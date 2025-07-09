@@ -1,0 +1,8 @@
+bind = ["127.0.0.1:61111"]
+umask = 7
+loglevel = "info"
+access_log_format = "%(h)s %(r)s %(s)s %(b)s %(M)s"
+# http2 = true
+keep_alive_timeout = 10
+workers = 3
+worker_class = "uvloop"

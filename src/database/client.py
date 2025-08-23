@@ -1,7 +1,8 @@
 from copy import deepcopy
+from typing import Union, Any
 from aiohttp import ClientSession
-from typing import Tuple, Union, Any
 
+from src import __version__
 from src.enums import RequestDatabaseType
 from .exceptions import ClientNotInitialized, InvalidDatabaseType
 
@@ -13,13 +14,11 @@ class HarukiDBClient(object):
         suite_api: str,
         db_api_authorization_token: str,
         suite_api_authorization_token: str,
-        user_agent: str,
-        haruki_cloud_version: str,
     ) -> None:
         self._db_api = db_api
         self._suite_api = suite_api
         self._headers = {
-            "User-Agent": f"{user_agent}/v{haruki_cloud_version}",
+            "User-Agent": f"Haruki-Cloud/v{__version__}",
             "Content-Type": "application/json",
             "accept": "application/json",
         }
@@ -41,7 +40,7 @@ class HarukiDBClient(object):
         data: Union[dict, list] = None,
         params: dict = None,
         db_type: RequestDatabaseType = RequestDatabaseType.main,
-    ) -> Tuple[Any, int]:
+    ) -> tuple[Any, int]:
         if self._session:
             if db_type == RequestDatabaseType.main:
                 token = self._db_api_authorization_token

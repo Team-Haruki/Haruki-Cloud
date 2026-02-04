@@ -1,4 +1,4 @@
-package dbapi
+package database
 
 import "haruki-cloud/utils/model"
 

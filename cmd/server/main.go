@@ -4,22 +4,11 @@ import (
 	"log"
 
 	"haruki-cloud/internal/core/crypto"
-	"haruki-cloud/internal/middleware/secure"
+	// "haruki-cloud/internal/middleware/secure"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/vmihailenco/msgpack/v5"
 )
-
-type TestRequest struct {
-	Name string `json:"name" msgpack:"name"`
-	Age  int    `json:"age" msgpack:"age"`
-}
-
-type TestResponse struct {
-	Message string `json:"message" msgpack:"message"`
-	Success bool   `json:"success" msgpack:"success"`
-}
 
 func main() {
 	// 1. Initialize Crypto
@@ -33,45 +22,13 @@ func main() {
 
 	app.Use(logger.New())
 
-	// Endpoint to retrieve server public key (Unencrypted)
-	app.Get("/key", func(c fiber.Ctx) error {
-		return c.Send(serverKeys.PublicKey.Bytes())
-	})
-
 	// Secure Group
-	api := app.Group("/api", secure.New(secure.Config{
-		ServerPrivateKey: serverKeys,
-	}))
+	// api := app.Group("/api", secure.New(secure.Config{
+	// 	ServerPrivateKey: serverKeys,
+	// }))
 
-	// 4. Define Routes
-	api.Post("/hello", func(c fiber.Ctx) error {
-		req := new(TestRequest)
-		// Fiber v3's Bind().Body() supports Content-Type negotiation.
-		// Middleware sets Content-Type: application/msgpack.
-		// Manual Unmarshal because Fiber's Bind might need configuring for MsgPack or it's failing
-		// c.Body() should contain the decrypted bytes set by middleware
-		if err := msgpack.Unmarshal(c.Body(), req); err != nil {
-			log.Printf("Handler: Unmarshal failed: %v", err)
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-
-		res := TestResponse{
-			Message: "Hello " + req.Name + " from Fiber v3!",
-			Success: true,
-		}
-
-		// Manually marshal to MsgPack because c.JSON() would marshal to JSON
-		// and we want strict Control over the bytes before encryption.
-		// If we let Fiber marshal to JSON, Middleware would encrypt JSON bytes.
-		// We want to encrypt MsgPack bytes.
-		resBytes, err := msgpack.Marshal(res)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Marshal failed")
-		}
-
-		// Send raw bytes. Middleware will encrypt them.
-		return c.Send(resBytes)
-	})
+	// TODO: Register your business routes here
+	// e.g. api.Post("/drawing", handler.HandleDrawing)
 
 	log.Println("Server starting on :3000")
 	log.Fatal(app.Listen(":3000"))

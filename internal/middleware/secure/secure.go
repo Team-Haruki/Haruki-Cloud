@@ -1,7 +1,6 @@
 package secure
 
 import (
-	"encoding/base64"
 	"log"
 
 	"haruki-cloud/internal/core/crypto"
@@ -11,76 +10,68 @@ import (
 
 // Config defines the config for Secure middleware.
 type Config struct {
-	// ServerPrivateKey is the server's private key used for ECDH.
+	// ServerPrivateKey is the server's private key used for Noise IK.
 	ServerPrivateKey *crypto.KeyPair
 }
 
-// New creates a new Secure middleware.
+// New creates a new Secure middleware with Noise IK support.
 func New(config Config) fiber.Handler {
 	if config.ServerPrivateKey == nil {
 		log.Fatal("Secure middleware: ServerPrivateKey is required")
 	}
 
 	return func(c fiber.Ctx) error {
-		// 1. Read X-Client-Pub-Key header
-		clientPubBase64 := c.Get("X-Client-Pub-Key")
-		if clientPubBase64 == "" {
-			// If no key provided, return error (Enforce encryption)
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Missing X-Client-Pub-Key header",
-			})
-		}
-
-		clientPubBytes, err := base64.StdEncoding.DecodeString(clientPubBase64)
+		// 1. Initialize Noise Responder (IK Pattern)
+		// Responder doesn't need peer static key initially for IK.
+		nc, err := crypto.NewHandshake(config.ServerPrivateKey, nil, false)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid X-Client-Pub-Key header",
-			})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Crypto init failed"})
 		}
 
-		// 2. Derive Shared Secret
-		sharedSecret, err := crypto.DeriveSharedSecret(config.ServerPrivateKey.PrivateKey, clientPubBytes)
+		// 2. Read Request Body (Handshake Message 1)
+		// For IK, the first message contains Client's Static Key (encrypted) and Payload (Encrypted).
+		ciphertext := c.Body()
+		if len(ciphertext) == 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Empty body"})
+		}
+
+		plaintext, err := nc.DecryptPacket(ciphertext)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Key exchange failed",
-			})
+			log.Printf("SecureMiddleware: Handshake/Decrypt failed: %v", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Secure handshake failed (Decrypt)"})
 		}
 
-		// 3. Decrypt Request Body (if present)
-		if len(c.Body()) > 0 {
-			decrypted, err := crypto.DecryptAESGCM(sharedSecret, c.Body())
-			if err != nil {
-				log.Printf("SecureMiddleware: Decryption failed: %v", err)
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": "Decryption failed",
-				})
-			}
-			log.Printf("SecureMiddleware: Decrypted body (%d bytes): %x", len(decrypted), decrypted)
-			c.Request().SetBody(decrypted)
-		} else {
-			log.Println("SecureMiddleware: No body to decrypt")
+		// 3. Verify Client Identity (Optional but recommended)
+		peerStatic := nc.GetPeerStatic()
+		if peerStatic != nil {
+			// TODO: Verify peerStatic against a whitelist DB
+			// log.Printf("SecureMiddleware: Client Identity: %x", peerStatic)
 		}
 
+		// 4. Set Request Body to Plaintext
+		c.Request().SetBody(plaintext)
 		// Ensure Content-Type is msgpack for binding
 		c.Request().Header.Set("Content-Type", "application/msgpack")
 
-		// 4. Continue stack
+		// 5. Continue stack
 		if err := c.Next(); err != nil {
 			return err
 		}
 
-		// 5. Encrypt Response Body
+		// 6. Encrypt Response Body (Handshake Message 2)
+		// For IK, the second message (Response) finishes the handshake.
 		responseBody := c.Response().Body()
-		if len(responseBody) > 0 {
-			encrypted, err := crypto.EncryptAESGCM(sharedSecret, responseBody)
-			if err != nil {
-				log.Printf("Encryption failed: %v", err)
-				return c.SendStatus(fiber.StatusInternalServerError)
-			}
-			c.Response().SetBody(encrypted)
-			// Set generic content type
-			c.Response().Header.Set("Content-Type", "application/octet-stream")
+
+		// Even if body is empty (e.g. 204), Noise protocol expects the flow to complete if we want strictness.
+		// But `EncryptPacket` handles writing the next message step even with empty payload.
+		encrypted, err := nc.EncryptPacket(responseBody)
+		if err != nil {
+			log.Printf("SecureMiddleware: Encryption failed: %v", err)
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
+
+		c.Response().SetBody(encrypted)
+		c.Response().Header.Set("Content-Type", "application/octet-stream")
 
 		return nil
 	}

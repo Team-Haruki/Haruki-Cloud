@@ -677,6 +677,16 @@ type GachaListRequest struct {
 	Filter     GachaFilter    `json:"filter"`
 }
 
+type GachaDetailRequest struct {
+	Gacha         GachaInfo         `json:"gacha"`
+	WeightInfo    GachaWeight       `json:"weight_info"`
+	PickupCards   []GachaCardWeight `json:"pickup_cards"`
+	LogoImgPath   *string           `json:"logo_img_path,omitempty"`
+	BannerImgPath *string           `json:"banner_img_path,omitempty"`
+	BgImgPath     *string           `json:"bg_img_path,omitempty"`
+	Region        string            `json:"region"`
+}
+
 // =========================== Misc Models ===========================
 
 type CharaBirthdayCard struct {
@@ -960,18 +970,6 @@ type MusicBoardRequest struct {
 	Items        []MusicBoardItem `json:"items"`
 	SpecMidDiffs [][]interface{}  `json:"spec_mid_diffs,omitempty"` // Tuple (int, str)
 	Description  string           `json:"description"`
-}
-
-// =========================== Gacha Models (Restored) ===========================
-
-type GachaDetailRequest struct {
-	Gacha         GachaInfo         `json:"gacha"`
-	WeightInfo    GachaWeight       `json:"weight_info"`
-	PickupCards   []GachaCardWeight `json:"pickup_cards"`
-	LogoImgPath   *string           `json:"logo_img_path,omitempty"`
-	BannerImgPath *string           `json:"banner_img_path,omitempty"`
-	BgImgPath     *string           `json:"bg_img_path,omitempty"`
-	Region        string            `json:"region"`
 }
 
 // =========================== Stamp Models ===========================

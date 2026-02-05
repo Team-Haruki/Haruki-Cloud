@@ -80,24 +80,28 @@ func (c *HarukiDrawingClient) GenerateCardList(req *CardListRequest) ([]byte, er
 	return c.post("/api/pjsk/card/list", req)
 }
 
+func (c *HarukiDrawingClient) GenerateCardBox(req *CardBoxRequest) ([]byte, error) {
+	return c.post("/api/pjsk/card/box", req)
+}
+
 // =========================== Deck API ===========================
 
 func (c *HarukiDrawingClient) GenerateDeckRecommendation(req *DeckRequest) ([]byte, error) {
-	return c.post("/api/pjsk/deck/recommendation", req)
+	return c.post("/api/pjsk/deck/recommend", req)
 }
 
 // =========================== Education API ===========================
 
 func (c *HarukiDrawingClient) GenerateChallengeLiveDetails(req *ChallengeLiveDetailsRequest) ([]byte, error) {
-	return c.post("/api/pjsk/education/challenge-live-details", req)
+	return c.post("/api/pjsk/education/challenge-live", req)
 }
 
 func (c *HarukiDrawingClient) GeneratePowerBonusDetail(req *PowerBonusDetailRequest) ([]byte, error) {
-	return c.post("/api/pjsk/education/power-bonus-detail", req)
+	return c.post("/api/pjsk/education/power-bonus", req)
 }
 
 func (c *HarukiDrawingClient) GenerateAreaItemUpgradeMaterials(req *AreaItemUpgradeMaterialsRequest) ([]byte, error) {
-	return c.post("/api/pjsk/education/area-item-upgrade-materials", req)
+	return c.post("/api/pjsk/education/area-item", req)
 }
 
 func (c *HarukiDrawingClient) GenerateBonds(req *BondsRequest) ([]byte, error) {
@@ -128,16 +132,20 @@ func (c *HarukiDrawingClient) GenerateGachaList(req *GachaListRequest) ([]byte, 
 	return c.post("/api/pjsk/gacha/list", req)
 }
 
+func (c *HarukiDrawingClient) GenerateGachaDetail(req *GachaDetailRequest) ([]byte, error) {
+	return c.post("/api/pjsk/gacha/detail", req)
+}
+
 // =========================== Honor API ===========================
 
 func (c *HarukiDrawingClient) GenerateHonor(req *HonorRequest) ([]byte, error) {
-	return c.post("/api/pjsk/honor/", req)
+	return c.post("/api/pjsk/honor", req)
 }
 
 // =========================== Misc API ===========================
 
 func (c *HarukiDrawingClient) GenerateCharacterBirthday(req *CharaBirthdayRequest) ([]byte, error) {
-	return c.post("/api/pjsk/misc/birthday", req)
+	return c.post("/api/pjsk/misc/chara-birthday", req)
 }
 
 // =========================== MySekai API ===========================
@@ -176,8 +184,12 @@ func (c *HarukiDrawingClient) GenerateCustomRoomScore(req *CustomRoomScoreReques
 	return c.post("/api/pjsk/score/custom-room", req)
 }
 
-func (c *HarukiDrawingClient) GenerateMusicMeta(req *MusicMetaRequest) ([]byte, error) {
-	return c.post("/api/pjsk/score/meta", req)
+func (c *HarukiDrawingClient) GenerateMusicMeta(req []MusicMetaRequest) ([]byte, error) {
+	return c.post("/api/pjsk/score/music-meta", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMusicBoard(req *MusicBoardRequest) ([]byte, error) {
+	return c.post("/api/pjsk/score/music-board", req)
 }
 
 // =========================== Stamp API ===========================
@@ -189,7 +201,7 @@ func (c *HarukiDrawingClient) GenerateStampList(req *StampListRequest) ([]byte, 
 // =========================== Chart API ===========================
 
 func (c *HarukiDrawingClient) GenerateMusicChart(req *GenerateMusicChartRequest) ([]byte, error) {
-	return c.post("/api/pjsk/chart/generate", req)
+	return c.post("/api/pjsk/chart", req)
 }
 
 // =========================== SK API ===========================

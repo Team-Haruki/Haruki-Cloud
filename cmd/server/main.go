@@ -16,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to generate server keys: %v", err)
 	}
+	_ = serverKeys
 
 	// 2. Setup Fiber
 	app := fiber.New()

@@ -1,0 +1,351 @@
+package bot
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"haruki-cloud/api"
+	"haruki-cloud/config"
+	ent "haruki-cloud/database/bot"
+	"haruki-cloud/database/bot/dailyrequests"
+	"haruki-cloud/database/bot/hourlyrequests"
+	"haruki-cloud/database/bot/requestsranking"
+	"haruki-cloud/database/bot/user"
+	"haruki-cloud/utils/crypto"
+
+	"github.com/gofiber/fiber/v3"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/redis/go-redis/v9"
+)
+
+type testEnvelope struct {
+	Status  int             `json:"status"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data"`
+}
+
+type mockTurnstile struct {
+	valid bool
+	err   error
+	token string
+	ip    string
+}
+
+func (m *mockTurnstile) VerifyToken(token, remoteIP string) (bool, error) {
+	m.token = token
+	m.ip = remoteIP
+	if m.err != nil {
+		return false, m.err
+	}
+	return m.valid, nil
+}
+
+type mockSMTP struct {
+	err  error
+	sent []mailEvent
+}
+
+type mailEvent struct {
+	qq   int64
+	code string
+}
+
+func (m *mockSMTP) SendVerificationCode(qqNumber int64, code string) error {
+	if m.err != nil {
+		return m.err
+	}
+	m.sent = append(m.sent, mailEvent{qq: qqNumber, code: code})
+	return nil
+}
+
+type memoryRedisStore struct {
+	mu    sync.Mutex
+	value map[string]string
+}
+
+func newMemoryRedisStore() *memoryRedisStore {
+	return &memoryRedisStore{value: make(map[string]string)}
+}
+
+func (s *memoryRedisStore) Set(_ context.Context, key string, value string, _ time.Duration) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.value[key] = value
+	return nil
+}
+
+func (s *memoryRedisStore) Get(_ context.Context, key string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	v, ok := s.value[key]
+	if !ok {
+		return "", redis.Nil
+	}
+	return v, nil
+}
+
+func (s *memoryRedisStore) Del(_ context.Context, key string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.value, key)
+	return nil
+}
+
+func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
+	ctx := context.Background()
+	client := newBotTestClient(t, "route")
+	defer func() { _ = client.Close() }()
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatalf("create schema: %v", err)
+	}
+
+	prev := config.Cfg
+	config.Cfg.Backend.AcceptAuthorization = "Bearer route-test"
+	t.Cleanup(func() { config.Cfg = prev })
+
+	app := fiber.New()
+	RegisterBotRoutes(app, client, nil)
+
+	sendResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", `{"qq_number":0}`, nil)
+	if sendResp.Status != fiber.StatusBadRequest {
+		t.Fatalf("expected /bot/send-mail to be registered, got status=%d message=%s", sendResp.Status, sendResp.Message)
+	}
+
+	registerResp := sendJSONRequest(t, app, http.MethodPost, "/bot/register", `{"qq_number":0}`, nil)
+	if registerResp.Status != fiber.StatusBadRequest {
+		t.Fatalf("expected /bot/register to be registered, got status=%d message=%s", registerResp.Status, registerResp.Message)
+	}
+
+	authResp := sendJSONRequest(t, app, http.MethodPost, "/bot/12345678/auth", `{"encrypted_payload":""}`, nil)
+	if authResp.Status != fiber.StatusBadRequest {
+		t.Fatalf("expected /bot/:bot_id/auth to be registered, got status=%d message=%s", authResp.Status, authResp.Message)
+	}
+
+	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", `{}`, map[string]string{
+		"Authorization": "Bearer route-test",
+	})
+	if verifyResp.Status != fiber.StatusBadRequest {
+		t.Fatalf("expected /internal/bot/verify-session to be registered, got status=%d message=%s", verifyResp.Status, verifyResp.Message)
+	}
+}
+
+func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
+	ctx := context.Background()
+	client := newBotTestClient(t, "flow")
+	defer func() { _ = client.Close() }()
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatalf("create schema: %v", err)
+	}
+
+	prev := config.Cfg
+	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
+	config.Cfg.HarukiBotDB.SessionSignToken = "session-sign-token"
+	config.Cfg.HarukiBotDB.SessionTTLDays = 7
+	config.Cfg.Backend.AcceptAuthorization = "Bearer internal-test"
+	config.Cfg.Backend.AcceptUserAgent = ""
+	t.Cleanup(func() { config.Cfg = prev })
+
+	store := newMemoryRedisStore()
+	turnstileMock := &mockTurnstile{valid: true}
+	smtpMock := &mockSMTP{}
+
+	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock))
+	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store))
+	statsHandler := NewStatisticsHandler(NewStatisticsService(client))
+
+	app := fiber.New()
+	public := app.Group("/bot")
+	public.Post("/send-mail", userHandler.SendMail)
+	public.Post("/register", userHandler.Register)
+	public.Post("/:bot_id/auth", userHandler.Auth)
+	internal := app.Group("/internal/bot", api.VerifyAPIAuthorization())
+	internal.Post("/verify-session", internalHandler.VerifySession)
+	app.Post("/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
+
+	const qqNumber int64 = 123456789
+	sendMailResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", fmt.Sprintf(`{"qq_number":%d,"turnstile_token":"ts-token"}`, qqNumber), nil)
+	if sendMailResp.Status != fiber.StatusOK {
+		t.Fatalf("send-mail failed: status=%d message=%s", sendMailResp.Status, sendMailResp.Message)
+	}
+	if turnstileMock.token != "ts-token" {
+		t.Fatalf("turnstile token mismatch: %q", turnstileMock.token)
+	}
+	if len(smtpMock.sent) != 1 {
+		t.Fatalf("expected one mock mail, got %d", len(smtpMock.sent))
+	}
+	verificationCode := smtpMock.sent[0].code
+	if verificationCode == "" {
+		t.Fatalf("verification code should not be empty")
+	}
+
+	registerResp := sendJSONRequest(t, app, http.MethodPost, "/bot/register", fmt.Sprintf(`{"qq_number":%d,"verification_code":"%s"}`, qqNumber, verificationCode), nil)
+	if registerResp.Status != fiber.StatusCreated {
+		t.Fatalf("register failed: status=%d message=%s", registerResp.Status, registerResp.Message)
+	}
+
+	var registerData CredentialResponse
+	if err := json.Unmarshal(registerResp.Data, &registerData); err != nil {
+		t.Fatalf("decode register response: %v", err)
+	}
+	if registerData.BotID == "" || registerData.Credential == "" {
+		t.Fatalf("register response missing bot_id or credential")
+	}
+
+	botID, err := strconv.Atoi(registerData.BotID)
+	if err != nil {
+		t.Fatalf("parse bot_id: %v", err)
+	}
+
+	dbUser, err := client.User.Query().Where(user.BotIDEQ(botID)).Only(ctx)
+	if err != nil {
+		t.Fatalf("load bot user: %v", err)
+	}
+	if dbUser.OwnerUserID != qqNumber {
+		t.Fatalf("owner user mismatch: got=%d want=%d", dbUser.OwnerUserID, qqNumber)
+	}
+
+	authPayload := AuthPayload{
+		Credential: registerData.Credential,
+		Timestamp:  time.Now().Unix(),
+	}
+	payloadBytes, err := json.Marshal(authPayload)
+	if err != nil {
+		t.Fatalf("marshal auth payload: %v", err)
+	}
+	encryptedPayload, err := crypto.Encrypt(payloadBytes, deriveKeyFromCredential(dbUser.Credential))
+	if err != nil {
+		t.Fatalf("encrypt auth payload: %v", err)
+	}
+
+	authResp := sendJSONRequest(t, app, http.MethodPost, "/bot/"+registerData.BotID+"/auth", fmt.Sprintf(`{"encrypted_payload":"%s"}`, encryptedPayload), nil)
+	if authResp.Status != fiber.StatusOK {
+		t.Fatalf("auth failed: status=%d message=%s", authResp.Status, authResp.Message)
+	}
+
+	var authData AuthResponse
+	if err := json.Unmarshal(authResp.Data, &authData); err != nil {
+		t.Fatalf("decode auth response: %v", err)
+	}
+	if authData.SessionToken == "" || authData.ExpiresAt <= time.Now().Unix() {
+		t.Fatalf("invalid auth response: %+v", authData)
+	}
+
+	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, registerData.BotID, authData.SessionToken)
+	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
+		"Authorization": "Bearer internal-test",
+	})
+	if verifyResp.Status != fiber.StatusOK {
+		t.Fatalf("verify-session failed: status=%d message=%s", verifyResp.Status, verifyResp.Message)
+	}
+	var verifyData InternalVerifyResponse
+	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
+		t.Fatalf("decode verify response: %v", err)
+	}
+	if !verifyData.Valid || verifyData.BotID != botID || verifyData.OwnerUserID != qqNumber {
+		t.Fatalf("unexpected verify response: %+v", verifyData)
+	}
+
+	statsResp := sendJSONRequest(t, app, http.MethodPost, "/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+		"Authorization": "Bearer internal-test",
+	})
+	if statsResp.Status != fiber.StatusOK {
+		t.Fatalf("statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
+	}
+
+	rankingRow, err := client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(botID)).Only(ctx)
+	if err != nil {
+		t.Fatalf("load requests ranking: %v", err)
+	}
+	if rankingRow.Counts != 1 {
+		t.Fatalf("requests ranking count mismatch: got=%d want=1", rankingRow.Counts)
+	}
+
+	hourlyRow, err := client.HourlyRequests.Query().Where(hourlyrequests.CountEQ(1)).Only(ctx)
+	if err != nil {
+		t.Fatalf("load hourly requests: %v", err)
+	}
+	if hourlyRow.Count != 1 {
+		t.Fatalf("hourly requests count mismatch: got=%d want=1", hourlyRow.Count)
+	}
+
+	dailyRow, err := client.DailyRequests.Query().Where(dailyrequests.CountEQ(1)).Only(ctx)
+	if err != nil {
+		t.Fatalf("load daily requests: %v", err)
+	}
+	if dailyRow.Count != 1 {
+		t.Fatalf("daily requests count mismatch: got=%d want=1", dailyRow.Count)
+	}
+}
+
+func TestBotSendMail_TurnstileFailure(t *testing.T) {
+	ctx := context.Background()
+	client := newBotTestClient(t, "turnstile-fail")
+	defer func() { _ = client.Close() }()
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatalf("create schema: %v", err)
+	}
+
+	store := newMemoryRedisStore()
+	turnstileMock := &mockTurnstile{valid: false}
+	smtpMock := &mockSMTP{}
+
+	h := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock))
+	app := fiber.New()
+	app.Post("/bot/send-mail", h.SendMail)
+
+	resp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", `{"qq_number":10001,"turnstile_token":"invalid"}`, nil)
+	if resp.Status != fiber.StatusBadRequest {
+		t.Fatalf("expected bad request for invalid turnstile, got status=%d message=%s", resp.Status, resp.Message)
+	}
+	if len(smtpMock.sent) != 0 {
+		t.Fatalf("smtp mock should not send mail on turnstile failure")
+	}
+}
+
+func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) testEnvelope {
+	t.Helper()
+
+	req, err := http.NewRequest(method, path, strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+
+	var envelope testEnvelope
+	if err := json.Unmarshal(respBody, &envelope); err != nil {
+		t.Fatalf("decode response body: %v\nraw=%s", err, string(respBody))
+	}
+	return envelope
+}
+
+func newBotTestClient(t *testing.T, name string) *ent.Client {
+	t.Helper()
+	dsn := fmt.Sprintf("file:bot_%s_%d?mode=memory&cache=shared&_fk=1", name, time.Now().UnixNano())
+	client, err := ent.Open("sqlite3", dsn)
+	if err != nil {
+		t.Fatalf("open bot sqlite: %v", err)
+	}
+	return client
+}

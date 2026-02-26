@@ -231,6 +231,190 @@ func TestClient_UserQueries(t *testing.T) {
 	}
 }
 
+func TestClient_ChunithmQueryErrors(t *testing.T) {
+	ctx := context.Background()
+	qc, raw := setupQueryClient(t)
+	defer closeQueryClients(raw)
+
+	if _, err := qc.GetChunithmMusicIDByAlias(ctx, ""); !errors.Is(err, ErrInvalidAlias) {
+		t.Fatalf("expected ErrInvalidAlias, got %v", err)
+	}
+	if _, err := qc.GetChunithmMusicIDByAlias(ctx, "not-exists"); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetChunithmAliasesByMusicID(ctx, 0); !errors.Is(err, ErrInvalidMusicID) {
+		t.Fatalf("expected ErrInvalidMusicID, got %v", err)
+	}
+	if _, err := qc.GetChunithmAliasesByMusicID(ctx, 9999); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetChunithmMusicBasicInfo(ctx, 0); !errors.Is(err, ErrInvalidMusicID) {
+		t.Fatalf("expected ErrInvalidMusicID, got %v", err)
+	}
+	if _, err := qc.GetChunithmMusicBasicInfo(ctx, 9999); !errors.Is(err, ErrMusicNotFound) {
+		t.Fatalf("expected ErrMusicNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetChunithmMusicDifficultyInfo(ctx, 0, ""); !errors.Is(err, ErrInvalidMusicID) {
+		t.Fatalf("expected ErrInvalidMusicID, got %v", err)
+	}
+	if _, err := qc.GetChunithmMusicDifficultyInfo(ctx, 9999, ""); !errors.Is(err, ErrMusicNotFound) {
+		t.Fatalf("expected ErrMusicNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetChunithmChartData(ctx, 0); !errors.Is(err, ErrInvalidMusicID) {
+		t.Fatalf("expected ErrInvalidMusicID, got %v", err)
+	}
+	if _, err := qc.GetChunithmChartData(ctx, 9999); !errors.Is(err, ErrMusicNotFound) {
+		t.Fatalf("expected ErrMusicNotFound, got %v", err)
+	}
+
+	batch, err := qc.QueryChunithmMusicDataBatch(ctx, []int{}, "v1")
+	if err != nil {
+		t.Fatalf("QueryChunithmMusicDataBatch(empty): %v", err)
+	}
+	if len(batch) != 0 {
+		t.Fatalf("expected empty batch result, got %+v", batch)
+	}
+
+	if _, err := qc.GetChunithmDefaultServer(ctx, 0); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetChunithmDefaultServer(ctx, 9999); !errors.Is(err, ErrBindingNotFound) {
+		t.Fatalf("expected ErrBindingNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetChunithmBinding(ctx, 0, "jp"); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetChunithmBinding(ctx, 500, ""); err == nil {
+		t.Fatalf("expected invalid server error, got nil")
+	}
+	if _, err := qc.GetChunithmBinding(ctx, 9999, "jp"); !errors.Is(err, ErrBindingNotFound) {
+		t.Fatalf("expected ErrBindingNotFound, got %v", err)
+	}
+}
+
+func TestClient_PJSKQueryErrors(t *testing.T) {
+	ctx := context.Background()
+	qc, raw := setupQueryClient(t)
+	defer closeQueryClients(raw)
+
+	if _, err := qc.GetPJSKGlobalAliasToID(ctx, "invalid", "sekai-song"); !errors.Is(err, ErrInvalidAliasType) {
+		t.Fatalf("expected ErrInvalidAliasType, got %v", err)
+	}
+	if _, err := qc.GetPJSKGlobalAliasToID(ctx, "music", ""); !errors.Is(err, ErrInvalidAlias) {
+		t.Fatalf("expected ErrInvalidAlias, got %v", err)
+	}
+	if _, err := qc.GetPJSKGlobalAliasToID(ctx, "music", "not-exists"); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKGlobalAliasesByID(ctx, "invalid", 2001); !errors.Is(err, ErrInvalidAliasType) {
+		t.Fatalf("expected ErrInvalidAliasType, got %v", err)
+	}
+	if _, err := qc.GetPJSKGlobalAliasesByID(ctx, "music", -1); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGlobalAliasesByID(ctx, "music", 9999); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKGroupAliasToID(ctx, "", "g1", "character", "miku"); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasToID(ctx, "qq", "", "character", "miku"); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasToID(ctx, "qq", "g1", "invalid", "miku"); !errors.Is(err, ErrInvalidAliasType) {
+		t.Fatalf("expected ErrInvalidAliasType, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasToID(ctx, "qq", "g1", "character", ""); !errors.Is(err, ErrInvalidAlias) {
+		t.Fatalf("expected ErrInvalidAlias, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasToID(ctx, "qq", "g1", "character", "not-exists"); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKGroupAliasesByID(ctx, "", "g1", "character", 3001); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasesByID(ctx, "qq", "", "character", 3001); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasesByID(ctx, "qq", "g1", "invalid", 3001); !errors.Is(err, ErrInvalidAliasType) {
+		t.Fatalf("expected ErrInvalidAliasType, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasesByID(ctx, "qq", "g1", "character", -1); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKGroupAliasesByID(ctx, "qq", "g1", "character", 9999); !errors.Is(err, ErrAliasNotFound) {
+		t.Fatalf("expected ErrAliasNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKBindings(ctx, 0, ""); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKBindings(ctx, 500, "invalid"); err == nil {
+		t.Fatalf("expected invalid server error, got nil")
+	}
+	if _, err := qc.GetPJSKBindings(ctx, 9999, ""); !errors.Is(err, ErrBindingNotFound) {
+		t.Fatalf("expected ErrBindingNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKDefaultBinding(ctx, 0, ""); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKDefaultBinding(ctx, 500, "invalid"); err == nil {
+		t.Fatalf("expected invalid default server error, got nil")
+	}
+	if _, err := qc.GetPJSKDefaultBinding(ctx, 9999, ""); !errors.Is(err, ErrBindingNotFound) {
+		t.Fatalf("expected ErrBindingNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKPreferences(ctx, 0); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKPreferences(ctx, 9999); !errors.Is(err, ErrPreferenceNotFound) {
+		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetPJSKPreference(ctx, 0, "theme"); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetPJSKPreference(ctx, 500, ""); !errors.Is(err, ErrPreferenceNotFound) {
+		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
+	}
+	if _, err := qc.GetPJSKPreference(ctx, 500, "not-exists"); !errors.Is(err, ErrPreferenceNotFound) {
+		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
+	}
+}
+
+func TestClient_UserQueryErrors(t *testing.T) {
+	ctx := context.Background()
+	qc, raw := setupQueryClient(t)
+	defer closeQueryClients(raw)
+
+	if _, err := qc.GetUserByPlatform(ctx, "", "10001"); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetUserByPlatform(ctx, "qq", ""); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetUserByPlatform(ctx, "qq", "not-exists"); !errors.Is(err, ErrUserNotFound) {
+		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	}
+
+	if _, err := qc.GetUserByID(ctx, 0); !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+	if _, err := qc.GetUserByID(ctx, 9999); !errors.Is(err, ErrUserNotFound) {
+		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	}
+}
+
 func setupQueryClient(t *testing.T) (*Client, *queryTestClients) {
 	t.Helper()
 	ctx := context.Background()

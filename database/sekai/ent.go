@@ -24,7 +24,6 @@ import (
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
-	"haruki-cloud/database/sekai/cost"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
@@ -75,6 +74,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"haruki-cloud/database/sekai/mysekaiphenomenabackgroundcolor"
+	"haruki-cloud/database/sekai/mysekaiphenomenon"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
 	"haruki-cloud/database/sekai/ngword"
 	"haruki-cloud/database/sekai/outsidecharacter"
@@ -173,7 +173,6 @@ func checkColumn(t, c string) error {
 			charactermissionv2parametergroup.Table:          charactermissionv2parametergroup.ValidColumn,
 			characterrank.Table:                             characterrank.ValidColumn,
 			cheerfulcarnivalteam.Table:                      cheerfulcarnivalteam.ValidColumn,
-			cost.Table:                                      cost.ValidColumn,
 			costume3d.Table:                                 costume3d.ValidColumn,
 			event.Table:                                     event.ValidColumn,
 			eventcard.Table:                                 eventcard.ValidColumn,
@@ -224,6 +223,7 @@ func checkColumn(t, c string) error {
 			mysekaimusicrecord.Table:                                mysekaimusicrecord.ValidColumn,
 			mysekaimusicrecordcategorie.Table:                       mysekaimusicrecordcategorie.ValidColumn,
 			mysekaiphenomenabackgroundcolor.Table:                   mysekaiphenomenabackgroundcolor.ValidColumn,
+			mysekaiphenomenon.Table:                                 mysekaiphenomenon.ValidColumn,
 			mysekaisiteharvestfixture.Table:                         mysekaisiteharvestfixture.ValidColumn,
 			ngword.Table:                                            ngword.ValidColumn,
 			outsidecharacter.Table:                                  outsidecharacter.ValidColumn,

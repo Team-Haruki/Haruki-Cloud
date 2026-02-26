@@ -48,8 +48,6 @@ type Tx struct {
 	Characterrank *CharacterrankClient
 	// Cheerfulcarnivalteam is the client for interacting with the Cheerfulcarnivalteam builders.
 	Cheerfulcarnivalteam *CheerfulcarnivalteamClient
-	// Cost is the client for interacting with the Cost builders.
-	Cost *CostClient
 	// Costume3D is the client for interacting with the Costume3D builders.
 	Costume3D *Costume3DClient
 	// Event is the client for interacting with the Event builders.
@@ -150,6 +148,8 @@ type Tx struct {
 	Mysekaimusicrecordcategorie *MysekaimusicrecordcategorieClient
 	// Mysekaiphenomenabackgroundcolor is the client for interacting with the Mysekaiphenomenabackgroundcolor builders.
 	Mysekaiphenomenabackgroundcolor *MysekaiphenomenabackgroundcolorClient
+	// Mysekaiphenomenon is the client for interacting with the Mysekaiphenomenon builders.
+	Mysekaiphenomenon *MysekaiphenomenonClient
 	// Mysekaisiteharvestfixture is the client for interacting with the Mysekaisiteharvestfixture builders.
 	Mysekaisiteharvestfixture *MysekaisiteharvestfixtureClient
 	// Ngword is the client for interacting with the Ngword builders.
@@ -327,7 +327,6 @@ func (tx *Tx) init() {
 	tx.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(tx.config)
 	tx.Characterrank = NewCharacterrankClient(tx.config)
 	tx.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(tx.config)
-	tx.Cost = NewCostClient(tx.config)
 	tx.Costume3D = NewCostume3DClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Eventcard = NewEventcardClient(tx.config)
@@ -378,6 +377,7 @@ func (tx *Tx) init() {
 	tx.Mysekaimusicrecord = NewMysekaimusicrecordClient(tx.config)
 	tx.Mysekaimusicrecordcategorie = NewMysekaimusicrecordcategorieClient(tx.config)
 	tx.Mysekaiphenomenabackgroundcolor = NewMysekaiphenomenabackgroundcolorClient(tx.config)
+	tx.Mysekaiphenomenon = NewMysekaiphenomenonClient(tx.config)
 	tx.Mysekaisiteharvestfixture = NewMysekaisiteharvestfixtureClient(tx.config)
 	tx.Ngword = NewNgwordClient(tx.config)
 	tx.Outsidecharacter = NewOutsidecharacterClient(tx.config)

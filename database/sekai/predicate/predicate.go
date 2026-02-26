@@ -60,9 +60,6 @@ type Characterrank func(*sql.Selector)
 // Cheerfulcarnivalteam is the predicate function for cheerfulcarnivalteam builders.
 type Cheerfulcarnivalteam func(*sql.Selector)
 
-// Cost is the predicate function for cost builders.
-type Cost func(*sql.Selector)
-
 // Costume3D is the predicate function for costume3d builders.
 type Costume3D func(*sql.Selector)
 
@@ -212,6 +209,9 @@ type Mysekaimusicrecordcategorie func(*sql.Selector)
 
 // Mysekaiphenomenabackgroundcolor is the predicate function for mysekaiphenomenabackgroundcolor builders.
 type Mysekaiphenomenabackgroundcolor func(*sql.Selector)
+
+// Mysekaiphenomenon is the predicate function for mysekaiphenomenon builders.
+type Mysekaiphenomenon func(*sql.Selector)
 
 // Mysekaisiteharvestfixture is the predicate function for mysekaisiteharvestfixture builders.
 type Mysekaisiteharvestfixture func(*sql.Selector)

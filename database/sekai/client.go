@@ -29,7 +29,6 @@ import (
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
-	"haruki-cloud/database/sekai/cost"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
@@ -80,6 +79,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"haruki-cloud/database/sekai/mysekaiphenomenabackgroundcolor"
+	"haruki-cloud/database/sekai/mysekaiphenomenon"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
 	"haruki-cloud/database/sekai/ngword"
 	"haruki-cloud/database/sekai/outsidecharacter"
@@ -141,8 +141,6 @@ type Client struct {
 	Characterrank *CharacterrankClient
 	// Cheerfulcarnivalteam is the client for interacting with the Cheerfulcarnivalteam builders.
 	Cheerfulcarnivalteam *CheerfulcarnivalteamClient
-	// Cost is the client for interacting with the Cost builders.
-	Cost *CostClient
 	// Costume3D is the client for interacting with the Costume3D builders.
 	Costume3D *Costume3DClient
 	// Event is the client for interacting with the Event builders.
@@ -243,6 +241,8 @@ type Client struct {
 	Mysekaimusicrecordcategorie *MysekaimusicrecordcategorieClient
 	// Mysekaiphenomenabackgroundcolor is the client for interacting with the Mysekaiphenomenabackgroundcolor builders.
 	Mysekaiphenomenabackgroundcolor *MysekaiphenomenabackgroundcolorClient
+	// Mysekaiphenomenon is the client for interacting with the Mysekaiphenomenon builders.
+	Mysekaiphenomenon *MysekaiphenomenonClient
 	// Mysekaisiteharvestfixture is the client for interacting with the Mysekaisiteharvestfixture builders.
 	Mysekaisiteharvestfixture *MysekaisiteharvestfixtureClient
 	// Ngword is the client for interacting with the Ngword builders.
@@ -300,7 +300,6 @@ func (c *Client) init() {
 	c.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(c.config)
 	c.Characterrank = NewCharacterrankClient(c.config)
 	c.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(c.config)
-	c.Cost = NewCostClient(c.config)
 	c.Costume3D = NewCostume3DClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.Eventcard = NewEventcardClient(c.config)
@@ -351,6 +350,7 @@ func (c *Client) init() {
 	c.Mysekaimusicrecord = NewMysekaimusicrecordClient(c.config)
 	c.Mysekaimusicrecordcategorie = NewMysekaimusicrecordcategorieClient(c.config)
 	c.Mysekaiphenomenabackgroundcolor = NewMysekaiphenomenabackgroundcolorClient(c.config)
+	c.Mysekaiphenomenon = NewMysekaiphenomenonClient(c.config)
 	c.Mysekaisiteharvestfixture = NewMysekaisiteharvestfixtureClient(c.config)
 	c.Ngword = NewNgwordClient(c.config)
 	c.Outsidecharacter = NewOutsidecharacterClient(c.config)
@@ -475,7 +475,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
 		Characterrank:                             NewCharacterrankClient(cfg),
 		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
-		Cost:                                      NewCostClient(cfg),
 		Costume3D:                                 NewCostume3DClient(cfg),
 		Event:                                     NewEventClient(cfg),
 		Eventcard:                                 NewEventcardClient(cfg),
@@ -526,6 +525,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Mysekaimusicrecord:                                NewMysekaimusicrecordClient(cfg),
 		Mysekaimusicrecordcategorie:                       NewMysekaimusicrecordcategorieClient(cfg),
 		Mysekaiphenomenabackgroundcolor:                   NewMysekaiphenomenabackgroundcolorClient(cfg),
+		Mysekaiphenomenon:                                 NewMysekaiphenomenonClient(cfg),
 		Mysekaisiteharvestfixture:                         NewMysekaisiteharvestfixtureClient(cfg),
 		Ngword:                                            NewNgwordClient(cfg),
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
@@ -577,7 +577,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
 		Characterrank:                             NewCharacterrankClient(cfg),
 		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
-		Cost:                                      NewCostClient(cfg),
 		Costume3D:                                 NewCostume3DClient(cfg),
 		Event:                                     NewEventClient(cfg),
 		Eventcard:                                 NewEventcardClient(cfg),
@@ -628,6 +627,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Mysekaimusicrecord:                                NewMysekaimusicrecordClient(cfg),
 		Mysekaimusicrecordcategorie:                       NewMysekaimusicrecordcategorieClient(cfg),
 		Mysekaiphenomenabackgroundcolor:                   NewMysekaiphenomenabackgroundcolorClient(cfg),
+		Mysekaiphenomenon:                                 NewMysekaiphenomenonClient(cfg),
 		Mysekaisiteharvestfixture:                         NewMysekaisiteharvestfixtureClient(cfg),
 		Ngword:                                            NewNgwordClient(cfg),
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
@@ -676,15 +676,14 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
 		c.Characterarchivemysekaicharactertalkgroup,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Cost, c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse,
-		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
-		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
-		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
-		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
-		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
-		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
-		c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie,
+		c.Eventitem, c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie,
+		c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket, c.Gamecharacter,
+		c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level, c.Limitedtimemusic,
+		c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie, c.Musictag,
+		c.Musicvocal, c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
+		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
+		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
 		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaifixture,
 		c.Mysekaifixturegamecharactergroup,
 		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
@@ -693,11 +692,11 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel, c.Mysekaigatematerialgroup,
 		c.Mysekaiitem, c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
 		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
-		c.Mysekaiphenomenabackgroundcolor, c.Mysekaisiteharvestfixture, c.Ngword,
-		c.Outsidecharacter, c.Playerframe, c.Playerframegroup, c.Resourceboxe,
-		c.Shopitem, c.Skill, c.Stamp, c.Virtuallive, c.Worldbloom,
-		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
-		c.Worldbloomsupportdeckuniteventlimitedbonuse,
+		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
+		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
+		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Use(hooks...)
 	}
@@ -712,15 +711,14 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
 		c.Characterarchivemysekaicharactertalkgroup,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Cost, c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse,
-		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
-		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
-		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
-		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
-		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
-		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
-		c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie,
+		c.Eventitem, c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie,
+		c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket, c.Gamecharacter,
+		c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level, c.Limitedtimemusic,
+		c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie, c.Musictag,
+		c.Musicvocal, c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
+		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
+		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
 		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaifixture,
 		c.Mysekaifixturegamecharactergroup,
 		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
@@ -729,11 +727,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel, c.Mysekaigatematerialgroup,
 		c.Mysekaiitem, c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
 		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
-		c.Mysekaiphenomenabackgroundcolor, c.Mysekaisiteharvestfixture, c.Ngword,
-		c.Outsidecharacter, c.Playerframe, c.Playerframegroup, c.Resourceboxe,
-		c.Shopitem, c.Skill, c.Stamp, c.Virtuallive, c.Worldbloom,
-		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
-		c.Worldbloomsupportdeckuniteventlimitedbonuse,
+		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
+		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
+		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -778,8 +776,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Characterrank.mutate(ctx, m)
 	case *CheerfulcarnivalteamMutation:
 		return c.Cheerfulcarnivalteam.mutate(ctx, m)
-	case *CostMutation:
-		return c.Cost.mutate(ctx, m)
 	case *Costume3DMutation:
 		return c.Costume3D.mutate(ctx, m)
 	case *EventMutation:
@@ -880,6 +876,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaimusicrecordcategorie.mutate(ctx, m)
 	case *MysekaiphenomenabackgroundcolorMutation:
 		return c.Mysekaiphenomenabackgroundcolor.mutate(ctx, m)
+	case *MysekaiphenomenonMutation:
+		return c.Mysekaiphenomenon.mutate(ctx, m)
 	case *MysekaisiteharvestfixtureMutation:
 		return c.Mysekaisiteharvestfixture.mutate(ctx, m)
 	case *NgwordMutation:
@@ -3304,139 +3302,6 @@ func (c *CheerfulcarnivalteamClient) mutate(ctx context.Context, m *Cheerfulcarn
 		return (&CheerfulcarnivalteamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Cheerfulcarnivalteam mutation op: %q", m.Op())
-	}
-}
-
-// CostClient is a client for the Cost schema.
-type CostClient struct {
-	config
-}
-
-// NewCostClient returns a client for the Cost from the given config.
-func NewCostClient(c config) *CostClient {
-	return &CostClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `cost.Hooks(f(g(h())))`.
-func (c *CostClient) Use(hooks ...Hook) {
-	c.hooks.Cost = append(c.hooks.Cost, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `cost.Intercept(f(g(h())))`.
-func (c *CostClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Cost = append(c.inters.Cost, interceptors...)
-}
-
-// Create returns a builder for creating a Cost entity.
-func (c *CostClient) Create() *CostCreate {
-	mutation := newCostMutation(c.config, OpCreate)
-	return &CostCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Cost entities.
-func (c *CostClient) CreateBulk(builders ...*CostCreate) *CostCreateBulk {
-	return &CostCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *CostClient) MapCreateBulk(slice any, setFunc func(*CostCreate, int)) *CostCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &CostCreateBulk{err: fmt.Errorf("calling to CostClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*CostCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &CostCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Cost.
-func (c *CostClient) Update() *CostUpdate {
-	mutation := newCostMutation(c.config, OpUpdate)
-	return &CostUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *CostClient) UpdateOne(_m *Cost) *CostUpdateOne {
-	mutation := newCostMutation(c.config, OpUpdateOne, withCost(_m))
-	return &CostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *CostClient) UpdateOneID(id int) *CostUpdateOne {
-	mutation := newCostMutation(c.config, OpUpdateOne, withCostID(id))
-	return &CostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Cost.
-func (c *CostClient) Delete() *CostDelete {
-	mutation := newCostMutation(c.config, OpDelete)
-	return &CostDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *CostClient) DeleteOne(_m *Cost) *CostDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CostClient) DeleteOneID(id int) *CostDeleteOne {
-	builder := c.Delete().Where(cost.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &CostDeleteOne{builder}
-}
-
-// Query returns a query builder for Cost.
-func (c *CostClient) Query() *CostQuery {
-	return &CostQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeCost},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Cost entity by its id.
-func (c *CostClient) Get(ctx context.Context, id int) (*Cost, error) {
-	return c.Query().Where(cost.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *CostClient) GetX(ctx context.Context, id int) *Cost {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *CostClient) Hooks() []Hook {
-	return c.hooks.Cost
-}
-
-// Interceptors returns the client interceptors.
-func (c *CostClient) Interceptors() []Interceptor {
-	return c.inters.Cost
-}
-
-func (c *CostClient) mutate(ctx context.Context, m *CostMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&CostCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&CostUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&CostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&CostDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("sekai: unknown Cost mutation op: %q", m.Op())
 	}
 }
 
@@ -10090,6 +9955,139 @@ func (c *MysekaiphenomenabackgroundcolorClient) mutate(ctx context.Context, m *M
 	}
 }
 
+// MysekaiphenomenonClient is a client for the Mysekaiphenomenon schema.
+type MysekaiphenomenonClient struct {
+	config
+}
+
+// NewMysekaiphenomenonClient returns a client for the Mysekaiphenomenon from the given config.
+func NewMysekaiphenomenonClient(c config) *MysekaiphenomenonClient {
+	return &MysekaiphenomenonClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaiphenomenon.Hooks(f(g(h())))`.
+func (c *MysekaiphenomenonClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaiphenomenon = append(c.hooks.Mysekaiphenomenon, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaiphenomenon.Intercept(f(g(h())))`.
+func (c *MysekaiphenomenonClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaiphenomenon = append(c.inters.Mysekaiphenomenon, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaiphenomenon entity.
+func (c *MysekaiphenomenonClient) Create() *MysekaiphenomenonCreate {
+	mutation := newMysekaiphenomenonMutation(c.config, OpCreate)
+	return &MysekaiphenomenonCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaiphenomenon entities.
+func (c *MysekaiphenomenonClient) CreateBulk(builders ...*MysekaiphenomenonCreate) *MysekaiphenomenonCreateBulk {
+	return &MysekaiphenomenonCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaiphenomenonClient) MapCreateBulk(slice any, setFunc func(*MysekaiphenomenonCreate, int)) *MysekaiphenomenonCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaiphenomenonCreateBulk{err: fmt.Errorf("calling to MysekaiphenomenonClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaiphenomenonCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaiphenomenonCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaiphenomenon.
+func (c *MysekaiphenomenonClient) Update() *MysekaiphenomenonUpdate {
+	mutation := newMysekaiphenomenonMutation(c.config, OpUpdate)
+	return &MysekaiphenomenonUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaiphenomenonClient) UpdateOne(_m *Mysekaiphenomenon) *MysekaiphenomenonUpdateOne {
+	mutation := newMysekaiphenomenonMutation(c.config, OpUpdateOne, withMysekaiphenomenon(_m))
+	return &MysekaiphenomenonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaiphenomenonClient) UpdateOneID(id int) *MysekaiphenomenonUpdateOne {
+	mutation := newMysekaiphenomenonMutation(c.config, OpUpdateOne, withMysekaiphenomenonID(id))
+	return &MysekaiphenomenonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaiphenomenon.
+func (c *MysekaiphenomenonClient) Delete() *MysekaiphenomenonDelete {
+	mutation := newMysekaiphenomenonMutation(c.config, OpDelete)
+	return &MysekaiphenomenonDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaiphenomenonClient) DeleteOne(_m *Mysekaiphenomenon) *MysekaiphenomenonDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaiphenomenonClient) DeleteOneID(id int) *MysekaiphenomenonDeleteOne {
+	builder := c.Delete().Where(mysekaiphenomenon.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaiphenomenonDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaiphenomenon.
+func (c *MysekaiphenomenonClient) Query() *MysekaiphenomenonQuery {
+	return &MysekaiphenomenonQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaiphenomenon},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaiphenomenon entity by its id.
+func (c *MysekaiphenomenonClient) Get(ctx context.Context, id int) (*Mysekaiphenomenon, error) {
+	return c.Query().Where(mysekaiphenomenon.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaiphenomenonClient) GetX(ctx context.Context, id int) *Mysekaiphenomenon {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaiphenomenonClient) Hooks() []Hook {
+	return c.hooks.Mysekaiphenomenon
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaiphenomenonClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaiphenomenon
+}
+
+func (c *MysekaiphenomenonClient) mutate(ctx context.Context, m *MysekaiphenomenonMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaiphenomenonCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaiphenomenonUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaiphenomenonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaiphenomenonDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaiphenomenon mutation op: %q", m.Op())
+	}
+}
+
 // MysekaisiteharvestfixtureClient is a client for the Mysekaisiteharvestfixture schema.
 type MysekaisiteharvestfixtureClient struct {
 	config
@@ -11959,7 +11957,7 @@ type (
 		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
 		Challengelivehighscorereward, Character2D,
 		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Cost, Costume3D, Event, Eventcard,
+		Characterrank, Cheerfulcarnivalteam, Costume3D, Event, Eventcard,
 		Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
 		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
 		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
@@ -11975,10 +11973,10 @@ type (
 		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
 		Mysekaiitem, Mysekaimaterial, Mysekaimaterialgamecharacterrelation,
 		Mysekaimusicrecord, Mysekaimusicrecordcategorie,
-		Mysekaiphenomenabackgroundcolor, Mysekaisiteharvestfixture, Ngword,
-		Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill,
-		Stamp, Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse,
+		Mysekaiphenomenabackgroundcolor, Mysekaiphenomenon, Mysekaisiteharvestfixture,
+		Ngword, Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe,
+		Shopitem, Skill, Stamp, Virtuallive, Worldbloom,
+		Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Hook
 	}
 	inters struct {
@@ -11986,7 +11984,7 @@ type (
 		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
 		Challengelivehighscorereward, Character2D,
 		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Cost, Costume3D, Event, Eventcard,
+		Characterrank, Cheerfulcarnivalteam, Costume3D, Event, Eventcard,
 		Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
 		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
 		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
@@ -12002,10 +12000,10 @@ type (
 		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
 		Mysekaiitem, Mysekaimaterial, Mysekaimaterialgamecharacterrelation,
 		Mysekaimusicrecord, Mysekaimusicrecordcategorie,
-		Mysekaiphenomenabackgroundcolor, Mysekaisiteharvestfixture, Ngword,
-		Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill,
-		Stamp, Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse,
+		Mysekaiphenomenabackgroundcolor, Mysekaiphenomenon, Mysekaisiteharvestfixture,
+		Ngword, Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe,
+		Shopitem, Skill, Stamp, Virtuallive, Worldbloom,
+		Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Interceptor
 	}
 )

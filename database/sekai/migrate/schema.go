@@ -474,20 +474,6 @@ var (
 			},
 		},
 	}
-	// CostsColumns holds the columns for the "costs" table.
-	CostsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "server_region", Type: field.TypeString},
-		{Name: "shop_item_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "seq", Type: field.TypeInt64, Nullable: true},
-		{Name: "cost", Type: field.TypeJSON, Nullable: true},
-	}
-	// CostsTable holds the schema information for the "costs" table.
-	CostsTable = &schema.Table{
-		Name:       "costs",
-		Columns:    CostsColumns,
-		PrimaryKey: []*schema.Column{CostsColumns[0]},
-	}
 	// Costume3dsColumns holds the columns for the "costume3ds" table.
 	Costume3dsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1749,6 +1735,34 @@ var (
 			},
 		},
 	}
+	// MysekaiphenomenonsColumns holds the columns for the "mysekaiphenomenons" table.
+	MysekaiphenomenonsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "server_region", Type: field.TypeString},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_phenomena_brightness_type", Type: field.TypeJSON, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "english_name", Type: field.TypeString, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "mysekai_phenomena_time_period_type", Type: field.TypeJSON, Nullable: true},
+		{Name: "mysekai_phenomena_background_color_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "ramp_texture_assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "icon_assetbundle_name", Type: field.TypeString, Nullable: true},
+	}
+	// MysekaiphenomenonsTable holds the schema information for the "mysekaiphenomenons" table.
+	MysekaiphenomenonsTable = &schema.Table{
+		Name:       "mysekaiphenomenons",
+		Columns:    MysekaiphenomenonsColumns,
+		PrimaryKey: []*schema.Column{MysekaiphenomenonsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaiphenomenon_game_id_server_region",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiphenomenonsColumns[2], MysekaiphenomenonsColumns[1]},
+			},
+		},
+	}
 	// MysekaisiteharvestfixturesColumns holds the columns for the "mysekaisiteharvestfixtures" table.
 	MysekaisiteharvestfixturesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2118,7 +2132,6 @@ var (
 		Charactermissionv2parametergroupsTable,
 		CharacterranksTable,
 		CheerfulcarnivalteamsTable,
-		CostsTable,
 		Costume3dsTable,
 		EventsTable,
 		EventcardsTable,
@@ -2169,6 +2182,7 @@ var (
 		MysekaimusicrecordsTable,
 		MysekaimusicrecordcategoriesTable,
 		MysekaiphenomenabackgroundcolorsTable,
+		MysekaiphenomenonsTable,
 		MysekaisiteharvestfixturesTable,
 		NgwordsTable,
 		OutsidecharactersTable,

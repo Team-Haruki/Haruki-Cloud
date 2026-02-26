@@ -24,7 +24,6 @@ import (
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
-	"haruki-cloud/database/sekai/cost"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
@@ -75,6 +74,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"haruki-cloud/database/sekai/mysekaiphenomenabackgroundcolor"
+	"haruki-cloud/database/sekai/mysekaiphenomenon"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
 	"haruki-cloud/database/sekai/ngword"
 	"haruki-cloud/database/sekai/outsidecharacter"
@@ -123,7 +123,6 @@ const (
 	TypeCharactermissionv2Parametergroup                     = "Charactermissionv2Parametergroup"
 	TypeCharacterrank                                        = "Characterrank"
 	TypeCheerfulcarnivalteam                                 = "Cheerfulcarnivalteam"
-	TypeCost                                                 = "Cost"
 	TypeCostume3D                                            = "Costume3D"
 	TypeEvent                                                = "Event"
 	TypeEventcard                                            = "Eventcard"
@@ -174,6 +173,7 @@ const (
 	TypeMysekaimusicrecord                                   = "Mysekaimusicrecord"
 	TypeMysekaimusicrecordcategorie                          = "Mysekaimusicrecordcategorie"
 	TypeMysekaiphenomenabackgroundcolor                      = "Mysekaiphenomenabackgroundcolor"
+	TypeMysekaiphenomenon                                    = "Mysekaiphenomenon"
 	TypeMysekaisiteharvestfixture                            = "Mysekaisiteharvestfixture"
 	TypeNgword                                               = "Ngword"
 	TypeOutsidecharacter                                     = "Outsidecharacter"
@@ -19403,625 +19403,6 @@ func (m *CheerfulcarnivalteamMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *CheerfulcarnivalteamMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Cheerfulcarnivalteam edge %s", name)
-}
-
-// CostMutation represents an operation that mutates the Cost nodes in the graph.
-type CostMutation struct {
-	config
-	op              Op
-	typ             string
-	id              *int
-	server_region   *string
-	shop_item_id    *int64
-	addshop_item_id *int64
-	seq             *int64
-	addseq          *int64
-	cost            *map[string]interface{}
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*Cost, error)
-	predicates      []predicate.Cost
-}
-
-var _ ent.Mutation = (*CostMutation)(nil)
-
-// costOption allows management of the mutation configuration using functional options.
-type costOption func(*CostMutation)
-
-// newCostMutation creates new mutation for the Cost entity.
-func newCostMutation(c config, op Op, opts ...costOption) *CostMutation {
-	m := &CostMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeCost,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withCostID sets the ID field of the mutation.
-func withCostID(id int) costOption {
-	return func(m *CostMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *Cost
-		)
-		m.oldValue = func(ctx context.Context) (*Cost, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().Cost.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withCost sets the old Cost of the mutation.
-func withCost(node *Cost) costOption {
-	return func(m *CostMutation) {
-		m.oldValue = func(context.Context) (*Cost, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m CostMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m CostMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("sekai: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *CostMutation) ID() (id int, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *CostMutation) IDs(ctx context.Context) ([]int, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Cost.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetServerRegion sets the "server_region" field.
-func (m *CostMutation) SetServerRegion(s string) {
-	m.server_region = &s
-}
-
-// ServerRegion returns the value of the "server_region" field in the mutation.
-func (m *CostMutation) ServerRegion() (r string, exists bool) {
-	v := m.server_region
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldServerRegion returns the old "server_region" field's value of the Cost entity.
-// If the Cost object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CostMutation) OldServerRegion(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldServerRegion requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
-	}
-	return oldValue.ServerRegion, nil
-}
-
-// ResetServerRegion resets all changes to the "server_region" field.
-func (m *CostMutation) ResetServerRegion() {
-	m.server_region = nil
-}
-
-// SetShopItemID sets the "shop_item_id" field.
-func (m *CostMutation) SetShopItemID(i int64) {
-	m.shop_item_id = &i
-	m.addshop_item_id = nil
-}
-
-// ShopItemID returns the value of the "shop_item_id" field in the mutation.
-func (m *CostMutation) ShopItemID() (r int64, exists bool) {
-	v := m.shop_item_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldShopItemID returns the old "shop_item_id" field's value of the Cost entity.
-// If the Cost object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CostMutation) OldShopItemID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldShopItemID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldShopItemID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldShopItemID: %w", err)
-	}
-	return oldValue.ShopItemID, nil
-}
-
-// AddShopItemID adds i to the "shop_item_id" field.
-func (m *CostMutation) AddShopItemID(i int64) {
-	if m.addshop_item_id != nil {
-		*m.addshop_item_id += i
-	} else {
-		m.addshop_item_id = &i
-	}
-}
-
-// AddedShopItemID returns the value that was added to the "shop_item_id" field in this mutation.
-func (m *CostMutation) AddedShopItemID() (r int64, exists bool) {
-	v := m.addshop_item_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ClearShopItemID clears the value of the "shop_item_id" field.
-func (m *CostMutation) ClearShopItemID() {
-	m.shop_item_id = nil
-	m.addshop_item_id = nil
-	m.clearedFields[cost.FieldShopItemID] = struct{}{}
-}
-
-// ShopItemIDCleared returns if the "shop_item_id" field was cleared in this mutation.
-func (m *CostMutation) ShopItemIDCleared() bool {
-	_, ok := m.clearedFields[cost.FieldShopItemID]
-	return ok
-}
-
-// ResetShopItemID resets all changes to the "shop_item_id" field.
-func (m *CostMutation) ResetShopItemID() {
-	m.shop_item_id = nil
-	m.addshop_item_id = nil
-	delete(m.clearedFields, cost.FieldShopItemID)
-}
-
-// SetSeq sets the "seq" field.
-func (m *CostMutation) SetSeq(i int64) {
-	m.seq = &i
-	m.addseq = nil
-}
-
-// Seq returns the value of the "seq" field in the mutation.
-func (m *CostMutation) Seq() (r int64, exists bool) {
-	v := m.seq
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSeq returns the old "seq" field's value of the Cost entity.
-// If the Cost object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CostMutation) OldSeq(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSeq requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
-	}
-	return oldValue.Seq, nil
-}
-
-// AddSeq adds i to the "seq" field.
-func (m *CostMutation) AddSeq(i int64) {
-	if m.addseq != nil {
-		*m.addseq += i
-	} else {
-		m.addseq = &i
-	}
-}
-
-// AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *CostMutation) AddedSeq() (r int64, exists bool) {
-	v := m.addseq
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ClearSeq clears the value of the "seq" field.
-func (m *CostMutation) ClearSeq() {
-	m.seq = nil
-	m.addseq = nil
-	m.clearedFields[cost.FieldSeq] = struct{}{}
-}
-
-// SeqCleared returns if the "seq" field was cleared in this mutation.
-func (m *CostMutation) SeqCleared() bool {
-	_, ok := m.clearedFields[cost.FieldSeq]
-	return ok
-}
-
-// ResetSeq resets all changes to the "seq" field.
-func (m *CostMutation) ResetSeq() {
-	m.seq = nil
-	m.addseq = nil
-	delete(m.clearedFields, cost.FieldSeq)
-}
-
-// SetCost sets the "cost" field.
-func (m *CostMutation) SetCost(value map[string]interface{}) {
-	m.cost = &value
-}
-
-// Cost returns the value of the "cost" field in the mutation.
-func (m *CostMutation) Cost() (r map[string]interface{}, exists bool) {
-	v := m.cost
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCost returns the old "cost" field's value of the Cost entity.
-// If the Cost object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CostMutation) OldCost(ctx context.Context) (v map[string]interface{}, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCost is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCost requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCost: %w", err)
-	}
-	return oldValue.Cost, nil
-}
-
-// ClearCost clears the value of the "cost" field.
-func (m *CostMutation) ClearCost() {
-	m.cost = nil
-	m.clearedFields[cost.FieldCost] = struct{}{}
-}
-
-// CostCleared returns if the "cost" field was cleared in this mutation.
-func (m *CostMutation) CostCleared() bool {
-	_, ok := m.clearedFields[cost.FieldCost]
-	return ok
-}
-
-// ResetCost resets all changes to the "cost" field.
-func (m *CostMutation) ResetCost() {
-	m.cost = nil
-	delete(m.clearedFields, cost.FieldCost)
-}
-
-// Where appends a list predicates to the CostMutation builder.
-func (m *CostMutation) Where(ps ...predicate.Cost) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the CostMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *CostMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Cost, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *CostMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *CostMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (Cost).
-func (m *CostMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *CostMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.server_region != nil {
-		fields = append(fields, cost.FieldServerRegion)
-	}
-	if m.shop_item_id != nil {
-		fields = append(fields, cost.FieldShopItemID)
-	}
-	if m.seq != nil {
-		fields = append(fields, cost.FieldSeq)
-	}
-	if m.cost != nil {
-		fields = append(fields, cost.FieldCost)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *CostMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case cost.FieldServerRegion:
-		return m.ServerRegion()
-	case cost.FieldShopItemID:
-		return m.ShopItemID()
-	case cost.FieldSeq:
-		return m.Seq()
-	case cost.FieldCost:
-		return m.Cost()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *CostMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case cost.FieldServerRegion:
-		return m.OldServerRegion(ctx)
-	case cost.FieldShopItemID:
-		return m.OldShopItemID(ctx)
-	case cost.FieldSeq:
-		return m.OldSeq(ctx)
-	case cost.FieldCost:
-		return m.OldCost(ctx)
-	}
-	return nil, fmt.Errorf("unknown Cost field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *CostMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case cost.FieldServerRegion:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetServerRegion(v)
-		return nil
-	case cost.FieldShopItemID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetShopItemID(v)
-		return nil
-	case cost.FieldSeq:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSeq(v)
-		return nil
-	case cost.FieldCost:
-		v, ok := value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCost(v)
-		return nil
-	}
-	return fmt.Errorf("unknown Cost field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *CostMutation) AddedFields() []string {
-	var fields []string
-	if m.addshop_item_id != nil {
-		fields = append(fields, cost.FieldShopItemID)
-	}
-	if m.addseq != nil {
-		fields = append(fields, cost.FieldSeq)
-	}
-	return fields
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *CostMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case cost.FieldShopItemID:
-		return m.AddedShopItemID()
-	case cost.FieldSeq:
-		return m.AddedSeq()
-	}
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *CostMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	case cost.FieldShopItemID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddShopItemID(v)
-		return nil
-	case cost.FieldSeq:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddSeq(v)
-		return nil
-	}
-	return fmt.Errorf("unknown Cost numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *CostMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(cost.FieldShopItemID) {
-		fields = append(fields, cost.FieldShopItemID)
-	}
-	if m.FieldCleared(cost.FieldSeq) {
-		fields = append(fields, cost.FieldSeq)
-	}
-	if m.FieldCleared(cost.FieldCost) {
-		fields = append(fields, cost.FieldCost)
-	}
-	return fields
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *CostMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *CostMutation) ClearField(name string) error {
-	switch name {
-	case cost.FieldShopItemID:
-		m.ClearShopItemID()
-		return nil
-	case cost.FieldSeq:
-		m.ClearSeq()
-		return nil
-	case cost.FieldCost:
-		m.ClearCost()
-		return nil
-	}
-	return fmt.Errorf("unknown Cost nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *CostMutation) ResetField(name string) error {
-	switch name {
-	case cost.FieldServerRegion:
-		m.ResetServerRegion()
-		return nil
-	case cost.FieldShopItemID:
-		m.ResetShopItemID()
-		return nil
-	case cost.FieldSeq:
-		m.ResetSeq()
-		return nil
-	case cost.FieldCost:
-		m.ResetCost()
-		return nil
-	}
-	return fmt.Errorf("unknown Cost field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *CostMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *CostMutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *CostMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *CostMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *CostMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *CostMutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *CostMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown Cost unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *CostMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown Cost edge %s", name)
 }
 
 // Costume3DMutation represents an operation that mutates the Costume3D nodes in the graph.
@@ -70183,6 +69564,1136 @@ func (m *MysekaiphenomenabackgroundcolorMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *MysekaiphenomenabackgroundcolorMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Mysekaiphenomenabackgroundcolor edge %s", name)
+}
+
+// MysekaiphenomenonMutation represents an operation that mutates the Mysekaiphenomenon nodes in the graph.
+type MysekaiphenomenonMutation struct {
+	config
+	op                                       Op
+	typ                                      string
+	id                                       *int
+	server_region                            *string
+	game_id                                  *int64
+	addgame_id                               *int64
+	mysekai_phenomena_brightness_type        *map[string]interface{}
+	name                                     *string
+	english_name                             *string
+	description                              *string
+	mysekai_phenomena_time_period_type       *map[string]interface{}
+	mysekai_phenomena_background_color_id    *int64
+	addmysekai_phenomena_background_color_id *int64
+	assetbundle_name                         *string
+	ramp_texture_assetbundle_name            *string
+	icon_assetbundle_name                    *string
+	clearedFields                            map[string]struct{}
+	done                                     bool
+	oldValue                                 func(context.Context) (*Mysekaiphenomenon, error)
+	predicates                               []predicate.Mysekaiphenomenon
+}
+
+var _ ent.Mutation = (*MysekaiphenomenonMutation)(nil)
+
+// mysekaiphenomenonOption allows management of the mutation configuration using functional options.
+type mysekaiphenomenonOption func(*MysekaiphenomenonMutation)
+
+// newMysekaiphenomenonMutation creates new mutation for the Mysekaiphenomenon entity.
+func newMysekaiphenomenonMutation(c config, op Op, opts ...mysekaiphenomenonOption) *MysekaiphenomenonMutation {
+	m := &MysekaiphenomenonMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMysekaiphenomenon,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMysekaiphenomenonID sets the ID field of the mutation.
+func withMysekaiphenomenonID(id int) mysekaiphenomenonOption {
+	return func(m *MysekaiphenomenonMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Mysekaiphenomenon
+		)
+		m.oldValue = func(ctx context.Context) (*Mysekaiphenomenon, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Mysekaiphenomenon.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMysekaiphenomenon sets the old Mysekaiphenomenon of the mutation.
+func withMysekaiphenomenon(node *Mysekaiphenomenon) mysekaiphenomenonOption {
+	return func(m *MysekaiphenomenonMutation) {
+		m.oldValue = func(context.Context) (*Mysekaiphenomenon, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MysekaiphenomenonMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MysekaiphenomenonMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MysekaiphenomenonMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MysekaiphenomenonMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Mysekaiphenomenon.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *MysekaiphenomenonMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *MysekaiphenomenonMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *MysekaiphenomenonMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// SetGameID sets the "game_id" field.
+func (m *MysekaiphenomenonMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *MysekaiphenomenonMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *MysekaiphenomenonMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *MysekaiphenomenonMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiphenomenonMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiphenomenon.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *MysekaiphenomenonMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldGameID)
+}
+
+// SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBrightnessType(value map[string]interface{}) {
+	m.mysekai_phenomena_brightness_type = &value
+}
+
+// MysekaiPhenomenaBrightnessType returns the value of the "mysekai_phenomena_brightness_type" field in the mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessType() (r map[string]interface{}, exists bool) {
+	v := m.mysekai_phenomena_brightness_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMysekaiPhenomenaBrightnessType returns the old "mysekai_phenomena_brightness_type" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBrightnessType(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiPhenomenaBrightnessType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiPhenomenaBrightnessType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiPhenomenaBrightnessType: %w", err)
+	}
+	return oldValue.MysekaiPhenomenaBrightnessType, nil
+}
+
+// ClearMysekaiPhenomenaBrightnessType clears the value of the "mysekai_phenomena_brightness_type" field.
+func (m *MysekaiphenomenonMutation) ClearMysekaiPhenomenaBrightnessType() {
+	m.mysekai_phenomena_brightness_type = nil
+	m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType] = struct{}{}
+}
+
+// MysekaiPhenomenaBrightnessTypeCleared returns if the "mysekai_phenomena_brightness_type" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessTypeCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType]
+	return ok
+}
+
+// ResetMysekaiPhenomenaBrightnessType resets all changes to the "mysekai_phenomena_brightness_type" field.
+func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaBrightnessType() {
+	m.mysekai_phenomena_brightness_type = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType)
+}
+
+// SetName sets the "name" field.
+func (m *MysekaiphenomenonMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MysekaiphenomenonMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *MysekaiphenomenonMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[mysekaiphenomenon.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) NameCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MysekaiphenomenonMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldName)
+}
+
+// SetEnglishName sets the "english_name" field.
+func (m *MysekaiphenomenonMutation) SetEnglishName(s string) {
+	m.english_name = &s
+}
+
+// EnglishName returns the value of the "english_name" field in the mutation.
+func (m *MysekaiphenomenonMutation) EnglishName() (r string, exists bool) {
+	v := m.english_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnglishName returns the old "english_name" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldEnglishName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnglishName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnglishName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnglishName: %w", err)
+	}
+	return oldValue.EnglishName, nil
+}
+
+// ClearEnglishName clears the value of the "english_name" field.
+func (m *MysekaiphenomenonMutation) ClearEnglishName() {
+	m.english_name = nil
+	m.clearedFields[mysekaiphenomenon.FieldEnglishName] = struct{}{}
+}
+
+// EnglishNameCleared returns if the "english_name" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) EnglishNameCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldEnglishName]
+	return ok
+}
+
+// ResetEnglishName resets all changes to the "english_name" field.
+func (m *MysekaiphenomenonMutation) ResetEnglishName() {
+	m.english_name = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldEnglishName)
+}
+
+// SetDescription sets the "description" field.
+func (m *MysekaiphenomenonMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *MysekaiphenomenonMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *MysekaiphenomenonMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[mysekaiphenomenon.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *MysekaiphenomenonMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldDescription)
+}
+
+// SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaTimePeriodType(value map[string]interface{}) {
+	m.mysekai_phenomena_time_period_type = &value
+}
+
+// MysekaiPhenomenaTimePeriodType returns the value of the "mysekai_phenomena_time_period_type" field in the mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodType() (r map[string]interface{}, exists bool) {
+	v := m.mysekai_phenomena_time_period_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMysekaiPhenomenaTimePeriodType returns the old "mysekai_phenomena_time_period_type" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaTimePeriodType(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiPhenomenaTimePeriodType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiPhenomenaTimePeriodType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiPhenomenaTimePeriodType: %w", err)
+	}
+	return oldValue.MysekaiPhenomenaTimePeriodType, nil
+}
+
+// ClearMysekaiPhenomenaTimePeriodType clears the value of the "mysekai_phenomena_time_period_type" field.
+func (m *MysekaiphenomenonMutation) ClearMysekaiPhenomenaTimePeriodType() {
+	m.mysekai_phenomena_time_period_type = nil
+	m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType] = struct{}{}
+}
+
+// MysekaiPhenomenaTimePeriodTypeCleared returns if the "mysekai_phenomena_time_period_type" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodTypeCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType]
+	return ok
+}
+
+// ResetMysekaiPhenomenaTimePeriodType resets all changes to the "mysekai_phenomena_time_period_type" field.
+func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaTimePeriodType() {
+	m.mysekai_phenomena_time_period_type = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType)
+}
+
+// SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBackgroundColorID(i int64) {
+	m.mysekai_phenomena_background_color_id = &i
+	m.addmysekai_phenomena_background_color_id = nil
+}
+
+// MysekaiPhenomenaBackgroundColorID returns the value of the "mysekai_phenomena_background_color_id" field in the mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBackgroundColorID() (r int64, exists bool) {
+	v := m.mysekai_phenomena_background_color_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMysekaiPhenomenaBackgroundColorID returns the old "mysekai_phenomena_background_color_id" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBackgroundColorID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiPhenomenaBackgroundColorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiPhenomenaBackgroundColorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiPhenomenaBackgroundColorID: %w", err)
+	}
+	return oldValue.MysekaiPhenomenaBackgroundColorID, nil
+}
+
+// AddMysekaiPhenomenaBackgroundColorID adds i to the "mysekai_phenomena_background_color_id" field.
+func (m *MysekaiphenomenonMutation) AddMysekaiPhenomenaBackgroundColorID(i int64) {
+	if m.addmysekai_phenomena_background_color_id != nil {
+		*m.addmysekai_phenomena_background_color_id += i
+	} else {
+		m.addmysekai_phenomena_background_color_id = &i
+	}
+}
+
+// AddedMysekaiPhenomenaBackgroundColorID returns the value that was added to the "mysekai_phenomena_background_color_id" field in this mutation.
+func (m *MysekaiphenomenonMutation) AddedMysekaiPhenomenaBackgroundColorID() (r int64, exists bool) {
+	v := m.addmysekai_phenomena_background_color_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMysekaiPhenomenaBackgroundColorID clears the value of the "mysekai_phenomena_background_color_id" field.
+func (m *MysekaiphenomenonMutation) ClearMysekaiPhenomenaBackgroundColorID() {
+	m.mysekai_phenomena_background_color_id = nil
+	m.addmysekai_phenomena_background_color_id = nil
+	m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID] = struct{}{}
+}
+
+// MysekaiPhenomenaBackgroundColorIDCleared returns if the "mysekai_phenomena_background_color_id" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBackgroundColorIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID]
+	return ok
+}
+
+// ResetMysekaiPhenomenaBackgroundColorID resets all changes to the "mysekai_phenomena_background_color_id" field.
+func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaBackgroundColorID() {
+	m.mysekai_phenomena_background_color_id = nil
+	m.addmysekai_phenomena_background_color_id = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID)
+}
+
+// SetAssetbundleName sets the "assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) SetAssetbundleName(s string) {
+	m.assetbundle_name = &s
+}
+
+// AssetbundleName returns the value of the "assetbundle_name" field in the mutation.
+func (m *MysekaiphenomenonMutation) AssetbundleName() (r string, exists bool) {
+	v := m.assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssetbundleName returns the old "assetbundle_name" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssetbundleName: %w", err)
+	}
+	return oldValue.AssetbundleName, nil
+}
+
+// ClearAssetbundleName clears the value of the "assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ClearAssetbundleName() {
+	m.assetbundle_name = nil
+	m.clearedFields[mysekaiphenomenon.FieldAssetbundleName] = struct{}{}
+}
+
+// AssetbundleNameCleared returns if the "assetbundle_name" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) AssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldAssetbundleName]
+	return ok
+}
+
+// ResetAssetbundleName resets all changes to the "assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ResetAssetbundleName() {
+	m.assetbundle_name = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldAssetbundleName)
+}
+
+// SetRampTextureAssetbundleName sets the "ramp_texture_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) SetRampTextureAssetbundleName(s string) {
+	m.ramp_texture_assetbundle_name = &s
+}
+
+// RampTextureAssetbundleName returns the value of the "ramp_texture_assetbundle_name" field in the mutation.
+func (m *MysekaiphenomenonMutation) RampTextureAssetbundleName() (r string, exists bool) {
+	v := m.ramp_texture_assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRampTextureAssetbundleName returns the old "ramp_texture_assetbundle_name" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldRampTextureAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRampTextureAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRampTextureAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRampTextureAssetbundleName: %w", err)
+	}
+	return oldValue.RampTextureAssetbundleName, nil
+}
+
+// ClearRampTextureAssetbundleName clears the value of the "ramp_texture_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ClearRampTextureAssetbundleName() {
+	m.ramp_texture_assetbundle_name = nil
+	m.clearedFields[mysekaiphenomenon.FieldRampTextureAssetbundleName] = struct{}{}
+}
+
+// RampTextureAssetbundleNameCleared returns if the "ramp_texture_assetbundle_name" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) RampTextureAssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldRampTextureAssetbundleName]
+	return ok
+}
+
+// ResetRampTextureAssetbundleName resets all changes to the "ramp_texture_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ResetRampTextureAssetbundleName() {
+	m.ramp_texture_assetbundle_name = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldRampTextureAssetbundleName)
+}
+
+// SetIconAssetbundleName sets the "icon_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) SetIconAssetbundleName(s string) {
+	m.icon_assetbundle_name = &s
+}
+
+// IconAssetbundleName returns the value of the "icon_assetbundle_name" field in the mutation.
+func (m *MysekaiphenomenonMutation) IconAssetbundleName() (r string, exists bool) {
+	v := m.icon_assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIconAssetbundleName returns the old "icon_assetbundle_name" field's value of the Mysekaiphenomenon entity.
+// If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiphenomenonMutation) OldIconAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIconAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIconAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIconAssetbundleName: %w", err)
+	}
+	return oldValue.IconAssetbundleName, nil
+}
+
+// ClearIconAssetbundleName clears the value of the "icon_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ClearIconAssetbundleName() {
+	m.icon_assetbundle_name = nil
+	m.clearedFields[mysekaiphenomenon.FieldIconAssetbundleName] = struct{}{}
+}
+
+// IconAssetbundleNameCleared returns if the "icon_assetbundle_name" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) IconAssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldIconAssetbundleName]
+	return ok
+}
+
+// ResetIconAssetbundleName resets all changes to the "icon_assetbundle_name" field.
+func (m *MysekaiphenomenonMutation) ResetIconAssetbundleName() {
+	m.icon_assetbundle_name = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldIconAssetbundleName)
+}
+
+// Where appends a list predicates to the MysekaiphenomenonMutation builder.
+func (m *MysekaiphenomenonMutation) Where(ps ...predicate.Mysekaiphenomenon) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MysekaiphenomenonMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MysekaiphenomenonMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Mysekaiphenomenon, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MysekaiphenomenonMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MysekaiphenomenonMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Mysekaiphenomenon).
+func (m *MysekaiphenomenonMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MysekaiphenomenonMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.server_region != nil {
+		fields = append(fields, mysekaiphenomenon.FieldServerRegion)
+	}
+	if m.game_id != nil {
+		fields = append(fields, mysekaiphenomenon.FieldGameID)
+	}
+	if m.mysekai_phenomena_brightness_type != nil {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType)
+	}
+	if m.name != nil {
+		fields = append(fields, mysekaiphenomenon.FieldName)
+	}
+	if m.english_name != nil {
+		fields = append(fields, mysekaiphenomenon.FieldEnglishName)
+	}
+	if m.description != nil {
+		fields = append(fields, mysekaiphenomenon.FieldDescription)
+	}
+	if m.mysekai_phenomena_time_period_type != nil {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType)
+	}
+	if m.mysekai_phenomena_background_color_id != nil {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID)
+	}
+	if m.assetbundle_name != nil {
+		fields = append(fields, mysekaiphenomenon.FieldAssetbundleName)
+	}
+	if m.ramp_texture_assetbundle_name != nil {
+		fields = append(fields, mysekaiphenomenon.FieldRampTextureAssetbundleName)
+	}
+	if m.icon_assetbundle_name != nil {
+		fields = append(fields, mysekaiphenomenon.FieldIconAssetbundleName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MysekaiphenomenonMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaiphenomenon.FieldServerRegion:
+		return m.ServerRegion()
+	case mysekaiphenomenon.FieldGameID:
+		return m.GameID()
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
+		return m.MysekaiPhenomenaBrightnessType()
+	case mysekaiphenomenon.FieldName:
+		return m.Name()
+	case mysekaiphenomenon.FieldEnglishName:
+		return m.EnglishName()
+	case mysekaiphenomenon.FieldDescription:
+		return m.Description()
+	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
+		return m.MysekaiPhenomenaTimePeriodType()
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		return m.MysekaiPhenomenaBackgroundColorID()
+	case mysekaiphenomenon.FieldAssetbundleName:
+		return m.AssetbundleName()
+	case mysekaiphenomenon.FieldRampTextureAssetbundleName:
+		return m.RampTextureAssetbundleName()
+	case mysekaiphenomenon.FieldIconAssetbundleName:
+		return m.IconAssetbundleName()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MysekaiphenomenonMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case mysekaiphenomenon.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	case mysekaiphenomenon.FieldGameID:
+		return m.OldGameID(ctx)
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
+		return m.OldMysekaiPhenomenaBrightnessType(ctx)
+	case mysekaiphenomenon.FieldName:
+		return m.OldName(ctx)
+	case mysekaiphenomenon.FieldEnglishName:
+		return m.OldEnglishName(ctx)
+	case mysekaiphenomenon.FieldDescription:
+		return m.OldDescription(ctx)
+	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
+		return m.OldMysekaiPhenomenaTimePeriodType(ctx)
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		return m.OldMysekaiPhenomenaBackgroundColorID(ctx)
+	case mysekaiphenomenon.FieldAssetbundleName:
+		return m.OldAssetbundleName(ctx)
+	case mysekaiphenomenon.FieldRampTextureAssetbundleName:
+		return m.OldRampTextureAssetbundleName(ctx)
+	case mysekaiphenomenon.FieldIconAssetbundleName:
+		return m.OldIconAssetbundleName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Mysekaiphenomenon field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiphenomenonMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case mysekaiphenomenon.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	case mysekaiphenomenon.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiPhenomenaBrightnessType(v)
+		return nil
+	case mysekaiphenomenon.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case mysekaiphenomenon.FieldEnglishName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnglishName(v)
+		return nil
+	case mysekaiphenomenon.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiPhenomenaTimePeriodType(v)
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiPhenomenaBackgroundColorID(v)
+		return nil
+	case mysekaiphenomenon.FieldAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssetbundleName(v)
+		return nil
+	case mysekaiphenomenon.FieldRampTextureAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRampTextureAssetbundleName(v)
+		return nil
+	case mysekaiphenomenon.FieldIconAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIconAssetbundleName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaiphenomenon field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MysekaiphenomenonMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, mysekaiphenomenon.FieldGameID)
+	}
+	if m.addmysekai_phenomena_background_color_id != nil {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MysekaiphenomenonMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaiphenomenon.FieldGameID:
+		return m.AddedGameID()
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		return m.AddedMysekaiPhenomenaBackgroundColorID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiphenomenonMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case mysekaiphenomenon.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMysekaiPhenomenaBackgroundColorID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaiphenomenon numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MysekaiphenomenonMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(mysekaiphenomenon.FieldGameID) {
+		fields = append(fields, mysekaiphenomenon.FieldGameID)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType) {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldName) {
+		fields = append(fields, mysekaiphenomenon.FieldName)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldEnglishName) {
+		fields = append(fields, mysekaiphenomenon.FieldEnglishName)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldDescription) {
+		fields = append(fields, mysekaiphenomenon.FieldDescription)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType) {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID) {
+		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldAssetbundleName) {
+		fields = append(fields, mysekaiphenomenon.FieldAssetbundleName)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldRampTextureAssetbundleName) {
+		fields = append(fields, mysekaiphenomenon.FieldRampTextureAssetbundleName)
+	}
+	if m.FieldCleared(mysekaiphenomenon.FieldIconAssetbundleName) {
+		fields = append(fields, mysekaiphenomenon.FieldIconAssetbundleName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MysekaiphenomenonMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MysekaiphenomenonMutation) ClearField(name string) error {
+	switch name {
+	case mysekaiphenomenon.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
+		m.ClearMysekaiPhenomenaBrightnessType()
+		return nil
+	case mysekaiphenomenon.FieldName:
+		m.ClearName()
+		return nil
+	case mysekaiphenomenon.FieldEnglishName:
+		m.ClearEnglishName()
+		return nil
+	case mysekaiphenomenon.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
+		m.ClearMysekaiPhenomenaTimePeriodType()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		m.ClearMysekaiPhenomenaBackgroundColorID()
+		return nil
+	case mysekaiphenomenon.FieldAssetbundleName:
+		m.ClearAssetbundleName()
+		return nil
+	case mysekaiphenomenon.FieldRampTextureAssetbundleName:
+		m.ClearRampTextureAssetbundleName()
+		return nil
+	case mysekaiphenomenon.FieldIconAssetbundleName:
+		m.ClearIconAssetbundleName()
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaiphenomenon nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MysekaiphenomenonMutation) ResetField(name string) error {
+	switch name {
+	case mysekaiphenomenon.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	case mysekaiphenomenon.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
+		m.ResetMysekaiPhenomenaBrightnessType()
+		return nil
+	case mysekaiphenomenon.FieldName:
+		m.ResetName()
+		return nil
+	case mysekaiphenomenon.FieldEnglishName:
+		m.ResetEnglishName()
+		return nil
+	case mysekaiphenomenon.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
+		m.ResetMysekaiPhenomenaTimePeriodType()
+		return nil
+	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
+		m.ResetMysekaiPhenomenaBackgroundColorID()
+		return nil
+	case mysekaiphenomenon.FieldAssetbundleName:
+		m.ResetAssetbundleName()
+		return nil
+	case mysekaiphenomenon.FieldRampTextureAssetbundleName:
+		m.ResetRampTextureAssetbundleName()
+		return nil
+	case mysekaiphenomenon.FieldIconAssetbundleName:
+		m.ResetIconAssetbundleName()
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaiphenomenon field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MysekaiphenomenonMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MysekaiphenomenonMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MysekaiphenomenonMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MysekaiphenomenonMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MysekaiphenomenonMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MysekaiphenomenonMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Mysekaiphenomenon unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MysekaiphenomenonMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Mysekaiphenomenon edge %s", name)
 }
 
 // MysekaisiteharvestfixtureMutation represents an operation that mutates the Mysekaisiteharvestfixture nodes in the graph.

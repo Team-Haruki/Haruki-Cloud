@@ -224,18 +224,6 @@ func (f CheerfulcarnivalteamFunc) Mutate(ctx context.Context, m sekai.Mutation) 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CheerfulcarnivalteamMutation", m)
 }
 
-// The CostFunc type is an adapter to allow the use of ordinary
-// function as Cost mutator.
-type CostFunc func(context.Context, *sekai.CostMutation) (sekai.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f CostFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
-	if mv, ok := m.(*sekai.CostMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CostMutation", m)
-}
-
 // The Costume3DFunc type is an adapter to allow the use of ordinary
 // function as Costume3D mutator.
 type Costume3DFunc func(context.Context, *sekai.Costume3DMutation) (sekai.Value, error)
@@ -834,6 +822,18 @@ func (f MysekaiphenomenabackgroundcolorFunc) Mutate(ctx context.Context, m sekai
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaiphenomenabackgroundcolorMutation", m)
+}
+
+// The MysekaiphenomenonFunc type is an adapter to allow the use of ordinary
+// function as Mysekaiphenomenon mutator.
+type MysekaiphenomenonFunc func(context.Context, *sekai.MysekaiphenomenonMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MysekaiphenomenonFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.MysekaiphenomenonMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaiphenomenonMutation", m)
 }
 
 // The MysekaisiteharvestfixtureFunc type is an adapter to allow the use of ordinary

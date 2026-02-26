@@ -73,6 +73,12 @@ type RedisConfig struct {
 	Password string `yaml:"password"`
 }
 
+type ToolboxConfig struct {
+	BaseURL   string `yaml:"base_url"`
+	APIToken  string `yaml:"api_token"`
+	UserAgent string `yaml:"user_agent"`
+}
+
 type Config struct {
 	Backend     BackendConfig     `yaml:"backend"`
 	Chunithm    ChunithmConfig    `yaml:"chunithm"`
@@ -81,6 +87,7 @@ type Config struct {
 	HarukiBotDB HarukiBotDBConfig `yaml:"haruki_bot"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
 	Redis       RedisConfig       `yaml:"redis"`
+	Toolbox     ToolboxConfig     `yaml:"toolbox"`
 }
 
 var Cfg Config

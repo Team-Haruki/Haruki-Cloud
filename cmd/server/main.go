@@ -14,6 +14,7 @@ import (
 	censorAPI "haruki-cloud/api/censor"
 	chunithmAPI "haruki-cloud/api/chunithm"
 	PJSKAPI "haruki-cloud/api/pjsk"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	censorTool "haruki-cloud/utils/censor"
 
 	botDB "haruki-cloud/database/bot"
@@ -21,6 +22,7 @@ import (
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
 	pjskDB "haruki-cloud/database/pjsk"
+	sekaiDB "haruki-cloud/database/sekai"
 	usersDB "haruki-cloud/database/users"
 
 	"github.com/bytedance/sonic"
@@ -44,10 +46,17 @@ func main() {
 	usersDBClient := initUsers(mainLogger)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(mainLogger, app, redisClient)
+	sekaiClient := initSekaiIfEnabled(mainLogger)
+	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
+	PJSKAPI.RegisterPJSKRenderRoutes(app, renderRuntime)
 	censorDBClient, _ := initCensor(mainLogger, app, usersDBClient, redisClient)
 	botDBClient := initBot(mainLogger, app, redisClient)
 
-	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, censorDBClient, botDBClient, usersDBClient)
+	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, censorDBClient, botDBClient, usersDBClient)
+
+	if renderRuntime != nil {
+		mainLogger.Infof("PJSK render runtime initialized; routes are not registered yet")
+	}
 
 	startServer(mainLogger, app)
 }
@@ -162,6 +171,64 @@ func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisCli
 	return pjskClient
 }
 
+func initSekaiIfEnabled(mainLogger *harukiLogger.Logger) *sekaiDB.Client {
+	if !harukiConfig.Cfg.Sekai.Enabled {
+		return nil
+	}
+
+	sekaiClient, err := sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
+	if err != nil {
+		mainLogger.Errorf("Failed to connect to Sekai DB: %v", err)
+		os.Exit(1)
+	}
+	if err := sekaiClient.Schema.Create(context.Background()); err != nil {
+		mainLogger.Errorf("Failed to create schema for Sekai DB: %v", err)
+		os.Exit(1)
+	}
+
+	return sekaiClient
+}
+
+func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client) *renderapp.App {
+	if !harukiConfig.Cfg.PJSKRender.Enabled {
+		return nil
+	}
+	if sekaiClient == nil {
+		mainLogger.Errorf("PJSK render runtime requires sekai.enabled=true")
+		os.Exit(1)
+	}
+
+	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
+		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
+		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
+		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
+		AssetPrimaryDir:   harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
+		AssetLegacyDirs:   harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
+		LocalMasterdata: renderapp.LocalMasterdataConfig{
+			Enabled: harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
+			Dir:     harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
+		},
+		UserSnapshot: renderapp.UserSnapshotConfig{
+			Provider:      harukiConfig.Cfg.PJSKRender.UserSnapshot.Provider,
+			UserJSON:      harukiConfig.Cfg.PJSKRender.UserSnapshot.UserJSON,
+			MusicMetaJSON: harukiConfig.Cfg.PJSKRender.UserSnapshot.MusicMetaJSON,
+			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
+		},
+		DeckRecommend: renderapp.DeckRecommendConfig{
+			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
+			UseLocalEngine: harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,
+			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
+			DefaultAlgs:    harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
+		},
+	})
+
+	if runtime.Drawing == nil {
+		mainLogger.Warnf("PJSK render runtime initialized without drawing_base_url; build-only mode")
+	}
+	mainLogger.Infof("PJSK render asset roots: %v", runtime.AssetRoots())
+	return runtime
+}
+
 func initCensor(mainLogger *harukiLogger.Logger, app *fiber.App, usersClient *usersDB.Client, redisClient *redis.Client) (*censorDB.Client, *censorTool.Service) {
 	censorDBClient, err := censorDB.Open(harukiConfig.Cfg.Censor.CensorDBType, harukiConfig.Cfg.Censor.CensorDBURL)
 	if err != nil {
@@ -208,7 +275,7 @@ func initUsers(mainLogger *harukiLogger.Logger) *usersDB.Client {
 }
 
 func closeClients(chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,
-	pjskClient *pjskDB.Client, censorDBClient *censorDB.Client, botDBClient *botDB.Client, usersDBClient *usersDB.Client) {
+	pjskClient *pjskDB.Client, sekaiClient *sekaiDB.Client, censorDBClient *censorDB.Client, botDBClient *botDB.Client, usersDBClient *usersDB.Client) {
 	if chunithmMainClient != nil {
 		_ = chunithmMainClient.Close()
 	}
@@ -217,6 +284,9 @@ func closeClients(chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient
 	}
 	if pjskClient != nil {
 		_ = pjskClient.Close()
+	}
+	if sekaiClient != nil {
+		_ = sekaiClient.Close()
 	}
 	if censorDBClient != nil {
 		_ = censorDBClient.Close()

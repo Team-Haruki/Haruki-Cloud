@@ -1,0 +1,166 @@
+package event
+
+import (
+	"fmt"
+	"testing"
+
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+)
+
+type testEventSource struct {
+	region         renderregion.Value
+	events         []*masterdata.Event
+	eventsByID     map[int]*masterdata.Event
+	cardsByEvent   map[int][]*masterdata.Card
+	bannerByEvent  map[int]int
+	bonusesByEvent map[int][]*masterdata.EventDeckBonus
+	gcuByID        map[int]*masterdata.GameCharacterUnit
+	worldByEvent   map[int][]*masterdata.WorldBloom
+	characterByID  map[int]*masterdata.Character
+}
+
+func newTestEventSource(region renderregion.Value) *testEventSource {
+	return &testEventSource{
+		region:         region,
+		eventsByID:     make(map[int]*masterdata.Event),
+		cardsByEvent:   make(map[int][]*masterdata.Card),
+		bannerByEvent:  make(map[int]int),
+		bonusesByEvent: make(map[int][]*masterdata.EventDeckBonus),
+		gcuByID:        make(map[int]*masterdata.GameCharacterUnit),
+		worldByEvent:   make(map[int][]*masterdata.WorldBloom),
+		characterByID:  make(map[int]*masterdata.Character),
+	}
+}
+
+func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
+	if eventInfo, ok := s.eventsByID[id]; ok {
+		copy := *eventInfo
+		return &copy, nil
+	}
+	return nil, fmt.Errorf("event not found: %d", id)
+}
+
+func (s *testEventSource) GetEventByCardID(cardID int) (*masterdata.Event, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *testEventSource) GetEvents() []*masterdata.Event {
+	out := make([]*masterdata.Event, 0, len(s.events))
+	for _, eventInfo := range s.events {
+		copy := *eventInfo
+		out = append(out, &copy)
+	}
+	return out
+}
+
+func (s *testEventSource) GetEventCards(eventID int) ([]*masterdata.Card, error) {
+	items := s.cardsByEvent[eventID]
+	out := make([]*masterdata.Card, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out, nil
+}
+
+func (s *testEventSource) GetEventBannerCharacterID(eventID int) (int, error) {
+	if value, ok := s.bannerByEvent[eventID]; ok {
+		return value, nil
+	}
+	return 0, fmt.Errorf("banner not found: %d", eventID)
+}
+
+func (s *testEventSource) GetEventDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
+	items := s.bonusesByEvent[eventID]
+	out := make([]*masterdata.EventDeckBonus, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out, nil
+}
+
+func (s *testEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+	if item, ok := s.gcuByID[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fmt.Errorf("gcu not found: %d", id)
+}
+
+func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event { return nil }
+
+func (s *testEventSource) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
+	items := s.worldByEvent[eventID]
+	out := make([]*masterdata.WorldBloom, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out
+}
+
+func (s *testEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	if item, ok := s.characterByID[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fmt.Errorf("character not found: %d", id)
+}
+
+func TestBuildEventListRequestWorldBloomNoCharacterAvatar(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{ID: 101, EventType: "world_bloom", Name: "JP_WL", AssetBundleName: "wl_101", StartAt: 100, AggregateAt: 200}
+	source.events = []*masterdata.Event{eventInfo}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	source.cardsByEvent[eventInfo.ID] = []*masterdata.Card{{ID: 1001, CharacterID: 5, Attr: "cool", AssetBundleName: "card_1001"}}
+	source.bannerByEvent[eventInfo.ID] = 5
+	source.bonusesByEvent[eventInfo.ID] = []*masterdata.EventDeckBonus{{ID: 1, EventID: eventInfo.ID, GameCharacterUnitID: 501, CardAttr: "cool"}}
+	source.gcuByID[501] = &masterdata.GameCharacterUnit{ID: 501, GameCharacterID: 5, Unit: "idol"}
+	source.characterByID[5] = &masterdata.Character{ID: 5, Unit: "idol"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{Region: renderregion.JP, EventType: "world_bloom", IncludePast: true, IncludeFuture: true})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(req.EventInfo))
+	}
+
+	brief := req.EventInfo[0]
+	if brief.EventType != "WorldLink" {
+		t.Fatalf("expected WorldLink event type, got %q", brief.EventType)
+	}
+	if brief.EventCharaPath != nil {
+		t.Fatalf("WL should not expose character avatar in list, got %q", *brief.EventCharaPath)
+	}
+	if brief.EventUnitPath == nil || *brief.EventUnitPath == "" {
+		t.Fatal("WL should keep unit icon path")
+	}
+}
+
+func TestBuildEventListRequestOrdersByStartAtAscending(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	later := &masterdata.Event{ID: 201, EventType: "marathon", Name: "Later", AssetBundleName: "later", StartAt: 200, AggregateAt: 300}
+	earlier := &masterdata.Event{ID: 202, EventType: "marathon", Name: "Earlier", AssetBundleName: "earlier", StartAt: 100, AggregateAt: 150}
+	source.events = []*masterdata.Event{later, earlier}
+	source.eventsByID[later.ID] = later
+	source.eventsByID[earlier.ID] = earlier
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{Region: renderregion.JP, IncludePast: true, IncludeFuture: true})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 2 {
+		t.Fatalf("expected 2 events, got %d", len(req.EventInfo))
+	}
+	if req.EventInfo[0].ID != 202 || req.EventInfo[1].ID != 201 {
+		t.Fatalf("unexpected order: got [%d, %d], want [202, 201]", req.EventInfo[0].ID, req.EventInfo[1].ID)
+	}
+}

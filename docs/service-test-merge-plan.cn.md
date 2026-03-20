@@ -2,7 +2,7 @@
 
 ## 1. 结论
 
-这次合并应按“将业务逻辑迁入 `Haruki-Cloud`、按照 `Haruki-Cloud` 的约定重建传输层、在切换期间保留兼容层”的思路推进。
+这次合并应按“将业务逻辑迁入 `Haruki-Cloud`、按照 `Haruki-Cloud` 的约定重建传输层、默认不保留代码级 `Service-Test` 兼容层”的思路推进。
 
 不要把 `Service-Test/cmd/server/main.go` 原样复制进 `Haruki-Cloud/cmd/server`。这两个项目在服务生命周期、路由风格、配置结构和职责边界上已经明显分化。
 
@@ -11,11 +11,13 @@
 - `Haruki-Cloud` 保持为唯一的服务进程。
 - `Haruki-Cloud` 成为唯一持有 PJSK render/build API 的位置。
 - `Service-Test` 中的 controller / builder / source 逻辑迁入 `Haruki-Cloud` 内部新的 PJSK 渲染子系统。
+- `Service-Test` 仅作为迁移来源存在，切换完成后不应继续作为长期并存服务、永久兼容运行时或重复代码镜像保留。
 - `Haruki-Cloud` 里已经存在的基础能力直接复用：
   - `database/sekai`
   - `utils/drawing`
   - `utils/query`
   - `api` 响应与中间件约定
+- 长期需要保留的是 `Haruki-Cloud/docs` 下的迁移/退役说明文档，而不是旧服务本体。
 
 ## 2. 当前状态梳理
 
@@ -85,6 +87,22 @@
 - `Service-Test` 又在这层基础设施之上额外叠加了一套领域模型和一套传输层。
 
 这意味着，这次合并的重点其实是消除重复层，而不是简单挪文件。
+
+### 2.4 调用方复查结论
+
+这次复查中，我额外检查了当前工作区内可能的调用方，包括：
+
+- `Haruki-ZeroBot`
+- `Haruki-OneBot`
+- `Haruki-Cloud`
+- `HarukiBot-Docs`
+
+没有发现现有代码继续显式依赖 `Service-Test` 旧 `/api/...` 路径的证据，也没有发现现有机器人代码直接绑定 `/api/render` 的实现。
+
+这意味着：
+
+- 方案里不应默认保留一整套应用内 `Service-Test` 兼容层
+- 如果未来确认存在工作区之外的历史调用方，应优先使用短期、时限明确的网关/反向代理重写，而不是把旧接口永久留在 `Haruki-Cloud` 代码中
 
 ## 3. 需要解决的主要冲突
 
@@ -252,20 +270,48 @@ Haruki-Cloud/
   - `POST /internal/pjsk/music/detail/build`
   - 等等
 
-推荐的迁移兼容层：
+推荐策略是：
 
-- 临时保留旧 `Service-Test` 路由别名：
-  - `POST /api/render`
-  - `POST /api/card/...`
-  - `POST /api/music/...`
-  - 等等
-- 等调用方准备好之后，对内部 render 接口统一挂上 `api.VerifyAPIAuthorization()`
+- 不在 `Haruki-Cloud` 应用代码中默认保留 `Service-Test` 的 `/api/...` 路由别名
+- 统一以新的 `Haruki-Cloud` 路由和鉴权约定为准
+- 对内部 render 接口统一挂上 `api.VerifyAPIAuthorization()`
+
+如果后续确认存在工作区之外的历史调用方：
+
+- 只允许使用短期、带明确下线日期的入口层重写
+- 不建议在 `Haruki-Cloud` 内部再保留一套长期 `/api/render`、`/api/card/...`、`/api/music/...` 路由
 
 这样做的好处：
 
-- 可以在切换期间继续兼容旧调用方
-- 新工作可以与 `Haruki-Cloud` 的现有路由风格保持一致
-- 避免将一大批纯渲染接口默认暴露到无鉴权的公开面上
+- 避免把即将废弃的旧传输契约继续固化进新代码库
+- 新工作可以直接与 `Haruki-Cloud` 的现有路由风格保持一致
+- 避免将一大批纯渲染接口默认暴露到无鉴权公开面上
+
+### 4.4 应明确采用的 Service-Test 方案
+
+并不是 `Service-Test` 的所有内容都应该丢弃。以下设计和实现值得明确吸收：
+
+- 区域感知的数据源注册与选择模式。
+  - 例如 `CardController`、`MusicController`、`EventController` 中的 `RegisterSource`、`resolveRegion`、`sourceForRegion` 这一组模式，适合直接迁入新 render 子系统。
+- `pkg/asset/asset_helper.go` 的多根目录资源解析逻辑。
+  - 这套 `primary + legacy roots + first existing` 的路径解析方案是成熟的，本地资源回退能力也比 `Haruki-Cloud` 现状更完整。
+- 基于 `database/sekai` 的 cloud source adapter 分层。
+  - `*_cloud_source.go` 这层把数据库访问和上层 builder/controller 逻辑隔开，迁移后仍然有价值。
+- controller -> builder -> source 的业务分层。
+  - 相比把所有逻辑堆进 Fiber handler，这一层次在 `Service-Test` 中已经比较清楚，适合作为 `Haruki-Cloud` 的内部实现结构。
+- 统一分发入口的“思想”，但不是旧接口契约。
+  - `cmd/server/render_dispatch.go` 的统一模块分发思路可保留；
+  - 旧的 `/api/render` 路径、宽松参数校验和静默吞错行为则不保留。
+- 现有测试样式。
+  - 例如 `internal/controller/event_controller_test.go` 这种按 source stub 做区域选择断言的测试方式，值得直接沿用。
+
+应明确舍弃的 `Service-Test` 内容：
+
+- `cmd/server/main.go` 和整套 `net/http` handler 传输层
+- 重复的 `internal/model/drawing_request.go` / `internal/service/drawing.go`
+- 进程级唯一的 `UserDataService` 运行模式
+- 默认开启、缺库即构建失败的 deck CGo 路径
+- 没有证据支撑时继续保留的旧 `/api/...` 路由契约
 
 ## 5. 包级迁移映射
 
@@ -284,7 +330,7 @@ Haruki-Cloud/
 | `internal/apiutils/cloud_clients.go` | `cmd/server/main.go` 中的 Sekai DB 初始化 + app container | 去掉重复的 DB init wrapper |
 | `internal/config/config.go` | `Haruki-Cloud/config/config.go` | 合并进新的配置分区 |
 | `pkg/asset/*` | `internal/pjsk/render/assets/*` 或 `utils/assets/*` | 迁入并保留本地路径解析逻辑 |
-| `pkg/masterdata/*` | `internal/pjsk/render/masterdata/*` | 作为临时兼容领域模型 |
+| `pkg/masterdata/*` | `internal/pjsk/render/masterdata/*` | 作为过渡期内部领域模型，后续逐步收敛到 `database/sekai` 周边标准层 |
 | `internal/service/masterdata*.go` | `internal/pjsk/render/masterdata/*` | 保留本地 JSON fallback，但作为可选 provider |
 | `pkg/deck_cgo/*` | `internal/pjsk/render/deck/*` | 保持可选并加 build tag |
 | `data/*` | `internal/pjsk/render/static/*` 或 `assets/pjsk/*` | 把 deck 相关静态数据迁入 Haruki-Cloud |
@@ -346,7 +392,7 @@ pjsk_render:
 这一阶段的产出：
 
 - 明确支持的 endpoint 列表
-- 明确哪些路由在切换期必须保持兼容
+- 明确是否真的存在必须保留的历史外部调用方；若没有，则不做应用内兼容层
 
 ### Phase 1: 抽基础层
 
@@ -385,7 +431,6 @@ pjsk_render:
 
 - 迁移 controller / builder / source 代码
 - 在 `api/pjsk` 中补 Fiber handlers
-- 如果有必要，为旧 `/api/...` 路径加兼容路由
 - 为 build payload 补 contract tests
 
 退出条件：
@@ -395,7 +440,7 @@ pjsk_render:
 
 ### Phase 3: 统一分发入口
 
-- 将 `/api/render` 逻辑迁入 `api/pjsk/render_dispatch.go`。
+- 将统一分发逻辑迁入 `api/pjsk/render_dispatch.go`，标准入口定为新的 `Haruki-Cloud` 内部路由，而不是继续沿用旧 `/api/render` 契约。
 - 把入站命令 payload 重定义为 `Haruki-Cloud` 自己持有的结构。
 - 在迁移期间统一参数校验行为，不要继续保留静默吞掉 JSON 反序列化错误的做法。
 
@@ -476,11 +521,12 @@ type SnapshotProvider interface {
 ### Phase 7: 切换与清理
 
 - 将调用方从 `Service-Test` 基础地址切换到 `Haruki-Cloud`。
-- 在切换期临时保留兼容路由。
+- 默认不在应用内保留兼容路由。
+- 如果确有工作区之外的历史调用方，使用入口层短期重写，并附带明确下线日期。
 - 经过生产环境观察后：
-  - 删除兼容别名路由
-  - 归档或删除 `Service-Test` 仓库/模块
-  - 删除迁移过程中遗留的重复模型
+  - 将 `Service-Test` 从活跃部署和活跃代码职责范围中移除
+  - 在 `Haruki-Cloud/docs` 中保留迁移与退役说明文档
+  - 删除迁移过程中遗留的重复模型、适配层和任何过渡兼容代码
 
 ## 8. 测试策略
 
@@ -535,12 +581,12 @@ type SnapshotProvider interface {
 
 待定问题：
 
-- 旧的 `/api/...` 路由是否要长期保留？
-- 还是仅作为迁移期间的临时兼容层？
+- 是否需要在 `Haruki-Cloud` 应用代码中保留旧的 `/api/...` 路由？
 
 建议答案：
 
-- 只作临时兼容
+- 默认不保留
+- 只有在确认存在历史外部调用方时，才允许通过短期入口层重写过渡
 
 ### 9.3 本地 masterdata fallback
 
@@ -572,7 +618,7 @@ type SnapshotProvider interface {
 2. 创建 `internal/pjsk/render` 包树。
 3. 先迁 asset helper、source interfaces 以及无状态模块。
 4. 为 card/music/gacha/event/honor/stamp/misc/score/sk 暴露 Fiber 路由。
-5. 只为这批第一阶段模块迁 unified dispatch。
+5. 为这批第一阶段模块迁 unified dispatch，但直接采用新的 `Haruki-Cloud` 路由契约。
 6. 设计并实现 user snapshot provider。
 7. 再迁 profile/education/mysekai/deck，以及剩余依赖用户态的 music 流程。
 
@@ -589,8 +635,11 @@ type SnapshotProvider interface {
 - 保持 `Haruki-Cloud` 作为宿主
 - 把 `Service-Test` 的领域逻辑迁入新的内部 PJSK 渲染子系统
 - 复用 `database/sekai` 和 `utils/drawing`
+- 明确吸收 `Service-Test` 中更成熟的 source 抽象、区域切换、资源路径解析与测试方式
 - 增补真正的 Sekai DB 运行时和真正的用户快照抽象
 - 先迁无状态模块
 - 再在数据模型修正之后迁强用户态模块
+- 默认不保留旧 `Service-Test` 的应用内兼容路由层
+- 在切换完成后退役并舍弃旧 `Service-Test` 服务，但保留迁移说明文档
 
 这样得到的结果会与 `Haruki-Cloud` 当前架构保持一致，而不是在里面再嵌一套第二服务器。

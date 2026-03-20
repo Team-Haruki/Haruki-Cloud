@@ -2,7 +2,7 @@
 
 ## 1. Conclusion
 
-This merge should be done as "move business logic into Haruki-Cloud, rebuild the transport layer around Haruki-Cloud conventions, keep a compatibility layer during cutover".
+This merge should be done as "move business logic into Haruki-Cloud, rebuild the transport layer around Haruki-Cloud conventions, and do not keep a code-level Service-Test compatibility layer by default".
 
 Do not copy `Service-Test/cmd/server/main.go` into `Haruki-Cloud/cmd/server` as-is. The two projects already diverged in server lifecycle, route style, config layout, and responsibility boundaries.
 
@@ -11,11 +11,13 @@ Recommended end state:
 - `Haruki-Cloud` remains the only server process.
 - `Haruki-Cloud` becomes the only place that owns PJSK render/build APIs.
 - `Service-Test` controller/builder/source logic is moved into a new internal PJSK render subsystem inside `Haruki-Cloud`.
+- `Service-Test` is only a migration source and must not remain as a long-lived sibling service, permanent compatibility runtime, or duplicate code mirror after cutover.
 - Existing `Haruki-Cloud` assets are reused where they already exist:
   - `database/sekai`
   - `utils/drawing`
   - `utils/query`
   - `api` response/middleware conventions
+- What must remain long-term is the migration/decommission documentation under `Haruki-Cloud/docs`, not the old service itself.
 
 ## 2. Current State Review
 
@@ -85,6 +87,22 @@ The current relationship is:
 - `Service-Test` adds a second domain model and a second transport layer on top of that infrastructure.
 
 That means the merge is mostly about removing duplicate layers, not merely moving files.
+
+### 2.4 Caller Recheck Result
+
+In this recheck, I also looked for current consumers inside the workspace, including:
+
+- `Haruki-ZeroBot`
+- `Haruki-OneBot`
+- `Haruki-Cloud`
+- `HarukiBot-Docs`
+
+I did not find evidence that current code still explicitly depends on the legacy `Service-Test` `/api/...` paths, and I did not find active bot-side code bound directly to the old `/api/render` transport.
+
+That means:
+
+- the plan should not assume an application-level compatibility layer by default
+- if unknown historical consumers are later confirmed outside this workspace, the preferred transition tool is a short-lived ingress/reverse-proxy rewrite with a removal date, not permanent compatibility routes inside `Haruki-Cloud`
 
 ## 3. Main Conflicts To Resolve
 
@@ -252,20 +270,48 @@ Recommended canonical routes inside `Haruki-Cloud`:
   - `POST /internal/pjsk/music/detail/build`
   - and so on
 
-Recommended migration compatibility layer:
+Recommended strategy:
 
-- keep temporary aliases for legacy Service-Test routes:
-  - `POST /api/render`
-  - `POST /api/card/...`
-  - `POST /api/music/...`
-  - etc.
-- protect internal render endpoints with `api.VerifyAPIAuthorization()` once consumers are ready
+- do not keep legacy `Service-Test` `/api/...` aliases in `Haruki-Cloud` application code by default
+- standardize directly on the new `Haruki-Cloud` route and authorization conventions
+- protect internal render endpoints with `api.VerifyAPIAuthorization()`
+
+If historical consumers are later confirmed outside this workspace:
+
+- allow only a short-lived edge-layer rewrite with an explicit removal date
+- do not preserve long-lived `/api/render`, `/api/card/...`, `/api/music/...` route aliases inside `Haruki-Cloud`
 
 This lets us:
 
-- preserve old callers during cutover
-- align new work with Haruki-Cloud route conventions
+- avoid hard-coding a soon-to-be-discarded transport contract into the new codebase
+- align new work with Haruki-Cloud route conventions immediately
 - avoid mixing large render-only APIs into public unauthenticated surfaces by default
+
+### 4.4 Service-Test Content That Should Be Explicitly Adopted
+
+Not everything in `Service-Test` should be discarded. These designs and implementations are worth explicitly carrying forward:
+
+- Region-aware source registration and selection patterns.
+  - For example, the `RegisterSource`, `resolveRegion`, and `sourceForRegion` patterns used in `CardController`, `MusicController`, and `EventController` are good fits for the new render subsystem.
+- Multi-root asset resolution from `pkg/asset/asset_helper.go`.
+  - The `primary + legacy roots + first existing` behavior is mature and more complete than the current Haruki-Cloud state for local asset fallback.
+- Cloud source adapter layering on top of `database/sekai`.
+  - The `*_cloud_source.go` layer cleanly separates DB access from builder/controller logic and should remain valuable after the move.
+- The controller -> builder -> source business layering.
+  - Compared with pushing everything into Fiber handlers, this structure is already reasonably clear in `Service-Test` and is a good internal shape for Haruki-Cloud.
+- The idea of unified dispatch, but not the old transport contract.
+  - The modular dispatch idea in `cmd/server/render_dispatch.go` is worth preserving;
+  - the old `/api/render` path, loose parameter handling, and silent JSON-unmarshal failures are not.
+- Existing test style.
+  - For example, `internal/controller/event_controller_test.go` shows a useful way to assert region routing behavior with small source stubs.
+
+Service-Test content that should be explicitly discarded:
+
+- `cmd/server/main.go` and the entire `net/http` transport layer
+- duplicated `internal/model/drawing_request.go` and `internal/service/drawing.go`
+- process-global `UserDataService` runtime assumptions
+- the default-on deck CGo path that breaks builds when native libraries are absent
+- legacy `/api/...` transport contracts when there is no proven consumer for them
 
 ## 5. Package-Level Migration Map
 
@@ -284,7 +330,7 @@ This lets us:
 | `internal/apiutils/cloud_clients.go` | `cmd/server/main.go` Sekai DB init + app container | Remove duplicate DB init wrapper |
 | `internal/config/config.go` | `Haruki-Cloud/config/config.go` | Merge into new config sections |
 | `pkg/asset/*` | `internal/pjsk/render/assets/*` or `utils/assets/*` | Move and keep local path logic |
-| `pkg/masterdata/*` | `internal/pjsk/render/masterdata/*` | Temporary compatibility domain model |
+| `pkg/masterdata/*` | `internal/pjsk/render/masterdata/*` | Transitional internal domain model to be reduced over time in favor of the standard `database/sekai`-based layer |
 | `internal/service/masterdata*.go` | `internal/pjsk/render/masterdata/*` | Keep local JSON fallback as optional provider |
 | `pkg/deck_cgo/*` | `internal/pjsk/render/deck/*` | Keep optional and build-tagged |
 | `data/*` | `internal/pjsk/render/static/*` or `assets/pjsk/*` | Move static deck-related data into Haruki-Cloud |
@@ -346,7 +392,7 @@ Key point:
 Output of this phase:
 
 - explicit list of supported endpoints
-- explicit list of routes that must remain compatible during cutover
+- explicit confirmation of whether any external historical consumers actually require transition handling; if not, no application-level compatibility layer is kept
 
 ### Phase 1: Foundation Extraction
 
@@ -385,7 +431,6 @@ Work items:
 
 - move controller/builder/source code
 - add Fiber handlers in `api/pjsk`
-- add compatibility routes for old `/api/...` paths if needed
 - add contract tests around build payloads
 
 Exit criteria:
@@ -395,7 +440,7 @@ Exit criteria:
 
 ### Phase 3: Unified Dispatch
 
-- Migrate `/api/render` logic into `api/pjsk/render_dispatch.go`.
+- Migrate the unified dispatch logic into `api/pjsk/render_dispatch.go`, with the canonical entry point changed to the new Haruki-Cloud internal route instead of the old `/api/render` contract.
 - Redefine the incoming command payload as a Haruki-Cloud-owned struct.
 - Normalize parameter validation behavior during migration. Do not keep silent JSON unmarshal failures.
 
@@ -476,11 +521,12 @@ Exit criteria:
 ### Phase 7: Cutover And Removal
 
 - Switch callers from Service-Test base URL to Haruki-Cloud.
-- Keep compatibility routes temporarily.
+- Do not keep application-level compatibility routes by default.
+- If historical external callers are proven to exist, use a short-lived edge rewrite with a removal date.
 - After production soak:
-  - remove compatibility aliases
-  - archive or delete Service-Test repo/module
-  - delete duplicated models still left over from temporary migration
+  - remove Service-Test from active deployment and active code ownership scope
+  - keep migration and decommission documentation in `Haruki-Cloud/docs`
+  - delete duplicated models, adapters, and any transitional compatibility code still left over from migration
 
 ## 8. Test Strategy
 
@@ -535,12 +581,12 @@ This decision directly affects:
 
 Open decision:
 
-- Should legacy `/api/...` routes remain long-term?
-- Or are they only temporary compatibility routes during migration?
+- Should legacy `/api/...` routes remain inside Haruki-Cloud application code at all?
 
 Recommended answer:
 
-- temporary only
+- no, not by default
+- only allow a short-lived edge-layer rewrite if a historical external dependency is proven
 
 ### 9.3 Local Masterdata Fallback
 
@@ -572,7 +618,7 @@ If the goal is fastest useful progress with controlled risk, implement in this o
 2. Create `internal/pjsk/render` package tree.
 3. Migrate asset helper, source interfaces, and stateless modules first.
 4. Expose Fiber routes for card/music/gacha/event/honor/stamp/misc/score/sk.
-5. Migrate unified dispatch for only those first-wave modules.
+5. Migrate unified dispatch for only those first-wave modules, using the new Haruki-Cloud route contract directly.
 6. Design and implement user snapshot provider.
 7. Migrate profile/education/mysekai/deck and remaining user-bound music flows.
 
@@ -589,8 +635,11 @@ The correct merge is:
 - keep Haruki-Cloud as the host
 - move Service-Test domain logic into a new internal PJSK render subsystem
 - reuse `database/sekai` and `utils/drawing`
+- explicitly adopt the stronger Service-Test patterns for source abstraction, region routing, asset resolution, and test structure
 - add a real Sekai DB runtime and a real user snapshot abstraction
 - migrate stateless modules first
 - migrate user-bound modules after the data model is corrected
+- do not keep the old Service-Test application-level compatibility route layer by default
+- retire and discard the old Service-Test service after cutover, while keeping the explanation documents in Haruki-Cloud
 
 That gives a result that is consistent with Haruki-Cloud's current architecture instead of embedding a second server inside it.

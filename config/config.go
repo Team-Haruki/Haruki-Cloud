@@ -40,6 +40,47 @@ type PJSKConfig struct {
 	DBURL   string `yaml:"db_url"`
 }
 
+type SekaiConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	DBType  string `yaml:"db_type"`
+	DBURL   string `yaml:"db_url"`
+}
+
+type AssetDirsConfig struct {
+	Primary string   `yaml:"primary"`
+	Legacy  []string `yaml:"legacy"`
+}
+
+type LocalMasterdataConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Dir     string `yaml:"dir"`
+}
+
+type UserSnapshotConfig struct {
+	Provider      string `yaml:"provider"`
+	UserJSON      string `yaml:"user_json"`
+	MusicMetaJSON string `yaml:"music_meta_json"`
+	MySekaiJSON   string `yaml:"mysekai_json"`
+}
+
+type DeckRecommendConfig struct {
+	Enabled        bool          `yaml:"enabled"`
+	UseLocalEngine bool          `yaml:"use_local_engine"`
+	Timeout        time.Duration `yaml:"timeout"`
+	DefaultAlgs    []string      `yaml:"default_algs"`
+}
+
+type PJSKRenderConfig struct {
+	Enabled           bool                  `yaml:"enabled"`
+	DrawingBaseURL    string                `yaml:"drawing_base_url"`
+	DrawingTimeout    time.Duration         `yaml:"drawing_timeout"`
+	DrawingRetryCount int                   `yaml:"drawing_retry_count"`
+	AssetDirs         AssetDirsConfig       `yaml:"asset_dirs"`
+	LocalMasterdata   LocalMasterdataConfig `yaml:"local_masterdata"`
+	UserSnapshot      UserSnapshotConfig    `yaml:"user_snapshot"`
+	DeckRecommend     DeckRecommendConfig   `yaml:"deck_recommend"`
+}
+
 type CensorConfig struct {
 	BaiduAPIKey  string `yaml:"baidu_api_key"`
 	BaiduSecret  string `yaml:"baidu_secret"`
@@ -83,6 +124,8 @@ type Config struct {
 	Backend     BackendConfig     `yaml:"backend"`
 	Chunithm    ChunithmConfig    `yaml:"chunithm"`
 	PJSK        PJSKConfig        `yaml:"pjsk"`
+	Sekai       SekaiConfig       `yaml:"sekai"`
+	PJSKRender  PJSKRenderConfig  `yaml:"pjsk_render"`
 	Censor      CensorConfig      `yaml:"censor"`
 	HarukiBotDB HarukiBotDBConfig `yaml:"haruki_bot"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`

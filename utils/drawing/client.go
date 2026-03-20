@@ -3,19 +3,42 @@ package drawing
 import (
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 )
+
+type ClientOption func(*resty.Client)
 
 type HarukiDrawingClient struct {
 	client  *resty.Client
 	baseURL string
 }
 
-func NewHarukiDrawingClient(baseURL string) *HarukiDrawingClient {
+func WithTimeout(timeout time.Duration) ClientOption {
+	return func(client *resty.Client) {
+		client.SetTimeout(timeout)
+	}
+}
+
+func WithRetryCount(retryCount int) ClientOption {
+	return func(client *resty.Client) {
+		client.SetRetryCount(retryCount)
+	}
+}
+
+func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDrawingClient {
+	client := resty.New()
+	for _, option := range options {
+		if option != nil {
+			option(client)
+		}
+	}
+
 	return &HarukiDrawingClient{
-		client:  resty.New(),
-		baseURL: baseURL,
+		client:  client,
+		baseURL: strings.TrimRight(baseURL, "/"),
 	}
 }
 

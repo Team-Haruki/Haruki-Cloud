@@ -15,9 +15,10 @@ type MusicMD struct {
 }
 
 type DifficultyInfo struct {
-	Level     []int `json:"level"`
-	NoteCount []int `json:"note_count"`
-	HasAppend bool  `json:"has_append"`
+	Level     []int    `json:"level"`
+	NoteCount []int    `json:"note_count"`
+	HasAppend bool     `json:"has_append"`
+	Order     []string `json:"order,omitempty"`
 }
 
 type MusicVocalInfo struct {
@@ -53,6 +54,9 @@ type MusicDetailRequest struct {
 }
 
 type MusicBriefList struct {
+	ID              int            `json:"id,omitempty"`
+	Level           int            `json:"level,omitempty"`
+	PlayResult      string         `json:"play_result,omitempty"`
 	Difficulty      DifficultyInfo `json:"difficulty"`
 	MusicInfo       MusicMD        `json:"music_info"`
 	MusicJacketPath string         `json:"music_jacket_path"`
@@ -60,8 +64,13 @@ type MusicBriefList struct {
 
 // MusicBriefListRequest represents request for /music/brief-list
 type MusicBriefListRequest struct {
-	MusicList []MusicBriefList `json:"music_list"`
-	Region    string           `json:"region"`
+	MusicList            []MusicBriefList `json:"music_list"`
+	Region               string           `json:"region"`
+	RequiredDifficulty   string           `json:"required_difficulty,omitempty"`
+	RequiredDifficulties string           `json:"required_difficulties,omitempty"`
+	Title                *string          `json:"title,omitempty"`
+	TitleStyle           interface{}      `json:"title_style,omitempty"`
+	TitleShadow          bool             `json:"title_shadow,omitempty"`
 }
 
 // MusicListRequest represents request for /music/list
@@ -72,6 +81,9 @@ type MusicListRequest struct {
 	RequiredDifficulties  string                     `json:"required_difficulties"`
 	Profile               DetailedProfileCardRequest `json:"profile"`
 	PlayResultIconPathMap map[string]string          `json:"play_result_icon_path_map,omitempty"`
+	Title                 *string                    `json:"title,omitempty"`
+	TitleStyle            interface{}                `json:"title_style,omitempty"`
+	TitleShadow           bool                       `json:"title_shadow,omitempty"`
 }
 
 type PlayProgressCount struct {

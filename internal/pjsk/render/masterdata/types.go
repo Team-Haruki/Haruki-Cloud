@@ -169,6 +169,56 @@ type GachaInformation struct {
 	Description string `json:"description"`
 }
 
+type Music struct {
+	ID                 int
+	Seq                int
+	ReleaseConditionID int
+	Categories         []string
+	Title              string
+	Pronunciation      string
+	Lyricist           string
+	Composer           string
+	Arranger           string
+	DancerCount        int
+	SelfDancerCount    int
+	AssetBundleName    string
+	PublishedAt        int64
+	DigitizedAt        int64
+	IsFullLength       bool
+}
+
+type MusicDifficulty struct {
+	ID              int    `json:"id"`
+	MusicID         int    `json:"musicId"`
+	MusicDifficulty string `json:"musicDifficulty"`
+	PlayLevel       int    `json:"playLevel"`
+	TotalNoteCount  int    `json:"totalNoteCount"`
+}
+
+type MusicVocal struct {
+	ID              int
+	MusicID         int
+	MusicVocalType  string
+	Caption         string
+	Characters      []MusicVocalCharacter
+	AssetBundleName string
+}
+
+type MusicVocalCharacter struct {
+	ID            int
+	MusicID       int
+	MusicVocalID  int
+	CharacterType string
+	CharacterID   int
+}
+
+type LimitedTimeMusic struct {
+	ID      int
+	MusicID int
+	StartAt int64
+	EndAt   int64
+}
+
 type Costume3d struct {
 	ID              int    `json:"id"`
 	CharacterID     int    `json:"characterId"`

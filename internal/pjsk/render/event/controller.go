@@ -72,6 +72,33 @@ func (c *Controller) RenderEventList(query ListQuery) ([]byte, error) {
 	return c.drawing.GenerateEventList(req)
 }
 
+func (c *Controller) BuildEventRecordRequest(req drawing.EventRecordRequest) (*drawing.EventRecordRequest, error) {
+	if len(req.EventInfo) == 0 && len(req.WlEventInfo) == 0 {
+		return nil, fmt.Errorf("event record requires at least one history entry")
+	}
+	if req.UserInfo.Region == "" {
+		return nil, fmt.Errorf("user_info.region is required")
+	}
+	if req.UserInfo.Nickname == "" {
+		return nil, fmt.Errorf("user_info.nickname is required")
+	}
+	if req.UserInfo.LeaderImagePath == "" {
+		return nil, fmt.Errorf("user_info.leader_image_path is required")
+	}
+	return &req, nil
+}
+
+func (c *Controller) RenderEventRecord(req drawing.EventRecordRequest) ([]byte, error) {
+	if c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildEventRecordRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateEventRecord(payload)
+}
+
 func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSource, error) {
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)

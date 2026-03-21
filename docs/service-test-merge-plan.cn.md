@@ -375,6 +375,8 @@ pjsk_render:
 
 - `Haruki-Cloud` 当前的 `config.PJSK` 是 alias / binding 数据
 - 合并后的渲染系统需要的是新的 Sekai masterdata DB 生命周期，以及独立的 render 配置块
+- 当前合并阶段先继续使用 `local_file`
+- Cloud 内部正式 snapshot provider 延后实现，设计文档单独保留
 
 ## 7. 推荐迁移顺序
 
@@ -459,18 +461,33 @@ pjsk_render:
 
 ```go
 type SnapshotProvider interface {
-    LoadByBinding(ctx context.Context, harukiUserID int, server string) (*UserSnapshot, error)
-    LoadByRawSource(ctx context.Context, source SnapshotSource) (*UserSnapshot, error)
+    Load(ctx context.Context, selector Selector) (Snapshot, error)
 }
 ```
 
-建议的第一版实现：
+正式实现建议拆成四层：
+
+- `IdentityResolver`
+- `BindingResolver`
+- `SnapshotStore`
+- `SnapshotFactory`
+
+当前合并阶段建议的临时实现：
 
 - `LocalFileSnapshotProvider`
 
-建议的目标实现：
+正式实现延后，目标仍然是：
 
-- 与 Haruki user / binding 上下文绑定的存储型或服务型 snapshot provider
+- `InternalCloudSnapshotProvider`
+
+其中：
+
+- `IdentityResolver` 先把 `im_platform + im_user_id` 映射成 `haruki_user_id`
+- `BindingResolver` 再从 `pjsk.user_default_bindings` / `user_bindings` 解析目标账号
+- `SnapshotStore` 从 Cloud 内部快照存储读取原始 blob
+- `SnapshotFactory` 复用 `Service-Test` 中成熟的原始快照视图构造逻辑
+
+`LocalFileSnapshotProvider` 仅保留为测试、联调和开发回归工具。
 
 在以下模块真正完成合并前，这一阶段是必需的：
 
@@ -577,6 +594,13 @@ type SnapshotProvider interface {
 - mysekai
 - music progress/rewards
 
+当前结论：
+
+- 当前合并阶段先使用本地 JSON
+- Cloud 内部正式 snapshot provider 仅保留设计，不进入本轮实现范围
+- 后续如果切换到正式 provider，需要显式经过 `users` 身份映射，再进入 `pjsk` 默认绑定解析
+- 因此 `im_platform` 等参数要求也一并推迟到正式 provider 阶段
+
 ### 9.2 路由兼容范围
 
 待定问题：
@@ -620,7 +644,9 @@ type SnapshotProvider interface {
 4. 为 card/music/gacha/event/honor/stamp/misc/score/sk 暴露 Fiber 路由。
 5. 为这批第一阶段模块迁 unified dispatch，但直接采用新的 `Haruki-Cloud` 路由契约。
 6. 设计并实现 user snapshot provider。
-7. 再迁 profile/education/mysekai/deck，以及剩余依赖用户态的 music 流程。
+7. 当前阶段先以本地 JSON 方式接通剩余依赖用户态的模块。
+8. 再迁 profile/education/mysekai/deck，以及剩余依赖用户态的 music 流程。
+9. 在后续阶段替换为正式的 Cloud 内部 snapshot provider。
 
 这样可以避免整次合并被最难的一部分拖住。
 

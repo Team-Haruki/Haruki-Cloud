@@ -375,6 +375,8 @@ Key point:
 
 - current `config.PJSK` in Haruki-Cloud is for alias/binding data
 - the merged render system needs a new Sekai masterdata DB lifecycle plus its own render config block
+- keep `local_file` as the current merge-phase implementation path
+- defer the Cloud-internal snapshot provider to a later phase, with design documented separately
 
 ## 7. Recommended Migration Order
 
@@ -459,18 +461,33 @@ Introduce a formal provider interface, for example:
 
 ```go
 type SnapshotProvider interface {
-    LoadByBinding(ctx context.Context, harukiUserID int, server string) (*UserSnapshot, error)
-    LoadByRawSource(ctx context.Context, source SnapshotSource) (*UserSnapshot, error)
+    Load(ctx context.Context, selector Selector) (Snapshot, error)
 }
 ```
 
-Recommended first implementation:
+The long-term production design should be split into four parts:
+
+- `IdentityResolver`
+- `BindingResolver`
+- `SnapshotStore`
+- `SnapshotFactory`
+
+Recommended merge-phase implementation:
 
 - `LocalFileSnapshotProvider`
 
-Recommended target implementation:
+Recommended long-term implementation:
 
-- storage-backed or service-backed snapshot provider tied to Haruki user/binding context
+- `InternalCloudSnapshotProvider`
+
+Where:
+
+- `IdentityResolver` maps `im_platform + im_user_id` to `haruki_user_id`
+- `BindingResolver` resolves the target PJSK account through `pjsk.user_default_bindings` / `user_bindings`
+- `SnapshotStore` loads raw snapshot blobs from Cloud-internal storage
+- `SnapshotFactory` reuses the mature raw-to-view logic that already exists in `Service-Test`
+
+For this merge phase, `LocalFileSnapshotProvider` is acceptable as a temporary bridge.
 
 This phase is required before the following modules are considered truly merged:
 
@@ -564,10 +581,12 @@ Prefer asserting drawing payload JSON over asserting PNG bytes directly.
 
 ### 9.1 User Snapshot Source
 
-Open decision:
+Current decision:
 
-- Is Haruki-Cloud going to own user snapshot storage?
-- Or will it continue receiving prebuilt snapshot JSON from another system?
+- use local JSON during the current merge phase
+- keep the Cloud-internal snapshot provider as a deferred design task
+- when that later provider is implemented, it must perform `users` identity resolution before default-binding lookup in `pjsk`
+- caller changes such as `im_platform` are deferred together with that later provider work
 
 This decision directly affects:
 
@@ -620,7 +639,9 @@ If the goal is fastest useful progress with controlled risk, implement in this o
 4. Expose Fiber routes for card/music/gacha/event/honor/stamp/misc/score/sk.
 5. Migrate unified dispatch for only those first-wave modules, using the new Haruki-Cloud route contract directly.
 6. Design and implement user snapshot provider.
-7. Migrate profile/education/mysekai/deck and remaining user-bound music flows.
+7. Use local JSON temporarily to unblock the remaining user-bound modules.
+8. Migrate profile/education/mysekai/deck and remaining user-bound music flows.
+9. Replace the temporary local JSON path with the formal Cloud-internal snapshot provider in a later phase.
 
 This avoids blocking the whole merge on the hardest part.
 

@@ -8,6 +8,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/gacha"
@@ -61,6 +62,7 @@ type App struct {
 	Drawing  *drawing.HarukiDrawingClient
 	Assets   *assets.AssetHelper
 	Cards    *card.Controller
+	Decks    *deck.Controller
 	Edu      *education.Controller
 	Events   *event.Controller
 	Gachas   *gacha.Controller
@@ -104,6 +106,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	miscController := misc.NewController(drawingClient)
 	mysekaiController := (*mysekai.Controller)(nil)
 	musicController := (*music.Controller)(nil)
+	deckController := deck.NewController(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
@@ -118,9 +121,12 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var profileController *profile.Controller
 	var stampController *stamp.Controller
 	if sekaiClient != nil {
-		cardController = card.NewController(card.NewCloudSource(sekaiClient, cfg.DefaultRegion), event.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
+		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
+		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
+		deckController = deck.NewController(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
+		cardController = card.NewController(cardSource, eventSource, drawingClient, assetHelper)
 		educationController.RegisterSource(education.NewCloudSource(sekaiClient, cfg.DefaultRegion))
-		eventController = event.NewController(event.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
+		eventController = event.NewController(eventSource, drawingClient, assetHelper)
 		gachaController = gacha.NewController(gacha.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 		honorController = honor.NewController(honor.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 		musicController = music.NewController(music.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper, snapshotService)
@@ -134,6 +140,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Drawing:  drawingClient,
 		Assets:   assetHelper,
 		Cards:    cardController,
+		Decks:    deckController,
 		Edu:      educationController,
 		Events:   eventController,
 		Gachas:   gachaController,

@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/api"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	rendereducation "haruki-cloud/internal/pjsk/render/education"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
@@ -25,6 +26,7 @@ const (
 	cardDetailDrawingEndpoint    = "/api/pjsk/card/detail"
 	cardListDrawingEndpoint      = "/api/pjsk/card/list"
 	cardBoxDrawingEndpoint       = "/api/pjsk/card/box"
+	deckRecommendEndpoint        = "/api/pjsk/deck/recommend"
 	eventDetailDrawingEndpoint   = "/api/pjsk/event/detail"
 	eventListDrawingEndpoint     = "/api/pjsk/event/list"
 	eventRecordDrawingEndpoint   = "/api/pjsk/event/record"
@@ -82,6 +84,7 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 
 	internal := app.Group("/internal/pjsk", api.VerifyAPIAuthorization())
 	registerCardRenderRoutes(internal, runtime)
+	registerDeckRenderRoutes(internal, runtime)
 	registerEventRenderRoutes(internal, runtime)
 	registerGachaRenderRoutes(internal, runtime)
 	registerHonorRenderRoutes(internal, runtime)
@@ -108,6 +111,19 @@ func registerCardRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/list/render", handler.RenderCardList)
 	group.Post("/box/build", handler.BuildCardBox)
 	group.Post("/box/render", handler.RenderCardBox)
+}
+
+func registerDeckRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Decks == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/deck")
+	group.Post("/recommend/build", handler.BuildDeckRecommend)
+	group.Post("/recommend/render", handler.RenderDeckRecommend)
+	group.Post("/recommend/auto/build", handler.BuildDeckRecommendAuto)
+	group.Post("/recommend/auto/render", handler.RenderDeckRecommendAuto)
 }
 
 func registerEventRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -371,6 +387,68 @@ func (h *RenderHandler) RenderCardBox(c fiber.Ctx) error {
 	}
 
 	image, err := h.app.Cards.RenderCardBox(queries)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildDeckRecommend(c fiber.Ctx) error {
+	var req drawing.DeckRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Decks.BuildRecommendRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: deckRecommendEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderDeckRecommend(c fiber.Ctx) error {
+	var req drawing.DeckRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Decks.RenderRecommend(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildDeckRecommendAuto(c fiber.Ctx) error {
+	var query renderdeck.AutoQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Decks.BuildAutoRecommendRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: deckRecommendEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderDeckRecommendAuto(c fiber.Ctx) error {
+	var query renderdeck.AutoQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Decks.RenderAutoRecommend(query)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}

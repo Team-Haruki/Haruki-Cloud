@@ -55,7 +55,7 @@ func main() {
 	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, censorDBClient, botDBClient, usersDBClient)
 
 	if renderRuntime != nil {
-		mainLogger.Infof("PJSK render runtime initialized; routes are not registered yet")
+		mainLogger.Infof("PJSK render runtime initialized; internal render routes registered")
 	}
 
 	startServer(mainLogger, app)

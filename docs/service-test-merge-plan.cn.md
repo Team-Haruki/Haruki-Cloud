@@ -1,5 +1,19 @@
 # Service-Test -> Haruki-Cloud 合并方案
 
+## 0. 状态说明（2026-03-21）
+
+这份文档保留为“历史方案与阶段划分”说明。
+
+当前这轮合并的实际落地结果、完成范围和后续注意事项，已经整理到：
+
+- `docs/service-test-merge-status.cn.md`
+
+当前已经明确的是：
+
+- `Service-Test` 按迁移来源处理，不再作为长期运行时保留
+- `Haruki-Cloud` 内部统一分发入口 `POST /internal/pjsk/render` 已落地
+- `Haruki-ZeroBot` 与 `Haruki-OneBot` 不在本轮代码修改范围内，只保留后续说明文档
+
 ## 1. 结论
 
 这次合并应按“将业务逻辑迁入 `Haruki-Cloud`、按照 `Haruki-Cloud` 的约定重建传输层、默认不保留代码级 `Service-Test` 兼容层”的思路推进。

@@ -22,6 +22,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermisc "haruki-cloud/internal/pjsk/render/misc"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
@@ -1200,6 +1201,297 @@ func TestPJSKMiscBirthdayRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 }
 
+func TestPJSKMysekaiResourceBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/resource/build", `{"region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			GateID    int `json:"gate_id"`
+			GateLevel int `json:"gate_level"`
+			Profile   struct {
+				MysekaiLevel *int `json:"mysekai_level"`
+			} `json:"profile"`
+			VisitCharacters []struct {
+				SdImagePath string `json:"sd_image_path"`
+			} `json:"visit_characters"`
+			SiteResourceNumbers []struct {
+				ImagePath string `json:"image_path"`
+			} `json:"site_resource_numbers"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiResourceEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.GateID != 1 || data.Payload.GateLevel != 1 {
+		t.Fatalf("unexpected gate payload: %+v", data.Payload)
+	}
+	if data.Payload.Profile.MysekaiLevel == nil || *data.Payload.Profile.MysekaiLevel != 15 {
+		t.Fatalf("unexpected mysekai level: %+v", data.Payload.Profile)
+	}
+	if len(data.Payload.VisitCharacters) != 1 || data.Payload.VisitCharacters[0].SdImagePath != "character/character_sd_l/chr_sp_1.png" {
+		t.Fatalf("unexpected visit characters: %+v", data.Payload.VisitCharacters)
+	}
+	if len(data.Payload.SiteResourceNumbers) != 1 || data.Payload.SiteResourceNumbers[0].ImagePath != "mysekai/site/sitemap/texture/img_harvest_site_5.png" {
+		t.Fatalf("unexpected site resources: %+v", data.Payload.SiteResourceNumbers)
+	}
+}
+
+func TestPJSKMysekaiResourceRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != mysekaiResourceEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("MYSEKAIPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/mysekai/resource/render", strings.NewReader(`{"region":"jp"}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "MYSEKAIPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKMysekaiFixtureListBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/fixture-list/build", `{"region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			ShowID          bool   `json:"show_id"`
+			ProgressMessage string `json:"progress_message"`
+			MainGenres      []struct {
+				Name      string `json:"name"`
+				SubGenres []struct {
+					Fixtures []struct {
+						ID       int  `json:"id"`
+						Obtained bool `json:"obtained"`
+					} `json:"fixtures"`
+				} `json:"sub_genres"`
+			} `json:"main_genres"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiFixtureListEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if !data.Payload.ShowID {
+		t.Fatalf("expected show_id=true")
+	}
+	if !strings.Contains(data.Payload.ProgressMessage, "1/1") {
+		t.Fatalf("unexpected progress: %s", data.Payload.ProgressMessage)
+	}
+	if len(data.Payload.MainGenres) != 1 || data.Payload.MainGenres[0].Name != "Main A" {
+		t.Fatalf("unexpected main genres: %+v", data.Payload.MainGenres)
+	}
+	if len(data.Payload.MainGenres[0].SubGenres) != 1 || len(data.Payload.MainGenres[0].SubGenres[0].Fixtures) != 2 {
+		t.Fatalf("unexpected fixture list: %+v", data.Payload.MainGenres[0].SubGenres)
+	}
+}
+
+func TestPJSKMysekaiFixtureDetailBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/fixture-detail/build", `{"region":"jp","query":"2001"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  []struct {
+			Title         string `json:"title"`
+			MainGenreName string `json:"main_genre_name"`
+			CostMaterials []struct {
+				Quantity int `json:"quantity"`
+			} `json:"cost_materials"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiFixtureDetailEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if len(data.Payload) != 1 || data.Payload[0].Title != "【JP-2001】Wood Chair" || data.Payload[0].MainGenreName != "Main A" {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+	if len(data.Payload[0].CostMaterials) != 1 || data.Payload[0].CostMaterials[0].Quantity != 2 {
+		t.Fatalf("unexpected cost materials: %+v", data.Payload[0].CostMaterials)
+	}
+}
+
+func TestPJSKMysekaiDoorUpgradeBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/door-upgrade/build", `{"region":"jp","query":"1"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			GateMaterials []struct {
+				ID             int `json:"id"`
+				LevelMaterials []struct {
+					Level int `json:"level"`
+				} `json:"level_materials"`
+			} `json:"gate_materials"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiDoorUpgradeEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if len(data.Payload.GateMaterials) != 1 || data.Payload.GateMaterials[0].ID != 1 {
+		t.Fatalf("unexpected gate materials: %+v", data.Payload.GateMaterials)
+	}
+	if len(data.Payload.GateMaterials[0].LevelMaterials) != 1 || data.Payload.GateMaterials[0].LevelMaterials[0].Level != 2 {
+		t.Fatalf("unexpected level materials: %+v", data.Payload.GateMaterials[0].LevelMaterials)
+	}
+}
+
+func TestPJSKMysekaiMusicRecordBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/music-record/build", `{"region":"jp","show_id":true}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			ProgressMessage      string `json:"progress_message"`
+			CategoryMusicrecords []struct {
+				Tag          string `json:"tag"`
+				Musicrecords []struct {
+					ID       *int `json:"id"`
+					Obtained bool `json:"obtained"`
+				} `json:"musicrecords"`
+			} `json:"category_musicrecords"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiMusicRecordEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if !strings.Contains(data.Payload.ProgressMessage, "1/1") {
+		t.Fatalf("unexpected progress: %s", data.Payload.ProgressMessage)
+	}
+	if len(data.Payload.CategoryMusicrecords) != 1 || data.Payload.CategoryMusicrecords[0].Tag != "light_music_club" {
+		t.Fatalf("unexpected categories: %+v", data.Payload.CategoryMusicrecords)
+	}
+	if len(data.Payload.CategoryMusicrecords[0].Musicrecords) != 1 || data.Payload.CategoryMusicrecords[0].Musicrecords[0].ID == nil || *data.Payload.CategoryMusicrecords[0].Musicrecords[0].ID != 101 || !data.Payload.CategoryMusicrecords[0].Musicrecords[0].Obtained {
+		t.Fatalf("unexpected records: %+v", data.Payload.CategoryMusicrecords[0].Musicrecords)
+	}
+}
+
+func TestPJSKMysekaiTalkListBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/talk-list/build", `{"region":"jp","query":"ick"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			SdImagePath      string `json:"sd_image_path"`
+			ProgressMessage  string `json:"progress_message"`
+			SingleMainGenres []struct {
+				Name string `json:"name"`
+			} `json:"single_main_genres"`
+			MultiReads []struct {
+				NoreadNum int `json:"noread_num"`
+			} `json:"multi_reads"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiTalkListEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Payload.SdImagePath != "character/character_sd_l/chr_sp_1.png" {
+		t.Fatalf("unexpected sd image path: %s", data.Payload.SdImagePath)
+	}
+	if !strings.Contains(data.Payload.ProgressMessage, "0/2") {
+		t.Fatalf("unexpected progress: %s", data.Payload.ProgressMessage)
+	}
+	if len(data.Payload.SingleMainGenres) != 1 || data.Payload.SingleMainGenres[0].Name != "Main A" {
+		t.Fatalf("unexpected single genres: %+v", data.Payload.SingleMainGenres)
+	}
+	if len(data.Payload.MultiReads) != 1 || data.Payload.MultiReads[0].NoreadNum != 1 {
+		t.Fatalf("unexpected multi reads: %+v", data.Payload.MultiReads)
+	}
+}
+
 func TestPJSKScoreControlBuildRouteReturnsBuiltPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, nil)
@@ -2350,6 +2642,216 @@ func challengeLiveRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingCl
 	}
 }
 
+func mysekaiRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *renderapp.App {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	writeFixtureFile(t, filepath.Join(tempDir, "user", "leader.png"), []byte("leader"))
+
+	userJSON := map[string]interface{}{
+		"now": 1700000000000,
+		"userGamedata": map[string]interface{}{
+			"userId": 10001,
+			"name":   "MySekai User",
+			"deck":   1,
+			"rank":   80,
+		},
+		"userProfile": map[string]interface{}{
+			"profileImageType": "default",
+			"word":             "hello mysekai",
+			"twitterId":        "mysekai_test",
+		},
+		"userDecks": []map[string]interface{}{
+			{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 0, "member2": 0, "member3": 0, "member4": 0, "member5": 0},
+		},
+		"userCards": []map[string]interface{}{
+			{"cardId": 1001, "level": 60, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "normal", "episodes": []interface{}{}},
+		},
+		"userMusicResults":                      []interface{}{},
+		"userChallengeLiveSoloResults":          []interface{}{},
+		"userChallengeLiveSoloStages":           []interface{}{},
+		"userChallengeLiveSoloHighScoreRewards": []interface{}{},
+	}
+	userJSONPath := filepath.Join(tempDir, "user.json")
+	writeJSONFixture(t, userJSONPath, userJSON)
+
+	mysekaiJSON := map[string]interface{}{
+		"userMysekaiGateCharacterVisit": map[string]interface{}{
+			"userMysekaiGate": map[string]interface{}{
+				"mysekaiGateId":    1,
+				"mysekaiGateLevel": 1,
+			},
+			"userMysekaiGateCharacters": []map[string]interface{}{
+				{"mysekaiGameCharacterUnitGroupId": 5001, "isReservation": true},
+			},
+		},
+		"userMysekaiGamedata": map[string]interface{}{
+			"mysekaiRank": 15,
+		},
+		"mysekaiPhenomenaSchedules": []map[string]interface{}{
+			{"mysekaiPhenomenaId": 1},
+			{"mysekaiPhenomenaId": 2},
+		},
+		"updatedResources": map[string]interface{}{
+			"now": 1700000000000,
+			"userMysekaiHarvestMaps": []map[string]interface{}{
+				{
+					"mysekaiSiteId": 5,
+					"userMysekaiSiteHarvestResourceDrops": []map[string]interface{}{
+						{"resourceType": "mysekai_material", "resourceId": 12, "quantity": 3, "mysekaiSiteHarvestResourceDropStatus": "before_drop"},
+						{"resourceType": "mysekai_music_record", "resourceId": 3001, "quantity": 1, "mysekaiSiteHarvestResourceDropStatus": "before_drop"},
+					},
+				},
+			},
+			"userMysekaiBlueprints": []map[string]interface{}{
+				{"mysekaiBlueprintId": 1001},
+			},
+			"userMysekaiMaterials": []map[string]interface{}{
+				{"mysekaiMaterialId": 11, "quantity": 5},
+				{"mysekaiMaterialId": 12, "quantity": 0},
+			},
+			"userMysekaiGates": []map[string]interface{}{
+				{"mysekaiGateId": 1, "mysekaiGateLevel": 1},
+			},
+			"userMysekaiMusicRecords": []map[string]interface{}{
+				{"mysekaiMusicRecordId": 3001, "obtainedAt": 1700000000000},
+			},
+			"userMysekaiCharacterTalks": []map[string]interface{}{},
+		},
+	}
+	mysekaiJSONPath := filepath.Join(tempDir, "mysekai.json")
+	writeJSONFixture(t, mysekaiJSONPath, mysekaiJSON)
+
+	masterdataDir := filepath.Join(tempDir, "masterdata")
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiGameCharacterUnitGroups.json"), []map[string]interface{}{
+		{"id": 5001, "gameCharacterUnitId1": 1},
+		{"id": 5002, "gameCharacterUnitId1": 1, "gameCharacterUnitId2": 2},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]interface{}{
+		{"id": 1, "gameCharacterId": 1},
+		{"id": 2, "gameCharacterId": 2},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
+		{"id": 1, "firstName": "星乃", "givenName": "一歌"},
+		{"id": 2, "firstName": "天马", "givenName": "咲希"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+		{"id": 11, "iconAssetbundleName": "wood", "mysekaiMaterialRarityType": "rarity_1"},
+		{"id": 12, "iconAssetbundleName": "rare_wood", "mysekaiMaterialRarityType": "rarity_3"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{
+		{"id": 21, "iconAssetbundleName": "ticket"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{
+		{"id": 3001, "externalId": 101, "mysekaiMusicTrackType": "music"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{
+		{"id": 101, "assetbundleName": "jacket_s_101", "publishedAt": 1600000000000},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "musicTags.json"), []map[string]interface{}{
+		{"id": 1, "musicId": 101, "musicTag": "light_music_club"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "limitedTimeMusics.json"), []map[string]interface{}{})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]interface{}{
+		{
+			"id":                             2001,
+			"name":                           "Wood Chair",
+			"assetbundleName":                "wood_chair",
+			"mysekaiFixtureType":             "furniture",
+			"mysekaiFixtureMainGenreId":      1,
+			"mysekaiFixtureSubGenreId":       11,
+			"gridSize":                       map[string]interface{}{"width": 1, "depth": 1, "height": 1},
+			"firstPutCost":                   10,
+			"secondPutCost":                  15,
+			"isAssembled":                    true,
+			"isDisassembled":                 true,
+			"mysekaiFixturePlayerActionType": "touch",
+			"isGameCharacterAction":          true,
+			"mysekaiFixtureAnotherColors": []map[string]interface{}{
+				{"colorCode": "#FFFFFF"},
+			},
+			"mysekaiFixtureTagGroup": map[string]interface{}{
+				"mysekaiFixtureTagId1": 701,
+			},
+		},
+		{
+			"id":                             2002,
+			"name":                           "Birthday Lamp（一歌）",
+			"assetbundleName":                "birthday_lamp",
+			"mysekaiFixtureType":             "furniture",
+			"mysekaiFixtureMainGenreId":      1,
+			"mysekaiFixtureSubGenreId":       11,
+			"gridSize":                       map[string]interface{}{"width": 1, "depth": 1, "height": 1},
+			"firstPutCost":                   8,
+			"secondPutCost":                  12,
+			"isAssembled":                    true,
+			"isDisassembled":                 false,
+			"mysekaiFixturePlayerActionType": "no_action",
+			"isGameCharacterAction":          false,
+		},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]interface{}{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]interface{}{
+		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]interface{}{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001, "isEnableSketch": true, "isObtainedByConvert": false, "craftCountLimit": 0},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiBlueprintMysekaiMaterialCosts.json"), []map[string]interface{}{
+		{"id": 1, "mysekaiBlueprintId": 1001, "mysekaiMaterialId": 11, "quantity": 2},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiFixtureOnlyDisassembleMaterials.json"), []map[string]interface{}{
+		{"id": 1, "mysekaiFixtureId": 2001, "mysekaiMaterialId": 11, "quantity": 1},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiFixtureTags.json"), []map[string]interface{}{
+		{"id": 701, "name": "Cozy"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]interface{}{
+		{"id": 1, "groupId": 1001, "mysekaiMaterialId": 11, "quantity": 2},
+		{"id": 2, "groupId": 1002, "mysekaiMaterialId": 12, "quantity": 1},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "characterArchiveMysekaiCharacterTalkGroups.json"), []map[string]interface{}{
+		{"id": 9001, "archiveDisplayType": "normal"},
+		{"id": 9002, "archiveDisplayType": "normal"},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditions.json"), []map[string]interface{}{
+		{"id": 7001, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 2001},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditionGroups.json"), []map[string]interface{}{
+		{"id": 7101, "mysekaiCharacterTalkConditionId": 7001},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekaiCharacterTalks.json"), []map[string]interface{}{
+		{"id": 8001, "mysekaiCharacterTalkConditionGroupId": 7101, "mysekaiGameCharacterUnitGroupId": 5001, "characterArchiveMysekaiCharacterTalkGroupId": 9001},
+		{"id": 8002, "mysekaiCharacterTalkConditionGroupId": 7101, "mysekaiGameCharacterUnitGroupId": 5002, "characterArchiveMysekaiCharacterTalkGroupId": 9002},
+	})
+	writeJSONFixture(t, filepath.Join(masterdataDir, "mysekai", "system", "fixture_reaction_data", "fixture_reaction_data.json"), map[string]interface{}{
+		"FixturerRactions": []map[string]interface{}{
+			{
+				"FixtureId": 2001,
+				"ReactionCharacter": []map[string]interface{}{
+					{"CharacterUnitIds": []int{1}},
+					{"CharacterUnitIds": []int{1, 2}},
+				},
+			},
+		},
+	})
+
+	assetHelper := assets.NewAssetHelper(tempDir, nil)
+	snapshot := renderuserdata.NewLocalFileService(nil, assetHelper, renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSONPath,
+		MySekaiJSON:   mysekaiJSONPath,
+	})
+
+	return &renderapp.App{
+		Drawing: drawingClient,
+		Assets:  assetHelper,
+		MySekai: rendermysekai.NewController(drawingClient, snapshot, masterdataDir, renderregion.JP),
+	}
+}
+
 func writeFixtureFile(t *testing.T, path string, content []byte) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -2358,4 +2860,13 @@ func writeFixtureFile(t *testing.T, path string, content []byte) {
 	if err := os.WriteFile(path, content, 0o644); err != nil {
 		t.Fatalf("write fixture file: %v", err)
 	}
+}
+
+func writeJSONFixture(t *testing.T, path string, value interface{}) {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal fixture json: %v", err)
+	}
+	writeFixtureFile(t, path, data)
 }

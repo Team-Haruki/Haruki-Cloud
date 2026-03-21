@@ -8,6 +8,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/event"
+	"haruki-cloud/internal/pjsk/render/gacha"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
@@ -49,6 +50,7 @@ type App struct {
 	Drawing *drawing.HarukiDrawingClient
 	Assets  *assets.AssetHelper
 	Events  *event.Controller
+	Gachas  *gacha.Controller
 	Config  Config
 }
 
@@ -70,8 +72,10 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	var eventController *event.Controller
+	var gachaController *gacha.Controller
 	if sekaiClient != nil {
 		eventController = event.NewController(event.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
+		gachaController = gacha.NewController(gacha.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 	}
 
 	return &App{
@@ -80,6 +84,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Drawing: drawingClient,
 		Assets:  assetHelper,
 		Events:  eventController,
+		Gachas:  gachaController,
 		Config:  cfg,
 	}
 }

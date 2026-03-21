@@ -10,11 +10,13 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/config"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	rendereducation "haruki-cloud/internal/pjsk/render/education"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
@@ -137,6 +139,22 @@ type routeCardSource struct {
 	skills       map[int]*masterdata.Skill
 	gachasByCard map[int]*masterdata.Gacha
 	costumes     map[int][]*masterdata.Costume3d
+}
+
+type routeDeckCardSource struct {
+	region renderregion.Value
+	cards  map[int]*masterdata.Card
+}
+
+func (s *routeDeckCardSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *routeDeckCardSource) GetCardByID(id int) (*masterdata.Card, error) {
+	if item, ok := s.cards[id]; ok {
+		copy := *item
+		copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
 }
 
 func (s *routeCardSource) DefaultRegion() renderregion.Value { return s.region }
@@ -802,6 +820,131 @@ func TestPJSKCardBoxBuildRouteReturnsBuiltPayload(t *testing.T) {
 	}
 	if len(data.Payload.Cards) != 1 || data.Payload.Cards[0].Card.CardID != 1001 {
 		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKDeckRecommendBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := deckRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/deck/recommend/build", `{"region":"jp","profile":{"id":"1","region":"JP","nickname":"Deck User","source":"suite","update_time":1,"is_hide_uid":true,"leader_image_path":"leader.png","has_frame":false},"deck_data":[{"card_data":[{"card_thumbnail":{"card_id":1001,"card_thumbnail_path":"thumb.png","rare":"rarity_4","frame_img_path":"frame.png","attr_img_path":"attr.png","rare_img_path":"rare.png","train_rank":0},"chara_id":1,"skill_level":"4","is_after_training":true,"skill_rate":120,"event_bonus_rate":20,"is_before_story":true,"is_after_story":true,"has_canvas_bonus":false}]}],"recommend_type":"event"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			RecommendType string `json:"recommend_type"`
+			DeckData      []struct {
+				CardData []struct {
+					CharaID int `json:"chara_id"`
+				} `json:"card_data"`
+			} `json:"deck_data"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != deckRecommendEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.RecommendType != "event" || len(data.Payload.DeckData) != 1 || len(data.Payload.DeckData[0].CardData) != 1 || data.Payload.DeckData[0].CardData[0].CharaID != 1 {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKDeckRecommendAutoBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := deckRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/deck/recommend/auto/build", `{"region":"jp","recommend_type":"event","limit":2}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			RecommendType string  `json:"recommend_type"`
+			EventID       *int    `json:"event_id"`
+			EventName     *string `json:"event_name"`
+			LiveType      *string `json:"live_type"`
+			DeckData      []struct {
+				TotalPower *int `json:"total_power"`
+				CardData   []struct {
+					CardThumbnail struct {
+						CardID int `json:"card_id"`
+					} `json:"card_thumbnail"`
+				} `json:"card_data"`
+			} `json:"deck_data"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != deckRecommendEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Payload.RecommendType != "event" {
+		t.Fatalf("unexpected recommend type: %s", data.Payload.RecommendType)
+	}
+	if data.Payload.EventID == nil || *data.Payload.EventID != 1 || data.Payload.EventName == nil || *data.Payload.EventName != "Deck Event" {
+		t.Fatalf("unexpected event payload: %+v", data.Payload)
+	}
+	if data.Payload.LiveType == nil || *data.Payload.LiveType != "multi" {
+		t.Fatalf("unexpected live type: %+v", data.Payload.LiveType)
+	}
+	if len(data.Payload.DeckData) != 1 || data.Payload.DeckData[0].TotalPower == nil || *data.Payload.DeckData[0].TotalPower <= 0 {
+		t.Fatalf("unexpected deck data: %+v", data.Payload.DeckData)
+	}
+	if len(data.Payload.DeckData[0].CardData) != 2 || data.Payload.DeckData[0].CardData[0].CardThumbnail.CardID != 1002 {
+		t.Fatalf("unexpected card order: %+v", data.Payload.DeckData[0].CardData)
+	}
+}
+
+func TestPJSKDeckRecommendAutoRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != deckRecommendEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("DECKPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := deckRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/deck/recommend/auto/render", strings.NewReader(`{"region":"jp","recommend_type":"event","limit":2}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "DECKPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
 	}
 }
 
@@ -2516,6 +2659,95 @@ func musicSnapshotRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingCl
 		Drawing: drawingClient,
 		Assets:  assetHelper,
 		Music:   rendermusic.NewController(musicSource, drawingClient, assetHelper, snapshot),
+	}
+}
+
+func deckRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *renderapp.App {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	writeFixtureFile(t, filepath.Join(tempDir, "user", "leader.png"), []byte("leader"))
+
+	userJSON := `{
+		"now": 1700000000000,
+		"userGamedata": {"userId": 10001, "name": "Deck User", "deck": 1, "rank": 88},
+		"userProfile": {"profileImageType": "default", "word": "deck hello", "twitterId": "deck_test"},
+		"userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 1002, "member2": 1003, "member3": 0, "member4": 0, "member5": 0}],
+		"userCards": [
+			{"cardId": 1001, "level": 60, "masterRank": 1, "specialTrainingStatus": "done", "defaultImage": "normal", "episodes": []},
+			{"cardId": 1002, "level": 50, "masterRank": 2, "specialTrainingStatus": "done", "defaultImage": "normal", "episodes": []},
+			{"cardId": 1003, "level": 40, "masterRank": 0, "specialTrainingStatus": "not_done", "defaultImage": "normal", "episodes": []}
+		],
+		"userMusicResults": [],
+		"userChallengeLiveSoloResults": [],
+		"userChallengeLiveSoloStages": [],
+		"userChallengeLiveSoloHighScoreRewards": []
+	}`
+	userJSONPath := filepath.Join(tempDir, "user.json")
+	writeFixtureFile(t, userJSONPath, []byte(userJSON))
+
+	assetHelper := assets.NewAssetHelper(tempDir, nil)
+	snapshot := renderuserdata.NewLocalFileService(nil, assetHelper, renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSONPath,
+	})
+
+	now := time.Now().UnixMilli()
+	cardSource := &routeDeckCardSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				AssetBundleName: "card_1001",
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 1000},
+					{CardParameterType: "param2", Power: 1000},
+					{CardParameterType: "param3", Power: 1000},
+				},
+			},
+			1002: {
+				ID:                              1002,
+				CharacterID:                     2,
+				CardRarityType:                  "rarity_4",
+				Attr:                            "cool",
+				AssetBundleName:                 "card_1002",
+				SpecialTrainingPower1BonusFixed: 100,
+				SpecialTrainingPower2BonusFixed: 100,
+				SpecialTrainingPower3BonusFixed: 100,
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 1500},
+					{CardParameterType: "param2", Power: 1400},
+					{CardParameterType: "param3", Power: 1300},
+				},
+			},
+			1003: {
+				ID:              1003,
+				CharacterID:     3,
+				CardRarityType:  "rarity_3",
+				Attr:            "pure",
+				AssetBundleName: "card_1003",
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 800},
+					{CardParameterType: "param2", Power: 700},
+					{CardParameterType: "param3", Power: 600},
+				},
+			},
+		},
+	}
+	eventSource := &routeEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{
+			{ID: 1, Name: "Deck Event", AssetBundleName: "deck_event", StartAt: now - 60000, AggregateAt: now + 60000},
+		},
+	}
+
+	return &renderapp.App{
+		Drawing: drawingClient,
+		Assets:  assetHelper,
+		Decks:   renderdeck.NewController(cardSource, eventSource, drawingClient, assetHelper, snapshot, renderregion.JP),
 	}
 }
 

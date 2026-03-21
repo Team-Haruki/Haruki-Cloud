@@ -219,6 +219,21 @@ type LimitedTimeMusic struct {
 	EndAt   int64
 }
 
+type PlayerFrame struct {
+	ID                 int
+	Seq                int
+	PlayerFrameGroupID int
+	Description        string
+	GameCharacterID    int
+}
+
+type PlayerFrameGroup struct {
+	ID              int
+	Seq             int
+	Name            string
+	AssetBundleName string
+}
+
 type Costume3d struct {
 	ID              int    `json:"id"`
 	CharacterID     int    `json:"characterId"`

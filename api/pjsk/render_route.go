@@ -7,10 +7,13 @@ import (
 	"haruki-cloud/api"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	rendereducation "haruki-cloud/internal/pjsk/render/education"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	renderprofile "haruki-cloud/internal/pjsk/render/profile"
+	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/utils/drawing"
 
@@ -23,13 +26,29 @@ const (
 	cardBoxDrawingEndpoint     = "/api/pjsk/card/box"
 	eventDetailDrawingEndpoint = "/api/pjsk/event/detail"
 	eventListDrawingEndpoint   = "/api/pjsk/event/list"
+	eventRecordDrawingEndpoint = "/api/pjsk/event/record"
 	gachaDetailDrawingEndpoint = "/api/pjsk/gacha/detail"
 	gachaListDrawingEndpoint   = "/api/pjsk/gacha/list"
 	honorDrawingEndpoint       = "/api/pjsk/honor"
+	profileDrawingEndpoint     = "/api/pjsk/profile/profile"
 	charaBirthdayEndpoint      = "/api/pjsk/misc/chara-birthday"
 	musicDetailDrawingEndpoint = "/api/pjsk/music/detail"
 	musicBriefDrawingEndpoint  = "/api/pjsk/music/brief-list"
+	musicProgressEndpoint      = "/api/pjsk/music/progress"
+	musicRewardsDetailEndpoint = "/api/pjsk/music/rewards/detail"
+	musicRewardsBasicEndpoint  = "/api/pjsk/music/rewards/basic"
 	musicChartDrawingEndpoint  = "/api/pjsk/chart"
+	educationChallengeEndpoint = "/api/pjsk/education/challenge-live"
+	educationPowerEndpoint     = "/api/pjsk/education/power-bonus"
+	educationAreaItemEndpoint  = "/api/pjsk/education/area-item"
+	educationBondsEndpoint     = "/api/pjsk/education/bonds"
+	educationLeaderEndpoint    = "/api/pjsk/education/leader-count"
+	skQueryEndpoint            = "/api/pjsk/sk/query"
+	skCheckRoomEndpoint        = "/api/pjsk/sk/check-room"
+	skSpeedEndpoint            = "/api/pjsk/sk/speed"
+	skPlayerTraceEndpoint      = "/api/pjsk/sk/player-trace"
+	skRankTraceEndpoint        = "/api/pjsk/sk/rank-trace"
+	skWinRateEndpoint          = "/api/pjsk/sk/winrate"
 	scoreControlEndpoint       = "/api/pjsk/score/control"
 	scoreCustomRoomEndpoint    = "/api/pjsk/score/custom-room"
 	scoreMusicMetaEndpoint     = "/api/pjsk/score/music-meta"
@@ -39,6 +58,10 @@ const (
 
 func musicListDrawingEndpoint(showID bool, showLeak bool) string {
 	return fmt.Sprintf("/api/pjsk/music/list?show_id=%t&show_leak=%t", showID, showLeak)
+}
+
+func skLineEndpoint(full bool) string {
+	return fmt.Sprintf("/api/pjsk/sk/line?full=%t", full)
 }
 
 type RenderHandler struct {
@@ -55,8 +78,11 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	registerEventRenderRoutes(internal, runtime)
 	registerGachaRenderRoutes(internal, runtime)
 	registerHonorRenderRoutes(internal, runtime)
+	registerProfileRenderRoutes(internal, runtime)
 	registerMiscRenderRoutes(internal, runtime)
 	registerMusicRenderRoutes(internal, runtime)
+	registerEducationRenderRoutes(internal, runtime)
+	registerSKRenderRoutes(internal, runtime)
 	registerScoreRenderRoutes(internal, runtime)
 	registerStampRenderRoutes(internal, runtime)
 }
@@ -87,6 +113,8 @@ func registerEventRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/detail/render", handler.RenderEventDetail)
 	group.Post("/list/build", handler.BuildEventList)
 	group.Post("/list/render", handler.RenderEventList)
+	group.Post("/record/build", handler.BuildEventRecord)
+	group.Post("/record/render", handler.RenderEventRecord)
 }
 
 func registerGachaRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -124,6 +152,17 @@ func registerHonorRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/render", handler.RenderHonor)
 }
 
+func registerProfileRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Profiles == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/profile")
+	group.Post("/build", handler.BuildProfile)
+	group.Post("/render", handler.RenderProfile)
+}
+
 func registerMiscRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	if runtime == nil || runtime.Misc == nil {
 		return
@@ -148,8 +187,56 @@ func registerMusicRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/brief-list/render", handler.RenderMusicBriefList)
 	group.Post("/list/build", handler.BuildMusicList)
 	group.Post("/list/render", handler.RenderMusicList)
+	group.Post("/progress/build", handler.BuildMusicProgress)
+	group.Post("/progress/render", handler.RenderMusicProgress)
+	group.Post("/rewards/detail/build", handler.BuildMusicRewardsDetail)
+	group.Post("/rewards/detail/render", handler.RenderMusicRewardsDetail)
+	group.Post("/rewards/basic/build", handler.BuildMusicRewardsBasic)
+	group.Post("/rewards/basic/render", handler.RenderMusicRewardsBasic)
 	group.Post("/chart/build", handler.BuildMusicChart)
 	group.Post("/chart/render", handler.RenderMusicChart)
+}
+
+func registerEducationRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Edu == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/education")
+	group.Post("/challenge-live/build", handler.BuildEducationChallengeLive)
+	group.Post("/challenge-live/render", handler.RenderEducationChallengeLive)
+	group.Post("/power-bonus/build", handler.BuildEducationPowerBonus)
+	group.Post("/power-bonus/render", handler.RenderEducationPowerBonus)
+	group.Post("/area-item/build", handler.BuildEducationAreaItem)
+	group.Post("/area-item/render", handler.RenderEducationAreaItem)
+	group.Post("/bonds/build", handler.BuildEducationBonds)
+	group.Post("/bonds/render", handler.RenderEducationBonds)
+	group.Post("/leader-count/build", handler.BuildEducationLeaderCount)
+	group.Post("/leader-count/render", handler.RenderEducationLeaderCount)
+}
+
+func registerSKRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.SK == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/sk")
+	group.Post("/line/build", handler.BuildSKLine)
+	group.Post("/line/render", handler.RenderSKLine)
+	group.Post("/query/build", handler.BuildSKQuery)
+	group.Post("/query/render", handler.RenderSKQuery)
+	group.Post("/check-room/build", handler.BuildSKCheckRoom)
+	group.Post("/check-room/render", handler.RenderSKCheckRoom)
+	group.Post("/speed/build", handler.BuildSKSpeed)
+	group.Post("/speed/render", handler.RenderSKSpeed)
+	group.Post("/player-trace/build", handler.BuildSKPlayerTrace)
+	group.Post("/player-trace/render", handler.RenderSKPlayerTrace)
+	group.Post("/rank-trace/build", handler.BuildSKRankTrace)
+	group.Post("/rank-trace/render", handler.RenderSKRankTrace)
+	group.Post("/winrate/build", handler.BuildSKWinRate)
+	group.Post("/winrate/render", handler.RenderSKWinRate)
 }
 
 func registerScoreRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -326,6 +413,38 @@ func (h *RenderHandler) RenderEventList(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).Send(image)
 }
 
+func (h *RenderHandler) BuildEventRecord(c fiber.Ctx) error {
+	var req drawing.EventRecordRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Events.BuildEventRecordRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: eventRecordDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderEventRecord(c fiber.Ctx) error {
+	var req drawing.EventRecordRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Events.RenderEventRecord(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
 func (h *RenderHandler) BuildGachaDetail(c fiber.Ctx) error {
 	var query rendergacha.DetailQuery
 	if err := c.Bind().Body(&query); err != nil {
@@ -418,6 +537,37 @@ func (h *RenderHandler) RenderHonor(c fiber.Ctx) error {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildProfile(c fiber.Ctx) error {
+	var query renderprofile.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Profiles.BuildProfileRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: profileDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderProfile(c fiber.Ctx) error {
+	var query renderprofile.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Profiles.RenderProfile(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
 	c.Type("png")
 	return c.Status(fiber.StatusOK).Send(image)
 }
@@ -547,6 +697,99 @@ func (h *RenderHandler) RenderMusicList(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).Send(image)
 }
 
+func (h *RenderHandler) BuildMusicProgress(c fiber.Ctx) error {
+	var query rendermusic.ProgressQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicProgressRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicProgressEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicProgress(c fiber.Ctx) error {
+	var query rendermusic.ProgressQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicProgress(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicRewardsDetail(c fiber.Ctx) error {
+	var query rendermusic.RewardsDetailQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicRewardsDetailRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicRewardsDetailEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicRewardsDetail(c fiber.Ctx) error {
+	var query rendermusic.RewardsDetailQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicRewardsDetail(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicRewardsBasic(c fiber.Ctx) error {
+	var query rendermusic.RewardsBasicQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicRewardsBasicRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicRewardsBasicEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicRewardsBasic(c fiber.Ctx) error {
+	var query rendermusic.RewardsBasicQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicRewardsBasic(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
 func (h *RenderHandler) BuildMusicChart(c fiber.Ctx) error {
 	var query rendermusic.ChartQuery
 	if err := c.Bind().Body(&query); err != nil {
@@ -571,6 +814,378 @@ func (h *RenderHandler) RenderMusicChart(c fiber.Ctx) error {
 	}
 
 	image, err := h.app.Music.RenderMusicChart(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildEducationPowerBonus(c fiber.Ctx) error {
+	var req drawing.PowerBonusDetailRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Edu.BuildPowerBonusDetailRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: educationPowerEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) BuildEducationChallengeLive(c fiber.Ctx) error {
+	var query rendereducation.ChallengeLiveQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Edu.BuildChallengeLiveDetailsRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: educationChallengeEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderEducationChallengeLive(c fiber.Ctx) error {
+	var query rendereducation.ChallengeLiveQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Edu.RenderChallengeLiveDetails(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) RenderEducationPowerBonus(c fiber.Ctx) error {
+	var req drawing.PowerBonusDetailRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Edu.RenderPowerBonusDetail(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildEducationAreaItem(c fiber.Ctx) error {
+	var req drawing.AreaItemUpgradeMaterialsRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Edu.BuildAreaItemUpgradeMaterialsRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: educationAreaItemEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderEducationAreaItem(c fiber.Ctx) error {
+	var req drawing.AreaItemUpgradeMaterialsRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Edu.RenderAreaItemUpgradeMaterials(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildEducationBonds(c fiber.Ctx) error {
+	var req drawing.BondsRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Edu.BuildBondsRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: educationBondsEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderEducationBonds(c fiber.Ctx) error {
+	var req drawing.BondsRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Edu.RenderBonds(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildEducationLeaderCount(c fiber.Ctx) error {
+	var req drawing.LeaderCountRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Edu.BuildLeaderCountRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: educationLeaderEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderEducationLeaderCount(c fiber.Ctx) error {
+	var req drawing.LeaderCountRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Edu.RenderLeaderCount(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKLine(c fiber.Ctx) error {
+	var req rendersk.LineRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildLineRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skLineEndpoint(req.Full),
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKLine(c fiber.Ctx) error {
+	var req rendersk.LineRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderLine(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKQuery(c fiber.Ctx) error {
+	var req drawing.SKRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildQueryRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skQueryEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKQuery(c fiber.Ctx) error {
+	var req drawing.SKRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderQuery(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKCheckRoom(c fiber.Ctx) error {
+	var req drawing.CFRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildCheckRoomRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skCheckRoomEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKCheckRoom(c fiber.Ctx) error {
+	var req drawing.CFRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderCheckRoom(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKSpeed(c fiber.Ctx) error {
+	var req drawing.SpeedRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildSpeedRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skSpeedEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKSpeed(c fiber.Ctx) error {
+	var req drawing.SpeedRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderSpeed(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKPlayerTrace(c fiber.Ctx) error {
+	var req drawing.PlayerTraceRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildPlayerTraceRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skPlayerTraceEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKPlayerTrace(c fiber.Ctx) error {
+	var req drawing.PlayerTraceRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderPlayerTrace(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKRankTrace(c fiber.Ctx) error {
+	var req drawing.RankTraceRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildRankTraceRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skRankTraceEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKRankTrace(c fiber.Ctx) error {
+	var req drawing.RankTraceRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderRankTrace(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildSKWinRate(c fiber.Ctx) error {
+	var req drawing.WinRateRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildWinRateRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skWinRateEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKWinRate(c fiber.Ctx) error {
+	var req drawing.WinRateRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.SK.RenderWinRate(req)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}

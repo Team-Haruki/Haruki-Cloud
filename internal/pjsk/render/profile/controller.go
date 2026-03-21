@@ -1,0 +1,357 @@
+package profile
+
+import (
+	"fmt"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
+	renderhonor "haruki-cloud/internal/pjsk/render/honor"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
+)
+
+var wordTagPattern = regexp.MustCompile(`<#.*?>`)
+
+type Controller struct {
+	sources  *regionsource.Registry[Source]
+	drawing  *drawing.HarukiDrawingClient
+	assets   *assets.AssetHelper
+	snapshot *userdata.Service
+}
+
+func NewController(defaultSource Source, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
+	if assetHelper == nil {
+		assetHelper = assets.NewAssetHelper("", nil)
+	}
+	ctrl := &Controller{
+		sources:  regionsource.NewRegistry[Source](renderregion.JP),
+		drawing:  drawingClient,
+		assets:   assetHelper,
+		snapshot: snapshot,
+	}
+	ctrl.RegisterSource(defaultSource)
+	return ctrl
+}
+
+func (c *Controller) RegisterSource(source Source) {
+	if c == nil || c.sources == nil {
+		return
+	}
+	c.sources.RegisterSource(source)
+}
+
+func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, error) {
+	if c == nil || c.sources == nil {
+		return nil, fmt.Errorf("profile controller is not initialized")
+	}
+	if c.snapshot == nil {
+		return nil, fmt.Errorf("local user snapshot is not configured")
+	}
+	if err := c.snapshot.Require(); err != nil {
+		return nil, err
+	}
+
+	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, fmt.Errorf("profile data source is not configured")
+	}
+
+	raw := c.snapshot.RawData()
+	if raw == nil {
+		return nil, fmt.Errorf("user snapshot is missing raw profile data")
+	}
+	detail := c.snapshot.DetailedProfile(region)
+	if detail == nil {
+		return nil, fmt.Errorf("user snapshot is missing profile data")
+	}
+
+	framePaths, hasFrame := c.buildFramePaths(source, raw.UserFrames)
+	var framePath *string
+	if framePaths != nil {
+		path := framePaths.Base
+		framePath = &path
+	}
+	updateTime := detail.UpdateTime
+
+	return &drawing.ProfileRequest{
+		Profile: drawing.BasicProfile{
+			ID:              detail.ID,
+			Region:          detail.Region,
+			Nickname:        detail.Nickname,
+			IsHideUID:       detail.IsHideUID,
+			LeaderImagePath: detail.LeaderImagePath,
+			HasFrame:        hasFrame,
+			FramePath:       framePath,
+		},
+		Rank:                 raw.UserGamedata.Rank,
+		TwitterID:            raw.UserProfile.TwitterID,
+		Word:                 cleanWord(raw.UserProfile.Word),
+		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
+		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
+		Honors:               c.buildHonors(source, raw),
+		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
+		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
+		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
+		UpdateTime:           &updateTime,
+		LvRankBgPath:         "user/lv_rank_bg.png",
+		XIconPath:            "user/icon_twitter.png",
+		IconClearPath:        "icon_clear.png",
+		IconFcPath:           "icon_fc.png",
+		IconApPath:           "icon_ap.png",
+		CharaRankIconPathMap: buildCharaIconMap(),
+		FramePaths:           framePaths,
+	}, nil
+}
+
+func (c *Controller) RenderProfile(query Query) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildProfileRequest(query)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateProfile(payload)
+}
+
+func (c *Controller) buildFramePaths(source Source, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
+	equippedID := 0
+	for _, item := range userFrames {
+		if strings.EqualFold(item.PlayerFrameAttachStatus, "equipped") {
+			equippedID = item.PlayerFrameID
+			break
+		}
+	}
+	if equippedID == 0 {
+		return nil, false
+	}
+
+	frame, err := source.GetPlayerFrameByID(equippedID)
+	if err != nil {
+		return nil, false
+	}
+	group, err := source.GetPlayerFrameGroupByID(frame.PlayerFrameGroupID)
+	if err != nil || strings.TrimSpace(group.AssetBundleName) == "" {
+		return nil, false
+	}
+
+	base := filepath.ToSlash(filepath.Join("player_frame", group.AssetBundleName, strconv.Itoa(equippedID)))
+	return &drawing.PlayerFramePaths{
+		Base:        filepath.ToSlash(filepath.Join(base, "horizontal", "frame_base.png")),
+		CenterTop:   filepath.ToSlash(filepath.Join(base, "vertical", "frame_centertop.png")),
+		LeftBottom:  filepath.ToSlash(filepath.Join(base, "vertical", "frame_leftbottom.png")),
+		LeftTop:     filepath.ToSlash(filepath.Join(base, "horizontal", "frame_lefttop.png")),
+		RightBottom: filepath.ToSlash(filepath.Join(base, "horizontal", "frame_rightbottom.png")),
+		RightTop:    filepath.ToSlash(filepath.Join(base, "horizontal", "frame_righttop.png")),
+	}, true
+}
+
+func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int) []drawing.CardFullThumbnailRequest {
+	activeDeck := findActiveDeck(decks, activeDeckID)
+	memberIDs := []int{activeDeck.Member1, activeDeck.Member2, activeDeck.Member3, activeDeck.Member4, activeDeck.Member5}
+	result := make([]drawing.CardFullThumbnailRequest, 0, len(memberIDs))
+	for _, cardID := range memberIDs {
+		if cardID == 0 {
+			continue
+		}
+		cardInfo, err := source.GetCardByID(cardID)
+		if err != nil || cardInfo == nil {
+			continue
+		}
+		userCard := findUserCard(userCards, cardID)
+		var level *int
+		if userCard != nil {
+			value := userCard.Level
+			level = &value
+		}
+		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, common.ThumbnailOptions{
+			AfterTraining: userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done"),
+			TrainedArt:    userCard != nil && strings.EqualFold(userCard.DefaultImage, "special_training"),
+			Level:         level,
+			IsPcard:       true,
+		}))
+	}
+	return result
+}
+
+func (c *Controller) buildHonors(source Source, raw *userdata.RawUserData) []drawing.HonorRequest {
+	if raw == nil {
+		return nil
+	}
+
+	builder := renderhonor.NewBuilder(source, c.assets)
+	selected := make([]userdata.RawUserProfileHonor, 0, len(raw.UserProfileHonors))
+	for _, item := range raw.UserProfileHonors {
+		if item.HonorID > 0 || item.HonorId2 > 0 {
+			selected = append(selected, item)
+		}
+	}
+	sort.Slice(selected, func(i, j int) bool { return selected[i].Seq < selected[j].Seq })
+
+	requests := make([]drawing.HonorRequest, 0, 3)
+	for _, item := range selected {
+		honorID := item.HonorID
+		if honorID == 0 {
+			honorID = item.HonorId2
+		}
+		req, err := builder.BuildHonorRequest(renderhonor.Query{
+			Region:           source.DefaultRegion(),
+			HonorID:          honorID,
+			HonorLevel:       item.HonorLevel,
+			IsMain:           item.Seq == 1,
+			Rank:             c.findEventRank(raw.UserEventResults, source.GetEventIDByHonorID(honorID)),
+			BondsHonorWordID: item.BondsHonorWordId,
+		})
+		if err == nil && req != nil {
+			requests = append(requests, *req)
+		}
+	}
+	if len(requests) > 0 {
+		return requests
+	}
+
+	for _, item := range raw.UserHonors {
+		if len(requests) >= 3 {
+			break
+		}
+		req, err := builder.BuildHonorRequest(renderhonor.Query{
+			Region:     source.DefaultRegion(),
+			HonorID:    item.HonorID,
+			HonorLevel: item.HonorLevel,
+			IsMain:     len(requests) == 0,
+			Rank:       c.findEventRank(raw.UserEventResults, source.GetEventIDByHonorID(item.HonorID)),
+		})
+		if err == nil && req != nil {
+			requests = append(requests, *req)
+		}
+	}
+	return requests
+}
+
+func (c *Controller) findEventRank(results []userdata.RawUserEventResult, eventID int) int {
+	if eventID == 0 {
+		return 0
+	}
+	for _, item := range results {
+		if item.EventID == eventID {
+			return item.Rank
+		}
+	}
+	return 0
+}
+
+func buildMusicCounts(clears []userdata.RawMusicClear, stats []userdata.RawMusicResult) []drawing.MusicClearCount {
+	difficulties := []string{"easy", "normal", "hard", "expert", "master", "append"}
+	result := make([]drawing.MusicClearCount, 0, len(difficulties))
+
+	if len(clears) > 0 {
+		for _, difficulty := range difficulties {
+			count := drawing.MusicClearCount{Difficulty: difficulty}
+			for _, item := range clears {
+				if strings.EqualFold(item.MusicDifficultyType, difficulty) {
+					count.Clear = item.LiveClear
+					count.Fc = item.FullCombo
+					count.Ap = item.AllPerfect
+					break
+				}
+			}
+			result = append(result, count)
+		}
+		return result
+	}
+
+	for _, difficulty := range difficulties {
+		count := drawing.MusicClearCount{Difficulty: difficulty}
+		seen := make(map[int]struct{})
+		for _, item := range stats {
+			if !strings.EqualFold(item.MusicDifficultyType, difficulty) {
+				continue
+			}
+			if _, ok := seen[item.MusicID]; ok {
+				continue
+			}
+			seen[item.MusicID] = struct{}{}
+			count.Clear++
+			if item.FullComboFlg {
+				count.Fc++
+			}
+			if item.FullPerfectFlg {
+				count.Ap++
+			}
+		}
+		result = append(result, count)
+	}
+	return result
+}
+
+func buildCharacterRanks(ranks []userdata.RawUserCharacter) []drawing.CharacterRank {
+	result := make([]drawing.CharacterRank, 0, len(ranks))
+	for _, item := range ranks {
+		result = append(result, drawing.CharacterRank{
+			CharacterID: item.CharacterID,
+			Rank:        item.CharacterRank,
+		})
+	}
+	return result
+}
+
+func buildSoloLive(results []userdata.RawChallengeLiveResult, stages []userdata.RawChallengeLiveStage) *drawing.SoloLiveRank {
+	if len(results) == 0 {
+		return nil
+	}
+	items := append([]userdata.RawChallengeLiveResult(nil), results...)
+	sort.Slice(items, func(i, j int) bool { return items[i].HighScore > items[j].HighScore })
+	top := items[0]
+	rank := 1
+	for _, item := range stages {
+		if item.CharacterID == top.CharacterID && item.Rank > rank {
+			rank = item.Rank
+		}
+	}
+	return &drawing.SoloLiveRank{
+		CharacterID: top.CharacterID,
+		Score:       top.HighScore,
+		Rank:        rank,
+	}
+}
+
+func buildCharaIconMap() map[string]string {
+	result := make(map[string]string, len(assets.CharacterIDToNickname))
+	for id, nickname := range assets.CharacterIDToNickname {
+		result[strconv.Itoa(id)] = filepath.ToSlash(filepath.Join("chara_rank_icon", nickname+".png"))
+	}
+	return result
+}
+
+func cleanWord(word string) string {
+	return wordTagPattern.ReplaceAllString(word, "")
+}
+
+func findActiveDeck(decks []userdata.RawUserDeck, activeID int) userdata.RawUserDeck {
+	for _, deck := range decks {
+		if deck.DeckID == activeID {
+			return deck
+		}
+	}
+	if len(decks) > 0 {
+		return decks[0]
+	}
+	return userdata.RawUserDeck{}
+}
+
+func findUserCard(cards []userdata.RawUserCard, cardID int) *userdata.RawUserCard {
+	for i := range cards {
+		if cards[i].CardID == cardID {
+			return &cards[i]
+		}
+	}
+	return nil
+}

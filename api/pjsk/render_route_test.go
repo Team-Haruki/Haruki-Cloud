@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -17,6 +18,7 @@ import (
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermisc "haruki-cloud/internal/pjsk/render/misc"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
@@ -285,6 +287,155 @@ func (s *routeHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCha
 		return &copy, true
 	}
 	return nil, false
+}
+
+type routeMusicSource struct {
+	region              renderregion.Value
+	musics              map[int]*masterdata.Music
+	localizedTitles     map[int][]string
+	difficulties        map[int][]*masterdata.MusicDifficulty
+	vocals              map[int][]*masterdata.MusicVocal
+	tags                map[int][]string
+	characters          map[int]*masterdata.Character
+	events              map[int]*masterdata.Event
+	primaryEventByMusic map[int]int
+	musicByEvent        map[int]int
+	banEvents           map[int][]*masterdata.Event
+	limited             map[int][]*masterdata.LimitedTimeMusic
+}
+
+func (s *routeMusicSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *routeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fiber.ErrNotFound
+	}
+	if id, err := strconv.Atoi(query); err == nil {
+		return s.GetMusicByID(id)
+	}
+	lower := strings.ToLower(query)
+	for _, item := range s.musics {
+		if strings.EqualFold(item.Title, query) || strings.Contains(strings.ToLower(item.Title), lower) {
+			copy := *item
+			if item.Categories != nil {
+				copy.Categories = append([]string(nil), item.Categories...)
+			}
+			return &copy, nil
+		}
+		for _, title := range s.localizedTitles[item.ID] {
+			if strings.EqualFold(title, query) || strings.Contains(strings.ToLower(title), lower) {
+				copy := *item
+				if item.Categories != nil {
+					copy.Categories = append([]string(nil), item.Categories...)
+				}
+				return &copy, nil
+			}
+		}
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeMusicSource) GetMusicByID(id int) (*masterdata.Music, error) {
+	if item, ok := s.musics[id]; ok {
+		copy := *item
+		if item.Categories != nil {
+			copy.Categories = append([]string(nil), item.Categories...)
+		}
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeMusicSource) GetMusicByEventID(eventID int) (*masterdata.Music, error) {
+	musicID, ok := s.musicByEvent[eventID]
+	if !ok {
+		return nil, fiber.ErrNotFound
+	}
+	return s.GetMusicByID(musicID)
+}
+
+func (s *routeMusicSource) GetMusics() []*masterdata.Music {
+	out := make([]*masterdata.Music, 0, len(s.musics))
+	for _, item := range s.musics {
+		copy := *item
+		if item.Categories != nil {
+			copy.Categories = append([]string(nil), item.Categories...)
+		}
+		out = append(out, &copy)
+	}
+	return out
+}
+
+func (s *routeMusicSource) GetBanEvents(charID int) []*masterdata.Event {
+	items := s.banEvents[charID]
+	out := make([]*masterdata.Event, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out
+}
+
+func (s *routeMusicSource) GetMusicLocalizedTitles(musicID int) ([]string, error) {
+	return append([]string(nil), s.localizedTitles[musicID]...), nil
+}
+
+func (s *routeMusicSource) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
+	items := s.difficulties[musicID]
+	out := make([]*masterdata.MusicDifficulty, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out, nil
+}
+
+func (s *routeMusicSource) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error) {
+	items := s.vocals[musicID]
+	out := make([]*masterdata.MusicVocal, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		if item.Characters != nil {
+			copy.Characters = append([]masterdata.MusicVocalCharacter(nil), item.Characters...)
+		}
+		out = append(out, &copy)
+	}
+	return out, nil
+}
+
+func (s *routeMusicSource) GetMusicTags(musicID int) ([]string, error) {
+	return append([]string(nil), s.tags[musicID]...), nil
+}
+
+func (s *routeMusicSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	if item, ok := s.characters[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeMusicSource) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
+	eventID, ok := s.primaryEventByMusic[musicID]
+	if !ok {
+		return nil, fiber.ErrNotFound
+	}
+	if item, ok := s.events[eventID]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeMusicSource) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
+	items := s.limited[musicID]
+	out := make([]*masterdata.LimitedTimeMusic, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out
 }
 
 func TestPJSKEventBuildRouteReturnsBuiltPayload(t *testing.T) {
@@ -885,6 +1036,184 @@ func TestPJSKScoreMusicBoardRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 }
 
+func TestPJSKMusicDetailBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/music/detail/build", `{"query":"100","region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			MusicInfo struct {
+				ID    int    `json:"id"`
+				Title string `json:"title"`
+			} `json:"music_info"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != musicDetailDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.MusicInfo.ID != 100 || data.Payload.MusicInfo.Title == "" {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKMusicBriefListBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/music/brief-list/build", `{"music_ids":[100],"difficulty":"master","region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			MusicList []struct {
+				ID    int `json:"id"`
+				Level int `json:"level"`
+			} `json:"music_list"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != musicBriefDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if len(data.Payload.MusicList) != 1 || data.Payload.MusicList[0].ID != 100 || data.Payload.MusicList[0].Level != 31 {
+		t.Fatalf("unexpected payload: %+v", data.Payload.MusicList)
+	}
+}
+
+func TestPJSKMusicListBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/music/list/build", `{"difficulty":"master","region":"jp","show_id":true,"include_leaks":true}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			RequiredDifficulties string `json:"required_difficulties"`
+			MusicList            []struct {
+				ID int `json:"id"`
+			} `json:"music_list"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != musicListDrawingEndpoint(true, true) {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.RequiredDifficulties != "master" || len(data.Payload.MusicList) != 1 || data.Payload.MusicList[0].ID != 100 {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKMusicListRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/music/list" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("show_id"); got != "true" {
+			t.Fatalf("unexpected show_id query: %s", got)
+		}
+		if got := r.URL.Query().Get("show_leak"); got != "true" {
+			t.Fatalf("unexpected show_leak query: %s", got)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("MUSICLISTPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/music/list/render", strings.NewReader(`{"difficulty":"master","region":"jp","show_id":true,"include_leaks":true}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "MUSICLISTPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKMusicChartBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/music/chart/build", `{"query":"100","region":"jp","difficulty":"master"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			MusicID    int    `json:"music_id"`
+			Difficulty string `json:"difficulty"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != musicChartDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.MusicID != 100 || data.Payload.Difficulty != "master" {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
 func TestPJSKRenderRoutesRequireAuthorizationWhenConfigured(t *testing.T) {
 	oldAuth := config.Cfg.Backend.AcceptAuthorization
 	oldUA := config.Cfg.Backend.AcceptUserAgent
@@ -1029,6 +1358,67 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 	}
 	honorController := renderhonor.NewController(honorSource, drawingClient, assets.NewAssetHelper("", nil))
 	miscController := rendermisc.NewController(drawingClient)
+	musicSource := &routeMusicSource{
+		region: renderregion.JP,
+		musics: map[int]*masterdata.Music{
+			100: {
+				ID:              100,
+				Categories:      []string{"mv_3d"},
+				Title:           "Tell Your World",
+				Pronunciation:   "tell your world",
+				Lyricist:        "kz",
+				Composer:        "kz",
+				Arranger:        "kz",
+				AssetBundleName: "jacket_s_001",
+				PublishedAt:     1700000000000,
+			},
+		},
+		localizedTitles: map[int][]string{
+			100: {"Tell Your World", "向你诉说世界"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			100: {
+				{ID: 1, MusicID: 100, MusicDifficulty: "expert", PlayLevel: 26, TotalNoteCount: 777},
+				{ID: 2, MusicID: 100, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 999},
+			},
+		},
+		vocals: map[int][]*masterdata.MusicVocal{
+			100: {
+				{
+					ID:              1,
+					MusicID:         100,
+					MusicVocalType:  "virtual_singer",
+					Caption:         "バーチャル・シンガーver.",
+					AssetBundleName: "vs_test",
+					Characters: []masterdata.MusicVocalCharacter{
+						{ID: 1, MusicID: 100, MusicVocalID: 1, CharacterType: "virtual_singer", CharacterID: 21},
+					},
+				},
+			},
+		},
+		tags: map[int][]string{
+			100: {"miku"},
+		},
+		characters: map[int]*masterdata.Character{
+			21: {ID: 21, FirstName: "初音", GivenName: "未来", Unit: "piapro"},
+		},
+		events: map[int]*masterdata.Event{
+			1: {ID: 1, Name: "JP Event", AssetBundleName: "jp_event", StartAt: 100, AggregateAt: 200},
+		},
+		primaryEventByMusic: map[int]int{
+			100: 1,
+		},
+		musicByEvent: map[int]int{
+			1: 100,
+		},
+		banEvents: map[int][]*masterdata.Event{},
+		limited: map[int][]*masterdata.LimitedTimeMusic{
+			100: {
+				{ID: 1, MusicID: 100, StartAt: 1700000000000, EndAt: 1700003600000},
+			},
+		},
+	}
+	musicController := rendermusic.NewController(musicSource, drawingClient, assets.NewAssetHelper("", nil))
 	scoreController := renderscore.NewController(drawingClient)
 
 	stampSource := &routeStampSource{
@@ -1047,6 +1437,7 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 		Gachas:  gachaController,
 		Honors:  honorController,
 		Misc:    miscController,
+		Music:   musicController,
 		Score:   scoreController,
 		Stamps:  stampController,
 	}

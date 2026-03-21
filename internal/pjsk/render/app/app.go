@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/gacha"
 	"haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/misc"
+	"haruki-cloud/internal/pjsk/render/music"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/stamp"
@@ -59,6 +60,7 @@ type App struct {
 	Gachas  *gacha.Controller
 	Honors  *honor.Controller
 	Misc    *misc.Controller
+	Music   *music.Controller
 	Score   *score.Controller
 	Stamps  *stamp.Controller
 	Config  Config
@@ -82,6 +84,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
+	musicController := (*music.Controller)(nil)
 	scoreController := score.NewController(drawingClient)
 
 	var cardController *card.Controller
@@ -94,6 +97,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		eventController = event.NewController(event.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 		gachaController = gacha.NewController(gacha.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 		honorController = honor.NewController(honor.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
+		musicController = music.NewController(music.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 		stampController = stamp.NewController(stamp.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
 	}
 
@@ -107,6 +111,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Gachas:  gachaController,
 		Honors:  honorController,
 		Misc:    miscController,
+		Music:   musicController,
 		Score:   scoreController,
 		Stamps:  stampController,
 		Config:  cfg,

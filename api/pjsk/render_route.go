@@ -1,6 +1,7 @@
 package pjsk
 
 import (
+	"fmt"
 	"net/http"
 
 	"haruki-cloud/api"
@@ -9,6 +10,7 @@ import (
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/utils/drawing"
 
@@ -25,12 +27,19 @@ const (
 	gachaListDrawingEndpoint   = "/api/pjsk/gacha/list"
 	honorDrawingEndpoint       = "/api/pjsk/honor"
 	charaBirthdayEndpoint      = "/api/pjsk/misc/chara-birthday"
+	musicDetailDrawingEndpoint = "/api/pjsk/music/detail"
+	musicBriefDrawingEndpoint  = "/api/pjsk/music/brief-list"
+	musicChartDrawingEndpoint  = "/api/pjsk/chart"
 	scoreControlEndpoint       = "/api/pjsk/score/control"
 	scoreCustomRoomEndpoint    = "/api/pjsk/score/custom-room"
 	scoreMusicMetaEndpoint     = "/api/pjsk/score/music-meta"
 	scoreMusicBoardEndpoint    = "/api/pjsk/score/music-board"
 	stampListDrawingEndpoint   = "/api/pjsk/stamp/list"
 )
+
+func musicListDrawingEndpoint(showID bool, showLeak bool) string {
+	return fmt.Sprintf("/api/pjsk/music/list?show_id=%t&show_leak=%t", showID, showLeak)
+}
 
 type RenderHandler struct {
 	app *renderapp.App
@@ -47,6 +56,7 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	registerGachaRenderRoutes(internal, runtime)
 	registerHonorRenderRoutes(internal, runtime)
 	registerMiscRenderRoutes(internal, runtime)
+	registerMusicRenderRoutes(internal, runtime)
 	registerScoreRenderRoutes(internal, runtime)
 	registerStampRenderRoutes(internal, runtime)
 }
@@ -123,6 +133,23 @@ func registerMiscRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group := router.Group("/misc")
 	group.Post("/chara-birthday/build", handler.BuildCharaBirthday)
 	group.Post("/chara-birthday/render", handler.RenderCharaBirthday)
+}
+
+func registerMusicRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Music == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/music")
+	group.Post("/detail/build", handler.BuildMusicDetail)
+	group.Post("/detail/render", handler.RenderMusicDetail)
+	group.Post("/brief-list/build", handler.BuildMusicBriefList)
+	group.Post("/brief-list/render", handler.RenderMusicBriefList)
+	group.Post("/list/build", handler.BuildMusicList)
+	group.Post("/list/render", handler.RenderMusicList)
+	group.Post("/chart/build", handler.BuildMusicChart)
+	group.Post("/chart/render", handler.RenderMusicChart)
 }
 
 func registerScoreRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -423,6 +450,130 @@ func (h *RenderHandler) RenderCharaBirthday(c fiber.Ctx) error {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicDetail(c fiber.Ctx) error {
+	var query rendermusic.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicDetailRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicDetailDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicDetail(c fiber.Ctx) error {
+	var query rendermusic.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicDetail(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicBriefList(c fiber.Ctx) error {
+	var query rendermusic.BriefListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicBriefListRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicBriefDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicBriefList(c fiber.Ctx) error {
+	var query rendermusic.BriefListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicBriefList(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicList(c fiber.Ctx) error {
+	var query rendermusic.ListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicListRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicListDrawingEndpoint(query.ShowID, query.IncludeLeaks),
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicList(c fiber.Ctx) error {
+	var query rendermusic.ListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicList(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicChart(c fiber.Ctx) error {
+	var query rendermusic.ChartQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Music.BuildMusicChartRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: musicChartDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicChart(c fiber.Ctx) error {
+	var query rendermusic.ChartQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Music.RenderMusicChart(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
 	c.Type("png")
 	return c.Status(fiber.StatusOK).Send(image)
 }

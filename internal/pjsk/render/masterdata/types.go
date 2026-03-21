@@ -126,3 +126,45 @@ type GachaInformation struct {
 	Summary     string `json:"summary"`
 	Description string `json:"description"`
 }
+
+type Stamp struct {
+	ID              int
+	AssetBundleName string
+}
+
+type Honor struct {
+	ID              int
+	GroupID         int
+	HonorType       string
+	HonorRarity     string
+	Name            string
+	Description     string
+	AssetBundleName string
+	Levels          []HonorLevel
+}
+
+type HonorLevel struct {
+	Level           int
+	HonorRarity     string
+	Description     string
+	AssetBundleName string
+}
+
+type HonorGroup struct {
+	ID                        int
+	HonorType                 string
+	Name                      string
+	Description               string
+	BackgroundAssetBundleName *string
+	FrameName                 *string
+}
+
+type BondsHonor struct {
+	ID                   int
+	GameCharacterUnitID1 int
+	GameCharacterUnitID2 int
+	HonorRarity          string
+	Name                 string
+	Description          string
+	BondsGroupID         int
+}

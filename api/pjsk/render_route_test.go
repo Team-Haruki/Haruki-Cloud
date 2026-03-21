@@ -13,8 +13,12 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
+	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	rendermisc "haruki-cloud/internal/pjsk/render/misc"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderscore "haruki-cloud/internal/pjsk/render/score"
+	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/utils/drawing"
 
 	"github.com/gofiber/fiber/v3"
@@ -114,6 +118,62 @@ func (s *routeGachaSource) GetCardByID(id int) (*masterdata.Card, error) {
 		return &copy, nil
 	}
 	return nil, fiber.ErrNotFound
+}
+
+type routeStampSource struct {
+	region renderregion.Value
+	stamps []masterdata.Stamp
+}
+
+func (s *routeStampSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *routeStampSource) GetStamps() ([]masterdata.Stamp, error) {
+	return append([]masterdata.Stamp(nil), s.stamps...), nil
+}
+
+type routeHonorSource struct {
+	region  renderregion.Value
+	honors  map[int]*masterdata.Honor
+	groups  map[int]*masterdata.HonorGroup
+	bonds   map[int]*masterdata.BondsHonor
+	gcuByID map[int]*masterdata.GameCharacterUnit
+}
+
+func (s *routeHonorSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *routeHonorSource) GetHonorByID(id int) (*masterdata.Honor, error) {
+	if item, ok := s.honors[id]; ok {
+		copy := *item
+		if item.Levels != nil {
+			copy.Levels = append([]masterdata.HonorLevel(nil), item.Levels...)
+		}
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeHonorSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
+	if item, ok := s.groups[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeHonorSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
+	if item, ok := s.bonds[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
+	if item, ok := s.gcuByID[id]; ok {
+		copy := *item
+		return &copy, true
+	}
+	return nil, false
 }
 
 func TestPJSKEventBuildRouteReturnsBuiltPayload(t *testing.T) {
@@ -258,6 +318,356 @@ func TestPJSKGachaRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 }
 
+func TestPJSKStampBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/stamp/list/build", `{"region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			Stamps []struct {
+				ID int `json:"id"`
+			} `json:"stamps"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != stampListDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if len(data.Payload.Stamps) != 1 || data.Payload.Stamps[0].ID != 5001 {
+		t.Fatalf("unexpected payload: %+v", data.Payload.Stamps)
+	}
+}
+
+func TestPJSKStampRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != stampListDrawingEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("STAMPPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/stamp/list/render", strings.NewReader(`{"region":"jp"}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "STAMPPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKHonorBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/honor/build", `{"region":"jp","honor_id":7001,"honor_level":3}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			HonorType *string `json:"honor_type"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != honorDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.HonorType == nil || *data.Payload.HonorType != "normal" {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKHonorRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != honorDrawingEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("HONORPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/honor/render", strings.NewReader(`{"region":"jp","honor_id":7001,"honor_level":3}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "HONORPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKMiscBirthdayBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/misc/chara-birthday/build", `{"cid":1,"month":8,"day":31,"cards":[{"id":1001,"thumbnail_path":"thumb.png"}]}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			Cid int `json:"cid"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != charaBirthdayEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.Cid != 1 {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKMiscBirthdayRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != charaBirthdayEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("BIRTHDAYPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/misc/chara-birthday/render", strings.NewReader(`{"cid":1,"month":8,"day":31,"cards":[{"id":1001,"thumbnail_path":"thumb.png"}]}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "BIRTHDAYPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKScoreControlBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/score/control/build", `{"music_id":1,"target_point":100,"music_cover_path":"jacket/jacket_s_001_rip/jacket_s_001.png"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			MusicCoverPath string `json:"music_cover_path"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != scoreControlEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.MusicCoverPath != "music/jacket/jacket_s_001/jacket_s_001.png" {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKScoreCustomRoomBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/score/custom-room/build", `{"target_point":100,"candidate_pairs":[[1,2]],"music_list_map":{"1":[{"music_cover":"jacket/jacket_s_002_rip/jacket_s_002.png"}]}}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			MusicListMap map[string][]struct {
+				MusicCover string `json:"music_cover"`
+			} `json:"music_list_map"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != scoreCustomRoomEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	items := data.Payload.MusicListMap["1"]
+	if len(items) != 1 || items[0].MusicCover != "music/jacket/jacket_s_002/jacket_s_002.png" {
+		t.Fatalf("unexpected payload: %+v", data.Payload.MusicListMap)
+	}
+}
+
+func TestPJSKScoreMusicMetaRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != scoreMusicMetaEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SCOREPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/score/music-meta/render", strings.NewReader(`[{"music_id":1,"music_cover_path":"jacket/jacket_s_001_rip/jacket_s_001.png","metas":[]}]`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "SCOREPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKScoreMusicBoardRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != scoreMusicBoardEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("BOARDPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/score/music-board/render", strings.NewReader(`{"items":[{"music_id":1,"music_cover_path":"jacket/jacket_s_003_rip/jacket_s_003.png"}]}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "BOARDPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
 func TestPJSKRenderRoutesRequireAuthorizationWhenConfigured(t *testing.T) {
 	oldAuth := config.Cfg.Backend.AcceptAuthorization
 	oldUA := config.Cfg.Backend.AcceptUserAgent
@@ -344,10 +754,45 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 	}
 	gachaController := rendergacha.NewController(gachaSource, drawingClient, assets.NewAssetHelper("", nil))
 
+	honorSource := &routeHonorSource{
+		region: renderregion.JP,
+		honors: map[int]*masterdata.Honor{
+			7001: {
+				ID:              7001,
+				GroupID:         7010,
+				HonorRarity:     "high",
+				AssetBundleName: "honor_test",
+			},
+		},
+		groups: map[int]*masterdata.HonorGroup{
+			7010: {
+				ID:        7010,
+				HonorType: "normal",
+			},
+		},
+		bonds:   map[int]*masterdata.BondsHonor{},
+		gcuByID: map[int]*masterdata.GameCharacterUnit{},
+	}
+	honorController := renderhonor.NewController(honorSource, drawingClient, assets.NewAssetHelper("", nil))
+	miscController := rendermisc.NewController(drawingClient)
+	scoreController := renderscore.NewController(drawingClient)
+
+	stampSource := &routeStampSource{
+		region: renderregion.JP,
+		stamps: []masterdata.Stamp{
+			{ID: 5001, AssetBundleName: "stamp_test"},
+		},
+	}
+	stampController := renderstamp.NewController(stampSource, drawingClient, assets.NewAssetHelper("", nil))
+
 	return &renderapp.App{
 		Drawing: drawingClient,
 		Assets:  assets.NewAssetHelper("", nil),
 		Events:  eventController,
 		Gachas:  gachaController,
+		Honors:  honorController,
+		Misc:    miscController,
+		Score:   scoreController,
+		Stamps:  stampController,
 	}
 }

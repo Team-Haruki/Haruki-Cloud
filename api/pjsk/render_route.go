@@ -83,6 +83,7 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	}
 
 	internal := app.Group("/internal/pjsk", api.VerifyAPIAuthorization())
+	registerRenderDispatchRoute(internal, runtime)
 	registerCardRenderRoutes(internal, runtime)
 	registerDeckRenderRoutes(internal, runtime)
 	registerEventRenderRoutes(internal, runtime)

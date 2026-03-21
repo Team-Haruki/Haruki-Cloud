@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/misc"
 	"haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/score"
@@ -65,6 +66,7 @@ type App struct {
 	Gachas   *gacha.Controller
 	Honors   *honor.Controller
 	Misc     *misc.Controller
+	MySekai  *mysekai.Controller
 	Music    *music.Controller
 	Profiles *profile.Controller
 	Score    *score.Controller
@@ -100,10 +102,14 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
+	mysekaiController := (*mysekai.Controller)(nil)
 	musicController := (*music.Controller)(nil)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
+	if snapshotService != nil && cfg.LocalMasterdata.Enabled && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
+		mysekaiController = mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion)
+	}
 
 	var cardController *card.Controller
 	var eventController *event.Controller
@@ -133,6 +139,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Gachas:   gachaController,
 		Honors:   honorController,
 		Misc:     miscController,
+		MySekai:  mysekaiController,
 		Music:    musicController,
 		Profiles: profileController,
 		Score:    scoreController,

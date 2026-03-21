@@ -12,6 +12,7 @@ import (
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
@@ -21,39 +22,45 @@ import (
 )
 
 const (
-	cardDetailDrawingEndpoint  = "/api/pjsk/card/detail"
-	cardListDrawingEndpoint    = "/api/pjsk/card/list"
-	cardBoxDrawingEndpoint     = "/api/pjsk/card/box"
-	eventDetailDrawingEndpoint = "/api/pjsk/event/detail"
-	eventListDrawingEndpoint   = "/api/pjsk/event/list"
-	eventRecordDrawingEndpoint = "/api/pjsk/event/record"
-	gachaDetailDrawingEndpoint = "/api/pjsk/gacha/detail"
-	gachaListDrawingEndpoint   = "/api/pjsk/gacha/list"
-	honorDrawingEndpoint       = "/api/pjsk/honor"
-	profileDrawingEndpoint     = "/api/pjsk/profile/profile"
-	charaBirthdayEndpoint      = "/api/pjsk/misc/chara-birthday"
-	musicDetailDrawingEndpoint = "/api/pjsk/music/detail"
-	musicBriefDrawingEndpoint  = "/api/pjsk/music/brief-list"
-	musicProgressEndpoint      = "/api/pjsk/music/progress"
-	musicRewardsDetailEndpoint = "/api/pjsk/music/rewards/detail"
-	musicRewardsBasicEndpoint  = "/api/pjsk/music/rewards/basic"
-	musicChartDrawingEndpoint  = "/api/pjsk/chart"
-	educationChallengeEndpoint = "/api/pjsk/education/challenge-live"
-	educationPowerEndpoint     = "/api/pjsk/education/power-bonus"
-	educationAreaItemEndpoint  = "/api/pjsk/education/area-item"
-	educationBondsEndpoint     = "/api/pjsk/education/bonds"
-	educationLeaderEndpoint    = "/api/pjsk/education/leader-count"
-	skQueryEndpoint            = "/api/pjsk/sk/query"
-	skCheckRoomEndpoint        = "/api/pjsk/sk/check-room"
-	skSpeedEndpoint            = "/api/pjsk/sk/speed"
-	skPlayerTraceEndpoint      = "/api/pjsk/sk/player-trace"
-	skRankTraceEndpoint        = "/api/pjsk/sk/rank-trace"
-	skWinRateEndpoint          = "/api/pjsk/sk/winrate"
-	scoreControlEndpoint       = "/api/pjsk/score/control"
-	scoreCustomRoomEndpoint    = "/api/pjsk/score/custom-room"
-	scoreMusicMetaEndpoint     = "/api/pjsk/score/music-meta"
-	scoreMusicBoardEndpoint    = "/api/pjsk/score/music-board"
-	stampListDrawingEndpoint   = "/api/pjsk/stamp/list"
+	cardDetailDrawingEndpoint    = "/api/pjsk/card/detail"
+	cardListDrawingEndpoint      = "/api/pjsk/card/list"
+	cardBoxDrawingEndpoint       = "/api/pjsk/card/box"
+	eventDetailDrawingEndpoint   = "/api/pjsk/event/detail"
+	eventListDrawingEndpoint     = "/api/pjsk/event/list"
+	eventRecordDrawingEndpoint   = "/api/pjsk/event/record"
+	gachaDetailDrawingEndpoint   = "/api/pjsk/gacha/detail"
+	gachaListDrawingEndpoint     = "/api/pjsk/gacha/list"
+	honorDrawingEndpoint         = "/api/pjsk/honor"
+	profileDrawingEndpoint       = "/api/pjsk/profile/profile"
+	charaBirthdayEndpoint        = "/api/pjsk/misc/chara-birthday"
+	mysekaiResourceEndpoint      = "/api/pjsk/mysekai/resource"
+	mysekaiFixtureListEndpoint   = "/api/pjsk/mysekai/fixture-list"
+	mysekaiFixtureDetailEndpoint = "/api/pjsk/mysekai/fixture-detail"
+	mysekaiDoorUpgradeEndpoint   = "/api/pjsk/mysekai/door-upgrade"
+	mysekaiMusicRecordEndpoint   = "/api/pjsk/mysekai/music-record"
+	mysekaiTalkListEndpoint      = "/api/pjsk/mysekai/talk-list"
+	musicDetailDrawingEndpoint   = "/api/pjsk/music/detail"
+	musicBriefDrawingEndpoint    = "/api/pjsk/music/brief-list"
+	musicProgressEndpoint        = "/api/pjsk/music/progress"
+	musicRewardsDetailEndpoint   = "/api/pjsk/music/rewards/detail"
+	musicRewardsBasicEndpoint    = "/api/pjsk/music/rewards/basic"
+	musicChartDrawingEndpoint    = "/api/pjsk/chart"
+	educationChallengeEndpoint   = "/api/pjsk/education/challenge-live"
+	educationPowerEndpoint       = "/api/pjsk/education/power-bonus"
+	educationAreaItemEndpoint    = "/api/pjsk/education/area-item"
+	educationBondsEndpoint       = "/api/pjsk/education/bonds"
+	educationLeaderEndpoint      = "/api/pjsk/education/leader-count"
+	skQueryEndpoint              = "/api/pjsk/sk/query"
+	skCheckRoomEndpoint          = "/api/pjsk/sk/check-room"
+	skSpeedEndpoint              = "/api/pjsk/sk/speed"
+	skPlayerTraceEndpoint        = "/api/pjsk/sk/player-trace"
+	skRankTraceEndpoint          = "/api/pjsk/sk/rank-trace"
+	skWinRateEndpoint            = "/api/pjsk/sk/winrate"
+	scoreControlEndpoint         = "/api/pjsk/score/control"
+	scoreCustomRoomEndpoint      = "/api/pjsk/score/custom-room"
+	scoreMusicMetaEndpoint       = "/api/pjsk/score/music-meta"
+	scoreMusicBoardEndpoint      = "/api/pjsk/score/music-board"
+	stampListDrawingEndpoint     = "/api/pjsk/stamp/list"
 )
 
 func musicListDrawingEndpoint(showID bool, showLeak bool) string {
@@ -80,6 +87,7 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	registerHonorRenderRoutes(internal, runtime)
 	registerProfileRenderRoutes(internal, runtime)
 	registerMiscRenderRoutes(internal, runtime)
+	registerMysekaiRenderRoutes(internal, runtime)
 	registerMusicRenderRoutes(internal, runtime)
 	registerEducationRenderRoutes(internal, runtime)
 	registerSKRenderRoutes(internal, runtime)
@@ -172,6 +180,27 @@ func registerMiscRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group := router.Group("/misc")
 	group.Post("/chara-birthday/build", handler.BuildCharaBirthday)
 	group.Post("/chara-birthday/render", handler.RenderCharaBirthday)
+}
+
+func registerMysekaiRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.MySekai == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/mysekai")
+	group.Post("/resource/build", handler.BuildMysekaiResource)
+	group.Post("/resource/render", handler.RenderMysekaiResource)
+	group.Post("/fixture-list/build", handler.BuildMysekaiFixtureList)
+	group.Post("/fixture-list/render", handler.RenderMysekaiFixtureList)
+	group.Post("/fixture-detail/build", handler.BuildMysekaiFixtureDetail)
+	group.Post("/fixture-detail/render", handler.RenderMysekaiFixtureDetail)
+	group.Post("/door-upgrade/build", handler.BuildMysekaiDoorUpgrade)
+	group.Post("/door-upgrade/render", handler.RenderMysekaiDoorUpgrade)
+	group.Post("/music-record/build", handler.BuildMysekaiMusicRecord)
+	group.Post("/music-record/render", handler.RenderMysekaiMusicRecord)
+	group.Post("/talk-list/build", handler.BuildMysekaiTalkList)
+	group.Post("/talk-list/render", handler.RenderMysekaiTalkList)
 }
 
 func registerMusicRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -600,6 +629,192 @@ func (h *RenderHandler) RenderCharaBirthday(c fiber.Ctx) error {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiResource(c fiber.Ctx) error {
+	var query rendermysekai.ResourceQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildResourceRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiResourceEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiResource(c fiber.Ctx) error {
+	var query rendermysekai.ResourceQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderResource(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiFixtureList(c fiber.Ctx) error {
+	var query rendermysekai.FixtureListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildFixtureListRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiFixtureListEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiFixtureList(c fiber.Ctx) error {
+	var query rendermysekai.FixtureListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderFixtureList(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiFixtureDetail(c fiber.Ctx) error {
+	var query rendermysekai.FixtureDetailQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildFixtureDetailRequests(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiFixtureDetailEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiFixtureDetail(c fiber.Ctx) error {
+	var query rendermysekai.FixtureDetailQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderFixtureDetail(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiDoorUpgrade(c fiber.Ctx) error {
+	var query rendermysekai.DoorUpgradeQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildDoorUpgradeRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiDoorUpgradeEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiDoorUpgrade(c fiber.Ctx) error {
+	var query rendermysekai.DoorUpgradeQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderDoorUpgrade(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiMusicRecord(c fiber.Ctx) error {
+	var query rendermysekai.MusicRecordQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildMusicRecordRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiMusicRecordEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiMusicRecord(c fiber.Ctx) error {
+	var query rendermysekai.MusicRecordQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderMusicRecord(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMysekaiTalkList(c fiber.Ctx) error {
+	var query rendermysekai.TalkListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildTalkListRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiTalkListEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiTalkList(c fiber.Ctx) error {
+	var query rendermysekai.TalkListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.MySekai.RenderTalkList(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
 	c.Type("png")
 	return c.Status(fiber.StatusOK).Send(image)
 }

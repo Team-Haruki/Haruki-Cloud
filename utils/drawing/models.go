@@ -147,6 +147,7 @@ type ProfileDataSource struct {
 type ProfileCardRequest struct {
 	Profile      *BasicProfile       `json:"profile,omitempty"`
 	DataSources  []ProfileDataSource `json:"data_sources"`
+	MysekaiLevel *int                `json:"mysekai_level,omitempty"`
 	ErrorMessage *string             `json:"error_message,omitempty"`
 }
 

@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/config"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
@@ -118,6 +119,116 @@ func (s *routeGachaSource) GetCardByID(id int) (*masterdata.Card, error) {
 		return &copy, nil
 	}
 	return nil, fiber.ErrNotFound
+}
+
+type routeCardSource struct {
+	region       renderregion.Value
+	cards        map[int]*masterdata.Card
+	characters   map[int]*masterdata.Character
+	skills       map[int]*masterdata.Skill
+	gachasByCard map[int]*masterdata.Gacha
+	costumes     map[int][]*masterdata.Costume3d
+}
+
+func (s *routeCardSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *routeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
+	if item, ok := s.cards[id]; ok {
+		copy := *item
+		if item.CardParameters != nil {
+			copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+		}
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeCardSource) GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
+	for _, item := range s.cards {
+		if item.CharacterID == characterID {
+			copy := *item
+			if item.CardParameters != nil {
+				copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+			}
+			return &copy, nil
+		}
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeCardSource) FilterCards(info *rendercard.CardQueryInfo) ([]*masterdata.Card, error) {
+	out := make([]*masterdata.Card, 0, len(s.cards))
+	for _, item := range s.cards {
+		if info != nil && info.CharacterID != 0 && item.CharacterID != info.CharacterID {
+			continue
+		}
+		copy := *item
+		if item.CardParameters != nil {
+			copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+		}
+		out = append(out, &copy)
+	}
+	return out, nil
+}
+
+func (s *routeCardSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	if item, ok := s.characters[id]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeCardSource) GetUnitByCardID(cardID int) (string, error) {
+	cardInfo, ok := s.cards[cardID]
+	if !ok {
+		return "", fiber.ErrNotFound
+	}
+	character, ok := s.characters[cardInfo.CharacterID]
+	if !ok {
+		return "", fiber.ErrNotFound
+	}
+	return character.Unit, nil
+}
+
+func (s *routeCardSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
+	if cardInfo == nil {
+		return ""
+	}
+	return "常驻"
+}
+
+func (s *routeCardSource) GetSkillByID(id int) (*masterdata.Skill, error) {
+	if item, ok := s.skills[id]; ok {
+		copy := *item
+		if item.SkillEffects != nil {
+			copy.SkillEffects = append([]masterdata.SkillEffect(nil), item.SkillEffects...)
+		}
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeCardSource) FormatSkillDescription(skillInfo *masterdata.Skill, cardCharacterID int) string {
+	return "score up"
+}
+
+func (s *routeCardSource) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
+	if item, ok := s.gachasByCard[cardID]; ok {
+		copy := *item
+		return &copy, nil
+	}
+	return nil, fiber.ErrNotFound
+}
+
+func (s *routeCardSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+	items := s.costumes[cardID]
+	out := make([]*masterdata.Costume3d, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out, nil
 }
 
 type routeStampSource struct {
@@ -244,6 +355,112 @@ func TestPJSKEventRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 	if string(body) != "PNGDATA" {
 		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKCardDetailBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/card/detail/build", `{"query":"1001","region":"jp"}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			CardInfo struct {
+				CardID int `json:"card_id"`
+			} `json:"card_info"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != cardDetailDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.CardInfo.CardID != 1001 {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
+	}
+}
+
+func TestPJSKCardListRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != cardListDrawingEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("CARDLISTPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/card/list/render", strings.NewReader(`{"card_ids":[1001],"region":"jp"}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "CARDLISTPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKCardBoxBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/card/box/build", `[{"query":"1001","region":"jp"}]`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			Cards []struct {
+				Card struct {
+					CardID int `json:"card_id"`
+				} `json:"card"`
+			} `json:"cards"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != cardBoxDrawingEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if len(data.Payload.Cards) != 1 || data.Payload.Cards[0].Card.CardID != 1001 {
+		t.Fatalf("unexpected payload: %+v", data.Payload)
 	}
 }
 
@@ -720,6 +937,43 @@ func requestRenderRoute(t *testing.T, app *fiber.App, method, path, body string)
 func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *renderapp.App {
 	t.Helper()
 
+	cardSource := &routeCardSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     5,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				Prefix:          "Test Card",
+				AssetBundleName: "card_1001",
+				ReleaseAt:       1700000000000,
+				SkillID:         9001,
+				CardSkillName:   "Score Up",
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 100},
+					{CardParameterType: "param2", Power: 200},
+					{CardParameterType: "param3", Power: 300},
+				},
+			},
+		},
+		characters: map[int]*masterdata.Character{
+			5: {ID: 5, FirstName: "花里", GivenName: "实乃理", Unit: "idol"},
+		},
+		skills: map[int]*masterdata.Skill{
+			9001: {ID: 9001, DescriptionSpriteName: "score_up"},
+		},
+		gachasByCard: map[int]*masterdata.Gacha{
+			1001: {ID: 3001, Name: "Test Gacha", StartAt: 1700000000000, EndAt: 1700003600000},
+		},
+		costumes: map[int][]*masterdata.Costume3d{
+			1001: {
+				{ID: 4001, CharacterID: 5, AssetBundleName: "costume_4001"},
+			},
+		},
+	}
+	cardController := rendercard.NewController(cardSource, nil, drawingClient, assets.NewAssetHelper("", nil))
+
 	eventSource := &routeEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{
@@ -788,6 +1042,7 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 	return &renderapp.App{
 		Drawing: drawingClient,
 		Assets:  assets.NewAssetHelper("", nil),
+		Cards:   cardController,
 		Events:  eventController,
 		Gachas:  gachaController,
 		Honors:  honorController,

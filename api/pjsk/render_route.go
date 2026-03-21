@@ -5,6 +5,7 @@ import (
 
 	"haruki-cloud/api"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
@@ -15,6 +16,9 @@ import (
 )
 
 const (
+	cardDetailDrawingEndpoint  = "/api/pjsk/card/detail"
+	cardListDrawingEndpoint    = "/api/pjsk/card/list"
+	cardBoxDrawingEndpoint     = "/api/pjsk/card/box"
 	eventDetailDrawingEndpoint = "/api/pjsk/event/detail"
 	eventListDrawingEndpoint   = "/api/pjsk/event/list"
 	gachaDetailDrawingEndpoint = "/api/pjsk/gacha/detail"
@@ -38,12 +42,28 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	}
 
 	internal := app.Group("/internal/pjsk", api.VerifyAPIAuthorization())
+	registerCardRenderRoutes(internal, runtime)
 	registerEventRenderRoutes(internal, runtime)
 	registerGachaRenderRoutes(internal, runtime)
 	registerHonorRenderRoutes(internal, runtime)
 	registerMiscRenderRoutes(internal, runtime)
 	registerScoreRenderRoutes(internal, runtime)
 	registerStampRenderRoutes(internal, runtime)
+}
+
+func registerCardRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Cards == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/card")
+	group.Post("/detail/build", handler.BuildCardDetail)
+	group.Post("/detail/render", handler.RenderCardDetail)
+	group.Post("/list/build", handler.BuildCardList)
+	group.Post("/list/render", handler.RenderCardList)
+	group.Post("/box/build", handler.BuildCardBox)
+	group.Post("/box/render", handler.RenderCardBox)
 }
 
 func registerEventRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -120,6 +140,99 @@ func registerScoreRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/music-meta/render", handler.RenderMusicMeta)
 	group.Post("/music-board/build", handler.BuildMusicBoard)
 	group.Post("/music-board/render", handler.RenderMusicBoard)
+}
+
+func (h *RenderHandler) BuildCardDetail(c fiber.Ctx) error {
+	var query rendercard.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Cards.BuildCardDetailRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: cardDetailDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderCardDetail(c fiber.Ctx) error {
+	var query rendercard.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Cards.RenderCardDetail(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildCardList(c fiber.Ctx) error {
+	var req rendercard.ListRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Cards.BuildCardListRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: cardListDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderCardList(c fiber.Ctx) error {
+	var req rendercard.ListRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Cards.RenderCardList(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildCardBox(c fiber.Ctx) error {
+	var queries []rendercard.Query
+	if err := c.Bind().Body(&queries); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Cards.BuildCardBoxRequest(queries)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: cardBoxDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderCardBox(c fiber.Ctx) error {
+	var queries []rendercard.Query
+	if err := c.Bind().Body(&queries); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Cards.RenderCardBox(queries)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
 }
 
 func (h *RenderHandler) BuildEventDetail(c fiber.Ctx) error {

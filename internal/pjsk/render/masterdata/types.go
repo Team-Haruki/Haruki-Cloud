@@ -11,12 +11,54 @@ type Card struct {
 	SkillID                         int
 	CardSkillName                   string
 	SupportUnit                     string
+	CardParameters                  []CardParameter
 	SpecialTrainingPower1BonusFixed int
 	SpecialTrainingPower2BonusFixed int
 	SpecialTrainingPower3BonusFixed int
 	SpecialTrainingSkillID          int
 	SpecialTrainingSkillName        string
 	CardSupplyID                    int
+}
+
+type CardParameter struct {
+	ID                int    `json:"id"`
+	CardID            int    `json:"cardId"`
+	CardParameterType string `json:"cardParameterType"`
+	Power             int    `json:"power"`
+}
+
+type Skill struct {
+	ID                    int           `json:"id"`
+	ShortDescription      string        `json:"shortDescription"`
+	Description           string        `json:"description"`
+	DescriptionSpriteName string        `json:"descriptionSpriteName"`
+	SkillEffects          []SkillEffect `json:"skillEffects"`
+}
+
+type SkillEffect struct {
+	ID                        int                 `json:"id"`
+	SkillEffectType           string              `json:"skillEffectType"`
+	ActivateEffectDuration    int                 `json:"activateEffectDuration"`
+	ActivateEffectValueType   string              `json:"activateEffectValueType"`
+	ActivateEffectValue       float64             `json:"activateEffectValue"`
+	SkillEffectDetails        []SkillEffectDetail `json:"skillEffectDetails"`
+	SkillEnhance              SkillEnhance        `json:"skillEnhance"`
+	ConditionType             string              `json:"conditionType"`
+	ActivateNotesJudgmentType string              `json:"activateNotesJudgmentType"`
+	ActivateUnitCount         int                 `json:"activateUnitCount"`
+	ActivateCharacterRank     int                 `json:"activateCharacterRank"`
+}
+
+type SkillEffectDetail struct {
+	ID                      int     `json:"id"`
+	ActivateEffectDuration  float64 `json:"activateEffectDuration"`
+	ActivateEffectValueType string  `json:"activateEffectValueType"`
+	ActivateEffectValue     int     `json:"activateEffectValue"`
+	ActivateEffectValue2    *int    `json:"activateEffectValue2,omitempty"`
+}
+
+type SkillEnhance struct {
+	ActivateEffectValue int `json:"activateEffectValue"`
 }
 
 type Character struct {
@@ -125,6 +167,13 @@ type GachaInformation struct {
 	GachaID     int    `json:"gachaId"`
 	Summary     string `json:"summary"`
 	Description string `json:"description"`
+}
+
+type Costume3d struct {
+	ID              int    `json:"id"`
+	CharacterID     int    `json:"characterId"`
+	AssetBundleName string `json:"assetbundleName"`
+	Description     string `json:"description"`
 }
 
 type Stamp struct {

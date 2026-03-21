@@ -7,6 +7,9 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	rendergacha "haruki-cloud/internal/pjsk/render/gacha"
+	renderhonor "haruki-cloud/internal/pjsk/render/honor"
+	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
+	"haruki-cloud/utils/drawing"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -16,6 +19,13 @@ const (
 	eventListDrawingEndpoint   = "/api/pjsk/event/list"
 	gachaDetailDrawingEndpoint = "/api/pjsk/gacha/detail"
 	gachaListDrawingEndpoint   = "/api/pjsk/gacha/list"
+	honorDrawingEndpoint       = "/api/pjsk/honor"
+	charaBirthdayEndpoint      = "/api/pjsk/misc/chara-birthday"
+	scoreControlEndpoint       = "/api/pjsk/score/control"
+	scoreCustomRoomEndpoint    = "/api/pjsk/score/custom-room"
+	scoreMusicMetaEndpoint     = "/api/pjsk/score/music-meta"
+	scoreMusicBoardEndpoint    = "/api/pjsk/score/music-board"
+	stampListDrawingEndpoint   = "/api/pjsk/stamp/list"
 )
 
 type RenderHandler struct {
@@ -30,6 +40,10 @@ func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
 	internal := app.Group("/internal/pjsk", api.VerifyAPIAuthorization())
 	registerEventRenderRoutes(internal, runtime)
 	registerGachaRenderRoutes(internal, runtime)
+	registerHonorRenderRoutes(internal, runtime)
+	registerMiscRenderRoutes(internal, runtime)
+	registerScoreRenderRoutes(internal, runtime)
+	registerStampRenderRoutes(internal, runtime)
 }
 
 func registerEventRenderRoutes(router fiber.Router, runtime *renderapp.App) {
@@ -56,6 +70,56 @@ func registerGachaRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group.Post("/detail/render", handler.RenderGachaDetail)
 	group.Post("/list/build", handler.BuildGachaList)
 	group.Post("/list/render", handler.RenderGachaList)
+}
+
+func registerStampRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Stamps == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/stamp")
+	group.Post("/list/build", handler.BuildStampList)
+	group.Post("/list/render", handler.RenderStampList)
+}
+
+func registerHonorRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Honors == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/honor")
+	group.Post("/build", handler.BuildHonor)
+	group.Post("/render", handler.RenderHonor)
+}
+
+func registerMiscRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Misc == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/misc")
+	group.Post("/chara-birthday/build", handler.BuildCharaBirthday)
+	group.Post("/chara-birthday/render", handler.RenderCharaBirthday)
+}
+
+func registerScoreRenderRoutes(router fiber.Router, runtime *renderapp.App) {
+	if runtime == nil || runtime.Score == nil {
+		return
+	}
+
+	handler := &RenderHandler{app: runtime}
+	group := router.Group("/score")
+	group.Post("/control/build", handler.BuildScoreControl)
+	group.Post("/control/render", handler.RenderScoreControl)
+	group.Post("/custom-room/build", handler.BuildCustomRoomScore)
+	group.Post("/custom-room/render", handler.RenderCustomRoomScore)
+	group.Post("/music-meta/build", handler.BuildMusicMeta)
+	group.Post("/music-meta/render", handler.RenderMusicMeta)
+	group.Post("/music-board/build", handler.BuildMusicBoard)
+	group.Post("/music-board/render", handler.RenderMusicBoard)
 }
 
 func (h *RenderHandler) BuildEventDetail(c fiber.Ctx) error {
@@ -178,6 +242,226 @@ func (h *RenderHandler) RenderGachaList(c fiber.Ctx) error {
 	}
 
 	image, err := h.app.Gachas.RenderGachaList(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildHonor(c fiber.Ctx) error {
+	var query renderhonor.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Honors.BuildHonorRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: honorDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderHonor(c fiber.Ctx) error {
+	var query renderhonor.Query
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Honors.RenderHonor(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildCharaBirthday(c fiber.Ctx) error {
+	var req drawing.CharaBirthdayRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Misc.BuildCharaBirthdayRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: charaBirthdayEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderCharaBirthday(c fiber.Ctx) error {
+	var req drawing.CharaBirthdayRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Misc.RenderCharaBirthday(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildScoreControl(c fiber.Ctx) error {
+	var req drawing.ScoreControlRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Score.BuildScoreControlRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: scoreControlEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderScoreControl(c fiber.Ctx) error {
+	var req drawing.ScoreControlRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Score.RenderScoreControl(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildCustomRoomScore(c fiber.Ctx) error {
+	var req drawing.CustomRoomScoreRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Score.BuildCustomRoomScoreRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: scoreCustomRoomEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderCustomRoomScore(c fiber.Ctx) error {
+	var req drawing.CustomRoomScoreRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Score.RenderCustomRoomScore(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicMeta(c fiber.Ctx) error {
+	var req []drawing.MusicMetaRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Score.BuildMusicMetaRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: scoreMusicMetaEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicMeta(c fiber.Ctx) error {
+	var req []drawing.MusicMetaRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Score.RenderMusicMeta(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildMusicBoard(c fiber.Ctx) error {
+	var req drawing.MusicBoardRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Score.BuildMusicBoardRequest(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: scoreMusicBoardEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMusicBoard(c fiber.Ctx) error {
+	var req drawing.MusicBoardRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Score.RenderMusicBoard(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) BuildStampList(c fiber.Ctx) error {
+	var query renderstamp.ListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.Stamps.BuildStampListRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: stampListDrawingEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderStampList(c fiber.Ctx) error {
+	var query renderstamp.ListQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.app.Stamps.RenderStampList(query)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 	}

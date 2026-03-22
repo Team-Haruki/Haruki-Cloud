@@ -13,6 +13,7 @@ require (
 	github.com/klauspost/compress v1.18.3
 	github.com/lib/pq v1.11.2
 	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/redis/go-redis/v9 v9.17.2
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.44.3

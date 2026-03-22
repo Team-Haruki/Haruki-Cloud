@@ -36,3 +36,22 @@ func TestResolveAssetPathFallsBackToPrimaryPath(t *testing.T) {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
+
+func TestResolveAssetPathSupportsURLRoots(t *testing.T) {
+	helper := NewAssetHelper("https://sekai-assets.haruki.seiunx.com/jp-assets", nil)
+	got := ResolveAssetPath(helper, "", "music/jacket/jacket_s_001/jacket_s_001.png")
+	want := "https://sekai-assets.haruki.seiunx.com/jp-assets/music/jacket/jacket_s_001/jacket_s_001.png"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestMakeRelativeSupportsURLRoots(t *testing.T) {
+	base := "https://sekai-assets.haruki.seiunx.com/jp-assets"
+	target := "https://sekai-assets.haruki.seiunx.com/jp-assets/music/jacket/jacket_s_001/jacket_s_001.png"
+	got := MakeRelative(base, target)
+	want := "music/jacket/jacket_s_001/jacket_s_001.png"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}

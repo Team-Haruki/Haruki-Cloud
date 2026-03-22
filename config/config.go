@@ -70,11 +70,18 @@ type DeckRecommendConfig struct {
 	DefaultAlgs    []string      `yaml:"default_algs"`
 }
 
+type RenderCacheConfig struct {
+	BaseURL    string        `yaml:"base_url"`
+	StorageDir string        `yaml:"storage_dir"`
+	TTL        time.Duration `yaml:"ttl"`
+}
+
 type PJSKRenderConfig struct {
 	Enabled           bool                  `yaml:"enabled"`
 	DrawingBaseURL    string                `yaml:"drawing_base_url"`
 	DrawingTimeout    time.Duration         `yaml:"drawing_timeout"`
 	DrawingRetryCount int                   `yaml:"drawing_retry_count"`
+	DrawingCache      RenderCacheConfig     `yaml:"drawing_cache"`
 	AssetDirs         AssetDirsConfig       `yaml:"asset_dirs"`
 	LocalMasterdata   LocalMasterdataConfig `yaml:"local_masterdata"`
 	UserSnapshot      UserSnapshotConfig    `yaml:"user_snapshot"`

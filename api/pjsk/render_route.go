@@ -33,7 +33,7 @@ const (
 	gachaDetailDrawingEndpoint   = "/api/pjsk/gacha/detail"
 	gachaListDrawingEndpoint     = "/api/pjsk/gacha/list"
 	honorDrawingEndpoint         = "/api/pjsk/honor"
-	profileDrawingEndpoint       = "/api/pjsk/profile/profile"
+	profileDrawingEndpoint       = "/api/pjsk/profile"
 	charaBirthdayEndpoint        = "/api/pjsk/misc/chara-birthday"
 	mysekaiResourceEndpoint      = "/api/pjsk/mysekai/resource"
 	mysekaiFixtureListEndpoint   = "/api/pjsk/mysekai/fixture-list"
@@ -75,6 +75,63 @@ func skLineEndpoint(full bool) string {
 
 type RenderHandler struct {
 	app *renderapp.App
+}
+
+func renderPNG[T any](h *RenderHandler, c fiber.Ctx, endpoint string, render func(T) ([]byte, error)) error {
+	return renderPNGWithEndpoint(h, c, func(T) string { return endpoint }, render)
+}
+
+func renderPNGWithEndpoint[T any](h *RenderHandler, c fiber.Ctx, endpoint func(T) string, render func(T) ([]byte, error)) error {
+	var req T
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	image, err := h.executeRender(endpoint(req), req, func() ([]byte, error) {
+		return render(req)
+	})
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
+}
+
+func (h *RenderHandler) executeRender(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+	if h != nil && h.app != nil && h.app.Drawing != nil {
+		return h.app.Drawing.RenderWithCache(endpoint, request, render)
+	}
+	return render()
+}
+
+func renderBuiltPNG[T any, P any](h *RenderHandler, c fiber.Ctx, endpoint string, build func(T) (P, error), render func(*drawing.HarukiDrawingClient, T, P) ([]byte, error)) error {
+	return renderBuiltPNGWithEndpoint(h, c, func(T, P) string { return endpoint }, build, render)
+}
+
+func renderBuiltPNGWithEndpoint[T any, P any](h *RenderHandler, c fiber.Ctx, endpoint func(T, P) string, build func(T) (P, error), render func(*drawing.HarukiDrawingClient, T, P) ([]byte, error)) error {
+	var req T
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := build(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	image, err := h.executeRender(endpoint(req, payload), payload, func() ([]byte, error) {
+		if h == nil || h.app == nil || h.app.Drawing == nil {
+			return nil, fmt.Errorf("drawing client is not configured")
+		}
+		return render(h.app.Drawing, req, payload)
+	})
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.Type("png")
+	return c.Status(fiber.StatusOK).Send(image)
 }
 
 func RegisterPJSKRenderRoutes(app *fiber.App, runtime *renderapp.App) {
@@ -320,17 +377,9 @@ func (h *RenderHandler) BuildCardDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderCardDetail(c fiber.Ctx) error {
-	var query rendercard.Query
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Cards.RenderCardDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, cardDetailDrawingEndpoint, h.app.Cards.BuildCardDetailRequest, func(client *drawing.HarukiDrawingClient, _ rendercard.Query, payload *drawing.CardDetailRequest) ([]byte, error) {
+		return client.GenerateCardDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildCardList(c fiber.Ctx) error {
@@ -351,17 +400,9 @@ func (h *RenderHandler) BuildCardList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderCardList(c fiber.Ctx) error {
-	var req rendercard.ListRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Cards.RenderCardList(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, cardListDrawingEndpoint, h.app.Cards.BuildCardListRequest, func(client *drawing.HarukiDrawingClient, _ rendercard.ListRequest, payload *drawing.CardListRequest) ([]byte, error) {
+		return client.GenerateCardList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildCardBox(c fiber.Ctx) error {
@@ -382,17 +423,9 @@ func (h *RenderHandler) BuildCardBox(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderCardBox(c fiber.Ctx) error {
-	var queries []rendercard.Query
-	if err := c.Bind().Body(&queries); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Cards.RenderCardBox(queries)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, cardBoxDrawingEndpoint, h.app.Cards.BuildCardBoxRequest, func(client *drawing.HarukiDrawingClient, _ []rendercard.Query, payload *drawing.CardBoxRequest) ([]byte, error) {
+		return client.GenerateCardBox(payload)
+	})
 }
 
 func (h *RenderHandler) BuildDeckRecommend(c fiber.Ctx) error {
@@ -413,17 +446,9 @@ func (h *RenderHandler) BuildDeckRecommend(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderDeckRecommend(c fiber.Ctx) error {
-	var req drawing.DeckRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Decks.RenderRecommend(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, deckRecommendEndpoint, h.app.Decks.BuildRecommendRequest, func(client *drawing.HarukiDrawingClient, _ drawing.DeckRequest, payload *drawing.DeckRequest) ([]byte, error) {
+		return client.GenerateDeckRecommendation(payload)
+	})
 }
 
 func (h *RenderHandler) BuildDeckRecommendAuto(c fiber.Ctx) error {
@@ -444,17 +469,9 @@ func (h *RenderHandler) BuildDeckRecommendAuto(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderDeckRecommendAuto(c fiber.Ctx) error {
-	var query renderdeck.AutoQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Decks.RenderAutoRecommend(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, deckRecommendEndpoint, h.app.Decks.BuildAutoRecommendRequest, func(client *drawing.HarukiDrawingClient, _ renderdeck.AutoQuery, payload *drawing.DeckRequest) ([]byte, error) {
+		return client.GenerateDeckRecommendation(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEventDetail(c fiber.Ctx) error {
@@ -475,18 +492,9 @@ func (h *RenderHandler) BuildEventDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEventDetail(c fiber.Ctx) error {
-	var query renderevent.DetailQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Events.RenderEventDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, eventDetailDrawingEndpoint, h.app.Events.BuildEventDetailRequest, func(client *drawing.HarukiDrawingClient, _ renderevent.DetailQuery, payload *drawing.EventDetailRequest) ([]byte, error) {
+		return client.GenerateEventDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEventList(c fiber.Ctx) error {
@@ -507,18 +515,9 @@ func (h *RenderHandler) BuildEventList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEventList(c fiber.Ctx) error {
-	var query renderevent.ListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Events.RenderEventList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, eventListDrawingEndpoint, h.app.Events.BuildEventListRequest, func(client *drawing.HarukiDrawingClient, _ renderevent.ListQuery, payload *drawing.EventListRequest) ([]byte, error) {
+		return client.GenerateEventList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEventRecord(c fiber.Ctx) error {
@@ -539,18 +538,9 @@ func (h *RenderHandler) BuildEventRecord(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEventRecord(c fiber.Ctx) error {
-	var req drawing.EventRecordRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Events.RenderEventRecord(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, eventRecordDrawingEndpoint, h.app.Events.BuildEventRecordRequest, func(client *drawing.HarukiDrawingClient, _ drawing.EventRecordRequest, payload *drawing.EventRecordRequest) ([]byte, error) {
+		return client.GenerateEventRecord(payload)
+	})
 }
 
 func (h *RenderHandler) BuildGachaDetail(c fiber.Ctx) error {
@@ -571,18 +561,9 @@ func (h *RenderHandler) BuildGachaDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderGachaDetail(c fiber.Ctx) error {
-	var query rendergacha.DetailQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Gachas.RenderGachaDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, gachaDetailDrawingEndpoint, h.app.Gachas.BuildGachaDetailRequest, func(client *drawing.HarukiDrawingClient, _ rendergacha.DetailQuery, payload *drawing.GachaDetailRequest) ([]byte, error) {
+		return client.GenerateGachaDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildGachaList(c fiber.Ctx) error {
@@ -603,18 +584,9 @@ func (h *RenderHandler) BuildGachaList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderGachaList(c fiber.Ctx) error {
-	var query rendergacha.ListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Gachas.RenderGachaList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, gachaListDrawingEndpoint, h.app.Gachas.BuildGachaListRequest, func(client *drawing.HarukiDrawingClient, _ rendergacha.ListQuery, payload *drawing.GachaListRequest) ([]byte, error) {
+		return client.GenerateGachaList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildHonor(c fiber.Ctx) error {
@@ -635,18 +607,9 @@ func (h *RenderHandler) BuildHonor(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderHonor(c fiber.Ctx) error {
-	var query renderhonor.Query
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Honors.RenderHonor(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, honorDrawingEndpoint, h.app.Honors.BuildHonorRequest, func(client *drawing.HarukiDrawingClient, _ renderhonor.Query, payload *drawing.HonorRequest) ([]byte, error) {
+		return client.GenerateHonor(payload)
+	})
 }
 
 func (h *RenderHandler) BuildProfile(c fiber.Ctx) error {
@@ -667,17 +630,9 @@ func (h *RenderHandler) BuildProfile(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderProfile(c fiber.Ctx) error {
-	var query renderprofile.Query
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Profiles.RenderProfile(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, profileDrawingEndpoint, h.app.Profiles.BuildProfileRequest, func(client *drawing.HarukiDrawingClient, _ renderprofile.Query, payload *drawing.ProfileRequest) ([]byte, error) {
+		return client.GenerateProfile(payload)
+	})
 }
 
 func (h *RenderHandler) BuildCharaBirthday(c fiber.Ctx) error {
@@ -698,18 +653,9 @@ func (h *RenderHandler) BuildCharaBirthday(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderCharaBirthday(c fiber.Ctx) error {
-	var req drawing.CharaBirthdayRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Misc.RenderCharaBirthday(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, charaBirthdayEndpoint, h.app.Misc.BuildCharaBirthdayRequest, func(client *drawing.HarukiDrawingClient, _ drawing.CharaBirthdayRequest, payload *drawing.CharaBirthdayRequest) ([]byte, error) {
+		return client.GenerateCharacterBirthday(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiResource(c fiber.Ctx) error {
@@ -730,17 +676,9 @@ func (h *RenderHandler) BuildMysekaiResource(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiResource(c fiber.Ctx) error {
-	var query rendermysekai.ResourceQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderResource(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiResourceEndpoint, h.app.MySekai.BuildResourceRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.ResourceQuery, payload *drawing.MysekaiResourceRequest) ([]byte, error) {
+		return client.GenerateMysekaiResource(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiFixtureList(c fiber.Ctx) error {
@@ -761,17 +699,9 @@ func (h *RenderHandler) BuildMysekaiFixtureList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiFixtureList(c fiber.Ctx) error {
-	var query rendermysekai.FixtureListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderFixtureList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiFixtureListEndpoint, h.app.MySekai.BuildFixtureListRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.FixtureListQuery, payload *drawing.MysekaiFixtureListRequest) ([]byte, error) {
+		return client.GenerateMysekaiFixtureList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiFixtureDetail(c fiber.Ctx) error {
@@ -792,17 +722,18 @@ func (h *RenderHandler) BuildMysekaiFixtureDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiFixtureDetail(c fiber.Ctx) error {
-	var query rendermysekai.FixtureDetailQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderFixtureDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiFixtureDetailEndpoint, func(query rendermysekai.FixtureDetailQuery) (*drawing.MysekaiFixtureDetailRequest, error) {
+		requests, err := h.app.MySekai.BuildFixtureDetailRequests(query)
+		if err != nil {
+			return nil, err
+		}
+		if len(requests) != 1 {
+			return nil, fmt.Errorf("mysekai fixture detail render requires exactly one fixture id")
+		}
+		return &requests[0], nil
+	}, func(client *drawing.HarukiDrawingClient, _ rendermysekai.FixtureDetailQuery, payload *drawing.MysekaiFixtureDetailRequest) ([]byte, error) {
+		return client.GenerateMysekaiFixtureDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiDoorUpgrade(c fiber.Ctx) error {
@@ -823,17 +754,9 @@ func (h *RenderHandler) BuildMysekaiDoorUpgrade(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiDoorUpgrade(c fiber.Ctx) error {
-	var query rendermysekai.DoorUpgradeQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderDoorUpgrade(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiDoorUpgradeEndpoint, h.app.MySekai.BuildDoorUpgradeRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.DoorUpgradeQuery, payload *drawing.MysekaiDoorUpgradeRequest) ([]byte, error) {
+		return client.GenerateMysekaiDoorUpgrade(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiMusicRecord(c fiber.Ctx) error {
@@ -854,17 +777,9 @@ func (h *RenderHandler) BuildMysekaiMusicRecord(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiMusicRecord(c fiber.Ctx) error {
-	var query rendermysekai.MusicRecordQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderMusicRecord(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiMusicRecordEndpoint, h.app.MySekai.BuildMusicRecordRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.MusicRecordQuery, payload *drawing.MysekaiMusicrecordRequest) ([]byte, error) {
+		return client.GenerateMysekaiMusicRecord(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMysekaiTalkList(c fiber.Ctx) error {
@@ -885,17 +800,9 @@ func (h *RenderHandler) BuildMysekaiTalkList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMysekaiTalkList(c fiber.Ctx) error {
-	var query rendermysekai.TalkListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.MySekai.RenderTalkList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, mysekaiTalkListEndpoint, h.app.MySekai.BuildTalkListRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.TalkListQuery, payload *drawing.MysekaiTalkListRequest) ([]byte, error) {
+		return client.GenerateMysekaiTalkList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicDetail(c fiber.Ctx) error {
@@ -916,17 +823,9 @@ func (h *RenderHandler) BuildMusicDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicDetail(c fiber.Ctx) error {
-	var query rendermusic.Query
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicDetailDrawingEndpoint, h.app.Music.BuildMusicDetailRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.Query, payload *drawing.MusicDetailRequest) ([]byte, error) {
+		return client.GenerateMusicDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicBriefList(c fiber.Ctx) error {
@@ -947,17 +846,9 @@ func (h *RenderHandler) BuildMusicBriefList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicBriefList(c fiber.Ctx) error {
-	var query rendermusic.BriefListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicBriefList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicBriefDrawingEndpoint, h.app.Music.BuildMusicBriefListRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.BriefListQuery, payload *drawing.MusicBriefListRequest) ([]byte, error) {
+		return client.GenerateMusicBriefList(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicList(c fiber.Ctx) error {
@@ -978,17 +869,11 @@ func (h *RenderHandler) BuildMusicList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicList(c fiber.Ctx) error {
-	var query rendermusic.ListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNGWithEndpoint(h, c, func(query rendermusic.ListQuery, _ *drawing.MusicListRequest) string {
+		return musicListDrawingEndpoint(query.ShowID, query.IncludeLeaks)
+	}, h.app.Music.BuildMusicListRequest, func(client *drawing.HarukiDrawingClient, query rendermusic.ListQuery, payload *drawing.MusicListRequest) ([]byte, error) {
+		return client.GenerateMusicList(payload, query.ShowID, query.IncludeLeaks)
+	})
 }
 
 func (h *RenderHandler) BuildMusicProgress(c fiber.Ctx) error {
@@ -1009,17 +894,9 @@ func (h *RenderHandler) BuildMusicProgress(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicProgress(c fiber.Ctx) error {
-	var query rendermusic.ProgressQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicProgress(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicProgressEndpoint, h.app.Music.BuildMusicProgressRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.ProgressQuery, payload *drawing.PlayProgressRequest) ([]byte, error) {
+		return client.GeneratePlayProgress(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicRewardsDetail(c fiber.Ctx) error {
@@ -1040,17 +917,9 @@ func (h *RenderHandler) BuildMusicRewardsDetail(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicRewardsDetail(c fiber.Ctx) error {
-	var query rendermusic.RewardsDetailQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicRewardsDetail(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicRewardsDetailEndpoint, h.app.Music.BuildMusicRewardsDetailRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.RewardsDetailQuery, payload *drawing.DetailMusicRewardsRequest) ([]byte, error) {
+		return client.GenerateDetailMusicRewards(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicRewardsBasic(c fiber.Ctx) error {
@@ -1071,17 +940,9 @@ func (h *RenderHandler) BuildMusicRewardsBasic(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicRewardsBasic(c fiber.Ctx) error {
-	var query rendermusic.RewardsBasicQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicRewardsBasic(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicRewardsBasicEndpoint, h.app.Music.BuildMusicRewardsBasicRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.RewardsBasicQuery, payload *drawing.BasicMusicRewardsRequest) ([]byte, error) {
+		return client.GenerateBasicMusicRewards(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicChart(c fiber.Ctx) error {
@@ -1102,17 +963,9 @@ func (h *RenderHandler) BuildMusicChart(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicChart(c fiber.Ctx) error {
-	var query rendermusic.ChartQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Music.RenderMusicChart(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, musicChartDrawingEndpoint, h.app.Music.BuildMusicChartRequest, func(client *drawing.HarukiDrawingClient, _ rendermusic.ChartQuery, payload *drawing.GenerateMusicChartRequest) ([]byte, error) {
+		return client.GenerateMusicChart(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEducationPowerBonus(c fiber.Ctx) error {
@@ -1150,31 +1003,15 @@ func (h *RenderHandler) BuildEducationChallengeLive(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEducationChallengeLive(c fiber.Ctx) error {
-	var query rendereducation.ChallengeLiveQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Edu.RenderChallengeLiveDetails(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, educationChallengeEndpoint, h.app.Edu.BuildChallengeLiveDetailsRequest, func(client *drawing.HarukiDrawingClient, _ rendereducation.ChallengeLiveQuery, payload *drawing.ChallengeLiveDetailsRequest) ([]byte, error) {
+		return client.GenerateChallengeLiveDetails(payload)
+	})
 }
 
 func (h *RenderHandler) RenderEducationPowerBonus(c fiber.Ctx) error {
-	var req drawing.PowerBonusDetailRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Edu.RenderPowerBonusDetail(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, educationPowerEndpoint, h.app.Edu.BuildPowerBonusDetailRequest, func(client *drawing.HarukiDrawingClient, _ drawing.PowerBonusDetailRequest, payload *drawing.PowerBonusDetailRequest) ([]byte, error) {
+		return client.GeneratePowerBonusDetail(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEducationAreaItem(c fiber.Ctx) error {
@@ -1195,17 +1032,9 @@ func (h *RenderHandler) BuildEducationAreaItem(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEducationAreaItem(c fiber.Ctx) error {
-	var req drawing.AreaItemUpgradeMaterialsRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Edu.RenderAreaItemUpgradeMaterials(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, educationAreaItemEndpoint, h.app.Edu.BuildAreaItemUpgradeMaterialsRequest, func(client *drawing.HarukiDrawingClient, _ drawing.AreaItemUpgradeMaterialsRequest, payload *drawing.AreaItemUpgradeMaterialsRequest) ([]byte, error) {
+		return client.GenerateAreaItemUpgradeMaterials(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEducationBonds(c fiber.Ctx) error {
@@ -1226,17 +1055,9 @@ func (h *RenderHandler) BuildEducationBonds(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEducationBonds(c fiber.Ctx) error {
-	var req drawing.BondsRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Edu.RenderBonds(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, educationBondsEndpoint, h.app.Edu.BuildBondsRequest, func(client *drawing.HarukiDrawingClient, _ drawing.BondsRequest, payload *drawing.BondsRequest) ([]byte, error) {
+		return client.GenerateBonds(payload)
+	})
 }
 
 func (h *RenderHandler) BuildEducationLeaderCount(c fiber.Ctx) error {
@@ -1257,17 +1078,9 @@ func (h *RenderHandler) BuildEducationLeaderCount(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderEducationLeaderCount(c fiber.Ctx) error {
-	var req drawing.LeaderCountRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Edu.RenderLeaderCount(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, educationLeaderEndpoint, h.app.Edu.BuildLeaderCountRequest, func(client *drawing.HarukiDrawingClient, _ drawing.LeaderCountRequest, payload *drawing.LeaderCountRequest) ([]byte, error) {
+		return client.GenerateLeaderCount(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKLine(c fiber.Ctx) error {
@@ -1288,17 +1101,11 @@ func (h *RenderHandler) BuildSKLine(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKLine(c fiber.Ctx) error {
-	var req rendersk.LineRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderLine(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNGWithEndpoint(h, c, func(req rendersk.LineRequest, _ *rendersk.LineRequest) string {
+		return skLineEndpoint(req.Full)
+	}, h.app.SK.BuildLineRequest, func(client *drawing.HarukiDrawingClient, _ rendersk.LineRequest, payload *rendersk.LineRequest) ([]byte, error) {
+		return client.GenerateSKLine(&payload.SklRequest, payload.Full)
+	})
 }
 
 func (h *RenderHandler) BuildSKQuery(c fiber.Ctx) error {
@@ -1319,17 +1126,9 @@ func (h *RenderHandler) BuildSKQuery(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKQuery(c fiber.Ctx) error {
-	var req drawing.SKRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderQuery(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skQueryEndpoint, h.app.SK.BuildQueryRequest, func(client *drawing.HarukiDrawingClient, _ drawing.SKRequest, payload *drawing.SKRequest) ([]byte, error) {
+		return client.GenerateSKQuery(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKCheckRoom(c fiber.Ctx) error {
@@ -1350,17 +1149,9 @@ func (h *RenderHandler) BuildSKCheckRoom(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKCheckRoom(c fiber.Ctx) error {
-	var req drawing.CFRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderCheckRoom(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skCheckRoomEndpoint, h.app.SK.BuildCheckRoomRequest, func(client *drawing.HarukiDrawingClient, _ drawing.CFRequest, payload *drawing.CFRequest) ([]byte, error) {
+		return client.GenerateSKCheckRoom(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKSpeed(c fiber.Ctx) error {
@@ -1381,17 +1172,9 @@ func (h *RenderHandler) BuildSKSpeed(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKSpeed(c fiber.Ctx) error {
-	var req drawing.SpeedRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderSpeed(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skSpeedEndpoint, h.app.SK.BuildSpeedRequest, func(client *drawing.HarukiDrawingClient, _ drawing.SpeedRequest, payload *drawing.SpeedRequest) ([]byte, error) {
+		return client.GenerateSKSpeed(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKPlayerTrace(c fiber.Ctx) error {
@@ -1412,17 +1195,9 @@ func (h *RenderHandler) BuildSKPlayerTrace(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKPlayerTrace(c fiber.Ctx) error {
-	var req drawing.PlayerTraceRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderPlayerTrace(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skPlayerTraceEndpoint, h.app.SK.BuildPlayerTraceRequest, func(client *drawing.HarukiDrawingClient, _ drawing.PlayerTraceRequest, payload *drawing.PlayerTraceRequest) ([]byte, error) {
+		return client.GenerateSKPlayerTrace(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKRankTrace(c fiber.Ctx) error {
@@ -1443,17 +1218,9 @@ func (h *RenderHandler) BuildSKRankTrace(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKRankTrace(c fiber.Ctx) error {
-	var req drawing.RankTraceRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderRankTrace(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skRankTraceEndpoint, h.app.SK.BuildRankTraceRequest, func(client *drawing.HarukiDrawingClient, _ drawing.RankTraceRequest, payload *drawing.RankTraceRequest) ([]byte, error) {
+		return client.GenerateSKRankTrace(payload)
+	})
 }
 
 func (h *RenderHandler) BuildSKWinRate(c fiber.Ctx) error {
@@ -1474,17 +1241,9 @@ func (h *RenderHandler) BuildSKWinRate(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderSKWinRate(c fiber.Ctx) error {
-	var req drawing.WinRateRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.SK.RenderWinRate(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, skWinRateEndpoint, h.app.SK.BuildWinRateRequest, func(client *drawing.HarukiDrawingClient, _ drawing.WinRateRequest, payload *drawing.WinRateRequest) ([]byte, error) {
+		return client.GenerateSKWinRate(payload)
+	})
 }
 
 func (h *RenderHandler) BuildScoreControl(c fiber.Ctx) error {
@@ -1505,17 +1264,9 @@ func (h *RenderHandler) BuildScoreControl(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderScoreControl(c fiber.Ctx) error {
-	var req drawing.ScoreControlRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Score.RenderScoreControl(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, scoreControlEndpoint, h.app.Score.BuildScoreControlRequest, func(client *drawing.HarukiDrawingClient, _ drawing.ScoreControlRequest, payload *drawing.ScoreControlRequest) ([]byte, error) {
+		return client.GenerateScoreControl(payload)
+	})
 }
 
 func (h *RenderHandler) BuildCustomRoomScore(c fiber.Ctx) error {
@@ -1536,17 +1287,9 @@ func (h *RenderHandler) BuildCustomRoomScore(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderCustomRoomScore(c fiber.Ctx) error {
-	var req drawing.CustomRoomScoreRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Score.RenderCustomRoomScore(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, scoreCustomRoomEndpoint, h.app.Score.BuildCustomRoomScoreRequest, func(client *drawing.HarukiDrawingClient, _ drawing.CustomRoomScoreRequest, payload *drawing.CustomRoomScoreRequest) ([]byte, error) {
+		return client.GenerateCustomRoomScore(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicMeta(c fiber.Ctx) error {
@@ -1567,17 +1310,9 @@ func (h *RenderHandler) BuildMusicMeta(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicMeta(c fiber.Ctx) error {
-	var req []drawing.MusicMetaRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Score.RenderMusicMeta(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, scoreMusicMetaEndpoint, h.app.Score.BuildMusicMetaRequest, func(client *drawing.HarukiDrawingClient, _ []drawing.MusicMetaRequest, payload []drawing.MusicMetaRequest) ([]byte, error) {
+		return client.GenerateMusicMeta(payload)
+	})
 }
 
 func (h *RenderHandler) BuildMusicBoard(c fiber.Ctx) error {
@@ -1598,17 +1333,9 @@ func (h *RenderHandler) BuildMusicBoard(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderMusicBoard(c fiber.Ctx) error {
-	var req drawing.MusicBoardRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Score.RenderMusicBoard(req)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, scoreMusicBoardEndpoint, h.app.Score.BuildMusicBoardRequest, func(client *drawing.HarukiDrawingClient, _ drawing.MusicBoardRequest, payload *drawing.MusicBoardRequest) ([]byte, error) {
+		return client.GenerateMusicBoard(payload)
+	})
 }
 
 func (h *RenderHandler) BuildStampList(c fiber.Ctx) error {
@@ -1629,16 +1356,7 @@ func (h *RenderHandler) BuildStampList(c fiber.Ctx) error {
 }
 
 func (h *RenderHandler) RenderStampList(c fiber.Ctx) error {
-	var query renderstamp.ListQuery
-	if err := c.Bind().Body(&query); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
-	}
-
-	image, err := h.app.Stamps.RenderStampList(query)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	c.Type("png")
-	return c.Status(fiber.StatusOK).Send(image)
+	return renderBuiltPNG(h, c, stampListDrawingEndpoint, h.app.Stamps.BuildStampListRequest, func(client *drawing.HarukiDrawingClient, _ renderstamp.ListQuery, payload *drawing.StampListRequest) ([]byte, error) {
+		return client.GenerateStampList(payload)
+	})
 }

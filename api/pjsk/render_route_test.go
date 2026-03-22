@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -714,6 +715,176 @@ func TestPJSKEventRecordRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 	if string(body) != "RECORDPNG" {
 		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKEventRecordRenderRouteUsesRenderCacheHit(t *testing.T) {
+	cacheFile := filepath.Join(t.TempDir(), "cache-hit.png")
+	if err := os.WriteFile(cacheFile, []byte("CACHEDPNG"), 0o644); err != nil {
+		t.Fatalf("write cache file: %v", err)
+	}
+
+	var drawingCalls int32
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&drawingCalls, 1)
+		t.Fatalf("drawing api should not be called on cache hit")
+	}))
+	defer drawingServer.Close()
+
+	cacheServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cache" {
+			t.Fatalf("unexpected cache path: %s", r.URL.Path)
+		}
+		if r.Method != http.MethodGet {
+			t.Fatalf("unexpected cache method: %s", r.Method)
+		}
+		key := r.URL.Query().Get("key")
+		if len(key) != 64 {
+			t.Fatalf("unexpected cache key: %q", key)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"` + key + `","file_path":"` + cacheFile + `","created_at":"2026-03-22T00:00:00Z","expires_at":"2026-03-22T01:00:00Z"}`))
+	}))
+	defer cacheServer.Close()
+
+	drawingClient := drawing.NewHarukiDrawingClient(drawingServer.URL)
+	drawingClient.SetRenderCache(drawing.NewRenderCacheClient(drawing.RenderCacheConfig{
+		BaseURL:    cacheServer.URL,
+		StorageDir: t.TempDir(),
+		TTL:        5 * time.Minute,
+	}))
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawingClient)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/event/record/render", strings.NewReader(`{"event_info":[{"id":1,"event_name":"Event"}],"user_info":{"id":"1","region":"JP","nickname":"Test","source":"suite","update_time":1,"is_hide_uid":true,"leader_image_path":"leader.png","has_frame":false}}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "CACHEDPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+	if atomic.LoadInt32(&drawingCalls) != 0 {
+		t.Fatalf("drawing api should not have been called")
+	}
+}
+
+func TestPJSKEventRecordRenderRouteStoresRenderCacheOnMiss(t *testing.T) {
+	storageDir := t.TempDir()
+	var drawingCalls int32
+	var postCalls int32
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&drawingCalls, 1)
+		if r.URL.Path != eventRecordDrawingEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("MISSPNG"))
+	}))
+	defer drawingServer.Close()
+
+	cacheServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cache" {
+			t.Fatalf("unexpected cache path: %s", r.URL.Path)
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":"record not found"}`))
+		case http.MethodPost:
+			atomic.AddInt32(&postCalls, 1)
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse form: %v", err)
+			}
+			if got := r.Form.Get("api_path"); got != strings.Trim(eventRecordDrawingEndpoint, "/") {
+				t.Fatalf("unexpected api_path: %s", got)
+			}
+			if got := r.Form.Get("user_id"); got != "1" {
+				t.Fatalf("unexpected user_id: %s", got)
+			}
+			if got := r.Form.Get("ttl"); got != "300" {
+				t.Fatalf("unexpected ttl: %s", got)
+			}
+			key := r.Form.Get("key")
+			if len(key) != 64 {
+				t.Fatalf("unexpected key: %q", key)
+			}
+			filePath := r.Form.Get("file_path")
+			expectedBase := filepath.Join(storageDir, "api", "pjsk", "event", "record") + string(filepath.Separator)
+			if !strings.HasPrefix(filePath, expectedBase) || !strings.Contains(filePath, string(filepath.Separator)+"1"+string(filepath.Separator)) {
+				t.Fatalf("unexpected file_path: %s", filePath)
+			}
+			data, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Fatalf("read cached file: %v", err)
+			}
+			if string(data) != "MISSPNG" {
+				t.Fatalf("unexpected cached file body: %s", string(data))
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"message":"ok","key":"` + key + `","old_deleted_count":0,"api_path":"` + r.Form.Get("api_path") + `","user_id":"1","file_path":"` + filePath + `","expires_at":"2026-03-22T01:00:00Z"}`))
+		default:
+			t.Fatalf("unexpected cache method: %s", r.Method)
+		}
+	}))
+	defer cacheServer.Close()
+
+	drawingClient := drawing.NewHarukiDrawingClient(drawingServer.URL)
+	drawingClient.SetRenderCache(drawing.NewRenderCacheClient(drawing.RenderCacheConfig{
+		BaseURL:    cacheServer.URL,
+		StorageDir: storageDir,
+		TTL:        5 * time.Minute,
+	}))
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawingClient)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/event/record/render", strings.NewReader(`{"event_info":[{"id":1,"event_name":"Event"}],"user_info":{"id":"1","region":"JP","nickname":"Test","source":"suite","update_time":1,"is_hide_uid":true,"leader_image_path":"leader.png","has_frame":false}}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "MISSPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+	if atomic.LoadInt32(&drawingCalls) != 1 {
+		t.Fatalf("expected drawing api to be called once, got %d", atomic.LoadInt32(&drawingCalls))
+	}
+	if atomic.LoadInt32(&postCalls) != 1 {
+		t.Fatalf("expected cache register to be called once, got %d", atomic.LoadInt32(&postCalls))
 	}
 }
 

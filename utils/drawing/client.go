@@ -14,6 +14,7 @@ type ClientOption func(*resty.Client)
 type HarukiDrawingClient struct {
 	client  *resty.Client
 	baseURL string
+	cache   *RenderCacheClient
 }
 
 func WithTimeout(timeout time.Duration) ClientOption {
@@ -40,6 +41,20 @@ func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDraw
 		client:  client,
 		baseURL: strings.TrimRight(baseURL, "/"),
 	}
+}
+
+func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
+	if c == nil {
+		return
+	}
+	c.cache = cache
+}
+
+func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+	if c == nil || c.cache == nil {
+		return render()
+	}
+	return c.cache.Render(endpoint, request, render)
 }
 
 func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, error) {
@@ -90,7 +105,7 @@ func (c *HarukiDrawingClient) GenerateBasicMusicRewards(req *BasicMusicRewardsRe
 // =========================== Profile API ===========================
 
 func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, error) {
-	return c.post("/api/pjsk/profile/profile", req)
+	return c.post("/api/pjsk/profile", req)
 }
 
 // =========================== Card API ===========================

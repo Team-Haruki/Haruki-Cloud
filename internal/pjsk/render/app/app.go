@@ -30,6 +30,7 @@ type Config struct {
 	DrawingBaseURL    string
 	DrawingTimeout    time.Duration
 	DrawingRetryCount int
+	DrawingCache      drawing.RenderCacheConfig
 	AssetPrimaryDir   string
 	AssetLegacyDirs   []string
 	LocalMasterdata   LocalMasterdataConfig
@@ -101,6 +102,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 		}
 		drawingClient = drawing.NewHarukiDrawingClient(cfg.DrawingBaseURL, options...)
+		drawingClient.SetRenderCache(drawing.NewRenderCacheClient(cfg.DrawingCache))
 	}
 
 	miscController := misc.NewController(drawingClient)

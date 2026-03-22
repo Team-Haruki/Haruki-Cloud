@@ -1,7 +1,9 @@
 package assets
 
 import (
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -20,7 +22,7 @@ func NewAssetHelper(primary string, legacy []string) *AssetHelper {
 		if clean == "" {
 			return
 		}
-		clean = filepath.ToSlash(filepath.Clean(clean))
+		clean = normalizeAssetRoot(clean)
 		if clean == "." {
 			return
 		}
@@ -59,8 +61,7 @@ func (h *AssetHelper) Join(parts ...string) string {
 	if len(h.roots) == 0 {
 		return ""
 	}
-	all := append([]string{h.Primary()}, parts...)
-	return filepath.ToSlash(filepath.Join(all...))
+	return joinAssetPath(h.Primary(), parts...)
 }
 
 func (h *AssetHelper) FirstExisting(relPaths ...string) string {
@@ -69,6 +70,9 @@ func (h *AssetHelper) FirstExisting(relPaths ...string) string {
 			continue
 		}
 		for _, root := range h.roots {
+			if isAssetURL(root) {
+				continue
+			}
 			candidate := filepath.Join(root, rel)
 			if _, err := os.Stat(candidate); err == nil {
 				return filepath.ToSlash(candidate)
@@ -94,7 +98,7 @@ func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) 
 	if base == "" {
 		return filepath.ToSlash(relPaths[0])
 	}
-	return filepath.ToSlash(filepath.Join(base, relPaths[0]))
+	return joinAssetPath(base, relPaths[0])
 }
 
 var CharacterIDToNickname = map[int]string{
@@ -131,12 +135,58 @@ func MakeRelative(base, target string) string {
 		return target
 	}
 
-	cleanBase := filepath.ToSlash(filepath.Clean(base))
-	cleanTarget := filepath.ToSlash(filepath.Clean(target))
+	cleanBase := normalizeAssetRoot(base)
+	cleanTarget := normalizeAssetRoot(target)
 	if strings.HasPrefix(cleanTarget, cleanBase) {
 		rel := strings.TrimPrefix(cleanTarget, cleanBase)
 		rel = strings.TrimPrefix(rel, "/")
 		return rel
 	}
 	return cleanTarget
+}
+
+func normalizeAssetRoot(root string) string {
+	root = strings.TrimSpace(root)
+	if root == "" {
+		return ""
+	}
+	if isAssetURL(root) {
+		return strings.TrimRight(root, "/")
+	}
+	return filepath.ToSlash(filepath.Clean(root))
+}
+
+func joinAssetPath(base string, parts ...string) string {
+	base = normalizeAssetRoot(base)
+	if base == "" {
+		if len(parts) == 0 {
+			return ""
+		}
+		return filepath.ToSlash(parts[0])
+	}
+	if isAssetURL(base) {
+		parsed, err := url.Parse(base)
+		if err != nil {
+			return base
+		}
+		joined := make([]string, 0, len(parts)+1)
+		if parsed.Path != "" {
+			joined = append(joined, parsed.Path)
+		}
+		for _, part := range parts {
+			if strings.TrimSpace(part) == "" {
+				continue
+			}
+			joined = append(joined, filepath.ToSlash(part))
+		}
+		parsed.Path = path.Join(joined...)
+		return parsed.String()
+	}
+	all := append([]string{base}, parts...)
+	return filepath.ToSlash(filepath.Join(all...))
+}
+
+func isAssetURL(value string) bool {
+	value = strings.ToLower(strings.TrimSpace(value))
+	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
 }

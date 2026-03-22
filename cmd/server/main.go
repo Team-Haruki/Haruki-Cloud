@@ -7,6 +7,7 @@ import (
 	"os"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/utils/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
 	harukiRedis "haruki-cloud/utils/redis"
 
@@ -202,8 +203,13 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
 		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
 		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
-		AssetPrimaryDir:   harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
-		AssetLegacyDirs:   harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
+		DrawingCache: drawing.RenderCacheConfig{
+			BaseURL:    harukiConfig.Cfg.PJSKRender.DrawingCache.BaseURL,
+			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,
+			TTL:        harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
+		},
+		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
+		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled: harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			Dir:     harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,

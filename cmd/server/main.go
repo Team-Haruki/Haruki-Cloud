@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
+	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/pjsk/chardata"
+	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/utils/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
 	harukiRedis "haruki-cloud/utils/redis"
@@ -50,6 +54,7 @@ func main() {
 	sekaiClient := initSekaiIfEnabled(mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
 	PJSKAPI.RegisterPJSKRenderRoutes(app, renderRuntime)
+	initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	censorDBClient, _ := initCensor(mainLogger, app, usersDBClient, redisClient)
 	botDBClient := initBot(mainLogger, app, redisClient)
 
@@ -233,6 +238,32 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 	}
 	mainLogger.Infof("PJSK render asset roots: %v", runtime.AssetRoots())
 	return runtime
+}
+
+func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client) *parser.GlobalCommandResolver {
+	if !harukiConfig.Cfg.PJSK.Enabled || sekaiClient == nil {
+		return nil
+	}
+
+	parserCfg := harukiConfig.Cfg.PJSK.Parser
+	region := parserCfg.ChardataRegion
+	if region == "" {
+		region = "jp"
+	}
+	refreshInterval := parserCfg.ChardataRefreshInterval
+	if refreshInterval <= 0 {
+		refreshInterval = time.Hour
+	}
+
+	loader := chardata.NewLoader(sekaiClient, region, slog.Default())
+	if err := loader.Load(context.Background()); err != nil {
+		mainLogger.Warnf("chardata initial load failed (parser will use empty nicknames): %v", err)
+	}
+	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
+
+	resolver := parser.NewGlobalCommandResolver(loader.Nicknames())
+	mainLogger.Infof("PJSK parser initialized (chardata_region=%s, refresh=%s)", region, refreshInterval)
+	return resolver
 }
 
 func initCensor(mainLogger *harukiLogger.Logger, app *fiber.App, usersClient *usersDB.Client, redisClient *redis.Client) (*censorDB.Client, *censorTool.Service) {

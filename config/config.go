@@ -34,10 +34,16 @@ type ChunithmConfig struct {
 	BindingDBURL  string `yaml:"binding_db_url"`
 }
 
+type PJSKParserConfig struct {
+	ChardataRegion          string        `yaml:"chardata_region"`
+	ChardataRefreshInterval time.Duration `yaml:"chardata_refresh_interval"`
+}
+
 type PJSKConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	DBType  string `yaml:"db_type"`
-	DBURL   string `yaml:"db_url"`
+	Enabled bool             `yaml:"enabled"`
+	DBType  string           `yaml:"db_type"`
+	DBURL   string           `yaml:"db_url"`
+	Parser  PJSKParserConfig `yaml:"parser"`
 }
 
 type SekaiConfig struct {

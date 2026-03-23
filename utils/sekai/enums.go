@@ -1,5 +1,26 @@
 package sekai
 
+type MusicDifficultyType string
+
+const (
+	MusicDifficultyEasy   MusicDifficultyType = "easy"
+	MusicDifficultyNormal MusicDifficultyType = "normal"
+	MusicDifficultyHard   MusicDifficultyType = "hard"
+	MusicDifficultyExpert MusicDifficultyType = "expert"
+	MusicDifficultyMaster MusicDifficultyType = "master"
+	MusicDifficultyAppend MusicDifficultyType = "append"
+)
+
+// AllMusicDifficulties is the canonical ordered list of all playable difficulties.
+var AllMusicDifficulties = []MusicDifficultyType{
+	MusicDifficultyEasy,
+	MusicDifficultyNormal,
+	MusicDifficultyHard,
+	MusicDifficultyExpert,
+	MusicDifficultyMaster,
+	MusicDifficultyAppend,
+}
+
 type SekaiServerRegion string
 
 const (

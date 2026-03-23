@@ -67,13 +67,13 @@ func (c *SekaiAPIClient) authReq() *resty.Request {
 //	GET /api/{server}/{userID}/profile
 //
 // Returns ErrUserNotFound on HTTP 404.
-func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetUserProfileResponse, error) {
+func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfileResponse, error) {
 	url := fmt.Sprintf("%s/api/%s/%s/profile", c.config.BaseURL, server, userID)
 	body, err := c.get(url)
 	if err != nil {
 		return nil, err
 	}
-	var result GetUserProfileResponse
+	var result GetAnotherProfileResponse
 	if err := sonic.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("sekai api: failed to unmarshal profile response: %w", err)
 	}

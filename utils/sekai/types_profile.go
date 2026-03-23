@@ -1,42 +1,92 @@
 package sekai
 
-// GetUserProfileResponse is the top-level response returned by GetUserProfile.
-type GetUserProfileResponse struct {
-	User                         UserData                      `json:"user"`
-	UserProfile                  UserProfile                   `json:"userProfile"`
-	UserDecks                    []UserDeck                    `json:"userDecks"`
-	UserCards                    []UserCard                    `json:"userCards"`
-	UserMusics                   []UserMusic                   `json:"userMusics"`
-	UserMusicResults             []UserMusicResult             `json:"userMusicResults"`
-	UserCharacters               []UserCharacter               `json:"userCharacters"`
-	UserChallengeLiveSoloResults []UserChallengeLiveSoloResult `json:"userChallengeLiveSoloResults"`
-	UserChallengeLiveSoloStages  []UserChallengeLiveSoloStage  `json:"userChallengeLiveSoloStages"`
-	UserAreaItems                []UserAreaItem                `json:"userAreaItems"`
-	UserHonors                   []UserHonor                   `json:"userHonors"`
-	UserStoryFavorites           []UserStoryFavorite           `json:"userStoryFavorites"`
-	UserCustomProfileCards       []UserCustomProfileCard       `json:"userCustomProfileCards"`
-	UserProfileHonors            []UserProfileHonor            `json:"userProfileHonors"`
-	UserBondsHonors              []UserBondsHonor              `json:"userBondsHonors"`
-	UserConfig                   UserConfig                    `json:"userConfig"`
+// GetAnotherProfileResponse is the top-level response returned by GetUserProfile
+// (maps to GetAnotherProfileResponse / GetUserProfileAPI in the game client).
+type GetAnotherProfileResponse struct {
+	User                          AnotherUser                            `json:"user"`
+	UserProfile                   UserProfile                            `json:"userProfile"`
+	UserDeck                      UserDeck                               `json:"userDeck"`
+	UserCards                     []AnotherUserCard                      `json:"userCards"`
+	UserCharacters                []AnotherUserCharacter                 `json:"userCharacters"`
+	UserChallengeLiveSoloResult   UserChallengeLiveSoloResult            `json:"userChallengeLiveSoloResult"`
+	UserChallengeLiveSoloStages   []AnotherUserChallengeLiveSoloStage    `json:"userChallengeLiveSoloStages"`
+	UserMusicDifficultyClearCount []AnotherUserMusicDifficultyClearCount `json:"userMusicDifficultyClearCount"`
+	UserCustomProfileCards        []UserCustomProfileCard                `json:"userCustomProfileCards"`
+	UserProfileHonors             []UserProfileHonor                     `json:"userProfileHonors"`
+	UserHonors                    []UserHonor                            `json:"userHonors"`
+	UserBondsHonors               []UserBondsHonor                       `json:"userBondsHonors"`
+	UserStoryFavorites            []UserStoryFavorite                    `json:"userStoryFavorites"`
+	UserConfig                    AnotherUserConfig                      `json:"userConfig"`
+	UserMultiLiveTopScoreCount    AnotherUserMultiLiveTopScoreCount      `json:"userMultiLiveTopScoreCount"`
+	TotalPower                    AnotherTotalPower                      `json:"totalPower"`
+	UserHonorMissions             []UserHonorMission                     `json:"userHonorMissions"`
+	IsMysekaiOwnerAcceptVisit     bool                                   `json:"isMysekaiOwnerAcceptVisit"`
 }
 
-// UserData wraps the user's game data.
-type UserData struct {
-	UserGamedata UserGamedata `json:"userGamedata"`
+// AnotherUser contains the basic public info of a player as seen by others.
+type AnotherUser struct {
+	UserID int64  `json:"userId"`
+	Name   string `json:"name"`
+	Rank   int    `json:"rank"`
 }
 
-// UserGamedata contains the player's core account state.
-type UserGamedata struct {
-	UserID          int64  `json:"userId"`
-	Name            string `json:"name"`
-	Deck            int    `json:"deck"`
-	Rank            int    `json:"rank"`
-	Exp             int    `json:"exp"`
-	TotalExp        int    `json:"totalExp"`
-	Coin            int    `json:"coin"`
-	VirtualCoin     int    `json:"virtualCoin"`
-	LastLoginAt     int64  `json:"lastLoginAt"`
-	CustomProfileID *int   `json:"customProfileId"`
+// AnotherUserCard is a card owned by the player (public-facing subset of fields).
+type AnotherUserCard struct {
+	CardID                int    `json:"cardId"`
+	Level                 int    `json:"level"`
+	MasterRank            int    `json:"masterRank"`
+	SpecialTrainingStatus string `json:"specialTrainingStatus"`
+	DefaultImage          string `json:"defaultImage"`
+}
+
+// AnotherUserCharacter contains another player's bond rank for one character.
+type AnotherUserCharacter struct {
+	CharacterID   int `json:"characterId"`
+	CharacterRank int `json:"characterRank"`
+}
+
+// AnotherUserChallengeLiveSoloStage contains another player's Challenge Live stage rank.
+type AnotherUserChallengeLiveSoloStage struct {
+	CharacterID int `json:"characterId"`
+	Rank        int `json:"rank"`
+}
+
+// AnotherUserMusicDifficultyClearCount holds a player's aggregate clear counts per difficulty.
+type AnotherUserMusicDifficultyClearCount struct {
+	MusicDifficultyType MusicDifficultyType `json:"musicDifficultyType"`
+	LiveClear           int                 `json:"liveClear"`
+	FullCombo           int                 `json:"fullCombo"`
+	AllPerfect          int                 `json:"allPerfect"`
+}
+
+// AnotherUserConfig holds the public-facing account settings of another player.
+type AnotherUserConfig struct {
+	FriendRequestScope string `json:"friendRequestScope"`
+}
+
+// AnotherUserMultiLiveTopScoreCount contains a player's multi-live top-score counts.
+type AnotherUserMultiLiveTopScoreCount struct {
+	MVP       int `json:"mvp"`
+	SuperStar int `json:"superStar"`
+}
+
+// AnotherTotalPower holds the breakdown of a player's total team power.
+type AnotherTotalPower struct {
+	TotalPower                                  int `json:"totalPower"`
+	BasicCardTotalPower                         int `json:"basicCardTotalPower"`
+	AreaItemBonus                               int `json:"areaItemBonus"`
+	CharacterRankBonus                          int `json:"characterRankBonus"`
+	HonorBonus                                  int `json:"honorBonus"`
+	MysekaiFixtureGameCharacterPerformanceBonus int `json:"mysekaiFixtureGameCharacterPerformanceBonus"`
+	MysekaiGateLevelBonus                       int `json:"mysekaiGateLevelBonus"`
+}
+
+// UserHonorMission tracks progress toward a specific honor mission type.
+type UserHonorMission struct {
+	UserID             int64  `json:"userId"`
+	HonorMissionType   string `json:"honorMissionType"`
+	Progress           int    `json:"progress"`
+	AchievedMissionIDs []int  `json:"achievedMissionIds"`
 }
 
 // UserProfile contains public-facing profile settings.
@@ -61,80 +111,10 @@ type UserDeck struct {
 	Member5   int    `json:"member5"`
 }
 
-// UserCard is a card owned by the player.
-type UserCard struct {
-	UserID                int64             `json:"userId"`
-	CardID                int               `json:"cardId"`
-	Level                 int               `json:"level"`
-	Exp                   int               `json:"exp"`
-	TotalExp              int               `json:"totalExp"`
-	SkillLevel            int               `json:"skillLevel"`
-	SkillExp              int               `json:"skillExp"`
-	TotalSkillExp         int               `json:"totalSkillExp"`
-	MasterRank            int               `json:"masterRank"`
-	SpecialTrainingStatus string            `json:"specialTrainingStatus"`
-	DefaultImage          string            `json:"defaultImage"`
-	DuplicateCount        int               `json:"duplicateCount"`
-	CreatedAt             int64             `json:"createdAt"`
-	Episodes              []UserCardEpisode `json:"episodes"`
-}
-
-// UserCardEpisode records the read/clear state of a card story episode.
-type UserCardEpisode struct {
-	CardEpisodeID         int      `json:"cardEpisodeId"`
-	ScenarioStatus        string   `json:"scenarioStatus"`
-	ScenarioStatusReasons []string `json:"scenarioStatusReasons"`
-	IsNotSkipped          bool     `json:"isNotSkipped"`
-}
-
-// UserMusic records which music the player owns.
-type UserMusic struct {
-	MusicID int `json:"musicId"`
-}
-
-// UserMusicResult holds a player's best result for one music×difficulty×play-type combination.
-type UserMusicResult struct {
-	MusicID             int    `json:"musicId"`
-	MusicDifficultyType string `json:"musicDifficultyType"`
-	PlayType            string `json:"playType"`
-	PlayResult          string `json:"playResult"`
-	HighScore           int    `json:"highScore"`
-	FullComboFlg        bool   `json:"fullComboFlg"`
-	FullPerfectFlg      bool   `json:"fullPerfectFlg"`
-	MvpCount            int    `json:"mvpCount"`
-	SuperStarCount      int    `json:"superStarCount"`
-}
-
-// UserCharacter tracks the player's bond rank with one character.
-type UserCharacter struct {
-	UserID        int64 `json:"userId"`
-	CharacterID   int   `json:"characterId"`
-	CharacterRank int   `json:"characterRank"`
-	Exp           int   `json:"exp"`
-	TotalExp      int   `json:"totalExp"`
-}
-
-// UserChallengeLiveSoloResult holds the player's high-score for a character's
-// Challenge Live.
+// UserChallengeLiveSoloResult holds the player's high-score for a character's Challenge Live.
 type UserChallengeLiveSoloResult struct {
 	CharacterID int `json:"characterId"`
 	HighScore   int `json:"highScore"`
-}
-
-// UserChallengeLiveSoloStage tracks the player's progress in one Challenge Live stage.
-type UserChallengeLiveSoloStage struct {
-	CharacterID              int    `json:"characterId"`
-	ChallengeLiveStageType   string `json:"challengeLiveStageType"`
-	Rank                     int    `json:"rank"`
-	ChallengeLiveStageID     int    `json:"challengeLiveStageId"`
-	ChallengeLiveStageStatus string `json:"challengeLiveStageStatus"`
-	Point                    int    `json:"point"`
-}
-
-// UserAreaItem records the upgrade level of an area item.
-type UserAreaItem struct {
-	AreaItemID int `json:"areaItemId"`
-	Level      int `json:"level"`
 }
 
 // UserHonor records an honor (title) owned by the player.
@@ -290,11 +270,4 @@ type UserBondsHonor struct {
 	Level        int    `json:"level"`
 	ObtainedAt   int64  `json:"obtainedAt"`
 	Description  string `json:"description"`
-}
-
-// UserConfig holds the player's account-level settings.
-type UserConfig struct {
-	DefaultMusicType     string `json:"defaultMusicType"`
-	IsDisplayLoginStatus bool   `json:"isDisplayLoginStatus"`
-	FriendRequestScope   string `json:"friendRequestScope"`
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/userpreference"
+	"haruki-cloud/ent/pjsk/schema"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -48,31 +49,9 @@ func (_u *UserPreferenceUpdate) AddHarukiUserID(v int) *UserPreferenceUpdate {
 	return _u
 }
 
-// SetOption sets the "option" field.
-func (_u *UserPreferenceUpdate) SetOption(v string) *UserPreferenceUpdate {
-	_u.mutation.SetOption(v)
-	return _u
-}
-
-// SetNillableOption sets the "option" field if the given value is not nil.
-func (_u *UserPreferenceUpdate) SetNillableOption(v *string) *UserPreferenceUpdate {
-	if v != nil {
-		_u.SetOption(*v)
-	}
-	return _u
-}
-
-// SetValue sets the "value" field.
-func (_u *UserPreferenceUpdate) SetValue(v string) *UserPreferenceUpdate {
-	_u.mutation.SetValue(v)
-	return _u
-}
-
-// SetNillableValue sets the "value" field if the given value is not nil.
-func (_u *UserPreferenceUpdate) SetNillableValue(v *string) *UserPreferenceUpdate {
-	if v != nil {
-		_u.SetValue(*v)
-	}
+// SetSettings sets the "settings" field.
+func (_u *UserPreferenceUpdate) SetSettings(v *schema.UserSettings) *UserPreferenceUpdate {
+	_u.mutation.SetSettings(v)
 	return _u
 }
 
@@ -108,25 +87,7 @@ func (_u *UserPreferenceUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *UserPreferenceUpdate) check() error {
-	if v, ok := _u.mutation.Option(); ok {
-		if err := userpreference.OptionValidator(v); err != nil {
-			return &ValidationError{Name: "option", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.option": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Value(); ok {
-		if err := userpreference.ValueValidator(v); err != nil {
-			return &ValidationError{Name: "value", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.value": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *UserPreferenceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userpreference.Table, userpreference.Columns, sqlgraph.NewFieldSpec(userpreference.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -141,11 +102,8 @@ func (_u *UserPreferenceUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.AddedHarukiUserID(); ok {
 		_spec.AddField(userpreference.FieldHarukiUserID, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.Option(); ok {
-		_spec.SetField(userpreference.FieldOption, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Value(); ok {
-		_spec.SetField(userpreference.FieldValue, field.TypeString, value)
+	if value, ok := _u.mutation.Settings(); ok {
+		_spec.SetField(userpreference.FieldSettings, field.TypeJSON, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -188,31 +146,9 @@ func (_u *UserPreferenceUpdateOne) AddHarukiUserID(v int) *UserPreferenceUpdateO
 	return _u
 }
 
-// SetOption sets the "option" field.
-func (_u *UserPreferenceUpdateOne) SetOption(v string) *UserPreferenceUpdateOne {
-	_u.mutation.SetOption(v)
-	return _u
-}
-
-// SetNillableOption sets the "option" field if the given value is not nil.
-func (_u *UserPreferenceUpdateOne) SetNillableOption(v *string) *UserPreferenceUpdateOne {
-	if v != nil {
-		_u.SetOption(*v)
-	}
-	return _u
-}
-
-// SetValue sets the "value" field.
-func (_u *UserPreferenceUpdateOne) SetValue(v string) *UserPreferenceUpdateOne {
-	_u.mutation.SetValue(v)
-	return _u
-}
-
-// SetNillableValue sets the "value" field if the given value is not nil.
-func (_u *UserPreferenceUpdateOne) SetNillableValue(v *string) *UserPreferenceUpdateOne {
-	if v != nil {
-		_u.SetValue(*v)
-	}
+// SetSettings sets the "settings" field.
+func (_u *UserPreferenceUpdateOne) SetSettings(v *schema.UserSettings) *UserPreferenceUpdateOne {
+	_u.mutation.SetSettings(v)
 	return _u
 }
 
@@ -261,25 +197,7 @@ func (_u *UserPreferenceUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *UserPreferenceUpdateOne) check() error {
-	if v, ok := _u.mutation.Option(); ok {
-		if err := userpreference.OptionValidator(v); err != nil {
-			return &ValidationError{Name: "option", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.option": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Value(); ok {
-		if err := userpreference.ValueValidator(v); err != nil {
-			return &ValidationError{Name: "value", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.value": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *UserPreferenceUpdateOne) sqlSave(ctx context.Context) (_node *UserPreference, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userpreference.Table, userpreference.Columns, sqlgraph.NewFieldSpec(userpreference.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -311,11 +229,8 @@ func (_u *UserPreferenceUpdateOne) sqlSave(ctx context.Context) (_node *UserPref
 	if value, ok := _u.mutation.AddedHarukiUserID(); ok {
 		_spec.AddField(userpreference.FieldHarukiUserID, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.Option(); ok {
-		_spec.SetField(userpreference.FieldOption, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Value(); ok {
-		_spec.SetField(userpreference.FieldValue, field.TypeString, value)
+	if value, ok := _u.mutation.Settings(); ok {
+		_spec.SetField(userpreference.FieldSettings, field.TypeJSON, value)
 	}
 	_node = &UserPreference{config: _u.config}
 	_spec.Assign = _node.assignValues

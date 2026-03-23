@@ -3,8 +3,10 @@
 package pjsk
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/pjsk/userpreference"
+	"haruki-cloud/ent/pjsk/schema"
 	"strings"
 
 	"entgo.io/ent"
@@ -18,10 +20,8 @@ type UserPreference struct {
 	ID int `json:"id,omitempty"`
 	// Reference to users table
 	HarukiUserID int `json:"haruki_user_id,omitempty"`
-	// Option holds the value of the "option" field.
-	Option string `json:"option,omitempty"`
-	// Value holds the value of the "value" field.
-	Value        string `json:"value,omitempty"`
+	// User settings stored as JSONB
+	Settings     *schema.UserSettings `json:"settings,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -30,10 +30,10 @@ func (*UserPreference) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case userpreference.FieldSettings:
+			values[i] = new([]byte)
 		case userpreference.FieldID, userpreference.FieldHarukiUserID:
 			values[i] = new(sql.NullInt64)
-		case userpreference.FieldOption, userpreference.FieldValue:
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -61,17 +61,13 @@ func (_m *UserPreference) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.HarukiUserID = int(value.Int64)
 			}
-		case userpreference.FieldOption:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field option", values[i])
-			} else if value.Valid {
-				_m.Option = value.String
-			}
-		case userpreference.FieldValue:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field value", values[i])
-			} else if value.Valid {
-				_m.Value = value.String
+		case userpreference.FieldSettings:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field settings", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Settings); err != nil {
+					return fmt.Errorf("unmarshal field settings: %w", err)
+				}
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -80,9 +76,9 @@ func (_m *UserPreference) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// GetValue returns the ent.Value that was dynamically selected and assigned to the UserPreference.
+// Value returns the ent.Value that was dynamically selected and assigned to the UserPreference.
 // This includes values selected through modifiers, order, etc.
-func (_m *UserPreference) GetValue(name string) (ent.Value, error) {
+func (_m *UserPreference) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
@@ -112,11 +108,8 @@ func (_m *UserPreference) String() string {
 	builder.WriteString("haruki_user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.HarukiUserID))
 	builder.WriteString(", ")
-	builder.WriteString("option=")
-	builder.WriteString(_m.Option)
-	builder.WriteString(", ")
-	builder.WriteString("value=")
-	builder.WriteString(_m.Value)
+	builder.WriteString("settings=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Settings))
 	builder.WriteByte(')')
 	return builder.String()
 }

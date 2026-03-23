@@ -152,22 +152,14 @@ var (
 	// UserPreferencesColumns holds the columns for the "user_preferences" table.
 	UserPreferencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "haruki_user_id", Type: field.TypeInt},
-		{Name: "option", Type: field.TypeString, Size: 50},
-		{Name: "value", Type: field.TypeString, Size: 50},
+		{Name: "haruki_user_id", Type: field.TypeInt, Unique: true},
+		{Name: "settings", Type: field.TypeJSON},
 	}
 	// UserPreferencesTable holds the schema information for the "user_preferences" table.
 	UserPreferencesTable = &schema.Table{
 		Name:       "user_preferences",
 		Columns:    UserPreferencesColumns,
 		PrimaryKey: []*schema.Column{UserPreferencesColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "userpreference_haruki_user_id_option",
-				Unique:  true,
-				Columns: []*schema.Column{UserPreferencesColumns[1], UserPreferencesColumns[2]},
-			},
-		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{

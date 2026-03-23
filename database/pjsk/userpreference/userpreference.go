@@ -3,6 +3,8 @@
 package userpreference
 
 import (
+	"haruki-cloud/ent/pjsk/schema"
+
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -13,10 +15,8 @@ const (
 	FieldID = "id"
 	// FieldHarukiUserID holds the string denoting the haruki_user_id field in the database.
 	FieldHarukiUserID = "haruki_user_id"
-	// FieldOption holds the string denoting the option field in the database.
-	FieldOption = "option"
-	// FieldValue holds the string denoting the value field in the database.
-	FieldValue = "value"
+	// FieldSettings holds the string denoting the settings field in the database.
+	FieldSettings = "settings"
 	// Table holds the table name of the userpreference in the database.
 	Table = "user_preferences"
 )
@@ -25,8 +25,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldHarukiUserID,
-	FieldOption,
-	FieldValue,
+	FieldSettings,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -40,10 +39,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// OptionValidator is a validator for the "option" field. It is called by the builders before save.
-	OptionValidator func(string) error
-	// ValueValidator is a validator for the "value" field. It is called by the builders before save.
-	ValueValidator func(string) error
+	// DefaultSettings holds the default value on creation for the "settings" field.
+	DefaultSettings func() *schema.UserSettings
 )
 
 // OrderOption defines the ordering options for the UserPreference queries.
@@ -57,14 +54,4 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByHarukiUserID orders the results by the haruki_user_id field.
 func ByHarukiUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHarukiUserID, opts...).ToFunc()
-}
-
-// ByOption orders the results by the option field.
-func ByOption(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOption, opts...).ToFunc()
-}
-
-// ByValue orders the results by the value field.
-func ByValue(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldValue, opts...).ToFunc()
 }

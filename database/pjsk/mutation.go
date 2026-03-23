@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
+	"haruki-cloud/ent/pjsk/schema"
 	"sync"
 	"time"
 
@@ -3894,8 +3895,7 @@ type UserPreferenceMutation struct {
 	id                *int
 	haruki_user_id    *int
 	addharuki_user_id *int
-	option            *string
-	value             *string
+	settings          **schema.UserSettings
 	clearedFields     map[string]struct{}
 	done              bool
 	oldValue          func(context.Context) (*UserPreference, error)
@@ -4056,76 +4056,40 @@ func (m *UserPreferenceMutation) ResetHarukiUserID() {
 	m.addharuki_user_id = nil
 }
 
-// SetOption sets the "option" field.
-func (m *UserPreferenceMutation) SetOption(s string) {
-	m.option = &s
+// SetSettings sets the "settings" field.
+func (m *UserPreferenceMutation) SetSettings(ss *schema.UserSettings) {
+	m.settings = &ss
 }
 
-// Option returns the value of the "option" field in the mutation.
-func (m *UserPreferenceMutation) Option() (r string, exists bool) {
-	v := m.option
+// Settings returns the value of the "settings" field in the mutation.
+func (m *UserPreferenceMutation) Settings() (r *schema.UserSettings, exists bool) {
+	v := m.settings
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldOption returns the old "option" field's value of the UserPreference entity.
+// OldSettings returns the old "settings" field's value of the UserPreference entity.
 // If the UserPreference object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserPreferenceMutation) OldOption(ctx context.Context) (v string, err error) {
+func (m *UserPreferenceMutation) OldSettings(ctx context.Context) (v *schema.UserSettings, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOption is only allowed on UpdateOne operations")
+		return v, errors.New("OldSettings is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOption requires an ID field in the mutation")
+		return v, errors.New("OldSettings requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOption: %w", err)
+		return v, fmt.Errorf("querying old value for OldSettings: %w", err)
 	}
-	return oldValue.Option, nil
+	return oldValue.Settings, nil
 }
 
-// ResetOption resets all changes to the "option" field.
-func (m *UserPreferenceMutation) ResetOption() {
-	m.option = nil
-}
-
-// SetValue sets the "value" field.
-func (m *UserPreferenceMutation) SetValue(s string) {
-	m.value = &s
-}
-
-// Value returns the value of the "value" field in the mutation.
-func (m *UserPreferenceMutation) Value() (r string, exists bool) {
-	v := m.value
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldValue returns the old "value" field's value of the UserPreference entity.
-// If the UserPreference object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserPreferenceMutation) OldValue(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldValue is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldValue requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldValue: %w", err)
-	}
-	return oldValue.Value, nil
-}
-
-// ResetValue resets all changes to the "value" field.
-func (m *UserPreferenceMutation) ResetValue() {
-	m.value = nil
+// ResetSettings resets all changes to the "settings" field.
+func (m *UserPreferenceMutation) ResetSettings() {
+	m.settings = nil
 }
 
 // Where appends a list predicates to the UserPreferenceMutation builder.
@@ -4162,15 +4126,12 @@ func (m *UserPreferenceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserPreferenceMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 2)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userpreference.FieldHarukiUserID)
 	}
-	if m.option != nil {
-		fields = append(fields, userpreference.FieldOption)
-	}
-	if m.value != nil {
-		fields = append(fields, userpreference.FieldValue)
+	if m.settings != nil {
+		fields = append(fields, userpreference.FieldSettings)
 	}
 	return fields
 }
@@ -4182,10 +4143,8 @@ func (m *UserPreferenceMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case userpreference.FieldHarukiUserID:
 		return m.HarukiUserID()
-	case userpreference.FieldOption:
-		return m.Option()
-	case userpreference.FieldValue:
-		return m.Value()
+	case userpreference.FieldSettings:
+		return m.Settings()
 	}
 	return nil, false
 }
@@ -4197,10 +4156,8 @@ func (m *UserPreferenceMutation) OldField(ctx context.Context, name string) (ent
 	switch name {
 	case userpreference.FieldHarukiUserID:
 		return m.OldHarukiUserID(ctx)
-	case userpreference.FieldOption:
-		return m.OldOption(ctx)
-	case userpreference.FieldValue:
-		return m.OldValue(ctx)
+	case userpreference.FieldSettings:
+		return m.OldSettings(ctx)
 	}
 	return nil, fmt.Errorf("unknown UserPreference field %s", name)
 }
@@ -4217,19 +4174,12 @@ func (m *UserPreferenceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetHarukiUserID(v)
 		return nil
-	case userpreference.FieldOption:
-		v, ok := value.(string)
+	case userpreference.FieldSettings:
+		v, ok := value.(*schema.UserSettings)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetOption(v)
-		return nil
-	case userpreference.FieldValue:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetValue(v)
+		m.SetSettings(v)
 		return nil
 	}
 	return fmt.Errorf("unknown UserPreference field %s", name)
@@ -4298,11 +4248,8 @@ func (m *UserPreferenceMutation) ResetField(name string) error {
 	case userpreference.FieldHarukiUserID:
 		m.ResetHarukiUserID()
 		return nil
-	case userpreference.FieldOption:
-		m.ResetOption()
-		return nil
-	case userpreference.FieldValue:
-		m.ResetValue()
+	case userpreference.FieldSettings:
+		m.ResetSettings()
 		return nil
 	}
 	return fmt.Errorf("unknown UserPreference field %s", name)

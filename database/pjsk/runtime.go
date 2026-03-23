@@ -106,12 +106,8 @@ func init() {
 	userdefaultbinding.ServerValidator = userdefaultbindingDescServer.Validators[0].(func(string) error)
 	userpreferenceFields := schema.UserPreference{}.Fields()
 	_ = userpreferenceFields
-	// userpreferenceDescOption is the schema descriptor for option field.
-	userpreferenceDescOption := userpreferenceFields[1].Descriptor()
-	// userpreference.OptionValidator is a validator for the "option" field. It is called by the builders before save.
-	userpreference.OptionValidator = userpreferenceDescOption.Validators[0].(func(string) error)
-	// userpreferenceDescValue is the schema descriptor for value field.
-	userpreferenceDescValue := userpreferenceFields[2].Descriptor()
-	// userpreference.ValueValidator is a validator for the "value" field. It is called by the builders before save.
-	userpreference.ValueValidator = userpreferenceDescValue.Validators[0].(func(string) error)
+	// userpreferenceDescSettings is the schema descriptor for settings field.
+	userpreferenceDescSettings := userpreferenceFields[1].Descriptor()
+	// userpreference.DefaultSettings holds the default value on creation for the settings field.
+	userpreference.DefaultSettings = userpreferenceDescSettings.Default.(func() *schema.UserSettings)
 }

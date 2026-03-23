@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/database/pjsk/userpreference"
+	"haruki-cloud/ent/pjsk/schema"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -25,15 +26,9 @@ func (_c *UserPreferenceCreate) SetHarukiUserID(v int) *UserPreferenceCreate {
 	return _c
 }
 
-// SetOption sets the "option" field.
-func (_c *UserPreferenceCreate) SetOption(v string) *UserPreferenceCreate {
-	_c.mutation.SetOption(v)
-	return _c
-}
-
-// SetValue sets the "value" field.
-func (_c *UserPreferenceCreate) SetValue(v string) *UserPreferenceCreate {
-	_c.mutation.SetValue(v)
+// SetSettings sets the "settings" field.
+func (_c *UserPreferenceCreate) SetSettings(v *schema.UserSettings) *UserPreferenceCreate {
+	_c.mutation.SetSettings(v)
 	return _c
 }
 
@@ -44,6 +39,7 @@ func (_c *UserPreferenceCreate) Mutation() *UserPreferenceMutation {
 
 // Save creates the UserPreference in the database.
 func (_c *UserPreferenceCreate) Save(ctx context.Context) (*UserPreference, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -69,26 +65,21 @@ func (_c *UserPreferenceCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *UserPreferenceCreate) defaults() {
+	if _, ok := _c.mutation.Settings(); !ok {
+		v := userpreference.DefaultSettings()
+		_c.mutation.SetSettings(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserPreferenceCreate) check() error {
 	if _, ok := _c.mutation.HarukiUserID(); !ok {
 		return &ValidationError{Name: "haruki_user_id", err: errors.New(`pjsk: missing required field "UserPreference.haruki_user_id"`)}
 	}
-	if _, ok := _c.mutation.Option(); !ok {
-		return &ValidationError{Name: "option", err: errors.New(`pjsk: missing required field "UserPreference.option"`)}
-	}
-	if v, ok := _c.mutation.Option(); ok {
-		if err := userpreference.OptionValidator(v); err != nil {
-			return &ValidationError{Name: "option", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.option": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.Value(); !ok {
-		return &ValidationError{Name: "value", err: errors.New(`pjsk: missing required field "UserPreference.value"`)}
-	}
-	if v, ok := _c.mutation.Value(); ok {
-		if err := userpreference.ValueValidator(v); err != nil {
-			return &ValidationError{Name: "value", err: fmt.Errorf(`pjsk: validator failed for field "UserPreference.value": %w`, err)}
-		}
+	if _, ok := _c.mutation.Settings(); !ok {
+		return &ValidationError{Name: "settings", err: errors.New(`pjsk: missing required field "UserPreference.settings"`)}
 	}
 	return nil
 }
@@ -120,13 +111,9 @@ func (_c *UserPreferenceCreate) createSpec() (*UserPreference, *sqlgraph.CreateS
 		_spec.SetField(userpreference.FieldHarukiUserID, field.TypeInt, value)
 		_node.HarukiUserID = value
 	}
-	if value, ok := _c.mutation.Option(); ok {
-		_spec.SetField(userpreference.FieldOption, field.TypeString, value)
-		_node.Option = value
-	}
-	if value, ok := _c.mutation.Value(); ok {
-		_spec.SetField(userpreference.FieldValue, field.TypeString, value)
-		_node.Value = value
+	if value, ok := _c.mutation.Settings(); ok {
+		_spec.SetField(userpreference.FieldSettings, field.TypeJSON, value)
+		_node.Settings = value
 	}
 	return _node, _spec
 }
@@ -149,6 +136,7 @@ func (_c *UserPreferenceCreateBulk) Save(ctx context.Context) ([]*UserPreference
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserPreferenceMutation)
 				if !ok {

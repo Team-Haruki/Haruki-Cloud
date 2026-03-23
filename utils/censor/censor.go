@@ -141,6 +141,6 @@ func NewService(apiKey, secretKey string, client *ent.Client) *Service {
 	return &Service{
 		Client:    client,
 		CensorAPI: censorAPI,
-		Logger:    logger.NewLogger("HarukiContentCensorService", "INFO", nil),
+		Logger:    logger.NewLoggerFromGlobal("HarukiContentCensorService"),
 	}
 }

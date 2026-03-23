@@ -127,6 +127,16 @@ type RedisConfig struct {
 	Password string `yaml:"password"`
 }
 
+type SekaiAPIConfig struct {
+	BaseURL string `yaml:"base_url"`
+	Token   string `yaml:"token"`
+}
+
+type TrackerConfig struct {
+	BaseURL   string `yaml:"base_url"`
+	UserAgent string `yaml:"user_agent"`
+}
+
 type ToolboxConfig struct {
 	BaseURL   string `yaml:"base_url"`
 	APIToken  string `yaml:"api_token"`
@@ -144,6 +154,8 @@ type Config struct {
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
 	Redis       RedisConfig       `yaml:"redis"`
 	Toolbox     ToolboxConfig     `yaml:"toolbox"`
+	SekaiAPI    SekaiAPIConfig    `yaml:"sekai_api"`
+	Tracker     TrackerConfig     `yaml:"tracker"`
 }
 
 var Cfg Config

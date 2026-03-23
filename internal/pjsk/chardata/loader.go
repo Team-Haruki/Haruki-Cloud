@@ -3,7 +3,6 @@ package chardata
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -11,6 +10,7 @@ import (
 	sekai "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
+	"haruki-cloud/utils/logger"
 )
 
 // CharacterNickname maps a nickname string to a character game ID.
@@ -24,14 +24,14 @@ type CharacterNickname struct {
 type Loader struct {
 	client *sekai.Client
 	region string
-	logger *slog.Logger
+	logger *logger.Logger
 
 	mu        sync.RWMutex
 	nicknames map[string]int // nickname -> character game_id
 	loaded    bool
 }
 
-func NewLoader(client *sekai.Client, region string, logger *slog.Logger) *Loader {
+func NewLoader(client *sekai.Client, region string, logger *logger.Logger) *Loader {
 	if region == "" {
 		region = "jp"
 	}
@@ -109,7 +109,7 @@ func (l *Loader) Load(ctx context.Context) error {
 	l.mu.Unlock()
 
 	if l.logger != nil {
-		l.logger.Info("chardata: loaded character nicknames", "count", len(characters), "nickname_entries", len(nicknames))
+		l.logger.Infof("chardata: loaded character nicknames count=%d nickname_entries=%d", len(characters), len(nicknames))
 	}
 	return nil
 }
@@ -145,7 +145,7 @@ func (l *Loader) StartBackgroundRefresh(ctx context.Context, interval time.Durat
 			case <-ticker.C:
 				if err := l.Load(ctx); err != nil {
 					if l.logger != nil {
-						l.logger.Warn("chardata: background refresh failed", "error", err)
+						l.logger.Warnf("chardata: background refresh failed: %v", err)
 					}
 				}
 			}

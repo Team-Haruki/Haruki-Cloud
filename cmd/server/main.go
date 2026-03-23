@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"time"
 
@@ -66,20 +65,21 @@ func main() {
 }
 
 func setupLogging() io.Writer {
-	var logFile *os.File
-	loggerWriter := io.Writer(os.Stdout)
 	harukiConfig.LoadConfig("haruki-db-configs.yaml")
+	loggerWriter := io.Writer(os.Stdout)
 
 	if harukiConfig.Cfg.Backend.MainLogFile != "" {
-		var err error
-		logFile, err = os.OpenFile(harukiConfig.Cfg.Backend.MainLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		logFile, err := harukiLogger.OpenLogFile(harukiConfig.Cfg.Backend.MainLogFile)
 		if err != nil {
-			mainLogger := harukiLogger.NewLogger("Main", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
-			mainLogger.Errorf("failed to open main log file: %v", err)
+			tmpLogger := harukiLogger.NewLogger("Main", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
+			tmpLogger.Errorf("failed to open main log file: %v", err)
 			os.Exit(1)
 		}
-		loggerWriter = io.MultiWriter(os.Stdout, logFile)
+		loggerWriter = harukiLogger.NewMultiWriter(os.Stdout, logFile)
 	}
+
+	harukiLogger.SetGlobalLogLevel(harukiConfig.Cfg.Backend.LogLevel)
+	harukiLogger.SetGlobalFileWriter(loggerWriter)
 	return loggerWriter
 }
 
@@ -115,7 +115,7 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	if harukiConfig.Cfg.Backend.AccessLog != "" {
 		loggerConfig := logger.Config{Format: harukiConfig.Cfg.Backend.AccessLog}
 		if harukiConfig.Cfg.Backend.AccessLogPath != "" {
-			accessLogFile, err := os.OpenFile(harukiConfig.Cfg.Backend.AccessLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			accessLogFile, err := harukiLogger.OpenLogFile(harukiConfig.Cfg.Backend.AccessLogPath)
 			if err != nil {
 				mainLogger.Errorf("Failed to open access log file: %v", err)
 				os.Exit(1)
@@ -253,7 +253,7 @@ func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		refreshInterval = time.Hour
 	}
 
-	loader := chardata.NewLoader(sekaiClient, region, slog.Default())
+	loader := chardata.NewLoader(sekaiClient, region, harukiLogger.NewLoggerFromGlobal("Chardata"))
 	if err := loader.Load(context.Background()); err != nil {
 		mainLogger.Warnf("chardata initial load failed (parser will use empty nicknames): %v", err)
 	}

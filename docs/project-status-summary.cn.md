@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-23（v6.0）
+> 最后更新：2026-03-23（v7.0）
 
 ## 📊 项目概览
 
@@ -245,6 +245,118 @@ api/
     pjsk/        → /internal/pjsk/*                       (VerifyAPIAuthorization，待删除)
 ```
 
+## ✅ 外部 API 客户端整合（已完成）
+
+**完成时间**：2026-03-23
+
+将原来分散的三个外部 API 客户端包合并为统一的 `utils/sekai/` 包。
+
+### 合并范围
+
+| 原包 | 说明 | 新位置 |
+|------|------|--------|
+| `utils/sekaiapi/` | Sekai World API 客户端 | `utils/sekai/client_api.go` |
+| `utils/tracker/` | 活动 Tracker 客户端 | `utils/sekai/client_tracker.go` |
+| `utils/toolbox/` | Haruki Toolbox 客户端 | `utils/sekai/client_toolbox.go` |
+
+三个原包目录均已删除。
+
+### 实现文件（`utils/sekai/`）
+
+| 文件 | 内容 |
+|------|------|
+| `enums.go` | `SekaiServerRegion`、`SekaiEventType`、`SekaiWorldBloomType`、`SekaiEventStatus`、`SekaiUnit` 等枚举及档线常量 |
+| `errors.go` | 所有 sentinel error、自定义 error 结构体（含 toolbox 的 6 种细分错误）和 `parseMessage` 辅助函数 |
+| `client_api.go` | `SekaiAPIClient`，单例，`GetSekaiAPIClient()` 获取 |
+| `client_tracker.go` | `TrackerClient`，单例，`GetTrackerClient()` 获取 |
+| `client_toolbox.go` | `HarukiToolboxClient`，单例，`GetToolboxClient()` 获取 |
+| `types_profile.go` | `GetUserProfileResponse` 及 31 个嵌套类型（从 C# dump.cs 完整反向工程得出） |
+| `types_system.go` | `GetSystemResponse`、`AppVersionInfo` |
+| `types_info.go` | `GetInformationResponse`、`InformationEntry` |
+| `types_tracker.go` | Tracker 响应类型（含多处类型修正） |
+| `types_ranking.go` | 游戏排行榜类型（`RankingUserCard/Profile/ProfileHonor` 等，解决命名冲突） |
+
+### Toolbox 错误细分
+
+`GetPrivateData` 针对常见错误场景返回明确类型：
+
+| HTTP 状态 | Message | 错误类型 |
+|-----------|---------|---------|
+| 404 | `account binding not found` | `ErrAccountBindingNotFound` |
+| 404 | `game data not found` | `ErrGameDataNotFound` |
+| 403 | `forbidden: invalid platform or platform_user_id` | `ErrInvalidPlatformUser` |
+| 403 | `forbidden: account owner is banned` | `ErrAccountOwnerBanned` |
+| 4xx/5xx 其他 | — | `ErrToolboxAPIError`（含状态码+消息） |
+
+### Tracker 类型修正
+
+原 `utils/tracker/` 中存在多处类型错误，合并时一并修复：
+
+- `RankDataPoint.UserID` / `UserEventData.UserID`：`int64` → `string`
+- `RankingUserData`：新增 `CheerfulTeamID *int` 字段
+- `ScoreGrowthPoint.ScoreEarlier` → `*int`，`TimestampEarlier` → `*int64`（均为可选）
+- `ScoreGrowthPoint` 新增 `TimeDiff *int64`、`Growth *int`
+- 新增 `WorldBloomRankDataPoint`（嵌入 `RankDataPoint` + `CharacterID *int`）
+- 新增 `WorldBloomLatestRankingResponse`、`WorldBloomTraceRankingResponse`
+
+---
+
+## ✅ Go 1.26 语法迁移（已完成）
+
+**完成时间**：2026-03-23
+
+将 `utils/sekai/` 中的 `errors.As` 替换为 Go 1.26 引入的类型安全泛型函数 `errors.AsType[T]`：
+
+```go
+// 旧写法
+var netErr net.Error
+if errors.As(err, &netErr) { ... }
+
+// 新写法
+if _, ok := errors.AsType[net.Error](err); ok { ... }
+```
+
+涉及三个客户端文件的重试逻辑（`client_api.go`、`client_tracker.go`、`client_toolbox.go`）。  
+`database/*/ent.go` 为自动生成文件（`DO NOT EDIT`），不做改动。
+
+---
+
+## ✅ Logger 全局对接（已完成）
+
+**完成时间**：2026-03-23
+
+从另一项目引入 `utils/logger/` 包，替换原有的 `log/slog` 用法，统一日志接口。
+
+### Logger API
+
+| 函数 | 说明 |
+|------|------|
+| `NewLogger(name, level, writer)` | 创建独立 logger，显式指定 level 和 writer |
+| `NewLoggerFromGlobal(name)` | 创建 logger，每次调用时动态读取全局 level/writer（支持运行时重配置） |
+| `SetGlobalLogLevel(level)` | 设置全局 log level（启动时调用一次） |
+| `SetGlobalFileWriter(writer)` | 设置全局文件 writer（启动时调用一次） |
+| `OpenLogFile(path)` | 创建目录并以 `O_APPEND\|O_CREATE\|O_WRONLY` 打开文件 |
+| `NewMultiWriter(writers...)` | 多路输出，自动过滤 nil（替代 `io.MultiWriter`） |
+
+### 对接变更
+
+**`cmd/server/main.go`**：
+- `setupLogging()`：`os.OpenFile` → `harukiLogger.OpenLogFile`，`io.MultiWriter` → `harukiLogger.NewMultiWriter`
+- 新增 `harukiLogger.SetGlobalLogLevel` + `SetGlobalFileWriter`，全局 logger 自动继承
+- access log 文件同样换用 `OpenLogFile`
+- `slog.Default()` → `harukiLogger.NewLoggerFromGlobal("Chardata")`
+- 移除 `"log/slog"` import
+
+**`internal/pjsk/chardata/loader.go`**：
+- `*slog.Logger` → `*logger.Logger`
+- `l.logger.Info("...", "key", val)` → `l.logger.Infof("... key=%v", val)`（结构化 kv 改 printf 风格）
+- `l.logger.Warn(...)` → `l.logger.Warnf(...)`
+
+**`utils/censor/censor.go`**：
+- `NewLogger("...", "INFO", nil)` → `NewLoggerFromGlobal("...")`，自动跟随全局 log level
+
+---
+
 ## 📋 后续待办事项
 
 ### P1 - 重要但不紧急
@@ -269,23 +381,25 @@ api/
 ## 📈 项目进度总览
 
 ```
-总体进度: ███████████████████░ 95%
+总体进度: ████████████████████ 98%
 
-Service-Test 合并:     ████████████████████ 100% ✅
-Test_Request_Constr:   ████████████████████ 100% ✅
-Parser 合并:           ████████████████████ 100% ✅
-Bot API 层:            ████████████████████ 100% ✅  (通用端点 + 41个功能端点)
-Command Manifest:      ████████████████████ 100% ✅  (DB表 + Seed + 端点)
-用户快照 Provider:     ░░░░░░░░░░░░░░░░░░░░   0% 📝
-Bot 切换:              ░░░░░░░░░░░░░░░░░░░░   0% 📝
+Service-Test 合并:       ████████████████████ 100% ✅
+Test_Request_Constr:     ████████████████████ 100% ✅
+Parser 合并:             ████████████████████ 100% ✅
+Bot API 层:              ████████████████████ 100% ✅  (通用端点 + 41个功能端点)
+Command Manifest:        ████████████████████ 100% ✅  (DB表 + Seed + 端点)
+外部API客户端整合:       ████████████████████ 100% ✅  (utils/sekai 统一包)
+Go 1.26 语法迁移:        ████████████████████ 100% ✅  (errors.AsType)
+Logger 对接:             ████████████████████ 100% ✅  (utils/logger 全局接入)
+用户快照 Provider:       ░░░░░░░░░░░░░░░░░░░░   0% 📝
+Bot 切换:                ░░░░░░░░░░░░░░░░░░░░   0% 📝
 ```
 
 ### 当前阶段小结（2026-03-23）
 
 四大核心子系统（渲染 + 解析 + API 端点 + Command Manifest）全部完成。  
-Bot 可通过 `POST /internal/pjsk/command`（内部服务调用）或 `GET|POST /api/v2/bot/:botId/pjsk/<module>/<mode>`（Bot 客户端直调，带 session 鉴权）获取渲染后的 PNG 图片。  
-Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已完整实现，数据存入 bot DB，按优先级降序返回，支持管理员在数据库中调整优先级、前缀、附加参数。  
-首次启动自动从内置路由表 Seed 41 条默认记录。  
+外部 API 客户端三包合并为 `utils/sekai/`，含完整类型定义（GetUserProfileResponse 31 个嵌套类型，Tracker 类型修正，Toolbox 错误细分）。  
+Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成（main.go + chardata/loader + censor）。  
 剩余工作：用户快照正式 Provider（技术债）和 ZeroBot 侧接入（外部仓库）。
 
 ## 📚 相关文档
@@ -293,6 +407,11 @@ Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已完整实现�
 ### 已完成合并
 - `docs/service-test-merge-plan.cn.md` - Service-Test 合并方案
 - `docs/service-test-merge-status.cn.md` - Service-Test 合并状态
+
+### 外部 API 客户端
+- `external/dump.cs` - C# 类型 dump（用于 GetUserProfileResponse 反向工程）
+- `external/sekaiapi/` - 原始 Sekai API 类型文件（参考用）
+- `external/eventtracker/` - 原始 Tracker 类型文件（参考用）
 
 ### 后续事项
 - `docs/pjsk-user-snapshot-provider-design.cn.md` - 用户快照 Provider 设计
@@ -410,5 +529,5 @@ Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已完整实现�
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v6.0  
+**文档版本**：v7.0  
 **创建日期**：2026-03-23

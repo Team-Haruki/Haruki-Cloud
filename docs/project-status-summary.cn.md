@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-23（v8.0）
+> 最后更新：2026-03-23（v9.0）
 
 ## 📊 项目概览
 
@@ -270,7 +270,7 @@ api/
 | `client_api.go` | `SekaiAPIClient`，单例，`GetSekaiAPIClient()` 获取 |
 | `client_tracker.go` | `TrackerClient`，单例，`GetTrackerClient()` 获取 |
 | `client_toolbox.go` | `HarukiToolboxClient`，单例，`GetToolboxClient()` 获取 |
-| `types_profile.go` | `GetUserProfileResponse` 及 31 个嵌套类型（从 C# dump.cs 完整反向工程得出） |
+| `types_profile.go` | `GetAnotherProfileResponse` 及嵌套类型（从 C# dump.cs 完整反向工程得出，已修正为正确的 `GetAnotherProfileResponse`） |
 | `types_system.go` | `GetSystemResponse`、`AppVersionInfo` |
 | `types_info.go` | `GetInformationResponse`、`InformationEntry` |
 | `types_tracker.go` | Tracker 响应类型（含多处类型修正） |
@@ -424,28 +424,138 @@ ToolboxDataTypeMySekai ToolboxDataType = "mysekai"  // MySekai 世界快照 → 
 
 ---
 
-## 📋 后续待办事项
+## ✅ Profile 响应类型修正（已完成）
 
-### P1 - 重要但不紧急
+**完成时间**：2026-03-23
 
-1. **账号管理 REST 端点**（bind/unbind/setMain 等）
-   - `sekai/profile.go` 中相关逻辑全部是 TODO stub，需先完成业务逻辑
-   - 完成后作为独立 REST 端点暴露（如 `POST /internal/pjsk/binding/bind`），不走 render 指令链路
+`GetUserProfile` 的响应类型已从错误的 `GetUserProfileResponse` 修正为与游戏客户端一致的 `GetAnotherProfileResponse`（对应 `GetUserProfileAPI : APICaller<EmptyRequest, GetAnotherProfileResponse>`）。
 
-2. **正式用户快照 Provider**（技术债偿还）
-   - 设计已完成：`docs/pjsk-user-snapshot-provider-design.cn.md`
-   - 数据来源已确认：suite → `GetSuiteData()`，mysekai → `GetMySekaiData()`，music meta → `meta.Loader`
-   - 当前仍依赖本地 `user.json`、`mysekai.json` 文件（`music_metas.json` 已由远端 loader 接管）
-   - 待实现：`snapshot-schema` → `snapshot-store` → `identity-resolver` → `binding-resolver` → `snapshot-provider` → `app-wire` → `snapshot-write-api`
+主要变化：
 
-3. **Bot 调用方切换**
-   - Haruki-ZeroBot 改调 `POST /internal/pjsk/command`
-   - 详见：`docs/zerobot-render-followup.cn.md`
+| 字段变化 | 说明 |
+|---------|------|
+| `User UserData{UserGamedata}` → `User AnotherUser` | 扁平化，只含 userId/name/rank |
+| `UserDecks []UserDeck` → `UserDeck UserDeck` | API 返回单个当前队伍 |
+| `UserCards []UserCard` → `[]AnotherUserCard` | 精简版（无 exp/skill/episodes） |
+| `UserCharacters []UserCharacter` → `[]AnotherUserCharacter` | 只有 characterId/characterRank |
+| `UserChallengeLiveSoloResults []` → 单个结果 | — |
+| `UserChallengeLiveSoloStages` → `[]AnotherUserChallengeLiveSoloStage` | 只有 characterId/rank |
+| 移除 `UserMusics/UserMusicResults/UserAreaItems/UserConfig` | 此端点不返回这些字段 |
+| 新增 `UserMusicDifficultyClearCount []AnotherUserMusicDifficultyClearCount` | 各难度总 liveClear/FC/AP 聚合计数 |
+| 新增 `TotalPower AnotherTotalPower` | 7 项战力分解 |
+| 新增 `UserMultiLiveTopScoreCount` | MVP/SuperStar 次数 |
+| 新增 `UserHonorMissions []UserHonorMission` | 荣誉任务进度 |
+| 新增 `IsMysekaiOwnerAcceptVisit bool` | 烤森访问权限 |
 
-### P2 - 可选优化
+---
 
-4. **MySekai 完全 DB 驱动**（当前依赖本地 masterdata 文件）
-5. **Deck 引擎收口**（如需原生 CGo 引擎）
+## ✅ 枚举与用户设置架构（已完成）
+
+**完成时间**：2026-03-23
+
+### MusicDifficultyType 枚举（`utils/sekai/enums.go`）
+
+```go
+type MusicDifficultyType string
+const (
+    MusicDifficultyEasy / Normal / Hard / Expert / Master / Append MusicDifficultyType
+)
+var AllMusicDifficulties = []MusicDifficultyType{...}  // 全量有序列表
+```
+
+`AnotherUserMusicDifficultyClearCount.MusicDifficultyType` 字段已从 `string` 改为 `MusicDifficultyType`，编译期类型安全。
+
+### UserPreference Schema 重构（`ent/pjsk/schema/userpreference.go`）
+
+旧方案（EAV）：`haruki_user_id + option(string) + value(string)`，多行 per 用户，无类型约束。
+
+新方案（JSONB）：`haruki_user_id(unique) + settings(jsonb)`，单行 per 用户，`UserSettings` 强类型结构体，新增字段向后兼容。
+
+`UserSettings` 当前定义：
+```go
+type UserSettings struct {
+    PJSKEnabledDifficulties []MusicDifficultyType `json:"pjsk_enabled_difficulties,omitempty"`
+    // 默认值：[expert, master]
+}
+```
+
+ent 默认值通过 `Default(func() *UserSettings)` 设置，新建用户自动填充 `[expert, master]`。已重新生成 `database/pjsk/` 全部 ent 代码。
+
+---
+
+## 📋 待实现功能设计
+
+### 逮捕功能（arrest-feature）
+
+**数据来源**：`GetUserProfile(server, pjskUserID)` → `GetAnotherProfileResponse`
+
+**核心数据**：`UserMusicDifficultyClearCount []AnotherUserMusicDifficultyClearCount`
+
+**过滤逻辑**：读取用户 `UserPreference.Settings.PJSKEnabledDifficulties`（默认 `[expert, master]`），只展示已启用的难度。
+
+**输出格式**：
+```
+{User.Name} - {User.UserID}
+master  FC {fullCombo}/{liveClear}  AP {allPerfect}/{liveClear}
+append  FC {fullCombo}/{liveClear}  AP {allPerfect}/{liveClear}
+...（仅显示用户启用的难度）
+```
+
+**待补充**：① parser 正则路由 ② handler 完整实现 ③ 文本格式化
+
+---
+
+### 抓包数据时间查询（ProfileCheckDataHandle）
+
+**现有 stub**：commands `/pjsk抓包`、`/pjsk check data` 等（DISABLED）
+
+**流程**：
+1. identity + binding → `pjsk_user_id`
+2. 并发调用 `GetSuiteData()` 和 `GetMySekaiData()`
+3. 各自解析顶层 `upload_time`（秒级时间戳）
+4. 输出：
+   ```
+   套件更新时间：2026-03-23 18:00 (2小时前)
+   MySekai更新时间：2026-03-22 10:00 (1天前)
+   ```
+
+**待补充**：① `upload_time` 字段加入 toolbox 响应 struct ② 时间格式化工具函数 ③ handler 完整实现
+
+---
+
+## 📋 接下来需要做的工作
+
+### 第一步：共同前置（必须先做）
+
+```
+identity-resolver          binding-resolver
+(im_platform+im_user_id    (haruki_user_id+region
+ → haruki_user_id)          → pjsk_user_id + 凭据)
+```
+
+这两个 resolver 是所有用户相关功能的入口，没有它们任何下游功能都无法工作。
+
+### 第二步：用户功能流转（并行，依赖第一步）
+
+| 功能 | 代码位置 | 核心工作 |
+|------|---------|---------|
+| **绑定/解绑账号** | `handler/sekai/profile.go` | 写入 `user_bindings` + `user_default_bindings` |
+| **逮捕（clear 统计）** | `handler/sekai/` 新增 | `GetUserProfile` → 过滤 `PJSKEnabledDifficulties` → 文本输出 |
+| **用户查询（名片/注册时间）** | `handler/sekai/profile.go` | `GetUserProfile` → 格式化 |
+| **抓包时间查询** | `handler/sekai/profile.go` | `GetSuiteData` + `GetMySekaiData` → `upload_time` |
+
+### 第三步：数据 Provider 替换
+
+- 将进程级单例 `userdata.Service`（从本地文件加载）改为请求级实例化
+- 每次渲染通过 identity+binding 查用户，直接调 `GetSuiteData()` / `GetMySekaiData()` 实时获取
+- 替换后本地 `user.json` / `mysekai.json` 仅作 fallback 供测试用
+
+### 第四步：Bot 切换（外部仓库）
+
+- Haruki-ZeroBot 将 im_platform + im_user_id 加入请求
+- 改调 `POST /internal/pjsk/command`
+
+---
 
 ## 📈 项目进度总览
 
@@ -461,17 +571,21 @@ Command Manifest:        ██████████████████�
 Go 1.26 语法迁移:        ████████████████████ 100% ✅  (errors.AsType)
 Logger 对接:             ████████████████████ 100% ✅  (utils/logger 全局接入)
 Music Meta 缓存:         ████████████████████ 100% ✅  (internal/pjsk/meta, ETag/30min刷新)
-用户快照 Provider:       ░░░░░░░░░░░░░░░░░░░░   0% 📝  (8个todo待实现)
+Profile 响应类型修正:    ████████████████████ 100% ✅  (GetAnotherProfileResponse)
+MusicDifficultyType枚举: ████████████████████ 100% ✅  (easy~append + AllMusicDifficulties)
+UserPreference JSONB:    ████████████████████ 100% ✅  (haruki_user_id+settings, 默认[expert,master])
+用户功能流转 (P1):       ░░░░░░░░░░░░░░░░░░░░   0% 📝  (前置: identity+binding → 4个功能)
+数据 Provider 替换 (P2): ░░░░░░░░░░░░░░░░░░░░   0% 📝  (直接调用 toolbox/sekai API)
 Bot 切换:                ░░░░░░░░░░░░░░░░░░░░   0% 📝
 ```
 
 ### 当前阶段小结（2026-03-23）
 
-四大核心子系统（渲染 + 解析 + API 端点 + Command Manifest）全部完成。  
-外部 API 客户端三包合并为 `utils/sekai/`，含完整类型定义、Toolbox 错误细分、`ToolboxDataType` 枚举及 `GetSuiteData`/`GetMySekaiData` 封装函数。  
-Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成。  
-`music_metas.json` 由全新的 `internal/pjsk/meta.Loader` 接管，支持 ETag/Last-Modified 条件请求和 30 分钟后台刷新。  
-剩余工作：用户快照正式 Provider（suite + mysekai 数据的 DB 存储与读取，共 8 个 todo）和 ZeroBot 侧接入（外部仓库）。
+基础设施层全部完成：渲染/解析/API端点/命令清单/外部客户端/枚举/用户设置架构/元数据缓存。  
+`UserPreference` 已从 EAV 重构为 JSONB，`UserSettings.PJSKEnabledDifficulties` 默认 `[expert, master]`，新增设置字段向后兼容。  
+`MusicDifficultyType` 枚举覆盖 easy/normal/hard/expert/master/append，`AllMusicDifficulties` 提供有序列表。  
+逮捕功能和抓包时间查询设计完整，等待 identity-resolver + binding-resolver 实现后落地。  
+接下来的实现顺序：identity-resolver → binding-resolver → 用户功能流转（4项并行）→ Provider 替换 → Bot 切换。
 
 ## 📚 相关文档
 
@@ -480,7 +594,7 @@ Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成。
 - `docs/service-test-merge-status.cn.md` - Service-Test 合并状态
 
 ### 外部 API 客户端
-- `external/dump.cs` - C# 类型 dump（用于 GetUserProfileResponse 反向工程）
+- `dump.cs` - C# 类型 dump（位于项目根目录，用于 GetAnotherProfileResponse 反向工程）
 - `external/sekaiapi/` - 原始 Sekai API 类型文件（参考用）
 - `external/eventtracker/` - 原始 Tracker 类型文件（参考用）
 
@@ -600,5 +714,5 @@ Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成。
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v8.0  
+**文档版本**：v10.0  
 **创建日期**：2026-03-23

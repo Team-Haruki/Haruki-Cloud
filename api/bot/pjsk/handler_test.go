@@ -27,7 +27,7 @@ func testBotApp(t *testing.T, drawingURL string) *fiber.App {
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
 	resolver := testResolver(t)
-	RegisterPJSKBotRoutes(app, resolver, runtime, nil)
+	RegisterPJSKBotRoutes(app, resolver, runtime, nil, nil)
 	return app
 }
 
@@ -225,23 +225,23 @@ func TestBotManifestEndpoint(t *testing.T) {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
+	// With nil botDBClient, the endpoint returns 501 Not Implemented.
+	if resp.StatusCode != http.StatusNotImplemented {
+		t.Fatalf("expected 501 (no DB client), got %d body=%s", resp.StatusCode, respBody)
 	}
 
-	// Placeholder response — just verify it returns valid JSON with "message"
 	var envelope renderEnvelope
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode manifest: %v raw=%s", err, respBody)
 	}
-	if !strings.Contains(envelope.Message, "placeholder") {
-		t.Fatalf("expected placeholder message, got: %s", envelope.Message)
+	if !strings.Contains(envelope.Message, "not available") {
+		t.Fatalf("expected 'not available' message, got: %s", envelope.Message)
 	}
 }
 
 func TestBotNilResolverSkipsRegistration(t *testing.T) {
 	app := fiber.New()
-	RegisterPJSKBotRoutes(app, nil, nil, nil)
+	RegisterPJSKBotRoutes(app, nil, nil, nil, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
 	resp, err := app.Test(req)

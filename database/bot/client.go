@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/database/bot/migrate"
 
+	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/database/bot/dailyrequests"
 	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/requestsranking"
@@ -26,6 +27,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// CommandManifest is the client for interacting with the CommandManifest builders.
+	CommandManifest *CommandManifestClient
 	// DailyRequests is the client for interacting with the DailyRequests builders.
 	DailyRequests *DailyRequestsClient
 	// HourlyRequests is the client for interacting with the HourlyRequests builders.
@@ -45,6 +48,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.CommandManifest = NewCommandManifestClient(c.config)
 	c.DailyRequests = NewDailyRequestsClient(c.config)
 	c.HourlyRequests = NewHourlyRequestsClient(c.config)
 	c.RequestsRanking = NewRequestsRankingClient(c.config)
@@ -141,6 +145,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		CommandManifest: NewCommandManifestClient(cfg),
 		DailyRequests:   NewDailyRequestsClient(cfg),
 		HourlyRequests:  NewHourlyRequestsClient(cfg),
 		RequestsRanking: NewRequestsRankingClient(cfg),
@@ -164,6 +169,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		CommandManifest: NewCommandManifestClient(cfg),
 		DailyRequests:   NewDailyRequestsClient(cfg),
 		HourlyRequests:  NewHourlyRequestsClient(cfg),
 		RequestsRanking: NewRequestsRankingClient(cfg),
@@ -174,7 +180,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		DailyRequests.
+//		CommandManifest.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -196,6 +202,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.CommandManifest.Use(hooks...)
 	c.DailyRequests.Use(hooks...)
 	c.HourlyRequests.Use(hooks...)
 	c.RequestsRanking.Use(hooks...)
@@ -205,6 +212,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.CommandManifest.Intercept(interceptors...)
 	c.DailyRequests.Intercept(interceptors...)
 	c.HourlyRequests.Intercept(interceptors...)
 	c.RequestsRanking.Intercept(interceptors...)
@@ -214,6 +222,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *CommandManifestMutation:
+		return c.CommandManifest.mutate(ctx, m)
 	case *DailyRequestsMutation:
 		return c.DailyRequests.mutate(ctx, m)
 	case *HourlyRequestsMutation:
@@ -224,6 +234,139 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("bot: unknown mutation type %T", m)
+	}
+}
+
+// CommandManifestClient is a client for the CommandManifest schema.
+type CommandManifestClient struct {
+	config
+}
+
+// NewCommandManifestClient returns a client for the CommandManifest from the given config.
+func NewCommandManifestClient(c config) *CommandManifestClient {
+	return &CommandManifestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `commandmanifest.Hooks(f(g(h())))`.
+func (c *CommandManifestClient) Use(hooks ...Hook) {
+	c.hooks.CommandManifest = append(c.hooks.CommandManifest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `commandmanifest.Intercept(f(g(h())))`.
+func (c *CommandManifestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CommandManifest = append(c.inters.CommandManifest, interceptors...)
+}
+
+// Create returns a builder for creating a CommandManifest entity.
+func (c *CommandManifestClient) Create() *CommandManifestCreate {
+	mutation := newCommandManifestMutation(c.config, OpCreate)
+	return &CommandManifestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CommandManifest entities.
+func (c *CommandManifestClient) CreateBulk(builders ...*CommandManifestCreate) *CommandManifestCreateBulk {
+	return &CommandManifestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CommandManifestClient) MapCreateBulk(slice any, setFunc func(*CommandManifestCreate, int)) *CommandManifestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CommandManifestCreateBulk{err: fmt.Errorf("calling to CommandManifestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CommandManifestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CommandManifestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CommandManifest.
+func (c *CommandManifestClient) Update() *CommandManifestUpdate {
+	mutation := newCommandManifestMutation(c.config, OpUpdate)
+	return &CommandManifestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CommandManifestClient) UpdateOne(_m *CommandManifest) *CommandManifestUpdateOne {
+	mutation := newCommandManifestMutation(c.config, OpUpdateOne, withCommandManifest(_m))
+	return &CommandManifestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CommandManifestClient) UpdateOneID(id int) *CommandManifestUpdateOne {
+	mutation := newCommandManifestMutation(c.config, OpUpdateOne, withCommandManifestID(id))
+	return &CommandManifestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CommandManifest.
+func (c *CommandManifestClient) Delete() *CommandManifestDelete {
+	mutation := newCommandManifestMutation(c.config, OpDelete)
+	return &CommandManifestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CommandManifestClient) DeleteOne(_m *CommandManifest) *CommandManifestDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CommandManifestClient) DeleteOneID(id int) *CommandManifestDeleteOne {
+	builder := c.Delete().Where(commandmanifest.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CommandManifestDeleteOne{builder}
+}
+
+// Query returns a query builder for CommandManifest.
+func (c *CommandManifestClient) Query() *CommandManifestQuery {
+	return &CommandManifestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCommandManifest},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CommandManifest entity by its id.
+func (c *CommandManifestClient) Get(ctx context.Context, id int) (*CommandManifest, error) {
+	return c.Query().Where(commandmanifest.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CommandManifestClient) GetX(ctx context.Context, id int) *CommandManifest {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CommandManifestClient) Hooks() []Hook {
+	return c.hooks.CommandManifest
+}
+
+// Interceptors returns the client interceptors.
+func (c *CommandManifestClient) Interceptors() []Interceptor {
+	return c.inters.CommandManifest
+}
+
+func (c *CommandManifestClient) mutate(ctx context.Context, m *CommandManifestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CommandManifestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CommandManifestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CommandManifestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CommandManifestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("bot: unknown CommandManifest mutation op: %q", m.Op())
 	}
 }
 
@@ -762,9 +905,10 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		DailyRequests, HourlyRequests, RequestsRanking, User []ent.Hook
+		CommandManifest, DailyRequests, HourlyRequests, RequestsRanking, User []ent.Hook
 	}
 	inters struct {
-		DailyRequests, HourlyRequests, RequestsRanking, User []ent.Interceptor
+		CommandManifest, DailyRequests, HourlyRequests, RequestsRanking,
+		User []ent.Interceptor
 	}
 )

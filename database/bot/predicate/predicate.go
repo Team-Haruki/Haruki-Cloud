@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// CommandManifest is the predicate function for commandmanifest builders.
+type CommandManifest func(*sql.Selector)
+
 // DailyRequests is the predicate function for dailyrequests builders.
 type DailyRequests func(*sql.Selector)
 

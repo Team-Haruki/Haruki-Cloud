@@ -9,6 +9,29 @@ import (
 )
 
 var (
+	// CommandManifestsColumns holds the columns for the "command_manifests" table.
+	CommandManifestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "command_prefixes", Type: field.TypeJSON},
+		{Name: "command_priority", Type: field.TypeInt, Default: 0},
+		{Name: "command_mode", Type: field.TypeString, Size: 16},
+		{Name: "command_module", Type: field.TypeString, Size: 64},
+		{Name: "command_path", Type: field.TypeString, Size: 256},
+		{Name: "command_additional_params", Type: field.TypeJSON, Nullable: true},
+	}
+	// CommandManifestsTable holds the schema information for the "command_manifests" table.
+	CommandManifestsTable = &schema.Table{
+		Name:       "command_manifests",
+		Columns:    CommandManifestsColumns,
+		PrimaryKey: []*schema.Column{CommandManifestsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "commandmanifest_command_module_command_path",
+				Unique:  true,
+				Columns: []*schema.Column{CommandManifestsColumns[4], CommandManifestsColumns[5]},
+			},
+		},
+	}
 	// DailyRequestsColumns holds the columns for the "daily_requests" table.
 	DailyRequestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -67,6 +90,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CommandManifestsTable,
 		DailyRequestsTable,
 		HourlyRequestsTable,
 		RequestsRankingTable,
@@ -75,6 +99,9 @@ var (
 )
 
 func init() {
+	CommandManifestsTable.Annotation = &entsql.Annotation{
+		Table: "command_manifests",
+	}
 	DailyRequestsTable.Annotation = &entsql.Annotation{
 		Table: "daily_requests",
 	}

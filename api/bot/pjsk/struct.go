@@ -19,18 +19,33 @@ type BotCommandErrorResponse struct {
 	ExpectedMode   string `json:"expected_mode,omitempty"`
 }
 
-// ManifestEntry describes one feature endpoint and the command prefixes that map to it.
-// TODO: Full manifest structure TBD when command manifests are implemented.
+// ManifestEntry describes one feature endpoint served by the Bot API.
+// The Bot client downloads the full manifest at startup and uses it to
+// pre-match user commands to the correct endpoint path without a server round-trip.
 type ManifestEntry struct {
-	Endpoint string   `json:"endpoint"` // e.g. /api/v2/bot/{botId}/pjsk/card/detail
-	Methods  []string `json:"methods"`  // e.g. ["GET","POST"]
-	Module   string   `json:"module"`
-	Mode     string   `json:"mode"`
-	Prefixes []string `json:"prefixes"` // human-readable command prefixes
+	// CommandPrefixes is the list of text prefixes (or patterns) that trigger this endpoint,
+	// e.g. ["/查卡", "/card", "/cards"].
+	CommandPrefixes []string `json:"command_prefixes"`
+
+	// CommandPriority controls matching order; higher value is matched first.
+	CommandPriority int `json:"command_priority"`
+
+	// CommandMode is the accepted HTTP method(s), e.g. "GET", "POST", "GET,POST".
+	CommandMode string `json:"command_mode"`
+
+	// CommandModule is the top-level game module, e.g. "pjsk", "chunithm".
+	CommandModule string `json:"command_module"`
+
+	// CommandPath is the path relative to the module base (no leading slash),
+	// e.g. "card/detail". Full URL: /api/v2/bot/{botId}/{module}/{path}.
+	CommandPath string `json:"command_path"`
+
+	// CommandAdditionalParams is an optional list of extra query parameter names
+	// the endpoint accepts beyond the standard "command" param.
+	CommandAdditionalParams []string `json:"command_additional_params,omitempty"`
 }
 
 // ManifestResponse is returned by GET /api/v2/bot/:botId/command/manifests.
-// TODO: Placeholder — full command manifest design pending.
 type ManifestResponse struct {
 	Entries []ManifestEntry `json:"entries"`
 }

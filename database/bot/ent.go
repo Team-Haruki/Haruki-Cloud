@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/database/bot/dailyrequests"
 	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/requestsranking"
@@ -76,6 +77,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			commandmanifest.Table: commandmanifest.ValidColumn,
 			dailyrequests.Table:   dailyrequests.ValidColumn,
 			hourlyrequests.Table:  hourlyrequests.ValidColumn,
 			requestsranking.Table: requestsranking.ValidColumn,

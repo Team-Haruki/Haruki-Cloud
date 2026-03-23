@@ -53,8 +53,8 @@ func main() {
 	legacyPJSK.RegisterPJSKRenderRoutes(app, renderRuntime)
 	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
-	botPJSK.RegisterPJSKBotRoutes(app, pjskResolver, renderRuntime, redisClient)
 	botDBClient := initBot(mainLogger, app, redisClient)
+	botPJSK.RegisterPJSKBotRoutes(app, pjskResolver, renderRuntime, redisClient, botDBClient)
 
 	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 

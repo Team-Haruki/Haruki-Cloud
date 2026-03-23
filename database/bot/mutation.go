@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/database/bot/dailyrequests"
 	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/predicate"
@@ -27,11 +28,699 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeCommandManifest = "CommandManifest"
 	TypeDailyRequests   = "DailyRequests"
 	TypeHourlyRequests  = "HourlyRequests"
 	TypeRequestsRanking = "RequestsRanking"
 	TypeUser            = "User"
 )
+
+// CommandManifestMutation represents an operation that mutates the CommandManifest nodes in the graph.
+type CommandManifestMutation struct {
+	config
+	op                              Op
+	typ                             string
+	id                              *int
+	command_prefixes                *[]string
+	appendcommand_prefixes          []string
+	command_priority                *int
+	addcommand_priority             *int
+	command_mode                    *string
+	command_module                  *string
+	command_path                    *string
+	command_additional_params       *[]string
+	appendcommand_additional_params []string
+	clearedFields                   map[string]struct{}
+	done                            bool
+	oldValue                        func(context.Context) (*CommandManifest, error)
+	predicates                      []predicate.CommandManifest
+}
+
+var _ ent.Mutation = (*CommandManifestMutation)(nil)
+
+// commandmanifestOption allows management of the mutation configuration using functional options.
+type commandmanifestOption func(*CommandManifestMutation)
+
+// newCommandManifestMutation creates new mutation for the CommandManifest entity.
+func newCommandManifestMutation(c config, op Op, opts ...commandmanifestOption) *CommandManifestMutation {
+	m := &CommandManifestMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCommandManifest,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCommandManifestID sets the ID field of the mutation.
+func withCommandManifestID(id int) commandmanifestOption {
+	return func(m *CommandManifestMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CommandManifest
+		)
+		m.oldValue = func(ctx context.Context) (*CommandManifest, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CommandManifest.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCommandManifest sets the old CommandManifest of the mutation.
+func withCommandManifest(node *CommandManifest) commandmanifestOption {
+	return func(m *CommandManifestMutation) {
+		m.oldValue = func(context.Context) (*CommandManifest, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CommandManifestMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CommandManifestMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("bot: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CommandManifestMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CommandManifestMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CommandManifest.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCommandPrefixes sets the "command_prefixes" field.
+func (m *CommandManifestMutation) SetCommandPrefixes(s []string) {
+	m.command_prefixes = &s
+	m.appendcommand_prefixes = nil
+}
+
+// CommandPrefixes returns the value of the "command_prefixes" field in the mutation.
+func (m *CommandManifestMutation) CommandPrefixes() (r []string, exists bool) {
+	v := m.command_prefixes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandPrefixes returns the old "command_prefixes" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandPrefixes(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandPrefixes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandPrefixes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandPrefixes: %w", err)
+	}
+	return oldValue.CommandPrefixes, nil
+}
+
+// AppendCommandPrefixes adds s to the "command_prefixes" field.
+func (m *CommandManifestMutation) AppendCommandPrefixes(s []string) {
+	m.appendcommand_prefixes = append(m.appendcommand_prefixes, s...)
+}
+
+// AppendedCommandPrefixes returns the list of values that were appended to the "command_prefixes" field in this mutation.
+func (m *CommandManifestMutation) AppendedCommandPrefixes() ([]string, bool) {
+	if len(m.appendcommand_prefixes) == 0 {
+		return nil, false
+	}
+	return m.appendcommand_prefixes, true
+}
+
+// ResetCommandPrefixes resets all changes to the "command_prefixes" field.
+func (m *CommandManifestMutation) ResetCommandPrefixes() {
+	m.command_prefixes = nil
+	m.appendcommand_prefixes = nil
+}
+
+// SetCommandPriority sets the "command_priority" field.
+func (m *CommandManifestMutation) SetCommandPriority(i int) {
+	m.command_priority = &i
+	m.addcommand_priority = nil
+}
+
+// CommandPriority returns the value of the "command_priority" field in the mutation.
+func (m *CommandManifestMutation) CommandPriority() (r int, exists bool) {
+	v := m.command_priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandPriority returns the old "command_priority" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandPriority(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandPriority is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandPriority requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandPriority: %w", err)
+	}
+	return oldValue.CommandPriority, nil
+}
+
+// AddCommandPriority adds i to the "command_priority" field.
+func (m *CommandManifestMutation) AddCommandPriority(i int) {
+	if m.addcommand_priority != nil {
+		*m.addcommand_priority += i
+	} else {
+		m.addcommand_priority = &i
+	}
+}
+
+// AddedCommandPriority returns the value that was added to the "command_priority" field in this mutation.
+func (m *CommandManifestMutation) AddedCommandPriority() (r int, exists bool) {
+	v := m.addcommand_priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCommandPriority resets all changes to the "command_priority" field.
+func (m *CommandManifestMutation) ResetCommandPriority() {
+	m.command_priority = nil
+	m.addcommand_priority = nil
+}
+
+// SetCommandMode sets the "command_mode" field.
+func (m *CommandManifestMutation) SetCommandMode(s string) {
+	m.command_mode = &s
+}
+
+// CommandMode returns the value of the "command_mode" field in the mutation.
+func (m *CommandManifestMutation) CommandMode() (r string, exists bool) {
+	v := m.command_mode
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandMode returns the old "command_mode" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandMode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandMode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandMode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandMode: %w", err)
+	}
+	return oldValue.CommandMode, nil
+}
+
+// ResetCommandMode resets all changes to the "command_mode" field.
+func (m *CommandManifestMutation) ResetCommandMode() {
+	m.command_mode = nil
+}
+
+// SetCommandModule sets the "command_module" field.
+func (m *CommandManifestMutation) SetCommandModule(s string) {
+	m.command_module = &s
+}
+
+// CommandModule returns the value of the "command_module" field in the mutation.
+func (m *CommandManifestMutation) CommandModule() (r string, exists bool) {
+	v := m.command_module
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandModule returns the old "command_module" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandModule(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandModule is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandModule requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandModule: %w", err)
+	}
+	return oldValue.CommandModule, nil
+}
+
+// ResetCommandModule resets all changes to the "command_module" field.
+func (m *CommandManifestMutation) ResetCommandModule() {
+	m.command_module = nil
+}
+
+// SetCommandPath sets the "command_path" field.
+func (m *CommandManifestMutation) SetCommandPath(s string) {
+	m.command_path = &s
+}
+
+// CommandPath returns the value of the "command_path" field in the mutation.
+func (m *CommandManifestMutation) CommandPath() (r string, exists bool) {
+	v := m.command_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandPath returns the old "command_path" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandPath: %w", err)
+	}
+	return oldValue.CommandPath, nil
+}
+
+// ResetCommandPath resets all changes to the "command_path" field.
+func (m *CommandManifestMutation) ResetCommandPath() {
+	m.command_path = nil
+}
+
+// SetCommandAdditionalParams sets the "command_additional_params" field.
+func (m *CommandManifestMutation) SetCommandAdditionalParams(s []string) {
+	m.command_additional_params = &s
+	m.appendcommand_additional_params = nil
+}
+
+// CommandAdditionalParams returns the value of the "command_additional_params" field in the mutation.
+func (m *CommandManifestMutation) CommandAdditionalParams() (r []string, exists bool) {
+	v := m.command_additional_params
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommandAdditionalParams returns the old "command_additional_params" field's value of the CommandManifest entity.
+// If the CommandManifest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandManifestMutation) OldCommandAdditionalParams(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommandAdditionalParams is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommandAdditionalParams requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommandAdditionalParams: %w", err)
+	}
+	return oldValue.CommandAdditionalParams, nil
+}
+
+// AppendCommandAdditionalParams adds s to the "command_additional_params" field.
+func (m *CommandManifestMutation) AppendCommandAdditionalParams(s []string) {
+	m.appendcommand_additional_params = append(m.appendcommand_additional_params, s...)
+}
+
+// AppendedCommandAdditionalParams returns the list of values that were appended to the "command_additional_params" field in this mutation.
+func (m *CommandManifestMutation) AppendedCommandAdditionalParams() ([]string, bool) {
+	if len(m.appendcommand_additional_params) == 0 {
+		return nil, false
+	}
+	return m.appendcommand_additional_params, true
+}
+
+// ClearCommandAdditionalParams clears the value of the "command_additional_params" field.
+func (m *CommandManifestMutation) ClearCommandAdditionalParams() {
+	m.command_additional_params = nil
+	m.appendcommand_additional_params = nil
+	m.clearedFields[commandmanifest.FieldCommandAdditionalParams] = struct{}{}
+}
+
+// CommandAdditionalParamsCleared returns if the "command_additional_params" field was cleared in this mutation.
+func (m *CommandManifestMutation) CommandAdditionalParamsCleared() bool {
+	_, ok := m.clearedFields[commandmanifest.FieldCommandAdditionalParams]
+	return ok
+}
+
+// ResetCommandAdditionalParams resets all changes to the "command_additional_params" field.
+func (m *CommandManifestMutation) ResetCommandAdditionalParams() {
+	m.command_additional_params = nil
+	m.appendcommand_additional_params = nil
+	delete(m.clearedFields, commandmanifest.FieldCommandAdditionalParams)
+}
+
+// Where appends a list predicates to the CommandManifestMutation builder.
+func (m *CommandManifestMutation) Where(ps ...predicate.CommandManifest) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CommandManifestMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CommandManifestMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CommandManifest, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CommandManifestMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CommandManifestMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CommandManifest).
+func (m *CommandManifestMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CommandManifestMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.command_prefixes != nil {
+		fields = append(fields, commandmanifest.FieldCommandPrefixes)
+	}
+	if m.command_priority != nil {
+		fields = append(fields, commandmanifest.FieldCommandPriority)
+	}
+	if m.command_mode != nil {
+		fields = append(fields, commandmanifest.FieldCommandMode)
+	}
+	if m.command_module != nil {
+		fields = append(fields, commandmanifest.FieldCommandModule)
+	}
+	if m.command_path != nil {
+		fields = append(fields, commandmanifest.FieldCommandPath)
+	}
+	if m.command_additional_params != nil {
+		fields = append(fields, commandmanifest.FieldCommandAdditionalParams)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CommandManifestMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case commandmanifest.FieldCommandPrefixes:
+		return m.CommandPrefixes()
+	case commandmanifest.FieldCommandPriority:
+		return m.CommandPriority()
+	case commandmanifest.FieldCommandMode:
+		return m.CommandMode()
+	case commandmanifest.FieldCommandModule:
+		return m.CommandModule()
+	case commandmanifest.FieldCommandPath:
+		return m.CommandPath()
+	case commandmanifest.FieldCommandAdditionalParams:
+		return m.CommandAdditionalParams()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CommandManifestMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case commandmanifest.FieldCommandPrefixes:
+		return m.OldCommandPrefixes(ctx)
+	case commandmanifest.FieldCommandPriority:
+		return m.OldCommandPriority(ctx)
+	case commandmanifest.FieldCommandMode:
+		return m.OldCommandMode(ctx)
+	case commandmanifest.FieldCommandModule:
+		return m.OldCommandModule(ctx)
+	case commandmanifest.FieldCommandPath:
+		return m.OldCommandPath(ctx)
+	case commandmanifest.FieldCommandAdditionalParams:
+		return m.OldCommandAdditionalParams(ctx)
+	}
+	return nil, fmt.Errorf("unknown CommandManifest field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommandManifestMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case commandmanifest.FieldCommandPrefixes:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandPrefixes(v)
+		return nil
+	case commandmanifest.FieldCommandPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandPriority(v)
+		return nil
+	case commandmanifest.FieldCommandMode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandMode(v)
+		return nil
+	case commandmanifest.FieldCommandModule:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandModule(v)
+		return nil
+	case commandmanifest.FieldCommandPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandPath(v)
+		return nil
+	case commandmanifest.FieldCommandAdditionalParams:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommandAdditionalParams(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CommandManifest field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CommandManifestMutation) AddedFields() []string {
+	var fields []string
+	if m.addcommand_priority != nil {
+		fields = append(fields, commandmanifest.FieldCommandPriority)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CommandManifestMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case commandmanifest.FieldCommandPriority:
+		return m.AddedCommandPriority()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommandManifestMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case commandmanifest.FieldCommandPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCommandPriority(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CommandManifest numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CommandManifestMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(commandmanifest.FieldCommandAdditionalParams) {
+		fields = append(fields, commandmanifest.FieldCommandAdditionalParams)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CommandManifestMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CommandManifestMutation) ClearField(name string) error {
+	switch name {
+	case commandmanifest.FieldCommandAdditionalParams:
+		m.ClearCommandAdditionalParams()
+		return nil
+	}
+	return fmt.Errorf("unknown CommandManifest nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CommandManifestMutation) ResetField(name string) error {
+	switch name {
+	case commandmanifest.FieldCommandPrefixes:
+		m.ResetCommandPrefixes()
+		return nil
+	case commandmanifest.FieldCommandPriority:
+		m.ResetCommandPriority()
+		return nil
+	case commandmanifest.FieldCommandMode:
+		m.ResetCommandMode()
+		return nil
+	case commandmanifest.FieldCommandModule:
+		m.ResetCommandModule()
+		return nil
+	case commandmanifest.FieldCommandPath:
+		m.ResetCommandPath()
+		return nil
+	case commandmanifest.FieldCommandAdditionalParams:
+		m.ResetCommandAdditionalParams()
+		return nil
+	}
+	return fmt.Errorf("unknown CommandManifest field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CommandManifestMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CommandManifestMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CommandManifestMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CommandManifestMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CommandManifestMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CommandManifestMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CommandManifestMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown CommandManifest unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CommandManifestMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown CommandManifest edge %s", name)
+}
 
 // DailyRequestsMutation represents an operation that mutates the DailyRequests nodes in the graph.
 type DailyRequestsMutation struct {

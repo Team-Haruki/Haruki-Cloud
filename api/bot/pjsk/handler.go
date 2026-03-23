@@ -8,10 +8,13 @@ import (
 	"strings"
 
 	"haruki-cloud/api"
+	botDB "haruki-cloud/database/bot"
+	"haruki-cloud/database/bot/commandmanifest"
 	pjskHandler "haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
@@ -22,22 +25,32 @@ const botRouteBase = "/api/v2/bot"
 //
 //	/api/v2/bot/:botId/pjsk/<module>/<mode>
 //
-// and a placeholder manifest at
+// and the command manifest endpoint at
 //
 //	GET /api/v2/bot/:botId/command/manifests
 //
 // When redisClient is non-nil, the api.VerifyBotSession middleware is applied to
 // authenticate requests via X-Haruki-Bot-Id and X-Haruki-Bot-Session-Token headers.
 // Pass nil for redisClient in unit tests (auth is skipped).
-func RegisterPJSKBotRoutes(app *fiber.App, resolver *parser.GlobalCommandResolver, renderApp *renderapp.App, redisClient *redis.Client) {
+//
+// When botDBClient is non-nil, the manifest table is seeded from botModeTable on
+// first run and the manifest endpoint returns live data from the database.
+// Pass nil to keep the placeholder response (e.g. in unit tests).
+func RegisterPJSKBotRoutes(app *fiber.App, resolver *parser.GlobalCommandResolver, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client) {
 	if resolver == nil || renderApp == nil {
 		return
 	}
 
+	if botDBClient != nil {
+		if err := SeedCommandManifests(context.Background(), botDBClient); err != nil {
+			// Non-fatal: manifest table seed failure should not block startup.
+			_ = err
+		}
+	}
+
 	bot := app.Group(botRouteBase+"/:botId", api.VerifyBotSession(redisClient))
 
-	// TODO: implement full command manifest — placeholder for now
-	bot.Get("/command/manifests", buildManifestHandler())
+	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 
 	pjsk := bot.Group("/pjsk")
 	for _, entry := range botModeTable {
@@ -218,14 +231,38 @@ type oneBotSegmentData struct {
 }
 
 // ---------------------------------------------------------------------------
-// Manifest (TODO — placeholder)
+// Manifest
 // ---------------------------------------------------------------------------
 
-// buildManifestHandler returns a placeholder handler for the command manifest endpoint.
-// TODO: Implement full command manifests with Bot-side pre-matching support.
-func buildManifestHandler() fiber.Handler {
+// buildManifestHandler returns a handler for GET /api/v2/bot/:botId/command/manifests.
+// When botDBClient is non-nil it queries the command_manifests table and returns
+// the full manifest ordered by priority descending.
+// When botDBClient is nil it returns a 501 Not Implemented response (test / no-DB mode).
+func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		return api.JSONResponse(c, fiber.StatusOK,
-			"command manifests not yet implemented — placeholder", nil)
+		if botDBClient == nil {
+			return api.JSONResponse(c, fiber.StatusNotImplemented,
+				"command manifests not available — bot DB not configured", nil)
+		}
+
+		rows, err := botDBClient.CommandManifest.Query().
+			Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
+			All(c.Context())
+		if err != nil {
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to load manifests", nil)
+		}
+
+		entries := make([]ManifestEntry, 0, len(rows))
+		for _, r := range rows {
+			entries = append(entries, ManifestEntry{
+				CommandPrefixes:         r.CommandPrefixes,
+				CommandPriority:         r.CommandPriority,
+				CommandMode:             r.CommandMode,
+				CommandModule:           r.CommandModule,
+				CommandPath:             r.CommandPath,
+				CommandAdditionalParams: r.CommandAdditionalParams,
+			})
+		}
+		return api.JSONResponse(c, fiber.StatusOK, "ok", ManifestResponse{Entries: entries})
 	}
 }

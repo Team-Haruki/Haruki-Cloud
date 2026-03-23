@@ -8,6 +8,18 @@ import (
 	"haruki-cloud/database/bot"
 )
 
+// The CommandManifestFunc type is an adapter to allow the use of ordinary
+// function as CommandManifest mutator.
+type CommandManifestFunc func(context.Context, *bot.CommandManifestMutation) (bot.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommandManifestFunc) Mutate(ctx context.Context, m bot.Mutation) (bot.Value, error) {
+	if mv, ok := m.(*bot.CommandManifestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *bot.CommandManifestMutation", m)
+}
+
 // The DailyRequestsFunc type is an adapter to allow the use of ordinary
 // function as DailyRequests mutator.
 type DailyRequestsFunc func(context.Context, *bot.DailyRequestsMutation) (bot.Value, error)

@@ -3,6 +3,7 @@
 package bot
 
 import (
+	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/database/bot/dailyrequests"
 	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/user"
@@ -13,6 +14,24 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	commandmanifestFields := schema.CommandManifest{}.Fields()
+	_ = commandmanifestFields
+	// commandmanifestDescCommandPriority is the schema descriptor for command_priority field.
+	commandmanifestDescCommandPriority := commandmanifestFields[1].Descriptor()
+	// commandmanifest.DefaultCommandPriority holds the default value on creation for the command_priority field.
+	commandmanifest.DefaultCommandPriority = commandmanifestDescCommandPriority.Default.(int)
+	// commandmanifestDescCommandMode is the schema descriptor for command_mode field.
+	commandmanifestDescCommandMode := commandmanifestFields[2].Descriptor()
+	// commandmanifest.CommandModeValidator is a validator for the "command_mode" field. It is called by the builders before save.
+	commandmanifest.CommandModeValidator = commandmanifestDescCommandMode.Validators[0].(func(string) error)
+	// commandmanifestDescCommandModule is the schema descriptor for command_module field.
+	commandmanifestDescCommandModule := commandmanifestFields[3].Descriptor()
+	// commandmanifest.CommandModuleValidator is a validator for the "command_module" field. It is called by the builders before save.
+	commandmanifest.CommandModuleValidator = commandmanifestDescCommandModule.Validators[0].(func(string) error)
+	// commandmanifestDescCommandPath is the schema descriptor for command_path field.
+	commandmanifestDescCommandPath := commandmanifestFields[4].Descriptor()
+	// commandmanifest.CommandPathValidator is a validator for the "command_path" field. It is called by the builders before save.
+	commandmanifest.CommandPathValidator = commandmanifestDescCommandPath.Validators[0].(func(string) error)
 	dailyrequestsFields := schema.DailyRequests{}.Fields()
 	_ = dailyrequestsFields
 	// dailyrequestsDescCount is the schema descriptor for count field.

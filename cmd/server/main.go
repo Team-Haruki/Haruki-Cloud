@@ -9,6 +9,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/chardata"
+	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/utils/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -202,6 +203,17 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		os.Exit(1)
 	}
 
+	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
+	if metaRefreshInterval <= 0 {
+		metaRefreshInterval = 30 * time.Minute
+	}
+	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"))
+	if err := metaLoader.LoadAll(context.Background()); err != nil {
+		mainLogger.Warnf("music meta initial load partially failed: %v", err)
+	}
+	metaLoader.StartBackgroundRefresh(context.Background(), metaRefreshInterval)
+	mainLogger.Infof("Music meta loader started (refresh=%s)", metaRefreshInterval)
+
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
 		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
 		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
@@ -223,6 +235,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 			MusicMetaJSON: harukiConfig.Cfg.PJSKRender.UserSnapshot.MusicMetaJSON,
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
 		},
+		MetaLoader: metaLoader,
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			UseLocalEngine: harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,

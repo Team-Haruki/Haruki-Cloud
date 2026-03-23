@@ -65,8 +65,8 @@ func GetToolboxClient() *HarukiToolboxClient {
 //   - ErrInvalidPlatformUser    — platform/user combo not authorised for this data
 //   - ErrAccountOwnerBanned     — game account owner is banned
 //   - *ToolboxAPIError          — any other unexpected non-2xx status
-func (c *HarukiToolboxClient) GetPrivateData(server, dataType string, userID int64, platform, platformUserID string) ([]byte, error) {
-	url := fmt.Sprintf("%s/api/private/%s/%s/%d", c.config.BaseURL, server, dataType, userID)
+func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+	url := fmt.Sprintf("%s/api/private/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
@@ -114,6 +114,18 @@ func (c *HarukiToolboxClient) GetPrivateData(server, dataType string, userID int
 		msg := parseMessage(resp.Body())
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
+}
+
+// GetSuiteData fetches the user game-data snapshot (suite) from the Toolbox.
+// The returned JSON is the raw payload that feeds into SnapshotStore (replaces user.json).
+func (c *HarukiToolboxClient) GetSuiteData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	return c.GetPrivateData(server, ToolboxDataTypeSuite, userID, platform, platformUserID)
+}
+
+// GetMySekaiData fetches the MySekai world snapshot from the Toolbox.
+// The returned JSON is the raw payload that feeds into MySekaiStore (replaces mysekai.json).
+func (c *HarukiToolboxClient) GetMySekaiData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	return c.GetPrivateData(server, ToolboxDataTypeMySekai, userID, platform, platformUserID)
 }
 
 // decompress handles transparent zstd decompression when the server indicates it.

@@ -60,6 +60,16 @@ var SekaiEventRankingLinesNormal = []int{
 	100000, 200000, 300000,
 }
 
+// ToolboxDataType identifies the kind of private snapshot served by the Toolbox API.
+// suite   → user game-data snapshot (replaces local user.json; stored in SnapshotStore)
+// mysekai → MySekai world snapshot  (replaces local mysekai.json; stored in MySekaiStore)
+type ToolboxDataType string
+
+const (
+	ToolboxDataTypeSuite   ToolboxDataType = "suite"
+	ToolboxDataTypeMySekai ToolboxDataType = "mysekai"
+)
+
 var SekaiEventRankingLinesWorldBloom = []int{
 	10, 20, 30, 40, 50, 100, 200, 300, 400, 500,
 	1000, 2000, 3000, 4000, 5000, 7000,

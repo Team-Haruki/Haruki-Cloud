@@ -6,6 +6,7 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -35,6 +36,7 @@ type Config struct {
 	AssetLegacyDirs   []string
 	LocalMasterdata   LocalMasterdataConfig
 	UserSnapshot      UserSnapshotConfig
+	MetaLoader        *meta.Loader
 	DeckRecommend     DeckRecommendConfig
 }
 
@@ -58,24 +60,25 @@ type DeckRecommendConfig struct {
 }
 
 type App struct {
-	Sekai    *sekaiDB.Client
-	PJSK     *pjskDB.Client
-	Drawing  *drawing.HarukiDrawingClient
-	Assets   *assets.AssetHelper
-	Cards    *card.Controller
-	Decks    *deck.Controller
-	Edu      *education.Controller
-	Events   *event.Controller
-	Gachas   *gacha.Controller
-	Honors   *honor.Controller
-	Misc     *misc.Controller
-	MySekai  *mysekai.Controller
-	Music    *music.Controller
-	Profiles *profile.Controller
-	Score    *score.Controller
-	SK       *sk.Controller
-	Stamps   *stamp.Controller
-	Config   Config
+	Sekai      *sekaiDB.Client
+	PJSK       *pjskDB.Client
+	Drawing    *drawing.HarukiDrawingClient
+	Assets     *assets.AssetHelper
+	MetaLoader *meta.Loader
+	Cards      *card.Controller
+	Decks      *deck.Controller
+	Edu        *education.Controller
+	Events     *event.Controller
+	Gachas     *gacha.Controller
+	Honors     *honor.Controller
+	Misc       *misc.Controller
+	MySekai    *mysekai.Controller
+	Music      *music.Controller
+	Profiles   *profile.Controller
+	Score      *score.Controller
+	SK         *sk.Controller
+	Stamps     *stamp.Controller
+	Config     Config
 }
 
 func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *App {
@@ -137,24 +140,25 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	return &App{
-		Sekai:    sekaiClient,
-		PJSK:     pjskClient,
-		Drawing:  drawingClient,
-		Assets:   assetHelper,
-		Cards:    cardController,
-		Decks:    deckController,
-		Edu:      educationController,
-		Events:   eventController,
-		Gachas:   gachaController,
-		Honors:   honorController,
-		Misc:     miscController,
-		MySekai:  mysekaiController,
-		Music:    musicController,
-		Profiles: profileController,
-		Score:    scoreController,
-		SK:       skController,
-		Stamps:   stampController,
-		Config:   cfg,
+		Sekai:      sekaiClient,
+		PJSK:       pjskClient,
+		Drawing:    drawingClient,
+		Assets:     assetHelper,
+		MetaLoader: cfg.MetaLoader,
+		Cards:      cardController,
+		Decks:      deckController,
+		Edu:        educationController,
+		Events:     eventController,
+		Gachas:     gachaController,
+		Honors:     honorController,
+		Misc:       miscController,
+		MySekai:    mysekaiController,
+		Music:      musicController,
+		Profiles:   profileController,
+		Score:      scoreController,
+		SK:         skController,
+		Stamps:     stampController,
+		Config:     cfg,
 	}
 }
 

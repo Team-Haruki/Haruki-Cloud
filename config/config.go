@@ -82,6 +82,10 @@ type RenderCacheConfig struct {
 	TTL        time.Duration `yaml:"ttl"`
 }
 
+type MusicMetaConfig struct {
+	RefreshInterval time.Duration `yaml:"refresh_interval"` // default: 30m
+}
+
 type PJSKRenderConfig struct {
 	Enabled           bool                  `yaml:"enabled"`
 	DrawingBaseURL    string                `yaml:"drawing_base_url"`
@@ -91,6 +95,7 @@ type PJSKRenderConfig struct {
 	AssetDirs         AssetDirsConfig       `yaml:"asset_dirs"`
 	LocalMasterdata   LocalMasterdataConfig `yaml:"local_masterdata"`
 	UserSnapshot      UserSnapshotConfig    `yaml:"user_snapshot"`
+	MusicMeta         MusicMetaConfig       `yaml:"music_meta"`
 	DeckRecommend     DeckRecommendConfig   `yaml:"deck_recommend"`
 }
 

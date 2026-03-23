@@ -1,4 +1,4 @@
-package bot
+package auth
 
 import (
 	ent "haruki-cloud/database/bot"

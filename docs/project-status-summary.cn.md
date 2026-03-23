@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-23 04:55 UTC
+> 最后更新：2026-03-23（v5.0）
 
 ## 📊 项目概览
 
@@ -74,36 +74,152 @@
    - ✅ `cmd/server/main.go` 中初始化 chardata + resolver
    - ✅ `haruki-db-configs.example.yaml` 更新
 
-### 调用链（已实现）
+### 调用链（已实现，含 API 端点）
 
 ```
-Bot → API 层（待定义）
-    → parser.GlobalCommandResolver.Resolve(message)
+Bot → POST /internal/pjsk/command
+    → parser.GlobalCommandResolver.Resolve(req.Command)
     → parser.ResolvedCommand{Module, Mode, Query, Region, Params}
     → handler.Execute(ctx, resolved, renderApp)
     → render Controller 直接调用
-    → Drawing API → PNG
+    → Drawing API → PNG (Content-Type: image/png)
+```
+
+## ✅ Bot 指令 API 端点（已完成）
+
+**完成时间**：2026-03-23
+
+### 设计范围说明
+
+本端点仅处理 **Render 类指令**（返回 PNG 图片的查询指令），例如：
+- 查卡、查活动、查卡池、谱面、sk线、我的世界资源等
+
+**不在此端点的操作**（账号管理类指令）：
+- `/绑定`、`/解绑`、`/设置主账号`、`/交换绑定`、`/注册` 等
+- 这些是数据写操作，无图片输出，**应当作为独立 REST 端点实现**（待账号管理逻辑完成后添加）
+- `GlobalCommandResolver` 中刻意不包含这些指令
+
+### 鉴权说明
+
+`/api/v2/bot/:botId/` 下的所有端点使用 **`VerifyBotSession` 中间件**（`api/bot_session_middleware.go`）。
+
+| 请求头 | 说明 |
+|--------|------|
+| `X-Haruki-Bot-Id` | Bot 的数字 ID（须与 URL `:botId` 一致） |
+| `X-Haruki-Bot-Session-Token` | POST `/bot/:bot_id/auth` 下发的 JWT session token |
+
+验证流程：
+```
+1. 检查两个请求头存在且 X-Haruki-Bot-Id == URL :botId（不一致 → 403）
+2. 验证 JWT 签名有效且未过期（失败 → 401）
+3. 验证 JWT bot_id claim == X-Haruki-Bot-Id（不一致 → 403）
+4. 在 Redis (hdb:bot:session:<botId>) 中查找 session token 是否存在且一致（不存在/不一致 → 401）
+```
+
+### 通用指令端点
+
+**`POST /internal/pjsk/command`** — 接受原始文本指令，内部自动解析+路由，适合内部服务场景。使用 `VerifyAPIAuthorization` 中间件。
+
+### 按功能分项端点
+
+路径格式：**`GET|POST /api/v2/bot/:botId/pjsk/<module>/<mode>`**
+
+Bot 工作流：
+```
+1. GET /api/v2/bot/:botId/command/manifests  →  TODO 占位端点（Manifest 结构待定）
+2. Bot 本地预匹配指令到对应端点
+3. GET /api/v2/bot/11451419/pjsk/card/detail?command=<Base64 OneBot JSON>
+   或  POST /api/v2/bot/11451419/pjsk/card/detail  body: {"command": "<Base64>"}
+4. Cloud 解码 Base64 → 提取 OneBot 消息文本 → 解析 → 验证端点匹配 → 渲染 → PNG
+```
+
+**command 参数**：Base64 编码的 OneBot v11 JSON payload（支持 `raw_message` 和 `message` 数组格式）。  
+如果不是有效的 Base64+OneBot JSON，自动降级为纯文本指令处理。
+
+端点若收到不属于该功能的指令，返回 400 并说明期望的 module/mode。
+
+### 请求格式
+
+GET：query params `command`、`server`、`im_platform`、`im_user_id`  
+POST：JSON body `{"command":"<base64>", "server":"jp", "im_platform":"qq", "im_user_id":"12345"}`
+
+成功响应：`200 OK`，`Content-Type: image/png`，body 为 PNG 字节流。
+
+### 实现文件
+
+| 文件 | 内容 |
+|------|------|
+| `api/bot_session_middleware.go` | `VerifyBotSession(redisClient)`、header 常量定义 |
+| `api/legacy/pjsk/command_struct.go` | `CommandRequest`、`CommandErrorResponse` |
+| `api/legacy/pjsk/command.go` | `RegisterPJSKCommandRoute`（通用端点） |
+| `api/legacy/pjsk/command_test.go` | 5 个测试 |
+| `api/bot/pjsk/struct.go` | `BotCommandRequest`、`BotCommandErrorResponse`、`ManifestEntry`、`ManifestResponse` |
+| `api/bot/pjsk/route_table.go` | 41 条路由配置表（module、mode、path、prefixes） |
+| `api/bot/pjsk/handler.go` | `makeBotHandler`、Base64+OneBot 解码、`RegisterPJSKBotRoutes`、manifest 占位 |
+| `api/bot/pjsk/handler_test.go` | 11 个测试（含 OneBot 解码、纯文本降级、GET/POST、端点匹配、manifest） |
+| `api/bot/pjsk/testhelpers_test.go` | 测试辅助：`testRenderApp`、`testResolver`、`renderEnvelope` |
+| `cmd/server/main.go` | 同时注册两套路由，传入 `redisClient` |
+
+> 注：`RegisterPJSKBotRoutes` 传入 `nil` redisClient 时跳过鉴权（用于单元测试）。
+
+## ✅ API 层结构整理（已完成）
+
+**完成时间**：2026-03-23
+
+### 变更内容
+
+1. **公开 API 路径统一迁移至 `/api/v2/public/` 前缀**：
+   - `/pjsk/alias/*` → `/api/v2/public/pjsk/alias/*`
+   - `/chunithm/*` → `/api/v2/public/chunithm/*`
+
+2. **删除 Censor 模块**：`api/censor/` 全部删除（`RegisterCensorRoutes` 已是空函数），`initCensor`/`initUsers` 从 `main.go` 移除。
+
+3. **`api/` 目录按 public/bot/legacy 三层重新组织**：
+
+   | 旧路径 | 新路径 | 说明 |
+   |--------|--------|------|
+   | `api/pjsk/alias_*.go` | `api/public/pjsk/` | 公开别名查询 |
+   | `api/chunithm/` | `api/public/chunithm/` | 公开曲目查询 |
+   | `api/bot/` | `api/bot/auth/` | Bot 注册/登录（package 改为 `auth`） |
+   | `api/pjsk/bot_*.go` | `api/bot/pjsk/` | Bot 指令端点 |
+   | `api/pjsk/render_*.go + command*.go` | `api/legacy/pjsk/` | 内部渲染路由（待发布前删除） |
+
+4. **删除 `api/types.go`**：仅有类型重新导出，无存活代码引用。
+5. **删除 `api/users/` 空目录**。
+
+### 最终 `api/` 结构
+
+```
+api/
+  struct.go / helper.go / bot_session_middleware.go   (package api — 共享层)
+  public/
+    pjsk/        → GET /api/v2/public/pjsk/alias/*         (无鉴权)
+    chunithm/    → GET /api/v2/public/chunithm/*           (无鉴权)
+  bot/
+    auth/        → /bot/send-mail, /bot/register, /bot/:id/auth
+    pjsk/        → /api/v2/bot/:botId/pjsk/*              (VerifyBotSession)
+  legacy/
+    pjsk/        → /internal/pjsk/*                       (VerifyAPIAuthorization，待删除)
 ```
 
 ## 📋 后续待办事项
 
-### P0 - 必须完成（阻塞 Bot 上线）
-
-1. **定义 Bot API 层端点**（协议待确认）
-   - 新增 `POST /internal/pjsk/process` 或类似端点
-   - 接收 Bot 消息 payload（格式 TBD）
-   - 串联：`GlobalCommandResolver.Resolve()` → `handler.Execute()` → 返回 PNG
-   - **前置条件**：Bot 侧调用协议（消息格式、鉴权方式、用户上下文字段）需先确认
-   - 技术准备：`GlobalCommandResolver` 已在 `main.go` 初始化，但返回值当前未使用
-
 ### P1 - 重要但不紧急
+
+1. **Command Manifest 实现**
+   - 占位端点已注册：`GET /api/v2/bot/:botId/command/manifests`
+   - 待 Client 确认 Manifest 结构后实现完整逻辑
+
+2. **账号管理 REST 端点**（bind/unbind/setMain 等）
+   - `sekai/profile.go` 中相关逻辑全部是 TODO stub，需先完成业务逻辑
+   - 完成后作为独立 REST 端点暴露（如 `POST /internal/pjsk/binding/bind`），不走 render 指令链路
 
 2. **正式用户快照 Provider**（技术债偿还）
    - 设计已完成：`docs/pjsk-user-snapshot-provider-design.cn.md`
    - 当前仍依赖本地 `user.json`、`music_metas.json`、`mysekai.json`
 
 3. **Bot 调用方切换**
-   - Haruki-ZeroBot 改调新接口
+   - Haruki-ZeroBot 改调 `POST /internal/pjsk/command`
    - 详见：`docs/zerobot-render-followup.cn.md`
 
 ### P2 - 可选优化
@@ -114,20 +230,22 @@ Bot → API 层（待定义）
 ## 📈 项目进度总览
 
 ```
-总体进度: ████████████████░░░░ 80%
+总体进度: ██████████████████░░ 90%
 
 Service-Test 合并:     ████████████████████ 100% ✅
 Test_Request_Constr:   ████████████████████ 100% ✅
 Parser 合并:           ████████████████████ 100% ✅
-Bot API 层:            ░░░░░░░░░░░░░░░░░░░░   0% ⚠️ (协议待确认)
+Bot API 层:            ████████████████████ 100% ✅  (通用端点 + 41个功能端点 + manifest)
 用户快照 Provider:     ░░░░░░░░░░░░░░░░░░░░   0% 📝
 Bot 切换:              ░░░░░░░░░░░░░░░░░░░░   0% 📝
 ```
 
 ### 当前阶段小结（2026-03-23）
 
-两大子系统（渲染 + 解析）已完全合并并通过编译和测试，调用链从指令解析到图像输出的技术路径已打通。  
-唯一阻塞项是 Bot API 层端点——协议确认后可快速实现（基础设施已就位）。
+三大核心子系统（渲染 + 解析 + API 端点）全部完成。  
+Bot 可通过 `POST /internal/pjsk/command`（内部服务调用）或 `GET|POST /api/v2/bot/:botId/pjsk/<module>/<mode>`（Bot 客户端直调，带 session 鉴权）获取渲染后的 PNG 图片。  
+Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已注册为占位，待 Client 确认 Manifest 结构后实现。  
+剩余工作：用户快照正式 Provider（技术债）和 ZeroBot 侧接入（外部仓库）。
 
 ## 📚 相关文档
 
@@ -139,8 +257,118 @@ Bot 切换:              ░░░░░░░░░░░░░░░░░░�
 - `docs/pjsk-user-snapshot-provider-design.cn.md` - 用户快照 Provider 设计
 - `docs/zerobot-render-followup.cn.md` - ZeroBot 接入说明
 
+## 🔌 API 端点一览
+
+### 鉴权方式说明
+
+| 中间件 | 适用场景 | 验证内容 |
+|--------|----------|----------|
+| `VerifyAPIAuthorization` | 内部服务间调用 | `Authorization` 头 + `User-Agent` 头（匹配配置值） |
+| `VerifyBotSession` | Bot 客户端直调 | `X-Haruki-Bot-Id` + `X-Haruki-Bot-Session-Token`（JWT + Redis） |
+| 无鉴权 | 公开端点 | — |
+
+### Bot 会话端点（公开）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/bot/send-mail` | 发送验证码 |
+| POST | `/bot/register` | 注册 Bot |
+| POST | `/bot/:bot_id/auth` | 登录，返回 `session_token` |
+
+### Bot 指令端点（Render 类，`VerifyBotSession` 鉴权）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/internal/pjsk/command` | 通用端点：纯文本指令 → 解析 → 渲染 → PNG |
+| GET | `/api/v2/bot/:botId/command/manifests` | **TODO 占位** — 返回指令前缀→端点映射表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/card/box` | 查箱/查框 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/gacha` | 卡池信息 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/music/list` | 歌曲列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/music/chart` | 谱面预览 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/music/progress` | 打歌进度 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/music/rewards` | 曲目奖励 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/deck/event` | 活动组卡 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/deck/challenge` | 挑战赛组卡 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/deck/no-event` | 长草最强组卡 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/deck/bonus` | 加成组卡 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/deck/mysekai` | 烤森组卡 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/event` | 活动详情 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/event/list` | 活动列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/education/challenge` | 挑战赛信息 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/education/power` | 角色加成 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/education/area` | 区域道具 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/education/bonds` | 羁绊等级 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/education/leader` | 加成统计 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/score` | 分数查询 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/score/custom-room` | 自定义房间分数 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/score/music-meta` | 曲目 meta |
+| GET/POST | `/api/v2/bot/:botId/pjsk/score/music-board` | 曲目榜 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/stamp` | 贴纸列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/misc/birthday` | 角色生日贺图 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/line` | SK 榜线 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/query` | SK 查分 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/check-room` | 查房 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/speed` | SK 时速 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/player-trace` | 玩家轨迹 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/rank-trace` | 档线轨迹 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/sk/winrate` | 胜率预测 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/resource` | 烤森资源 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/fixture-list` | 家具列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/fixture-detail` | 家具详情 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/door-upgrade` | 大门升级 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/music-record` | 音乐唱片 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/talk-list` | 对话列表 |
+| GET/POST | `/api/v2/bot/:botId/pjsk/profile` | 个人名片 |
+
+> `command` 参数为 Base64 编码的 OneBot JSON payload，支持 `raw_message` 和 `message[]` 格式。  
+> 账号管理类指令（bind/unbind 等）为 TODO，完成后将作为独立 REST 端点添加。
+
+### 渲染分发端点（`VerifyAPIAuthorization` 鉴权）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/internal/pjsk/render` | 统一分发入口（指定 target + operation + payload） |
+
+### 模块化渲染端点（`VerifyAPIAuthorization` 鉴权）
+
+每个模块提供 `build`（返回 JSON payload）和 `render`（返回 PNG）两种操作。
+
+| 模块 | 路径前缀 | 操作 |
+|------|---------|------|
+| Card | `/internal/pjsk/card/` | `detail`, `list`, `box` |
+| Deck | `/internal/pjsk/deck/` | `recommend`, `recommend/auto` |
+| Event | `/internal/pjsk/event/` | `detail`, `list`, `record` |
+| Gacha | `/internal/pjsk/gacha/` | `detail`, `list` |
+| Honor | `/internal/pjsk/honor/` | （直接） |
+| Profile | `/internal/pjsk/profile/` | （直接） |
+| Misc | `/internal/pjsk/misc/` | `chara-birthday` |
+| MySekai | `/internal/pjsk/mysekai/` | `resource`, `fixture-list`, `fixture-detail`, `door-upgrade`, `music-record`, `talk-list` |
+| Music | `/internal/pjsk/music/` | `detail`, `brief-list`, `list`, `progress`, `rewards/detail`, `rewards/basic`, `chart` |
+| Education | `/internal/pjsk/education/` | `challenge-live`, `power-bonus`, `area-item`, `bonds`, `leader-count` |
+| SK | `/internal/pjsk/sk/` | `line`, `query`, `check-room`, `speed`, `player-trace`, `rank-trace`, `winrate` |
+| Score | `/internal/pjsk/score/` | `control`, `custom-room`, `music-meta`, `music-board` |
+| Stamp | `/internal/pjsk/stamp/` | `list` |
+
+### 其他端点
+
+| 路径前缀 | 鉴权 | 说明 |
+|---------|------|------|
+| `/api/v2/public/pjsk/` | 无 | PJSK 别名查询（公开） |
+| `/api/v2/public/chunithm/` | 无 | Chunithm 别名 + 曲目查询（公开） |
+| `/internal/bot/` | `VerifyAPIAuthorization` | Bot 会话验证（内部服务） |
+
+### 待实现端点
+
+| 路径 | 说明 |
+|------|------|
+| `GET /api/v2/bot/:botId/command/manifests` | Command Manifest — 结构待 Client 确认后实现 |
+| `POST /internal/pjsk/binding/bind` 等 | 账号管理（bind/unbind/setMain），需先完成业务逻辑 |
+
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v2.1  
+**文档版本**：v5.0  
 **创建日期**：2026-03-23

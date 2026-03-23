@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterChunithmRoutes(app fiber.Router, mainClient *maindb.Client, musicClient *music.Client, redisClient *redis.Client) {
-	group := app.Group("/chunithm")
+	group := app.Group("/api/v2/public/chunithm")
 	registerAliasRoutes(group, mainClient, redisClient)
 	registerMusicRoutes(group, musicClient, redisClient)
 }

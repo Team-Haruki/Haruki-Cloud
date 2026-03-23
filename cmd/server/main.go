@@ -15,20 +15,18 @@ import (
 	harukiLogger "haruki-cloud/utils/logger"
 	harukiRedis "haruki-cloud/utils/redis"
 
-	botAPI "haruki-cloud/api/bot"
-	censorAPI "haruki-cloud/api/censor"
-	chunithmAPI "haruki-cloud/api/chunithm"
-	PJSKAPI "haruki-cloud/api/pjsk"
+	botAuth "haruki-cloud/api/bot/auth"
+	botPJSK "haruki-cloud/api/bot/pjsk"
+	legacyPJSK "haruki-cloud/api/legacy/pjsk"
+	publicChunithm "haruki-cloud/api/public/chunithm"
+	publicPJSK "haruki-cloud/api/public/pjsk"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	censorTool "haruki-cloud/utils/censor"
 
 	botDB "haruki-cloud/database/bot"
-	censorDB "haruki-cloud/database/censor"
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
-	usersDB "haruki-cloud/database/users"
 
 	"github.com/bytedance/sonic"
 	_ "github.com/go-sql-driver/mysql"
@@ -48,17 +46,17 @@ func main() {
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(mainLogger)
 	app := createFiberApp(mainLogger)
-	usersDBClient := initUsers(mainLogger)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(mainLogger, app, redisClient)
 	sekaiClient := initSekaiIfEnabled(mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
-	PJSKAPI.RegisterPJSKRenderRoutes(app, renderRuntime)
-	initPJSKParserIfEnabled(mainLogger, sekaiClient)
-	censorDBClient, _ := initCensor(mainLogger, app, usersDBClient, redisClient)
+	legacyPJSK.RegisterPJSKRenderRoutes(app, renderRuntime)
+	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
+	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
+	botPJSK.RegisterPJSKBotRoutes(app, pjskResolver, renderRuntime, redisClient)
 	botDBClient := initBot(mainLogger, app, redisClient)
 
-	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, censorDBClient, botDBClient, usersDBClient)
+	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 
 	if renderRuntime != nil {
 		mainLogger.Infof("PJSK render runtime initialized; internal render routes registered")
@@ -154,7 +152,7 @@ func initChunithmIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redi
 		os.Exit(1)
 	}
 
-	chunithmAPI.RegisterChunithmRoutes(app, chunithmMainClient, chunithmMusicClient, redisClient)
+	publicChunithm.RegisterChunithmRoutes(app, chunithmMainClient, chunithmMusicClient, redisClient)
 	return chunithmMainClient, chunithmMusicClient
 }
 
@@ -173,7 +171,7 @@ func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisCli
 		os.Exit(1)
 	}
 
-	PJSKAPI.RegisterPJSKRoutes(app, pjskClient, redisClient)
+	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
 }
 
@@ -266,23 +264,6 @@ func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 	return resolver
 }
 
-func initCensor(mainLogger *harukiLogger.Logger, app *fiber.App, usersClient *usersDB.Client, redisClient *redis.Client) (*censorDB.Client, *censorTool.Service) {
-	censorDBClient, err := censorDB.Open(harukiConfig.Cfg.Censor.CensorDBType, harukiConfig.Cfg.Censor.CensorDBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to initialize Censor entgo client: %v", err)
-		os.Exit(1)
-	}
-	if err := censorDBClient.Schema.Create(context.Background()); err != nil {
-		mainLogger.Errorf("Failed to create schema for Censor DB: %v", err)
-		os.Exit(1)
-	}
-
-	censorService := censorTool.NewService(harukiConfig.Cfg.Censor.BaiduAPIKey, harukiConfig.Cfg.Censor.BaiduSecret, censorDBClient)
-	censorAPI.RegisterCensorRoutes(app, censorService, usersClient, redisClient)
-
-	return censorDBClient, censorService
-}
-
 func initBot(mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) *botDB.Client {
 	botDBClient, err := botDB.Open(harukiConfig.Cfg.HarukiBotDB.DBType, harukiConfig.Cfg.HarukiBotDB.DBURL)
 	if err != nil {
@@ -294,25 +275,12 @@ func initBot(mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis
 		os.Exit(1)
 	}
 
-	botAPI.RegisterBotRoutes(app, botDBClient, redisClient)
+	botAuth.RegisterBotRoutes(app, botDBClient, redisClient)
 	return botDBClient
 }
 
-func initUsers(mainLogger *harukiLogger.Logger) *usersDB.Client {
-	usersDBClient, err := usersDB.Open(harukiConfig.Cfg.UsersDB.DBType, harukiConfig.Cfg.UsersDB.DBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to initialize Users entgo client: %v", err)
-		os.Exit(1)
-	}
-	if err := usersDBClient.Schema.Create(context.Background()); err != nil {
-		mainLogger.Errorf("Failed to create schema for Users DB: %v", err)
-		os.Exit(1)
-	}
-	return usersDBClient
-}
-
 func closeClients(chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,
-	pjskClient *pjskDB.Client, sekaiClient *sekaiDB.Client, censorDBClient *censorDB.Client, botDBClient *botDB.Client, usersDBClient *usersDB.Client) {
+	pjskClient *pjskDB.Client, sekaiClient *sekaiDB.Client, botDBClient *botDB.Client) {
 	if chunithmMainClient != nil {
 		_ = chunithmMainClient.Close()
 	}
@@ -325,14 +293,8 @@ func closeClients(chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient
 	if sekaiClient != nil {
 		_ = sekaiClient.Close()
 	}
-	if censorDBClient != nil {
-		_ = censorDBClient.Close()
-	}
 	if botDBClient != nil {
 		_ = botDBClient.Close()
-	}
-	if usersDBClient != nil {
-		_ = usersDBClient.Close()
 	}
 }
 

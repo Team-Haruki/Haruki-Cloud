@@ -38,9 +38,9 @@ func TestPublicPJSKAliasEndpoints(t *testing.T) {
 	app := fiber.New()
 	RegisterPJSKRoutes(app, client, nil)
 
-	aliasToID := requestPJSK(t, app, http.MethodGet, "/pjsk/alias/music/by-alias?alias=sekai-song", "")
+	aliasToID := requestPJSK(t, app, http.MethodGet, "/api/v2/public/pjsk/alias/music/by-alias?alias=sekai-song", "")
 	if aliasToID.Status != fiber.StatusOK {
-		t.Fatalf("/pjsk/alias/:alias_type/by-alias failed: status=%d message=%s", aliasToID.Status, aliasToID.Message)
+		t.Fatalf("/api/v2/public/pjsk/alias/:alias_type/by-alias failed: status=%d message=%s", aliasToID.Status, aliasToID.Message)
 	}
 	var toIDData struct {
 		MatchIDs []int `json:"match_ids"`
@@ -52,9 +52,9 @@ func TestPublicPJSKAliasEndpoints(t *testing.T) {
 		t.Fatalf("unexpected alias->id data: %+v", toIDData)
 	}
 
-	aliasList := requestPJSK(t, app, http.MethodGet, "/pjsk/alias/music/2001", "")
+	aliasList := requestPJSK(t, app, http.MethodGet, "/api/v2/public/pjsk/alias/music/2001", "")
 	if aliasList.Status != fiber.StatusOK {
-		t.Fatalf("/pjsk/alias/:alias_type/:alias_type_id failed: status=%d message=%s", aliasList.Status, aliasList.Message)
+		t.Fatalf("/api/v2/public/pjsk/alias/:alias_type/:alias_type_id failed: status=%d message=%s", aliasList.Status, aliasList.Message)
 	}
 	var listData struct {
 		Aliases []string `json:"aliases"`
@@ -66,7 +66,7 @@ func TestPublicPJSKAliasEndpoints(t *testing.T) {
 		t.Fatalf("expected 2 aliases, got %+v", listData)
 	}
 
-	notGroup := requestPJSK(t, app, http.MethodGet, "/pjsk/alias/character/by-alias?alias=miku", "")
+	notGroup := requestPJSK(t, app, http.MethodGet, "/api/v2/public/pjsk/alias/character/by-alias?alias=miku", "")
 	if notGroup.Status != fiber.StatusNotFound {
 		t.Fatalf("group alias should not be exposed on public API, got status=%d message=%s", notGroup.Status, notGroup.Message)
 	}

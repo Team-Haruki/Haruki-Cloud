@@ -49,7 +49,7 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 	app := fiber.New()
 	RegisterChunithmRoutes(app, mainClient, musicClient, nil)
 
-	aliasResp := requestAPI(t, app, http.MethodGet, "/chunithm/alias/music-id?alias=test-song", "")
+	aliasResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/alias/music-id?alias=test-song", "")
 	if aliasResp.Status != fiber.StatusOK {
 		t.Fatalf("alias/music-id failed: status=%d message=%s", aliasResp.Status, aliasResp.Message)
 	}
@@ -63,40 +63,40 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 		t.Fatalf("unexpected alias/music-id data: %+v", aliasData)
 	}
 
-	aliasListResp := requestAPI(t, app, http.MethodGet, "/chunithm/alias/1001", "")
+	aliasListResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/alias/1001", "")
 	if aliasListResp.Status != fiber.StatusOK {
 		t.Fatalf("alias/:music_id failed: status=%d message=%s", aliasListResp.Status, aliasListResp.Message)
 	}
 
-	allMusicResp := requestAPI(t, app, http.MethodGet, "/chunithm/music/all-music", "")
+	allMusicResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/all-music", "")
 	if allMusicResp.Status != fiber.StatusOK {
 		t.Fatalf("music/all-music failed: status=%d message=%s", allMusicResp.Status, allMusicResp.Message)
 	}
 
-	basicResp := requestAPI(t, app, http.MethodGet, "/chunithm/music/1001/basic-info", "")
+	basicResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/1001/basic-info", "")
 	if basicResp.Status != fiber.StatusOK {
 		t.Fatalf("music/basic-info failed: status=%d message=%s", basicResp.Status, basicResp.Message)
 	}
 
-	difficultyResp := requestAPI(t, app, http.MethodGet, "/chunithm/music/1001/difficulty-info?version=v1", "")
+	difficultyResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/1001/difficulty-info?version=v1", "")
 	if difficultyResp.Status != fiber.StatusOK {
 		t.Fatalf("music/difficulty-info failed: status=%d message=%s", difficultyResp.Status, difficultyResp.Message)
 	}
 
-	chartResp := requestAPI(t, app, http.MethodGet, "/chunithm/music/1001/chart-data", "")
+	chartResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/1001/chart-data", "")
 	if chartResp.Status != fiber.StatusOK {
 		t.Fatalf("music/chart-data failed: status=%d message=%s", chartResp.Status, chartResp.Message)
 	}
 
 	batchBody := `{"music_ids":[1001,9999],"version":"v1"}`
-	batchCompatResp := requestAPI(t, app, http.MethodPost, "/chunithm/query-batch", batchBody)
+	batchCompatResp := requestAPI(t, app, http.MethodPost, "/api/v2/public/chunithm/query-batch", batchBody)
 	if batchCompatResp.Status != fiber.StatusOK {
-		t.Fatalf("compat /chunithm/query-batch failed: status=%d message=%s", batchCompatResp.Status, batchCompatResp.Message)
+		t.Fatalf("compat /api/v2/public/chunithm/query-batch failed: status=%d message=%s", batchCompatResp.Status, batchCompatResp.Message)
 	}
 
-	batchMusicResp := requestAPI(t, app, http.MethodPost, "/chunithm/music/query-batch", batchBody)
+	batchMusicResp := requestAPI(t, app, http.MethodPost, "/api/v2/public/chunithm/music/query-batch", batchBody)
 	if batchMusicResp.Status != fiber.StatusOK {
-		t.Fatalf("/chunithm/music/query-batch failed: status=%d message=%s", batchMusicResp.Status, batchMusicResp.Message)
+		t.Fatalf("/api/v2/public/chunithm/music/query-batch failed: status=%d message=%s", batchMusicResp.Status, batchMusicResp.Message)
 	}
 }
 

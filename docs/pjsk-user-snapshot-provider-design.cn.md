@@ -18,7 +18,27 @@
 
 ## 2. 已确认的事实
 
-### 2.1 Service-Test 当前做法
+### 2.1 数据来源（已确认）
+
+用户态快照数据统一由 **Haruki Toolbox API** 提供（`utils/sekai.HarukiToolboxClient`）：
+
+| 本地文件 | Toolbox 调用 | 数据类型 | 存储字段 |
+|---------|-------------|---------|---------|
+| `user.json` | `GetSuiteData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeSuite` | `main_snapshot_json`（用户级） |
+| `mysekai.json` | `GetMySekaiData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeMySekai` | `mysekai_snapshot_json`（用户级） |
+| `music_metas.json` | `https://sekai-data.3-3.dev/music_metas-{region}.json`（公开远端） | 全局区服数据 | `music_meta_cache`（区服级） |
+
+`music_metas` 是全局按区服的静态数据（完全不含用户状态），来源与用户快照无关，存储层独立设计。
+
+快照写入链路（`POST /internal/pjsk/snapshot/upload`）：
+1. `IdentityResolver`：`im_platform + im_user_id` → `haruki_user_id`
+2. `BindingResolver`：`haruki_user_id + region` → `pjsk_user_id`
+3. `GetSuiteData()` → 写 `main_snapshot_json`
+4. `GetMySekaiData()` → 写 `mysekai_snapshot_json`
+
+**不**接受外部 raw_json 推送；数据源由 Cloud 统一向对应服务拉取。
+
+### 2.2 Service-Test 当前做法
 
 `Service-Test` 的用户态模块依赖启动时加载的一组本地文件：
 
@@ -28,7 +48,7 @@
 
 其核心问题不是“文件格式不对”，而是“这是进程级单租户状态”，与 `Haruki-Cloud` 的多用户后端形态不兼容。
 
-### 2.2 Haruki-Cloud 当前现状
+### 2.3 Haruki-Cloud 当前现状
 
 当前 `Haruki-Cloud` 已有：
 
@@ -43,7 +63,7 @@
 - 任何用户快照存储表或读取服务
 - 任何将 `user_snapshot` 配置真正消费到 render runtime 的实现
 
-### 2.3 调用方现状
+### 2.4 调用方现状
 
 当前 `Haruki-ZeroBot` 在调用 Cloud 时会传：
 
@@ -223,23 +243,20 @@ type BindingResolver interface {
 - `id`
 - `server`
 - `pjsk_user_id`
-- `main_snapshot_json`
-- `music_meta_json`
-- `mysekai_snapshot_json`
+- `main_snapshot_json`（对应原 `user.json`，由 `GetSuiteData()` 写入）
+- `mysekai_snapshot_json`（对应原 `mysekai.json`，由 `GetMySekaiData()` 写入）
 - `main_updated_at`
-- `music_meta_updated_at`
 - `mysekai_updated_at`
 - `source`
 - `version`
 - `created_at`
 - `updated_at`
 
+> `music_metas` 为全局区服数据，不属于用户快照，存储在独立的 `music_meta_cache` 表（唯一键: `region`）。
+
 设计要点：
 
-- `main_snapshot_json` 对应原 `user.json`
-- `music_meta_json` 对应原 `music_metas.json`
-- `mysekai_snapshot_json` 对应原 `mysekai.json`
-- 保留独立更新时间，避免强行要求三份数据总是同批次刷新
+- 两份快照独立更新时间，避免强行要求同批次刷新
 - `version` 用于缓存失效和后续增量升级
 
 ## 8.4 读写职责边界

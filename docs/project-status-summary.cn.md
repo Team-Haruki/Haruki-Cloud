@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-23（v7.0）
+> 最后更新：2026-03-23（v8.0）
 
 ## 📊 项目概览
 
@@ -357,6 +357,73 @@ if _, ok := errors.AsType[net.Error](err); ok { ... }
 
 ---
 
+## ✅ Toolbox 数据类型枚举与封装（已完成）
+
+**完成时间**：2026-03-23
+
+`utils/sekai/enums.go` 新增 `ToolboxDataType` 枚举，明确两种私有数据类型：
+
+```go
+ToolboxDataTypeSuite   ToolboxDataType = "suite"    // 用户游戏快照 → SnapshotStore
+ToolboxDataTypeMySekai ToolboxDataType = "mysekai"  // MySekai 世界快照 → MySekaiStore
+```
+
+`utils/sekai/client_toolbox.go` 新增两个语义化封装函数：
+
+| 函数 | 说明 | 最终存储目标 |
+|------|------|------------|
+| `GetSuiteData(server, userID, platform, platformUserID)` | 拉取用户游戏快照（替代 user.json） | `pjsk_user_snapshots.main_snapshot_json` |
+| `GetMySekaiData(server, userID, platform, platformUserID)` | 拉取 MySekai 世界快照（替代 mysekai.json） | `pjsk_user_snapshots.mysekai_snapshot_json` |
+
+`GetPrivateData` 参数 `dataType` 从 `string` 改为 `ToolboxDataType`（编译期类型安全）。
+
+---
+
+## ✅ Music Meta 全局缓存（已完成）
+
+**完成时间**：2026-03-23
+
+新增 `internal/pjsk/meta/` 包，负责从公开远端（`sekai-data.3-3.dev`）按区服拉取并缓存 music_metas 数据，替代本地 `music_metas.json` 文件路径。
+
+### 数据来源说明
+
+`music_metas.json` 是**全局区服级**数据（不含任何用户状态），与 suite/mysekai 快照完全无关：
+
+| 区服 | URL |
+|------|-----|
+| jp | `sekai-data.3-3.dev/music_metas.json` |
+| en | `sekai-data.3-3.dev/music_metas-en.json` |
+| tw | `sekai-data.3-3.dev/music_metas-tc.json`（注意 tc 后缀） |
+| kr | `sekai-data.3-3.dev/music_metas-kr.json` |
+| cn | `sekai-data.3-3.dev/music_metas-cn.json` |
+
+### 实现文件（`internal/pjsk/meta/`）
+
+| 文件 | 内容 |
+|------|------|
+| `urls.go` | 区服 → 远端 URL 映射，`Regions()` 返回稳定顺序 |
+| `omakase.go` | `InjectOmakase(data []byte) []byte`（从 `userdata/local.go` 迁出导出） |
+| `loader.go` | `Loader` 结构体，ETag + Last-Modified 条件请求，并发拉取，后台刷新 |
+
+### Loader 核心行为
+
+- **条件 GET**：携带 `If-None-Match` + `If-Modified-Since`
+  - **304 Not Modified** → 保留缓存，零 body 传输
+  - **200 OK** → `InjectOmakase` 处理后更新缓存，保存新 ETag/Last-Modified
+- **并发拉取**：`LoadAll(ctx)` 对所有区服并发发起请求，单区服失败不阻断其他
+- **后台刷新**：`StartBackgroundRefresh(ctx, interval)`，默认间隔 30 分钟（与 TS 原版一致）
+- **安全读取**：`Get(region)` 返回缓存的独立副本，RWMutex 保护
+
+### 集成情况
+
+- `internal/pjsk/render/userdata/local.go` — 删除私有 `injectOmakaseMusicMeta` + helpers，改调 `meta.InjectOmakase`
+- `internal/pjsk/render/app/app.go` — `Config` + `App` 新增 `MetaLoader *meta.Loader` 字段
+- `config/config.go` — 新增 `MusicMetaConfig { RefreshInterval }` 及 `PJSKRenderConfig.MusicMeta`
+- `cmd/server/main.go` — `initPJSKRenderIfEnabled` 中初始化 loader、首次 `LoadAll`、启动后台刷新并注入 `renderapp.Config`
+- `haruki-db-configs.example.yaml` — 新增 `pjsk_render.music_meta.refresh_interval` 配置示例
+
+---
+
 ## 📋 后续待办事项
 
 ### P1 - 重要但不紧急
@@ -367,7 +434,9 @@ if _, ok := errors.AsType[net.Error](err); ok { ... }
 
 2. **正式用户快照 Provider**（技术债偿还）
    - 设计已完成：`docs/pjsk-user-snapshot-provider-design.cn.md`
-   - 当前仍依赖本地 `user.json`、`music_metas.json`、`mysekai.json`
+   - 数据来源已确认：suite → `GetSuiteData()`，mysekai → `GetMySekaiData()`，music meta → `meta.Loader`
+   - 当前仍依赖本地 `user.json`、`mysekai.json` 文件（`music_metas.json` 已由远端 loader 接管）
+   - 待实现：`snapshot-schema` → `snapshot-store` → `identity-resolver` → `binding-resolver` → `snapshot-provider` → `app-wire` → `snapshot-write-api`
 
 3. **Bot 调用方切换**
    - Haruki-ZeroBot 改调 `POST /internal/pjsk/command`
@@ -381,26 +450,28 @@ if _, ok := errors.AsType[net.Error](err); ok { ... }
 ## 📈 项目进度总览
 
 ```
-总体进度: ████████████████████ 98%
+总体进度: ████████████████████ 99%
 
 Service-Test 合并:       ████████████████████ 100% ✅
 Test_Request_Constr:     ████████████████████ 100% ✅
 Parser 合并:             ████████████████████ 100% ✅
 Bot API 层:              ████████████████████ 100% ✅  (通用端点 + 41个功能端点)
 Command Manifest:        ████████████████████ 100% ✅  (DB表 + Seed + 端点)
-外部API客户端整合:       ████████████████████ 100% ✅  (utils/sekai 统一包)
+外部API客户端整合:       ████████████████████ 100% ✅  (utils/sekai 统一包 + ToolboxDataType)
 Go 1.26 语法迁移:        ████████████████████ 100% ✅  (errors.AsType)
 Logger 对接:             ████████████████████ 100% ✅  (utils/logger 全局接入)
-用户快照 Provider:       ░░░░░░░░░░░░░░░░░░░░   0% 📝
+Music Meta 缓存:         ████████████████████ 100% ✅  (internal/pjsk/meta, ETag/30min刷新)
+用户快照 Provider:       ░░░░░░░░░░░░░░░░░░░░   0% 📝  (8个todo待实现)
 Bot 切换:                ░░░░░░░░░░░░░░░░░░░░   0% 📝
 ```
 
 ### 当前阶段小结（2026-03-23）
 
 四大核心子系统（渲染 + 解析 + API 端点 + Command Manifest）全部完成。  
-外部 API 客户端三包合并为 `utils/sekai/`，含完整类型定义（GetUserProfileResponse 31 个嵌套类型，Tracker 类型修正，Toolbox 错误细分）。  
-Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成（main.go + chardata/loader + censor）。  
-剩余工作：用户快照正式 Provider（技术债）和 ZeroBot 侧接入（外部仓库）。
+外部 API 客户端三包合并为 `utils/sekai/`，含完整类型定义、Toolbox 错误细分、`ToolboxDataType` 枚举及 `GetSuiteData`/`GetMySekaiData` 封装函数。  
+Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成。  
+`music_metas.json` 由全新的 `internal/pjsk/meta.Loader` 接管，支持 ETag/Last-Modified 条件请求和 30 分钟后台刷新。  
+剩余工作：用户快照正式 Provider（suite + mysekai 数据的 DB 存储与读取，共 8 个 todo）和 ZeroBot 侧接入（外部仓库）。
 
 ## 📚 相关文档
 
@@ -529,5 +600,5 @@ Go 1.26 `errors.AsType[T]` 迁移完成，`utils/logger` 全局对接完成（ma
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v7.0  
+**文档版本**：v8.0  
 **创建日期**：2026-03-23

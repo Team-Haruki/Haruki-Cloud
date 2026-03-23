@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-23（v5.0）
+> 最后更新：2026-03-23（v6.0）
 
 ## 📊 项目概览
 
@@ -162,6 +162,49 @@ POST：JSON body `{"command":"<base64>", "server":"jp", "im_platform":"qq", "im_
 
 > 注：`RegisterPJSKBotRoutes` 传入 `nil` redisClient 时跳过鉴权（用于单元测试）。
 
+## ✅ Command Manifest 系统（已完成）
+
+**完成时间**：2026-03-23
+
+### 设计目标
+
+Bot 客户端启动时下载完整 Manifest，本地预匹配用户输入的指令前缀到对应端点，避免每次指令都向服务端查询路由。
+
+### 数据库表：`command_manifests`（bot DB）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `command_prefixes` | JSON `[]string` | 触发前缀列表，如 `["/查卡","/card"]` |
+| `command_priority` | int (default 0) | 匹配优先级，越大越优先 |
+| `command_mode` | string(16) | 请求方法，如 `"GET,POST"` |
+| `command_module` | string(64) | 功能模块，如 `"pjsk"` |
+| `command_path` | string(256) | 路径（无前导斜杠），如 `"card/detail"` |
+| `command_additional_params` | JSON `[]string`（可空） | 额外可接受的参数名 |
+
+唯一索引：`(command_module, command_path)`
+
+### 启动时自动 Seed
+
+首次启动若表为空，`SeedCommandManifests` 自动从 `botModeTable` 填充 41 条默认记录（priority=0，mode="GET,POST"）。后续启动不覆盖已有数据，手动调整的优先级得以保留。
+
+### 实现文件
+
+| 文件 | 内容 |
+|------|------|
+| `ent/bot/schema/commandmanifest.go` | Ent Schema 定义 |
+| `database/bot/commandmanifest*.go` | 自动生成的 CRUD 代码 |
+| `api/bot/pjsk/seed.go` | `SeedCommandManifests` — 首次空表时填充默认数据 |
+| `api/bot/pjsk/struct.go` | `ManifestEntry`、`ManifestResponse` 结构体 |
+| `api/bot/pjsk/handler.go` | `buildManifestHandler` — DB 查询按 priority DESC 返回 |
+
+### API 端点
+
+`GET /api/v2/bot/:botId/command/manifests`
+
+- 需要 `VerifyBotSession` 鉴权
+- 返回 `{"status":"ok","data":{"entries":[...]}}`，entries 按 `command_priority` 降序排列
+- 无 botDB 配置时返回 501（单元测试模式）
+
 ## ✅ API 层结构整理（已完成）
 
 **完成时间**：2026-03-23
@@ -206,11 +249,7 @@ api/
 
 ### P1 - 重要但不紧急
 
-1. **Command Manifest 实现**
-   - 占位端点已注册：`GET /api/v2/bot/:botId/command/manifests`
-   - 待 Client 确认 Manifest 结构后实现完整逻辑
-
-2. **账号管理 REST 端点**（bind/unbind/setMain 等）
+1. **账号管理 REST 端点**（bind/unbind/setMain 等）
    - `sekai/profile.go` 中相关逻辑全部是 TODO stub，需先完成业务逻辑
    - 完成后作为独立 REST 端点暴露（如 `POST /internal/pjsk/binding/bind`），不走 render 指令链路
 
@@ -230,21 +269,23 @@ api/
 ## 📈 项目进度总览
 
 ```
-总体进度: ██████████████████░░ 90%
+总体进度: ███████████████████░ 95%
 
 Service-Test 合并:     ████████████████████ 100% ✅
 Test_Request_Constr:   ████████████████████ 100% ✅
 Parser 合并:           ████████████████████ 100% ✅
-Bot API 层:            ████████████████████ 100% ✅  (通用端点 + 41个功能端点 + manifest)
+Bot API 层:            ████████████████████ 100% ✅  (通用端点 + 41个功能端点)
+Command Manifest:      ████████████████████ 100% ✅  (DB表 + Seed + 端点)
 用户快照 Provider:     ░░░░░░░░░░░░░░░░░░░░   0% 📝
 Bot 切换:              ░░░░░░░░░░░░░░░░░░░░   0% 📝
 ```
 
 ### 当前阶段小结（2026-03-23）
 
-三大核心子系统（渲染 + 解析 + API 端点）全部完成。  
+四大核心子系统（渲染 + 解析 + API 端点 + Command Manifest）全部完成。  
 Bot 可通过 `POST /internal/pjsk/command`（内部服务调用）或 `GET|POST /api/v2/bot/:botId/pjsk/<module>/<mode>`（Bot 客户端直调，带 session 鉴权）获取渲染后的 PNG 图片。  
-Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已注册为占位，待 Client 确认 Manifest 结构后实现。  
+Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已完整实现，数据存入 bot DB，按优先级降序返回，支持管理员在数据库中调整优先级、前缀、附加参数。  
+首次启动自动从内置路由表 Seed 41 条默认记录。  
 剩余工作：用户快照正式 Provider（技术债）和 ZeroBot 侧接入（外部仓库）。
 
 ## 📚 相关文档
@@ -364,11 +405,10 @@ Manifest 端点（`GET /api/v2/bot/:botId/command/manifests`）已注册为占�
 
 | 路径 | 说明 |
 |------|------|
-| `GET /api/v2/bot/:botId/command/manifests` | Command Manifest — 结构待 Client 确认后实现 |
 | `POST /internal/pjsk/binding/bind` 等 | 账号管理（bind/unbind/setMain），需先完成业务逻辑 |
 
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v5.0  
+**文档版本**：v6.0  
 **创建日期**：2026-03-23

@@ -1,6 +1,6 @@
 # Haruki-Cloud 数据库 Schema 文档
 
-> 最后更新：2026-03-23（v1.0）
+> 最后更新：2026-03-23（v1.1）
 
 ---
 
@@ -12,7 +12,7 @@
 
 | 模块 | Schema 目录 | 生成目录 | 数据库 | 表数量 |
 |------|-------------|----------|--------|--------|
-| **bot** | `ent/bot/schema/` | `database/bot/` | MySQL | 4 |
+| **bot** | `ent/bot/schema/` | `database/bot/` | MySQL | 5 |
 | **censor** | `ent/censor/schema/` | `database/censor/` | MySQL | 3 |
 | **chunithm/maindb** | `ent/chunithm/maindb/schema/` | `database/chunithm/maindb/` | MySQL/PostgreSQL | 3 |
 | **chunithm/music** | `ent/chunithm/music/schema/` | `database/chunithm/music/` | MySQL/PostgreSQL | 3 |
@@ -93,6 +93,22 @@ entc.Generate("./schema", &gen.Config{
 | `id` | auto | PK | 自动主键 |
 | `bot_id` | int | UNIQUE | Bot 数字 ID |
 | `counts` | int64 | optional | 累计请求总量 |
+
+### 3.5 `command_manifests` 表
+
+Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点。管理员可在数据库中调整 `command_priority` 改变前缀匹配顺序。首次启动时由 `SeedCommandManifests` 自动填充 41 条默认记录。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | auto | PK | 自动主键 |
+| `command_prefixes` | JSON `[]string` | NOT NULL | 触发前缀列表，如 `["/查卡","/card"]` |
+| `command_priority` | int | default 0 | 匹配优先级，越大越优先 |
+| `command_mode` | string(16) | NOT NULL | 请求方法，如 `"GET,POST"` |
+| `command_module` | string(64) | NOT NULL | 功能模块，如 `"pjsk"` |
+| `command_path` | string(256) | NOT NULL | 路径（无前导斜杠），如 `"card/detail"` |
+| `command_additional_params` | JSON `[]string` | optional | 端点额外接受的参数名列表 |
+
+唯一索引：`(command_module, command_path)`
 
 ---
 

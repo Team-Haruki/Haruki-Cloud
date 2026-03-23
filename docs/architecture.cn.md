@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-03-23（v1.1）
+> 最后更新：2026-03-23（v1.2）
 
 ---
 
@@ -61,7 +61,7 @@ Haruki-Cloud/
 │   └── config.go                 #   YAML 配置加载，10 个顶级配置块
 │
 ├── database/                     # ── 数据库层（Ent 自动生成） ──
-│   ├── bot/                      #   Bot 用户、统计、会话
+│   ├── bot/                      #   Bot 用户、统计、Command Manifest
 │   ├── censor/                   #   ⚠ 审核记录（API 层已删除，DB 表仍保留）
 │   ├── chunithm/                 #   CHUNITHM 主库 + 曲目库
 │   ├── pjsk/                     #   PJSK 别名、卡片、活动等
@@ -453,7 +453,6 @@ internal/pjsk/chardata/
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
 | `sekai/profile.go` 绑定指令 | bind/unbind/setMain 全为 TODO stub，暂不可用 |
-| Command Manifest | 占位端点，结构待 Client 确认后实现 |
 
 ---
 

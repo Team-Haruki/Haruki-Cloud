@@ -67,9 +67,19 @@ type ScoreGrowthPoint struct {
 	Growth           *int   `json:"growth,omitempty"`
 }
 
-// UserEventData contains a user's contribution data for a specific event,
+// UserEventData contains a user's name record for a specific event,
 // as returned by GetUserEventData.
 type UserEventData struct {
-	UserID string `json:"userId"`
-	Name   string `json:"name"`
+	UserID         string `json:"userId"`
+	Name           string `json:"name"`
+	CheerfulTeamID *int   `json:"cheerfulTeamId,omitempty"`
+}
+
+// EventStatusResponse is returned by GetEventStatus and describes the latest
+// heartbeat state of the tracker for a given event.
+type EventStatusResponse struct {
+	Timestamp  int64  `json:"timestamp"`
+	Status     int8   `json:"status"`
+	StatusDesc string `json:"statusDesc"`
+	TimeAgo    int64  `json:"timeAgo"`
 }

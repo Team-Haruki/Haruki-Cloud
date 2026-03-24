@@ -165,6 +165,14 @@ func (c *TrackerClient) GetUserEventData(server string, eventID int, userID int6
 	return getAs[UserEventData](c, path)
 }
 
+// GetEventStatus fetches the latest heartbeat/status of the tracker for a given event.
+//
+//	GET /event/{server}/{eventID}/status
+func (c *TrackerClient) GetEventStatus(server string, eventID int) (*EventStatusResponse, error) {
+	path := fmt.Sprintf("/event/%s/%d/status", server, eventID)
+	return getAs[EventStatusResponse](c, path)
+}
+
 // getAs executes a GET and unmarshals the JSON body into T.
 func getAs[T any](c *TrackerClient, path string) (*T, error) {
 	body, err := c.getRaw(path)

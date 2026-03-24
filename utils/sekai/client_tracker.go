@@ -202,7 +202,11 @@ func getSliceAs[T any](c *TrackerClient, path string) ([]T, error) {
 // getRaw executes a GET request and returns the raw body, mapping HTTP errors
 // to typed errors.
 func (c *TrackerClient) getRaw(path string) ([]byte, error) {
-	url := c.config.BaseURL + path
+	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
+	if baseURL == "" {
+		return nil, fmt.Errorf("tracker: base_url is empty")
+	}
+	url := baseURL + path
 	resp, err := c.http.R().
 		SetHeader("User-Agent", c.config.UserAgent).
 		Get(url)

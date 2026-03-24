@@ -33,6 +33,7 @@ import (
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	sekaiapi "haruki-cloud/utils/sekai"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -97,6 +98,163 @@ func (s *routeEventSource) GetWorldBloomChapters(eventID int) []*masterdata.Worl
 
 func (s *routeEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	return nil, fiber.ErrNotFound
+}
+
+type routeTrackerSource struct{}
+
+func (routeTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	score := 1000000 + rank
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.Itoa(10000 + rank),
+			Score:     score,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(10000 + rank),
+			Name:   "TrackerUser",
+		},
+	}, nil
+}
+
+func (routeTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	score := 1500000 + int(userID%1000)
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     score,
+			Rank:      321,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "TrackerUIDUser",
+		},
+	}, nil
+}
+
+func (routeTrackerSource) GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	score := 2000000 + rank
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    strconv.Itoa(20000 + rank),
+				Score:     score,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+			CharacterID: &characterID,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(20000 + rank),
+			Name:   "WLTrackerUser",
+		},
+	}, nil
+}
+
+func (routeTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	score := 2500000 + int(userID%1000)
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     score,
+				Rank:      432,
+				Timestamp: 1704067200,
+			},
+			CharacterID: &characterID,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "WLTrackerUIDUser",
+		},
+	}, nil
+}
+
+func (routeTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	earlier := int64(1704067200)
+	diff := int64(interval)
+	growthRank1 := 900
+	growthRank100 := 3000
+	earlierRank1 := 1001000
+	earlierRank100 := 1100000
+	return []sekaiapi.ScoreGrowthPoint{
+		{
+			Rank:             1,
+			ScoreLatest:      earlierRank1 + growthRank1,
+			ScoreEarlier:     &earlierRank1,
+			TimestampLatest:  earlier + diff,
+			TimestampEarlier: &earlier,
+			TimeDiff:         &diff,
+			Growth:           &growthRank1,
+		},
+		{
+			Rank:             100,
+			ScoreLatest:      earlierRank100 + growthRank100,
+			ScoreEarlier:     &earlierRank100,
+			TimestampLatest:  earlier + diff,
+			TimestampEarlier: &earlier,
+			TimeDiff:         &diff,
+			Growth:           &growthRank100,
+		},
+	}, nil
+}
+
+func (routeTrackerSource) GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return routeTrackerSource{}.GetRankingScoreGrowth(server, eventID, interval)
+}
+
+func (routeTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    strconv.Itoa(10000 + rank),
+				Score:     1000000 + rank,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+			{
+				UserID:    strconv.Itoa(10000 + rank),
+				Score:     1005000 + rank,
+				Rank:      rank,
+				Timestamp: 1704070800,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(10000 + rank),
+			Name:   "TrackerUser",
+		},
+	}, nil
+}
+
+func (routeTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return &sekaiapi.WorldBloomTraceRankingResponse{
+		RankData: []sekaiapi.WorldBloomRankDataPoint{
+			{
+				RankDataPoint: sekaiapi.RankDataPoint{
+					UserID:    strconv.Itoa(20000 + rank),
+					Score:     2000000 + rank,
+					Rank:      rank,
+					Timestamp: 1704067200,
+				},
+				CharacterID: &characterID,
+			},
+			{
+				RankDataPoint: sekaiapi.RankDataPoint{
+					UserID:    strconv.Itoa(20000 + rank),
+					Score:     2005000 + rank,
+					Rank:      rank,
+					Timestamp: 1704070800,
+				},
+				CharacterID: &characterID,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(20000 + rank),
+			Name:   "WLTrackerUser",
+		},
+	}, nil
 }
 
 type routeGachaSource struct {
@@ -2535,6 +2693,293 @@ func TestPJSKSKQueryRenderRouteReturnsDrawingBytes(t *testing.T) {
 		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
 	}
 	if string(body) != "SKPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKSKQueryTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/sk/query/tracker/build", `{"event_id":101,"region":"jp","ranks":[100,1,1]}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			ID          int    `json:"id"`
+			AggregateAt int64  `json:"aggregate_at"`
+			Name        string `json:"name"`
+			Ranks       []struct {
+				Rank int `json:"rank"`
+			} `json:"ranks"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != skQueryEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.ID != 101 {
+		t.Fatalf("unexpected event id: %d", data.Payload.ID)
+	}
+	if data.Payload.Name != "Tracker Event" {
+		t.Fatalf("unexpected event name: %s", data.Payload.Name)
+	}
+	if data.Payload.AggregateAt != 222 {
+		t.Fatalf("unexpected aggregate_at: %d", data.Payload.AggregateAt)
+	}
+	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+}
+
+func TestPJSKSKQueryTrackerBuildRouteSupportsUID(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/sk/query/tracker/build", `{"event_id":101,"region":"jp","user_id":1234567890}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Payload struct {
+			ID    int `json:"id"`
+			Ranks []struct {
+				Rank int `json:"rank"`
+			} `json:"ranks"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Payload.ID != 101 {
+		t.Fatalf("unexpected event id: %d", data.Payload.ID)
+	}
+	if len(data.Payload.Ranks) != 1 || data.Payload.Ranks[0].Rank != 321 {
+		t.Fatalf("unexpected uid rank payload: %+v", data.Payload.Ranks)
+	}
+}
+
+func TestPJSKSKLineTrackerRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/line" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("full"); got != "true" {
+			t.Fatalf("unexpected full query value: %s", got)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKLINE_TRACKER_PNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/sk/line/tracker/render", strings.NewReader(`{"event_id":101,"region":"jp","ranks":[1],"full":true}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "SKLINE_TRACKER_PNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKSKCheckRoomTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/sk/check-room/tracker/build", `{"event_id":101,"region":"jp","ranks":[100,1]}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Payload  struct {
+			Eid   int `json:"eid"`
+			Ranks []struct {
+				Rank int `json:"rank"`
+			} `json:"ranks"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != skCheckRoomEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Payload.Eid != 101 {
+		t.Fatalf("unexpected event id: %d", data.Payload.Eid)
+	}
+	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+}
+
+func TestPJSKSKSpeedTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/sk/speed/tracker/build", `{"event_id":101,"region":"jp","ranks":[100,1]}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Payload  struct {
+			EventID     int    `json:"event_id"`
+			RequestType string `json:"request_type"`
+			Period      int64  `json:"period"`
+			Ranks       []struct {
+				Rank int `json:"rank"`
+			} `json:"ranks"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != skSpeedEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Payload.EventID != 101 {
+		t.Fatalf("unexpected event id: %d", data.Payload.EventID)
+	}
+	if data.Payload.RequestType != "tracker" {
+		t.Fatalf("unexpected request_type: %s", data.Payload.RequestType)
+	}
+	if data.Payload.Period <= 0 {
+		t.Fatalf("unexpected period: %d", data.Payload.Period)
+	}
+	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+}
+
+func TestPJSKSKRankTraceTrackerRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/rank-trace" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKTRACE_TRACKER_PNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/sk/rank-trace/tracker/render", strings.NewReader(`{"event_id":101,"region":"jp","ranks":[100]}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "SKTRACE_TRACKER_PNG" {
 		t.Fatalf("unexpected render body: %s", string(body))
 	}
 }

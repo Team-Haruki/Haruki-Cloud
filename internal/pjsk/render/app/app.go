@@ -25,6 +25,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
+	sekaiutil "haruki-cloud/utils/sekai"
 )
 
 type Config struct {
@@ -117,6 +118,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
+	skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), nil, assetHelper)
 	if snapshotService != nil && cfg.LocalMasterdata.Enabled && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
 		mysekaiController = mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion)
 	}
@@ -130,6 +132,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if sekaiClient != nil {
 		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
+		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventSource, assetHelper)
 		deckController = deck.NewController(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 		cardController = card.NewController(cardSource, eventSource, drawingClient, assetHelper)
 		educationController.RegisterSource(education.NewCloudSource(sekaiClient, cfg.DefaultRegion))

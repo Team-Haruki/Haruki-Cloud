@@ -328,16 +328,26 @@ func registerSKRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group := router.Group("/sk")
 	group.Post("/line/build", handler.BuildSKLine)
 	group.Post("/line/render", handler.RenderSKLine)
+	group.Post("/line/tracker/build", handler.BuildSKLineFromTracker)
+	group.Post("/line/tracker/render", handler.RenderSKLineFromTracker)
 	group.Post("/query/build", handler.BuildSKQuery)
 	group.Post("/query/render", handler.RenderSKQuery)
+	group.Post("/query/tracker/build", handler.BuildSKQueryFromTracker)
+	group.Post("/query/tracker/render", handler.RenderSKQueryFromTracker)
 	group.Post("/check-room/build", handler.BuildSKCheckRoom)
 	group.Post("/check-room/render", handler.RenderSKCheckRoom)
+	group.Post("/check-room/tracker/build", handler.BuildSKCheckRoomFromTracker)
+	group.Post("/check-room/tracker/render", handler.RenderSKCheckRoomFromTracker)
 	group.Post("/speed/build", handler.BuildSKSpeed)
 	group.Post("/speed/render", handler.RenderSKSpeed)
+	group.Post("/speed/tracker/build", handler.BuildSKSpeedFromTracker)
+	group.Post("/speed/tracker/render", handler.RenderSKSpeedFromTracker)
 	group.Post("/player-trace/build", handler.BuildSKPlayerTrace)
 	group.Post("/player-trace/render", handler.RenderSKPlayerTrace)
 	group.Post("/rank-trace/build", handler.BuildSKRankTrace)
 	group.Post("/rank-trace/render", handler.RenderSKRankTrace)
+	group.Post("/rank-trace/tracker/build", handler.BuildSKRankTraceFromTracker)
+	group.Post("/rank-trace/tracker/render", handler.RenderSKRankTraceFromTracker)
 	group.Post("/winrate/build", handler.BuildSKWinRate)
 	group.Post("/winrate/render", handler.RenderSKWinRate)
 }
@@ -1108,6 +1118,34 @@ func (h *RenderHandler) RenderSKLine(c fiber.Ctx) error {
 	})
 }
 
+func (h *RenderHandler) BuildSKLineFromTracker(c fiber.Ctx) error {
+	var req rendersk.TrackerRankQuery
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildLineRequestFromTracker(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skLineEndpoint(payload.Full),
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKLineFromTracker(c fiber.Ctx) error {
+	return renderBuiltPNGWithEndpoint(h, c, func(req rendersk.TrackerRankQuery, payload *rendersk.LineRequest) string {
+		if payload != nil {
+			return skLineEndpoint(payload.Full)
+		}
+		return skLineEndpoint(req.Full)
+	}, h.app.SK.BuildLineRequestFromTracker, func(client *drawing.HarukiDrawingClient, _ rendersk.TrackerRankQuery, payload *rendersk.LineRequest) ([]byte, error) {
+		return client.GenerateSKLine(&payload.SklRequest, payload.Full)
+	})
+}
+
 func (h *RenderHandler) BuildSKQuery(c fiber.Ctx) error {
 	var req drawing.SKRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -1127,6 +1165,29 @@ func (h *RenderHandler) BuildSKQuery(c fiber.Ctx) error {
 
 func (h *RenderHandler) RenderSKQuery(c fiber.Ctx) error {
 	return renderBuiltPNG(h, c, skQueryEndpoint, h.app.SK.BuildQueryRequest, func(client *drawing.HarukiDrawingClient, _ drawing.SKRequest, payload *drawing.SKRequest) ([]byte, error) {
+		return client.GenerateSKQuery(payload)
+	})
+}
+
+func (h *RenderHandler) BuildSKQueryFromTracker(c fiber.Ctx) error {
+	var req rendersk.TrackerRankQuery
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildQueryRequestFromTracker(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skQueryEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKQueryFromTracker(c fiber.Ctx) error {
+	return renderBuiltPNG(h, c, skQueryEndpoint, h.app.SK.BuildQueryRequestFromTracker, func(client *drawing.HarukiDrawingClient, _ rendersk.TrackerRankQuery, payload *drawing.SKRequest) ([]byte, error) {
 		return client.GenerateSKQuery(payload)
 	})
 }
@@ -1154,6 +1215,29 @@ func (h *RenderHandler) RenderSKCheckRoom(c fiber.Ctx) error {
 	})
 }
 
+func (h *RenderHandler) BuildSKCheckRoomFromTracker(c fiber.Ctx) error {
+	var req rendersk.TrackerRankQuery
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildCheckRoomRequestFromTracker(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skCheckRoomEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKCheckRoomFromTracker(c fiber.Ctx) error {
+	return renderBuiltPNG(h, c, skCheckRoomEndpoint, h.app.SK.BuildCheckRoomRequestFromTracker, func(client *drawing.HarukiDrawingClient, _ rendersk.TrackerRankQuery, payload *drawing.CFRequest) ([]byte, error) {
+		return client.GenerateSKCheckRoom(payload)
+	})
+}
+
 func (h *RenderHandler) BuildSKSpeed(c fiber.Ctx) error {
 	var req drawing.SpeedRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -1173,6 +1257,29 @@ func (h *RenderHandler) BuildSKSpeed(c fiber.Ctx) error {
 
 func (h *RenderHandler) RenderSKSpeed(c fiber.Ctx) error {
 	return renderBuiltPNG(h, c, skSpeedEndpoint, h.app.SK.BuildSpeedRequest, func(client *drawing.HarukiDrawingClient, _ drawing.SpeedRequest, payload *drawing.SpeedRequest) ([]byte, error) {
+		return client.GenerateSKSpeed(payload)
+	})
+}
+
+func (h *RenderHandler) BuildSKSpeedFromTracker(c fiber.Ctx) error {
+	var req rendersk.TrackerRankQuery
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildSpeedRequestFromTracker(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skSpeedEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKSpeedFromTracker(c fiber.Ctx) error {
+	return renderBuiltPNG(h, c, skSpeedEndpoint, h.app.SK.BuildSpeedRequestFromTracker, func(client *drawing.HarukiDrawingClient, _ rendersk.TrackerRankQuery, payload *drawing.SpeedRequest) ([]byte, error) {
 		return client.GenerateSKSpeed(payload)
 	})
 }
@@ -1219,6 +1326,29 @@ func (h *RenderHandler) BuildSKRankTrace(c fiber.Ctx) error {
 
 func (h *RenderHandler) RenderSKRankTrace(c fiber.Ctx) error {
 	return renderBuiltPNG(h, c, skRankTraceEndpoint, h.app.SK.BuildRankTraceRequest, func(client *drawing.HarukiDrawingClient, _ drawing.RankTraceRequest, payload *drawing.RankTraceRequest) ([]byte, error) {
+		return client.GenerateSKRankTrace(payload)
+	})
+}
+
+func (h *RenderHandler) BuildSKRankTraceFromTracker(c fiber.Ctx) error {
+	var req rendersk.TrackerRankQuery
+	if err := c.Bind().Body(&req); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.SK.BuildRankTraceRequestFromTracker(req)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: skRankTraceEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderSKRankTraceFromTracker(c fiber.Ctx) error {
+	return renderBuiltPNG(h, c, skRankTraceEndpoint, h.app.SK.BuildRankTraceRequestFromTracker, func(client *drawing.HarukiDrawingClient, _ rendersk.TrackerRankQuery, payload *drawing.RankTraceRequest) ([]byte, error) {
 		return client.GenerateSKRankTrace(payload)
 	})
 }

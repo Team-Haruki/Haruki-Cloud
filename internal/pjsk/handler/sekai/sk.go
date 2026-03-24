@@ -1,9 +1,13 @@
 package sekai
 
 import (
+	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
@@ -16,7 +20,11 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-line"), nil
+			params, err := buildSKTrackerParams(ctx, true, true)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-line", params), nil
 		},
 	}
 }
@@ -29,7 +37,11 @@ func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-query"), nil
+			params, err := buildSKTrackerParams(ctx, false, true)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-query", params), nil
 		},
 	}
 }
@@ -45,7 +57,11 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-speed"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-speed", params), nil
 		},
 	}
 }
@@ -59,7 +75,11 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-check-room"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
 		},
 	}
 }
@@ -89,7 +109,11 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-rank-trace"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-rank-trace", params), nil
 		},
 	}
 }
@@ -117,7 +141,11 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-speed"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-speed", params), nil
 		},
 	}
 }
@@ -132,7 +160,11 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-rank-trace"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-rank-trace", params), nil
 		},
 	}
 }
@@ -147,7 +179,11 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-query"), nil
+			params, err := buildSKTrackerParams(ctx, false, true)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-query", params), nil
 		},
 	}
 }
@@ -162,7 +198,181 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-check-room"), nil
+			params, err := buildSKTrackerParams(ctx, false, false)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
 		},
 	}
+}
+
+func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool) (map[string]any, error) {
+	eventID, wlCharacterID, full, rankArgs := extractSKMetaArgs(strings.TrimSpace(ctx.GetArgs()), defaultFull)
+
+	effectiveRankArgs := rankArgs
+	targetUserID := ""
+	if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(effectiveRankArgs) == "" {
+		switch {
+		case strings.HasPrefix(uidArg, "@"):
+			candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
+			if isDigits(candidate) {
+				targetUserID = candidate
+			}
+		case isDigits(uidArg):
+			effectiveRankArgs = uidArg
+		}
+	}
+
+	ranks, userID, err := parseSKRanks(effectiveRankArgs, allowUID)
+	if err != nil {
+		return nil, err
+	}
+	if len(ranks) == 0 && userID == nil {
+		return nil, fmt.Errorf("请至少提供一个排名或UID")
+	}
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 {
+		return nil, fmt.Errorf("wl 模式需要角色ID，例如: /wlsk cid5 100 500")
+	}
+
+	params := map[string]any{
+		"region": strings.ToLower(strings.TrimSpace(ctx.Region().String())),
+		"ranks":  ranks,
+	}
+	if eventID > 0 {
+		params["event_id"] = eventID
+	}
+	if wlCharacterID > 0 {
+		params["wl_character_id"] = wlCharacterID
+	}
+	if userID != nil && *userID > 0 {
+		params["user_id"] = *userID
+	}
+	if targetUserID != "" {
+		params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
+		params["target_user_id"] = targetUserID
+	}
+	if full {
+		params["full"] = true
+	}
+	return params, nil
+}
+
+func extractSKMetaArgs(args string, defaultFull bool) (eventID int, wlCharacterID int, full bool, rankArgs string) {
+	full = defaultFull
+	fields := strings.Fields(strings.TrimSpace(args))
+	remaining := make([]string, 0, len(fields))
+	for _, raw := range fields {
+		token := strings.ToLower(strings.TrimSpace(raw))
+		switch {
+		case token == "full" || token == "-f" || token == "--full":
+			full = true
+			continue
+		case strings.HasPrefix(token, "event") && isDigits(token[5:]):
+			eventID, _ = strconv.Atoi(token[5:])
+			continue
+		case strings.HasPrefix(token, "e") && len(token) > 1 && isDigits(token[1:]):
+			eventID, _ = strconv.Atoi(token[1:])
+			continue
+		case strings.HasPrefix(token, "wl:") && isDigits(token[3:]):
+			wlCharacterID, _ = strconv.Atoi(token[3:])
+			continue
+		case strings.HasPrefix(token, "wl") && len(token) > 2 && isDigits(token[2:]):
+			wlCharacterID, _ = strconv.Atoi(token[2:])
+			continue
+		case strings.HasPrefix(token, "cid") && len(token) > 3 && isDigits(token[3:]):
+			wlCharacterID, _ = strconv.Atoi(token[3:])
+			continue
+		case strings.HasPrefix(token, "chara") && len(token) > 5 && isDigits(token[5:]):
+			wlCharacterID, _ = strconv.Atoi(token[5:])
+			continue
+		case strings.HasPrefix(token, "char") && len(token) > 4 && isDigits(token[4:]):
+			wlCharacterID, _ = strconv.Atoi(token[4:])
+			continue
+		default:
+			remaining = append(remaining, raw)
+		}
+	}
+	rankArgs = strings.TrimSpace(strings.Join(remaining, " "))
+	return
+}
+
+func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
+	cmd, err := parser.NewCommandParser().Parse(strings.TrimSpace(args))
+	if err != nil {
+		return nil, nil, fmt.Errorf("无法解析排名参数: %w", err)
+	}
+
+	switch cmd.Type {
+	case parser.CmdTypeEventQuerySelf:
+		return append([]int(nil), defaultSKRanks...), nil, nil
+	case parser.CmdTypeEventQueryRank:
+		return normalizeRanks([]int{cmd.Param1}), nil, nil
+	case parser.CmdTypeEventQueryMultiRank:
+		ranks := normalizeRanks(cmd.MultiArgs)
+		if len(ranks) > 20 {
+			return nil, nil, fmt.Errorf("一次最多查询20个排名")
+		}
+		return ranks, nil, nil
+	case parser.CmdTypeEventQueryRankRange:
+		if cmd.Param1 <= 0 || cmd.Param2 <= 0 {
+			return nil, nil, fmt.Errorf("排名必须大于 0")
+		}
+		count := cmd.Param2 - cmd.Param1 + 1
+		if count > 20 {
+			return nil, nil, fmt.Errorf("排名区间最多20个排名")
+		}
+		ranks := make([]int, 0, count)
+		for rank := cmd.Param1; rank <= cmd.Param2; rank++ {
+			ranks = append(ranks, rank)
+		}
+		return ranks, nil, nil
+	case parser.CmdTypeEventQueryUID:
+		if !allowUID {
+			return nil, nil, fmt.Errorf("该命令暂不支持按用户查询，请改用排名")
+		}
+		uid, parseErr := strconv.ParseInt(cmd.TargetID, 10, 64)
+		if parseErr != nil || uid <= 0 {
+			return nil, nil, fmt.Errorf("无效的UID: %s", cmd.TargetID)
+		}
+		return nil, &uid, nil
+	case parser.CmdTypeEventQueryAt:
+		return nil, nil, fmt.Errorf("暂不支持@用户查询，请直接输入游戏UID")
+	default:
+		return nil, nil, fmt.Errorf("暂不支持该查询格式")
+	}
+}
+
+func normalizeRanks(values []int) []int {
+	if len(values) == 0 {
+		return nil
+	}
+	seen := make(map[int]struct{}, len(values))
+	out := make([]int, 0, len(values))
+	for _, rank := range values {
+		if rank <= 0 {
+			continue
+		}
+		if _, ok := seen[rank]; ok {
+			continue
+		}
+		seen[rank] = struct{}{}
+		out = append(out, rank)
+	}
+	sort.Ints(out)
+	return out
+}
+
+var defaultSKRanks = []int{100, 500, 1000, 2000, 5000, 10000}
+
+func isDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }

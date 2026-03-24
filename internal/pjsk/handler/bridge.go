@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -51,7 +53,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	case parser.ModuleEducation:
 		data, err = executeEducation(resolved, app)
 	case parser.ModuleSK:
-		data, err = executeSK(resolved, app)
+		data, err = executeSK(ctx, resolved, app)
 	case parser.ModuleScore:
 		data, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
@@ -197,21 +199,61 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, er
 	}
 }
 
-func executeSK(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
 	switch r.Mode {
 	case "sk-line":
+		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+				return nil, err
+			}
+			payload, err := app.SK.BuildLineRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			return app.SK.RenderLine(*payload)
+		}
 		req := sk.LineRequest{}
 		mergeParams(r.Params, &req)
 		return app.SK.RenderLine(req)
 	case "sk-query":
+		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+				return nil, err
+			}
+			payload, err := app.SK.BuildQueryRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			return app.SK.RenderQuery(*payload)
+		}
 		req := drawing.SKRequest{}
 		mergeParams(r.Params, &req)
 		return app.SK.RenderQuery(req)
 	case "sk-check-room":
+		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+				return nil, err
+			}
+			payload, err := app.SK.BuildCheckRoomRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			return app.SK.RenderCheckRoom(*payload)
+		}
 		req := drawing.CFRequest{}
 		mergeParams(r.Params, &req)
 		return app.SK.RenderCheckRoom(req)
 	case "sk-speed":
+		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+				return nil, err
+			}
+			payload, err := app.SK.BuildSpeedRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			return app.SK.RenderSpeed(*payload)
+		}
 		req := drawing.SpeedRequest{}
 		mergeParams(r.Params, &req)
 		return app.SK.RenderSpeed(req)
@@ -220,6 +262,16 @@ func executeSK(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
 		mergeParams(r.Params, &req)
 		return app.SK.RenderPlayerTrace(req)
 	case "sk-rank-trace":
+		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+				return nil, err
+			}
+			payload, err := app.SK.BuildRankTraceRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			return app.SK.RenderRankTrace(*payload)
+		}
 		req := drawing.RankTraceRequest{}
 		mergeParams(r.Params, &req)
 		return app.SK.RenderRankTrace(req)
@@ -229,6 +281,101 @@ func executeSK(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
 		return app.SK.RenderWinRate(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported sk mode %q", r.Mode)
+	}
+}
+
+func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery, bool) {
+	if r == nil || len(r.Params) == 0 {
+		return sk.TrackerRankQuery{}, false
+	}
+	var req sk.TrackerRankQuery
+	if err := json.Unmarshal(r.Params, &req); err != nil {
+		return sk.TrackerRankQuery{}, false
+	}
+	if req.Region == "" {
+		req.Region = r.Region
+	}
+	if len(req.Ranks) == 0 && req.EventID == 0 && req.WlCharacterID == nil && req.UserID == nil {
+		return sk.TrackerRankQuery{}, false
+	}
+	return req, true
+}
+
+func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
+	if req == nil || req.UserID != nil {
+		return nil
+	}
+
+	targetPlatform := strings.TrimSpace(req.TargetPlatform)
+	targetUserID := strings.TrimSpace(req.TargetUserID)
+	if targetPlatform == "" || targetUserID == "" {
+		return nil
+	}
+
+	if app == nil || app.Bindings == nil || !app.Bindings.IsReady() {
+		return fmt.Errorf("暂不支持@用户查询：绑定服务未就绪，请改用游戏UID")
+	}
+
+	bindings, err := app.Bindings.List(ctx, targetPlatform, targetUserID)
+	if err != nil {
+		return fmt.Errorf("无法解析@用户 %s 的绑定: %w", targetUserID, err)
+	}
+
+	selected, ok := pickTrackerBindingByRegion(bindings, req.Region)
+	if !ok {
+		return fmt.Errorf("@用户 %s 在 %s 服没有可用绑定", targetUserID, strings.ToUpper(strings.TrimSpace(req.Region)))
+	}
+
+	uid, parseErr := strconv.ParseInt(strings.TrimSpace(selected.UserID), 10, 64)
+	if parseErr != nil || uid <= 0 {
+		return fmt.Errorf("@用户 %s 的绑定UID无效: %s", targetUserID, selected.UserID)
+	}
+	req.UserID = &uid
+	return nil
+}
+
+func pickTrackerBindingByRegion(bindings []accountdata.BindingListItem, region string) (accountdata.BindingListItem, bool) {
+	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
+	var (
+		serverDefault accountdata.BindingListItem
+		hasServer     bool
+		globalDefault accountdata.BindingListItem
+		hasGlobal     bool
+		fallback      accountdata.BindingListItem
+		hasFallback   bool
+	)
+
+	for _, item := range bindings {
+		if !item.Visible {
+			continue
+		}
+		if strings.ToLower(strings.TrimSpace(item.Server)) != normalizedRegion {
+			continue
+		}
+		if item.IsServerDefault {
+			serverDefault = item
+			hasServer = true
+			continue
+		}
+		if item.IsGlobalDefault && !hasGlobal {
+			globalDefault = item
+			hasGlobal = true
+		}
+		if !hasFallback {
+			fallback = item
+			hasFallback = true
+		}
+	}
+
+	switch {
+	case hasServer:
+		return serverDefault, true
+	case hasGlobal:
+		return globalDefault, true
+	case hasFallback:
+		return fallback, true
+	default:
+		return accountdata.BindingListItem{}, false
 	}
 }
 

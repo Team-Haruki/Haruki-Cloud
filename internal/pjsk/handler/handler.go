@@ -21,6 +21,7 @@ func Dispatch(ctx context.Context, event Event) (interface{}, error) {
 
 	handlerContext := &HandlerContext{
 		Context:     ctx,
+		Platform:    event.Platform,
 		MessageType: event.MessageType,
 		Message:     event.Message,
 		Event:       event,

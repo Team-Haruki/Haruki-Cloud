@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-const DefaultBotCommandMode = "GET,POST"
+const DefaultBotCommandMode = "GET"
 
-var DefaultBotAdditionalParams = []string{"matched_command", "server"}
+var DefaultBotAdditionalParams = []string{}
 
 type BotRoute struct {
 	Path             string

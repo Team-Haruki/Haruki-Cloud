@@ -12,7 +12,7 @@
 2. `Haruki-ZeroBot` 基于 manifest 构建本地前缀树。
 3. 客户端收到消息后先本地命中 `path`。
 4. 客户端按命中的 `path` 请求对应 `/api/v2/bot/*` 端点，并上传 `matched_command`。
-5. 云端端点校验 `matched_command` 属于当前 `path` 后，再在 handler 内部解析原始文本、提取参数、处理和画图。
+5. 云端端点校验 `matched_command` 属于当前 `path` 后，再在 handler 内部解析原始文本、提取参数，并进入统一执行链路返回图片或文本。
 
 ## 2. 协议边界
 
@@ -50,7 +50,7 @@
 
 客户端命中后必须请求：
 
-`GET|POST /api/v2/bot/:botId/pjsk/<path>`
+`GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(ob11 pack)>`
 
 例如：
 
@@ -69,10 +69,10 @@
 |------|---------|
 | `command_prefixes` | 命中同一 Bot 端点的前缀集合 |
 | `command_priority` | 前缀树冲突时的优先级 |
-| `command_mode` | 该端点允许的 HTTP 方法，例如 `GET,POST` |
+| `command_mode` | 该端点允许的 HTTP 方法；当前 PJSK Bot 协议使用 `GET` |
 | `command_module` | 顶层业务模块，例如 `pjsk`、`chunithm` |
 | `command_path` | 客户端命中后要请求的端点路径，例如 `card/detail` |
-| `command_additional_params` | 客户端命中后可补充提供的额外字段 |
+| `command_additional_params` | 端点额外接受的查询参数名；当前 PJSK 标准协议通常为空 |
 
 需要特别强调：
 
@@ -99,28 +99,30 @@
 
 ## 6. 命中后的请求格式
 
-### 6.1 推荐调用方式
+### 6.1 标准调用方式
 
-推荐使用 `POST` JSON：
+标准调用方式为：
 
-```json
-{
-  "im_platform": "qq",
-  "im_user_id": "12345",
-  "command": "/查卡 初音 4星",
-  "matched_command": "/查卡",
-  "server": "jp"
-}
+```http
+GET /api/v2/bot/:botId/pjsk/card/detail?command_payload=<base64(ob11 pack)>
+X-Haruki-Bot-Platform: qq
+X-Haruki-Bot-Platform-User-Id: 12345
+X-Haruki-Bot-Platform-Group-Id: 67890
+X-Haruki-Bot-Pjsk-Server: jp
+X-Haruki-Bot-Matched-Command: /查卡
 ```
 
-`command` 应优先直接传原始文本。
-`matched_command` 必须传客户端前缀树实际命中的那条命令。
+字段说明：
 
-当前云端即使兼容 Base64 OneBot JSON，也只视为兼容输入，不视为后续主协议。
+1. `command_payload` 是客户端从 OneBot V11 拿到的消息原文包，经 Base64 后作为查询参数上传。
+2. `X-Haruki-Bot-Matched-Command` 必须传客户端前缀树实际命中的那条命令。
+3. `X-Haruki-Bot-Pjsk-Server` 用于显式覆盖区服。
+4. `X-Haruki-Bot-Platform-Group-Id` 在私聊场景可为空。
+5. 当前协议只消费这里列出的查询参数和请求头，不包含 `group_name`、`username`、`sender_name` 这类扩展字段。
 
 ### 6.2 `server` 字段
 
-如果客户端本地已经识别出区服，可以同时传 `server`。
+如果客户端本地已经识别出区服，可以同时传 `X-Haruki-Bot-Pjsk-Server`。
 
 要求是：
 
@@ -132,19 +134,19 @@
 对于任意一个 Bot 业务端点，目标行为应当是：
 
 1. 校验 `VerifyBotSession`
-2. 恢复原始 `command`
+2. 从 `command_payload` 恢复原始 `command`
 3. 校验 `matched_command` 是否属于当前端点
 4. 用命中的 handler 在当前端点语义范围内解析原文
 5. 提取当前端点需要的业务参数
 6. 若 `matched_command` 不属于当前端点，返回 `400`
 7. 若解析失败，返回 `400`
-8. 若解析成立，继续处理并画图
-9. 返回 PNG
+8. 若解析成立，调用 `commandhandler.Execute(...)`
+9. 按执行结果类型返回图片或文本
 
 以 `card/detail` 为例：
 
 1. 客户端命中 `/api/v2/bot/:botId/pjsk/card/detail`
-2. 客户端上传 `matched_command`
+2. 客户端上传 `command_payload` 和 `X-Haruki-Bot-Matched-Command`
 3. 云端先检查这个 `matched_command` 是否属于 `card/detail`
 4. 命中对应 handler 后再继续解析原文
 5. 若当前 handler 无法继续处理，则直接报错
@@ -164,7 +166,7 @@
 
 表示：
 
-1. `command` 缺失
+1. `command_payload` 缺失
 2. `matched_command` 缺失
 3. `matched_command` 不属于当前端点
 4. 原文无法被当前 handler 解析
@@ -225,18 +227,18 @@
 
 至少验证：
 
-1. 命中正确端点时能成功返回 PNG
+1. 命中正确端点时能成功返回图片或文本结果
 2. 故意请求错误端点时云端返回 `400`
 
 ### 阶段 5：上下文字段联调
 
 逐步验证：
 
-1. `server`
-2. `group_id`
-3. `group_name`
-4. `username`
-5. `sender_name`
+1. `X-Haruki-Bot-Platform`
+2. `X-Haruki-Bot-Platform-User-Id`
+3. `X-Haruki-Bot-Platform-Group-Id`
+4. `X-Haruki-Bot-Pjsk-Server`
+5. `X-Haruki-Bot-Matched-Command`
 
 ## 11. 验收标准
 
@@ -246,7 +248,7 @@
 2. 客户端可以按 manifest 构建前缀树。
 3. 客户端命中后可以正确产出 `path + matched_command`。
 4. 客户端可以正确请求 `/api/v2/bot/:botId/pjsk/*`。
-5. 云端端点能按原文在本端点内解析参数并返回 PNG。
+5. 云端端点能按原文在本端点内解析参数，并根据执行结果返回图片或文本。
 6. 客户端请求错误端点时，云端能稳定返回 `400`。
 
 ## 12. 相关文档

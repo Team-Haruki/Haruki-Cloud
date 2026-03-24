@@ -103,7 +103,7 @@ Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点�
 | `id` | auto | PK | 自动主键 |
 | `command_prefixes` | JSON `[]string` | NOT NULL | 触发前缀列表，如 `["/查卡","/card"]` |
 | `command_priority` | int | default 0 | 匹配优先级，越大越优先 |
-| `command_mode` | string(16) | NOT NULL | 请求方法，如 `"GET,POST"` |
+| `command_mode` | string(16) | NOT NULL | 请求方法，如 `"GET"` |
 | `command_module` | string(64) | NOT NULL | 功能模块，如 `"pjsk"` |
 | `command_path` | string(256) | NOT NULL | 路径（无前导斜杠），如 `"card/detail"` |
 | `command_additional_params` | JSON `[]string` | optional | 端点额外接受的参数名列表 |

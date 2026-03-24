@@ -14,6 +14,10 @@
   - 当前状态、已完成工作、待办事项
   - 适合：快速了解项目全貌
 
+- **[PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)** ⭐
+  - 详细记录 2026-03-24 这轮账号绑定、Execute 返回类型、`handler`/`userdata` 分层收口
+  - 适合：查看今天这轮代码修改的完整背景和落地结果
+
 ## 🎯 Service-Test 合并（已完成）
 
 - **[合并方案](service-test-merge-plan.cn.md)**
@@ -36,19 +40,21 @@ Parser 已作为内部子系统合并进 Haruki-Cloud：
 客户端联调应优先使用：
 
 - `GET /api/v2/bot/:botId/command/manifests`
-- `GET|POST /api/v2/bot/:botId/pjsk/<path>`
+- `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(ob11 pack)>`
 
-```json
-{
-  "im_platform": "qq",
-  "im_user_id": "12345",
-  "command": "/卡面 1001",
-  "matched_command": "/卡面",
-  "server": "jp"
-}
+```http
+GET /api/v2/bot/:botId/pjsk/card/detail?command_payload=<base64(ob11 pack)>
+X-Haruki-Bot-Platform: qq
+X-Haruki-Bot-Platform-User-Id: 12345
+X-Haruki-Bot-Platform-Group-Id: 67890
+X-Haruki-Bot-Pjsk-Server: jp
+X-Haruki-Bot-Matched-Command: /卡面
 ```
 
-`matched_command` 表示客户端前缀树实际命中的那条命令。
+其中：
+
+- `command_payload` 是客户端通过 OneBot V11 协议拿到的消息原文包，做 Base64 后放到查询参数里。
+- `X-Haruki-Bot-Matched-Command` 表示客户端前缀树实际命中的那条命令。
 
 `POST /internal/pjsk/command` 仅保留给内部兼容场景，不是客户端主协议。
 
@@ -66,6 +72,7 @@ Parser 已作为内部子系统合并进 Haruki-Cloud：
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-24 | PJSK 账号绑定实现说明 | 新增账号绑定与执行链路收口专题文档 |
 | 2026-03-24 | README 索引 | 补充 `matched_command`，并改正 Bot 业务路径描述 |
 | 2026-03-24 | ZeroBot 与 Cloud 联调方案 | 明确 `/api/v2/bot/*` 为客户端联调主协议 |
 | 2026-03-24 | ZeroBot 后续接入 | 改为引用新的联调方案 |

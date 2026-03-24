@@ -5,16 +5,20 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/chardata"
 	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
 	harukiRedis "haruki-cloud/utils/redis"
+	sekaiAPI "haruki-cloud/utils/sekai"
 
 	botAuth "haruki-cloud/api/bot/auth"
 	botPJSK "haruki-cloud/api/bot/pjsk"
@@ -28,6 +32,7 @@ import (
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	usersDB "haruki-cloud/database/users"
 
 	"github.com/bytedance/sonic"
 	_ "github.com/go-sql-driver/mysql"
@@ -47,17 +52,19 @@ func main() {
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(mainLogger)
 	app := createFiberApp(mainLogger)
+	usersClient := initUsers(mainLogger)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(mainLogger, app, redisClient)
 	sekaiClient := initSekaiIfEnabled(mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
+	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient)
 	legacyPJSK.RegisterPJSKRenderRoutes(app, renderRuntime)
 	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 	botDBClient := initBot(mainLogger, app, redisClient)
 	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient)
 
-	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
+	defer closeClients(usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 
 	if renderRuntime != nil {
 		mainLogger.Infof("PJSK render runtime initialized; internal render routes registered")
@@ -158,6 +165,24 @@ func initChunithmIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redi
 	return chunithmMainClient, chunithmMusicClient
 }
 
+func initUsers(mainLogger *harukiLogger.Logger) *usersDB.Client {
+	if strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBType) == "" || strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBURL) == "" {
+		mainLogger.Warnf("Users DB is not configured; profile binding commands will be unavailable")
+		return nil
+	}
+
+	client, err := usersDB.Open(harukiConfig.Cfg.UsersDB.DBType, harukiConfig.Cfg.UsersDB.DBURL)
+	if err != nil {
+		mainLogger.Errorf("Failed to connect to Users DB: %v", err)
+		os.Exit(1)
+	}
+	if err := client.Schema.Create(context.Background()); err != nil {
+		mainLogger.Errorf("Failed to create schema for Users DB: %v", err)
+		os.Exit(1)
+	}
+	return client
+}
+
 func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) *pjskDB.Client {
 	if !harukiConfig.Cfg.PJSK.Enabled {
 		return nil
@@ -175,6 +200,18 @@ func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisCli
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
+}
+
+func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client) {
+	if renderRuntime == nil || pjskClient == nil || usersClient == nil {
+		return
+	}
+	renderRuntime.Bindings = userdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		sekaiAPI.GetSekaiAPIClient(),
+	)
+	mainLogger.Infof("Sekai runtime services configured")
 }
 
 func initSekaiIfEnabled(mainLogger *harukiLogger.Logger) *sekaiDB.Client {
@@ -294,8 +331,11 @@ func initBot(mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis
 	return botDBClient
 }
 
-func closeClients(chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,
+func closeClients(usersClient *usersDB.Client, chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,
 	pjskClient *pjskDB.Client, sekaiClient *sekaiDB.Client, botDBClient *botDB.Client) {
+	if usersClient != nil {
+		_ = usersClient.Close()
+	}
 	if chunithmMainClient != nil {
 		_ = chunithmMainClient.Close()
 	}

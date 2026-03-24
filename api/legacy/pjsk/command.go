@@ -13,13 +13,10 @@ import (
 
 // CommandHandler handles POST /internal/pjsk/command.
 //
-// Design scope: this endpoint handles RENDER commands only — commands that
-// produce a PNG image (card queries, event info, SK lines, etc.).
-//
-// Account management commands (bind, unbind, set-main, etc.) are NOT handled
-// here. Those are data write operations with no image output and should be
-// exposed as dedicated REST endpoints when their business logic is implemented.
-// They are intentionally absent from GlobalCommandResolver.
+// Design scope: this endpoint parses internal raw commands and returns whatever
+// unified Execute() produces. Today that is still primarily PNG-producing
+// render commands; account-binding commands are intentionally absent from the
+// GlobalCommandResolver and therefore do not flow through this endpoint.
 type CommandHandler struct {
 	resolver  *parser.GlobalCommandResolver
 	renderApp *renderapp.App
@@ -59,7 +56,7 @@ func (h *CommandHandler) HandleCommand(c fiber.Ctx) error {
 		resolved.Region = req.Server
 	}
 
-	pngBytes, err := pjskHandler.Execute(context.Background(), resolved, h.renderApp)
+	responseData, dataType, err := pjskHandler.Execute(context.Background(), resolved, h.renderApp)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", CommandErrorResponse{
 			Error: err.Error(),
@@ -67,6 +64,16 @@ func (h *CommandHandler) HandleCommand(c fiber.Ctx) error {
 		})
 	}
 
-	c.Set("Content-Type", "image/png")
-	return c.Send(pngBytes)
+	switch dataType {
+	case pjskHandler.CommandResultDataTypeImagePNG:
+		c.Set("Content-Type", string(dataType))
+		return c.Send(responseData)
+	case pjskHandler.CommandResultDataTypeText:
+		return api.JSONResponse(c, fiber.StatusOK, string(responseData))
+	default:
+		return api.JSONResponse(c, fiber.StatusInternalServerError, "unsupported command result", CommandErrorResponse{
+			Error: "unsupported execute result data type",
+			Mode:  resolved.Mode,
+		})
+	}
 }

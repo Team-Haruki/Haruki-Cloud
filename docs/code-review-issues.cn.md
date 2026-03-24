@@ -4,6 +4,8 @@
 > 审查时间：2026-03-23  
 > 范围：`api/`、`internal/`、`cmd/server/main.go`  
 > 测试结论：`go test -race ./api/... ./internal/...` 全部通过，无数据竞争报告
+>
+> 说明：本文保留的是 2026-03-23 当时的审查快照，不等同于当前未修复问题总表。若与最新实现存在差异，应以 `architecture.cn.md`、`project-status-summary.cn.md` 与对应代码为准。
 
 ---
 

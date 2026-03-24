@@ -16,7 +16,7 @@
 1. 云端下发 manifest。
 2. 客户端构建前缀树并命中 `path`。
 3. 客户端按命中的 `path` 调用 `/api/v2/bot/:botId/pjsk/*`，并上传 `matched_command`。
-4. 命中的端点在云端内部先校验 `matched_command -> handler.path`，再解析原文、提取参数、处理和画图。
+4. 命中的端点在云端内部先校验 `matched_command -> handler.path`，再解析原文、提取参数，并进入统一执行链路返回图片或文本。
 
 也就是说，客户端负责“命中哪个端点”，云端端点负责“这个端点到底怎么解释原文”。
 
@@ -70,7 +70,7 @@
 
 ### 3.2 业务端点
 
-- `GET|POST /api/v2/bot/:botId/pjsk/<path>`
+- `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(ob11 pack)>`
 
 ### 3.3 内部兼容入口
 
@@ -117,12 +117,26 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 
 这些内容后续需要继续收口。
 
+## 5.1 账号绑定能力状态
+
+截至 2026-03-24，PJSK 账号绑定相关链路已经完成一轮收口：
+
+1. 绑定命令已经接入 `/api/v2/bot/:botId/pjsk/profile/*`
+2. handler 只返回 `ResolvedCommand`
+3. 文本型绑定命令与图片型命令统一走 `commandhandler.Execute(...)`
+4. `Execute(...)` 统一返回 `payload + data_type`
+5. 绑定业务执行和文本格式化已下沉到 `internal/pjsk/userdata/`
+
+更详细的实现说明、代码落点、测试覆盖和注意事项，请直接参考：
+
+- [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)
+
 ## 6. 当前保留项
 
 下面这些内容目前明确保留：
 
 1. `command_manifests`
-2. `route_table.go`
+2. 基于 `internal/pjsk/handler` registry 派生的 Bot route 元数据
 3. `/api/v2/bot/:botId/pjsk/*` 直达型端点
 4. `internal/pjsk/parser` 中的通用提取与类型化解析能力
 5. render runtime 与内部 build/render 路由
@@ -149,5 +163,6 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 ## 9. 相关文档
 
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
+- [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)
 - [ZeroBot 渲染接入后续事项](zerobot-render-followup.cn.md)

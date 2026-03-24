@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -22,6 +23,15 @@ import (
 
 const botRouteBase = "/api/v2/bot"
 
+const (
+	botQueryCommandPayload   = "command_payload"
+	botHeaderPlatform        = "X-Haruki-Bot-Platform"
+	botHeaderPlatformUserID  = "X-Haruki-Bot-Platform-User-Id"
+	botHeaderPlatformGroupID = "X-Haruki-Bot-Platform-Group-Id"
+	botHeaderPJSKServer      = "X-Haruki-Bot-Pjsk-Server"
+	botHeaderMatchedCommand  = "X-Haruki-Bot-Matched-Command"
+)
+
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
 //	/api/v2/bot/:botId/pjsk/<path>
@@ -29,6 +39,13 @@ const botRouteBase = "/api/v2/bot"
 // and the command manifest endpoint at
 //
 //	GET /api/v2/bot/:botId/command/manifests
+//
+// The canonical PJSK bot protocol is:
+//
+//	GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(onebot-v11-payload)>
+//
+// with metadata carried in headers such as X-Haruki-Bot-Matched-Command and
+// X-Haruki-Bot-Pjsk-Server.
 //
 // When redisClient is non-nil, the api.VerifyBotSession middleware is applied to
 // authenticate requests via X-Haruki-Bot-Id and X-Haruki-Bot-Session-Token headers.
@@ -61,48 +78,55 @@ func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient
 		h := makeBotHandler(renderApp, route.Path)
 		path := "/" + route.Path
 		pjsk.Get(path, h)
-		pjsk.Post(path, h)
 	}
 }
 
-// makeBotHandler returns a fiber.Handler that validates matched_command belongs
-// to the current endpoint path, then lets the registered handler parse the
-// original text and produce a resolved render command.
+// makeBotHandler returns a GET-only fiber.Handler that validates the matched
+// command header belongs to the current endpoint path, then lets the registered
+// handler parse the original OneBot payload and produce a resolved render command.
 func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
-		if req.Command == "" {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "command is required")
+		if req.CommandPayload == "" {
+			return api.JSONResponse(c, fiber.StatusBadRequest, "command_payload is required")
 		}
 		if req.MatchedCommand == "" {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "matched_command is required")
+			return api.JSONResponse(c, fiber.StatusBadRequest, "X-Haruki-Bot-Matched-Command is required")
 		}
 
-		commandText, err := decodeCommand(req.Command)
+		commandText, err := decodeCommand(req.CommandPayload)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to decode command", BotCommandErrorResponse{
 				Error: err.Error(),
 			})
 		}
 
-		resolved, err := resolveBotCommand(commandText, req.MatchedCommand, expectedPath)
+		resolved, err := resolveBotCommand(commandText, expectedPath, req)
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
-				BotCommandErrorResponse{
-					Error:          err.Error(),
-					ExpectedPath:   expectedPath,
-					MatchedCommand: req.MatchedCommand,
-				})
+			var validationErr *botValidationError
+			if errors.As(err, &validationErr) {
+				return api.JSONResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
+					BotCommandErrorResponse{
+						Error:          err.Error(),
+						ExpectedPath:   expectedPath,
+						MatchedCommand: req.MatchedCommand,
+					})
+			}
+			return api.JSONResponse(c, fiber.StatusBadRequest, err.Error(), BotCommandErrorResponse{
+				Error:          err.Error(),
+				ExpectedPath:   expectedPath,
+				MatchedCommand: req.MatchedCommand,
+			})
 		}
 
 		if req.Server != "" {
 			resolved.Region = req.Server
 		}
 
-		pngBytes, err := commandhandler.Execute(context.Background(), resolved, renderApp)
+		responseData, dataType, err := commandhandler.Execute(context.Background(), resolved, renderApp)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
 				Error: err.Error(),
@@ -110,72 +134,93 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler
 			})
 		}
 
-		c.Set("Content-Type", "image/png")
-		return c.Send(pngBytes)
+		switch dataType {
+		case commandhandler.CommandResultDataTypeImagePNG:
+			c.Set("Content-Type", string(dataType))
+			return c.Send(responseData)
+		case commandhandler.CommandResultDataTypeText:
+			return api.JSONResponse(c, fiber.StatusOK, string(responseData))
+		default:
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "unsupported command result", BotCommandErrorResponse{
+				Error: fmt.Sprintf("execute returned unsupported data type %q", dataType),
+			})
+		}
 	}
 }
 
-// parseBotRequest reads BotCommandRequest from either GET query params or POST JSON body.
+// parseBotRequest reads BotCommandRequest from the canonical GET query + header protocol.
 func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
-	if c.Method() == fiber.MethodGet {
-		return BotCommandRequest{
-			IMPlatform:     c.Query("im_platform"),
-			IMUserID:       c.Query("im_user_id"),
-			Command:        c.Query("command"),
-			MatchedCommand: c.Query("matched_command"),
-			Server:         c.Query("server"),
-		}, nil
-	}
-	var req BotCommandRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return BotCommandRequest{}, err
-	}
-	return req, nil
+	return BotCommandRequest{
+		Platform:        strings.TrimSpace(c.Get(botHeaderPlatform)),
+		PlatformUserID:  strings.TrimSpace(c.Get(botHeaderPlatformUserID)),
+		PlatformGroupID: strings.TrimSpace(c.Get(botHeaderPlatformGroupID)),
+		CommandPayload:  c.Query(botQueryCommandPayload),
+		MatchedCommand:  strings.TrimSpace(c.Get(botHeaderMatchedCommand)),
+		Server:          strings.TrimSpace(c.Get(botHeaderPJSKServer)),
+	}, nil
 }
 
-func resolveBotCommand(commandText, matchedCommand, expectedPath string) (*parser.ResolvedCommand, error) {
+type botValidationError struct {
+	msg string
+}
+
+func (e *botValidationError) Error() string {
+	return e.msg
+}
+
+func resolveBotCommand(commandText, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+	matchedCommand := req.MatchedCommand
 	matched := commandhandler.MatchCommandHandler(matchedCommand)
 	if matched.Handler == nil || matched.Handler.IsDisabled() {
-		return nil, fmt.Errorf("matched_command is not registered: %s", matchedCommand)
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
 	}
 
 	if remaining, ok := commandhandler.ExtractCommandArgs(matchedCommand, matched.Command); !ok || remaining != "" {
-		return nil, fmt.Errorf("matched_command is not an exact registered command: %s", matchedCommand)
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not an exact registered command: %s", matchedCommand)}
 	}
 
 	if matched.Handler.GetPath() == "" {
-		return nil, fmt.Errorf("matched_command is not exposed by the bot api: %s", matchedCommand)
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
 	}
 
 	if matched.Handler.GetPath() != expectedPath {
-		return nil, fmt.Errorf("matched_command belongs to path %s", matched.Handler.GetPath())
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
 	args, ok := commandhandler.ExtractCommandArgs(commandText, matchedCommand)
 	if !ok {
-		return nil, fmt.Errorf("original command does not start with matched_command")
+		return nil, &botValidationError{msg: "original command does not start with matched_command"}
+	}
+
+	messageType := commandhandler.MessageTypePrivate
+	if req.PlatformGroupID != "" {
+		messageType = commandhandler.MessageTypeGroup
 	}
 
 	ctx := &commandhandler.HandlerContext{
 		Context:     context.Background(),
+		Platform:    req.Platform,
 		TriggerCmd:  matchedCommand,
 		ArgText:     args,
-		MessageType: commandhandler.MessageTypePrivate,
+		MessageType: messageType,
 		Message:     commandText,
 		Event: commandhandler.Event{
-			MessageType: commandhandler.MessageTypePrivate,
+			Platform:    req.Platform,
+			MessageType: messageType,
 			Message:     commandText,
+			UserId:      req.PlatformUserID,
+			GroupId:     req.PlatformGroupID,
 		},
+		UserId:  req.PlatformUserID,
+		GroupId: req.PlatformGroupID,
 	}
-
 	result, err := matched.Handler.Handle(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	resolved, ok := result.(*parser.ResolvedCommand)
 	if !ok {
-		return nil, fmt.Errorf("handler returned %T instead of *parser.ResolvedCommand", result)
+		return nil, fmt.Errorf("handler returned %T", result)
 	}
 	return resolved, nil
 }
@@ -184,7 +229,7 @@ func resolveBotCommand(commandText, matchedCommand, expectedPath string) (*parse
 // Base64 + OneBot JSON payload decoding
 // ---------------------------------------------------------------------------
 
-// decodeCommand decodes the command parameter.
+// decodeCommand decodes the command payload parameter.
 // Expected format: Base64-encoded OneBot JSON payload → extract raw text command.
 // Falls back to treating the input as a plain text command if decoding fails.
 func decodeCommand(raw string) (string, error) {

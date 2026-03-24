@@ -18,48 +18,57 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
+	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 )
 
-// Execute routes a ResolvedCommand to the corresponding render controller,
-// returning the rendered PNG bytes or an error.
+// Execute routes a ResolvedCommand to the corresponding execution controller,
+// returning the output payload, its data type, or an error.
 // This is the main bridge between the parser output and the render system.
-func Execute(_ context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
 	if resolved == nil {
-		return nil, fmt.Errorf("bridge: nil resolved command")
+		return nil, "", fmt.Errorf("bridge: nil resolved command")
 	}
 	if app == nil {
-		return nil, fmt.Errorf("bridge: nil render app")
+		return nil, "", fmt.Errorf("bridge: nil render app")
 	}
 
+	var (
+		data []byte
+		err  error
+	)
 	switch resolved.Module {
 	case parser.ModuleCard:
-		return executeCard(resolved, app)
+		data, err = executeCard(resolved, app)
 	case parser.ModuleEvent:
-		return executeEvent(resolved, app)
+		data, err = executeEvent(resolved, app)
 	case parser.ModuleMusic:
-		return executeMusic(resolved, app)
+		data, err = executeMusic(resolved, app)
 	case parser.ModuleGacha:
-		return executeGacha(resolved, app)
+		data, err = executeGacha(resolved, app)
 	case parser.ModuleDeck:
-		return executeDeck(resolved, app)
+		data, err = executeDeck(resolved, app)
 	case parser.ModuleEducation:
-		return executeEducation(resolved, app)
+		data, err = executeEducation(resolved, app)
 	case parser.ModuleSK:
-		return executeSK(resolved, app)
+		data, err = executeSK(resolved, app)
 	case parser.ModuleScore:
-		return executeScore(resolved, app)
+		data, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
-		return executeProfile(resolved, app)
+		return executeProfile(ctx, resolved, app)
 	case parser.ModuleMysekai:
-		return executeMysekai(resolved, app)
+		data, err = executeMysekai(resolved, app)
 	case parser.ModuleStamp:
-		return executeStamp(resolved, app)
+		data, err = executeStamp(resolved, app)
 	case parser.ModuleMisc:
-		return executeMisc(resolved, app)
+		data, err = executeMisc(resolved, app)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported module %v", resolved.Module)
+		return nil, "", fmt.Errorf("bridge: unsupported module %v", resolved.Module)
 	}
+	if err != nil {
+		return nil, "", err
+	}
+	return data, CommandResultDataTypeImagePNG, nil
 }
 
 func executeCard(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
@@ -250,14 +259,28 @@ func executeScore(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error)
 	}
 }
 
-func executeProfile(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
 	switch r.Mode {
-	case "profile":
+	case ProfileModeRender:
 		q := profile.Query{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Profiles.RenderProfile(q)
+		data, err := app.Profiles.RenderProfile(q)
+		if err != nil {
+			return nil, "", err
+		}
+		return data, CommandResultDataTypeImagePNG, nil
+	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
+		params, err := accountdata.DecodeProfileBindingParams(r.Params)
+		if err != nil {
+			return nil, "", err
+		}
+		data, err := accountdata.ExecuteProfileBindingCommand(ctx, app.Bindings, r.Mode, params)
+		if err != nil {
+			return nil, "", err
+		}
+		return data, CommandResultDataTypeText, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported profile mode %q", r.Mode)
+		return nil, "", fmt.Errorf("bridge: unsupported profile mode %q", r.Mode)
 	}
 }
 

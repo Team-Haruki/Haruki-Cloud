@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-03-23（v1.2）
+> 最后更新：2026-03-24（v1.4）
 
 ---
 
@@ -8,7 +8,7 @@
 
 **Haruki-Cloud** 是 HarukiBot 生态的核心后端服务，负责：
 
-- 为 Bot 提供 **指令解析 → 渲染 → 返回图片** 的完整链路
+- 为 Bot 提供 **指令解析 → 执行 → 返回图片或文本** 的完整链路
 - 管理 Project SEKAI（プロジェクトセカイ）和 CHUNITHM 两个音游的查询数据
 - 提供 Bot 注册/鉴权/会话管理
 
@@ -44,18 +44,18 @@ Haruki-Cloud/
 │   │   └── chunithm/             #     CHUNITHM 别名 + 曲目查询 → /api/v2/public/chunithm/*
 │   ├── bot/                      #   Bot 专属端点
 │   │   ├── auth/                 #     Bot 注册/登录/会话验证/统计
-│   │   └── pjsk/                 #     Bot 指令端点（41个功能端点）→ /api/v2/bot/:botId/pjsk/*
-│   └── legacy/                   #   ⚠ 内部渲染路由（发布前需删除）
+│   │   └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
+│   └── legacy/                   #   内部兼容端点
 │       └── pjsk/                 #     渲染分发 + 通用指令端点 → /internal/pjsk/*
 │
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
 │   ├── core/crypto/              #   Noise 协议加密工具
 │   ├── middleware/secure/        #   安全中间件
 │   └── pjsk/                     #   PJSK 核心子系统
-│       ├── parser/               #     指令解析器（43 条正则路由）
-│       ├── handler/              #     指令处理器 + Bridge 调用桥
+│       ├── parser/               #     指令解析与提取能力
+│       ├── handler/              #     命令注册、端点归属、执行桥接
 │       ├── chardata/             #     角色昵称加载器
-│       └── render/               #     渲染子系统（13 个模块）
+│       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
 │   └── config.go                 #   YAML 配置加载，10 个顶级配置块
@@ -209,34 +209,46 @@ toolbox:                   # Toolbox 外部服务
 
 ### 5.2 Bot 指令端点（VerifyBotSession 鉴权）
 
+当前 Bot 端点由 `internal/pjsk/handler` registry 动态派生，标准协议如下：
+
+1. `GET /api/v2/bot/:botId/command/manifests`
+2. `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(onebot-v11-payload)>`
+协议头示例
+X-Haruki-Bot-Platform: qq/qqbot/discord/telegram
+X-Haruki-Bot-Platform-User-Id: 114514
+X-Haruki-Bot-Platform-Group-Id: 114514
+X-Haruki-Bot-Pjsk-Server: jp
+X-Haruki-Bot-Matched-Command: /查卡
+其中：
+
+1. `command_payload` 放在查询参数中
+2. `matched_command` 放在 `X-Haruki-Bot-Matched-Command` 请求头中
+3. 当前 PJSK Bot 端点只支持 `GET`
+
+代表性端点包括：
+
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/v2/bot/:botId/command/manifests` | **TODO 占位** — Command Manifest |
-| GET/POST | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/card/box` | 查箱 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/gacha` | 卡池信息 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/music/{list,chart,progress,rewards}` | 歌曲子功能 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/deck/{event,challenge,no-event,bonus,mysekai}` | 组卡推荐 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/event` | 活动详情 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/event/list` | 活动列表 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/education/{challenge,power,area,bonds,leader}` | 教育系统 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/score` | 分数查询 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/score/{custom-room,music-meta,music-board}` | 分数子功能 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/stamp` | 贴纸列表 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/misc/birthday` | 角色生日 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/sk/{line,query,check-room,speed,player-trace,rank-trace,winrate}` | SK 排名系统 |
-| GET/POST | `/api/v2/bot/:botId/pjsk/mysekai/{resource,fixture-list,fixture-detail,door-upgrade,music-record,talk-list}` | MySekai |
-| GET/POST | `/api/v2/bot/:botId/pjsk/profile` | 个人名片 |
+| GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应 |
+| GET | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
+| GET | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
+| GET | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情类路径之一 |
+| GET | `/api/v2/bot/:botId/pjsk/event` | 活动详情类路径之一 |
+| GET | `/api/v2/bot/:botId/pjsk/profile/bind` | 账号绑定 / 绑定列表 |
+| GET | `/api/v2/bot/:botId/pjsk/profile/unbind` | 账号解绑 |
+| GET | `/api/v2/bot/:botId/pjsk/profile/default` | 设置默认绑定 |
+| GET | `/api/v2/bot/:botId/pjsk/profile/default/clear` | 取消默认绑定 |
 
-共 **41 个功能端点 + 1 个 manifest 占位**。`command` 参数为 Base64 编码的 OneBot v11 JSON。
+需要特别说明：
+
+1. 实际可用路径以运行时 handler registry 和 manifest 数据为准
+2. Bot 端点执行结果不再只限于图片，也可能返回文本
 
 ### 5.3 内部渲染端点（VerifyAPIAuthorization 鉴权）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/internal/pjsk/command` | 通用指令端点（纯文本 → 渲染 → PNG） |
+| POST | `/internal/pjsk/command` | 通用指令端点（原文解析 → `Execute`；当前以 PNG 返回为主） |
 | POST | `/internal/pjsk/render` | 统一渲染分发（指定 target + operation + payload） |
 | POST | `/internal/pjsk/<module>/<action>/build` | 模块化构建（返回 JSON payload） |
 | POST | `/internal/pjsk/<module>/<action>/render` | 模块化渲染（返回 PNG） |
@@ -273,7 +285,7 @@ toolbox:                   # Toolbox 外部服务
 
 ## 6. 核心数据流
 
-### 6.1 Bot 指令渲染流程
+### 6.1 Bot 指令执行流程
 
 ```
 Bot 客户端
@@ -285,28 +297,33 @@ Bot 客户端
   │
   ├─ Bot 本地用前缀匹配到端点 /pjsk/card/detail
   │
-  └─ POST /api/v2/bot/:botId/pjsk/card/detail
-       Headers: X-Haruki-Bot-Id, X-Haruki-Bot-Session-Token
-       Body: {"command": "<base64 OneBot JSON>"}
+  └─ GET /api/v2/bot/:botId/pjsk/card/detail?command_payload=<base64 OneBot JSON>
+       Headers:
+         X-Haruki-Bot-Id
+         X-Haruki-Bot-Session-Token
+         X-Haruki-Bot-Matched-Command
+         X-Haruki-Bot-Platform
+         X-Haruki-Bot-Platform-User-Id
        │
        ▼ VerifyBotSession middleware
        │
        ▼ decodeCommand()  ←── Base64 解码 → OneBot JSON → 提取文本
        │
-       ▼ GlobalCommandResolver.Resolve("/卡面 1001")
+       ▼ 校验 matched_command -> handler.path
+       │
+       ▼ handler.Handle(...)
        │  → ResolvedCommand{Module:Card, Mode:"card-detail", Query:"1001"}
        │
-       ▼ 验证 Module+Mode 与端点匹配
-       │
        ▼ handler.Execute(ctx, resolved, renderApp)  [bridge.go]
-       │  → renderApp.Cards.HandleDetail(region, query)
+       │  → 返回 payload + data_type
        │
-       ▼ Drawing API (外部服务)
-       │  → POST http://drawing-service/render  {payload}
+       ├─ 若 data_type == image/png
+       │    ▼ Drawing API (外部服务)
+       │    ▼ PNG 字节流
+       │    ▼ 200 OK, Content-Type: image/png
        │
-       ▼ PNG 字节流
-       │
-       ▼ 200 OK, Content-Type: image/png
+       └─ 若 data_type == text/plain
+            ▼ 200 OK, JSON 包装文本响应
 ```
 
 ### 6.2 内部渲染流程
@@ -359,36 +376,39 @@ Schema 定义在 `ent/<module>/schema/` 下，通过 `go generate` 自动生成 
 
 ```
 internal/pjsk/parser/
-├── global_resolver.go    # GlobalCommandResolver：43 条正则路由，指令→模块+模式
-├── extractor.go          # Extractor：从文本中提取角色/稀有度/属性/技能/区服/年份
+├── global_resolver.go    # 兼容型全局解析器，供 /internal/pjsk/command 等内部入口使用
+├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份等
 ├── parser.go             # CardParser + CardQueryInfo
 ├── music_parser.go       # MusicParser + MusicQueryInfo
 ├── event_parser.go       # EventParser + EventQueryInfo
-├── command_parser.go     # CommandParser（SK/bind 命令）
+├── command_parser.go     # 其他命令解析辅助
 ├── utils.go              # isNumeric 等工具函数
 └── parser_test.go        # 测试
 ```
 
 **核心概念：**
-- `GlobalCommandResolver.Resolve(text)` → `*ResolvedCommand`
+- `GlobalCommandResolver.Resolve(text)` 当前主要服务 `/internal/pjsk/command` 等内部兼容入口与测试，不是 Bot 主协议的首选选路器
 - `ResolvedCommand` 包含：Module, Mode, Query, Region, Params, IsHelp, IsVerbose, IsPreview
-- 支持 13 个模块（Card, Gacha, Music, Deck, Event, Education, Score, Stamp, Misc, SK, MySekai, Profile, Help）
+- parser 包同时向各 path 绑定的 handler 提供通用提取器和类型化解析能力
 
 ### 8.2 handler — 指令处理 + Bridge
 
 ```
 internal/pjsk/handler/
-├── bridge.go             # Execute(ctx, resolved, app) → []byte — 核心桥接
+├── bridge.go             # Execute(ctx, resolved, app) → payload + data_type + error
+├── bot_route.go          # Bot route registry：聚合 module/path/commands/method
 ├── context.go            # Event, Context 接口, HandlerContext
-├── handler.go            # Trie 树指令分发器
-└── sekai/                # 15 个功能 handler 文件
-    ├── handler.go        # SekaiCommandHandler，反射自动注册
+├── handler.go            # Trie 注册、命令匹配、参数截取
+├── profile_mode.go       # Profile 渲染模式常量
+├── result.go             # CommandResultDataType 常量
+└── sekai/                # 各功能 handler
+    ├── handler.go        # SekaiCommandHandler 注册
     ├── helpers.go        # 工具函数
     ├── card.go ... vlive.go  # 各功能处理器
     └── handler_test.go
 ```
 
-**Bridge 设计：** `bridge.go` 是指令解析和渲染之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应的 render Controller 方法，无 HTTP 往返。
+**Bridge 设计：** `bridge.go` 是指令解析与执行层之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应执行入口，并显式返回结果载荷及其数据类型，无 HTTP 往返。
 
 ### 8.3 render — 渲染子系统
 
@@ -442,7 +462,7 @@ internal/pjsk/chardata/
 | 根目录存在独立 main 文件 | `migrate.go`, `extract_tables.go` | 与 `cmd/migrate/`, `cmd/extractor/` 功能重复，导致 `go build ./...` 失败（多个 main） |
 | `internal/core/` 半空 | `internal/core/pjsk/`, `internal/core/middleware/` | 目录存在但无实际代码或为空 |
 | `cmd/client_test/` 空目录 | `cmd/client_test/` | 未使用 |
-| `api/legacy/pjsk/` 待删除 | `api/legacy/pjsk/` | 发布前需删除，Bot 客户端切换到 `/api/v2/bot/` 后即可移除 |
+| `api/legacy/pjsk/` 命名历史遗留 | `api/legacy/pjsk/` | 实际仍承担 `/internal/pjsk/*` 内部兼容入口，后续若要重命名需单独迁移 |
 | `exports/` 用途不明 | `exports/` | 目录存在但未调查内容 |
 
 ### ⚠ 技术债
@@ -452,7 +472,7 @@ internal/pjsk/chardata/
 | 本地用户快照 | `render/userdata/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
-| `sekai/profile.go` 绑定指令 | bind/unbind/setMain 全为 TODO stub，暂不可用 |
+| Profile 扩展命令未完成 | `internal/pjsk/handler/sekai/profile.go` | 绑定/解绑/默认绑定已接入；`swap bind`、隐藏/展示抓包、隐藏/展示 ID、注册时间、服务状态、抓包模式仍为 disabled/TODO |
 
 ---
 
@@ -525,13 +545,13 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
-| `route_table.go` | 41 条路由配置表（module、mode、path、prefixes） | — |
-| `handler.go` | `makeBotHandler`、Base64+OneBot 解码、`RegisterPJSKBotRoutes`、manifest 占位 | `/api/v2/bot/:botId/pjsk/*` |
+| `handler.go` | `makeBotHandler`、Base64+OneBot 解码、handler registry 派生路由注册、manifest 端点 | `/api/v2/bot/:botId/pjsk/*`, `/api/v2/bot/:botId/command/manifests` |
+| `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |
-| `handler_test.go` | 11 个测试（OneBot 解码、纯文本降级、GET/POST、端点匹配、manifest） | — |
-| `testhelpers_test.go` | 测试辅助：`testRenderApp`、`testResolver`、`renderEnvelope` | — |
+| `handler_test.go` | 覆盖 OneBot 解码、GET-only、端点匹配、文本/图片返回、manifest 行为 | — |
+| `testhelpers_test.go` | 测试辅助：`testRenderApp`、`renderEnvelope` | — |
 
-### api/legacy/pjsk/（package pjsk，⚠ 待删除）
+### api/legacy/pjsk/（package pjsk，内部兼容端点）
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
@@ -540,7 +560,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `render_struct.go` | 渲染请求/响应结构体 | — |
 | `render_route_test.go` | 渲染路由测试 + `testRenderApp` | — |
 | `render_dispatch_test.go` | 分发测试 | — |
-| `command.go` | 通用指令端点 Handler | `/internal/pjsk/command` |
+| `command.go` | 通用指令端点 Handler（原文解析 → `Execute`；当前以 PNG 返回为主，保留文本结果分支） | `/internal/pjsk/command` |
 | `command_struct.go` | 指令请求/响应结构体 | — |
 | `command_test.go` | 通用指令测试（5 个） | — |
 
@@ -553,6 +573,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `docs/utils-query.cn.md` | `utils/query` 包说明（统一查询门面） |
 | `docs/database-schemas.cn.md` | 数据库 Schema 详解（全 7 个 DB 模块） |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
+| `docs/pjsk-profile-binding-implementation.cn.md` | PJSK 账号绑定与执行链路收口说明 |
 | `docs/README.cn.md` | 项目 README |
 | `docs/service-test-merge-plan.cn.md` | Service-Test 合并方案 |
 | `docs/service-test-merge-status.cn.md` | Service-Test 合并状态 |
@@ -562,5 +583,5 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.1  
+**文档版本**：v1.4  
 **创建日期**：2026-03-23

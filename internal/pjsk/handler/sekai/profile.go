@@ -5,7 +5,7 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"strconv"
+	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"strings"
 )
 
@@ -14,16 +14,41 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk bind", "/pjsk id",
-				"/绑定", "/pjsk 绑定",
+				"/绑定", "/pjsk 绑定", "/绑定列表",
 			},
-			Disabled: true,
+			Path: "profile/bind",
 		},
-		// TODO: parse_uid_arg=False 的行为目前未迁移
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			// TODO: 迁移查询绑定列表 + 绑定新ID + 跨区冲突检查 + add_player_bind_id 逻辑
-			return nil, fmt.Errorf("TODO: 绑定/查询绑定未实现，args=%q", args)
+			if isProfileBindingListCommand(ctx.GetTriggerCmd()) {
+				if args != "" {
+					return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+				}
+				return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, newProfileBindingParams(ctx, "", "")), nil
+			}
+			if args == "" {
+				return nil, fmt.Errorf("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBind, newProfileBindingParams(ctx, args, "")), nil
 		},
+	}
+}
+
+func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {
+	return accountdata.ProfileBindingCommandParams{
+		Platform:       ctx.GetPlatform(),
+		PlatformUserID: ctx.GetUserId(),
+		Selector:       strings.TrimSpace(selector),
+		Scope:          strings.TrimSpace(scope),
+	}
+}
+
+func isProfileBindingListCommand(triggerCmd string) bool {
+	switch strings.TrimSpace(strings.ToLower(triggerCmd)) {
+	case "/绑定列表":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -31,20 +56,16 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
-				"/pjsk unbind", "/pjsk解绑", "/解绑",
+				"/pjsk unbind", "/pjsk解绑", "/解绑", "/取消绑定",
 			},
-			Disabled: true,
+			Path: "profile/unbind",
 		},
-		// TODO: parse_uid_arg=False 的行为目前未迁移
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.ToLower(strings.TrimSpace(ctx.GetArgs()))
-			args = strings.ReplaceAll(args, "u", "")
-			index, err := strconv.Atoi(args)
-			if err != nil {
-				return nil, fmt.Errorf("解除第x个账号绑定:\"%s x\"\n发送\"/绑定\"查询已绑定的账号", ctx.originalTriggerCmd)
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
 			}
-			// TODO: 迁移 remove_player_bind_id(ctx, qid, index-1)
-			return nil, fmt.Errorf("TODO: 解绑未实现，index=%d", index)
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeUnbind, newProfileBindingParams(ctx, args, "")), nil
 		},
 	}
 }
@@ -54,18 +75,44 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk set main", "/pjsk主账号", "/设置主账号", "/主账号",
+				"/设置默认绑定", "/默认绑定",
 			},
-			Disabled: true,
+			Path: "profile/default",
 		},
-		// TODO: parse_uid_arg=False 的行为目前未迁移
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(strings.ReplaceAll(ctx.GetArgs(), "u", ""))
-			index, err := strconv.Atoi(args)
-			if err != nil {
-				return nil, fmt.Errorf("使用方式:\n设置主账号为你第x个绑定的账号: %s x", ctx.originalTriggerCmd)
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
 			}
-			// TODO: 迁移 set_player_main_bind_id(ctx, qid, index-1)
-			return nil, fmt.Errorf("TODO: 设置主账号未实现，index=%d", index)
+
+			scope := ""
+			if ctx.HasExplicitRegion() {
+				scope = ctx.Region().String()
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultSet, newProfileBindingParams(ctx, args, scope)), nil
+		},
+	}
+}
+
+func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/取消默认绑定", "/清除默认绑定", "/取消主账号", "/清除主账号",
+			},
+			Path: "profile/default/clear",
+		},
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
+			}
+
+			scope := ""
+			if ctx.HasExplicitRegion() {
+				scope = ctx.Region().String()
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultClear, newProfileBindingParams(ctx, args, scope)), nil
 		},
 	}
 }
@@ -161,7 +208,7 @@ func (sekaiHandlers) ProfileInfoHandle() SekaiCommandHandler {
 			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleProfile, "profile"), nil
+			return makeResolvedCmd(ctx, parser.ModuleProfile, handler.ProfileModeRender), nil
 		},
 	}
 }

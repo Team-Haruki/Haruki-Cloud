@@ -16,6 +16,7 @@ import (
 type SekaiHandlerContext struct {
 	handler.HandlerContext
 	region             renderregion.Value // 区服
+	explicitRegion     bool               // 是否由前缀或参数显式指定区服
 	originalTriggerCmd string             // 原始触发命令，未去除区服前缀
 	prefixArg          string             // 额外前缀
 	uidArg             string             // UID参数
@@ -31,6 +32,9 @@ type SekaiCommandHandler struct {
 
 func (s *SekaiHandlerContext) Region() renderregion.Value {
 	return s.region
+}
+func (s *SekaiHandlerContext) HasExplicitRegion() bool {
+	return s.explicitRegion
 }
 func (s *SekaiHandlerContext) PrefixArg() string {
 	return s.prefixArg
@@ -52,12 +56,14 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 	}
 
 	var cmdRegion renderregion.Value
+	explicitRegion := false
 	originalTriggerCmd := ctx.GetTriggerCmd()
 	triggerCmd := originalTriggerCmd
 	for _, region := range skh.Regions {
 		cmdRegionPrefix := fmt.Sprintf("/%s", string(region))
 		if strings.HasPrefix(triggerCmd, cmdRegionPrefix) {
 			cmdRegion = region
+			explicitRegion = true
 			triggerCmd = strings.Replace(triggerCmd, cmdRegionPrefix, "/", 1)
 			break
 		}
@@ -88,6 +94,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 		normalized := renderregion.Normalize(regRes.Value)
 		if !normalized.IsZero() {
 			cmdRegion = normalized
+			explicitRegion = true
 		}
 	}
 	args = regRes.Remaining
@@ -107,6 +114,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 	skCtx := SekaiHandlerContext{
 		HandlerContext: handler.HandlerContext{
 			Context:     ctx,
+			Platform:    ctx.GetPlatform(),
 			TriggerCmd:  triggerCmd,
 			ArgText:     args,
 			MessageType: ctx.GetMessageType(),
@@ -118,6 +126,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 			GroupId:     ctx.GetGroupId(),
 		},
 		region:             cmdRegion,
+		explicitRegion:     explicitRegion,
 		originalTriggerCmd: originalTriggerCmd,
 		prefixArg:          prefixArg,
 		uidArg:             uidArg,

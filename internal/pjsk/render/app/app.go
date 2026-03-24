@@ -23,6 +23,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/userdata"
+	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -78,6 +79,7 @@ type App struct {
 	Score      *score.Controller
 	SK         *sk.Controller
 	Stamps     *stamp.Controller
+	Bindings   *accountdata.BindingService
 	Config     Config
 }
 

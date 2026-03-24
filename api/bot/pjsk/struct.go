@@ -1,15 +1,15 @@
 package pjsk
 
-// BotCommandRequest is the common request body for all per-feature bot endpoints.
-// GET requests may also pass these as query parameters.
-// Command is expected to be a Base64-encoded OneBot JSON payload;
-// if decoding fails, the raw string is treated as a plain text command.
+// BotCommandRequest is the canonical request shape for per-feature bot endpoints.
+// The client sends the raw OneBot v11 payload as a Base64-encoded query parameter
+// and carries routing / platform metadata in request headers.
 type BotCommandRequest struct {
-	IMPlatform     string `json:"im_platform"     query:"im_platform"`
-	IMUserID       string `json:"im_user_id"      query:"im_user_id"`
-	Command        string `json:"command"         query:"command"`
-	MatchedCommand string `json:"matched_command" query:"matched_command"`
-	Server         string `json:"server"          query:"server"`
+	Platform        string
+	PlatformUserID  string
+	PlatformGroupID string
+	CommandPayload  string
+	MatchedCommand  string
+	Server          string
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.
@@ -33,7 +33,7 @@ type ManifestEntry struct {
 	// CommandPriority controls matching order; higher value is matched first.
 	CommandPriority int `json:"command_priority"`
 
-	// CommandMode is the accepted HTTP method(s), e.g. "GET", "POST", "GET,POST".
+	// CommandMode is the accepted HTTP method, e.g. "GET".
 	CommandMode string `json:"command_mode"`
 
 	// CommandModule is the top-level game module, e.g. "pjsk", "chunithm".
@@ -44,7 +44,7 @@ type ManifestEntry struct {
 	CommandPath string `json:"command_path"`
 
 	// CommandAdditionalParams is an optional list of extra query parameter names
-	// the endpoint accepts beyond the standard "command" param.
+	// the endpoint accepts beyond the standard command payload protocol.
 	CommandAdditionalParams []string `json:"command_additional_params,omitempty"`
 }
 

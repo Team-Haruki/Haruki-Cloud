@@ -2,7 +2,7 @@
 
 > 最后更新：2026-03-24
 >
-> 本文档描述的是当前目标模型。若现有实现仍保留部分旧链路，以本文档定义的边界为后续收口目标。
+> 本文档描述的是当前已落地的主模型。若后续实现发生变化，应以代码和本文档同步更新后的内容为准。
 
 ## 1. 核心结论
 
@@ -15,7 +15,7 @@ PJSK 指令系统的主链路应当是“端点中心”模型，而不是“云
 3. 客户端命中后，按 `path` 调用对应的 Bot 端点，并上传 `matched_command`。
 4. 云端只校验 `matched_command` 是否属于当前端点。
 5. 当前端点对应的 handler 再根据原始文本做详细解析。
-6. 解析成功后直接进入处理和画图。
+6. 解析成功后进入统一执行链路。
 7. 如果 `matched_command` 与端点不一致，或原文无法被该 handler 继续处理，则返回错误。
 
 ## 2. 主链路
@@ -27,11 +27,11 @@ Haruki-Cloud 下发 command_manifests
   -> Haruki-ZeroBot 构建本地前缀树
   -> 本地匹配到 command_module + command_path + matched_command
   -> 请求 /api/v2/bot/:botId/<module>/<path>
-  -> 上传原始 command + matched_command
+  -> 上传 command_payload 查询参数 + matched_command 请求头
   -> 端点校验 matched_command -> handler.path
   -> 命中 handler 后在该 handler 内解析原文参数
-  -> 调用 render 处理链路
-  -> 返回 PNG
+  -> 调用统一执行链路
+  -> 返回 PNG 或文本
 ```
 
 当前 PJSK 这批端点中，`command_module` 固定为 `pjsk`，因此实际请求路径仍然是：
@@ -89,7 +89,7 @@ Haruki-Cloud 下发 command_manifests
 职责：
 
 1. 校验 Bot session
-2. 恢复原始文本命令
+2. 从 `command_payload` 恢复原始文本命令
 3. 校验 `matched_command` 是否属于当前端点
 4. 使用对应 handler 在当前端点语义范围内解析原文
 5. 提取当前端点所需参数
@@ -131,9 +131,16 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 
 1. 接收已经提取好的业务参数
 2. 调用对应 controller / render runtime
-3. 返回 PNG 或中间构建结果
+3. 返回统一的执行结果，而不是让上游自己猜测返回类型
 
 这一层不负责前缀树命中，也不负责 Bot 业务端点选路。
+
+需要额外明确：
+
+1. `sekai/*Handle()` 与其他 handler 一样，只负责解析原文并产出 `makeResolvedCmd(...)` 或 `makeResolvedCmdWithParams(...)`
+2. handler 不应在自身内部直接完成绑定、解绑、默认绑定切换等业务执行
+3. 文本型结果与图片型结果都必须经过 `commandhandler.Execute(...)`
+4. `refer/profile.py` 仅作为语义参考，不作为 Cloud 分层实现方式的直接模板
 
 ## 4. `GlobalCommandResolver` 的定位
 
@@ -168,9 +175,9 @@ Trie 仍然保留，但不再承担“替客户端决定访问哪个端点”的
 
 1. 客户端命中 `card/detail`
 2. 请求 `/api/v2/bot/:botId/pjsk/card/detail`
-3. 客户端同时上传 `matched_command`
+3. 客户端同时上传 `command_payload` 和 `X-Haruki-Bot-Matched-Command`
 4. 云端先检查这个 `matched_command` 是否属于 `card/detail`
-5. 命中该 path 的 handler 后，再按当前 handler 规则解析原始 `command`
+5. 命中该 path 的 handler 后，再按当前 handler 规则解析 `command_payload` 中的原始命令
 6. 若 `matched_command` 不属于该 path，则返回 `400`
 7. 若 handler 成功产出最终 render 参数，则继续处理
 
@@ -215,229 +222,202 @@ Trie 仍然保留，但不再承担“替客户端决定访问哪个端点”的
 3. 客户端直接调用 `/internal/pjsk/render`
 4. 客户端直接调用 `/internal/pjsk/command`
 
-## 10. `path` 定义合并方案
+## 10. `path` 定义合并状态
 
-### 10.1 合并目标
+这项合并已经完成，当前代码状态如下。
 
-`path` 的定义应当从 `api/bot/pjsk/route_table.go` 收回到 `internal/pjsk/handler`。
+### 10.1 当前唯一事实来源
 
-目标结构如下：
-
-1. 每个对外暴露的 Bot handler 自己声明 `Path`
-2. handler registry 聚合出完整的 Bot route 列表
-3. Bot 路由注册、manifest 同步、端点归属校验都使用同一份 handler-derived 数据
-4. `api/bot/pjsk` 不再维护第二份静态 `path` 表
-
-换句话说，未来的唯一事实来源应当是：
+当前 Bot 路由元数据的唯一事实来源是：
 
 `command -> handler -> path`
 
-而不是：
+也就是说：
 
-`command -> handler`
+1. 每个对外暴露的 Bot handler 直接在自身定义处声明 `Path`
+2. `internal/pjsk/handler` registry 聚合同一路径下的命令集合
+3. Bot HTTP 路由注册使用 `ListBotRoutes()`
+4. manifest seed 也使用同一份 route 数据
 
-再加上另一份独立的：
+`api/bot/pjsk/route_table.go` 已不存在。
 
-`path -> route_table`
+### 10.2 当前分层
 
-### 10.2 为什么必须合并
-
-当前双份定义至少有以下风险：
-
-1. `route_table.go` 和 handler 中的 `path` 容易漂移
-2. manifest、HTTP 路由注册、端点归属校验可能各自使用不同来源
-3. 新增或调整命令时，开发者必须同时修改 API 层和 handler 层，容易漏改
-4. 部分 handler 是多义解析器，静态 `mode` 表和真实 handler 行为本身就不完全同构
-
-因此，继续保留两份路径定义只会增加维护成本。
-
-### 10.3 目标分层
-
-合并后的职责划分应当是：
+当前职责划分已经落地为：
 
 1. `internal/pjsk/handler/*`
    - 定义命令
    - 定义 `Path`
    - 负责详细解析
 2. `internal/pjsk/handler` registry
-   - 聚合 `path -> commands -> handler metadata`
-   - 提供给 Bot API 使用
+   - 聚合 `path -> commands -> module -> method`
+   - 提供给 Bot API 与 manifest seed 使用
 3. `api/bot/pjsk/*`
    - 只负责 HTTP 暴露
-   - 不再定义第二份业务路径表
+   - 不再维护第二份静态路径表
 4. `command_manifests`
    - 从 handler registry 同步生成
 
-### 10.4 详细迁移清单
+### 10.3 当前效果
 
-#### 阶段 1：把 `Path` 写回具体 handler
-
-需要完成：
-
-1. 对所有对外暴露的 Bot handler，直接在 `CommandHandlerBase` 上显式填写 `Path`
-2. 不再依赖方法名到 `path` 的映射表
-3. 对不对外暴露的内部/兼容 handler，保持 `Path == ""`
-
-例如：
-
-1. `CardDetailHandle` 写 `Path: "card/detail"`
-2. `MusicListHandle` 写 `Path: "music/list"`
-3. `EventHandle` 写 `Path: "event/list"`
-
-验收标准：
-
-1. 所有 Bot 暴露 handler 都能在自身定义处直接看到 `Path`
-2. 不再需要在别处反推它属于哪个路径
-
-#### 阶段 2：在 handler registry 中建立 Bot route 聚合结果
-
-建议新增统一结构，例如：
-
-```go
-type BotRoute struct {
-    Path string
-    Module string
-    Commands []string
-    Methods []string
-    AdditionalParams []string
-}
-```
-
-需要完成：
-
-1. 在 `RegisterCommandHandler()` 或其上层注册流程中聚合所有带 `Path` 的 handler
-2. 将同一路径下的多条命令合并到同一个 route 记录
-3. 给 Bot API 暴露只读查询接口，例如：
-   - `ListBotRoutes()`
-   - `GetBotRoute(path string)`
-
-验收标准：
-
-1. handler registry 可以独立返回完整 Bot route 列表
-2. 不依赖 `route_table.go` 也能拿到 `path + commands`
-
-#### 阶段 3：让 Bot HTTP 路由注册改为消费 handler registry
-
-需要完成：
-
-1. `api/bot/pjsk/handler.go` 不再遍历 `botModeTable`
-2. 改为遍历 `handler.ListBotRoutes()`
-3. 每条 route 注册 `GET|POST /api/v2/bot/:botId/pjsk/<path>`
-
-验收标准：
-
-1. Bot 路由注册来源与 handler registry 完全一致
-2. 新增一个 Bot handler 时，不需要再去 API 层补第二份路径定义
-
-#### 阶段 4：让 manifest seed 改为消费同一份 route 数据
-
-需要完成：
-
-1. `api/bot/pjsk/seed.go` 改为直接读取 handler registry 中的 route 列表
-2. `command_prefixes` 来自该路径下聚合出的命令集合
-3. `command_path` 来自 handler 的 `Path`
-4. `command_additional_params` 继续由协议要求统一维护
-
-验收标准：
-
-1. manifest 与 HTTP 路由注册使用同一份 route 元数据
-2. manifest 不再依赖 `route_table.go`
-
-#### 阶段 5：移除迁移期映射与静态表
-
-需要完成：
-
-1. 删除 `botPathByMethodName`
-2. 删除 `botModeTable`
-3. 删除 `route_table.go`
-4. 清理所有只为兼容静态路径表而存在的辅助逻辑
-
-验收标准：
-
-1. 代码库中不存在第二份 Bot 路径定义
-2. `path` 只能从 handler registry 推导出来
-
-#### 阶段 6：补测试
-
-至少需要补下面几类测试：
-
-1. 注册测试
-   - 所有 Bot 暴露 handler 都有非空 `Path`
-2. 聚合测试
-   - 同一路径下的命令被正确合并
-3. 路由注册测试
-   - `ListBotRoutes()` 产出的每个路径都被实际注册
-4. manifest 测试
-   - 返回的 `command_path` 和命令集合与 handler registry 一致
-5. 归属校验测试
-   - `matched_command` 只能命中其所属 `path`
-
-验收标准：
-
-1. 路由注册、manifest、端点校验三者共享同一份测试事实来源
-
-### 10.5 需要明确的取舍
-
-#### `module` 的处理
-
-`module` 应作为显式注册信息保留，不能再从 `path` 首段推导。
-
-当前约束如下：
-
-1. Bot API 的总路径形状是 `/api/v2/bot/:botId/<module>/<path>`
-2. `command_module` 表示顶层业务模块，例如 `pjsk`
-3. `command_path` 表示模块内相对路径，例如 `card/detail`
-4. 因此 PJSK manifest 应写成 `command_module = "pjsk"`、`command_path = "card/detail"`
-
-这样设计后：
-
-1. `card`、`music`、`event` 这类值只属于 `path` 首段，不再代表 manifest 的 `module`
-2. 未来若接入其他模块，也只需要在注册 handler 时显式声明自己的 `module`
-
-#### `mode` 的处理
-
-建议不要把当前 `route_table.go` 中的静态 `mode` 继续当作 Bot 路由元数据主来源。
-
-原因是：
-
-1. Bot 端点命中的是 `path`
-2. 最终 render 的 `ResolvedCommand.Mode` 由 handler 详细解析后决定
-3. 某些 handler 本身可能根据原文分流到不同 render mode
-
-因此：
-
-静态 `mode` 更适合作为渲染桥接内部概念，而不是 Bot path 注册表的核心字段。
-
-### 10.6 推荐实施顺序
-
-推荐按下面顺序实施：
-
-1. 先把所有 Bot 暴露 handler 的 `Path` 显式写回各自文件
-2. 建立 handler registry 的 route 聚合能力
-3. 改 Bot 路由注册
-4. 改 manifest seed
-5. 补测试
-6. 最后删除 `route_table.go` 和方法名映射表
-
-这样做的好处是：
-
-1. 每一步都可验证
-2. 可以先完成“唯一事实来源”迁移，再做删除
-3. 避免一口气替换过多位置导致排查困难
-
-### 10.7 最终验收标准
-
-最终应达到以下状态：
+当前实现已经满足：
 
 1. `path` 只在 handler 定义侧声明一次
 2. handler registry 能完整导出 Bot route 列表
 3. Bot HTTP 路由注册使用 handler registry
 4. manifest seed 使用 handler registry
 5. `matched_command -> handler.path` 校验仍然成立
-6. `route_table.go` 不再存在
-7. 新增一个 Bot handler 时，只需要改 handler 定义，不需要再改第二份静态路径表
 
-## 11. 相关文档
+### 10.4 需要继续注意的点
+
+虽然 `route_table.go` 已删除，但仍需继续注意：
+
+1. 新增命令时必须显式写好 `Path`
+2. 多义 handler 的 path 归属要继续保持稳定
+3. 文档不能再用“静态 route_table”描述当前 Bot 路由来源
+
+## 11. 账号绑定命令修正规则
+
+本节用于修正 `profile` 中账号绑定相关命令的实现边界。
+
+### 11.1 基本原则
+
+账号绑定相关命令虽然最终只返回文本，但它们仍然属于标准 PJSK 命令执行链路的一部分。
+
+因此必须满足：
+
+1. `ProfileBindHandle`
+2. `ProfileUnbindHandle`
+3. `ProfileSetMainHandle`
+4. `ProfileClearDefaultBindingHandle`
+
+这几类 handler 的返回值都应与其他 handler 保持一致，统一返回 `*parser.ResolvedCommand`。
+
+禁止再采用下面这种做法：
+
+1. handler 内部直接调用绑定 service
+2. handler 直接拼接文本结果
+3. Bot API 根据 handler 返回 `string` 特判出站
+
+### 11.2 正确链路
+
+账号绑定命令的目标链路应为：
+
+```text
+Bot 端点
+  -> handler 校验 matched_command 是否属于当前 path
+  -> handler 解析原文
+  -> handler 返回 ResolvedCommand
+  -> commandhandler.Execute(...)
+  -> profile 执行分发
+  -> 返回 文本数据 + 数据类型
+  -> Bot API 按数据类型输出响应
+```
+
+也就是说：
+
+1. handler 负责“命令解释”
+2. `Execute` 负责“命令执行”
+3. Bot API 负责“HTTP 出站”
+
+三者不能混在一起。
+
+### 11.3 `ResolvedCommand` 侧的要求
+
+绑定相关 handler 应新增并使用明确的 `Mode`，例如：
+
+1. `profile-bind`
+2. `profile-bind-list`
+3. `profile-unbind`
+4. `profile-default-set`
+5. `profile-default-clear`
+
+其中：
+
+1. 原始输入中的 UID、`uN`、是否显式指定区服等信息，应由 handler 解析后写入 `Params`
+2. `Query` 仍可保留原始剩余参数，但不能把真正的业务执行放在 handler 内完成
+
+### 11.4 `Execute` 返回类型修正
+
+当前 `commandhandler.Execute(...)` 只返回 `[]byte`，这对图片命令足够，但对绑定类文本命令不够准确。
+
+应改为返回：
+
+```go
+func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error)
+```
+
+其中 `CommandResultDataType` 必须定义为显式常量，而不是由调用方猜测：
+
+```go
+type CommandResultDataType string
+
+const (
+    CommandResultDataTypeImagePNG CommandResultDataType = "image/png"
+    CommandResultDataTypeText     CommandResultDataType = "text/plain"
+)
+```
+
+这里的重点不是常量名细节，而是：
+
+1. 图片和文本都由 `Execute` 统一返回
+2. 数据类型必须是强约束常量
+3. Bot API 不再通过 `handler.Handle()` 的 Go 返回类型分支判断业务类型
+
+### 11.5 Bot API 的正确职责
+
+`api/bot/pjsk/handler.go` 应当调整为：
+
+1. 调用 handler，拿到 `*parser.ResolvedCommand`
+2. 调用 `commandhandler.Execute(...)`
+3. 根据 `CommandResultDataType` 输出 HTTP 响应
+
+具体要求：
+
+1. `CommandResultDataTypeImagePNG`
+   - 返回 `image/png`
+2. `CommandResultDataTypeText`
+   - 返回文本型业务结果
+   - 当前 Bot 协议下可继续包装为 JSON 响应体
+
+不再允许：
+
+1. `case *parser.ResolvedCommand`
+2. `case string`
+
+这样的业务分流逻辑直接留在 Bot API 中。
+
+### 11.6 `profile` 执行分发要求
+
+`internal/pjsk/handler/bridge.go` 中的 `executeProfile(...)` 应扩展为同时支持：
+
+1. 传统资料卡类图片模式
+2. 账号绑定相关文本模式
+
+也就是说，绑定 service 的实际调用位置应下沉到 `executeProfile(...)` 对应分发中，或其继续调用的 profile 执行层中，而不是停留在 `sekai/profile.go` 的 handler 内。
+
+### 11.7 本轮修正的实施顺序
+
+后续代码修正应按下面顺序进行：
+
+1. 先回退 handler 内部直接执行业务、直接返回字符串的实现
+2. 为 profile 绑定命令定义稳定的 `ResolvedCommand.Mode`
+3. 修改 `commandhandler.Execute(...)` 签名，增加“数据类型”返回值和常量定义
+4. 扩展 `executeProfile(...)`，承接绑定/解绑/默认绑定执行
+5. 调整 Bot API，使其只按 `Execute` 的数据类型响应
+6. 最后补测试
+
+### 11.8 验收标准
+
+账号绑定链路的最终正确状态应为：
+
+1. binding 相关 handler 与其他 handler 一样，只返回 `ResolvedCommand`
+2. Bot API 不再根据 handler 返回 `string` 做特殊分支
+3. `commandhandler.Execute(...)` 成为图片命令和文本命令的统一执行入口
+4. 数据类型由显式常量定义
+5. `refer/profile.py` 只保留语义参考价值，不污染 Cloud 当前的分层结构
+
+## 12. 相关文档
 
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)
 - [项目进展总结](project-status-summary.cn.md)

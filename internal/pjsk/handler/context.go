@@ -10,6 +10,7 @@ const (
 )
 
 type Event struct {
+	Platform    string
 	MessageType MessageType
 	Message     string
 	MessageId   string
@@ -22,6 +23,7 @@ type Context interface {
 	context.Context
 	GetTriggerCmd() string
 	GetArgs() string
+	GetPlatform() string
 	GetMessageType() MessageType
 	GetMessage() string
 	GetEvent() Event
@@ -33,6 +35,7 @@ type Context interface {
 
 type HandlerContext struct {
 	context.Context
+	Platform    string
 	TriggerCmd  string
 	ArgText     string
 	MessageType MessageType
@@ -49,6 +52,9 @@ func (h *HandlerContext) GetTriggerCmd() string {
 }
 func (h *HandlerContext) GetArgs() string {
 	return h.ArgText
+}
+func (h *HandlerContext) GetPlatform() string {
+	return h.Platform
 }
 func (h *HandlerContext) GetMessageType() MessageType {
 	return h.MessageType

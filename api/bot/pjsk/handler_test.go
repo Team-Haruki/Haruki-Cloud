@@ -19,6 +19,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
+	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 const testBotID = "11451419"
@@ -93,6 +94,13 @@ func newBotGETRequest(path, commandPayload, matchedCommand string) *http.Request
 		req.Header.Set(botHeaderMatchedCommand, matchedCommand)
 	}
 	return req
+}
+
+func assertSegmentsText(t *testing.T, got []zeromessage.Segment, want string) {
+	t.Helper()
+	if text := flattenOneBotSegments(got); text != want {
+		t.Fatalf("expected %q, got %q", want, text)
+	}
 }
 
 // ── Endpoint tests ──────────────────────────────────────────────────────────
@@ -372,9 +380,7 @@ func TestDecodeCommandOneBotRawMessage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
-	if result != "/卡面 1001" {
-		t.Fatalf("expected '/卡面 1001', got '%s'", result)
-	}
+	assertSegmentsText(t, result, "/卡面 1001")
 }
 
 func TestDecodeCommandOneBotMessageSegments(t *testing.T) {
@@ -385,9 +391,29 @@ func TestDecodeCommandOneBotMessageSegments(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
-	if result != "/查卡 初音" {
-		t.Fatalf("expected '/查卡 初音', got '%s'", result)
+	assertSegmentsText(t, result, "/查卡 初音")
+}
+
+func TestDecodeCommandOneBotMessageSegmentsWithAt(t *testing.T) {
+	payload := `{"message":[{"type":"text","data":{"text":"/sk "}},{"type":"at","data":{"qq":"12345"}},{"type":"text","data":{"text":" 20"}}]}`
+	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
+
+	result, err := decodeCommand(encoded)
+	if err != nil {
+		t.Fatalf("decode error: %v", err)
 	}
+	assertSegmentsText(t, result, "/sk @12345 20")
+}
+
+func TestDecodeCommandOneBotMessageSegmentsPreferredOverRawMessage(t *testing.T) {
+	payload := `{"raw_message":"/sk @测试用户","message":[{"type":"text","data":{"text":"/sk "}},{"type":"at","data":{"qq":"12345"}}]}`
+	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
+
+	result, err := decodeCommand(encoded)
+	if err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	assertSegmentsText(t, result, "/sk @12345")
 }
 
 func TestDecodeCommandPlainTextFallback(t *testing.T) {
@@ -395,7 +421,5 @@ func TestDecodeCommandPlainTextFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
-	if result != "/卡面 1001" {
-		t.Fatalf("expected '/卡面 1001', got '%s'", result)
-	}
+	assertSegmentsText(t, result, "/卡面 1001")
 }

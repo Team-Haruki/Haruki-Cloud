@@ -18,6 +18,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bind",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if isProfileBindingListCommand(ctx.GetTriggerCmd()) {
@@ -60,6 +61,7 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 			},
 			Path: "profile/unbind",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -79,6 +81,7 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 			},
 			Path: "profile/default",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -102,6 +105,7 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 			},
 			Path: "profile/default/clear",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -126,7 +130,7 @@ func (sekaiHandlers) ProfileSwapBindHandle() SekaiCommandHandler {
 			},
 			Disabled: true,
 		},
-		// TODO: parse_uid_arg=False 的行为目前未迁移
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(parts) != 2 {

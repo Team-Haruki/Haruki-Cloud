@@ -70,6 +70,39 @@ func TestExtractPreview(t *testing.T) {
 	}
 }
 
+func TestExtractUid(t *testing.T) {
+	e := NewExtractor(nil)
+
+	tests := []struct {
+		name      string
+		input     string
+		expected  string
+		remaining string
+		found     bool
+	}{
+		{"Index Selector", "u12 目标", "u12", "目标", true},
+		{"Index Selector Ignores mu Prefix", "mu12 目标", "", "mu12 目标", false},
+		{"Game UID", "12345678901234 查档", "12345678901234", "查档", true},
+		{"QQ Mention", "@123456789 查询", "@123456789", "查询", true},
+		{"Sequential Override", "u2 12345678901234 @123456789", "@123456789", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := e.ExtractUid(tt.input)
+			if res.Found != tt.found {
+				t.Fatalf("expected found=%v, got %v", tt.found, res.Found)
+			}
+			if res.Value != tt.expected {
+				t.Fatalf("expected value=%q, got %q", tt.expected, res.Value)
+			}
+			if res.Remaining != tt.remaining {
+				t.Fatalf("expected remaining=%q, got %q", tt.remaining, res.Remaining)
+			}
+		})
+	}
+}
+
 func TestGlobalResolver_Help(t *testing.T) {
 	resolver := NewGlobalCommandResolver(nil)
 

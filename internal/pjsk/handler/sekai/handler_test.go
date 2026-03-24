@@ -5,6 +5,8 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"log"
 	"testing"
+
+	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 func TestRegisterCommandHandler(t *testing.T) {
@@ -13,11 +15,67 @@ func TestRegisterCommandHandler(t *testing.T) {
 
 	handler.PrintTree()
 	v, e := handler.Dispatch(context.Background(), handler.Event{
-		Message: "/cn查谱面 虾",
+		Message: []zeromessage.Segment{
+			{Type: "text", Data: map[string]string{"text": "/cn查谱面 虾"}},
+		},
 	})
 	log.Println(v, e)
 	v, e = handler.Dispatch(context.Background(), handler.Event{
-		Message: "/card 1",
+		Message: []zeromessage.Segment{
+			{Type: "text", Data: map[string]string{"text": "/card 1"}},
+		},
 	})
 	log.Println(v, e)
+}
+
+func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
+	skh := SekaiCommandHandler{
+		ParseUIDArg: boolPtr(true),
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			if ctx.UIDArg() != "@987654321" {
+				t.Fatalf("uidArg = %q", ctx.UIDArg())
+			}
+			if ctx.GetArgs() != "剩余参数" {
+				t.Fatalf("args = %q", ctx.GetArgs())
+			}
+			return ctx, nil
+		},
+	}
+
+	baseCtx := &handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/sk",
+		ArgText:    "u2 12345678901234 @123456789 剩余参数",
+		AtIds:      []string{"987654321"},
+	}
+
+	if _, err := skh.Handle(baseCtx); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+}
+
+func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
+	skh := SekaiCommandHandler{
+		ParseUIDArg: boolPtr(false),
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			if ctx.UIDArg() != "" {
+				t.Fatalf("uidArg = %q", ctx.UIDArg())
+			}
+			if ctx.GetArgs() != "u2 12345678901234 @123456789 剩余参数" {
+				t.Fatalf("args = %q", ctx.GetArgs())
+			}
+			return ctx, nil
+		},
+	}
+
+	baseCtx := &handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/绑定",
+		ArgText:    "u2 12345678901234 @123456789 剩余参数",
+		AtIds:      []string{"987654321"},
+	}
+
+	if _, err := skh.Handle(baseCtx); err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
 }

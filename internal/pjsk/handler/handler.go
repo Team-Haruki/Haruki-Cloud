@@ -19,18 +19,11 @@ const DefaultPriority = 100
 
 func Dispatch(ctx context.Context, event Event) (interface{}, error) {
 
-	handlerContext := &HandlerContext{
-		Context:     ctx,
-		Platform:    event.Platform,
-		MessageType: event.MessageType,
-		Message:     event.Message,
-		Event:       event,
-		MessageId:   event.MessageId,
-		UserId:      event.UserId,
-		SenderName:  event.SenderName,
-		GroupId:     event.GroupId,
+	handlerContext, err := BuildContext(ctx, event, "")
+	if err != nil {
+		return nil, fmt.Errorf("构建命令上下文失败: %w", err)
 	}
-	matched := MatchCommandHandler(event.Message)
+	matched := MatchCommandHandler(handlerContext.GetArgs())
 	if matched.Handler == nil || matched.Handler.IsDisabled() {
 		return nil, nil
 	}

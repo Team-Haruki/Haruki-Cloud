@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-
 	"haruki-cloud/api"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
@@ -15,10 +13,12 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"strings"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
+	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 const botRouteBase = "/api/v2/bot"
@@ -97,14 +97,14 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler
 			return api.JSONResponse(c, fiber.StatusBadRequest, "X-Haruki-Bot-Matched-Command is required")
 		}
 
-		commandText, err := decodeCommand(req.CommandPayload)
+		message, err := decodeCommand(req.CommandPayload)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to decode command", BotCommandErrorResponse{
 				Error: err.Error(),
 			})
 		}
 
-		resolved, err := resolveBotCommand(commandText, expectedPath, req)
+		resolved, err := resolveBotCommand(message, expectedPath, req)
 		if err != nil {
 			var validationErr *botValidationError
 			if errors.As(err, &validationErr) {
@@ -168,7 +168,7 @@ func (e *botValidationError) Error() string {
 	return e.msg
 }
 
-func resolveBotCommand(commandText, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
 	matchedCommand := req.MatchedCommand
 	matched := commandhandler.MatchCommandHandler(matchedCommand)
 	if matched.Handler == nil || matched.Handler.IsDisabled() {
@@ -187,33 +187,30 @@ func resolveBotCommand(commandText, expectedPath string, req BotCommandRequest) 
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
-	args, ok := commandhandler.ExtractCommandArgs(commandText, matchedCommand)
-	if !ok {
-		return nil, &botValidationError{msg: "original command does not start with matched_command"}
-	}
-
 	messageType := commandhandler.MessageTypePrivate
 	if req.PlatformGroupID != "" {
 		messageType = commandhandler.MessageTypeGroup
 	}
 
-	ctx := &commandhandler.HandlerContext{
-		Context:     context.Background(),
+	event := commandhandler.Event{
 		Platform:    req.Platform,
-		TriggerCmd:  matchedCommand,
-		ArgText:     args,
 		MessageType: messageType,
-		Message:     commandText,
-		Event: commandhandler.Event{
-			Platform:    req.Platform,
-			MessageType: messageType,
-			Message:     commandText,
-			UserId:      req.PlatformUserID,
-			GroupId:     req.PlatformGroupID,
-		},
-		UserId:  req.PlatformUserID,
-		GroupId: req.PlatformGroupID,
+		Message:     message,
+		UserId:      req.PlatformUserID,
+		GroupId:     req.PlatformGroupID,
 	}
+
+	ctx, err := commandhandler.BuildContext(context.Background(), event, matchedCommand)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build handler context: %w", err)
+	}
+	args, ok := commandhandler.ExtractCommandArgs(ctx.ArgText, matchedCommand)
+	if !ok {
+		return nil, &botValidationError{msg: "original command does not start with matched_command"}
+	}
+
+	ctx.ArgText = args
+	ctx.MessageType = messageType
 	result, err := matched.Handler.Handle(ctx)
 	if err != nil {
 		return nil, err
@@ -230,23 +227,23 @@ func resolveBotCommand(commandText, expectedPath string, req BotCommandRequest) 
 // ---------------------------------------------------------------------------
 
 // decodeCommand decodes the command payload parameter.
-// Expected format: Base64-encoded OneBot JSON payload → extract raw text command.
-// Falls back to treating the input as a plain text command if decoding fails.
-func decodeCommand(raw string) (string, error) {
+// Expected format: Base64-encoded OneBot JSON payload → extract message segments.
+// Falls back to treating the input as a single plain text segment if decoding fails.
+func decodeCommand(raw string) ([]zeromessage.Segment, error) {
 	decoded, ok := tryBase64Decode(raw)
 	if !ok {
 		// Not valid Base64 — treat raw input as plain text
-		return raw, nil
+		return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": raw}}}, nil
 	}
 
 	// Try to extract command text from OneBot JSON
-	text, err := extractOneBotText(decoded)
+	text, err := extractOneBotMessage(decoded)
 	if err == nil {
 		return text, nil
 	}
 
 	// Base64 decoded successfully but not valid OneBot JSON — treat as plain text
-	return raw, nil
+	return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": raw}}}, nil
 }
 
 // tryBase64Decode attempts multiple Base64 variants (std/URL-safe, with/without padding).
@@ -264,55 +261,56 @@ func tryBase64Decode(s string) ([]byte, bool) {
 	return nil, false
 }
 
-// extractOneBotText parses a OneBot v11 JSON payload and returns the text command.
-// Tries raw_message (string) first, then message (array of segments), then message (string).
-func extractOneBotText(data []byte) (string, error) {
+// extractOneBotText parses a OneBot v11 JSON payload and returns a canonical
+// command string. It prefers message segment arrays so "at" segments can be
+// normalized into "@qq", then falls back to raw_message or message strings.
+func extractOneBotMessage(data []byte) ([]zeromessage.Segment, error) {
 	var payload map[string]json.RawMessage
 	if err := json.Unmarshal(data, &payload); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Prefer raw_message (OneBot v11 — plain text of the entire message)
-	if rawMsg, ok := payload["raw_message"]; ok {
-		var text string
-		if err := json.Unmarshal(rawMsg, &text); err == nil && text != "" {
-			return text, nil
-		}
-	}
-
-	// Try message as array of segments (OneBot v11 rich message)
+	// Prefer message segment arrays because they retain structured mention data.
 	if msgRaw, ok := payload["message"]; ok {
-		var segments []oneBotSegment
+		var segments []zeromessage.Segment
 		if err := json.Unmarshal(msgRaw, &segments); err == nil && len(segments) > 0 {
-			var sb strings.Builder
-			for _, seg := range segments {
-				if seg.Type == "text" {
-					sb.WriteString(seg.Data.Text)
-				}
-			}
-			if sb.Len() > 0 {
-				return sb.String(), nil
-			}
+			return segments, nil
 		}
 
 		// message as plain string (some OneBot implementations)
 		var msgStr string
 		if err := json.Unmarshal(msgRaw, &msgStr); err == nil && msgStr != "" {
-			return msgStr, nil
+			return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": msgStr}}}, nil
 		}
 	}
 
-	return "", fmt.Errorf("no command text found in OneBot payload")
+	// Fallback to raw_message when segment arrays are unavailable.
+	if rawMsg, ok := payload["raw_message"]; ok {
+		var text string
+		if err := json.Unmarshal(rawMsg, &text); err == nil && text != "" {
+			return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": text}}}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no command text found in OneBot payload")
 }
 
-// oneBotSegment represents a single message segment in OneBot v11 format.
-type oneBotSegment struct {
-	Type string            `json:"type"`
-	Data oneBotSegmentData `json:"data"`
-}
-
-type oneBotSegmentData struct {
-	Text string `json:"text"`
+func flattenOneBotSegments(segments []zeromessage.Segment) string {
+	var sb strings.Builder
+	for _, seg := range segments {
+		switch seg.Type {
+		case "text":
+			sb.WriteString(seg.Data["text"])
+		case "at":
+			qq := strings.TrimSpace(seg.Data["qq"])
+			if qq == "" {
+				continue
+			}
+			sb.WriteByte('@')
+			sb.WriteString(qq)
+		}
+	}
+	return sb.String()
 }
 
 // ---------------------------------------------------------------------------

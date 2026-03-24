@@ -25,9 +25,10 @@ type SekaiHandlerContext struct {
 
 type SekaiCommandHandler struct {
 	handler.CommandHandlerBase
-	Regions    []renderregion.Value
-	PrefixArgs []string
-	handleFunc func(SekaiHandlerContext) (interface{}, error)
+	Regions     []renderregion.Value
+	PrefixArgs  []string
+	ParseUIDArg *bool
+	handleFunc  func(SekaiHandlerContext) (interface{}, error)
 }
 
 func (s *SekaiHandlerContext) Region() renderregion.Value {
@@ -38,6 +39,9 @@ func (s *SekaiHandlerContext) HasExplicitRegion() bool {
 }
 func (s *SekaiHandlerContext) PrefixArg() string {
 	return s.prefixArg
+}
+func (s *SekaiHandlerContext) UIDArg() string {
+	return s.uidArg
 }
 func (s *SekaiHandlerContext) Flags() map[string]bool {
 	return s.flags
@@ -111,6 +115,17 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 	flags["is_help"] = helpRes.Value
 	args = helpRes.Remaining
 
+	if skh.shouldParseUIDArg() {
+		uidRes := ext.ExtractUid(args)
+		if uidRes.Found {
+			uidArg = uidRes.Value
+			args = uidRes.Remaining
+		}
+		if atIDs := ctx.GetAtIds(); len(atIDs) > 0 {
+			uidArg = "@" + atIDs[0]
+		}
+	}
+
 	skCtx := SekaiHandlerContext{
 		HandlerContext: handler.HandlerContext{
 			Context:     ctx,
@@ -133,6 +148,17 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 		flags:              flags,
 	}
 	return skh.handleFunc(skCtx)
+}
+
+func (skh *SekaiCommandHandler) shouldParseUIDArg() bool {
+	if skh.ParseUIDArg == nil {
+		return true
+	}
+	return *skh.ParseUIDArg
+}
+
+func boolPtr(v bool) *bool {
+	return &v
 }
 
 var DefaultRegions = AllRegions

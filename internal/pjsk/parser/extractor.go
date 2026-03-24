@@ -240,6 +240,91 @@ func (e *Extractor) ExtractVerbose(text string) ExtractResult[bool] {
 	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
 }
 
+var (
+	reUIDIndex = regexp.MustCompile(`(?i)u(\d{1,2})`)
+	reUID      = regexp.MustCompile(`\d{14,20}`)
+	reQQAt     = regexp.MustCompile(`@(\d{9,13})`)
+)
+
+// ExtractUid extracts account selector arguments from text.
+//
+// Supported forms:
+// - u[i]  -> u1, u2 ... (while avoiding matches like "mu1")
+// - uid   -> 14-20 digit game uid
+// - @qq   -> @123456789
+//
+// It mirrors the legacy parser order: first remove u[i], then uid, then @qq.
+// The last matched selector wins and Remaining contains the fully stripped text.
+func (e *Extractor) ExtractUid(text string) ExtractResult[string] {
+	remaining := strings.TrimSpace(text)
+	value := ""
+	found := false
+
+	if matched, next, ok := extractUIDIndexArg(remaining); ok {
+		value = matched
+		remaining = next
+		found = true
+	}
+	if matched, next, ok := extractFirstMatch(remaining, reUID, ""); ok {
+		value = matched
+		remaining = next
+		found = true
+	}
+	if matched, next, ok := extractFirstMatch(remaining, reQQAt, "@"); ok {
+		value = matched
+		remaining = next
+		found = true
+	}
+
+	return ExtractResult[string]{
+		Value:     value,
+		Remaining: strings.TrimSpace(remaining),
+		Found:     found,
+	}
+}
+
+func extractUIDIndexArg(text string) (string, string, bool) {
+	indices := reUIDIndex.FindAllStringSubmatchIndex(text, -1)
+	for _, idx := range indices {
+		if len(idx) < 4 {
+			continue
+		}
+		start, end := idx[0], idx[1]
+		if start > 0 {
+			prev := text[start-1]
+			if prev == 'm' || prev == 'M' {
+				continue
+			}
+		}
+		if end < len(text) && text[end] >= '0' && text[end] <= '9' {
+			continue
+		}
+
+		digitStart, digitEnd := idx[2], idx[3]
+		value := "u" + text[digitStart:digitEnd]
+		remaining := strings.TrimSpace(text[:start] + text[end:])
+		return value, remaining, true
+	}
+	return "", text, false
+}
+
+func extractFirstMatch(text string, re *regexp.Regexp, prefix string) (string, string, bool) {
+	idx := re.FindStringSubmatchIndex(text)
+	if len(idx) == 0 {
+		return "", text, false
+	}
+
+	start, end := idx[0], idx[1]
+	valueStart, valueEnd := start, end
+	if len(idx) >= 4 {
+		valueStart, valueEnd = idx[2], idx[3]
+	}
+
+	value := prefix + text[valueStart:valueEnd]
+	remaining := strings.TrimSpace(text[:start] + text[end:])
+	return value, remaining, true
+}
+
 func (e *Extractor) ExtractYear(text string) ExtractResult[int] {
 	return e.extractYearInternal(text)
 }

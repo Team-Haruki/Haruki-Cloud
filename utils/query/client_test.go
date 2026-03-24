@@ -11,6 +11,8 @@ import (
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
 	pjskDB "haruki-cloud/database/pjsk"
 	usersDB "haruki-cloud/database/users"
+	pjskschema "haruki-cloud/ent/pjsk/schema"
+	sekai "haruki-cloud/utils/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -192,20 +194,12 @@ func TestClient_PJSKQueries(t *testing.T) {
 		t.Fatalf("unexpected default binding: %+v", defaultBinding)
 	}
 
-	preferences, err := qc.GetPJSKPreferences(ctx, 500)
+	settings, err := qc.GetPJSKSettings(ctx, 500)
 	if err != nil {
-		t.Fatalf("GetPJSKPreferences: %v", err)
+		t.Fatalf("GetPJSKSettings: %v", err)
 	}
-	if len(preferences.Options) != 2 {
-		t.Fatalf("expected 2 preferences, got %+v", preferences)
-	}
-
-	preference, err := qc.GetPJSKPreference(ctx, 500, "theme")
-	if err != nil {
-		t.Fatalf("GetPJSKPreference: %v", err)
-	}
-	if preference.Option == nil || preference.Option.Value != "light" {
-		t.Fatalf("unexpected preference response: %+v", preference)
+	if len(settings.PJSKEnabledDifficulties) != 2 {
+		t.Fatalf("expected 2 enabled difficulties, got %+v", settings)
 	}
 }
 
@@ -374,20 +368,10 @@ func TestClient_PJSKQueryErrors(t *testing.T) {
 		t.Fatalf("expected ErrBindingNotFound, got %v", err)
 	}
 
-	if _, err := qc.GetPJSKPreferences(ctx, 0); !errors.Is(err, ErrInvalidUserID) {
+	if _, err := qc.GetPJSKSettings(ctx, 0); !errors.Is(err, ErrInvalidUserID) {
 		t.Fatalf("expected ErrInvalidUserID, got %v", err)
 	}
-	if _, err := qc.GetPJSKPreferences(ctx, 9999); !errors.Is(err, ErrPreferenceNotFound) {
-		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
-	}
-
-	if _, err := qc.GetPJSKPreference(ctx, 0, "theme"); !errors.Is(err, ErrInvalidUserID) {
-		t.Fatalf("expected ErrInvalidUserID, got %v", err)
-	}
-	if _, err := qc.GetPJSKPreference(ctx, 500, ""); !errors.Is(err, ErrPreferenceNotFound) {
-		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
-	}
-	if _, err := qc.GetPJSKPreference(ctx, 500, "not-exists"); !errors.Is(err, ErrPreferenceNotFound) {
+	if _, err := qc.GetPJSKSettings(ctx, 9999); !errors.Is(err, ErrPreferenceNotFound) {
 		t.Fatalf("expected ErrPreferenceNotFound, got %v", err)
 	}
 }
@@ -530,8 +514,15 @@ func seedQueryData(t *testing.T, raw *queryTestClients) {
 		SetBinding(bindingJP).
 		SaveX(ctx)
 
-	raw.pjsk.UserPreference.Create().SetHarukiUserID(500).SetOption("theme").SetValue("light").SaveX(ctx)
-	raw.pjsk.UserPreference.Create().SetHarukiUserID(500).SetOption("difficulty").SetValue("expert").SaveX(ctx)
+	raw.pjsk.UserPreference.Create().
+		SetHarukiUserID(500).
+		SetSettings(&pjskschema.UserSettings{
+			PJSKEnabledDifficulties: []sekai.MusicDifficultyType{
+				sekai.MusicDifficultyExpert,
+				sekai.MusicDifficultyMaster,
+			},
+		}).
+		SaveX(ctx)
 
 	raw.users.User.Create().
 		SetID(500).

@@ -15,6 +15,7 @@ import (
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	sekai "haruki-cloud/utils/sekai"
 )
 
 var wordTagPattern = regexp.MustCompile(`<#.*?>`)
@@ -96,7 +97,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		Word:                 cleanWord(raw.UserProfile.Word),
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
 		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
-		Honors:               c.buildHonors(source, raw),
+		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors, raw.UserEventResults),
 		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
@@ -120,6 +121,107 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 		return nil, err
 	}
 	return c.drawing.GenerateProfile(payload)
+}
+
+// BuildProfileRequestFromAPI builds a ProfileRequest from a live GetUserProfile API response.
+// framesJSON is the optional raw bytes from a ?key=userPlayerFrames toolbox key-query; pass nil
+// to render without a player frame.
+// query.Visible maps directly to !IsHideUID (false = hide UID, true = show UID).
+// UpdateTime is always nil so that the image cache system produces a stable cache key for
+// identical renders.
+// UserEventResults are intentionally ignored — honor badges show the honor level instead of
+// an event rank; this field may be wired in later once the honor builder design is confirmed.
+func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileRequest, error) {
+	if c == nil || c.sources == nil {
+		return nil, fmt.Errorf("profile controller is not initialized")
+	}
+	if resp == nil {
+		return nil, fmt.Errorf("nil API response")
+	}
+
+	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, fmt.Errorf("profile data source is not configured")
+	}
+
+	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
+	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard))
+
+	frames := parseFramesJSON(framesJSON)
+	framePaths, hasFrame := c.buildFramePaths(source, frames)
+	var framePath *string
+	if framePaths != nil {
+		path := framePaths.Base
+		framePath = &path
+	}
+
+	adaptedCards := adaptAPICards(resp.UserCards)
+	adaptedDecks := adaptAPIDeckAsList(resp.UserDeck)
+
+	return &drawing.ProfileRequest{
+		Profile: drawing.BasicProfile{
+			ID:              strconv.FormatInt(resp.User.UserID, 10),
+			Region:          strings.ToUpper(region.String()),
+			Nickname:        resp.User.Name,
+			IsHideUID:       !query.Visible,
+			LeaderImagePath: leaderImagePath,
+			HasFrame:        hasFrame,
+			FramePath:       framePath,
+		},
+		Rank:                 resp.User.Rank,
+		TwitterID:            resp.UserProfile.TwitterID,
+		Word:                 cleanWord(resp.UserProfile.Word),
+		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID),
+		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
+		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors), nil),
+		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
+		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
+		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
+		UpdateTime:           nil,
+		LvRankBgPath:         "user/lv_rank_bg.png",
+		XIconPath:            "user/icon_twitter.png",
+		IconClearPath:        "icon_clear.png",
+		IconFcPath:           "icon_fc.png",
+		IconApPath:           "icon_ap.png",
+		CharaRankIconPathMap: buildCharaIconMap(),
+		FramePaths:           framePaths,
+	}, nil
+}
+
+// RenderProfileFromAPI is a convenience wrapper that calls BuildProfileRequestFromAPI and
+// then sends the result to the drawing service.
+func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildProfileRequestFromAPI(query, resp, framesJSON)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateProfile(payload)
+}
+
+// buildLeaderImagePathFromSource resolves the leader card thumbnail path using the Source's
+// master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
+// requiring a direct ent client reference.
+func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, cardID int, afterTraining bool) string {
+	const fallback = "user/leader.png"
+	if cardID == 0 || source == nil {
+		return fallback
+	}
+	card, err := source.GetCardByID(cardID)
+	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
+		return fallback
+	}
+	imageType := "normal"
+	if afterTraining {
+		imageType = "after_training"
+	}
+	return assets.ResolveAssetPath(helper, "",
+		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
+		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
+	)
 }
 
 func (c *Controller) buildFramePaths(source Source, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
@@ -182,14 +284,10 @@ func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard
 	return result
 }
 
-func (c *Controller) buildHonors(source Source, raw *userdata.RawUserData) []drawing.HonorRequest {
-	if raw == nil {
-		return nil
-	}
-
+func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor, eventResults []userdata.RawUserEventResult) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
-	selected := make([]userdata.RawUserProfileHonor, 0, len(raw.UserProfileHonors))
-	for _, item := range raw.UserProfileHonors {
+	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
+	for _, item := range profileHonors {
 		if item.HonorID > 0 || item.HonorId2 > 0 {
 			selected = append(selected, item)
 		}
@@ -207,7 +305,7 @@ func (c *Controller) buildHonors(source Source, raw *userdata.RawUserData) []dra
 			HonorID:          honorID,
 			HonorLevel:       item.HonorLevel,
 			IsMain:           item.Seq == 1,
-			Rank:             c.findEventRank(raw.UserEventResults, source.GetEventIDByHonorID(honorID)),
+			Rank:             c.findEventRank(eventResults, source.GetEventIDByHonorID(honorID)),
 			BondsHonorWordID: item.BondsHonorWordId,
 		})
 		if err == nil && req != nil {
@@ -218,7 +316,7 @@ func (c *Controller) buildHonors(source Source, raw *userdata.RawUserData) []dra
 		return requests
 	}
 
-	for _, item := range raw.UserHonors {
+	for _, item := range userHonors {
 		if len(requests) >= 3 {
 			break
 		}
@@ -227,7 +325,7 @@ func (c *Controller) buildHonors(source Source, raw *userdata.RawUserData) []dra
 			HonorID:    item.HonorID,
 			HonorLevel: item.HonorLevel,
 			IsMain:     len(requests) == 0,
-			Rank:       c.findEventRank(raw.UserEventResults, source.GetEventIDByHonorID(item.HonorID)),
+			Rank:       c.findEventRank(eventResults, source.GetEventIDByHonorID(item.HonorID)),
 		})
 		if err == nil && req != nil {
 			requests = append(requests, *req)

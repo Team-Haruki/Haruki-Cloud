@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-24
+> 最后更新：2026-03-24（v11.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -130,6 +130,36 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 更详细的实现说明、代码落点、测试覆盖和注意事项，请直接参考：
 
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)
+
+## 5.2 Profile 渲染数据源迁移状态（v11.0 新增）
+
+### 已完成
+
+- `internal/pjsk/render/profile/controller.go` 新增 `BuildProfileRequestFromAPI` 和 `RenderProfileFromAPI` 方法
+- `internal/pjsk/render/profile/live_adapter.go` 提供 `GetAnotherProfileResponse → Raw*` 适配层
+- profile render 链路可通过 `RenderProfileFromAPI(query, resp, framesJSON)` 直接使用 Sekai API 实时数据，不再依赖本地快照
+- 玩家框架（player frame）支持通过工具箱 `?key=userPlayerFrames` 单独查询，`framesJSON=nil` 时优雅降级不渲染框
+
+### 数据来源对应关系
+
+| 字段 | 来源 | 说明 |
+|------|------|------|
+| 用户基础信息 / Rank | `GetUserProfile()` | ✅ |
+| 卡牌 / Deck | `GetUserProfile()` | ✅ |
+| Honor / ProfileHonor | `GetUserProfile()` | ✅ |
+| ChallengeLive 最高分 | `GetUserProfile()` | ✅，singular = 最高角色结果 |
+| MusicDifficultyCount | `GetUserProfile().UserMusicDifficultyClearCount` | ✅ |
+| 角色羁绊等级 | `GetUserProfile()` | ✅ |
+| 玩家框架 | 工具箱 key 查询 `?key=userPlayerFrames` | ⚠️ 可选，nil = 不渲染框 |
+| **活动排名（honor badge 上的名次）** | **未接入** | ⚠️ 见下方存疑项 |
+
+### 存疑 / 待确认
+
+1. **活动排名显示（UserEventResults）**：honor builder 中 `query.Rank > 0` 会将 honor badge 上的 FcOrApLevel 替换为活动排名数字。当前 `BuildProfileRequestFromAPI` 显式传入 `nil` 忽略此字段，honor badge 正常显示 honor 等级。**协作者对 honor builder 这部分的设计意图尚未确认**，待对齐后再决定是否补充来源（如从工具箱 key 查询补充 `userEventResults`）。
+
+2. ~~**IsHideUID**~~：已解决。读取 `query.Visible`（binding 的 `Visible` 字段），`IsHideUID = !binding.Visible`。
+
+3. **UpdateTime**：`BuildProfileRequestFromAPI` 固定传入 `nil`，确保 image cache system 在相同渲染内容下得到稳定的 cache key。
 
 ## 6. 当前保留项
 

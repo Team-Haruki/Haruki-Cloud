@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
+	pjskschema "haruki-cloud/ent/pjsk/schema"
 	"haruki-cloud/utils"
 	"haruki-cloud/utils/types"
 )
@@ -235,63 +236,28 @@ func (c *Client) GetPJSKDefaultBinding(ctx context.Context, harukiUserID int, se
 	}, nil
 }
 
-func (c *Client) GetPJSKPreferences(ctx context.Context, harukiUserID int) (*types.PJSKPreferenceResponse, error) {
+// GetPJSKSettings returns the UserSettings JSONB for the given haruki user.
+// Returns ErrPreferenceNotFound when no settings row exists yet.
+func (c *Client) GetPJSKSettings(ctx context.Context, harukiUserID int) (*pjskschema.UserSettings, error) {
 	if err := c.requirePJSK(); err != nil {
 		return nil, err
 	}
 	if harukiUserID <= 0 {
 		return nil, ErrInvalidUserID
-	}
-
-	rows, err := c.pjsk.UserPreference.
-		Query().
-		Where(userpreference.HarukiUserIDEQ(harukiUserID)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, ErrPreferenceNotFound
-	}
-
-	options := make([]types.PJSKPreference, 0, len(rows))
-	for _, row := range rows {
-		options = append(options, types.PJSKPreference{
-			Option: row.Option,
-			Value:  row.Value,
-		})
-	}
-	return &types.PJSKPreferenceResponse{Options: options}, nil
-}
-
-func (c *Client) GetPJSKPreference(ctx context.Context, harukiUserID int, option string) (*types.PJSKPreferenceResponse, error) {
-	if err := c.requirePJSK(); err != nil {
-		return nil, err
-	}
-	if harukiUserID <= 0 {
-		return nil, ErrInvalidUserID
-	}
-	if option == "" {
-		return nil, ErrPreferenceNotFound
 	}
 
 	row, err := c.pjsk.UserPreference.
 		Query().
-		Where(
-			userpreference.HarukiUserIDEQ(harukiUserID),
-			userpreference.OptionEQ(option),
-		).
-		First(ctx)
+		Where(userpreference.HarukiUserIDEQ(harukiUserID)).
+		Only(ctx)
 	if err != nil {
 		if entpjsk.IsNotFound(err) {
 			return nil, ErrPreferenceNotFound
 		}
 		return nil, err
 	}
-
-	respOption := &types.PJSKPreference{
-		Option: row.Option,
-		Value:  row.Value,
+	if row.Settings == nil {
+		return &pjskschema.UserSettings{}, nil
 	}
-	return &types.PJSKPreferenceResponse{Option: respOption}, nil
+	return row.Settings, nil
 }

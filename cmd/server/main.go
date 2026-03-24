@@ -211,6 +211,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		identity.NewResolver(usersClient),
 		sekaiAPI.GetSekaiAPIClient(),
 	)
+	renderRuntime.BanChecker = userdata.NewBanService(usersClient)
 	mainLogger.Infof("Sekai runtime services configured")
 }
 
@@ -261,6 +262,8 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,
 			TTL:        harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
 		},
+		ImageCacheURI:   harukiConfig.Cfg.PJSKRender.ImageCache.URI,
+		ImageCacheDir:   harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
 		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{

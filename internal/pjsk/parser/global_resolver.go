@@ -32,14 +32,16 @@ const (
 
 // ResolvedCommand stores normalized command parsing result.
 type ResolvedCommand struct {
-	Module    TargetModule
-	Mode      string
-	Query     string
-	Region    string
-	Params    json.RawMessage
-	IsHelp    bool
-	IsVerbose bool
-	IsPreview bool
+	Module            TargetModule
+	Mode              string
+	Query             string
+	Region            string
+	Params            json.RawMessage
+	IsHelp            bool
+	IsVerbose         bool
+	IsPreview         bool
+	RequesterPlatform string
+	RequesterUserID   string
 }
 
 // GlobalCommandResolver provides unified command parsing.

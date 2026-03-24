@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-24（v12.0）
+> 最后更新：2026-03-24（v14.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -204,9 +204,127 @@ UID xxxxxx 的注册时间
 ### 待完成 / 遗留
 
 - **别名系统（alias-feature）**：`/注册时间` 等指令的别名支持，待后续设计
-- **ProfileCheckDataHandle（抓包状态查询）**：`/pjsk抓包状态`（指令 `/sud` 查套件更新时间、`/msd` 查 MySekai 更新时间），需接入工具箱 `GetUploadTime()`，仍为 `Disabled: true` 存根
 
-## 6. 当前保留项
+## 5.4 Image Cache System & 颗粒度 Ban（v13.0 新增）
+
+### Image Cache System
+
+**背景**：此前 bot API 对图片渲染结果直接以 `image/png` raw bytes 返回，不符合设计——bot 框架（如 go-cqhttp / nonebot）应收到 OneBot11 `MessageSegment`，而非裸字节流。
+
+**实现方案**：
+
+| 层级 | 说明 |
+|------|------|
+| `utils/imagecache.Client` | 新建包；`StoreAndGetURL(data, group)` 将 PNG 以 SHA-256 内容寻址写入磁盘并返回 CDN URL |
+| `renderapp.Config.ImageCacheURI/Dir` | 新增两个字段，对应 `pjsk_render.image_cache.uri/dir` |
+| `renderapp.App.ImageCache` | 工厂 `New()` 中直接初始化，nil 时降级到 raw bytes |
+| `CommandResultDataTypeImageURL` | `result.go` 新增类型；bridge 图片执行器调用 `imageCacheOrBytes()` 决定返回类型 |
+| bot handler | 新增 `case CommandResultDataTypeImageURL` → 返回 JSON OneBot11 image segment `{"type":"image","data":{"file":"<url>"}}` |
+
+**配置示例**：
+```yaml
+pjsk_render:
+  image_cache:
+    uri: "https://image-cache.example.haruki.local"
+    dir: "/var/haruki/image-cache"
+```
+
+**降级行为**：`image_cache.uri` 或 `dir` 未配置时，`imagecache.New()` 返回 nil；bridge 自动回退为 `CommandResultDataTypeImagePNG`（raw bytes），保持兼容。
+
+---
+
+### 颗粒度 Ban Check
+
+**背景**：users 表中已定义 `ban_state`、`pjsk_ban_state`、`pjsk_main_ban_state` 等多级 ban 字段，此前未接入任何命令处理链路。
+
+**Ban 层级（检查顺序，首个命中即返回）**：
+
+```
+ban_state              → 全平台禁用
+└── pjsk_ban_state     → 全 PJSK 模块禁用
+    ├── pjsk_main_ban_state     → Card/Gacha/Event/Music/Deck/Education/Profile/Arrest/RegTime/CheckData/Stamp/Misc
+    ├── pjsk_ranking_ban_state  → SK
+    ├── pjsk_alias_ban_state    → Alias（待实现）
+    └── pjsk_mysekai_ban_state  → MySekai
+```
+
+**实现方案**：
+
+| 组件 | 变更 |
+|------|------|
+| `parser.ResolvedCommand` | 新增 `RequesterPlatform` / `RequesterUserID` 字段 |
+| `sekai/helpers.go makeResolvedCmd` | 从 `ctx.Platform` / `ctx.UserId` 填充两字段 |
+| `userdata.BanService` | 新建 `ban_service.go`；`CheckBan(ctx, platform, userID, module)` 按层级查 users 表；user 不存在则放行（fail open）|
+| `renderapp.App.BanChecker` | `configureSekaiRuntime()` 中初始化（需 usersClient） |
+| `bridge.Execute()` | 开头检查 ban：返回文本错误而非执行命令 |
+
+> **注意**：ban 检查只针对**发起者**（requester），不影响被查询的目标 UID。
+
+---
+
+## 6. 全功能链路状态（v14.0 全量审计）
+
+### 6.1 已全链路接通（E2E Ready）✅
+
+以下功能从 bot 客户端入站 → handler → bridge → executor → 出站响应全部打通：
+
+| 模块 | 功能 | 路径 |
+|------|------|------|
+| **Profile** | 绑定 / 解绑 / 设主账号 / 清除默认绑定 / 查看个人信息 | profile/bind · unbind · default · default/clear · profile |
+| **Arrest** | 逮捕（self/at\_user/uid 三模式，含 Visible 检查） | arrest |
+| **RegTime** | 注册时间查询（JP/EN + TW/KR/CN 双算法） | profile/reg-time |
+| **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
+| **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） | card/detail · list · box |
+| **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 | music · list · progress · rewards · chart |
+| **Gacha** | 卡池列表 | gacha |
+| **Deck** | 活动/挑战/长草/加成/烤森 组卡推荐 | deck/event · challenge · no-event · bonus · mysekai |
+| **Event** | 活动列表 / 活动详情 / 活动记录 | event/list · event · event-record |
+| **Education** | 挑战信息 / 加成信息 / 区域道具 / 羁绊 / 队长统计 | education/challenge · power · area · bonds · leader |
+| **Score** | 分数计算 / 自定义房间 / 歌曲 meta / 歌曲排行 | score · custom-room · music-meta · music-board |
+| **SK** | 档线 / 查询 / 时速 / 查房 / 玩家轨迹 / 档线轨迹 / 胜率预测 / 日速 / SK 预测 / 水表 | sk/line · query · speed · check-room · player-trace · rank-trace · winrate · (日速/预测/水表→复用) |
+| **MySekai** | 资源 / 对话列表 / 家具列表 / 家具详情 / 大门升级 / 唱片 / 蓝图 | mysekai/resource · talk-list · fixture-list · fixture-detail · door-upgrade · music-record |
+| **Stamp** | 贴纸列表 | stamp |
+| **Misc** | 角色生日 | misc/birthday |
+
+> **统计**：约 75 个 handler · 15 个 module · 全部有 bridge case
+
+---
+
+### 6.2 已定义但未实现（Disabled / TODO）❌
+
+以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
+
+**Profile 系统（23 个）**：交换绑定、隐藏/展示 UID、隐藏/展示抓包数据、黑名单管理、认证、背景图管理、用户统计、绑定历史、访客账号
+
+**Music 系统（7 个）**：别名查询/添加/删除/同步、BPM 查询、曲绘查询、物量统计
+
+**Stamp 系统（7 个）**：贴纸制作、随机贴纸、批量刷新、底图管理
+
+**Card 系统（3 个）**：角色别名查询、卡面原图、卡牌剧情（仅 JP）
+
+**Event 系统（2 个）**：活动剧情（仅 JP）、自动送火（仅 JP）
+
+**Gacha 系统（1 个）**：抽卡记录
+
+**MySekai 系统（3 个）**：照片下载、抓包数据检查、MSR 换绑
+
+**Entertainment 系统（全部 8 个）**：猜曲绘 / 猜谱面 / 猜卡面 / 听歌识曲、模拟抽卡、活动限制管理（全部仅 JP）
+
+**Virtual Live（1 个）**：vlive 查询
+
+> **统计**：约 55 个 handler，均无 module 分配或无 executor 实现
+
+---
+
+### 6.3 特殊 handler（绕过 bridge）
+
+| Handler | 行为 |
+|---------|------|
+| `HeyiweiHandle`（/b30, /b39） | 返回硬编码字符串"何意味"，Easter Egg，不走 bridge |
+
+---
+
+## 7. 当前保留项
 
 下面这些内容目前明确保留：
 
@@ -216,7 +334,7 @@ UID xxxxxx 的注册时间
 4. `internal/pjsk/parser` 中的通用提取与类型化解析能力
 5. render runtime 与内部 build/render 路由
 
-## 7. 当前不再作为主链路的内容
+## 8. 当前不再作为主链路的内容
 
 下面这些内容不再应被文档描述为客户端主链路：
 
@@ -225,7 +343,7 @@ UID xxxxxx 的注册时间
 3. 客户端直接调用 `/internal/pjsk/render`
 4. 客户端直接调用 `/internal/pjsk/command`
 
-## 8. 仍然存在的技术债
+## 9. 仍然存在的技术债
 
 当前主要技术债包括：
 
@@ -234,8 +352,9 @@ UID xxxxxx 的注册时间
 3. MySekai 仍有本地 masterdata fallback
 4. Deck 当前仍是 Go 方案，旧 CGo 引擎未恢复为默认链路
 5. 已存在的 `command_manifests` 若被人工特殊维护，仍需确认新的 handler-source 同步结果是否符合预期
+6. `context.Background()` 在 bot handler 中硬编码（M-1），应传 `c.Context()`
 
-## 9. 相关文档
+## 10. 相关文档
 
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)

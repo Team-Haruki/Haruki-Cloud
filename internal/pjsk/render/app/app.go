@@ -25,6 +25,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/imagecache"
 	sekaiutil "haruki-cloud/utils/sekai"
 )
 
@@ -34,6 +35,8 @@ type Config struct {
 	DrawingTimeout    time.Duration
 	DrawingRetryCount int
 	DrawingCache      drawing.RenderCacheConfig
+	ImageCacheURI     string
+	ImageCacheDir     string
 	AssetPrimaryDir   string
 	AssetLegacyDirs   []string
 	LocalMasterdata   LocalMasterdataConfig
@@ -81,6 +84,8 @@ type App struct {
 	SK         *sk.Controller
 	Stamps     *stamp.Controller
 	Bindings   *accountdata.BindingService
+	BanChecker *accountdata.BanService
+	ImageCache *imagecache.Client
 	Config     Config
 }
 
@@ -163,6 +168,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Score:      scoreController,
 		SK:         skController,
 		Stamps:     stampController,
+		ImageCache: imagecache.New(cfg.ImageCacheURI, cfg.ImageCacheDir),
 		Config:     cfg,
 	}
 }

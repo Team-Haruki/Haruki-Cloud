@@ -39,6 +39,15 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		return nil, "", fmt.Errorf("bridge: nil render app")
 	}
 
+	// Check requester ban before dispatching.
+	if platform := strings.TrimSpace(resolved.RequesterPlatform); platform != "" {
+		if userID := strings.TrimSpace(resolved.RequesterUserID); userID != "" {
+			if err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module); err != nil {
+				return []byte(err.Error()), CommandResultDataTypeText, nil
+			}
+		}
+	}
+
 	var (
 		data []byte
 		err  error
@@ -61,7 +70,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	case parser.ModuleScore:
 		data, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
-		return executeProfile(ctx, resolved, app)
+		return executeProfileWithCache(ctx, resolved, app)
 	case parser.ModuleArrest:
 		return executeArrest(ctx, resolved, app)
 	case parser.ModuleRegTime:
@@ -80,7 +89,29 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	if err != nil {
 		return nil, "", err
 	}
-	return data, CommandResultDataTypeImagePNG, nil
+	return imageCacheOrBytes(data, app, "pjsk")
+}
+
+// imageCacheOrBytes stores img to the image cache if configured and returns a
+// URL result; falls back to raw PNG bytes if image cache is not configured or
+// storage fails.
+func imageCacheOrBytes(img []byte, app *renderapp.App, group string) ([]byte, CommandResultDataType, error) {
+	if app.ImageCache != nil {
+		if url, err := app.ImageCache.StoreAndGetURL(img, group); err == nil {
+			return []byte(url), CommandResultDataTypeImageURL, nil
+		}
+	}
+	return img, CommandResultDataTypeImagePNG, nil
+}
+
+// executeProfileWithCache wraps executeProfile so image results go through the
+// image cache layer.
+func executeProfileWithCache(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+	data, dataType, err := executeProfile(ctx, r, app)
+	if err != nil || dataType != CommandResultDataTypeImagePNG {
+		return data, dataType, err
+	}
+	return imageCacheOrBytes(data, app, "pjsk")
 }
 
 func executeCard(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {

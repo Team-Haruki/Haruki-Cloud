@@ -82,6 +82,11 @@ type RenderCacheConfig struct {
 	TTL        time.Duration `yaml:"ttl"`
 }
 
+type ImageCacheConfig struct {
+	URI string `yaml:"uri"`
+	Dir string `yaml:"dir"`
+}
+
 type MusicMetaConfig struct {
 	RefreshInterval time.Duration `yaml:"refresh_interval"` // default: 30m
 }
@@ -92,6 +97,7 @@ type PJSKRenderConfig struct {
 	DrawingTimeout    time.Duration         `yaml:"drawing_timeout"`
 	DrawingRetryCount int                   `yaml:"drawing_retry_count"`
 	DrawingCache      RenderCacheConfig     `yaml:"drawing_cache"`
+	ImageCache        ImageCacheConfig      `yaml:"image_cache"`
 	AssetDirs         AssetDirsConfig       `yaml:"asset_dirs"`
 	LocalMasterdata   LocalMasterdataConfig `yaml:"local_masterdata"`
 	UserSnapshot      UserSnapshotConfig    `yaml:"user_snapshot"`

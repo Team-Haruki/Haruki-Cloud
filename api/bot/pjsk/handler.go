@@ -19,6 +19,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
+
+	"haruki-cloud/api/bot/onebot11"
 )
 
 const botRouteBase = "/api/v2/bot"
@@ -138,8 +140,10 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler
 		case commandhandler.CommandResultDataTypeImagePNG:
 			c.Set("Content-Type", string(dataType))
 			return c.Send(responseData)
+		case commandhandler.CommandResultDataTypeImageURL:
+			return api.JSONResponse(c, fiber.StatusOK, "ok", onebot11.Image(string(responseData)))
 		case commandhandler.CommandResultDataTypeText:
-			return api.JSONResponse(c, fiber.StatusOK, string(responseData))
+			return api.JSONResponse(c, fiber.StatusOK, "ok", onebot11.Text(string(responseData)))
 		default:
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "unsupported command result", BotCommandErrorResponse{
 				Error: fmt.Sprintf("execute returned unsupported data type %q", dataType),

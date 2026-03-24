@@ -10,7 +10,8 @@ import (
 	"haruki-cloud/api"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
-	pjskHandler "haruki-cloud/internal/pjsk/handler"
+	commandhandler "haruki-cloud/internal/pjsk/handler"
+	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 
@@ -23,7 +24,7 @@ const botRouteBase = "/api/v2/bot"
 
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
-//	/api/v2/bot/:botId/pjsk/<module>/<mode>
+//	/api/v2/bot/:botId/pjsk/<path>
 //
 // and the command manifest endpoint at
 //
@@ -33,13 +34,16 @@ const botRouteBase = "/api/v2/bot"
 // authenticate requests via X-Haruki-Bot-Id and X-Haruki-Bot-Session-Token headers.
 // Pass nil for redisClient in unit tests (auth is skipped).
 //
-// When botDBClient is non-nil, the manifest table is seeded from botModeTable on
-// first run and the manifest endpoint returns live data from the database.
+// When botDBClient is non-nil, the manifest table is synchronized from the
+// registered handler routes on startup and the manifest endpoint returns live
+// data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
-func RegisterPJSKBotRoutes(app *fiber.App, resolver *parser.GlobalCommandResolver, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client) {
-	if resolver == nil || renderApp == nil {
+func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client) {
+	if renderApp == nil {
 		return
 	}
+
+	sekaihandler.EnsureCommandHandlersRegistered(nil)
 
 	if botDBClient != nil {
 		if err := SeedCommandManifests(context.Background(), botDBClient); err != nil {
@@ -53,23 +57,18 @@ func RegisterPJSKBotRoutes(app *fiber.App, resolver *parser.GlobalCommandResolve
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 
 	pjsk := bot.Group("/pjsk")
-	for _, entry := range botModeTable {
-		h := makeBotHandler(resolver, renderApp, entry.module, entry.mode)
-		path := "/" + entry.path
+	for _, route := range commandhandler.ListBotRoutes() {
+		h := makeBotHandler(renderApp, route.Path)
+		path := "/" + route.Path
 		pjsk.Get(path, h)
 		pjsk.Post(path, h)
 	}
 }
 
-// makeBotHandler returns a fiber.Handler that decodes the command from
-// a Base64-encoded OneBot JSON payload, validates the resolved module+mode
-// matches the endpoint, then executes via the bridge.
-func makeBotHandler(
-	resolver *parser.GlobalCommandResolver,
-	renderApp *renderapp.App,
-	expectedModule parser.TargetModule,
-	expectedMode string,
-) fiber.Handler {
+// makeBotHandler returns a fiber.Handler that validates matched_command belongs
+// to the current endpoint path, then lets the registered handler parse the
+// original text and produce a resolved render command.
+func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
@@ -77,6 +76,9 @@ func makeBotHandler(
 		}
 		if req.Command == "" {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "command is required")
+		}
+		if req.MatchedCommand == "" {
+			return api.JSONResponse(c, fiber.StatusBadRequest, "matched_command is required")
 		}
 
 		commandText, err := decodeCommand(req.Command)
@@ -86,23 +88,13 @@ func makeBotHandler(
 			})
 		}
 
-		resolved, err := resolver.Resolve(commandText)
+		resolved, err := resolveBotCommand(commandText, req.MatchedCommand, expectedPath)
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "unrecognized command", BotCommandErrorResponse{
-				Error: err.Error(),
-			})
-		}
-
-		if resolved.Module != expectedModule || resolved.Mode != expectedMode {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
 				BotCommandErrorResponse{
-					Error: fmt.Sprintf(
-						"got module=%s mode=%s, endpoint expects module=%s mode=%s",
-						moduleNameStr(resolved.Module), resolved.Mode,
-						moduleNameStr(expectedModule), expectedMode,
-					),
-					ExpectedModule: moduleNameStr(expectedModule),
-					ExpectedMode:   expectedMode,
+					Error:          err.Error(),
+					ExpectedPath:   expectedPath,
+					MatchedCommand: req.MatchedCommand,
 				})
 		}
 
@@ -110,7 +102,7 @@ func makeBotHandler(
 			resolved.Region = req.Server
 		}
 
-		pngBytes, err := pjskHandler.Execute(context.Background(), resolved, renderApp)
+		pngBytes, err := commandhandler.Execute(context.Background(), resolved, renderApp)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
 				Error: err.Error(),
@@ -127,10 +119,11 @@ func makeBotHandler(
 func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 	if c.Method() == fiber.MethodGet {
 		return BotCommandRequest{
-			IMPlatform: c.Query("im_platform"),
-			IMUserID:   c.Query("im_user_id"),
-			Command:    c.Query("command"),
-			Server:     c.Query("server"),
+			IMPlatform:     c.Query("im_platform"),
+			IMUserID:       c.Query("im_user_id"),
+			Command:        c.Query("command"),
+			MatchedCommand: c.Query("matched_command"),
+			Server:         c.Query("server"),
 		}, nil
 	}
 	var req BotCommandRequest
@@ -138,6 +131,53 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 		return BotCommandRequest{}, err
 	}
 	return req, nil
+}
+
+func resolveBotCommand(commandText, matchedCommand, expectedPath string) (*parser.ResolvedCommand, error) {
+	matched := commandhandler.MatchCommandHandler(matchedCommand)
+	if matched.Handler == nil || matched.Handler.IsDisabled() {
+		return nil, fmt.Errorf("matched_command is not registered: %s", matchedCommand)
+	}
+
+	if remaining, ok := commandhandler.ExtractCommandArgs(matchedCommand, matched.Command); !ok || remaining != "" {
+		return nil, fmt.Errorf("matched_command is not an exact registered command: %s", matchedCommand)
+	}
+
+	if matched.Handler.GetPath() == "" {
+		return nil, fmt.Errorf("matched_command is not exposed by the bot api: %s", matchedCommand)
+	}
+
+	if matched.Handler.GetPath() != expectedPath {
+		return nil, fmt.Errorf("matched_command belongs to path %s", matched.Handler.GetPath())
+	}
+
+	args, ok := commandhandler.ExtractCommandArgs(commandText, matchedCommand)
+	if !ok {
+		return nil, fmt.Errorf("original command does not start with matched_command")
+	}
+
+	ctx := &commandhandler.HandlerContext{
+		Context:     context.Background(),
+		TriggerCmd:  matchedCommand,
+		ArgText:     args,
+		MessageType: commandhandler.MessageTypePrivate,
+		Message:     commandText,
+		Event: commandhandler.Event{
+			MessageType: commandhandler.MessageTypePrivate,
+			Message:     commandText,
+		},
+	}
+
+	result, err := matched.Handler.Handle(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		return nil, fmt.Errorf("handler returned %T instead of *parser.ResolvedCommand", result)
+	}
+	return resolved, nil
 }
 
 // ---------------------------------------------------------------------------

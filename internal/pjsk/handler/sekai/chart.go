@@ -17,6 +17,7 @@ const MUSIC_SEARCH_HELP = `请输入要查询的曲目，支持以下查询方�
 func (sekaiHandlers) ChartHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/chart",
 			Commands: []string{
 				"/pjsk chart",
 				"/谱面查询", "/铺面查询", "/谱面预览", "/铺面预览", "/谱面", "/铺面", "/查谱面", "/查铺面", "/查谱",

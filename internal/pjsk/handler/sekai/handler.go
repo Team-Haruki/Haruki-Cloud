@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 )
 
 type SekaiHandlerContext struct {
@@ -127,9 +128,22 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 
 var DefaultRegions = AllRegions
 
+var registerOnce sync.Once
+
 type sekaiHandlers struct{}
 
+func EnsureCommandHandlersRegistered(nicknames map[string]int) {
+	if nicknames != nil {
+		SetNicknames(nicknames)
+	}
+	registerOnce.Do(registerSekaiCommandHandlers)
+}
+
 func RegisterSekaiCommandHandler() {
+	EnsureCommandHandlersRegistered(nil)
+}
+
+func registerSekaiCommandHandlers() {
 	handlersVal := reflect.ValueOf(sekaiHandlers{})
 	handlersTyp := handlersVal.Type()
 	configTyp := reflect.TypeOf(SekaiCommandHandler{})
@@ -172,7 +186,7 @@ func RegisterSekaiCommandHandler() {
 			if skHandler.Priority == 0 {
 				skHandler.Priority = handler.DefaultPriority
 			}
-			handler.RegisterCommandHandler(&skHandler)
+			handler.RegisterCommandHandler(handler.BotModulePJSK, &skHandler)
 		}
 	}
 }

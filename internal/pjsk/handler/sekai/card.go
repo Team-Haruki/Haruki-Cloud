@@ -13,6 +13,7 @@ import (
 func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "card/detail",
 			Commands: []string{
 				"/card-detail", "/卡面", "/详情", "/查卡",
 			},
@@ -34,6 +35,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "card/list",
 			Commands: []string{
 				"/查牌", "/查卡牌", "/卡牌列表", "/card", "/cards", "/pjsk card", "/pjsk member",
 			},
@@ -55,6 +57,7 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "card/box",
 			Commands: []string{
 				"/查箱", "/查框", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
 			},
@@ -181,6 +184,7 @@ func (sekaiHandlers) CardStoryHandle() SekaiCommandHandler {
 func (sekaiHandlers) BoxHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "card/box",
 			Commands: []string{
 				"/pjsk box",
 				"/卡牌一览", "/卡面一览", "/卡一览",

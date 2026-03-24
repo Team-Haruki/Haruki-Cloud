@@ -11,6 +11,7 @@ import (
 func (sekaiHandlers) StampHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "stamp",
 			Commands: []string{
 				"/贴纸", "/查贴纸", "/pjsk贴纸", "/pjsk表情", "/pjsk stamp", "/pjsk bq", "/stamp",
 			},

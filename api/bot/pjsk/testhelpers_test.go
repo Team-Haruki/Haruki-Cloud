@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -20,11 +19,6 @@ type renderEnvelope struct {
 	Status  int             `json:"status"`
 	Message string          `json:"message"`
 	Data    json.RawMessage `json:"data"`
-}
-
-func testResolver(t *testing.T) *parser.GlobalCommandResolver {
-	t.Helper()
-	return parser.NewGlobalCommandResolver(nil)
 }
 
 // ── Minimal card source for bot handler tests ────────────────────────────────

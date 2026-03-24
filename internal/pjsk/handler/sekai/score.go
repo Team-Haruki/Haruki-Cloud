@@ -12,6 +12,7 @@ import (
 func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "score",
 			Commands: []string{
 				"/分数", "/查分数", "/pjsk score", "/score control",
 				"/控分",
@@ -37,6 +38,7 @@ func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
 func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "score/custom-room",
 			Commands: []string{
 				"/pjsk custom room score", "/custom room score",
 				"/自定义房间控分", "/自定义房控分", "/自定义控分",
@@ -58,6 +60,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "score/music-meta",
 			Commands: []string{
 				"/pjsk music meta", "/music meta",
 				"/歌曲meta", "/曲目meta",
@@ -88,6 +91,7 @@ func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "score/music-board",
 			Commands: []string{
 				"/pjsk music board", "/music board",
 				"/歌曲排行", "/歌曲比较", "/歌曲排名", "/曲目榜",

@@ -5,10 +5,11 @@ package pjsk
 // Command is expected to be a Base64-encoded OneBot JSON payload;
 // if decoding fails, the raw string is treated as a plain text command.
 type BotCommandRequest struct {
-	IMPlatform string `json:"im_platform" query:"im_platform"`
-	IMUserID   string `json:"im_user_id"  query:"im_user_id"`
-	Command    string `json:"command"     query:"command"`
-	Server     string `json:"server"      query:"server"`
+	IMPlatform     string `json:"im_platform"     query:"im_platform"`
+	IMUserID       string `json:"im_user_id"      query:"im_user_id"`
+	Command        string `json:"command"         query:"command"`
+	MatchedCommand string `json:"matched_command" query:"matched_command"`
+	Server         string `json:"server"          query:"server"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.
@@ -17,6 +18,8 @@ type BotCommandErrorResponse struct {
 	Mode           string `json:"mode,omitempty"`
 	ExpectedModule string `json:"expected_module,omitempty"`
 	ExpectedMode   string `json:"expected_mode,omitempty"`
+	ExpectedPath   string `json:"expected_path,omitempty"`
+	MatchedCommand string `json:"matched_command,omitempty"`
 }
 
 // ManifestEntry describes one feature endpoint served by the Bot API.

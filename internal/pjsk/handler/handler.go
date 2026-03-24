@@ -41,6 +41,7 @@ func Dispatch(ctx context.Context, event Event) (interface{}, error) {
 type CommandHandler interface {
 	IsDisabled() bool
 	GetCommands() []string
+	GetPath() string
 	GetPriority() int
 	GetHelper() string
 	Handle(Context) (interface{}, error)
@@ -49,6 +50,7 @@ type CommandHandler interface {
 type CommandHandlerBase struct {
 	Disabled   bool
 	Commands   []string
+	Path       string
 	Priority   int
 	Helper     string
 	handleFunc func(Context) (interface{}, error)
@@ -60,6 +62,9 @@ func (h *CommandHandlerBase) IsDisabled() bool {
 
 func (h *CommandHandlerBase) GetCommands() []string {
 	return h.Commands
+}
+func (h *CommandHandlerBase) GetPath() string {
+	return h.Path
 }
 func (h *CommandHandlerBase) GetPriority() int {
 	return h.Priority
@@ -78,12 +83,13 @@ func (b *CommandHandlerBase) Handle(ctx Context) (interface{}, error) {
 	return nil, fmt.Errorf("命令处理器 %s 没有处理方法", cmdName)
 }
 
-func RegisterCommandHandler(handler CommandHandler) {
+func RegisterCommandHandler(module string, handler CommandHandler) {
 	treeMutex.Lock()
 	defer treeMutex.Unlock()
 	for _, command := range handler.GetCommands() {
 		commandHandlerTree.add(0, 0, []rune(command), handler)
 	}
+	registerBotRouteLocked(module, handler)
 }
 
 func MatchCommandHandler(message string) matchedHandler {
@@ -108,6 +114,51 @@ func IsCommandSeg(r rune) bool {
 	default:
 		return false
 	}
+}
+
+// ExtractCommandArgs strips the matched command prefix from the original message
+// using the same separator-insensitive matching rules as the handler trie.
+func ExtractCommandArgs(message, command string) (string, bool) {
+	prefixLength, ok := MatchCommandPrefix(message, command)
+	if !ok {
+		return "", false
+	}
+	return strings.TrimSpace(string([]rune(message)[prefixLength:])), true
+}
+
+// MatchCommandPrefix reports whether command matches the start of message while
+// ignoring command separators and ASCII case, returning the consumed rune count.
+func MatchCommandPrefix(message, command string) (int, bool) {
+	messageRunes := []rune(message)
+	commandRunes := []rune(command)
+
+	messageIndex := 0
+	commandIndex := 0
+
+	for commandIndex < len(commandRunes) {
+		for commandIndex < len(commandRunes) && IsCommandSeg(commandRunes[commandIndex]) {
+			commandIndex++
+		}
+		if commandIndex >= len(commandRunes) {
+			break
+		}
+
+		for messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
+			messageIndex++
+		}
+		if messageIndex >= len(messageRunes) {
+			return 0, false
+		}
+
+		if unicode.ToLower(messageRunes[messageIndex]) != unicode.ToLower(commandRunes[commandIndex]) {
+			return 0, false
+		}
+
+		messageIndex++
+		commandIndex++
+	}
+
+	return messageIndex, true
 }
 
 type handlerTreeNode struct {

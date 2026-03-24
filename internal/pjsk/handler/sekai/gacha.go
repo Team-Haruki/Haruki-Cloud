@@ -11,6 +11,7 @@ import (
 func (sekaiHandlers) GachaHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "gacha",
 			Commands: []string{
 				"/pjsk gacha", "/卡池列表", "/卡池一览", "/卡池", "/查卡池",
 			},

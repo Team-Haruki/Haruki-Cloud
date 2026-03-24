@@ -11,6 +11,7 @@ import (
 func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music",
 			Commands: []string{
 				"/查曲", "/查歌", "/查乐", "/查音乐", "/查询乐曲", "/查歌曲", "/歌曲", "/乐曲", "/song", "/music",
 			},
@@ -31,6 +32,7 @@ func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/list",
 			Commands: []string{
 				"/歌曲列表", "/歌曲一览", "/乐曲列表", "/乐曲一览", "/难度排行", "/定数表", "/歌曲定数", "/查乐曲", "/music-list", "/pjsk music list",
 			},
@@ -51,6 +53,7 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/rewards",
 			Commands: []string{
 				"/曲目奖励", "/歌曲奖励", "/music rewards", "/music-rewards", "/pjsk music rewards",
 				"/打歌奖励", "/歌曲挖矿", "/打歌挖矿", "/pjsk 曲目奖励",
@@ -65,6 +68,7 @@ func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/progress",
 			Commands: []string{
 				"/打歌进度", "/歌曲进度", "/打歌信息", "/pjsk进度", "/progress", "/music-progress", "/pjsk music progress",
 			},
@@ -94,6 +98,7 @@ func (sekaiHandlers) AliasDelHandle() SekaiCommandHandler {
 func (sekaiHandlers) SongHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music",
 			Commands: []string{
 				"/pjsk song", "/pjsk music", "/song", "/music",
 				"/查曲", "/查歌", "/歌曲", "/查歌曲",
@@ -138,6 +143,7 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 func (sekaiHandlers) PlayProgressHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/progress",
 			Commands: []string{
 				"/pjsk progress",
 				"/pjsk进度", "/打歌进度", "/歌曲进度", "/打歌信息",

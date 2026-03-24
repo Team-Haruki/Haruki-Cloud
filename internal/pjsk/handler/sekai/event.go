@@ -11,6 +11,7 @@ import (
 func (sekaiHandlers) EventHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "event/list",
 			Commands: []string{
 				"/pjsk events", "/pjsk_events", "/events", "/活动列表", "/活动一览", "/event-list",
 			},
@@ -24,6 +25,7 @@ func (sekaiHandlers) EventHandle() SekaiCommandHandler {
 func (sekaiHandlers) EventDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "event",
 			Commands: []string{
 				"/pjsk event", "/pjsk_event", "/活动", "/查活动", "/event",
 			},

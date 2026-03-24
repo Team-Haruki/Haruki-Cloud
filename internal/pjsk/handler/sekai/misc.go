@@ -12,6 +12,7 @@ import (
 func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "misc/birthday",
 			Commands: []string{
 				"/pjsk chara birthday", "/角色生日", "/生日", "/查生日",
 			},
@@ -25,6 +26,7 @@ func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "profile",
 			Commands: []string{
 				"/个人中心", "/profile",
 			},

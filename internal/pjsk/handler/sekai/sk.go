@@ -9,6 +9,7 @@ import (
 func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/line",
 			Commands: []string{
 				"/sk-line", "/sk线", "/榜线", "/pjsk sk line", "/pjsk board line", "/skl",
 			},
@@ -22,7 +23,7 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 
 func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{Commands: []string{
+		CommandHandlerBase: handler.CommandHandlerBase{Path: "sk/query", Commands: []string{
 			"/sk-query", "/sk查询", "/sk查分", "/pjsk sk board", "/pjsk board",
 		},
 		},
@@ -36,6 +37,7 @@ func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/speed",
 			Commands: []string{
 				"/pjsk sk speed", "/pjsk board speed", "/时速", "/sks", "/skv", "/sk时速",
 				"/sk-speed", "/sk时速", "/时速线", "/pjsk sk speed", "/pjsk board speed", "/sks", "/skv", "/sktime",
@@ -50,6 +52,7 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/check-room",
 			Commands: []string{
 				"/sk-check-room", "/sk查房", "/查房", "/cf", "/pjsk查房", "/csb", "/冲水板", "/pjsk冲水板",
 			},
@@ -64,6 +67,7 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/player-trace",
 			Commands: []string{
 				"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
 			},
@@ -78,6 +82,7 @@ func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/rank-trace",
 			Commands: []string{
 				"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
 			},
@@ -91,7 +96,7 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 
 func (sekaiHandlers) WinratePredictHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{Commands: []string{
+		CommandHandlerBase: handler.CommandHandlerBase{Path: "sk/winrate", Commands: []string{
 			"/pjsk winrate predict", "/胜率预测", "/5v5预测", "/胜率", "/5v5胜率", "/预测胜率", "/预测5v5",
 		}},
 		Regions: []renderregion.Value{renderregion.JP},
@@ -105,6 +110,7 @@ func (sekaiHandlers) WinratePredictHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/speed",
 			Commands: []string{
 				"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
 			},
@@ -119,6 +125,7 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/rank-trace",
 			Commands: []string{
 				"/pjsk sk predict", "/pjsk board predict", "/sk预测", "/榜线预测", "/skp",
 			},
@@ -133,6 +140,7 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/query",
 			Commands: []string{
 				"/pjsk sk board", "/pjsk board", "/sk",
 			},
@@ -147,6 +155,7 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/check-room",
 			Commands: []string{
 				"/csb", "/查水表", "/pjsk查水表", "/停车时间",
 			},

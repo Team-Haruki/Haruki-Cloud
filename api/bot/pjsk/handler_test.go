@@ -26,8 +26,7 @@ func testBotApp(t *testing.T, drawingURL string) *fiber.App {
 	}
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
-	resolver := testResolver(t)
-	RegisterPJSKBotRoutes(app, resolver, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil)
 	return app
 }
 
@@ -62,6 +61,7 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 
 	params := url.Values{}
 	params.Set("command", encodeOneBotPayload("/卡面 1001"))
+	params.Set("matched_command", "/卡面")
 	req, _ := http.NewRequest(http.MethodGet, botPJSKPath("card/detail")+"?"+params.Encode(), nil)
 
 	resp, err := app.Test(req)
@@ -90,7 +90,7 @@ func TestBotEndpointPostReturnsImage(t *testing.T) {
 	defer srv.Close()
 	app := testBotApp(t, srv.URL)
 
-	body := `{"im_platform":"qq","im_user_id":"12345","command":"` + encodeOneBotPayload("/卡面 1001") + `"}`
+	body := `{"im_platform":"qq","im_user_id":"12345","command":"` + encodeOneBotPayload("/卡面 1001") + `","matched_command":"/卡面"}`
 	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -118,7 +118,7 @@ func TestBotEndpointPlainTextFallback(t *testing.T) {
 	app := testBotApp(t, srv.URL)
 
 	// Plain text (not Base64) should fall back gracefully
-	body := `{"command":"/卡面 1001"}`
+	body := `{"command":"/卡面 1001","matched_command":"/卡面"}`
 	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -152,7 +152,7 @@ func TestBotEndpointOneBotMessageArray(t *testing.T) {
 	b, _ := json.Marshal(payload)
 	encoded := base64.StdEncoding.EncodeToString(b)
 
-	body := `{"command":"` + encoded + `"}`
+	body := `{"command":"` + encoded + `","matched_command":"/卡面"}`
 	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -172,7 +172,7 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
 	// /卡面 resolves to card-detail, but we send it to card/list
-	body := `{"command":"` + encodeOneBotPayload("/卡面 1001") + `"}`
+	body := `{"command":"` + encodeOneBotPayload("/卡面 1001") + `","matched_command":"/卡面"}`
 	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/list"), strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -199,7 +199,43 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 func TestBotEndpointEmptyCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	body := `{"command":""}`
+	body := `{"command":"","matched_command":"/卡面"}`
+	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestBotEndpointUnknownMatchedCommandRejects400(t *testing.T) {
+	app := testBotApp(t, "")
+
+	body := `{"command":"` + encodeOneBotPayload("/卡面 1001") + `","matched_command":"/不存在的命令"}`
+	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestBotEndpointMissingMatchedCommandRejects400(t *testing.T) {
+	app := testBotApp(t, "")
+
+	body := `{"command":"` + encodeOneBotPayload("/卡面 1001") + `"}`
 	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -239,9 +275,9 @@ func TestBotManifestEndpoint(t *testing.T) {
 	}
 }
 
-func TestBotNilResolverSkipsRegistration(t *testing.T) {
+func TestBotNilRenderAppSkipsRegistration(t *testing.T) {
 	app := fiber.New()
-	RegisterPJSKBotRoutes(app, nil, nil, nil, nil)
+	RegisterPJSKBotRoutes(app, nil, nil, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
 	resp, err := app.Test(req)

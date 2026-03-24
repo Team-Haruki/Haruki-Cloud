@@ -11,6 +11,7 @@ import (
 func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/resource",
 			Commands: []string{
 				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msr", "/msmap", "/msa",
 			},
@@ -37,6 +38,7 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/talk-list",
 			Commands: []string{
 				"/mysekai-talk-list", "/mysekai对话列表", "/烤森对话列表",
 			},
@@ -58,6 +60,7 @@ func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/fixture-list",
 			Commands: []string{
 				"/mysekai-fixture-list", "/mysekai家具列表", "/烤森家具列表",
 			},
@@ -81,6 +84,7 @@ func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/fixture-detail",
 			Commands: []string{
 				"/pjsk mysekai furniture", "/pjsk mysekai fixture",
 				"/msf", "/mysekai 家具", "/家具列表",
@@ -116,6 +120,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/door-upgrade",
 			Commands: []string{
 				"/pjsk mysekai gate", "/mysekai-door-upgrade", "/mysekai大门升级", "/烤森大门升级", "/msg", "/msgate",
 			},
@@ -138,6 +143,7 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/music-record",
 			Commands: []string{
 				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/msm", "/mss", "/mssong",
 			},

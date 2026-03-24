@@ -9,6 +9,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/chardata"
+	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/utils/drawing"
@@ -54,7 +55,7 @@ func main() {
 	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 	botDBClient := initBot(mainLogger, app, redisClient)
-	botPJSK.RegisterPJSKBotRoutes(app, pjskResolver, renderRuntime, redisClient, botDBClient)
+	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient)
 
 	defer closeClients(chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 
@@ -272,6 +273,7 @@ func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 	}
 	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
 
+	sekaiHandler.EnsureCommandHandlersRegistered(loader.Nicknames())
 	resolver := parser.NewGlobalCommandResolver(loader.Nicknames())
 	mainLogger.Infof("PJSK parser initialized (chardata_region=%s, refresh=%s)", region, refreshInterval)
 	return resolver

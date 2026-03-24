@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-24（v11.0）
+> 最后更新：2026-03-24（v12.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -160,6 +160,51 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 2. ~~**IsHideUID**~~：已解决。读取 `query.Visible`（binding 的 `Visible` 字段），`IsHideUID = !binding.Visible`。
 
 3. **UpdateTime**：`BuildProfileRequestFromAPI` 固定传入 `nil`，确保 image cache system 在相同渲染内容下得到稳定的 cache key。
+
+### 待完成
+
+- **ProfileInfoHandle 接入**：`bridge.go` 的 `executeProfile(ProfileModeRender)` 目前仍调用 `app.Profiles.RenderProfile(q)`（旧快照路径）。需要改为调用 `RenderProfileFromAPI`，并在 `ProfileInfoHandle` 中移除 `Disabled: true`。同时需要通过 `app.Bindings.ResolveUserBinding()` 获取 `Visible` 标志并传入 `query.Visible`，以及通过工具箱 key 查询 `userPlayerFrames` 作为可选帧数据。
+
+## 5.3 逮捕 / 注册时间功能（v12.0 新增）
+
+### 已完成
+
+- `internal/pjsk/userdata/binding.go`：`ResolvedBinding` 新增 `Visible bool` 字段，`Resolve()` 同步填充
+- `internal/pjsk/userdata/binding_service.go`：新增 `ResolveUserBinding(ctx, platform, platformUserID, server) (harukiID int, binding *ResolvedBinding, error)` — 组合身份解析 + 绑定解析，供 bridge 直接调用
+- `internal/pjsk/parser/global_resolver.go`：新增 `ModuleArrest`、`ModuleRegTime` 两个 TargetModule 枚举值，及对应的正则路由
+- `internal/pjsk/handler/sekai/arrest.go`（新文件）：
+  - `UserQueryParams` 通用参数结构体（mode: self / at\_user / uid）
+  - `resolveUserQueryParams()` 从 `ctx.UIDArg()` 中推断查询模式
+  - `ArrestHandle()` — 指令 `/逮捕`，注册路径 `arrest`
+  - `RegTimeHandle()` — 指令 `/注册时间` / `/pjsk reg time` / `/pjsk 注册时间` / `/查时间`，注册路径 `profile/reg-time`；旧 `ProfileRegTimeHandle` 存根已删除
+- `internal/pjsk/handler/bridge.go`：
+  - 新增 `userQueryParams` bridge 侧解码结构体
+  - 新增 `resolveGameUID()` — 统一处理 self / at\_user / uid 三种模式，at\_user 模式检查 `Visible` 标志
+  - 新增 `executeArrest()` — 调用 `GetSekaiAPIClient().GetUserProfile()`，按用户设置的开启难度筛选统计（self 模式读 pjsk DB 设置；其余模式使用 master + expert 默认值），格式化文本输出
+  - 新增 `executeRegTime()` — 调用 `calcRegistrationTime()` 计算注册时间，输出格式化日期 + "N天前"
+  - 新增 `calcRegistrationTime()` — JP/EN：`1600218000 + uid[:-3] / (1024×4096)`；TW/KR/CN：`uid / (1024×1024×4096)`
+
+### 逮捕文本输出格式
+
+```
+逮捕: 玩家名 (UID: xxxxxx) Lv.200
+[master] 谱面:300 FC:200 AP:100
+[expert] 谱面:250 FC:180 AP:80
+挑战Live(角色#20): 3,011,947分
+```
+
+### 注册时间文本输出格式
+
+```
+UID xxxxxx 的注册时间
+2020-09-16 03:00:00 UTC
+（约 2015 天前）
+```
+
+### 待完成 / 遗留
+
+- **别名系统（alias-feature）**：`/注册时间` 等指令的别名支持，待后续设计
+- **ProfileCheckDataHandle（抓包状态查询）**：`/pjsk抓包状态`，需接入工具箱 `GetUploadTime()`，仍为 `Disabled: true` 存根
 
 ## 6. 当前保留项
 

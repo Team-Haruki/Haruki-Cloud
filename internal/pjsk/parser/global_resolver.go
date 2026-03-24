@@ -25,6 +25,8 @@ const (
 	ModuleScore
 	ModuleStamp
 	ModuleMisc
+	ModuleArrest
+	ModuleRegTime
 )
 
 // ResolvedCommand stores normalized command parsing result.
@@ -123,6 +125,12 @@ func init() {
 		// ── Profile ──────────────────────────────────────────────────────────────
 		{regexp.MustCompile(`(?i)^/sk\s*(.*)`), ModuleProfile, "profile"},
 		{regexp.MustCompile(`(?i)^/(个人中心|个人信息|名片|pjsk profile|profile)\s*(.*)`), ModuleProfile, "profile"},
+
+		// ── Arrest ───────────────────────────────────────────────────────────────
+		{regexp.MustCompile(`(?i)^/(逮捕|pjsk逮捕|pjsk arrest)\s*(.*)`), ModuleArrest, "arrest"},
+
+		// ── Registration Time ─────────────────────────────────────────────────────
+		{regexp.MustCompile(`(?i)^/(注册时间|pjsk reg time|pjsk 注册时间|查时间|get_registration_time)\s*(.*)`), ModuleRegTime, "reg-time"},
 	}
 }
 

@@ -20,6 +20,7 @@ type ResolvedBinding struct {
 	BindingID  int
 	PJSKUserID string
 	Server     string
+	Visible    bool
 }
 
 // BindingResolver resolves a (haruki_user_id, server) pair to the user's
@@ -59,6 +60,7 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			BindingID:  b.ID,
 			PJSKUserID: b.UserID,
 			Server:     b.Server,
+			Visible:    b.Visible,
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -84,5 +86,6 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		BindingID:  b.ID,
 		PJSKUserID: b.UserID,
 		Server:     b.Server,
+		Visible:    b.Visible,
 	}, nil
 }

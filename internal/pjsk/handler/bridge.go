@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -22,6 +24,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/query"
+	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 // Execute routes a ResolvedCommand to the corresponding execution controller,
@@ -58,6 +62,10 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		data, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
 		return executeProfile(ctx, resolved, app)
+	case parser.ModuleArrest:
+		return executeArrest(ctx, resolved, app)
+	case parser.ModuleRegTime:
+		return executeRegTime(ctx, resolved, app)
 	case parser.ModuleMysekai:
 		data, err = executeMysekai(resolved, app)
 	case parser.ModuleStamp:
@@ -482,6 +490,196 @@ func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) 
 		return app.Misc.RenderCharaBirthday(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported misc mode %q", r.Mode)
+	}
+}
+
+// userQueryParams mirrors sekai.UserQueryParams for bridge-side decoding.
+type userQueryParams struct {
+	Mode           string `json:"mode"`
+	Platform       string `json:"platform"`
+	PlatformUserID string `json:"platform_user_id"`
+	AtUserID       string `json:"at_user_id"`
+	PJSKUserID     string `json:"pjsk_user_id"`
+}
+
+// resolveGameUID resolves a game UID from userQueryParams using the identity and
+// binding layers in the renderapp. For "at_user" mode the caller's visibility
+// is checked; if the target has hidden their profile an error is returned.
+//
+// Returns (harukiUserID, pjskUserID, error).
+// harukiUserID is 0 when the mode is "uid" (no identity resolution performed).
+func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, error) {
+	switch p.Mode {
+	case "self":
+		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		if err != nil {
+			return 0, "", fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		return hid, binding.PJSKUserID, nil
+	case "at_user":
+		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
+		if err != nil {
+			return 0, "", fmt.Errorf("未找到该用户的绑定账号：%w", err)
+		}
+		if !binding.Visible {
+			return 0, "", fmt.Errorf("该用户已隐藏个人信息")
+		}
+		return 0, binding.PJSKUserID, nil
+	case "uid":
+		return 0, p.PJSKUserID, nil
+	default:
+		return 0, "", fmt.Errorf("未知的查询模式：%q", p.Mode)
+	}
+}
+
+func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+	var p userQueryParams
+	mergeParams(r.Params, &p)
+
+	region := r.Region
+	if region == "" {
+		region = string(renderregion.JP)
+	}
+
+	harukiUserID, pjskUserID, err := resolveGameUID(ctx, p, region, app)
+	if err != nil {
+		return nil, "", err
+	}
+
+	client := sekaiutils.GetSekaiAPIClient()
+	resp, err := client.GetUserProfile(region, pjskUserID)
+	if err != nil {
+		return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
+	}
+
+	// Load the caller's enabled difficulties for self-mode; default for others.
+	enabledDiffs := defaultEnabledDiffs()
+	if p.Mode == "self" && harukiUserID > 0 && app.PJSK != nil {
+		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, harukiUserID); sErr == nil && settings != nil {
+			if len(settings.PJSKEnabledDifficulties) > 0 {
+				enabledDiffs = settings.PJSKEnabledDifficulties
+			}
+		}
+	}
+
+	text := formatArrestText(resp, enabledDiffs)
+	return []byte(text), CommandResultDataTypeText, nil
+}
+
+func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
+	return []sekaiutils.MusicDifficultyType{
+		sekaiutils.MusicDifficultyMaster,
+		sekaiutils.MusicDifficultyExpert,
+	}
+}
+
+func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType) string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %d) Lv.%d\n",
+		resp.User.Name, resp.User.UserID, resp.User.Rank))
+
+	// Index clear counts by difficulty.
+	countByDiff := make(map[sekaiutils.MusicDifficultyType]sekaiutils.AnotherUserMusicDifficultyClearCount)
+	for _, c := range resp.UserMusicDifficultyClearCount {
+		countByDiff[c.MusicDifficultyType] = c
+	}
+
+	for _, diff := range diffs {
+		c, ok := countByDiff[diff]
+		if !ok {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("[%s] 谱面:%d FC:%d AP:%d\n",
+			diff, c.LiveClear, c.FullCombo, c.AllPerfect))
+	}
+
+	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
+		sb.WriteString(fmt.Sprintf("挑战Live(角色#%d): %s分",
+			resp.UserChallengeLiveSoloResult.CharacterID,
+			formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+// formatInt formats an integer with comma separators (e.g. 3011947 → "3,011,947").
+func formatInt(n int) string {
+	if n < 0 {
+		return "-" + formatInt(-n)
+	}
+	s := strconv.Itoa(n)
+	if len(s) <= 3 {
+		return s
+	}
+	var buf strings.Builder
+	remainder := len(s) % 3
+	if remainder > 0 {
+		buf.WriteString(s[:remainder])
+	}
+	for i := remainder; i < len(s); i += 3 {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		buf.WriteString(s[i : i+3])
+	}
+	return buf.String()
+}
+
+func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+	var p userQueryParams
+	mergeParams(r.Params, &p)
+
+	region := r.Region
+	if region == "" {
+		region = string(renderregion.JP)
+	}
+
+	_, pjskUserID, err := resolveGameUID(ctx, p, region, app)
+	if err != nil {
+		return nil, "", err
+	}
+
+	ts, err := calcRegistrationTime(pjskUserID, region)
+	if err != nil {
+		return nil, "", err
+	}
+
+	regTime := time.Unix(ts, 0).UTC()
+	duration := time.Since(regTime)
+	days := int(math.Floor(duration.Hours() / 24))
+
+	text := fmt.Sprintf("UID %s 的注册时间\n%s UTC\n（约 %d 天前）",
+		pjskUserID,
+		regTime.Format("2006-01-02 15:04:05"),
+		days)
+	return []byte(text), CommandResultDataTypeText, nil
+}
+
+// calcRegistrationTime derives the approximate Unix registration timestamp from
+// a PJSK game user ID and server region.
+//
+// JP/EN: the upper bits encode seconds since 2020-09-16T03:00:00 UTC.
+// TW/KR/CN: the raw bits encode an absolute Unix timestamp.
+func calcRegistrationTime(userID string, server string) (int64, error) {
+	switch strings.ToLower(server) {
+	case "jp", "en":
+		if len(userID) <= 3 {
+			return 0, fmt.Errorf("账号ID格式不正确")
+		}
+		n, err := strconv.ParseInt(userID[:len(userID)-3], 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("无效的账号ID：%w", err)
+		}
+		return 1600218000 + int64(float64(n)/(1024*4096)), nil
+	case "tw", "kr", "cn":
+		n, err := strconv.ParseInt(userID, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("无效的账号ID：%w", err)
+		}
+		return int64(float64(n) / (1024 * 1024 * 4096)), nil
+	default:
+		return 0, fmt.Errorf("不支持的服务器：%s", server)
 	}
 }
 

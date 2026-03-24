@@ -640,3 +640,19 @@ var AllBindingServers = []renderregion.Value{
 	renderregion.KR,
 	renderregion.EN,
 }
+
+// ResolveUserBinding resolves a platform user's active PJSK binding for the given
+// server by combining identity resolution and binding resolution.
+// Returns the haruki user ID and the resolved binding.
+func (s *BindingService) ResolveUserBinding(ctx context.Context, platform, platformUserID, server string) (int, *ResolvedBinding, error) {
+	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return 0, nil, err
+	}
+	resolver := NewBindingResolver(s.pjskDB)
+	binding, err := resolver.Resolve(ctx, harukiUserID, server)
+	if err != nil {
+		return harukiUserID, nil, err
+	}
+	return harukiUserID, binding, nil
+}

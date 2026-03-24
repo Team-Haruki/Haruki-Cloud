@@ -217,21 +217,6 @@ func (sekaiHandlers) ProfileInfoHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileRegTimeHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk reg time", "/注册时间", "/pjsk 注册时间", "/查时间",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 get_player_bind_id + get_register_time 逻辑
-			return nil, fmt.Errorf("TODO: 注册时间查询未实现，user_id=%s", ctx.GetUserId())
-		},
-	}
-}
-
 func (sekaiHandlers) ProfileCheckServiceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

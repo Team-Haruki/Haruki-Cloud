@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-03-24（v1.4）
+> 最后更新：2026-03-25（v1.5）
 
 ---
 
@@ -307,7 +307,9 @@ Bot 客户端
        │
        ▼ VerifyBotSession middleware
        │
-       ▼ decodeCommand()  ←── Base64 解码 → OneBot JSON → 提取文本
+       ▼ decodeCommand()  ←── Base64 解码 → OneBot JSON → 恢复消息段
+       │
+       ▼ BuildContext()   ←── 从消息段提取纯文本参数 + at 列表
        │
        ▼ 校验 matched_command -> handler.path
        │
@@ -377,7 +379,7 @@ Schema 定义在 `ent/<module>/schema/` 下，通过 `go generate` 自动生成 
 ```
 internal/pjsk/parser/
 ├── global_resolver.go    # 兼容型全局解析器，供 /internal/pjsk/command 等内部入口使用
-├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份等
+├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份、uidArg 等
 ├── parser.go             # CardParser + CardQueryInfo
 ├── music_parser.go       # MusicParser + MusicQueryInfo
 ├── event_parser.go       # EventParser + EventQueryInfo
@@ -390,6 +392,7 @@ internal/pjsk/parser/
 - `GlobalCommandResolver.Resolve(text)` 当前主要服务 `/internal/pjsk/command` 等内部兼容入口与测试，不是 Bot 主协议的首选选路器
 - `ResolvedCommand` 包含：Module, Mode, Query, Region, Params, IsHelp, IsVerbose, IsPreview
 - parser 包同时向各 path 绑定的 handler 提供通用提取器和类型化解析能力
+- `Extractor.ExtractUid` 当前支持 `u[i]`、游戏 UID、`@qq` 三类账号指定参数
 
 ### 8.2 handler — 指令处理 + Bridge
 
@@ -397,18 +400,20 @@ internal/pjsk/parser/
 internal/pjsk/handler/
 ├── bridge.go             # Execute(ctx, resolved, app) → payload + data_type + error
 ├── bot_route.go          # Bot route registry：聚合 module/path/commands/method
-├── context.go            # Event, Context 接口, HandlerContext
+├── context.go            # Event, Context 接口, HandlerContext；从消息段提取文本和 at.qq 列表
 ├── handler.go            # Trie 注册、命令匹配、参数截取
 ├── profile_mode.go       # Profile 渲染模式常量
 ├── result.go             # CommandResultDataType 常量
 └── sekai/                # 各功能 handler
-    ├── handler.go        # SekaiCommandHandler 注册
+    ├── handler.go        # SekaiCommandHandler 注册；含 ParseUIDArg / uidArg 公共处理
     ├── helpers.go        # 工具函数
     ├── card.go ... vlive.go  # 各功能处理器
     └── handler_test.go
 ```
 
 **Bridge 设计：** `bridge.go` 是指令解析与执行层之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应执行入口，并显式返回结果载荷及其数据类型，无 HTTP 往返。
+
+`context.go` 当前只识别 OneBot `at` 段中的 `qq` 字段，不包含任何额外兼容字段。
 
 ### 8.3 render — 渲染子系统
 
@@ -583,5 +588,5 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.4  
+**文档版本**：v1.5  
 **创建日期**：2026-03-23

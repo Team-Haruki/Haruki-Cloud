@@ -1,6 +1,6 @@
 # Haruki-Cloud PJSK 账号绑定实现说明
 
-> 最后更新：2026-03-24
+> 最后更新：2026-03-25
 >
 > 本文档记录 2026-03-24 这轮账号绑定相关改造的最终收口结果，重点说明命令链路、分层边界、代码落点、测试覆盖和后续注意事项。
 
@@ -291,6 +291,25 @@
 
 1. 这里不再直接调用 `BindingService`
 2. 这里不再直接拼接绑定结果文本
+3. 绑定、解绑、默认绑定、清除默认绑定、交换绑定等命令显式关闭通用 `uidArg` 解析
+4. 也就是说，这些命令中的 `u1` / UID 仍由各自命令本身解释，而不会先被 `sekai` 公共层吃掉
+
+#### `internal/pjsk/handler/sekai/handler.go`
+
+职责：
+
+1. 统一处理区服前缀、前缀参数、帮助/预览/详细模式等通用参数
+2. 统一处理账号指定参数：
+   - `u[i]`
+   - 游戏 UID
+   - `@qq`
+3. 将通用账号选择器写入 `SekaiHandlerContext.uidArg`
+
+当前实现约束：
+
+1. `SekaiCommandHandler.ParseUIDArg` 默认开启
+2. profile 绑定相关命令显式关闭该能力
+3. 消息段中的 `at` 只识别 OneBot 标准 `qq` 字段
 
 ### 5.3 userdata 层
 
@@ -409,11 +428,12 @@
 
 1. 读取 `command_payload`
 2. 读取 `X-Haruki-Bot-Matched-Command`
-3. 恢复原始命令文本
-4. 校验当前 `matched_command` 是否属于该 path
-5. 调用 handler 获取 `ResolvedCommand`
-6. 调用 `commandhandler.Execute(...)`
-7. 按 `CommandResultDataType` 输出响应：
+3. 将 `command_payload` 恢复为 OneBot 消息段
+4. 通过 `BuildContext` 提取纯文本参数和 `at` 列表
+5. 校验当前 `matched_command` 是否属于该 path
+6. 调用 handler 获取 `ResolvedCommand`
+7. 调用 `commandhandler.Execute(...)`
+8. 按 `CommandResultDataType` 输出响应：
    - `image/png`
    - JSON 包装的文本消息
 
@@ -509,6 +529,7 @@
 
 1. 图片型命令仍能正常返回 `image/png`
 2. 文本型命令现在通过真实的 `profile/bind + /绑定列表` 链路返回 JSON 文本
+3. `decodeCommand` 会保留 OneBot 消息段，并覆盖 `@qq` 场景
 
 ### 9.4 `api/legacy/pjsk/command_test.go`
 
@@ -523,6 +544,14 @@
 ```bash
 go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./api/legacy/pjsk ./cmd/server
 ```
+
+补充说明：
+
+当前 `uidArg` 通用解析相关测试还覆盖了：
+
+1. `internal/pjsk/parser/parser_test.go`
+2. `internal/pjsk/handler/context_test.go`
+3. `internal/pjsk/handler/sekai/handler_test.go`
 
 ## 10. 当前限制与未完成项
 

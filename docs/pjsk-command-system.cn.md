@@ -1,6 +1,6 @@
 # Haruki-Cloud PJSK 指令系统设计
 
-> 最后更新：2026-03-24
+> 最后更新：2026-03-25
 >
 > 本文档描述的是当前已落地的主模型。若后续实现发生变化，应以代码和本文档同步更新后的内容为准。
 
@@ -89,16 +89,45 @@ Haruki-Cloud 下发 command_manifests
 职责：
 
 1. 校验 Bot session
-2. 从 `command_payload` 恢复原始文本命令
-3. 校验 `matched_command` 是否属于当前端点
-4. 使用对应 handler 在当前端点语义范围内解析原文
-5. 提取当前端点所需参数
-6. 若 `matched_command` 或原文不成立，返回 `400`
-7. 若解析成立，调用后续处理链路
+2. 从 `command_payload` 恢复 OneBot 消息段
+3. 构造 `HandlerContext`，提取纯文本参数与 `at` 列表
+4. 校验 `matched_command` 是否属于当前端点
+5. 使用对应 handler 在当前端点语义范围内解析原文
+6. 提取当前端点所需参数
+7. 若 `matched_command` 或原文不成立，返回 `400`
+8. 若解析成立，调用后续处理链路
 
 关键点是：
 
 Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给一个全局路由器决定。
+
+### 3.3.1 消息段与 `@` 信息
+
+当前 Bot 入口对 `command_payload` 的处理方式是：
+
+1. 优先读取 OneBot `message` 段数组
+2. 若没有段数组，再回退 `message` 字符串或 `raw_message`
+3. `HandlerContext` 从消息段中提取纯文本参数与 `at` 列表
+
+当前 `at` 信息只识别 OneBot `at` 段中的 `qq` 字段。
+
+### 3.3.2 通用账号指定参数
+
+当前 `sekai` handler 通用支持三类账号指定参数：
+
+1. `u[i]`，例如 `u1`
+2. 游戏 UID，例如 `12345678901234`
+3. `@qq`，包括文本中的 `@123456789` 和消息段中的 `at.qq`
+
+这些参数由 `Extractor.ExtractUid` 统一提取，并写入 `SekaiHandlerContext.uidArg`。
+
+默认情况下：
+
+1. `SekaiCommandHandler.ParseUIDArg` 视为开启
+2. 提取顺序为 `u[i] -> uid -> @qq`
+3. 若消息段中存在真实 `at.qq`，会作为最终账号选择器覆盖文本解析结果
+
+绑定、解绑、主账号等需要自行解释 `u1` / UID 的命令，会显式关闭这层通用提取。
 
 ### 3.4 参数解析层
 
@@ -115,6 +144,7 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 1. 提供通用提取能力，例如区服、角色、属性、稀有度、年份、难度
 2. 提供面向具体业务域的类型化解析器
 3. 为具体端点服务，而不是替端点决定目标模块
+4. `Extractor.ExtractUid` 用于提取 `u[i]`、游戏 UID、`@qq`
 
 这些解析器是应该保留的。
 

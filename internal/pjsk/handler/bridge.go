@@ -66,6 +66,8 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		return executeArrest(ctx, resolved, app)
 	case parser.ModuleRegTime:
 		return executeRegTime(ctx, resolved, app)
+	case parser.ModuleCheckData:
+		return executeCheckData(ctx, resolved, app)
 	case parser.ModuleMysekai:
 		data, err = executeMysekai(resolved, app)
 	case parser.ModuleStamp:
@@ -417,9 +419,35 @@ func executeScore(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error)
 func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
 	switch r.Mode {
 	case ProfileModeRender:
-		q := profile.Query{Region: r.Region}
-		mergeParams(r.Params, &q)
-		data, err := app.Profiles.RenderProfile(q)
+		var p userQueryParams
+		mergeParams(r.Params, &p)
+
+		region := r.Region
+		if region == "" {
+			region = string(renderregion.JP)
+		}
+
+		_, pjskUserID, visible, err := resolveGameUID(ctx, p, region, app)
+		if err != nil {
+			return nil, "", err
+		}
+
+		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
+		if err != nil {
+			return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
+		}
+
+		// Fetch player frames from the suite snapshot (best-effort; nil = no frame rendered).
+		var framesJSON []byte
+		if platform, platformUserID := platformCredentials(p); platform != "" {
+			if uid, convErr := strconv.ParseInt(pjskUserID, 10, 64); convErr == nil {
+				framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
+					region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
+			}
+		}
+
+		q := profile.Query{Region: r.Region, Visible: visible}
+		data, err := app.Profiles.RenderProfileFromAPI(q, resp, framesJSON)
 		if err != nil {
 			return nil, "", err
 		}
@@ -506,29 +534,42 @@ type userQueryParams struct {
 // binding layers in the renderapp. For "at_user" mode the caller's visibility
 // is checked; if the target has hidden their profile an error is returned.
 //
-// Returns (harukiUserID, pjskUserID, error).
-// harukiUserID is 0 when the mode is "uid" (no identity resolution performed).
-func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, error) {
+// Returns (harukiUserID, pjskUserID, visible, error).
+// harukiUserID is 0 and visible is true when the mode is "uid".
+func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, bool, error) {
 	switch p.Mode {
 	case "self":
 		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		if err != nil {
-			return 0, "", fmt.Errorf("未找到绑定账号：%w", err)
+			return 0, "", false, fmt.Errorf("未找到绑定账号：%w", err)
 		}
-		return hid, binding.PJSKUserID, nil
+		return hid, binding.PJSKUserID, binding.Visible, nil
 	case "at_user":
 		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
 		if err != nil {
-			return 0, "", fmt.Errorf("未找到该用户的绑定账号：%w", err)
+			return 0, "", false, fmt.Errorf("未找到该用户的绑定账号：%w", err)
 		}
 		if !binding.Visible {
-			return 0, "", fmt.Errorf("该用户已隐藏个人信息")
+			return 0, "", false, fmt.Errorf("该用户已隐藏个人信息")
 		}
-		return 0, binding.PJSKUserID, nil
+		return 0, binding.PJSKUserID, binding.Visible, nil
 	case "uid":
-		return 0, p.PJSKUserID, nil
+		return 0, p.PJSKUserID, true, nil
 	default:
-		return 0, "", fmt.Errorf("未知的查询模式：%q", p.Mode)
+		return 0, "", false, fmt.Errorf("未知的查询模式：%q", p.Mode)
+	}
+}
+
+// platformCredentials returns the (platform, platformUserID) pair for toolbox
+// key queries. Returns empty strings for "uid" mode (no credentials available).
+func platformCredentials(p userQueryParams) (string, string) {
+	switch p.Mode {
+	case "self":
+		return p.Platform, p.PlatformUserID
+	case "at_user":
+		return p.Platform, p.AtUserID
+	default:
+		return "", ""
 	}
 }
 
@@ -541,13 +582,11 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 		region = string(renderregion.JP)
 	}
 
-	harukiUserID, pjskUserID, err := resolveGameUID(ctx, p, region, app)
+	harukiUserID, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
 		return nil, "", err
 	}
-
-	client := sekaiutils.GetSekaiAPIClient()
-	resp, err := client.GetUserProfile(region, pjskUserID)
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
 	if err != nil {
 		return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
 	}
@@ -635,7 +674,7 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		region = string(renderregion.JP)
 	}
 
-	_, pjskUserID, err := resolveGameUID(ctx, p, region, app)
+	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
 		return nil, "", err
 	}
@@ -653,6 +692,56 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		pjskUserID,
 		regTime.Format("2006-01-02 15:04:05"),
 		days)
+	return []byte(text), CommandResultDataTypeText, nil
+}
+
+func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+	var p userQueryParams
+	mergeParams(r.Params, &p)
+
+	region := r.Region
+	if region == "" {
+		region = string(renderregion.JP)
+	}
+
+	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
+	if err != nil {
+		return nil, "", err
+	}
+
+	uid, err := strconv.ParseInt(pjskUserID, 10, 64)
+	if err != nil {
+		return nil, "", fmt.Errorf("无效的账号ID：%w", err)
+	}
+
+	platform, platformUserID := platformCredentials(p)
+
+	var dataType sekaiutils.ToolboxDataType
+	var label string
+	switch r.Mode {
+	case "mysekai":
+		dataType = sekaiutils.ToolboxDataTypeMySekai
+		label = "MySekai"
+	default:
+		dataType = sekaiutils.ToolboxDataTypeSuite
+		label = "套件"
+	}
+
+	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(region, dataType, uid, platform, platformUserID)
+	if err != nil {
+		return nil, "", fmt.Errorf("获取%s更新时间失败：%w", label, err)
+	}
+
+	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
+	if err != nil {
+		return nil, "", fmt.Errorf("解析更新时间失败：%w", err)
+	}
+
+	uploadTime := time.Unix(ts, 0).UTC()
+	duration := time.Since(uploadTime)
+	days := int(math.Floor(duration.Hours() / 24))
+
+	text := fmt.Sprintf("%s 数据更新时间\n%s UTC\n（约 %d 天前）", label, uploadTime.Format("2006-01-02 15:04:05"), days)
 	return []byte(text), CommandResultDataTypeText, nil
 }
 

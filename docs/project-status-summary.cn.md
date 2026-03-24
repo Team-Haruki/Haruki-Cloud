@@ -163,7 +163,7 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 
 ### 待完成
 
-- **ProfileInfoHandle 接入**：`bridge.go` 的 `executeProfile(ProfileModeRender)` 目前仍调用 `app.Profiles.RenderProfile(q)`（旧快照路径）。需要改为调用 `RenderProfileFromAPI`，并在 `ProfileInfoHandle` 中移除 `Disabled: true`。同时需要通过 `app.Bindings.ResolveUserBinding()` 获取 `Visible` 标志并传入 `query.Visible`，以及通过工具箱 key 查询 `userPlayerFrames` 作为可选帧数据。
+~~**ProfileInfoHandle 接入**：已完成（v12.0）。~~
 
 ## 5.3 逮捕 / 注册时间功能（v12.0 新增）
 
@@ -204,7 +204,7 @@ UID xxxxxx 的注册时间
 ### 待完成 / 遗留
 
 - **别名系统（alias-feature）**：`/注册时间` 等指令的别名支持，待后续设计
-- **ProfileCheckDataHandle（抓包状态查询）**：`/pjsk抓包状态`，需接入工具箱 `GetUploadTime()`，仍为 `Disabled: true` 存根
+- **ProfileCheckDataHandle（抓包状态查询）**：`/pjsk抓包状态`（指令 `/sud` 查套件更新时间、`/msd` 查 MySekai 更新时间），需接入工具箱 `GetUploadTime()`，仍为 `Disabled: true` 存根
 
 ## 6. 当前保留项
 

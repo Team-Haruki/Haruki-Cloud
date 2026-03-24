@@ -27,6 +27,7 @@ const (
 	ModuleMisc
 	ModuleArrest
 	ModuleRegTime
+	ModuleCheckData
 )
 
 // ResolvedCommand stores normalized command parsing result.
@@ -131,6 +132,10 @@ func init() {
 
 		// ── Registration Time ─────────────────────────────────────────────────────
 		{regexp.MustCompile(`(?i)^/(注册时间|pjsk reg time|pjsk 注册时间|查时间|get_registration_time)\s*(.*)`), ModuleRegTime, "reg-time"},
+
+		// ── Check Data (upload time) ──────────────────────────────────────────────
+		{regexp.MustCompile(`(?i)^/(pjsk check data|pjsk抓包|pjsk抓包状态|pjsk抓包数据|pjsk抓包查询|抓包数据|抓包状态|抓包信息|sud)\s*(.*)`), ModuleCheckData, "suite"},
+		{regexp.MustCompile(`(?i)^/msd\s*(.*)`), ModuleCheckData, "mysekai"},
 	}
 }
 

@@ -209,10 +209,13 @@ func (sekaiHandlers) ProfileInfoHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk profile", "/个人信息", "/名片", "/pjsk 个人信息", "/pjsk 名片",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleProfile, handler.ProfileModeRender), nil
+			p, err := resolveUserQueryParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, handler.ProfileModeRender, p), nil
 		},
 	}
 }
@@ -252,13 +255,33 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
-				"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询", "/抓包数据", "/抓包状态", "/抓包信息",
+				"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
+				"/抓包数据", "/抓包状态", "/抓包信息", "/sud",
 			},
-			Disabled: true,
+			Path: "profile/check-data",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 at用户解析 + get_suite_upload_time + 文本组装逻辑
-			return nil, fmt.Errorf("TODO: 抓包状态查询未实现，user_id=%s", ctx.GetUserId())
+			p, err := resolveUserQueryParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleCheckData, "suite", p), nil
+		},
+	}
+}
+
+func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{"/msd"},
+			Path:     "profile/check-data-mysekai",
+		},
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			p, err := resolveUserQueryParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleCheckData, "mysekai", p), nil
 		},
 	}
 }

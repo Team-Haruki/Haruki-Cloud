@@ -18,6 +18,10 @@
   - 详细记录 2026-03-24 这轮账号绑定、Execute 返回类型、`handler`/`userdata` 分层收口
   - 适合：查看今天这轮代码修改的完整背景和落地结果
 
+- **[PJSK Event Tracker 对接说明](pjsk-event-tracker-integration.cn.md)** ⭐
+  - 记录 SK tracker 接入点、参数协议、`@用户` 绑定解析和能力矩阵
+  - 适合：联调 `sk/skl` 与排查 tracker 查询链路
+
 ## 🎯 Service-Test 合并（已完成）
 
 - **[合并方案](service-test-merge-plan.cn.md)**
@@ -72,6 +76,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-25 | PJSK Event Tracker 对接说明 | 新增 tracker 对接专题文档（含 `@用户` 解析方案） |
 | 2026-03-24 | PJSK 账号绑定实现说明 | 新增账号绑定与执行链路收口专题文档 |
 | 2026-03-24 | README 索引 | 补充 `matched_command`，并改正 Bot 业务路径描述 |
 | 2026-03-24 | ZeroBot 与 Cloud 联调方案 | 明确 `/api/v2/bot/*` 为客户端联调主协议 |
@@ -82,4 +87,4 @@ X-Haruki-Bot-Matched-Command: /卡面
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-03-24
+**最后更新**：2026-03-25

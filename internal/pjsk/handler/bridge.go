@@ -198,10 +198,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		q.Profile = publicProfileCard
 		data, err = app.Music.RenderMusicProgress(q)
 	case "music-rewards":
-		q := music.RewardsBasicQuery{Region: r.Region}
-		mergeParams(r.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = app.Music.RenderMusicRewardsBasic(q)
+		data, err = renderMusicRewards(r, app, publicProfileCard)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported music mode %q", r.Mode)
 	}
@@ -261,6 +258,62 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		return detail, nil
 	}
 	return detail, card
+}
+
+func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicProfileCard *drawing.ProfileCardRequest) ([]byte, error) {
+	q := music.RewardsBasicQuery{Region: r.Region}
+	mergeParams(r.Params, &q)
+	q.Profile = publicProfileCard
+
+	reason := ""
+	region := strings.TrimSpace(r.Region)
+	if region == "" {
+		region = string(renderregion.JP)
+	}
+
+	if strings.TrimSpace(r.RequesterPlatform) != "" && strings.TrimSpace(r.RequesterUserID) != "" {
+		queryParams := userQueryParams{
+			Mode:           "self",
+			Platform:       strings.TrimSpace(r.RequesterPlatform),
+			PlatformUserID: strings.TrimSpace(r.RequesterUserID),
+		}
+		target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+		if err == nil && target.Binding != nil {
+			if !target.Binding.SuiteVisible {
+				reason = "当前已关闭 Suite 抓包数据，以下为基于公开信息的估算结果。"
+			} else if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
+				raw, toolboxErr := sekaiutils.GetToolboxClient().GetPrivateDataValue(
+					region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userMusicAchievements")
+				if toolboxErr == nil && len(raw) > 0 {
+					detailQuery := music.RewardsDetailQuery{
+						Region:        q.Region,
+						Title:         q.Title,
+						TitleStyle:    q.TitleStyle,
+						JewelIconPath: q.JewelIconPath,
+						ShardIconPath: q.ShardIconPath,
+						Profile:       q.Profile,
+					}
+					if _, buildErr := app.Music.BuildMusicRewardsDetailRequestFromAchievements(detailQuery, raw); buildErr == nil {
+						return app.Music.RenderMusicRewardsDetailFromAchievements(detailQuery, raw)
+					}
+					reason = "Suite 抓包数据可用，但奖励明细构建失败，以下为基于公开信息的估算结果。"
+				} else {
+					reason = "当前无法读取 Suite 抓包奖励明细，以下为基于公开信息的估算结果。"
+				}
+			}
+		}
+	}
+
+	var clearCounts []sekaiutils.AnotherUserMusicDifficultyClearCount
+	if publicProfileCard != nil && publicProfileCard.Profile != nil {
+		if userID := strings.TrimSpace(publicProfileCard.Profile.ID); userID != "" {
+			if resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, userID); err == nil && resp != nil {
+				clearCounts = resp.UserMusicDifficultyClearCount
+			}
+		}
+	}
+
+	return app.Music.RenderMusicRewardsBasicEstimate(q, clearCounts, reason)
 }
 
 func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {

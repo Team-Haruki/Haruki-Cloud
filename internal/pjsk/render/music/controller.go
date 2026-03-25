@@ -14,6 +14,7 @@ import (
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	sekai "haruki-cloud/utils/sekai"
 )
 
 var hiddenMusicIDs = map[int]struct{}{
@@ -283,6 +284,17 @@ func (c *Controller) RenderMusicRewardsDetail(query RewardsDetailQuery) ([]byte,
 	return c.drawing.GenerateDetailMusicRewards(payload)
 }
 
+func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetailQuery, achievementsJSON []byte) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateDetailMusicRewards(payload)
+}
+
 func (c *Controller) BuildMusicRewardsBasicRequest(query RewardsBasicQuery) (*drawing.BasicMusicRewardsRequest, error) {
 	region := c.resolveRegion(query.Region)
 	combo := query.ComboRewards
@@ -308,6 +320,17 @@ func (c *Controller) RenderMusicRewardsBasic(query RewardsBasicQuery) ([]byte, e
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
 	payload, err := c.BuildMusicRewardsBasicRequest(query)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateBasicMusicRewards(payload)
+}
+
+func (c *Controller) RenderMusicRewardsBasicEstimate(query RewardsBasicQuery, clearCounts []sekai.AnotherUserMusicDifficultyClearCount, reason string) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMusicRewardsBasicEstimateRequest(query, clearCounts, reason)
 	if err != nil {
 		return nil, err
 	}
@@ -380,6 +403,16 @@ func (c *Controller) resolveProfileCard(override *drawing.ProfileCardRequest, re
 		return *override
 	}
 	return c.profileCard(region)
+}
+
+func (c *Controller) profileCardWithMessage(override *drawing.ProfileCardRequest, region renderregion.Value, message *string) drawing.ProfileCardRequest {
+	card := c.resolveProfileCard(override, region)
+	if message == nil {
+		return card
+	}
+	copy := *message
+	card.ErrorMessage = &copy
+	return card
 }
 
 func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {

@@ -211,6 +211,10 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		identity.NewResolver(usersClient),
 		sekaiAPI.GetSekaiAPIClient(),
 	)
+	renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
+	if renderRuntime.Assets != nil {
+		renderRuntime.Bindings.SetProfileBGStorage(userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary()))
+	}
 	renderRuntime.BanChecker = userdata.NewBanService(usersClient)
 	mainLogger.Infof("Sekai runtime services configured")
 }

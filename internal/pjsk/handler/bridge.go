@@ -80,6 +80,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		message, err = executeStamp(resolved, app)
 	case parser.ModuleMisc:
 		message, err = executeMisc(resolved, app)
+
 	default:
 		return nil, fmt.Errorf("bridge: unsupported module %v", resolved.Module)
 	}
@@ -507,26 +508,32 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 			region = string(renderregion.JP)
 		}
 
-		_, pjskUserID, visible, err := resolveGameUID(ctx, p, region, app)
+		target, err := resolveGameTarget(ctx, p, region, app)
 		if err != nil {
 			return nil, "", err
 		}
 
-		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
+		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
 		}
 
 		// Fetch player frames from the suite snapshot (best-effort; nil = no frame rendered).
 		var framesJSON []byte
-		if platform, platformUserID := platformCredentials(p); platform != "" {
-			if uid, convErr := strconv.ParseInt(pjskUserID, 10, 64); convErr == nil {
-				framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-					region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
+		if p.Mode == "self" && target.Binding != nil && target.Binding.SuiteVisible {
+			if platform, platformUserID := platformCredentials(p); platform != "" {
+				if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
+					framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
+						region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
+				}
 			}
 		}
 
-		q := profile.Query{Region: r.Region, Visible: visible}
+		q := profile.Query{
+			Region:     r.Region,
+			Visible:    target.Visible,
+			BgSettings: target.BgSettings,
+		}
 		data, err := app.Profiles.RenderProfileFromAPI(q, resp, framesJSON)
 		if err != nil {
 			return nil, "", err
@@ -538,6 +545,19 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 			return nil, "", err
 		}
 		data, err := accountdata.ExecuteProfileBindingCommand(ctx, app.Bindings, r.Mode, params)
+		if err != nil {
+			return nil, "", err
+		}
+		return data, CommandResultDataTypeText, nil
+	case accountdata.ProfileModeHideID, accountdata.ProfileModeShowID,
+		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
+		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
+		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
+		params, err := accountdata.DecodeProfileSettingsParams(r.Params)
+		if err != nil {
+			return nil, "", err
+		}
+		data, err := accountdata.ExecuteProfileSettingsCommand(ctx, app.Bindings, r.Mode, params)
 		if err != nil {
 			return nil, "", err
 		}
@@ -625,6 +645,52 @@ type userQueryParams struct {
 	PJSKUserID     string `json:"pjsk_user_id"`
 }
 
+type resolvedGameTarget struct {
+	HarukiUserID int
+	PJSKUserID   string
+	Visible      bool
+	BgSettings   *drawing.ProfileBgSettings
+	Binding      *accountdata.ResolvedBinding
+}
+
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (resolvedGameTarget, error) {
+	switch p.Mode {
+	case "self":
+		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		if err != nil {
+			return resolvedGameTarget{}, fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		return resolvedGameTarget{
+			HarukiUserID: hid,
+			PJSKUserID:   binding.PJSKUserID,
+			Visible:      binding.Visible,
+			BgSettings:   binding.Bg,
+			Binding:      binding,
+		}, nil
+	case "at_user":
+		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
+		if err != nil {
+			return resolvedGameTarget{}, fmt.Errorf("未找到该用户的绑定账号：%w", err)
+		}
+		if !binding.Visible {
+			return resolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
+		}
+		return resolvedGameTarget{
+			PJSKUserID: binding.PJSKUserID,
+			Visible:    binding.Visible,
+			BgSettings: binding.Bg,
+			Binding:    binding,
+		}, nil
+	case "uid":
+		return resolvedGameTarget{
+			PJSKUserID: p.PJSKUserID,
+			Visible:    true,
+		}, nil
+	default:
+		return resolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
+	}
+}
+
 // resolveGameUID resolves a game UID from userQueryParams using the identity and
 // binding layers in the renderapp. For "at_user" mode the caller's visibility
 // is checked; if the target has hidden their profile an error is returned.
@@ -632,27 +698,11 @@ type userQueryParams struct {
 // Returns (harukiUserID, pjskUserID, visible, error).
 // harukiUserID is 0 and visible is true when the mode is "uid".
 func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, bool, error) {
-	switch p.Mode {
-	case "self":
-		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
-		if err != nil {
-			return 0, "", false, fmt.Errorf("未找到绑定账号：%w", err)
-		}
-		return hid, binding.PJSKUserID, binding.Visible, nil
-	case "at_user":
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
-		if err != nil {
-			return 0, "", false, fmt.Errorf("未找到该用户的绑定账号：%w", err)
-		}
-		if !binding.Visible {
-			return 0, "", false, fmt.Errorf("该用户已隐藏个人信息")
-		}
-		return 0, binding.PJSKUserID, binding.Visible, nil
-	case "uid":
-		return 0, p.PJSKUserID, true, nil
-	default:
-		return 0, "", false, fmt.Errorf("未知的查询模式：%q", p.Mode)
+	target, err := resolveGameTarget(ctx, p, region, app)
+	if err != nil {
+		return 0, "", false, err
 	}
+	return target.HarukiUserID, target.PJSKUserID, target.Visible, nil
 }
 
 // platformCredentials returns the (platform, platformUserID) pair for toolbox
@@ -799,25 +849,48 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		region = string(renderregion.JP)
 	}
 
-	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
-	if err != nil {
-		return nil, err
-	}
-
-	uid, err := strconv.ParseInt(pjskUserID, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("无效的账号ID：%w", err)
-	}
-
-	platform, platformUserID := platformCredentials(p)
-
 	var dataType sekaiutils.ToolboxDataType
 	var label string
+	var uid int64
+	var platform string
+	var platformUserID string
 	switch r.Mode {
 	case "mysekai":
+		if p.Mode != "self" {
+			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
+		}
+		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		if err != nil {
+			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		if !binding.SuiteVisible {
+			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
+		}
+		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("无效的账号ID：%w", err)
+		}
+		platform = p.Platform
+		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeMySekai
 		label = "MySekai"
 	default:
+		if p.Mode != "self" {
+			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
+		}
+		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		if err != nil {
+			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		if !binding.SuiteVisible {
+			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")
+		}
+		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("无效的账号ID：%w", err)
+		}
+		platform = p.Platform
+		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeSuite
 		label = "套件"
 	}

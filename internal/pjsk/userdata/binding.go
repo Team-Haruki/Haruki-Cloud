@@ -9,6 +9,7 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
+	"haruki-cloud/utils/drawing"
 )
 
 // ErrNoBinding is returned when no PJSK game account is bound for the
@@ -17,10 +18,13 @@ var ErrNoBinding = errors.New("pjsk: no binding found for user on this server")
 
 // ResolvedBinding holds the result of a successful binding lookup.
 type ResolvedBinding struct {
-	BindingID  int
-	PJSKUserID string
-	Server     string
-	Visible    bool
+	BindingID    int
+	PJSKUserID   string
+	Server       string
+	Visible      bool
+	SuiteVisible bool
+	Verified     bool
+	Bg           *drawing.ProfileBgSettings
 }
 
 // BindingResolver resolves a (haruki_user_id, server) pair to the user's
@@ -57,10 +61,13 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			return nil, ErrNoBinding
 		}
 		return &ResolvedBinding{
-			BindingID:  b.ID,
-			PJSKUserID: b.UserID,
-			Server:     b.Server,
-			Visible:    b.Visible,
+			BindingID:    b.ID,
+			PJSKUserID:   b.UserID,
+			Server:       b.Server,
+			Visible:      b.Visible,
+			SuiteVisible: b.SuiteVisible,
+			Verified:     b.Verified,
+			Bg:           cloneProfileBGSettings(b.Bg),
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -83,9 +90,24 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 	}
 
 	return &ResolvedBinding{
-		BindingID:  b.ID,
-		PJSKUserID: b.UserID,
-		Server:     b.Server,
-		Visible:    b.Visible,
+		BindingID:    b.ID,
+		PJSKUserID:   b.UserID,
+		Server:       b.Server,
+		Visible:      b.Visible,
+		SuiteVisible: b.SuiteVisible,
+		Verified:     b.Verified,
+		Bg:           cloneProfileBGSettings(b.Bg),
 	}, nil
+}
+
+func cloneProfileBGSettings(bg *drawing.ProfileBgSettings) *drawing.ProfileBgSettings {
+	if bg == nil {
+		return nil
+	}
+	cloned := *bg
+	if bg.ImgPath != nil {
+		path := *bg.ImgPath
+		cloned.ImgPath = &path
+	}
+	return &cloned
 }

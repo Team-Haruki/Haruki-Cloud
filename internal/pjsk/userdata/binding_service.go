@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/utils/drawing"
 	sekaiapi "haruki-cloud/utils/sekai"
 )
 
@@ -27,10 +28,21 @@ type ProfileValidator interface {
 	GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error)
 }
 
+type FastVerificationProvider interface {
+	GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]sekaiapi.UserGameBinding, error)
+}
+
+type ProfileBGStorage interface {
+	SaveProfileBackground(ctx context.Context, server string, bindingID int, imageURL string) (*drawing.ProfileBgSettings, error)
+	DeleteProfileBackground(ctx context.Context, settings *drawing.ProfileBgSettings) error
+}
+
 type BindingService struct {
-	pjskDB    *pjskdb.Client
-	identity  IdentityResolver
-	validator ProfileValidator
+	pjskDB       *pjskdb.Client
+	identity     IdentityResolver
+	validator    ProfileValidator
+	fastVerifier FastVerificationProvider
+	bgStorage    ProfileBGStorage
 }
 
 type BindResult struct {
@@ -56,6 +68,9 @@ type BindingListItem struct {
 	Server          string
 	UserID          string
 	Visible         bool
+	SuiteVisible    bool
+	Verified        bool
+	Bg              *drawing.ProfileBgSettings
 	IsGlobalDefault bool
 	IsServerDefault bool
 }
@@ -84,6 +99,20 @@ func NewBindingService(pjskClient *pjskdb.Client, identityResolver IdentityResol
 		identity:  identityResolver,
 		validator: validator,
 	}
+}
+
+func (s *BindingService) SetFastVerificationProvider(provider FastVerificationProvider) {
+	if s == nil {
+		return
+	}
+	s.fastVerifier = provider
+}
+
+func (s *BindingService) SetProfileBGStorage(store ProfileBGStorage) {
+	if s == nil {
+		return
+	}
+	s.bgStorage = store
 }
 
 func (s *BindingService) IsReady() bool {
@@ -460,6 +489,9 @@ func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDef
 			Server:          binding.Server,
 			UserID:          binding.UserID,
 			Visible:         binding.Visible,
+			SuiteVisible:    binding.SuiteVisible,
+			Verified:        binding.Verified,
+			Bg:              cloneProfileBGSettings(binding.Bg),
 			IsGlobalDefault: binding.ID == globalDefaultID,
 			IsServerDefault: binding.ID == serverDefaultByServer[binding.Server],
 		})
@@ -631,6 +663,193 @@ func compareNumericString(a, b string) int {
 	default:
 		return 0
 	}
+}
+
+func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platformUserID, server string, visible bool) (*BindingListItem, error) {
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetVisible(visible).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) SetBindingSuiteVisible(ctx context.Context, platform, platformUserID, server string, suiteVisible bool) (*BindingListItem, error) {
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetSuiteVisible(suiteVisible).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
+	if s == nil || s.fastVerifier == nil {
+		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
+	}
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, false, err
+	}
+	if binding.Verified {
+		item, itemErr := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+		return item, true, itemErr
+	}
+
+	records, err := s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	matched := false
+	for _, record := range records {
+		if strings.EqualFold(strings.TrimSpace(record.Server), binding.Server) &&
+			strings.TrimSpace(record.GameUserID) == binding.UserID {
+			matched = true
+			break
+		}
+	}
+	if !matched {
+		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(binding.Server))
+	}
+
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetVerified(true).
+		Save(ctx); err != nil {
+		return nil, false, err
+	}
+	item, err := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+	return item, false, err
+}
+
+func (s *BindingService) ListVerifiedBindings(ctx context.Context, platform, platformUserID, server string) ([]BindingListItem, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	server = strings.TrimSpace(strings.ToLower(server))
+	if server == "" {
+		return nil, fmt.Errorf("请提供区服")
+	}
+	items, err := s.List(ctx, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	var verified []BindingListItem
+	for _, item := range items {
+		if !strings.EqualFold(item.Server, server) || !item.Verified {
+			continue
+		}
+		verified = append(verified, item)
+	}
+	return verified, nil
+}
+
+func (s *BindingService) SetCurrentBindingProfileBG(ctx context.Context, platform, platformUserID, server, imageURL string) (*BindingListItem, error) {
+	if s == nil || s.bgStorage == nil {
+		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
+	}
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(binding.Server))
+	}
+	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetBg(settings).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) ClearCurrentBindingProfileBG(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, error) {
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(binding.Server))
+	}
+	if s.bgStorage != nil {
+		if err := s.bgStorage.DeleteProfileBackground(ctx, binding.Bg); err != nil {
+			return nil, err
+		}
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		ClearBg().
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) AdjustCurrentBindingProfileBG(ctx context.Context, platform, platformUserID, server string, blur, alpha *int, vertical *bool) (*BindingListItem, error) {
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(binding.Server))
+	}
+	if binding.Bg == nil || binding.Bg.ImgPath == nil || strings.TrimSpace(*binding.Bg.ImgPath) == "" {
+		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))
+	}
+
+	settings := cloneProfileBGSettings(binding.Bg)
+	if blur != nil {
+		settings.Blur = *blur
+	}
+	if alpha != nil {
+		settings.Alpha = *alpha
+	}
+	if vertical != nil {
+		settings.Vertical = *vertical
+	}
+
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetBg(settings).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) currentBindingEntity(ctx context.Context, platform, platformUserID, server string) (*pjskdb.UserBinding, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	_, resolved, err := s.ResolveUserBinding(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	return s.pjskDB.UserBinding.Get(ctx, resolved.BindingID)
+}
+
+func (s *BindingService) bindingListItemByID(ctx context.Context, platform, platformUserID string, bindingID int) (*BindingListItem, error) {
+	items, err := s.List(ctx, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if item.BindingID == bindingID {
+			cloned := item
+			return &cloned, nil
+		}
+	}
+	return nil, fmt.Errorf("未找到绑定记录 %d", bindingID)
 }
 
 var AllBindingServers = []renderregion.Value{

@@ -15,7 +15,7 @@
   - 适合：快速了解项目全貌
 
 - **[PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)** ⭐
-  - 详细记录 2026-03-24 这轮账号绑定、Execute 返回类型、`handler`/`userdata` 分层收口
+  - 详细记录 2026-03-24 ~ 2026-03-25 这轮账号绑定、Profile 设置、Execute 返回类型、`handler`/`userdata` 分层收口
   - 适合：查看今天这轮代码修改的完整背景和落地结果
 
 - **[PJSK Event Tracker 对接说明](pjsk-event-tracker-integration.cn.md)** ⭐
@@ -76,6 +76,8 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` 语义、验证现状与背景图存储规则 |
+| 2026-03-25 | 项目进展总结 | 同步 Profile 设置落地状态与当前语义 |
 | 2026-03-25 | PJSK Event Tracker 对接说明 | 新增 tracker 对接专题文档（含 `@用户` 解析方案） |
 | 2026-03-24 | PJSK 账号绑定实现说明 | 新增账号绑定与执行链路收口专题文档 |
 | 2026-03-24 | README 索引 | 补充 `matched_command`，并改正 Bot 业务路径描述 |

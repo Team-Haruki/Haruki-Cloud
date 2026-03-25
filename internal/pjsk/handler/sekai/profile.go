@@ -43,6 +43,107 @@ func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) ac
 	}
 }
 
+func newProfileSettingsParams(ctx SekaiHandlerContext) accountdata.ProfileSettingsCommandParams {
+	return accountdata.ProfileSettingsCommandParams{
+		Platform:       ctx.GetPlatform(),
+		PlatformUserID: ctx.GetUserId(),
+		Server:         ctx.Region().String(),
+	}
+}
+
+func extractFirstImageURL(ctx SekaiHandlerContext) string {
+	for _, segment := range ctx.GetMessage() {
+		if segment.Type != "image" {
+			continue
+		}
+		if imageURL := strings.TrimSpace(segment.Data["url"]); imageURL != "" {
+			return imageURL
+		}
+		if fileURL := strings.TrimSpace(segment.Data["file"]); strings.HasPrefix(strings.ToLower(fileURL), "http://") || strings.HasPrefix(strings.ToLower(fileURL), "https://") {
+			return fileURL
+		}
+	}
+	return ""
+}
+
+func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandParams, error) {
+	params := accountdata.ProfileSettingsCommandParams{}
+	args = strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(args, "度", ""), "%", ""))
+	if args == "" {
+		return params, nil
+	}
+
+	tokens := strings.Fields(args)
+	for i := 0; i < len(tokens); i++ {
+		token := strings.TrimSpace(tokens[i])
+		switch strings.ToLower(token) {
+		case "横屏", "横向", "横版":
+			v := false
+			params.Vertical = &v
+		case "竖屏", "竖向", "竖版", "纵向":
+			v := true
+			params.Vertical = &v
+		case "模糊", "blur":
+			if i+1 >= len(tokens) {
+				return params, fmt.Errorf("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+			}
+			value, err := parseProfileBGInt(tokens[i+1], 0, 10)
+			if err != nil {
+				return params, err
+			}
+			params.Blur = &value
+			i++
+		case "透明", "alpha":
+			if i+1 >= len(tokens) {
+				return params, fmt.Errorf("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+			}
+			value, err := parseProfileBGInt(tokens[i+1], 0, 100)
+			if err != nil {
+				return params, err
+			}
+			params.Alpha = &value
+			i++
+		default:
+			if strings.HasPrefix(token, "模糊") {
+				value, err := parseProfileBGInt(strings.TrimPrefix(token, "模糊"), 0, 10)
+				if err != nil {
+					return params, err
+				}
+				params.Blur = &value
+				continue
+			}
+			if strings.HasPrefix(token, "透明") {
+				value, err := parseProfileBGInt(strings.TrimPrefix(token, "透明"), 0, 100)
+				if err != nil {
+					return params, err
+				}
+				params.Alpha = &value
+				continue
+			}
+			return params, fmt.Errorf("无法识别的个人信息背景参数: %s", token)
+		}
+	}
+	return params, nil
+}
+
+func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return 0, fmt.Errorf("请提供正确的数值")
+	}
+	n := 0
+	for _, ch := range value {
+		if ch < '0' || ch > '9' {
+			return 0, fmt.Errorf("请提供正确的数值")
+		}
+		n = n*10 + int(ch-'0')
+	}
+	if n < minValue || n > maxValue {
+		return 0, fmt.Errorf("数值超出范围，需要在 %d~%d 之间", minValue, maxValue)
+	}
+	return n, nil
+}
+
 func isProfileBindingListCommand(triggerCmd string) bool {
 	switch strings.TrimSpace(strings.ToLower(triggerCmd)) {
 	case "/绑定列表":
@@ -147,11 +248,14 @@ func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk hide suite", "/pjsk隐藏抓包", "/隐藏抓包",
 			},
-			Disabled: true,
+			Path: "profile/suite/hide",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 hide_suite_list 写入逻辑
-			return nil, fmt.Errorf("TODO: 隐藏抓包信息未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideSuite, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -162,11 +266,14 @@ func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk show suite", "/pjsk显示抓包", "/pjsk展示抓包", "/展示抓包",
 			},
-			Disabled: true,
+			Path: "profile/suite/show",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 hide_suite_list 移除逻辑
-			return nil, fmt.Errorf("TODO: 展示抓包信息未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowSuite, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -177,11 +284,14 @@ func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
 			},
-			Disabled: true,
+			Path: "profile/visibility/hide",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 hide_id_list 写入逻辑
-			return nil, fmt.Errorf("TODO: 隐藏ID信息未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideID, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -193,11 +303,14 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 				"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
 				"/展示id", "/展示ID", "/显示id", "/显示ID",
 			},
-			Disabled: true,
+			Path: "profile/visibility/show",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 hide_id_list 移除逻辑
-			return nil, fmt.Errorf("TODO: 展示ID信息未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -291,11 +404,14 @@ func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk verify", "/pjsk验证",
 			},
-			Disabled: true,
+			Path: "profile/verify",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 block_region + verify_user_game_account(ctx)
-			return nil, fmt.Errorf("TODO: 游戏账号验证未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerify, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -306,11 +422,14 @@ func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjsk verify list", "/pjsk验证列表", "/pjsk验证状态",
 			},
-			Disabled: true,
+			Path: "profile/verify/list",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 get_user_verified_uids + 输出脱敏列表逻辑
-			return nil, fmt.Errorf("TODO: 验证列表查询未实现，user_id=%s", ctx.GetUserId())
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerifyList, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -322,13 +441,20 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 				"/pjsk upload profile bg", "/pjsk upload profile background",
 				"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息",
 			},
-			Disabled: true,
+			Path: "profile/bg/upload",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			force := strings.Contains(args, "force")
-			// TODO: 迁移开关校验 + block_region + 图片上传与回写逻辑
-			return nil, fmt.Errorf("TODO: 上传个人信息背景未实现，force=%t", force)
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
+			}
+			imageURL := extractFirstImageURL(ctx)
+			if imageURL == "" {
+				return nil, fmt.Errorf("请在命令中附带一张个人信息背景图片")
+			}
+			params := newProfileSettingsParams(ctx)
+			params.ImageURL = imageURL
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGUpload, params), nil
 		},
 	}
 }
@@ -340,13 +466,14 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 				"/pjsk clear profile bg", "/pjsk clear profile background",
 				"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片",
 			},
-			Disabled: true,
+			Path: "profile/bg/clear",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			force := strings.Contains(args, "force")
-			// TODO: 迁移 block_region + 清理背景逻辑
-			return nil, fmt.Errorf("TODO: 清空个人背景未实现，force=%t", force)
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGClear, newProfileSettingsParams(ctx)), nil
 		},
 	}
 }
@@ -358,13 +485,19 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 				"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
 				"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景",
 			},
-			Disabled: true,
+			Path: "profile/bg/adjust",
 		},
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			force := strings.Contains(args, "force")
-			// TODO: 迁移 block_region + 背景参数调整逻辑
-			return nil, fmt.Errorf("TODO: 调整个人背景未实现，args=%q, force=%t", args, force)
+			params := newProfileSettingsParams(ctx)
+			adjustParams, err := parseProfileBGAdjustArgs(ctx.GetArgs())
+			if err != nil {
+				return nil, err
+			}
+			params.Blur = adjustParams.Blur
+			params.Alpha = adjustParams.Alpha
+			params.Vertical = adjustParams.Vertical
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGAdjust, params), nil
 		},
 	}
 }

@@ -96,7 +96,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		TwitterID:            raw.UserProfile.TwitterID,
 		Word:                 cleanWord(raw.UserProfile.Word),
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
-		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
+		BgSettings:           resolveProfileBGSettings(query.BgSettings),
 		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors),
 		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
@@ -173,7 +173,7 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		TwitterID:            resp.UserProfile.TwitterID,
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID),
-		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
+		BgSettings:           resolveProfileBGSettings(query.BgSettings),
 		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
 		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
@@ -200,6 +200,18 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 		return nil, err
 	}
 	return c.drawing.GenerateProfile(payload)
+}
+
+func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.ProfileBgSettings {
+	if settings == nil {
+		return &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false}
+	}
+	cloned := *settings
+	if settings.ImgPath != nil {
+		path := filepath.ToSlash(strings.TrimSpace(*settings.ImgPath))
+		cloned.ImgPath = &path
+	}
+	return &cloned
 }
 
 // buildLeaderImagePathFromSource resolves the leader card thumbnail path using the Source's

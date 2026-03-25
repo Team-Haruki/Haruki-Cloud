@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-25（v15.1）
+> 最后更新：2026-03-25（v15.2）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -213,7 +213,7 @@ UID xxxxxx 的注册时间
 
 | 字段 | 类型 | 默认值 | 用途 |
 |------|------|--------|------|
-| `suite_visible` | bool | `true` | 控制套件抓包数据在查询他人时是否可见 |
+| `suite_visible` | bool | `true` | 控制当前绑定是否被视为“有可用 Suite 抓包数据” |
 | `bg` | `*drawing.ProfileBgSettings` (JSONB) | nil | 个人信息名片背景图设置，可为空 |
 | `verified` | bool | `false` | 游戏账号是否已通过 `/pjsk verify` 验证 |
 
@@ -230,14 +230,38 @@ type ProfileBgSettings struct {
 
 存储示例（JSONB）：
 ```json
-{"img_path": "/static/bg/user_123.png", "blur": 4, "alpha": 80, "vertical": false}
+{"img_path": "user_upload/profile_bg/jp/binding_42.jpg", "blur": 4, "alpha": 80, "vertical": false}
 ```
 
-这三个字段直接支撑以下当前为 `Disabled: true` 的 handler 的实现：
+这三个字段现在已经直接支撑以下 handler：
 
 - `suite_visible` → `ProfileHideSuiteHandle` / `ProfileShowSuiteHandle`
 - `bg` → `ProfileUploadBGHandle` / `ProfileClearBGHandle` / `ProfileAdjustBGHandle`
 - `verified` → `ProfileVerifyHandle` / `ProfileVerifyListHandle`
+
+### 当前已落地语义（2026-03-25）
+
+1. `visible`
+   - 对应隐藏/显示 ID
+   - 影响个人信息卡与文本列表中的 UID 展示方式
+2. `suite_visible`
+   - 不再按“是否允许别人查看”解释
+   - 当前语义是：当它为 `false` 时，系统把该绑定视为“没有可用的 Suite 抓包数据”
+   - 当前实际影响点有三处：
+     - `profile/check-data` 的 Suite 分支（`/sud`）
+     - `profile/check-data-mysekai`（`/msd`）
+     - `profile` 渲染时的玩家框附加信息（`userPlayerFrames`）读取
+   - 不影响公开 Sekai API 数据
+3. `verified`
+   - 当前 `/pjsk verify` 暂时走 Toolbox fast-verification 路径
+   - 仅当当前区服当前绑定账号命中 `/api/private/game-binding` 返回列表时，才会写入 `verified=true`
+4. `bg`
+   - 当前背景图文件保存到：
+     `pjsk_render.asset_dirs.primary/user_upload/profile_bg/<server>/binding_<binding_id>.jpg`
+   - DB 中 `bg.img_path` 持久化的是相对路径：
+     `user_upload/profile_bg/<server>/binding_<binding_id>.jpg`
+   - 上传 / 清除 / 调整背景图都要求当前绑定已完成验证
+   - 渲染时直接把这份 `bg` 设置透传给 drawing payload
 
 ### Toolbox 客户端路由更新
 
@@ -319,7 +343,7 @@ ban_state              → 全平台禁用
 
 | 模块 | 功能 | 路径 |
 |------|------|------|
-| **Profile** | 绑定 / 解绑 / 设主账号 / 清除默认绑定 / 查看个人信息 | profile/bind · unbind · default · default/clear · profile |
+| **Profile** | 绑定 / 解绑 / 设主账号 / 清除默认绑定 / 查看个人信息 / 隐藏或显示 ID / 隐藏或显示抓包 / 验证 / 验证列表 / 个人信息背景上传·清除·调整 | profile/bind · unbind · default · default/clear · profile · profile/visibility/hide · profile/visibility/show · profile/suite/hide · profile/suite/show · profile/verify · profile/verify/list · profile/bg/upload · profile/bg/clear · profile/bg/adjust |
 | **Arrest** | 逮捕（self/at\_user/uid 三模式，含 Visible 检查） | arrest |
 | **RegTime** | 注册时间查询（JP/EN + TW/KR/CN 双算法） | profile/reg-time |
 | **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
@@ -343,10 +367,9 @@ ban_state              → 全平台禁用
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
 
-**Profile 系统（13 个）**
+**Profile 系统（4 个）**
 
-- DB 字段已就绪，可直接实现（8 个）：隐藏/展示 UID（`visible`）、隐藏/展示抓包（`suite_visible`）、认证/验证列表（`verified`）、背景图上传/清除/调整（`bg`）
-- 尚需确认语义（5 个）：交换绑定、服务状态检查、抓包模式切换、绑定历史
+- 尚未实现：交换绑定、服务状态检查、抓包模式切换、绑定历史
 
 **Music 系统（5 个）**：别名查询/添加/删除（alias-feature，设计待定）、BPM 查询、曲绘查询、物量统计
 
@@ -362,7 +385,7 @@ ban_state              → 全平台禁用
 
 **Virtual Live（1 个）**：vlive 查询
 
-> **统计**：约 33 个 handler，均无 executor 实现；其中 8 个 DB 字段已就绪可立即开始实现
+> **统计**：约 24 个 handler 仍未实现；Profile 中原先“字段已就绪可直接实现”的那一组已完成收口
 
 ---
 

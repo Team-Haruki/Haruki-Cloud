@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/api/bot/onebot11"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
@@ -281,6 +282,51 @@ func assertSegmentsText(t *testing.T, got []zeromessage.Segment, want string) {
 	}
 }
 
+func decodeSuccessMessage(t *testing.T, body []byte) onebot11.Message {
+	t.Helper()
+	var envelope renderEnvelope
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		t.Fatalf("decode response: %v raw=%s", err, body)
+	}
+	var message onebot11.Message
+	if err := json.Unmarshal(envelope.Data, &message); err != nil {
+		t.Fatalf("decode onebot message: %v raw=%s", err, envelope.Data)
+	}
+	return message
+}
+
+func assertSingleImageMessage(t *testing.T, body []byte) {
+	t.Helper()
+	message := decodeSuccessMessage(t, body)
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("expected single image message, got %+v", message)
+	}
+	data, ok := message[0].Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("unexpected image segment data: %#v", message[0].Data)
+	}
+	file, _ := data["file"].(string)
+	if !strings.HasPrefix(file, "https://image-cache.test/pjsk/") {
+		t.Fatalf("unexpected image url: %q", file)
+	}
+}
+
+func assertSingleTextMessage(t *testing.T, body []byte, want string) {
+	t.Helper()
+	message := decodeSuccessMessage(t, body)
+	if len(message) != 1 || message[0].Type != "text" {
+		t.Fatalf("expected single text message, got %+v", message)
+	}
+	data, ok := message[0].Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
+	}
+	text, _ := data["text"].(string)
+	if text != want {
+		t.Fatalf("expected text %q, got %q", want, text)
+	}
+}
+
 // ── Endpoint tests ──────────────────────────────────────────────────────────
 
 func TestBotEndpointGetReturnsImage(t *testing.T) {
@@ -303,12 +349,7 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if resp.Header.Get("Content-Type") != "image/png" {
-		t.Fatalf("expected image/png, got %s", resp.Header.Get("Content-Type"))
-	}
-	if string(body) != "PNGDATA" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
@@ -327,13 +368,7 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	var envelope renderEnvelope
-	if err := json.Unmarshal(body, &envelope); err != nil {
-		t.Fatalf("decode response: %v raw=%s", err, body)
-	}
-	if envelope.Message != "你还没有绑定任何PJSK账号" {
-		t.Fatalf("unexpected message: %s", envelope.Message)
-	}
+	assertSingleTextMessage(t, body, "你还没有绑定任何PJSK账号")
 }
 
 func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {
@@ -357,9 +392,7 @@ func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
 	}
-	if string(respBody) != "PNGGROUP" {
-		t.Fatalf("unexpected body: %s", respBody)
-	}
+	assertSingleImageMessage(t, respBody)
 }
 
 func TestBotEndpointPlainTextFallback(t *testing.T) {
@@ -382,6 +415,7 @@ func TestBotEndpointPlainTextFallback(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
 	}
+	assertSingleImageMessage(t, respBody)
 }
 
 func TestBotEndpointOneBotMessageArray(t *testing.T) {
@@ -414,6 +448,7 @@ func TestBotEndpointOneBotMessageArray(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
 	}
+	assertSingleImageMessage(t, respBody)
 }
 
 func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
@@ -453,9 +488,7 @@ func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKTRACKERPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
@@ -495,9 +528,7 @@ func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKLINEPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
@@ -540,9 +571,7 @@ func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKUIDPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
@@ -585,9 +614,7 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKLUIDPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
@@ -644,9 +671,7 @@ func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKATPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
@@ -692,9 +717,7 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKSPEEDPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
@@ -737,9 +760,7 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKCHECKPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
@@ -782,9 +803,7 @@ func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	if string(body) != "SKTRACEPNG" {
-		t.Fatalf("unexpected body: %s", body)
-	}
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {
@@ -808,7 +827,7 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode response: %v raw=%s", err, respBody)
 	}
-	if envelope.Message != "command does not match this endpoint" {
+	if envelope.Message != "matched command is not allowed for this endpoint" {
 		t.Fatalf("unexpected message: %s", envelope.Message)
 	}
 }

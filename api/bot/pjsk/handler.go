@@ -196,6 +196,7 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
+	ctx.TriggerCmd = matchedCommand
 	ctx.ArgText = strings.TrimSpace(string(matched.ArgText))
 	ctx.MessageType = messageType
 	result, err := matched.Handler.Handle(ctx)

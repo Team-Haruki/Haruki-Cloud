@@ -563,16 +563,72 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 以下 profile 相关能力仍是 `TODO` 或禁用状态：
 
 1. 交换绑定
-2. 隐藏/显示抓包
-3. 隐藏/显示 ID
-4. 注册时间查询
-5. profile 服务状态检查
-6. 抓包模式
-7. 抓包状态
-8. 黑名单增删
-9. verify / verify list
+2. profile 服务状态检查
+3. 抓包模式
+4. 绑定历史
 
-### 10.2 多服同 UID 的选择规则仍较保守
+### 10.2 已在 2026-03-25 落地的 profile 设置能力
+
+以下四组 profile 设置能力现在已经接入统一的 `ResolvedCommand -> Execute -> userdata` 链路，共 9 个 bot path：
+
+1. 隐藏 / 显示 ID
+   - `profile/visibility/hide`
+   - `profile/visibility/show`
+2. 隐藏 / 显示抓包
+   - `profile/suite/hide`
+   - `profile/suite/show`
+3. `/pjsk verify` / `/pjsk verify list`
+   - `profile/verify`
+   - `profile/verify/list`
+4. 个人信息背景上传 / 清除 / 调整
+   - `profile/bg/upload`
+   - `profile/bg/clear`
+   - `profile/bg/adjust`
+
+当前这组能力的统一执行方式是：
+
+1. handler 不直接完成写库，而是返回 `ResolvedCommand`
+2. bridge 内部通过 `ExecuteProfile(...)` 分发到 `userdata.ExecuteProfileSettingsCommand(...)`
+3. 结果统一返回文本数据，由 `commandhandler.Execute(...)` 再封装成 OneBot11 文本消息
+
+### 10.3 `verify` 的当前语义
+
+当前 `/pjsk verify` 是暂定实现，规则如下：
+
+1. 只校验“当前区服的当前绑定账号”
+2. 通过 Toolbox fast-verification 接口 `/api/private/game-binding` 做匹配
+3. 只有当返回列表中存在同区服同 UID 记录时，才会写入 `verified=true`
+4. `/pjsk verify list` 只列出当前区服下已验证的绑定
+
+后续如果验证方案调整，需要以这里的实现为基线继续替换，而不是回退到旧 refer 流程。
+
+### 10.4 `suite_visible` 的当前实际语义
+
+它的实际语义是：
+
+1. 当 `suite_visible=false` 时，该绑定会被视为“没有可用的 Suite 抓包数据”
+2. 当前受影响的功能有三处：
+   - `profile/check-data` 的 Suite 分支（`/sud`）
+   - `profile/check-data-mysekai`（`/msd`）
+   - `profile` 渲染时附加读取的 `userPlayerFrames`
+3. 它不影响公开 Sekai API 数据
+
+### 10.5 背景图保存路径
+
+当前背景图采用本地文件存储，规则如下：
+
+1. 落盘目录：
+   `pjsk_render.asset_dirs.primary/user_upload/profile_bg/<server>/`
+2. 文件名：
+   `binding_<binding_id>.jpg`
+3. DB 中 `bg.img_path` 持久化相对路径，例如：
+   `user_upload/profile_bg/jp/binding_42.jpg`
+4. 上传时会把远程图片下载后统一转成 JPEG 保存
+5. 上传 / 清除 / 调整背景图都要求该绑定已经 `verified=true`
+
+这样做的目的，是让 DB 中只保存稳定的相对路径，而不是部署相关的绝对路径。
+
+### 10.6 多服同 UID 的选择规则仍较保守
 
 当前规则是：
 
@@ -582,7 +638,7 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 
 这能工作，但不是最终最强语义。
 
-### 10.3 隐藏显示规则仍未完整接上
+### 10.7 隐藏显示规则的当前状态
 
 当前新建绑定默认：
 
@@ -591,7 +647,8 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 因此：
 
 1. 列表展示逻辑已经支持隐藏显示
-2. 但隐藏/显示 ID 的命令本身还未迁移完成
+2. 隐藏/显示 ID 命令也已经完成迁移
+3. `verify list` 等文本输出同样会复用这套 UID 脱敏逻辑
 
 ## 11. 后续建议
 

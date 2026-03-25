@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/imagecache"
 )
 
 // renderEnvelope is the standard JSON wrapper used by all API error responses.
@@ -115,8 +116,9 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 		assets.NewAssetHelper("", nil),
 	)
 	return &renderapp.App{
-		Drawing: drawingClient,
-		Cards:   cardController,
+		Drawing:    drawingClient,
+		Cards:      cardController,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 }
 

@@ -79,11 +79,6 @@ func SuiteVisible(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldSuiteVisible, v))
 }
 
-// Bg applies equality check predicate on the "bg" field. It's identical to BgEQ.
-func Bg(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldBg, v))
-}
-
 // Verified applies equality check predicate on the "verified" field. It's identical to VerifiedEQ.
 func Verified(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldVerified, v))
@@ -279,61 +274,6 @@ func SuiteVisibleNEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNEQ(FieldSuiteVisible, v))
 }
 
-// BgEQ applies the EQ predicate on the "bg" field.
-func BgEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldBg, v))
-}
-
-// BgNEQ applies the NEQ predicate on the "bg" field.
-func BgNEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNEQ(FieldBg, v))
-}
-
-// BgIn applies the In predicate on the "bg" field.
-func BgIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldIn(FieldBg, vs...))
-}
-
-// BgNotIn applies the NotIn predicate on the "bg" field.
-func BgNotIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNotIn(FieldBg, vs...))
-}
-
-// BgGT applies the GT predicate on the "bg" field.
-func BgGT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGT(FieldBg, v))
-}
-
-// BgGTE applies the GTE predicate on the "bg" field.
-func BgGTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGTE(FieldBg, v))
-}
-
-// BgLT applies the LT predicate on the "bg" field.
-func BgLT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLT(FieldBg, v))
-}
-
-// BgLTE applies the LTE predicate on the "bg" field.
-func BgLTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLTE(FieldBg, v))
-}
-
-// BgContains applies the Contains predicate on the "bg" field.
-func BgContains(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContains(FieldBg, v))
-}
-
-// BgHasPrefix applies the HasPrefix predicate on the "bg" field.
-func BgHasPrefix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasPrefix(FieldBg, v))
-}
-
-// BgHasSuffix applies the HasSuffix predicate on the "bg" field.
-func BgHasSuffix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasSuffix(FieldBg, v))
-}
-
 // BgIsNil applies the IsNil predicate on the "bg" field.
 func BgIsNil() predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldIsNull(FieldBg))
@@ -342,16 +282,6 @@ func BgIsNil() predicate.UserBinding {
 // BgNotNil applies the NotNil predicate on the "bg" field.
 func BgNotNil() predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNotNull(FieldBg))
-}
-
-// BgEqualFold applies the EqualFold predicate on the "bg" field.
-func BgEqualFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEqualFold(FieldBg, v))
-}
-
-// BgContainsFold applies the ContainsFold predicate on the "bg" field.
-func BgContainsFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContainsFold(FieldBg, v))
 }
 
 // VerifiedEQ applies the EQ predicate on the "verified" field.

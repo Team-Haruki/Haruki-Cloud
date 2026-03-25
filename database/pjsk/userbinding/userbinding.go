@@ -107,11 +107,6 @@ func BySuiteVisible(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSuiteVisible, opts...).ToFunc()
 }
 
-// ByBg orders the results by the bg field.
-func ByBg(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBg, opts...).ToFunc()
-}
-
 // ByVerified orders the results by the verified field.
 func ByVerified(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVerified, opts...).ToFunc()

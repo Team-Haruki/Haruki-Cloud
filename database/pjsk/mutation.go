@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
 	"haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/utils/drawing"
 	"sync"
 	"time"
 
@@ -2746,7 +2747,7 @@ type UserBindingMutation struct {
 	server              *string
 	visible             *bool
 	suite_visible       *bool
-	bg                  *string
+	bg                  **drawing.ProfileBgSettings
 	verified            *bool
 	clearedFields       map[string]struct{}
 	default_refs        map[int]struct{}
@@ -3062,12 +3063,12 @@ func (m *UserBindingMutation) ResetSuiteVisible() {
 }
 
 // SetBg sets the "bg" field.
-func (m *UserBindingMutation) SetBg(s string) {
-	m.bg = &s
+func (m *UserBindingMutation) SetBg(dbs *drawing.ProfileBgSettings) {
+	m.bg = &dbs
 }
 
 // Bg returns the value of the "bg" field in the mutation.
-func (m *UserBindingMutation) Bg() (r string, exists bool) {
+func (m *UserBindingMutation) Bg() (r *drawing.ProfileBgSettings, exists bool) {
 	v := m.bg
 	if v == nil {
 		return
@@ -3078,7 +3079,7 @@ func (m *UserBindingMutation) Bg() (r string, exists bool) {
 // OldBg returns the old "bg" field's value of the UserBinding entity.
 // If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserBindingMutation) OldBg(ctx context.Context) (v *string, err error) {
+func (m *UserBindingMutation) OldBg(ctx context.Context) (v *drawing.ProfileBgSettings, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBg is only allowed on UpdateOne operations")
 	}
@@ -3346,7 +3347,7 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 		m.SetSuiteVisible(v)
 		return nil
 	case userbinding.FieldBg:
-		v, ok := value.(string)
+		v, ok := value.(*drawing.ProfileBgSettings)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

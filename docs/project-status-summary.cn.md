@@ -214,8 +214,24 @@ UID xxxxxx 的注册时间
 | 字段 | 类型 | 默认值 | 用途 |
 |------|------|--------|------|
 | `suite_visible` | bool | `true` | 控制套件抓包数据在查询他人时是否可见 |
-| `bg` | string? | nil | 个人信息名片背景图路径（可为空） |
+| `bg` | `*drawing.ProfileBgSettings` (JSONB) | nil | 个人信息名片背景图设置，可为空 |
 | `verified` | bool | `false` | 游戏账号是否已通过 `/pjsk verify` 验证 |
+
+`ProfileBgSettings`（定义于 `utils/drawing/models.go`）的字段说明：
+
+```go
+type ProfileBgSettings struct {
+    ImgPath  *string `json:"img_path,omitempty"` // 背景图文件路径，nil 表示使用默认背景
+    Blur     int     `json:"blur"`               // 模糊半径（像素）
+    Alpha    int     `json:"alpha"`              // 背景透明度（0–100）
+    Vertical bool    `json:"vertical"`           // 是否以纵向模式裁切背景图
+}
+```
+
+存储示例（JSONB）：
+```json
+{"img_path": "/static/bg/user_123.png", "blur": 4, "alpha": 80, "vertical": false}
+```
 
 这三个字段直接支撑以下当前为 `Disabled: true` 的 handler 的实现：
 

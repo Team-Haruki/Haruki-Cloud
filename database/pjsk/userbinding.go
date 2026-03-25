@@ -3,8 +3,10 @@
 package pjsk
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/pjsk/userbinding"
+	"haruki-cloud/utils/drawing"
 	"strings"
 
 	"entgo.io/ent"
@@ -26,8 +28,8 @@ type UserBinding struct {
 	Visible bool `json:"visible,omitempty"`
 	// Controls visibility of suite/capture data
 	SuiteVisible bool `json:"suite_visible,omitempty"`
-	// Background image path for profile card
-	Bg *string `json:"bg,omitempty"`
+	// Profile card background settings stored as JSONB
+	Bg *drawing.ProfileBgSettings `json:"bg,omitempty"`
 	// Whether the game account has been verified
 	Verified bool `json:"verified,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -59,11 +61,13 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case userbinding.FieldBg:
+			values[i] = new([]byte)
 		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
 		case userbinding.FieldID, userbinding.FieldHarukiUserID:
 			values[i] = new(sql.NullInt64)
-		case userbinding.FieldUserID, userbinding.FieldServer, userbinding.FieldBg:
+		case userbinding.FieldUserID, userbinding.FieldServer:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -117,11 +121,12 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				_m.SuiteVisible = value.Bool
 			}
 		case userbinding.FieldBg:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field bg", values[i])
-			} else if value.Valid {
-				_m.Bg = new(string)
-				*_m.Bg = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Bg); err != nil {
+					return fmt.Errorf("unmarshal field bg: %w", err)
+				}
 			}
 		case userbinding.FieldVerified:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -185,10 +190,8 @@ func (_m *UserBinding) String() string {
 	builder.WriteString("suite_visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SuiteVisible))
 	builder.WriteString(", ")
-	if v := _m.Bg; v != nil {
-		builder.WriteString("bg=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("bg=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Bg))
 	builder.WriteString(", ")
 	builder.WriteString("verified=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Verified))

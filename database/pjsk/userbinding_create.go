@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
+	"haruki-cloud/utils/drawing"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -67,16 +68,8 @@ func (_c *UserBindingCreate) SetNillableSuiteVisible(v *bool) *UserBindingCreate
 }
 
 // SetBg sets the "bg" field.
-func (_c *UserBindingCreate) SetBg(v string) *UserBindingCreate {
+func (_c *UserBindingCreate) SetBg(v *drawing.ProfileBgSettings) *UserBindingCreate {
 	_c.mutation.SetBg(v)
-	return _c
-}
-
-// SetNillableBg sets the "bg" field if the given value is not nil.
-func (_c *UserBindingCreate) SetNillableBg(v *string) *UserBindingCreate {
-	if v != nil {
-		_c.SetBg(*v)
-	}
 	return _c
 }
 
@@ -247,8 +240,8 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 		_node.SuiteVisible = value
 	}
 	if value, ok := _c.mutation.Bg(); ok {
-		_spec.SetField(userbinding.FieldBg, field.TypeString, value)
-		_node.Bg = &value
+		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)
+		_node.Bg = value
 	}
 	if value, ok := _c.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)

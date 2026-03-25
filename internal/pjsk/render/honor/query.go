@@ -7,6 +7,5 @@ type Query struct {
 	HonorID          int                `json:"honor_id"`
 	HonorLevel       int                `json:"honor_level,omitempty"`
 	IsMain           bool               `json:"is_main,omitempty"`
-	Rank             int                `json:"rank,omitempty"`
 	BondsHonorWordID int                `json:"bonds_honor_word_id,omitempty"`
 }

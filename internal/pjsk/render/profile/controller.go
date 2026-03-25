@@ -97,7 +97,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		Word:                 cleanWord(raw.UserProfile.Word),
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
 		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
-		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors, raw.UserEventResults),
+		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors),
 		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
@@ -129,8 +129,8 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 // query.Visible maps directly to !IsHideUID (false = hide UID, true = show UID).
 // UpdateTime is always nil so that the image cache system produces a stable cache key for
 // identical renders.
-// UserEventResults are intentionally ignored — honor badges show the honor level instead of
-// an event rank; this field may be wired in later once the honor builder design is confirmed.
+// UserEventResults are intentionally ignored — honor badges show the honor level,
+// and FcOrApLevel is not an event-rank rendering field.
 func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
@@ -174,7 +174,7 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID),
 		BgSettings:           &drawing.ProfileBgSettings{Alpha: 100, Blur: 4, Vertical: false},
-		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors), nil),
+		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
 		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
 		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
@@ -284,7 +284,7 @@ func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard
 	return result
 }
 
-func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor, eventResults []userdata.RawUserEventResult) []drawing.HonorRequest {
+func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
 	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {
@@ -305,7 +305,6 @@ func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUser
 			HonorID:          honorID,
 			HonorLevel:       item.HonorLevel,
 			IsMain:           item.Seq == 1,
-			Rank:             c.findEventRank(eventResults, source.GetEventIDByHonorID(honorID)),
 			BondsHonorWordID: item.BondsHonorWordId,
 		})
 		if err == nil && req != nil {
@@ -325,7 +324,6 @@ func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUser
 			HonorID:    item.HonorID,
 			HonorLevel: item.HonorLevel,
 			IsMain:     len(requests) == 0,
-			Rank:       c.findEventRank(eventResults, source.GetEventIDByHonorID(item.HonorID)),
 		})
 		if err == nil && req != nil {
 			requests = append(requests, *req)

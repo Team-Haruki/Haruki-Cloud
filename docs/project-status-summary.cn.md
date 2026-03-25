@@ -151,11 +151,11 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 | MusicDifficultyCount | `GetUserProfile().UserMusicDifficultyClearCount` | ✅ |
 | 角色羁绊等级 | `GetUserProfile()` | ✅ |
 | 玩家框架 | 工具箱 key 查询 `?key=userPlayerFrames` | ⚠️ 可选，nil = 不渲染框 |
-| **活动排名（honor badge 上的名次）** | **未接入** | ⚠️ 见下方存疑项 |
+| **活动排名（honor badge 上的名次）** | **不接入** | ✅ 已确认 honor badge 显示 honor 等级，不使用 `UserEventResults` |
 
 ### 存疑 / 待确认
 
-1. **活动排名显示（UserEventResults）**：honor builder 中 `query.Rank > 0` 会将 honor badge 上的 FcOrApLevel 替换为活动排名数字。当前 `BuildProfileRequestFromAPI` 显式传入 `nil` 忽略此字段，honor badge 正常显示 honor 等级。**协作者对 honor builder 这部分的设计意图尚未确认**，待对齐后再决定是否补充来源（如从工具箱 key 查询补充 `userEventResults`）。
+1. ~~**活动排名显示（UserEventResults）**~~：已确认不需要接入。`FcOrApLevel` 与活动排名数字无关；honor builder 中原先基于 `query.Rank` 覆盖 `FcOrApLevel` 的逻辑已删除，`BuildProfileRequest(...)` 与 `BuildProfileRequestFromAPI(...)` 也都不再把 `UserEventResults` 传入 honor 构造流程。
 
 2. ~~**IsHideUID**~~：已解决。读取 `query.Visible`（binding 的 `Visible` 字段），`IsHideUID = !binding.Visible`。
 

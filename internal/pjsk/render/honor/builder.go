@@ -47,11 +47,6 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 		}
 	}
 
-	if query.Rank > 0 {
-		rankText := strconv.Itoa(query.Rank)
-		req.FcOrApLevel = &rankText
-	}
-
 	return req, nil
 }
 

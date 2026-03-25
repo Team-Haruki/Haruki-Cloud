@@ -174,9 +174,13 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
   - `BuildProfileCardFromAPI(...)`
 - `internal/pjsk/handler/bridge.go` 已新增 `buildPublicMusicProfiles(...)`，用于在 bridge 层统一构造公开资料卡，并复用到其他模块。
 - 当前复用范围已经从“仅 profile 主链”扩展到：
+  - `card-list`
+  - `card-box`
   - `music-list`
   - `music-progress`
   - `music-rewards`
+  - `education-challenge`
+  - `mysekai` 头部资料（`resource / fixture-list / door-upgrade / music-record / talk-list`）
   - `deck auto recommend` 头部资料
 
 ### 当前链路
@@ -184,15 +188,19 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 | 模块 | 复用方式 | 说明 |
 |------|------|------|
 | `profile` | `GetUserProfile()` + `RenderProfileFromAPI(...)` | 公开资料主链，直接使用 Sekai API 实时数据 |
+| `card-list / card-box` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 卡牌列表/一览头部资料优先走公开资料，卡牌主体数据仍来自 masterdata |
 | `music-list` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 资料卡优先使用公开资料，不再强依赖本地 snapshot |
 | `music-progress` | `buildPublicMusicProfiles(...)` -> `ProfileCardRequest` | 进度页头部资料改为优先走公开资料 |
 | `music-rewards` | `buildPublicMusicProfiles(...)` -> `ProfileCardRequest` | 奖励页头部资料改为优先走公开资料 |
+| `education-challenge` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 仅替换挑战页头部资料，挑战主体数据仍读 snapshot |
+| `mysekai` | `buildPublicMusicProfiles(...)` -> `ProfileCardRequest` | 仅替换 MySekai 信息卡头部资料，主体数据仍依赖本地 snapshot / mysekai 数据 |
 | `deck` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 当前仅覆盖组卡图头部 profile，不触碰 deck 算法主体 |
 
 ### 设计边界
 
 - 当前复用的是 **公开资料卡**，不是完整用户快照替代。
 - `music` 的成绩主体、`education`、`mysekai`、`deck` 算法主体仍主要依赖 snapshot / 私有数据。
+- `card` 当前只复用了用户资料头，不涉及持有状态、抽卡记录等私有字段。
 - `buildPublicMusicProfiles(...)` 只在能够解析出调用者绑定、并能从 Sekai API 成功获取公开资料时生效；失败时模块仍按原有 fallback 逻辑运行。
 
 ## 5.3 逮捕 / 注册时间功能（v12.0 新增）

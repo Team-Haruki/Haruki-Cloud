@@ -203,6 +203,36 @@
 
 这一步不在本轮代码修改范围内，只保留说明文档。
 
+### 5.5 Sekai API 复用扩展的暂缓边界备忘录
+
+截至 2026-03-26，`Sekai API` 公开资料复用已经安全推进到以下范围：
+
+- `profile` 主链
+- `card-list` / `card-box`
+- `music-list` / `music-progress` / `music-rewards`
+- `education-challenge`
+- `mysekai` 的信息卡头部（`resource / fixture-list / door-upgrade / music-record / talk-list`）
+- `deck auto recommend` 头部资料
+
+这些模块的共同点是：**只需要替换头部资料卡**，不会改变主体数据来源，也不会把公开资料误当成私有抓包明细。
+
+当前明确暂缓的是 `event` 方向，原因如下：
+
+- `event` 现有 query / controller 结构没有像 `music`、`deck`、`education`、`mysekai` 那样预留 profile override 注入点。
+- 一旦继续改，很容易从“只替换头部资料卡”滑到“改 event-record 主体数据构造”，边界会明显变糊。
+- `lunabot` 在 `event`、`education`、`mysekai` 等模块里经常混用 `basic profile`、`detailed profile` 与私有字段；如果不先拆清“哪些字段只是头部资料，哪些字段属于主体业务数据”，直接照搬容易引入奇怪错误。
+
+后续若要继续推进 `Sekai API` 线，建议顺序：
+
+1. 先保持“只做头部资料卡复用”原则，不碰主体私有字段。
+2. 若要进入 `event`，先单独给 `event` 设计 query-level profile override，而不是直接在 `event-record` 里硬塞公开 profile。
+3. 只有在能够明确字段边界后，才考虑把 `education` / `mysekai` / `event` 里更深层的详细用户态字段迁出 snapshot。
+
+结论：
+
+- 当前这条线已经推进到一个相对安全的阶段。
+- `event` 及更深层私有字段迁移属于**下一阶段单独任务**，不建议为了赶进度在本轮继续硬推。
+
 ## 6. 后续开发时的注意事项
 
 - 不要重新把旧 `/api/render` 契约写回 `Haruki-Cloud`。

@@ -37,7 +37,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 		return nil, err
 	}
 
-	profile := c.mysekaiProfileCard(region, merged)
+	profile := c.mysekaiProfileCard(region, merged, query.Profile)
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai resource requires profile data")
 	}
@@ -204,7 +204,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	}
 
 	request := &drawing.MysekaiFixtureListRequest{
-		Profile:    c.mysekaiProfileCard(region, merged),
+		Profile:    c.mysekaiProfileCard(region, merged, query.Profile),
 		ShowID:     showID,
 		MainGenres: mainGenres,
 	}
@@ -435,7 +435,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	}
 
 	return &drawing.MysekaiDoorUpgradeRequest{
-		Profile:       c.mysekaiProfileCard(region, merged),
+		Profile:       c.mysekaiProfileCard(region, merged, query.Profile),
 		GateMaterials: gateMaterials,
 	}, nil
 }
@@ -603,7 +603,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		})
 	}
 
-	profile := c.mysekaiProfileCard(region, merged)
+	profile := c.mysekaiProfileCard(region, merged, query.Profile)
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai music record requires profile data")
 	}
@@ -870,7 +870,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	progressMessage := fmt.Sprintf("未读对话家具列表 - 进度: %d/%d (%.1f%%)", totalReads, totalTalks, percent(totalReads, totalTalks))
 	promptMessage := "*仅展示未读对话家具，灰色表示未获得蓝图"
 	return &drawing.MysekaiTalkListRequest{
-		Profile:          c.mysekaiProfileCard(region, merged),
+		Profile:          c.mysekaiProfileCard(region, merged, query.Profile),
 		SdImagePath:      fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", characterUnitID),
 		ProgressMessage:  &progressMessage,
 		PromptMessage:    &promptMessage,
@@ -933,11 +933,24 @@ func (c *Controller) prepareSnapshot(region string) (map[string]interface{}, ren
 	return merged, c.resolveRegion(region), nil
 }
 
-func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]interface{}) *drawing.ProfileCardRequest {
-	if c == nil || c.snapshot == nil {
-		return nil
+func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]interface{}, override *drawing.ProfileCardRequest) *drawing.ProfileCardRequest {
+	var profile *drawing.ProfileCardRequest
+	if override != nil {
+		cloned := *override
+		if override.Profile != nil {
+			basic := *override.Profile
+			cloned.Profile = &basic
+		}
+		if len(override.DataSources) > 0 {
+			cloned.DataSources = append([]drawing.ProfileDataSource(nil), override.DataSources...)
+		}
+		profile = &cloned
+	} else {
+		if c == nil || c.snapshot == nil {
+			return nil
+		}
+		profile = c.snapshot.ProfileCard(region)
 	}
-	profile := c.snapshot.ProfileCard(region)
 	if profile == nil {
 		return nil
 	}

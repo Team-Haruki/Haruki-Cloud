@@ -56,7 +56,10 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 	if challenge == nil {
 		return nil, fmt.Errorf("user snapshot is missing challenge live data")
 	}
-	profile := c.snapshot.DetailedProfile(region)
+	profile := query.Profile
+	if profile == nil {
+		profile = c.snapshot.DetailedProfile(region)
+	}
 	if profile == nil {
 		return nil, fmt.Errorf("user snapshot is missing profile data")
 	}

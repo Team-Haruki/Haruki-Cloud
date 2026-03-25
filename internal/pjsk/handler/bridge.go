@@ -120,6 +120,7 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		data []byte
 		url  string
 	)
+	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
 	switch r.Mode {
 	case "card-detail":
 		q := card.Query{Query: r.Query, Region: r.Region}
@@ -128,9 +129,10 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	case "card-list":
 		q := card.ListRequest{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.DetailedProfile = publicDetailedProfile
 		data, err = app.Cards.RenderCardList(q)
 	case "card-box":
-		queries := []card.Query{{Query: r.Query, Region: r.Region}}
+		queries := []card.Query{{Query: r.Query, Region: r.Region, DetailedProfile: publicDetailedProfile}}
 		data, err = app.Cards.RenderCardBox(queries)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported card mode %q", r.Mode)
@@ -304,10 +306,12 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	var data []byte
 	region := renderregion.Value(r.Region)
+	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
 	switch r.Mode {
 	case "education-challenge":
 		q := education.ChallengeLiveQuery{Region: region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicDetailedProfile
 		data, err = app.Edu.RenderChallengeLiveDetails(q)
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}
@@ -628,14 +632,17 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 
 func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	var data []byte
+	_, publicProfileCard := buildPublicMusicProfiles(r, app)
 	switch r.Mode {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderResource(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
 		q := mysekai.FixtureDetailQuery{Region: r.Region, Query: r.Query}
@@ -644,14 +651,17 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
 		q := mysekai.MusicRecordQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderMusicRecord(q)
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderTalkList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported mysekai mode %q", r.Mode)

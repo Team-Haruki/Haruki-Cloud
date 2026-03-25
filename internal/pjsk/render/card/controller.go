@@ -77,7 +77,14 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 	if err != nil {
 		return nil, err
 	}
-	return builder.BuildCardListRequest(query.CardIDs, region)
+	req, err := builder.BuildCardListRequest(query.CardIDs, region)
+	if err != nil {
+		return nil, err
+	}
+	if query.DetailedProfile != nil {
+		req.UserInfo = query.DetailedProfile
+	}
+	return req, nil
 }
 
 func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
@@ -127,7 +134,14 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 			return nil, fmt.Errorf("failed to search card box: %w", err)
 		}
 	}
-	return builder.BuildCardBoxRequest(cards, region)
+	req, err := builder.BuildCardBoxRequest(cards, region)
+	if err != nil {
+		return nil, err
+	}
+	if queries[0].DetailedProfile != nil {
+		req.UserInfo = queries[0].DetailedProfile
+	}
+	return req, nil
 }
 
 func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {

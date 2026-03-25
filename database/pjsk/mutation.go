@@ -2745,6 +2745,9 @@ type UserBindingMutation struct {
 	user_id             *string
 	server              *string
 	visible             *bool
+	suite_visible       *bool
+	bg                  *string
+	verified            *bool
 	clearedFields       map[string]struct{}
 	default_refs        map[int]struct{}
 	removeddefault_refs map[int]struct{}
@@ -3022,6 +3025,127 @@ func (m *UserBindingMutation) ResetVisible() {
 	m.visible = nil
 }
 
+// SetSuiteVisible sets the "suite_visible" field.
+func (m *UserBindingMutation) SetSuiteVisible(b bool) {
+	m.suite_visible = &b
+}
+
+// SuiteVisible returns the value of the "suite_visible" field in the mutation.
+func (m *UserBindingMutation) SuiteVisible() (r bool, exists bool) {
+	v := m.suite_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSuiteVisible returns the old "suite_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldSuiteVisible(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSuiteVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSuiteVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSuiteVisible: %w", err)
+	}
+	return oldValue.SuiteVisible, nil
+}
+
+// ResetSuiteVisible resets all changes to the "suite_visible" field.
+func (m *UserBindingMutation) ResetSuiteVisible() {
+	m.suite_visible = nil
+}
+
+// SetBg sets the "bg" field.
+func (m *UserBindingMutation) SetBg(s string) {
+	m.bg = &s
+}
+
+// Bg returns the value of the "bg" field in the mutation.
+func (m *UserBindingMutation) Bg() (r string, exists bool) {
+	v := m.bg
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBg returns the old "bg" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldBg(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBg: %w", err)
+	}
+	return oldValue.Bg, nil
+}
+
+// ClearBg clears the value of the "bg" field.
+func (m *UserBindingMutation) ClearBg() {
+	m.bg = nil
+	m.clearedFields[userbinding.FieldBg] = struct{}{}
+}
+
+// BgCleared returns if the "bg" field was cleared in this mutation.
+func (m *UserBindingMutation) BgCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldBg]
+	return ok
+}
+
+// ResetBg resets all changes to the "bg" field.
+func (m *UserBindingMutation) ResetBg() {
+	m.bg = nil
+	delete(m.clearedFields, userbinding.FieldBg)
+}
+
+// SetVerified sets the "verified" field.
+func (m *UserBindingMutation) SetVerified(b bool) {
+	m.verified = &b
+}
+
+// Verified returns the value of the "verified" field in the mutation.
+func (m *UserBindingMutation) Verified() (r bool, exists bool) {
+	v := m.verified
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVerified returns the old "verified" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldVerified(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVerified is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVerified requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVerified: %w", err)
+	}
+	return oldValue.Verified, nil
+}
+
+// ResetVerified resets all changes to the "verified" field.
+func (m *UserBindingMutation) ResetVerified() {
+	m.verified = nil
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by ids.
 func (m *UserBindingMutation) AddDefaultRefIDs(ids ...int) {
 	if m.default_refs == nil {
@@ -3110,7 +3234,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 7)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
@@ -3122,6 +3246,15 @@ func (m *UserBindingMutation) Fields() []string {
 	}
 	if m.visible != nil {
 		fields = append(fields, userbinding.FieldVisible)
+	}
+	if m.suite_visible != nil {
+		fields = append(fields, userbinding.FieldSuiteVisible)
+	}
+	if m.bg != nil {
+		fields = append(fields, userbinding.FieldBg)
+	}
+	if m.verified != nil {
+		fields = append(fields, userbinding.FieldVerified)
 	}
 	return fields
 }
@@ -3139,6 +3272,12 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.Server()
 	case userbinding.FieldVisible:
 		return m.Visible()
+	case userbinding.FieldSuiteVisible:
+		return m.SuiteVisible()
+	case userbinding.FieldBg:
+		return m.Bg()
+	case userbinding.FieldVerified:
+		return m.Verified()
 	}
 	return nil, false
 }
@@ -3156,6 +3295,12 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldServer(ctx)
 	case userbinding.FieldVisible:
 		return m.OldVisible(ctx)
+	case userbinding.FieldSuiteVisible:
+		return m.OldSuiteVisible(ctx)
+	case userbinding.FieldBg:
+		return m.OldBg(ctx)
+	case userbinding.FieldVerified:
+		return m.OldVerified(ctx)
 	}
 	return nil, fmt.Errorf("unknown UserBinding field %s", name)
 }
@@ -3192,6 +3337,27 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVisible(v)
+		return nil
+	case userbinding.FieldSuiteVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSuiteVisible(v)
+		return nil
+	case userbinding.FieldBg:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBg(v)
+		return nil
+	case userbinding.FieldVerified:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVerified(v)
 		return nil
 	}
 	return fmt.Errorf("unknown UserBinding field %s", name)
@@ -3237,7 +3403,11 @@ func (m *UserBindingMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserBindingMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(userbinding.FieldBg) {
+		fields = append(fields, userbinding.FieldBg)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3250,6 +3420,11 @@ func (m *UserBindingMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserBindingMutation) ClearField(name string) error {
+	switch name {
+	case userbinding.FieldBg:
+		m.ClearBg()
+		return nil
+	}
 	return fmt.Errorf("unknown UserBinding nullable field %s", name)
 }
 
@@ -3268,6 +3443,15 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldVisible:
 		m.ResetVisible()
+		return nil
+	case userbinding.FieldSuiteVisible:
+		m.ResetSuiteVisible()
+		return nil
+	case userbinding.FieldBg:
+		m.ResetBg()
+		return nil
+	case userbinding.FieldVerified:
+		m.ResetVerified()
 		return nil
 	}
 	return fmt.Errorf("unknown UserBinding field %s", name)

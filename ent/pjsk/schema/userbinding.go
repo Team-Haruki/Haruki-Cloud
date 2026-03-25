@@ -18,6 +18,9 @@ func (UserBinding) Fields() []ent.Field {
 		field.String("user_id").MaxLen(30),
 		field.String("server").MaxLen(2),
 		field.Bool("visible").Default(true),
+		field.Bool("suite_visible").Default(true).Comment("Controls visibility of suite/capture data"),
+		field.String("bg").Optional().Nillable().Comment("Background image path for profile card"),
+		field.Bool("verified").Default(false).Comment("Whether the game account has been verified"),
 	}
 }
 

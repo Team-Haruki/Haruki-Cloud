@@ -91,6 +91,54 @@ func (_u *UserBindingUpdate) SetNillableVisible(v *bool) *UserBindingUpdate {
 	return _u
 }
 
+// SetSuiteVisible sets the "suite_visible" field.
+func (_u *UserBindingUpdate) SetSuiteVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetSuiteVisible(v)
+	return _u
+}
+
+// SetNillableSuiteVisible sets the "suite_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableSuiteVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetSuiteVisible(*v)
+	}
+	return _u
+}
+
+// SetBg sets the "bg" field.
+func (_u *UserBindingUpdate) SetBg(v string) *UserBindingUpdate {
+	_u.mutation.SetBg(v)
+	return _u
+}
+
+// SetNillableBg sets the "bg" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableBg(v *string) *UserBindingUpdate {
+	if v != nil {
+		_u.SetBg(*v)
+	}
+	return _u
+}
+
+// ClearBg clears the value of the "bg" field.
+func (_u *UserBindingUpdate) ClearBg() *UserBindingUpdate {
+	_u.mutation.ClearBg()
+	return _u
+}
+
+// SetVerified sets the "verified" field.
+func (_u *UserBindingUpdate) SetVerified(v bool) *UserBindingUpdate {
+	_u.mutation.SetVerified(v)
+	return _u
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableVerified(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetVerified(*v)
+	}
+	return _u
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by IDs.
 func (_u *UserBindingUpdate) AddDefaultRefIDs(ids ...int) *UserBindingUpdate {
 	_u.mutation.AddDefaultRefIDs(ids...)
@@ -200,6 +248,18 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SuiteVisible(); ok {
+		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Bg(); ok {
+		_spec.SetField(userbinding.FieldBg, field.TypeString, value)
+	}
+	if _u.mutation.BgCleared() {
+		_spec.ClearField(userbinding.FieldBg, field.TypeString)
+	}
+	if value, ok := _u.mutation.Verified(); ok {
+		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
 	}
 	if _u.mutation.DefaultRefsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -325,6 +385,54 @@ func (_u *UserBindingUpdateOne) SetVisible(v bool) *UserBindingUpdateOne {
 func (_u *UserBindingUpdateOne) SetNillableVisible(v *bool) *UserBindingUpdateOne {
 	if v != nil {
 		_u.SetVisible(*v)
+	}
+	return _u
+}
+
+// SetSuiteVisible sets the "suite_visible" field.
+func (_u *UserBindingUpdateOne) SetSuiteVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetSuiteVisible(v)
+	return _u
+}
+
+// SetNillableSuiteVisible sets the "suite_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableSuiteVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetSuiteVisible(*v)
+	}
+	return _u
+}
+
+// SetBg sets the "bg" field.
+func (_u *UserBindingUpdateOne) SetBg(v string) *UserBindingUpdateOne {
+	_u.mutation.SetBg(v)
+	return _u
+}
+
+// SetNillableBg sets the "bg" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableBg(v *string) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetBg(*v)
+	}
+	return _u
+}
+
+// ClearBg clears the value of the "bg" field.
+func (_u *UserBindingUpdateOne) ClearBg() *UserBindingUpdateOne {
+	_u.mutation.ClearBg()
+	return _u
+}
+
+// SetVerified sets the "verified" field.
+func (_u *UserBindingUpdateOne) SetVerified(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetVerified(v)
+	return _u
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableVerified(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetVerified(*v)
 	}
 	return _u
 }
@@ -468,6 +576,18 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SuiteVisible(); ok {
+		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Bg(); ok {
+		_spec.SetField(userbinding.FieldBg, field.TypeString, value)
+	}
+	if _u.mutation.BgCleared() {
+		_spec.ClearField(userbinding.FieldBg, field.TypeString)
+	}
+	if value, ok := _u.mutation.Verified(); ok {
+		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
 	}
 	if _u.mutation.DefaultRefsCleared() {
 		edge := &sqlgraph.EdgeSpec{

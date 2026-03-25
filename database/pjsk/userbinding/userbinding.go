@@ -20,6 +20,12 @@ const (
 	FieldServer = "server"
 	// FieldVisible holds the string denoting the visible field in the database.
 	FieldVisible = "visible"
+	// FieldSuiteVisible holds the string denoting the suite_visible field in the database.
+	FieldSuiteVisible = "suite_visible"
+	// FieldBg holds the string denoting the bg field in the database.
+	FieldBg = "bg"
+	// FieldVerified holds the string denoting the verified field in the database.
+	FieldVerified = "verified"
 	// EdgeDefaultRefs holds the string denoting the default_refs edge name in mutations.
 	EdgeDefaultRefs = "default_refs"
 	// Table holds the table name of the userbinding in the database.
@@ -40,6 +46,9 @@ var Columns = []string{
 	FieldUserID,
 	FieldServer,
 	FieldVisible,
+	FieldSuiteVisible,
+	FieldBg,
+	FieldVerified,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,6 +68,10 @@ var (
 	ServerValidator func(string) error
 	// DefaultVisible holds the default value on creation for the "visible" field.
 	DefaultVisible bool
+	// DefaultSuiteVisible holds the default value on creation for the "suite_visible" field.
+	DefaultSuiteVisible bool
+	// DefaultVerified holds the default value on creation for the "verified" field.
+	DefaultVerified bool
 )
 
 // OrderOption defines the ordering options for the UserBinding queries.
@@ -87,6 +100,21 @@ func ByServer(opts ...sql.OrderTermOption) OrderOption {
 // ByVisible orders the results by the visible field.
 func ByVisible(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVisible, opts...).ToFunc()
+}
+
+// BySuiteVisible orders the results by the suite_visible field.
+func BySuiteVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuiteVisible, opts...).ToFunc()
+}
+
+// ByBg orders the results by the bg field.
+func ByBg(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBg, opts...).ToFunc()
+}
+
+// ByVerified orders the results by the verified field.
+func ByVerified(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVerified, opts...).ToFunc()
 }
 
 // ByDefaultRefsCount orders the results by default_refs count.

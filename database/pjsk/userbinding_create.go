@@ -52,6 +52,48 @@ func (_c *UserBindingCreate) SetNillableVisible(v *bool) *UserBindingCreate {
 	return _c
 }
 
+// SetSuiteVisible sets the "suite_visible" field.
+func (_c *UserBindingCreate) SetSuiteVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetSuiteVisible(v)
+	return _c
+}
+
+// SetNillableSuiteVisible sets the "suite_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableSuiteVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetSuiteVisible(*v)
+	}
+	return _c
+}
+
+// SetBg sets the "bg" field.
+func (_c *UserBindingCreate) SetBg(v string) *UserBindingCreate {
+	_c.mutation.SetBg(v)
+	return _c
+}
+
+// SetNillableBg sets the "bg" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableBg(v *string) *UserBindingCreate {
+	if v != nil {
+		_c.SetBg(*v)
+	}
+	return _c
+}
+
+// SetVerified sets the "verified" field.
+func (_c *UserBindingCreate) SetVerified(v bool) *UserBindingCreate {
+	_c.mutation.SetVerified(v)
+	return _c
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableVerified(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetVerified(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *UserBindingCreate) SetID(v int) *UserBindingCreate {
 	_c.mutation.SetID(v)
@@ -112,6 +154,14 @@ func (_c *UserBindingCreate) defaults() {
 		v := userbinding.DefaultVisible
 		_c.mutation.SetVisible(v)
 	}
+	if _, ok := _c.mutation.SuiteVisible(); !ok {
+		v := userbinding.DefaultSuiteVisible
+		_c.mutation.SetSuiteVisible(v)
+	}
+	if _, ok := _c.mutation.Verified(); !ok {
+		v := userbinding.DefaultVerified
+		_c.mutation.SetVerified(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -137,6 +187,12 @@ func (_c *UserBindingCreate) check() error {
 	}
 	if _, ok := _c.mutation.Visible(); !ok {
 		return &ValidationError{Name: "visible", err: errors.New(`pjsk: missing required field "UserBinding.visible"`)}
+	}
+	if _, ok := _c.mutation.SuiteVisible(); !ok {
+		return &ValidationError{Name: "suite_visible", err: errors.New(`pjsk: missing required field "UserBinding.suite_visible"`)}
+	}
+	if _, ok := _c.mutation.Verified(); !ok {
+		return &ValidationError{Name: "verified", err: errors.New(`pjsk: missing required field "UserBinding.verified"`)}
 	}
 	return nil
 }
@@ -185,6 +241,18 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
 		_node.Visible = value
+	}
+	if value, ok := _c.mutation.SuiteVisible(); ok {
+		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
+		_node.SuiteVisible = value
+	}
+	if value, ok := _c.mutation.Bg(); ok {
+		_spec.SetField(userbinding.FieldBg, field.TypeString, value)
+		_node.Bg = &value
+	}
+	if value, ok := _c.mutation.Verified(); ok {
+		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
+		_node.Verified = value
 	}
 	if nodes := _c.mutation.DefaultRefsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

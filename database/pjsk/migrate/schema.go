@@ -107,6 +107,9 @@ var (
 		{Name: "user_id", Type: field.TypeString, Size: 30},
 		{Name: "server", Type: field.TypeString, Size: 2},
 		{Name: "visible", Type: field.TypeBool, Default: true},
+		{Name: "suite_visible", Type: field.TypeBool, Default: true},
+		{Name: "bg", Type: field.TypeString, Nullable: true},
+		{Name: "verified", Type: field.TypeBool, Default: false},
 	}
 	// UserBindingsTable holds the schema information for the "user_bindings" table.
 	UserBindingsTable = &schema.Table{

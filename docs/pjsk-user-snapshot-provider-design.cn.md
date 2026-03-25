@@ -30,6 +30,12 @@
 
 `music_metas` 是全局按区服的静态数据（完全不含用户状态），来源与用户快照无关，存储层独立设计。
 
+当前 Toolbox API 路由（详见 [toolbox-api.cn.md](toolbox-api.cn.md)）：
+
+- 完整快照：`GET /api/private/game-data/:server/:data_type/:user_id`
+- 单 key 查询（如 `upload_time`）：同路由加 `?key=...`
+- 快速验证绑定查询：`GET /api/private/game-binding?platform=...&platform_user_id=...`
+
 快照写入链路（`POST /internal/pjsk/snapshot/upload`）：
 1. `IdentityResolver`：`im_platform + im_user_id` → `haruki_user_id`
 2. `BindingResolver`：`haruki_user_id + region` → `pjsk_user_id`

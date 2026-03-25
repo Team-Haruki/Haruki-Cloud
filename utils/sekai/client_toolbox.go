@@ -197,25 +197,34 @@ func (c *HarukiToolboxClient) GetUploadTime(server string, dataType ToolboxDataT
 	return c.GetPrivateDataValue(server, dataType, userID, platform, platformUserID, "upload_time")
 }
 
-// UserGameBinding represents a single game account binding returned by the toolbox.
+// UserGameBinding represents a single game account binding returned by the toolbox
+// fast-verification endpoint.
 type UserGameBinding struct {
 	Server     string `json:"server"`
 	GameUserID string `json:"gameUserId"`
-	Verified   bool   `json:"verified"`
 }
 
-// GetToolboxUserGameBindings looks up all game account bindings for a given
-// region + game user ID, verifying access via the provided platform credentials.
+// GetToolboxUserFastVerificationGameAccountBindings returns all game account bindings
+// associated with the given platform identity via the fast-verification path.
 //
-//	GET /api/private/game-binding/:region/:game_user_id?platform=...&platform_user_id=...
+// The endpoint queries authorize_social_platform_infos where
+// allow_fast_verification=true for the supplied platform/platform_user_id, then
+// returns a deduplicated flat list of every game account bound to those users.
 //
-// Typed errors that callers should handle:
-//   - ErrAccountBindingNotFound — no binding found for this game user ID / region
-//   - ErrInvalidPlatformUser    — platform/user combo not authorised
-//   - ErrAccountOwnerBanned     — game account owner is banned
-//   - *ToolboxAPIError          — any other unexpected non-2xx status
-func (c *HarukiToolboxClient) GetToolboxUserGameBindings(region string, gameUserID int64, platform, platformUserID string) ([]UserGameBinding, error) {
-	url := fmt.Sprintf("%s/api/private/game-binding/%s/%d", c.config.BaseURL, region, gameUserID)
+// Return value semantics:
+//
+//   - Empty slice (no error) — platform/user found but no associated game bindings exist.
+//
+//   - ErrAccountOwnerBanned  — the platform user's associated toolbox account is banned (HTTP 403).
+//     This is distinct from "no bindings": a banned user returns 403, not an empty list.
+//
+//   - ErrInvalidPlatformUser — platform/user combo not found or not authorised (HTTP 403).
+//
+//   - *ToolboxAPIError       — any other unexpected non-2xx status.
+//
+//     GET /api/private/game-binding?platform=...&platform_user_id=...
+func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]UserGameBinding, error) {
+	url := fmt.Sprintf("%s/api/private/game-binding", c.config.BaseURL)
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).

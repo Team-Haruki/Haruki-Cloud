@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-24（v14.0）
+> 最后更新：2026-03-25（v15.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -203,7 +203,38 @@ UID xxxxxx 的注册时间
 
 ### 待完成 / 遗留
 
-- **别名系统（alias-feature）**：`/注册时间` 等指令的别名支持，待后续设计
+- **别名系统（alias-feature）**：歌曲别名查询/添加/删除，待后续设计
+
+## 5.5 Schema 扩展 & Toolbox 路由更新（v15.0 新增）
+
+### user_bindings 表新增字段
+
+`ent/pjsk/schema/userbinding.go` 新增三个字段（ent codegen 已同步）：
+
+| 字段 | 类型 | 默认值 | 用途 |
+|------|------|--------|------|
+| `suite_visible` | bool | `true` | 控制套件抓包数据在查询他人时是否可见 |
+| `bg` | string? | nil | 个人信息名片背景图路径（可为空） |
+| `verified` | bool | `false` | 游戏账号是否已通过 `/pjsk verify` 验证 |
+
+这三个字段直接支撑以下当前为 `Disabled: true` 的 handler 的实现：
+
+- `suite_visible` → `ProfileHideSuiteHandle` / `ProfileShowSuiteHandle`
+- `bg` → `ProfileUploadBGHandle` / `ProfileClearBGHandle` / `ProfileAdjustBGHandle`
+- `verified` → `ProfileVerifyHandle` / `ProfileVerifyListHandle`
+
+### Toolbox 客户端路由更新
+
+| 变更 | 旧值 | 新值 |
+|------|------|------|
+| 私有数据端点路径 | `/api/private/:server/:data_type/:user_id` | `/api/private/game-data/:server/:data_type/:user_id` |
+| 游戏绑定查询函数名 | `GetToolboxUserGameBindings` | `GetToolboxUserFastVerificationGameAccountBindings` |
+| 游戏绑定端点路径 | `/api/private/game-binding/:region/:game_user_id` | `/api/private/game-binding`（纯 Query 参数） |
+| 响应类型 `UserGameBinding` | 含 `verified` 字段 | 无 `verified` 字段 |
+
+新函数行为：查询 `authorize_social_platform_infos` 中 `allow_fast_verification=true` 的记录，返回所有关联游戏账号的扁平去重列表（空数组不报错，被封禁用户跳过）。
+
+> 完整 Toolbox API 文档：[toolbox-api.cn.md](toolbox-api.cn.md)
 
 ## 5.4 Image Cache System & 颗粒度 Ban（v13.0 新增）
 
@@ -294,9 +325,12 @@ ban_state              → 全平台禁用
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
 
-**Profile 系统（18 个）**：交换绑定、隐藏/展示 UID、隐藏/展示抓包数据、认证、背景图管理、绑定历史
+**Profile 系统（13 个）**
 
-**Music 系统（5 个）**：别名查询/添加/删除、BPM 查询、曲绘查询、物量统计
+- DB 字段已就绪，可直接实现（8 个）：隐藏/展示 UID（`visible`）、隐藏/展示抓包（`suite_visible`）、认证/验证列表（`verified`）、背景图上传/清除/调整（`bg`）
+- 尚需确认语义（5 个）：交换绑定、服务状态检查、抓包模式切换、绑定历史
+
+**Music 系统（5 个）**：别名查询/添加/删除（alias-feature，设计待定）、BPM 查询、曲绘查询、物量统计
 
 **Stamp 系统（7 个）**：贴纸制作、随机贴纸、批量刷新、底图管理
 
@@ -310,7 +344,7 @@ ban_state              → 全平台禁用
 
 **Virtual Live（1 个）**：vlive 查询
 
-> **统计**：约 38 个 handler，均无 module 分配或无 executor 实现
+> **统计**：约 33 个 handler，均无 executor 实现；其中 8 个 DB 字段已就绪可立即开始实现
 
 ---
 
@@ -351,6 +385,8 @@ ban_state              → 全平台禁用
 4. Deck 当前仍是 Go 方案，旧 CGo 引擎未恢复为默认链路
 5. 已存在的 `command_manifests` 若被人工特殊维护，仍需确认新的 handler-source 同步结果是否符合预期
 6. `context.Background()` 在 bot handler 中硬编码（M-1），应传 `c.Context()`
+7. `user_bindings` 表新增的 `suite_visible`、`bg`、`verified` 三个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
+8. `authorize_social_platform_infos` 表新增 `allow_fast_verification` 列同样需要 DB 迁移（Toolbox 侧）
 
 ## 10. 相关文档
 
@@ -358,3 +394,4 @@ ban_state              → 全平台禁用
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)
 - [ZeroBot 渲染接入后续事项](zerobot-render-followup.cn.md)
+- [Haruki Toolbox API 客户端文档](toolbox-api.cn.md)

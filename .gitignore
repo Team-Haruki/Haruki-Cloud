@@ -36,3 +36,4 @@ test.go
 test.py
 haruki-cloud-configs.yaml
 Data/dump.cs
+.DS_Store

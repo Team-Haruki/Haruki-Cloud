@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"strings"
 )
@@ -286,48 +285,6 @@ func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileBlacklistAddHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk blacklist add", "/pjsk add blacklist",
-				"/pjsk黑名单添加", "/pjsk添加黑名单",
-			},
-			Disabled: true,
-		},
-		// TODO: refer 中这里是 CmdHandler（非 SekaiCmdHandler）
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if args == "" {
-				return nil, fmt.Errorf("请提供要添加的游戏ID")
-			}
-			// TODO: 迁移 superuser 校验 + blacklist 写入逻辑
-			return nil, fmt.Errorf("TODO: 添加黑名单未实现，uid=%q", args)
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileBlacklistRemoveHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk blacklist remove", "/pjsk blacklist del", "/pjsk remove blacklist", "/pjsk del blacklist",
-				"/pjsk黑名单移除", "/pjsk移除黑名单", "/pjsk删除黑名单",
-			},
-			Disabled: true,
-		},
-		// TODO: refer 中这里是 CmdHandler（非 SekaiCmdHandler）
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if args == "" {
-				return nil, fmt.Errorf("请提供要移除的游戏ID")
-			}
-			// TODO: 迁移 superuser 校验 + blacklist 移除逻辑
-			return nil, fmt.Errorf("TODO: 移除黑名单未实现，uid=%q", args)
-		},
-	}
-}
-
 func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -412,23 +369,6 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileUserStatHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk user sta", "/用户统计",
-			},
-			Disabled: true,
-		},
-		// TODO: refer 中这里是 CmdHandler（非 SekaiCmdHandler）
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			// TODO: 迁移 superuser 校验 + 用户统计逻辑
-			return nil, fmt.Errorf("TODO: 用户统计未实现，args=%q", args)
-		},
-	}
-}
-
 func (sekaiHandlers) ProfileBindHistoryHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -443,25 +383,6 @@ func (sekaiHandlers) ProfileBindHistoryHandle() SekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			// TODO: 迁移 superuser 校验 + bind_history 查询逻辑
 			return nil, fmt.Errorf("TODO: 绑定历史查询未实现，args=%q", args)
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileCreateGuestHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk create guest", "/pjsk register", "/pjsk注册",
-			},
-			Disabled: true,
-		},
-		Regions: []renderregion.Value{
-			renderregion.JP,
-			renderregion.EN,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 create_account + 折叠消息回传逻辑
-			return nil, fmt.Errorf("TODO: 注册游客账号未实现，region=%s", string(ctx.region))
 		},
 	}
 }

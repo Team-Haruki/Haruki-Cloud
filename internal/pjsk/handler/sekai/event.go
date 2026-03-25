@@ -71,22 +71,6 @@ func (sekaiHandlers) EventStoryHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SendBoostHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk send boost", "/pjsk_send_boost", "/pjsk grant boost", "/pjsk_grant_boost",
-				"/自动送火", "/送火",
-			},
-			Disabled: true,
-		},
-		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, fmt.Errorf("TODO: 自动送火未实现，user_id=%s", ctx.GetUserId())
-		},
-	}
-}
-
 func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

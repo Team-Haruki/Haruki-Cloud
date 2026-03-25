@@ -291,19 +291,3 @@ func (sekaiHandlers) CheckMysekaiDataHandle() SekaiCommandHandler {
 		},
 	}
 }
-
-func (sekaiHandlers) MSRChangeBindHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/msr换绑",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			force := strings.Contains(args, "force")
-			return nil, fmt.Errorf("TODO: msr换绑未实现，force=%t, args=%q", force, args)
-		},
-	}
-}

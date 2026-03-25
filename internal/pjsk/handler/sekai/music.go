@@ -162,20 +162,6 @@ func (sekaiHandlers) PlayProgressHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SyncMusicAliasHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/sync music alias", "/sma", "/同步歌曲别名",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, fmt.Errorf("TODO: 同步歌曲别名未实现")
-		},
-	}
-}
-
 func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

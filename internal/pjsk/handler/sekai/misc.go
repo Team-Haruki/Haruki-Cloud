@@ -32,7 +32,11 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleProfile, "profile"), nil
+			p, err := resolveUserQueryParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, handler.ProfileModeRender, p), nil
 		},
 	}
 }

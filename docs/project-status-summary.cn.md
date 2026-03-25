@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-25（v15.2）
+> 最后更新：2026-03-26（v15.4）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -164,6 +164,36 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 ### 待完成
 
 ~~**ProfileInfoHandle 接入**：已完成（v12.0）。~~
+
+## 5.2.1 Sekai API 公开资料复用扩展（v15.4 新增）
+
+### 已完成
+
+- `internal/pjsk/render/profile/controller.go` 已补齐：
+  - `BuildDetailedProfileCardFromAPI(...)`
+  - `BuildProfileCardFromAPI(...)`
+- `internal/pjsk/handler/bridge.go` 已新增 `buildPublicMusicProfiles(...)`，用于在 bridge 层统一构造公开资料卡，并复用到其他模块。
+- 当前复用范围已经从“仅 profile 主链”扩展到：
+  - `music-list`
+  - `music-progress`
+  - `music-rewards`
+  - `deck auto recommend` 头部资料
+
+### 当前链路
+
+| 模块 | 复用方式 | 说明 |
+|------|------|------|
+| `profile` | `GetUserProfile()` + `RenderProfileFromAPI(...)` | 公开资料主链，直接使用 Sekai API 实时数据 |
+| `music-list` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 资料卡优先使用公开资料，不再强依赖本地 snapshot |
+| `music-progress` | `buildPublicMusicProfiles(...)` -> `ProfileCardRequest` | 进度页头部资料改为优先走公开资料 |
+| `music-rewards` | `buildPublicMusicProfiles(...)` -> `ProfileCardRequest` | 奖励页头部资料改为优先走公开资料 |
+| `deck` | `buildPublicMusicProfiles(...)` -> `DetailedProfileCardRequest` | 当前仅覆盖组卡图头部 profile，不触碰 deck 算法主体 |
+
+### 设计边界
+
+- 当前复用的是 **公开资料卡**，不是完整用户快照替代。
+- `music` 的成绩主体、`education`、`mysekai`、`deck` 算法主体仍主要依赖 snapshot / 私有数据。
+- `buildPublicMusicProfiles(...)` 只在能够解析出调用者绑定、并能从 Sekai API 成功获取公开资料时生效；失败时模块仍按原有 fallback 逻辑运行。
 
 ## 5.3 逮捕 / 注册时间功能（v12.0 新增）
 
@@ -334,6 +364,32 @@ ban_state              → 全平台禁用
 > **注意**：ban 检查只针对**发起者**（requester），不影响被查询的目标 UID。
 
 ---
+
+## 5.7 Music Chart 技能谱面 `music_meta` 接入（v15.3 新增）
+
+### 已完成
+
+- `internal/pjsk/meta.Loader` 已从“仅在 runtime 启动时预加载 `music_metas`”推进到“实际被 `music chart` 构建链消费”。
+- `internal/pjsk/render/music/controller.go` 已补齐 chart 请求的 `music_meta` 注入逻辑：
+  - `skill=false`：保持普通谱面预览行为，不附带 `music_meta`
+  - `skill=true`：按 `region + music_id + difficulty` 从 `MetaLoader` 选择对应条目并写入 `drawing.GenerateMusicChartRequest.MusicMeta`
+- 当 `MetaLoader` 当前无该区服缓存时，会回退读取 snapshot 的 `MusicMetaBytes()`，保持与旧本地调试链兼容。
+- `internal/pjsk/handler/sekai/chart.go` 已补齐 `/技能预览` -> `music-chart` 的 `skill=true` 参数透传；此前该入口虽然存在，但不会显式打开 skill 模式。
+- 已新增最小测试覆盖：
+  - `internal/pjsk/render/music/chart_meta_test.go`
+  - `internal/pjsk/handler/sekai/chart_test.go`
+
+### 当前行为
+
+| 入口 | 行为 |
+|------|------|
+| `/查谱面` / `/谱面预览` | 普通谱面图，不注入 `music_meta` |
+| `/技能预览` | 技能谱面图，注入对应难度的 `music_meta`，供 DrawingAPI / `pjsekai-scores-rs` 显示技能区间、`skill_score_*` 与 fever 相关信息 |
+
+### 说明
+
+- 这次改动解决的是 `Haruki-Cloud` 侧“payload 没有把 `music_meta` 传下去”的问题。
+- 若后续图面仍未正确显示技能加成文本或 fever 区块，应继续排查 `Haruki-Drawing-API` / `pjsekai-scores-rs` 对 `music_meta` 字段的消费逻辑，而不是再回到 Cloud 侧重复排查注入链。
 
 ## 6. 全功能链路状态（v14.0 全量审计）
 

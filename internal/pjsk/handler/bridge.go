@@ -168,6 +168,7 @@ func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 }
 
 func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	publicDetailedProfile, publicProfileCard := buildPublicMusicProfiles(r, app)
 	var data []byte
 	switch r.Mode {
 	case "music-detail":
@@ -177,6 +178,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	case "music-list":
 		q := music.ListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.DetailedProfile = publicDetailedProfile
 		data, err = app.Music.RenderMusicList(q)
 	case "music-chart":
 		q := music.ChartQuery{Query: r.Query, Region: r.Region}
@@ -185,10 +187,12 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	case "music-progress":
 		q := music.ProgressQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.Music.RenderMusicProgress(q)
 	case "music-rewards":
 		q := music.RewardsBasicQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		q.Profile = publicProfileCard
 		data, err = app.Music.RenderMusicRewardsBasic(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported music mode %q", r.Mode)
@@ -197,6 +201,58 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+	if r == nil || app == nil || app.Profiles == nil {
+		return nil, nil
+	}
+	if strings.TrimSpace(r.RequesterPlatform) == "" || strings.TrimSpace(r.RequesterUserID) == "" {
+		return nil, nil
+	}
+
+	region := strings.TrimSpace(r.Region)
+	if region == "" {
+		region = string(renderregion.JP)
+	}
+
+	queryParams := userQueryParams{
+		Mode:           "self",
+		Platform:       strings.TrimSpace(r.RequesterPlatform),
+		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
+	}
+	target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+	if err != nil {
+		return nil, nil
+	}
+
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	if err != nil {
+		return nil, nil
+	}
+
+	var framesJSON []byte
+	if target.Binding != nil && target.Binding.SuiteVisible {
+		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
+			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
+				region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userPlayerFrames")
+		}
+	}
+
+	q := profile.Query{
+		Region:     region,
+		Visible:    target.Visible,
+		BgSettings: target.BgSettings,
+	}
+	detail, err := app.Profiles.BuildDetailedProfileCardFromAPI(q, resp, framesJSON)
+	if err != nil {
+		return nil, nil
+	}
+	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
+	if err != nil {
+		return detail, nil
+	}
+	return detail, card
 }
 
 func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -235,6 +291,9 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	}
 	q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
 	mergeParams(r.Params, &q)
+	if detail, _ := buildPublicMusicProfiles(r, app); detail != nil {
+		q.Profile = detail
+	}
 	data, err = app.Decks.RenderAutoRecommend(q)
 	if err != nil {
 		return nil, err

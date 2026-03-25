@@ -126,6 +126,27 @@
 
 这套实现适合当前迁移阶段、测试和联调，但不是最终生产形态。
 
+补充说明（2026-03-26）：
+
+- `music_metas.json` 不再只是“本地调试时可选读取”的静态附件。
+- 在当前 `Haruki-Cloud` runtime 中，`internal/pjsk/meta.Loader` 已成为区服级 `music_metas` 的主读取入口，并已被 `music chart` 技能预览链实际消费。
+- 具体行为是：
+  - `skill=false`：普通 chart，不读取 `music_meta`
+  - `skill=true`：按 `region + music_id + difficulty` 从 `MetaLoader` 中选取对应条目，注入 chart payload
+  - 若 `MetaLoader` 当前无缓存，再回退到 snapshot 的 `MusicMetaBytes()`
+- 因此，`music_metas` 当前已经处于“公开区服静态数据缓存 + 本地 snapshot fallback”并行阶段，而不是纯粹的本地 JSON 临时文件。
+
+再补充一层（Sekai API 公开资料，2026-03-26）：
+
+- 当前 `Haruki-Cloud` 已不再只能依赖本地 `user.json` 为 `profile` 之外的模块提供头部资料。
+- `internal/pjsk/handler/bridge.go` 已新增统一的公开资料构造逻辑：先通过绑定解析调用者 UID，再调用 `GetSekaiAPIClient().GetUserProfile()` 构造公开资料卡。
+- 这套公开资料当前已复用到：
+  - `music-list`
+  - `music-progress`
+  - `music-rewards`
+  - `deck auto recommend` 的头部 profile
+- 这意味着当前状态已经从“这些模块完全依赖本地 snapshot”推进到“资料卡部分可优先复用 Sekai API，主体数据仍依赖 snapshot / 私有数据”的混合阶段。
+
 ### 4.2 mysekai 仍使用本地 masterdata fallback
 
 `mysekai` 当前已经迁入 `Haruki-Cloud`，但主要依赖本地 masterdata 目录。

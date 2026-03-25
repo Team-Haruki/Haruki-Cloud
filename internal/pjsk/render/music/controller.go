@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -21,23 +22,25 @@ var hiddenMusicIDs = map[int]struct{}{
 }
 
 type Controller struct {
-	sources   *regionsource.Registry[DataSource]
-	drawing   *drawing.HarukiDrawingClient
-	assets    *assets.AssetHelper
-	nicknames map[string]int
-	snapshot  *userdata.Service
+	sources    *regionsource.Registry[DataSource]
+	drawing    *drawing.HarukiDrawingClient
+	assets     *assets.AssetHelper
+	nicknames  map[string]int
+	snapshot   *userdata.Service
+	metaLoader *meta.Loader
 }
 
-func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, metaLoader *meta.Loader) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
 	controller := &Controller{
-		sources:   regionsource.NewRegistry[DataSource](renderregion.JP),
-		drawing:   drawingClient,
-		assets:    assetHelper,
-		nicknames: cloneNicknames(defaultNicknames),
-		snapshot:  snapshot,
+		sources:    regionsource.NewRegistry[DataSource](renderregion.JP),
+		drawing:    drawingClient,
+		assets:     assetHelper,
+		nicknames:  cloneNicknames(defaultNicknames),
+		snapshot:   snapshot,
+		metaLoader: metaLoader,
 	}
 	controller.RegisterSource(defaultSource)
 	return controller
@@ -168,7 +171,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		MusicList:            list,
 		JacketsPathList:      jackets,
 		RequiredDifficulties: diff,
-		Profile:              c.detailedProfile(region),
+		Profile:              c.resolveDetailedProfile(query.DetailedProfile, region),
 		Title:                query.Title,
 		TitleStyle:           query.TitleStyle,
 		TitleShadow:          query.TitleShadow,
@@ -203,7 +206,14 @@ func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.Generate
 	if strings.TrimSpace(query.Difficulty) == "" && info != nil {
 		query.Difficulty = info.Difficulty
 	}
-	return builder.BuildMusicChartRequest(query, musicInfo, region)
+	req, err := builder.BuildMusicChartRequest(query, musicInfo, region)
+	if err != nil {
+		return nil, err
+	}
+	if query.Skill {
+		req.MusicMeta = c.resolveMusicChartMeta(region, musicInfo.ID, query.Difficulty)
+	}
+	return req, nil
 }
 
 func (c *Controller) RenderMusicChart(query ChartQuery) ([]byte, error) {
@@ -236,7 +246,7 @@ func (c *Controller) BuildMusicProgressRequest(query ProgressQuery) (*drawing.Pl
 	return &drawing.PlayProgressRequest{
 		Counts:     counts,
 		Difficulty: diff,
-		Profile:    c.profileCard(region),
+		Profile:    c.resolveProfileCard(query.Profile, region),
 	}, nil
 }
 
@@ -256,7 +266,7 @@ func (c *Controller) BuildMusicRewardsDetailRequest(query RewardsDetailQuery) (*
 	return &drawing.DetailMusicRewardsRequest{
 		RankRewards:   query.RankRewards,
 		ComboRewards:  ensureDetailComboRewards(query.ComboRewards),
-		Profile:       c.profileCard(region),
+		Profile:       c.resolveProfileCard(query.Profile, region),
 		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
 		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
 	}, nil
@@ -287,7 +297,7 @@ func (c *Controller) BuildMusicRewardsBasicRequest(query RewardsBasicQuery) (*dr
 	return &drawing.BasicMusicRewardsRequest{
 		RankRewards:   query.RankRewards,
 		ComboRewards:  combo,
-		Profile:       c.profileCard(region),
+		Profile:       c.resolveProfileCard(query.Profile, region),
 		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
 		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
 	}, nil
@@ -349,6 +359,13 @@ func (c *Controller) detailedProfile(region renderregion.Value) drawing.Detailed
 	return c.buildPlaceholderProfile(region)
 }
 
+func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) drawing.DetailedProfileCardRequest {
+	if override != nil {
+		return *override
+	}
+	return c.detailedProfile(region)
+}
+
 func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardRequest {
 	if snapshot := c.currentSnapshot(); snapshot != nil {
 		if profile := snapshot.ProfileCard(region); profile != nil {
@@ -356,6 +373,13 @@ func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardR
 		}
 	}
 	return convertDetailedProfileToCard(c.buildPlaceholderProfile(region))
+}
+
+func (c *Controller) resolveProfileCard(override *drawing.ProfileCardRequest, region renderregion.Value) drawing.ProfileCardRequest {
+	if override != nil {
+		return *override
+	}
+	return c.profileCard(region)
 }
 
 func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {
@@ -540,6 +564,31 @@ func cloneStringPtr(value *string) *string {
 	}
 	copy := *value
 	return &copy
+}
+
+func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID int, difficulty string) map[string]interface{} {
+	diff := normalizeDifficulty(difficulty)
+	if diff == "" || musicID <= 0 {
+		return nil
+	}
+
+	if c != nil && c.metaLoader != nil {
+		if payload := c.metaLoader.Get(region.String()); len(payload) > 0 {
+			if item := findMusicMeta(payload, musicID, diff); item != nil {
+				return item
+			}
+		}
+	}
+
+	if snapshot := c.currentSnapshot(); snapshot != nil {
+		if payload := snapshot.MusicMetaBytes(); len(payload) > 0 {
+			if item := findMusicMeta(payload, musicID, diff); item != nil {
+				return item
+			}
+		}
+	}
+
+	return nil
 }
 
 func matchesMusicKeyword(source DataSource, musicInfo *masterdata.Music, keyword string) bool {

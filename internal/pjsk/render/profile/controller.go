@@ -189,6 +189,71 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 	}, nil
 }
 
+func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.DetailedProfileCardRequest, error) {
+	if c == nil || c.sources == nil {
+		return nil, fmt.Errorf("profile controller is not initialized")
+	}
+	if resp == nil {
+		return nil, fmt.Errorf("nil API response")
+	}
+
+	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, fmt.Errorf("profile data source is not configured")
+	}
+
+	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
+	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard))
+
+	frames := parseFramesJSON(framesJSON)
+	framePaths, hasFrame := c.buildFramePaths(source, frames)
+	var framePath *string
+	if framePaths != nil {
+		path := framePaths.Base
+		framePath = &path
+	}
+
+	return &drawing.DetailedProfileCardRequest{
+		ID:              strconv.FormatInt(resp.User.UserID, 10),
+		Region:          strings.ToUpper(region.String()),
+		Nickname:        resp.User.Name,
+		Source:          "sekai_api_public",
+		UpdateTime:      0,
+		IsHideUID:       !query.Visible,
+		LeaderImagePath: leaderImagePath,
+		HasFrame:        hasFrame,
+		FramePath:       framePath,
+		UserCards:       buildAPIUserCardEntries(resp.UserDeck),
+	}, nil
+}
+
+func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileCardRequest, error) {
+	detail, err := c.BuildDetailedProfileCardFromAPI(query, resp, framesJSON)
+	if err != nil {
+		return nil, err
+	}
+	source := detail.Source
+	return &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{
+			ID:              detail.ID,
+			Region:          detail.Region,
+			Nickname:        detail.Nickname,
+			IsHideUID:       detail.IsHideUID,
+			LeaderImagePath: detail.LeaderImagePath,
+			HasFrame:        detail.HasFrame,
+			FramePath:       cloneStringPtr(detail.FramePath),
+		},
+		DataSources: []drawing.ProfileDataSource{
+			{
+				Name:   "Sekai API",
+				Source: &source,
+				Mode:   cloneStringPtr(detail.Mode),
+			},
+		},
+	}, nil
+}
+
 // RenderProfileFromAPI is a convenience wrapper that calls BuildProfileRequestFromAPI and
 // then sends the result to the drawing service.
 func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) ([]byte, error) {
@@ -212,6 +277,20 @@ func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.Prof
 		cloned.ImgPath = &path
 	}
 	return &cloned
+}
+
+func buildAPIUserCardEntries(deck sekai.UserDeck) []interface{} {
+	ids := []int{deck.Leader, deck.SubLeader, deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5}
+	entries := make([]interface{}, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		entries = append(entries, map[string]interface{}{
+			"card_id": id,
+		})
+	}
+	return entries
 }
 
 // buildLeaderImagePathFromSource resolves the leader card thumbnail path using the Source's
@@ -462,4 +541,12 @@ func findUserCard(cards []userdata.RawUserCard, cardID int) *userdata.RawUserCar
 		}
 	}
 	return nil
+}
+
+func cloneStringPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
 }

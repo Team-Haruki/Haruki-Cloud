@@ -29,6 +29,11 @@ func (sekaiHandlers) ChartHandle() SekaiCommandHandler {
 			if strings.TrimSpace(ctx.GetArgs()) == "" {
 				return nil, errors.New(MUSIC_SEARCH_HELP)
 			}
+			if ctx.GetTriggerCmd() == "/技能预览" {
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-chart", map[string]bool{
+					"skill": true,
+				}), nil
+			}
 			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-chart"), nil
 		},
 	}

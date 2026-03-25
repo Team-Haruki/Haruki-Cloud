@@ -151,7 +151,10 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 		})
 	}
 
-	profile := c.snapshot.DetailedProfile(region)
+	profile := query.Profile
+	if profile == nil {
+		profile = c.snapshot.DetailedProfile(region)
+	}
 	if profile == nil {
 		profile = &drawing.DetailedProfileCardRequest{
 			ID:              "1",

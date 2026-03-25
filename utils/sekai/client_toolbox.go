@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/config"
 
+	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v3"
 	"github.com/klauspost/compress/zstd"
@@ -66,7 +67,7 @@ func GetToolboxClient() *HarukiToolboxClient {
 //   - ErrAccountOwnerBanned     — game account owner is banned
 //   - *ToolboxAPIError          — any other unexpected non-2xx status
 func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
-	url := fmt.Sprintf("%s/api/private/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
+	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
@@ -136,7 +137,7 @@ func (c *HarukiToolboxClient) GetMySekaiData(server string, userID int64, platfo
 //
 //	GET /api/private/{server}/{dataType}/{userID}?platform=...&platform_user_id=...&key={key}
 func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType ToolboxDataType, userID int64, platform, platformUserID, key string) ([]byte, error) {
-	url := fmt.Sprintf("%s/api/private/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
+	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
@@ -194,6 +195,73 @@ func (c *HarukiToolboxClient) GetPrivateDataValues(server string, dataType Toolb
 // Returns the raw bytes of the integer value, e.g. []byte("1774339266").
 func (c *HarukiToolboxClient) GetUploadTime(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
 	return c.GetPrivateDataValue(server, dataType, userID, platform, platformUserID, "upload_time")
+}
+
+// UserGameBinding represents a single game account binding returned by the toolbox.
+type UserGameBinding struct {
+	Server     string `json:"server"`
+	GameUserID string `json:"gameUserId"`
+	Verified   bool   `json:"verified"`
+}
+
+// GetToolboxUserGameBindings looks up all game account bindings for a given
+// region + game user ID, verifying access via the provided platform credentials.
+//
+//	GET /api/private/game-binding/:region/:game_user_id?platform=...&platform_user_id=...
+//
+// Typed errors that callers should handle:
+//   - ErrAccountBindingNotFound — no binding found for this game user ID / region
+//   - ErrInvalidPlatformUser    — platform/user combo not authorised
+//   - ErrAccountOwnerBanned     — game account owner is banned
+//   - *ToolboxAPIError          — any other unexpected non-2xx status
+func (c *HarukiToolboxClient) GetToolboxUserGameBindings(region string, gameUserID int64, platform, platformUserID string) ([]UserGameBinding, error) {
+	url := fmt.Sprintf("%s/api/private/game-binding/%s/%d", c.config.BaseURL, region, gameUserID)
+
+	resp, err := c.http.R().
+		SetHeader("Authorization", c.config.APIToken).
+		SetHeader("User-Agent", c.config.UserAgent).
+		SetQueryParams(map[string]string{
+			"platform":         platform,
+			"platform_user_id": platformUserID,
+		}).
+		Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("toolbox: request failed after retries: %w", err)
+	}
+
+	switch resp.StatusCode() {
+	case fiber.StatusOK:
+		var bindings []UserGameBinding
+		if err := sonic.Unmarshal(resp.Body(), &bindings); err != nil {
+			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
+		}
+		return bindings, nil
+
+	case fiber.StatusForbidden:
+		msg := parseMessage(resp.Body())
+		switch {
+		case strings.Contains(msg, "invalid platform or platform_user_id"):
+			return nil, ErrInvalidPlatformUser
+		case strings.Contains(msg, "account owner is banned"):
+			return nil, ErrAccountOwnerBanned
+		default:
+			return nil, &ToolboxAPIError{StatusCode: fiber.StatusForbidden, Message: msg}
+		}
+
+	case fiber.StatusNotFound:
+		msg := parseMessage(resp.Body())
+		if strings.Contains(msg, "account binding not found") {
+			return nil, ErrAccountBindingNotFound
+		}
+		return nil, &ToolboxAPIError{StatusCode: fiber.StatusNotFound, Message: msg}
+
+	case fiber.StatusServiceUnavailable:
+		return nil, &ToolboxAPIError{StatusCode: fiber.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+
+	default:
+		msg := parseMessage(resp.Body())
+		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
+	}
 }
 
 // decompress handles transparent zstd decompression when the server indicates it.

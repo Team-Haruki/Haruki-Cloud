@@ -74,6 +74,7 @@ func (sekaiHandlers) EventStoryHandle() SekaiCommandHandler {
 func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "event/record",
 			Commands: []string{
 				"/pjsk event record", "/pjsk_event_record",
 				"/活动记录", "/冲榜记录",

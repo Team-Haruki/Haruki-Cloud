@@ -221,27 +221,6 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileSwapBindHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk swap bind", "/pjsk交换绑定",
-				"/交换绑定", "/绑定交换", "/交换账号", "/交换账号顺序",
-			},
-			Disabled: true,
-		},
-		ParseUIDArg: boolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
-			if len(parts) != 2 {
-				return nil, fmt.Errorf("使用方式:\n%s u1 u2", ctx.originalTriggerCmd)
-			}
-			// TODO: 迁移 swap_player_bind_id(ctx, qid, index1, index2)
-			return nil, fmt.Errorf("TODO: 交换绑定未实现，parts=%v", parts)
-		},
-	}
-}
-
 func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -311,54 +290,6 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx)), nil
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileInfoHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk profile", "/个人信息", "/名片", "/pjsk 个人信息", "/pjsk 名片",
-			},
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			p, err := resolveUserQueryParams(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, handler.ProfileModeRender, p), nil
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileCheckServiceHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk check service", "/pcs", "/pjsk检查服务状态",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			// TODO: 迁移 get_service_status 逻辑
-			return nil, fmt.Errorf("TODO: profile服务状态检查未实现")
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileDataModeHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk data mode", "/pjsk抓包模式", "/pjsk抓包获取模式", "/抓包模式",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			// TODO: 迁移 data_modes 查询/切换逻辑
-			return nil, fmt.Errorf("TODO: 抓包模式查询/设置未实现，args=%q", args)
 		},
 	}
 }
@@ -498,24 +429,6 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			params.Alpha = adjustParams.Alpha
 			params.Vertical = adjustParams.Vertical
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGAdjust, params), nil
-		},
-	}
-}
-
-func (sekaiHandlers) ProfileBindHistoryHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk bind history", "/pjsk bind his", "/绑定历史", "/绑定记录",
-			},
-			Priority: 1,
-			Disabled: true,
-		},
-		// TODO: refer 中这里是 CmdHandler（非 SekaiCmdHandler）
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			// TODO: 迁移 superuser 校验 + bind_history 查询逻辑
-			return nil, fmt.Errorf("TODO: 绑定历史查询未实现，args=%q", args)
 		},
 	}
 }

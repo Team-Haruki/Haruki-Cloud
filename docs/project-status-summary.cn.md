@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v15.4）
+> 最后更新：2026-03-25（v16.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -399,7 +399,7 @@ ban_state              → 全平台禁用
 - 这次改动解决的是 `Haruki-Cloud` 侧“payload 没有把 `music_meta` 传下去”的问题。
 - 若后续图面仍未正确显示技能加成文本或 fever 区块，应继续排查 `Haruki-Drawing-API` / `pjsekai-scores-rs` 对 `music_meta` 字段的消费逻辑，而不是再回到 Cloud 侧重复排查注入链。
 
-## 6. 全功能链路状态（v14.0 全量审计）
+## 6. 全功能链路状态（v16.0 全量审计）
 
 ### 6.1 已全链路接通（E2E Ready）✅
 
@@ -415,7 +415,7 @@ ban_state              → 全平台禁用
 | **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 | music · list · progress · rewards · chart |
 | **Gacha** | 卡池列表 | gacha |
 | **Deck** | 活动/挑战/长草/加成/烤森 组卡推荐 | deck/event · challenge · no-event · bonus · mysekai |
-| **Event** | 活动列表 / 活动详情 / 活动记录 | event/list · event · event-record |
+| **Event** | 活动列表 / 活动详情 / **活动记录** | event/list · event · event/record |
 | **Education** | 挑战信息 / 加成信息 / 区域道具 / 羁绊 / 队长统计 | education/challenge · power · area · bonds · leader |
 | **Score** | 分数计算 / 自定义房间 / 歌曲 meta / 歌曲排行 | score · custom-room · music-meta · music-board |
 | **SK** | 档线 / 查询 / 时速 / 查房 / 玩家轨迹 / 档线轨迹 / 胜率预测 / 日速 / SK 预测 / 水表 | sk/line · query · speed · check-room · player-trace · rank-trace · winrate · (日速/预测/水表→复用) |
@@ -423,17 +423,13 @@ ban_state              → 全平台禁用
 | **Stamp** | 贴纸列表 | stamp |
 | **Misc** | 角色生日 | misc/birthday |
 
-> **统计**：约 75 个 handler · 15 个 module · 全部有 bridge case
+> **统计**：约 70 个 handler · 15 个 module · 全部有 bridge case · 所有 enabled handler 均有 Path
 
 ---
 
 ### 6.2 已定义但未实现（Disabled / TODO）❌
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
-
-**Profile 系统（4 个）**
-
-- 尚未实现：交换绑定、服务状态检查、抓包模式切换、绑定历史
 
 **Music 系统（5 个）**：别名查询/添加/删除（alias-feature，设计待定）、BPM 查询、曲绘查询、物量统计
 
@@ -447,20 +443,28 @@ ban_state              → 全平台禁用
 
 **MySekai 系统（2 个）**：照片下载、抓包数据检查
 
+**Misc 系统（2 个）**：帮助（HelpHandle，bridge 无实现）、ExtractCard
+
 **Virtual Live（1 个）**：vlive 查询
 
-> **统计**：约 24 个 handler 仍未实现；Profile 中原先“字段已就绪可直接实现”的那一组已完成收口
+> **统计**：约 22 个 handler 仍未实现
 
 ---
 
-### 6.3 特殊 handler（绕过 bridge）
+### 6.3 v16.0 本次清理（handler 清理与链路修复）
+
+- **删除**：`ProfileSwapBindHandle`（交换绑定）、`ProfileCheckServiceHandle`（服务状态检查）、`ProfileDataModeHandle`（抓包模式切换）、`ProfileBindHistoryHandle`（绑定历史）——全部不在项目规划内
+- **删除**：`ProfileInfoHandle`——功能与 `ProfileHandle`（path: `profile`）完全重复，冗余死代码
+- **修复**：`EventRecordHandle` 补充 `Path: "event/record"`，现已进入 bot API 路由表
+- **修复**：`HelpHandle` 改为 `Disabled: true`，防止路由到无实现的 `ModuleHelp`
+
+### 6.4 特殊 handler（绕过 bridge）
 
 | Handler | 行为 |
 |---------|------|
 | `HeyiweiHandle`（/b30, /b39） | 返回硬编码字符串"何意味"，Easter Egg，不走 bridge |
 
 ---
-
 ## 7. 当前保留项
 
 下面这些内容目前明确保留：

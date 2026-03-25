@@ -47,9 +47,10 @@ func (sekaiHandlers) HelpHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/help", "/帮助",
 			},
+			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleHelp, "help"), nil
+			return nil, fmt.Errorf("TODO: 帮助未实现")
 		},
 	}
 }

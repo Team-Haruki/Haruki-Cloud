@@ -88,7 +88,6 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 	}
 
 	args := ctx.GetArgs()
-	uidArg := ""
 
 	ext := parser.NewExtractor(nil)
 	flags := make(map[string]bool)
@@ -114,6 +113,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 	helpRes := ext.ExtractHelp(args)
 	flags["is_help"] = helpRes.Value
 	args = helpRes.Remaining
+	uidArg := ""
 
 	if skh.shouldParseUIDArg() {
 		uidRes := ext.ExtractUid(args)

@@ -38,12 +38,11 @@ type Context interface {
 	GetAtIds() []string
 }
 
-func BuildContext(ctx context.Context, event Event, macthedCommand string) (*HandlerContext, error) {
+func BuildContext(ctx context.Context, event Event) (*HandlerContext, error) {
 	handleCtx := HandlerContext{
 		Context:     ctx,
 		Event:       event,
 		Platform:    event.Platform,
-		TriggerCmd:  macthedCommand,
 		MessageType: event.MessageType,
 		Message:     event.Message,
 		MessageId:   event.MessageId,

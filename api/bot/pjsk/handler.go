@@ -13,14 +13,13 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"slices"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
-
-	"haruki-cloud/api/bot/onebot11"
 )
 
 const botRouteBase = "/api/v2/bot"
@@ -77,7 +76,7 @@ func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient
 
 	pjsk := bot.Group("/pjsk")
 	for _, route := range commandhandler.ListBotRoutes() {
-		h := makeBotHandler(renderApp, route.Path)
+		h := makeBotHandler(renderApp, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Get(path, h)
 	}
@@ -86,7 +85,7 @@ func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient
 // makeBotHandler returns a GET-only fiber.Handler that validates the matched
 // command header belongs to the current endpoint path, then lets the registered
 // handler parse the original OneBot payload and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
@@ -98,7 +97,9 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler
 		if req.MatchedCommand == "" {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "X-Haruki-Bot-Matched-Command is required")
 		}
-
+		if !slices.Contains(commands, req.MatchedCommand) {
+			return api.JSONResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
+		}
 		message, err := decodeCommand(req.CommandPayload)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to decode command", BotCommandErrorResponse{
@@ -128,27 +129,14 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string) fiber.Handler
 			resolved.Region = req.Server
 		}
 
-		responseData, dataType, err := commandhandler.Execute(context.Background(), resolved, renderApp)
+		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
 				Error: err.Error(),
 				Mode:  resolved.Mode,
 			})
 		}
-
-		switch dataType {
-		case commandhandler.CommandResultDataTypeImagePNG:
-			c.Set("Content-Type", string(dataType))
-			return c.Send(responseData)
-		case commandhandler.CommandResultDataTypeImageURL:
-			return api.JSONResponse(c, fiber.StatusOK, "ok", onebot11.Image(string(responseData)))
-		case commandhandler.CommandResultDataTypeText:
-			return api.JSONResponse(c, fiber.StatusOK, "ok", onebot11.Text(string(responseData)))
-		default:
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "unsupported command result", BotCommandErrorResponse{
-				Error: fmt.Sprintf("execute returned unsupported data type %q", dataType),
-			})
-		}
+		return api.JSONResponse(c, fiber.StatusOK, "ok", responseData)
 	}
 }
 
@@ -173,24 +161,8 @@ func (e *botValidationError) Error() string {
 }
 
 func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+
 	matchedCommand := req.MatchedCommand
-	matched := commandhandler.MatchCommandHandler(matchedCommand)
-	if matched.Handler == nil || matched.Handler.IsDisabled() {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
-	}
-
-	if remaining, ok := commandhandler.ExtractCommandArgs(matchedCommand, matched.Command); !ok || remaining != "" {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not an exact registered command: %s", matchedCommand)}
-	}
-
-	if matched.Handler.GetPath() == "" {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
-	}
-
-	if matched.Handler.GetPath() != expectedPath {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
-	}
-
 	messageType := commandhandler.MessageTypePrivate
 	if req.PlatformGroupID != "" {
 		messageType = commandhandler.MessageTypeGroup
@@ -204,16 +176,27 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 		GroupId:     req.PlatformGroupID,
 	}
 
-	ctx, err := commandhandler.BuildContext(context.Background(), event, matchedCommand)
+	ctx, err := commandhandler.BuildContext(context.Background(), event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build handler context: %w", err)
 	}
-	args, ok := commandhandler.ExtractCommandArgs(ctx.ArgText, matchedCommand)
-	if !ok {
-		return nil, &botValidationError{msg: "original command does not start with matched_command"}
+	matched := commandhandler.MatchCommandHandler(ctx.GetArgs())
+	if matched.Handler == nil || matched.Handler.IsDisabled() {
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
+	}
+	if matched.Command != matchedCommand {
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command does not match handler command: %s", matchedCommand)}
 	}
 
-	ctx.ArgText = args
+	if matched.Handler.GetPath() == "" {
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
+	}
+
+	if matched.Handler.GetPath() != expectedPath {
+		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
+	}
+
+	ctx.ArgText = strings.TrimSpace(string(matched.ArgText))
 	ctx.MessageType = messageType
 	result, err := matched.Handler.Handle(ctx)
 	if err != nil {
@@ -223,6 +206,8 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 	if !ok {
 		return nil, fmt.Errorf("handler returned %T", result)
 	}
+	resolved.RequesterPlatform = req.Platform
+	resolved.RequesterUserID = req.PlatformUserID
 	return resolved, nil
 }
 

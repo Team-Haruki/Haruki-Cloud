@@ -340,8 +340,8 @@ Bot 端点
   -> handler 返回 ResolvedCommand
   -> commandhandler.Execute(...)
   -> profile 执行分发
-  -> 返回 文本数据 + 数据类型
-  -> Bot API 按数据类型输出响应
+  -> 返回 onebot11.Message
+  -> Bot API 直接输出 OneBot11 JSON 响应
 ```
 
 也就是说：
@@ -367,32 +367,25 @@ Bot 端点
 1. 原始输入中的 UID、`uN`、是否显式指定区服等信息，应由 handler 解析后写入 `Params`
 2. `Query` 仍可保留原始剩余参数，但不能把真正的业务执行放在 handler 内完成
 
-### 11.4 `Execute` 返回类型修正
+### 11.4 `Execute` 返回值收口
 
-当前 `commandhandler.Execute(...)` 只返回 `[]byte`，这对图片命令足够，但对绑定类文本命令不够准确。
+这条链路已经走过两步收口：
 
-应改为返回：
+1. 第一阶段先把图片/文本统一到 `Execute(...)`
+2. 第二阶段再把 `Execute(...)` 的外部契约进一步收口为 `onebot11.Message`
 
-```go
-func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error)
-```
-
-其中 `CommandResultDataType` 必须定义为显式常量，而不是由调用方猜测：
+当前代码状态是：
 
 ```go
-type CommandResultDataType string
-
-const (
-    CommandResultDataTypeImagePNG CommandResultDataType = "image/png"
-    CommandResultDataTypeText     CommandResultDataType = "text/plain"
-)
+func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error)
 ```
 
-这里的重点不是常量名细节，而是：
+当前约定如下：
 
-1. 图片和文本都由 `Execute` 统一返回
-2. 数据类型必须是强约束常量
-3. Bot API 不再通过 `handler.Handle()` 的 Go 返回类型分支判断业务类型
+1. 图片类 `execute*` 在 bridge 内部完成 `Render... -> ImageCache.StoreAndGetURL(...) -> onebot11.Image(url)`
+2. 文本类 `execute*` 直接在 bridge 内部返回 `onebot11.Text(text)`
+3. `CommandResultDataType` 仍保留在 bridge 内部，主要给 `executeProfile(...)` 这类辅助路径区分图片/文本，不再作为 API 对外契约
+4. Bot API 与 legacy API 不再根据 `data_type` 分支出站
 
 ### 11.5 Bot API 的正确职责
 
@@ -400,22 +393,13 @@ const (
 
 1. 调用 handler，拿到 `*parser.ResolvedCommand`
 2. 调用 `commandhandler.Execute(...)`
-3. 根据 `CommandResultDataType` 输出 HTTP 响应
+3. 直接输出 `Execute(...)` 返回的 `onebot11.Message`
 
-具体要求：
+当前实现还补充了两个关键约束：
 
-1. `CommandResultDataTypeImagePNG`
-   - 返回 `image/png`
-2. `CommandResultDataTypeText`
-   - 返回文本型业务结果
-   - 当前 Bot 协议下可继续包装为 JSON 响应体
-
-不再允许：
-
-1. `case *parser.ResolvedCommand`
-2. `case string`
-
-这样的业务分流逻辑直接留在 Bot API 中。
+1. `BuildContext(ctx, event)` 只负责从消息段提取 `ArgText` 与 `at` 列表
+2. 真正的命令匹配通过 `MatchCommandHandler(ctx.GetArgs())` 完成，并校验结果与请求头 `matched_command` 及当前 endpoint path 一致
+3. API 层不再保留 `case *parser.ResolvedCommand`、`case string` 或 `case data_type` 这类业务分流逻辑
 
 ### 11.6 `profile` 执行分发要求
 
@@ -428,14 +412,13 @@ const (
 
 ### 11.7 本轮修正的实施顺序
 
-后续代码修正应按下面顺序进行：
+当前这轮收口实际按下面顺序落地：
 
 1. 先回退 handler 内部直接执行业务、直接返回字符串的实现
 2. 为 profile 绑定命令定义稳定的 `ResolvedCommand.Mode`
-3. 修改 `commandhandler.Execute(...)` 签名，增加“数据类型”返回值和常量定义
-4. 扩展 `executeProfile(...)`，承接绑定/解绑/默认绑定执行
-5. 调整 Bot API，使其只按 `Execute` 的数据类型响应
-6. 最后补测试
+3. 先用 `payload + data_type` 打通图片/文本统一执行
+4. 再把 `Execute(...)`、bot API、legacy API 的外部契约统一收口到 `onebot11.Message`
+5. 最后再把 `BuildContext` 简化为只负责消息提取，把命令匹配收回 registry
 
 ### 11.8 验收标准
 
@@ -443,8 +426,8 @@ const (
 
 1. binding 相关 handler 与其他 handler 一样，只返回 `ResolvedCommand`
 2. Bot API 不再根据 handler 返回 `string` 做特殊分支
-3. `commandhandler.Execute(...)` 成为图片命令和文本命令的统一执行入口
-4. 数据类型由显式常量定义
+3. `commandhandler.Execute(...)` 成为图片命令和文本命令的统一执行入口，并直接返回 `onebot11.Message`
+4. bot API 与 legacy API 直接输出 `Execute(...)` 结果，不再以 `data_type` 为外部协议
 5. `refer/profile.py` 只保留语义参考价值，不污染 Cloud 当前的分层结构
 
 ## 12. 相关文档

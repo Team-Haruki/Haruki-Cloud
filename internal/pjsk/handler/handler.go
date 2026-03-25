@@ -19,7 +19,7 @@ const DefaultPriority = 100
 
 func Dispatch(ctx context.Context, event Event) (interface{}, error) {
 
-	handlerContext, err := BuildContext(ctx, event, "")
+	handlerContext, err := BuildContext(ctx, event)
 	if err != nil {
 		return nil, fmt.Errorf("构建命令上下文失败: %w", err)
 	}

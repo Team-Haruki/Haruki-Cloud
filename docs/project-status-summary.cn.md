@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-25（v15.0）
+> 最后更新：2026-03-25（v15.1）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -16,7 +16,7 @@
 1. 云端下发 manifest。
 2. 客户端构建前缀树并命中 `path`。
 3. 客户端按命中的 `path` 调用 `/api/v2/bot/:botId/pjsk/*`，并上传 `matched_command`。
-4. 命中的端点在云端内部先校验 `matched_command -> handler.path`，再解析原文、提取参数，并进入统一执行链路返回图片或文本。
+4. 命中的端点在云端内部先校验 `matched_command -> handler.path`，再解析原文、提取参数，并进入统一执行链路返回 `onebot11.Message`。
 
 也就是说，客户端负责“命中哪个端点”，云端端点负责“这个端点到底怎么解释原文”。
 
@@ -124,7 +124,7 @@ PJSK 指令系统不应再把“云端全局 resolver 重新选 module + mode”
 1. 绑定命令已经接入 `/api/v2/bot/:botId/pjsk/profile/*`
 2. handler 只返回 `ResolvedCommand`
 3. 文本型绑定命令与图片型命令统一走 `commandhandler.Execute(...)`
-4. `Execute(...)` 统一返回 `payload + data_type`
+4. `Execute(...)` 统一返回 `onebot11.Message`
 5. 绑定业务执行和文本格式化已下沉到 `internal/pjsk/userdata/`
 
 更详细的实现说明、代码落点、测试覆盖和注意事项，请直接参考：
@@ -254,19 +254,21 @@ type ProfileBgSettings struct {
 
 ## 5.4 Image Cache System & 颗粒度 Ban（v13.0 新增）
 
-### Image Cache System
+### Image Cache System / OneBot11 出站
 
-**背景**：此前 bot API 对图片渲染结果直接以 `image/png` raw bytes 返回，不符合设计——bot 框架（如 go-cqhttp / nonebot）应收到 OneBot11 `MessageSegment`，而非裸字节流。
+**背景**：PJSK bot/legacy handler 的外部契约已经从 `payload + data_type` 收口为 `onebot11.Message`。图片与文本都不再由 API 层做结果类型分支，而是在 bridge 内部直接封装成 OneBot11 消息段。
 
 **实现方案**：
 
 | 层级 | 说明 |
 |------|------|
 | `utils/imagecache.Client` | 新建包；`StoreAndGetURL(data, group)` 将 PNG 以 SHA-256 内容寻址写入磁盘并返回 CDN URL |
-| `renderapp.Config.ImageCacheURI/Dir` | 新增两个字段，对应 `pjsk_render.image_cache.uri/dir` |
-| `renderapp.App.ImageCache` | 工厂 `New()` 中直接初始化，nil 时降级到 raw bytes |
-| `CommandResultDataTypeImageURL` | `result.go` 新增类型；bridge 图片执行器调用 `imageCacheOrBytes()` 决定返回类型 |
-| bot handler | 新增 `case CommandResultDataTypeImageURL` → 返回 JSON OneBot11 image segment `{"type":"image","data":{"file":"<url>"}}` |
+| `renderapp.Config.ImageCacheURI/Dir` | 对应 `pjsk_render.image_cache.uri/dir` |
+| `renderapp.App.ImageCache` | 工厂 `New()` 中直接初始化，供 bridge 图片执行器生成 URL |
+| `internal/pjsk/handler/bridge.go` | `Execute(...)` 对外统一返回 `onebot11.Message` |
+| 图片类 `execute*` | 在 bridge 内部完成 `Render... -> StoreAndGetURL(...) -> onebot11.Image(url)` |
+| 文本类 `execute*` | 在 bridge 内部直接返回 `onebot11.Text(text)` |
+| bot handler / legacy API | 直接 JSON 返回 `Execute(...)` 的消息段数组 |
 
 **配置示例**：
 ```yaml
@@ -276,7 +278,7 @@ pjsk_render:
     dir: "/var/haruki/image-cache"
 ```
 
-**降级行为**：`image_cache.uri` 或 `dir` 未配置时，`imagecache.New()` 返回 nil；bridge 自动回退为 `CommandResultDataTypeImagePNG`（raw bytes），保持兼容。
+**当前行为**：`image_cache.uri` 或 `dir` 未配置时，`imagecache.New()` 返回 nil；当前图片类 bridge 执行器不再回退 raw bytes，而是会因为无法生成图片 URL 而返回错误。
 
 ---
 
@@ -400,7 +402,7 @@ ban_state              → 全平台禁用
 3. MySekai 仍有本地 masterdata fallback
 4. Deck 当前仍是 Go 方案，旧 CGo 引擎未恢复为默认链路
 5. 已存在的 `command_manifests` 若被人工特殊维护，仍需确认新的 handler-source 同步结果是否符合预期
-6. `context.Background()` 在 bot handler 中硬编码（M-1），应传 `c.Context()`
+6. 图片类 bridge 执行器当前强依赖 `ImageCache`；若部署未配置 image cache，会直接影响图片命令可用性
 7. `user_bindings` 表新增的 `suite_visible`、`bg`、`verified` 三个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
 8. `authorize_social_platform_infos` 表新增 `allow_fast_verification` 列同样需要 DB 迁移（Toolbox 侧）
 

@@ -1,6 +1,6 @@
 # Haruki-ZeroBot 与 Haruki-Cloud 联调方案
 
-> 最后更新：2026-03-24
+> 最后更新：2026-03-25
 >
 > 本文档描述的是当前目标联调协议。若现有实现仍保留部分旧链路，以本文定义的边界为后续收口目标。
 
@@ -12,7 +12,7 @@
 2. `Haruki-ZeroBot` 基于 manifest 构建本地前缀树。
 3. 客户端收到消息后先本地命中 `path`。
 4. 客户端按命中的 `path` 请求对应 `/api/v2/bot/*` 端点，并上传 `matched_command`。
-5. 云端端点校验 `matched_command` 属于当前 `path` 后，再在 handler 内部解析原始文本、提取参数，并进入统一执行链路返回图片或文本。
+5. 云端端点校验 `matched_command` 属于当前 `path` 后，再在 handler 内部解析原始文本、提取参数，并进入统一执行链路返回 OneBot11 消息。
 
 ## 2. 协议边界
 
@@ -141,7 +141,7 @@ X-Haruki-Bot-Matched-Command: /查卡
 6. 若 `matched_command` 不属于当前端点，返回 `400`
 7. 若解析失败，返回 `400`
 8. 若解析成立，调用 `commandhandler.Execute(...)`
-9. 按执行结果类型返回图片或文本
+9. 返回 JSON 包装的 `onebot11.Message`（图片为 `image` segment，文本为 `text` segment）
 
 以 `card/detail` 为例：
 
@@ -227,7 +227,7 @@ X-Haruki-Bot-Matched-Command: /查卡
 
 至少验证：
 
-1. 命中正确端点时能成功返回图片或文本结果
+1. 命中正确端点时能成功返回 OneBot11 图片/文本消息
 2. 故意请求错误端点时云端返回 `400`
 
 ### 阶段 5：上下文字段联调
@@ -248,7 +248,7 @@ X-Haruki-Bot-Matched-Command: /查卡
 2. 客户端可以按 manifest 构建前缀树。
 3. 客户端命中后可以正确产出 `path + matched_command`。
 4. 客户端可以正确请求 `/api/v2/bot/:botId/pjsk/*`。
-5. 云端端点能按原文在本端点内解析参数，并根据执行结果返回图片或文本。
+5. 云端端点能按原文在本端点内解析参数，并返回 OneBot11 图片/文本消息。
 6. 客户端请求错误端点时，云端能稳定返回 `400`。
 
 ## 12. 相关文档

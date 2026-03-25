@@ -34,8 +34,8 @@
   -> handler 返回 ResolvedCommand
   -> commandhandler.Execute(...)
   -> profile 分发到 userdata 绑定执行
-  -> Execute 返回 payload + data_type
-  -> API 层按 data_type 输出最终响应
+  -> Execute 返回 onebot11.Message
+  -> API 层直接输出 OneBot11 JSON 响应
 ```
 
 这意味着：
@@ -62,23 +62,20 @@
    - 协议校验
    - HTTP 出站响应
 
-### 2.3 结果类型结论
+### 2.3 返回值结论
 
-`commandhandler.Execute(...)` 不再只返回 `[]byte`，而是统一返回：
+`commandhandler.Execute(...)` 当前统一返回：
 
 ```go
-([]byte, CommandResultDataType, error)
+(onebot11.Message, error)
 ```
 
-当前定义的结果类型常量为：
-
-1. `CommandResultDataTypeImagePNG = "image/png"`
-2. `CommandResultDataTypeText = "text/plain"`
-
-因此：
+当前外部约定为：
 
 1. 图片命令和文本命令都走同一个执行入口
-2. API 层不再依赖 handler 的返回值 Go 类型做业务判断
+2. 图片命令在 bridge 内部转成 `onebot11.Image(url)`
+3. 文本命令在 bridge 内部转成 `onebot11.Text(text)`
+4. API 层不再依赖 handler 的返回值 Go 类型，也不再依赖 `data_type` 分支做业务判断
 
 ## 3. 当前已实现的账号绑定能力
 
@@ -246,12 +243,17 @@
 
 职责：
 
-1. 定义统一执行结果类型常量
+1. 保留 bridge 内部辅助结果类型常量
 
 当前常量：
 
 1. `CommandResultDataTypeImagePNG`
-2. `CommandResultDataTypeText`
+2. `CommandResultDataTypeImageURL`
+3. `CommandResultDataTypeText`
+
+注意：
+
+这些类型当前主要给 bridge 内部的少量兼容路径使用，不再作为 `Execute(...)` 的对外返回契约。
 
 #### `internal/pjsk/handler/profile_mode.go`
 
@@ -272,10 +274,13 @@
 3. 对 profile 模块继续转发到：
    - 传统 profile 图片渲染
    - userdata 绑定执行
+4. 直接返回 `onebot11.Message`
 
 注意：
 
-这里现在只负责“转发”，不再保存绑定领域逻辑。
+1. 图片类执行器在这里完成 `StoreAndGetURL(...)` 和 `onebot11.Image(...)` 封装
+2. 文本类执行器在这里直接返回 `onebot11.Text(...)`
+3. 这里现在只负责“转发”，不再保存绑定领域逻辑
 
 ### 5.2 sekai handler 层
 
@@ -430,12 +435,10 @@
 2. 读取 `X-Haruki-Bot-Matched-Command`
 3. 将 `command_payload` 恢复为 OneBot 消息段
 4. 通过 `BuildContext` 提取纯文本参数和 `at` 列表
-5. 校验当前 `matched_command` 是否属于该 path
+5. 通过 `MatchCommandHandler(ctx.GetArgs())` 校验当前原文实际命中的 handler 与 `matched_command` 一致，且属于该 path
 6. 调用 handler 获取 `ResolvedCommand`
-7. 调用 `commandhandler.Execute(...)`
-8. 按 `CommandResultDataType` 输出响应：
-   - `image/png`
-   - JSON 包装的文本消息
+7. 调用 `commandhandler.Execute(c.Context(), ...)`
+8. 直接返回 JSON 包装的 `onebot11.Message`
 
 ### 7.2 legacy API
 
@@ -447,7 +450,7 @@
 
 1. `resolver.Resolve(...)`
 2. `commandhandler.Execute(...)`
-3. 按 `CommandResultDataType` 出站响应
+3. 直接返回 JSON 包装的 `onebot11.Message`
 
 不过需要再次明确：
 

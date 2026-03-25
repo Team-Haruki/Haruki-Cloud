@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
@@ -28,170 +29,194 @@ import (
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
-// Execute routes a ResolvedCommand to the corresponding execution controller,
-// returning the output payload, its data type, or an error.
-// This is the main bridge between the parser output and the render system.
-func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+// Execute routes a ResolvedCommand to the corresponding execution controller
+// and returns a OneBot message or an error.
+func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	if resolved == nil {
-		return nil, "", fmt.Errorf("bridge: nil resolved command")
+		return nil, fmt.Errorf("bridge: nil resolved command")
 	}
 	if app == nil {
-		return nil, "", fmt.Errorf("bridge: nil render app")
+		return nil, fmt.Errorf("bridge: nil render app")
 	}
 
 	// Check requester ban before dispatching.
 	if platform := strings.TrimSpace(resolved.RequesterPlatform); platform != "" {
 		if userID := strings.TrimSpace(resolved.RequesterUserID); userID != "" {
 			if err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module); err != nil {
-				return []byte(err.Error()), CommandResultDataTypeText, nil
+				message = append(message, onebot11.Text(err.Error()))
+				return message, nil
 			}
 		}
 	}
 
-	var (
-		data []byte
-		err  error
-	)
 	switch resolved.Module {
 	case parser.ModuleCard:
-		data, err = executeCard(resolved, app)
+		message, err = executeCard(resolved, app)
 	case parser.ModuleEvent:
-		data, err = executeEvent(resolved, app)
+		message, err = executeEvent(resolved, app)
 	case parser.ModuleMusic:
-		data, err = executeMusic(resolved, app)
+		message, err = executeMusic(resolved, app)
 	case parser.ModuleGacha:
-		data, err = executeGacha(resolved, app)
+		message, err = executeGacha(resolved, app)
 	case parser.ModuleDeck:
-		data, err = executeDeck(resolved, app)
+		message, err = executeDeck(resolved, app)
 	case parser.ModuleEducation:
-		data, err = executeEducation(resolved, app)
+		message, err = executeEducation(resolved, app)
 	case parser.ModuleSK:
-		data, err = executeSK(ctx, resolved, app)
+		message, err = executeSK(ctx, resolved, app)
 	case parser.ModuleScore:
-		data, err = executeScore(resolved, app)
+		message, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
-		return executeProfileWithCache(ctx, resolved, app)
+		message, err = executeProfileWithCache(ctx, resolved, app)
 	case parser.ModuleArrest:
-		return executeArrest(ctx, resolved, app)
+		message, err = executeArrest(ctx, resolved, app)
 	case parser.ModuleRegTime:
-		return executeRegTime(ctx, resolved, app)
+		message, err = executeRegTime(ctx, resolved, app)
 	case parser.ModuleCheckData:
-		return executeCheckData(ctx, resolved, app)
+		message, err = executeCheckData(ctx, resolved, app)
 	case parser.ModuleMysekai:
-		data, err = executeMysekai(resolved, app)
+		message, err = executeMysekai(resolved, app)
 	case parser.ModuleStamp:
-		data, err = executeStamp(resolved, app)
+		message, err = executeStamp(resolved, app)
 	case parser.ModuleMisc:
-		data, err = executeMisc(resolved, app)
+		message, err = executeMisc(resolved, app)
 	default:
-		return nil, "", fmt.Errorf("bridge: unsupported module %v", resolved.Module)
+		return nil, fmt.Errorf("bridge: unsupported module %v", resolved.Module)
 	}
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	return imageCacheOrBytes(data, app, "pjsk")
+	return message, nil
 }
 
-// imageCacheOrBytes stores img to the image cache if configured and returns a
-// URL result; falls back to raw PNG bytes if image cache is not configured or
-// storage fails.
-func imageCacheOrBytes(img []byte, app *renderapp.App, group string) ([]byte, CommandResultDataType, error) {
-	if app.ImageCache != nil {
-		if url, err := app.ImageCache.StoreAndGetURL(img, group); err == nil {
-			return []byte(url), CommandResultDataTypeImageURL, nil
-		}
+func imageMessage(img []byte, app *renderapp.App, group string) (onebot11.Message, error) {
+	url, err := app.ImageCache.StoreAndGetURL(img, group)
+	if err != nil {
+		return nil, err
 	}
-	return img, CommandResultDataTypeImagePNG, nil
+	return onebot11.Message{onebot11.Image(url)}, nil
 }
 
 // executeProfileWithCache wraps executeProfile so image results go through the
 // image cache layer.
-func executeProfileWithCache(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+func executeProfileWithCache(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	data, dataType, err := executeProfile(ctx, r, app)
-	if err != nil || dataType != CommandResultDataTypeImagePNG {
-		return data, dataType, err
+	if err != nil {
+		return nil, err
 	}
-	return imageCacheOrBytes(data, app, "pjsk")
+	switch dataType {
+	case CommandResultDataTypeImagePNG:
+		return imageMessage(data, app, BotModulePJSK)
+	case CommandResultDataTypeText:
+		return onebot11.Message{onebot11.Text(string(data))}, nil
+	default:
+		return nil, fmt.Errorf("bridge: unsupported profile result type %q", dataType)
+	}
 }
 
-func executeCard(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var (
+		data []byte
+		url  string
+	)
 	switch r.Mode {
 	case "card-detail":
 		q := card.Query{Query: r.Query, Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Cards.RenderCardDetail(q)
+		data, err = app.Cards.RenderCardDetail(q)
 	case "card-list":
 		q := card.ListRequest{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Cards.RenderCardList(q)
+		data, err = app.Cards.RenderCardList(q)
 	case "card-box":
 		queries := []card.Query{{Query: r.Query, Region: r.Region}}
-		return app.Cards.RenderCardBox(queries)
+		data, err = app.Cards.RenderCardBox(queries)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported card mode %q", r.Mode)
 	}
+	if err != nil {
+		return
+	}
+	url, err = app.ImageCache.StoreAndGetURL(data, BotModulePJSK)
+	return onebot11.Message{onebot11.Image(url)}, err
 }
 
-func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
 	case "event-detail":
 		q := event.DetailQuery{Region: region}
 		mergeParams(r.Params, &q)
-		return app.Events.RenderEventDetail(q)
+		data, err = app.Events.RenderEventDetail(q)
 	case "event-list":
 		q := event.ListQuery{Region: region}
 		mergeParams(r.Params, &q)
-		return app.Events.RenderEventList(q)
+		data, err = app.Events.RenderEventList(q)
 	case "event-record":
 		req := drawing.EventRecordRequest{}
 		mergeParams(r.Params, &req)
-		return app.Events.RenderEventRecord(req)
+		data, err = app.Events.RenderEventRecord(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported event mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	switch r.Mode {
 	case "music-detail":
 		q := music.Query{Query: r.Query, Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Music.RenderMusicDetail(q)
+		data, err = app.Music.RenderMusicDetail(q)
 	case "music-list":
 		q := music.ListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Music.RenderMusicList(q)
+		data, err = app.Music.RenderMusicList(q)
 	case "music-chart":
 		q := music.ChartQuery{Query: r.Query, Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Music.RenderMusicChart(q)
+		data, err = app.Music.RenderMusicChart(q)
 	case "music-progress":
 		q := music.ProgressQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Music.RenderMusicProgress(q)
+		data, err = app.Music.RenderMusicProgress(q)
 	case "music-rewards":
 		q := music.RewardsBasicQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.Music.RenderMusicRewardsBasic(q)
+		data, err = app.Music.RenderMusicRewardsBasic(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported music mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
 	case "gacha":
 		q := gacha.ListQuery{Region: region}
 		mergeParams(r.Params, &q)
-		return app.Gachas.RenderGachaList(q)
+		data, err = app.Gachas.RenderGachaList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported gacha mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	recommendType := ""
 	switch r.Mode {
 	case "deck-event":
@@ -209,38 +234,48 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) 
 	}
 	q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
 	mergeParams(r.Params, &q)
-	return app.Decks.RenderAutoRecommend(q)
+	data, err = app.Decks.RenderAutoRecommend(q)
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
 	case "education-challenge":
 		q := education.ChallengeLiveQuery{Region: region}
 		mergeParams(r.Params, &q)
-		return app.Edu.RenderChallengeLiveDetails(q)
+		data, err = app.Edu.RenderChallengeLiveDetails(q)
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(r.Params, &req)
-		return app.Edu.RenderPowerBonusDetail(req)
+		data, err = app.Edu.RenderPowerBonusDetail(req)
 	case "education-area":
 		req := drawing.AreaItemUpgradeMaterialsRequest{}
 		mergeParams(r.Params, &req)
-		return app.Edu.RenderAreaItemUpgradeMaterials(req)
+		data, err = app.Edu.RenderAreaItemUpgradeMaterials(req)
 	case "education-bonds":
 		req := drawing.BondsRequest{}
 		mergeParams(r.Params, &req)
-		return app.Edu.RenderBonds(req)
+		data, err = app.Edu.RenderBonds(req)
 	case "education-leader":
 		req := drawing.LeaderCountRequest{}
 		mergeParams(r.Params, &req)
-		return app.Edu.RenderLeaderCount(req)
+		data, err = app.Edu.RenderLeaderCount(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported education mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	switch r.Mode {
 	case "sk-line":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
@@ -251,11 +286,12 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if err != nil {
 				return nil, err
 			}
-			return app.SK.RenderLine(*payload)
+			data, err = app.SK.RenderLine(*payload)
+			break
 		}
 		req := sk.LineRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderLine(req)
+		data, err = app.SK.RenderLine(req)
 	case "sk-query":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
 			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
@@ -265,11 +301,12 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if err != nil {
 				return nil, err
 			}
-			return app.SK.RenderQuery(*payload)
+			data, err = app.SK.RenderQuery(*payload)
+			break
 		}
 		req := drawing.SKRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderQuery(req)
+		data, err = app.SK.RenderQuery(req)
 	case "sk-check-room":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
 			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
@@ -279,11 +316,12 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if err != nil {
 				return nil, err
 			}
-			return app.SK.RenderCheckRoom(*payload)
+			data, err = app.SK.RenderCheckRoom(*payload)
+			break
 		}
 		req := drawing.CFRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderCheckRoom(req)
+		data, err = app.SK.RenderCheckRoom(req)
 	case "sk-speed":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
 			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
@@ -293,15 +331,16 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if err != nil {
 				return nil, err
 			}
-			return app.SK.RenderSpeed(*payload)
+			data, err = app.SK.RenderSpeed(*payload)
+			break
 		}
 		req := drawing.SpeedRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderSpeed(req)
+		data, err = app.SK.RenderSpeed(req)
 	case "sk-player-trace":
 		req := drawing.PlayerTraceRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderPlayerTrace(req)
+		data, err = app.SK.RenderPlayerTrace(req)
 	case "sk-rank-trace":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
 			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
@@ -311,18 +350,23 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if err != nil {
 				return nil, err
 			}
-			return app.SK.RenderRankTrace(*payload)
+			data, err = app.SK.RenderRankTrace(*payload)
+			break
 		}
 		req := drawing.RankTraceRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderRankTrace(req)
+		data, err = app.SK.RenderRankTrace(req)
 	case "sk-winrate":
 		req := drawing.WinRateRequest{}
 		mergeParams(r.Params, &req)
-		return app.SK.RenderWinRate(req)
+		data, err = app.SK.RenderWinRate(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported sk mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
 func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery, bool) {
@@ -420,16 +464,17 @@ func pickTrackerBindingByRegion(bindings []accountdata.BindingListItem, region s
 	}
 }
 
-func executeScore(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeScore(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	switch r.Mode {
 	case "score-control":
 		req := drawing.ScoreControlRequest{}
 		mergeParams(r.Params, &req)
-		return app.Score.RenderScoreControl(req)
+		data, err = app.Score.RenderScoreControl(req)
 	case "score-custom-room":
 		req := drawing.CustomRoomScoreRequest{}
 		mergeParams(r.Params, &req)
-		return app.Score.RenderCustomRoomScore(req)
+		data, err = app.Score.RenderCustomRoomScore(req)
 	case "score-music-meta":
 		var req []drawing.MusicMetaRequest
 		if r.Params != nil {
@@ -437,14 +482,18 @@ func executeScore(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error)
 				return nil, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
 			}
 		}
-		return app.Score.RenderMusicMeta(req)
+		data, err = app.Score.RenderMusicMeta(req)
 	case "score-music-board":
 		req := drawing.MusicBoardRequest{}
 		mergeParams(r.Params, &req)
-		return app.Score.RenderMusicBoard(req)
+		data, err = app.Score.RenderMusicBoard(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported score mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
 func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
@@ -498,58 +547,73 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 	}
 }
 
-func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	switch r.Mode {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderResource(q)
+		data, err = app.MySekai.RenderResource(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderFixtureList(q)
+		data, err = app.MySekai.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
 		q := mysekai.FixtureDetailQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderFixtureDetail(q)
+		data, err = app.MySekai.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderDoorUpgrade(q)
+		data, err = app.MySekai.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
 		q := mysekai.MusicRecordQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderMusicRecord(q)
+		data, err = app.MySekai.RenderMusicRecord(q)
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
-		return app.MySekai.RenderTalkList(q)
+		data, err = app.MySekai.RenderTalkList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported mysekai mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeStamp(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeStamp(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
 	case "stamp-list":
 		q := stamp.ListQuery{Region: region}
 		mergeParams(r.Params, &q)
-		return app.Stamps.RenderStampList(q)
+		data, err = app.Stamps.RenderStampList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported stamp mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) ([]byte, error) {
+func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	var data []byte
 	switch r.Mode {
 	case "misc-birthday":
 		req := drawing.CharaBirthdayRequest{}
 		mergeParams(r.Params, &req)
-		return app.Misc.RenderCharaBirthday(req)
+		data, err = app.Misc.RenderCharaBirthday(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported misc mode %q", r.Mode)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
 }
 
 // userQueryParams mirrors sekai.UserQueryParams for bridge-side decoding.
@@ -604,7 +668,7 @@ func platformCredentials(p userQueryParams) (string, string) {
 	}
 }
 
-func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(r.Params, &p)
 
@@ -615,11 +679,11 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 
 	harukiUserID, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
 	if err != nil {
-		return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
+		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}
 
 	// Load the caller's enabled difficulties for self-mode; default for others.
@@ -633,7 +697,7 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 	}
 
 	text := formatArrestText(resp, enabledDiffs)
-	return []byte(text), CommandResultDataTypeText, nil
+	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
 func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
@@ -696,7 +760,7 @@ func formatInt(n int) string {
 	return buf.String()
 }
 
-func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(r.Params, &p)
 
@@ -707,12 +771,12 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 
 	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	ts, err := calcRegistrationTime(pjskUserID, region)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	regTime := time.Unix(ts, 0).UTC()
@@ -723,10 +787,10 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		pjskUserID,
 		regTime.Format("2006-01-02 15:04:05"),
 		days)
-	return []byte(text), CommandResultDataTypeText, nil
+	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
-func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(r.Params, &p)
 
@@ -737,12 +801,12 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 
 	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	uid, err := strconv.ParseInt(pjskUserID, 10, 64)
 	if err != nil {
-		return nil, "", fmt.Errorf("无效的账号ID：%w", err)
+		return nil, fmt.Errorf("无效的账号ID：%w", err)
 	}
 
 	platform, platformUserID := platformCredentials(p)
@@ -760,12 +824,12 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 
 	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(region, dataType, uid, platform, platformUserID)
 	if err != nil {
-		return nil, "", fmt.Errorf("获取%s更新时间失败：%w", label, err)
+		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}
 
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return nil, "", fmt.Errorf("解析更新时间失败：%w", err)
+		return nil, fmt.Errorf("解析更新时间失败：%w", err)
 	}
 
 	uploadTime := time.Unix(ts, 0).UTC()
@@ -773,7 +837,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	days := int(math.Floor(duration.Hours() / 24))
 
 	text := fmt.Sprintf("%s 数据更新时间\n%s UTC\n（约 %d 天前）", label, uploadTime.Format("2006-01-02 15:04:05"), days)
-	return []byte(text), CommandResultDataTypeText, nil
+	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
 // calcRegistrationTime derives the approximate Unix registration timestamp from

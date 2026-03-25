@@ -56,24 +56,12 @@ func (h *CommandHandler) HandleCommand(c fiber.Ctx) error {
 		resolved.Region = req.Server
 	}
 
-	responseData, dataType, err := pjskHandler.Execute(context.Background(), resolved, h.renderApp)
+	responseData, err := pjskHandler.Execute(context.Background(), resolved, h.renderApp)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", CommandErrorResponse{
 			Error: err.Error(),
 			Mode:  resolved.Mode,
 		})
 	}
-
-	switch dataType {
-	case pjskHandler.CommandResultDataTypeImagePNG:
-		c.Set("Content-Type", string(dataType))
-		return c.Send(responseData)
-	case pjskHandler.CommandResultDataTypeText:
-		return api.JSONResponse(c, fiber.StatusOK, string(responseData))
-	default:
-		return api.JSONResponse(c, fiber.StatusInternalServerError, "unsupported command result", CommandErrorResponse{
-			Error: "unsupported execute result data type",
-			Mode:  resolved.Mode,
-		})
-	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", responseData)
 }

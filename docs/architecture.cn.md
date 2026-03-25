@@ -8,7 +8,7 @@
 
 **Haruki-Cloud** 是 HarukiBot 生态的核心后端服务，负责：
 
-- 为 Bot 提供 **指令解析 → 执行 → 返回图片或文本** 的完整链路
+- 为 Bot 提供 **指令解析 → 执行 → 返回 OneBot11 消息** 的完整链路
 - 管理 Project SEKAI（プロジェクトセカイ）和 CHUNITHM 两个音游的查询数据
 - 提供 Bot 注册/鉴权/会话管理
 
@@ -311,21 +311,17 @@ Bot 客户端
        │
        ▼ BuildContext()   ←── 从消息段提取纯文本参数 + at 列表
        │
-       ▼ 校验 matched_command -> handler.path
+       ▼ MatchCommandHandler(ctx.GetArgs())
+       │
+       ▼ 校验 registry 命中结果 == matched_command，且 handler.path == 当前端点
        │
        ▼ handler.Handle(...)
        │  → ResolvedCommand{Module:Card, Mode:"card-detail", Query:"1001"}
        │
        ▼ handler.Execute(ctx, resolved, renderApp)  [bridge.go]
-       │  → 返回 payload + data_type
+       │  → 返回 onebot11.Message
        │
-       ├─ 若 data_type == image/png
-       │    ▼ Drawing API (外部服务)
-       │    ▼ PNG 字节流
-       │    ▼ 200 OK, Content-Type: image/png
-       │
-       └─ 若 data_type == text/plain
-            ▼ 200 OK, JSON 包装文本响应
+       └─ 200 OK, JSON 包装的 OneBot11 message segments
 ```
 
 ### 6.2 内部渲染流程
@@ -398,12 +394,12 @@ internal/pjsk/parser/
 
 ```
 internal/pjsk/handler/
-├── bridge.go             # Execute(ctx, resolved, app) → payload + data_type + error
+├── bridge.go             # Execute(ctx, resolved, app) → onebot11.Message + error
 ├── bot_route.go          # Bot route registry：聚合 module/path/commands/method
 ├── context.go            # Event, Context 接口, HandlerContext；从消息段提取文本和 at.qq 列表
 ├── handler.go            # Trie 注册、命令匹配、参数截取
 ├── profile_mode.go       # Profile 渲染模式常量
-├── result.go             # CommandResultDataType 常量
+├── result.go             # bridge 内部辅助结果类型（当前主要供 executeProfile 等路径使用）
 └── sekai/                # 各功能 handler
     ├── handler.go        # SekaiCommandHandler 注册；含 ParseUIDArg / uidArg 公共处理
     ├── helpers.go        # 工具函数
@@ -411,7 +407,7 @@ internal/pjsk/handler/
     └── handler_test.go
 ```
 
-**Bridge 设计：** `bridge.go` 是指令解析与执行层之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应执行入口，并显式返回结果载荷及其数据类型，无 HTTP 往返。
+**Bridge 设计：** `bridge.go` 是指令解析与执行层之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应执行入口，并直接返回 `onebot11.Message`。图片执行器在 bridge 内完成缓存落盘和 `image` segment 封装，文本执行器直接返回 `text` segment，无 HTTP 往返。
 
 `context.go` 当前只识别 OneBot `at` 段中的 `qq` 字段，不包含任何额外兼容字段。
 

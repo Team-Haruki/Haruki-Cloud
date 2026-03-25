@@ -23,12 +23,9 @@ func TestBuildContextPreservesEventFieldsAndExtractsAtIDs(t *testing.T) {
 		GroupId:    "g-1",
 	}
 
-	ctx, err := BuildContext(context.Background(), event, "/sk")
+	ctx, err := BuildContext(context.Background(), event)
 	if err != nil {
 		t.Fatalf("BuildContext() error = %v", err)
-	}
-	if ctx.GetTriggerCmd() != "/sk" {
-		t.Fatalf("GetTriggerCmd() = %q", ctx.GetTriggerCmd())
 	}
 	if ctx.GetPlatform() != event.Platform {
 		t.Fatalf("GetPlatform() = %q", ctx.GetPlatform())

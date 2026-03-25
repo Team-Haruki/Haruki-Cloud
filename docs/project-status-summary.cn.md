@@ -457,6 +457,15 @@ ban_state              → 全平台禁用
 - **删除**：`ProfileInfoHandle`——功能与 `ProfileHandle`（path: `profile`）完全重复，冗余死代码
 - **修复**：`EventRecordHandle` 补充 `Path: "event/record"`，现已进入 bot API 路由表
 - **修复**：`HelpHandle` 改为 `Disabled: true`，防止路由到无实现的 `ModuleHelp`
+- **修复**：`bridge.go` 补充 6 处 nil guard，防止 `sekaiClient` 未配置时 panic：
+  - `executeCard`：`app.Cards == nil` → 返回错误而非 panic
+  - `executeEvent`：`app.Events == nil` → 返回错误而非 panic
+  - `executeGacha`：`app.Gachas == nil` → 返回错误而非 panic
+  - `executeStamp`：`app.Stamps == nil` → 返回错误而非 panic
+  - `executeProfile` binding 分支：`app.Bindings == nil` → 返回"绑定服务未就绪"
+  - `executeProfile` settings 分支：`app.Bindings == nil` → 返回"绑定服务未就绪"
+
+> `app.Music`、`app.MySekai`、`app.Profiles` 各自的 controller 已内置 `if c == nil` nil 接收者守卫，无需 bridge 层额外处理。`app.BanChecker` 同理。
 
 ### 6.4 特殊 handler（绕过 bridge）
 
@@ -496,6 +505,8 @@ ban_state              → 全平台禁用
 6. 图片类 bridge 执行器当前强依赖 `ImageCache`；若部署未配置 image cache，会直接影响图片命令可用性
 7. `user_bindings` 表新增的 `suite_visible`、`bg`、`verified` 三个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
 8. `authorize_social_platform_infos` 表新增 `allow_fast_verification` 列同样需要 DB 迁移（Toolbox 侧）
+
+> **已修复**：`app.Cards`、`app.Events`、`app.Gachas`、`app.Stamps` 和 `app.Bindings` 的 nil panic 风险已在 bridge.go 中通过前置 nil guard 解决（v16.0）。
 
 ## 10. 相关文档
 

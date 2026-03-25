@@ -116,6 +116,9 @@ func executeProfileWithCache(ctx context.Context, r *parser.ResolvedCommand, app
 }
 
 func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app.Cards == nil {
+		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
+	}
 	var (
 		data []byte
 		url  string
@@ -145,6 +148,9 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 }
 
 func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app.Events == nil {
+		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
+	}
 	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
@@ -258,6 +264,9 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 }
 
 func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app.Gachas == nil {
+		return nil, fmt.Errorf("gacha service unavailable: sekai client not configured")
+	}
 	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
@@ -603,6 +612,9 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		}
 		return data, CommandResultDataTypeImagePNG, nil
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
+		if app.Bindings == nil {
+			return nil, "", fmt.Errorf("绑定服务未就绪，请稍后再试")
+		}
 		params, err := accountdata.DecodeProfileBindingParams(r.Params)
 		if err != nil {
 			return nil, "", err
@@ -616,6 +628,9 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
+		if app.Bindings == nil {
+			return nil, "", fmt.Errorf("绑定服务未就绪，请稍后再试")
+		}
 		params, err := accountdata.DecodeProfileSettingsParams(r.Params)
 		if err != nil {
 			return nil, "", err
@@ -673,6 +688,9 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 }
 
 func executeStamp(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app.Stamps == nil {
+		return nil, fmt.Errorf("stamp service unavailable: sekai client not configured")
+	}
 	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {

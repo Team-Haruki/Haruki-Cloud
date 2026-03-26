@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/chardata"
 	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
+	"haruki-cloud/internal/pjsk/musicalias"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
@@ -203,19 +204,26 @@ func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisCli
 }
 
 func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client) {
-	if renderRuntime == nil || pjskClient == nil || usersClient == nil {
+	if renderRuntime == nil || pjskClient == nil {
 		return
 	}
-	renderRuntime.Bindings = userdata.NewBindingService(
-		pjskClient,
-		identity.NewResolver(usersClient),
-		sekaiAPI.GetSekaiAPIClient(),
-	)
-	renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
-	if renderRuntime.Assets != nil {
-		renderRuntime.Bindings.SetProfileBGStorage(userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary()))
+
+	var resolver *identity.Resolver
+	if usersClient != nil {
+		resolver = identity.NewResolver(usersClient)
+		renderRuntime.Bindings = userdata.NewBindingService(
+			pjskClient,
+			resolver,
+			sekaiAPI.GetSekaiAPIClient(),
+		)
+		renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
+		if renderRuntime.Assets != nil {
+			renderRuntime.Bindings.SetProfileBGStorage(userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary()))
+		}
+		renderRuntime.BanChecker = userdata.NewBanService(usersClient)
 	}
-	renderRuntime.BanChecker = userdata.NewBanService(usersClient)
+
+	renderRuntime.Aliases = musicalias.NewService(renderRuntime.Sekai, pjskClient, resolver)
 	mainLogger.Infof("Sekai runtime services configured")
 }
 

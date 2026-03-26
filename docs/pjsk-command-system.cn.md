@@ -1,6 +1,6 @@
 # Haruki-Cloud PJSK 指令系统设计
 
-> 最后更新：2026-03-25
+> 最后更新：2026-03-26
 >
 > 本文档描述的是当前已落地的主模型。若后续实现发生变化，应以代码和本文档同步更新后的内容为准。
 
@@ -430,7 +430,68 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 4. bot API 与 legacy API 直接输出 `Execute(...)` 结果，不再以 `data_type` 为外部协议
 5. `refer/profile.py` 只保留语义参考价值，不污染 Cloud 当前的分层结构
 
-## 12. 相关文档
+## 12. 歌曲别名命令补充（2026-03-26）
+
+当前歌曲别名已经不再是 `music` 模块内的占位逻辑，而是作为独立的 `ModuleAlias` 文本执行链路落地。
+
+### 12.1 当前命令路径
+
+| 功能 | Path | 说明 |
+|------|------|------|
+| 歌曲别名查询 | `music/alias` | 仅查询已审核通过的别名 |
+| 添加歌曲别名 | `music/alias/add` | 提交审核申请，不直接写入正式别名表 |
+| 删除歌曲别名 | `music/alias/del` | 仅管理员可用，只删除已审核别名 |
+| 待审核列表 | `music/alias/pending` | 仅管理员可用 |
+| 通过别名审核 | `music/alias/approve` | 仅管理员可用，支持批量 |
+| 拒绝别名审核 | `music/alias/reject` | 仅管理员可用，单条 + 原因 |
+
+### 12.2 解析与执行边界
+
+当前别名链路按下面顺序工作：
+
+```text
+sekai/music.go
+  -> makeResolvedCmdWithParams(..., ModuleAlias, mode, params)
+  -> bridge.executeAlias(...)
+  -> musicalias.ExecuteCommand(...)
+  -> musicalias.Service
+```
+
+也就是说：
+
+1. `sekai/music.go` 只负责命令格式检查和参数提取
+2. `bridge.go` 只负责把 `ModuleAlias` 路由到文本执行器
+3. `musicalias.Service` 负责歌曲解析、冲突检查、审核权限和数据库写入
+
+### 12.3 歌曲定位规则
+
+无论是查询还是提交别名，目标歌曲都按以下顺序解析：
+
+1. 歌曲 ID
+2. 曲名（精确匹配）
+3. 已审核别名（精确匹配）
+
+如果命中多首歌曲，则要求调用方改用歌曲 ID。
+
+### 12.4 审核规则
+
+当前歌曲别名审核采用“两阶段”模型：
+
+1. 用户提交 `/music alias add`
+2. 每个别名单独写入 `pending_alias`
+3. 管理员使用 `/待审核别名` 查看列表
+4. 管理员使用 `/同意别名 ...` 或 `/拒绝别名 ...` 完成审核
+
+当前规则还包括：
+
+1. 查询只能读取正式 `alias` 表中的已审核别名
+2. 提交时会拒绝与已有曲名重复的别名
+3. 提交时会拒绝与已审核别名重复的别名
+4. 提交时会拒绝与待审核别名重复的别名
+5. 删除命令只允许删除正式 `alias` 表中的已审核别名
+6. 审核管理员身份通过 `(platform, user_id) -> haruki_user_id -> alias_admins` 校验
+
+## 13. 相关文档
 
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)
 - [项目进展总结](project-status-summary.cn.md)

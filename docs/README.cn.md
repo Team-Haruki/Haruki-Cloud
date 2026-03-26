@@ -76,6 +76,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-26 | PJSK 指令系统设计 / 项目进展总结 / 数据库 Schema 文档 | 补充歌曲别名审核指令、命令路径与审核数据表说明 |
 | 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` / `mysekai_visible` 语义、验证现状与背景图存储规则 |
 | 2026-03-25 | 项目进展总结 | 同步 Profile 设置落地状态与当前语义 |
 | 2026-03-25 | PJSK Event Tracker 对接说明 | 新增 tracker 对接专题文档（含 `@用户` 解析方案） |
@@ -89,4 +90,4 @@ X-Haruki-Bot-Matched-Command: /卡面
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-03-25
+**最后更新**：2026-03-26

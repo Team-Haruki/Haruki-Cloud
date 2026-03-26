@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-25（v16.0）
+> 最后更新：2026-03-26（v16.1）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -241,7 +241,7 @@ UID xxxxxx 的注册时间
 
 ### 待完成 / 遗留
 
-- **别名系统（alias-feature）**：歌曲别名查询/添加/删除，待后续设计
+- **Music 遗留功能**：BPM 查询、曲绘查询、物量统计
 
 ## 5.5 Schema 扩展 & Toolbox 路由更新（v15.0 新增）
 
@@ -382,7 +382,7 @@ ban_state              → 全平台禁用
 └── pjsk_ban_state     → 全 PJSK 模块禁用
     ├── pjsk_main_ban_state     → Card/Gacha/Event/Music/Deck/Education/Profile/Arrest/RegTime/CheckData/Stamp/Misc
     ├── pjsk_ranking_ban_state  → SK
-    ├── pjsk_alias_ban_state    → Alias（待实现）
+    ├── pjsk_alias_ban_state    → Alias（已实现，覆盖歌曲别名查询与审核）
     └── pjsk_mysekai_ban_state  → MySekai
 ```
 
@@ -440,6 +440,7 @@ ban_state              → 全平台禁用
 | **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
 | **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） | card/detail · list · box |
 | **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 | music · list · progress · rewards · chart |
+| **Alias** | 歌曲别名查询 / 提交审核 / 删除已审核别名 / 待审核列表 / 通过审核 / 拒绝审核 | music/alias · music/alias/add · music/alias/del · music/alias/pending · music/alias/approve · music/alias/reject |
 | **Gacha** | 卡池列表 | gacha |
 | **Deck** | 活动/挑战/长草/加成/烤森 组卡推荐 | deck/event · challenge · no-event · bonus · mysekai |
 | **Event** | 活动列表 / 活动详情 / **活动记录** | event/list · event · event/record |
@@ -458,7 +459,7 @@ ban_state              → 全平台禁用
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
 
-**Music 系统（5 个）**：别名查询/添加/删除（alias-feature，设计待定）、BPM 查询、曲绘查询、物量统计
+**Music 系统（3 个）**：BPM 查询、曲绘查询、物量统计
 
 **Stamp 系统（7 个）**：贴纸制作、随机贴纸、批量刷新、底图管理
 

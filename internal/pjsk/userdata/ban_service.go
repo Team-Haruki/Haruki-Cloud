@@ -89,6 +89,8 @@ func isPJSKModule(m parser.TargetModule) bool {
 		parser.ModuleHelp, parser.ModuleEducation, parser.ModuleScore, parser.ModuleStamp,
 		parser.ModuleMisc, parser.ModuleArrest, parser.ModuleRegTime, parser.ModuleCheckData:
 		return true
+	case parser.ModuleAlias:
+		return true
 	}
 	return false
 }
@@ -97,6 +99,8 @@ func featureBanFor(m parser.TargetModule) featureCategory {
 	switch m {
 	case parser.ModuleSK:
 		return featureRanking
+	case parser.ModuleAlias:
+		return featureAlias
 	case parser.ModuleMysekai:
 		return featureMysekai
 	default:

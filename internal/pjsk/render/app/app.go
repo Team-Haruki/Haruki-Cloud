@@ -7,6 +7,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/meta"
+	"haruki-cloud/internal/pjsk/musicalias"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -79,6 +80,7 @@ type App struct {
 	Misc       *misc.Controller
 	MySekai    *mysekai.Controller
 	Music      *music.Controller
+	Aliases    *musicalias.Service
 	Profiles   *profile.Controller
 	Score      *score.Controller
 	SK         *sk.Controller

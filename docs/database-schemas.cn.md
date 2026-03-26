@@ -1,6 +1,6 @@
 # Haruki-Cloud 数据库 Schema 文档
 
-> 最后更新：2026-03-23（v1.1）
+> 最后更新：2026-03-26（v1.2）
 
 ---
 
@@ -314,7 +314,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 | `haruki_user_id` | int | UNIQUE | Haruki 用户 ID（一人一条） |
 | `name` | string(100) | — | 管理员昵称 |
 
-### 6.7 `pending_aliases` 表（待审核别名）
+### 6.7 `pending_alias` 表（待审核别名）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -327,7 +327,13 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 唯一索引：`(alias_type, alias_type_id, alias)`
 
-### 6.8 `rejected_aliases` 表（已拒绝别名）
+补充说明：
+
+1. 当前歌曲别名审核采用“一条别名一条待审记录”的写入方式
+2. `/music alias add` 不会直接写入正式 `alias` 表，而是先写入这里
+3. 当前审核命令只使用 `alias_type = music`
+
+### 6.8 `rejected_alias` 表（已拒绝别名）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -338,6 +344,11 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 | `reviewed_by` | string(100) | — | 审核者标识 |
 | `reason` | string(255) | — | 拒绝原因 |
 | `reviewed_at` | time | — | 审核时间 |
+
+补充说明：
+
+1. `reviewed_by` 保存审核者标识文本
+2. 审核权限本身通过 `alias_admins.haruki_user_id` 与 `users.id` 关联判定
 
 ---
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/musicalias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
@@ -56,6 +57,8 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		message, err = executeEvent(resolved, app)
 	case parser.ModuleMusic:
 		message, err = executeMusic(resolved, app)
+	case parser.ModuleAlias:
+		message, err = executeAlias(ctx, resolved, app)
 	case parser.ModuleGacha:
 		message, err = executeGacha(resolved, app)
 	case parser.ModuleDeck:
@@ -206,6 +209,17 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
+	if app == nil || app.Aliases == nil {
+		return nil, fmt.Errorf("歌曲别名服务未就绪，请稍后再试")
+	}
+	data, err := musicalias.ExecuteCommand(ctx, app.Aliases, r.Mode, r.Params)
+	if err != nil {
+		return nil, err
+	}
+	return onebot11.Message{onebot11.Text(string(data))}, nil
 }
 
 func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {

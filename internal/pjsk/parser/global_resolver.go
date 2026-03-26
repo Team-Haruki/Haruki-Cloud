@@ -28,6 +28,7 @@ const (
 	ModuleArrest
 	ModuleRegTime
 	ModuleCheckData
+	ModuleAlias
 )
 
 // ResolvedCommand stores normalized command parsing result.

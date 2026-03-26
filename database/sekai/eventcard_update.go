@@ -28,14 +28,14 @@ func (_u *EventcardUpdate) Where(ps ...predicate.Eventcard) *EventcardUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventcardUpdate) SetGameID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetGameID(v int64) *EventcardUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventcardUpdate) SetNillableGameID(v *int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetNillableGameID(v *int64) *EventcardUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *EventcardUpdate) SetNillableGameID(v *int) *EventcardUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventcardUpdate) AddGameID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) AddGameID(v int64) *EventcardUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *EventcardUpdate) SetCardID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetCardID(v int64) *EventcardUpdate {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *EventcardUpdate) SetNillableCardID(v *int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetNillableCardID(v *int64) *EventcardUpdate {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *EventcardUpdate) SetNillableCardID(v *int) *EventcardUpdate {
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *EventcardUpdate) AddCardID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) AddCardID(v int64) *EventcardUpdate {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -76,14 +76,14 @@ func (_u *EventcardUpdate) ClearCardID() *EventcardUpdate {
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventcardUpdate) SetEventID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetEventID(v int64) *EventcardUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventcardUpdate) SetNillableEventID(v *int) *EventcardUpdate {
+func (_u *EventcardUpdate) SetNillableEventID(v *int64) *EventcardUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -91,7 +91,7 @@ func (_u *EventcardUpdate) SetNillableEventID(v *int) *EventcardUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventcardUpdate) AddEventID(v int) *EventcardUpdate {
+func (_u *EventcardUpdate) AddEventID(v int64) *EventcardUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -232,28 +232,28 @@ func (_u *EventcardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventcard.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventcard.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(eventcard.FieldCardID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(eventcard.FieldCardID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(eventcard.FieldCardID, field.TypeInt)
+		_spec.ClearField(eventcard.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventcard.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventcard.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventcard.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventcard.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventcard.FieldBonusRate, field.TypeFloat64, value)
@@ -303,14 +303,14 @@ type EventcardUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventcardUpdateOne) SetGameID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetGameID(v int64) *EventcardUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventcardUpdateOne) SetNillableGameID(v *int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetNillableGameID(v *int64) *EventcardUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -318,20 +318,20 @@ func (_u *EventcardUpdateOne) SetNillableGameID(v *int) *EventcardUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventcardUpdateOne) AddGameID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) AddGameID(v int64) *EventcardUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *EventcardUpdateOne) SetCardID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetCardID(v int64) *EventcardUpdateOne {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *EventcardUpdateOne) SetNillableCardID(v *int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetNillableCardID(v *int64) *EventcardUpdateOne {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -339,7 +339,7 @@ func (_u *EventcardUpdateOne) SetNillableCardID(v *int) *EventcardUpdateOne {
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *EventcardUpdateOne) AddCardID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) AddCardID(v int64) *EventcardUpdateOne {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -351,14 +351,14 @@ func (_u *EventcardUpdateOne) ClearCardID() *EventcardUpdateOne {
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventcardUpdateOne) SetEventID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetEventID(v int64) *EventcardUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventcardUpdateOne) SetNillableEventID(v *int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) SetNillableEventID(v *int64) *EventcardUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -366,7 +366,7 @@ func (_u *EventcardUpdateOne) SetNillableEventID(v *int) *EventcardUpdateOne {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventcardUpdateOne) AddEventID(v int) *EventcardUpdateOne {
+func (_u *EventcardUpdateOne) AddEventID(v int64) *EventcardUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -537,28 +537,28 @@ func (_u *EventcardUpdateOne) sqlSave(ctx context.Context) (_node *Eventcard, er
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventcard.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventcard.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(eventcard.FieldCardID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(eventcard.FieldCardID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(eventcard.FieldCardID, field.TypeInt)
+		_spec.ClearField(eventcard.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventcard.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventcard.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventcard.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventcard.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventcard.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventcard.FieldBonusRate, field.TypeFloat64, value)

@@ -18,7 +18,7 @@ type Mysekaifixturetag struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -26,7 +26,7 @@ type Mysekaifixturetag struct {
 	// MysekaiFixtureTagType holds the value of the "mysekai_fixture_tag_type" field.
 	MysekaiFixtureTagType json.RawMessage `json:"mysekai_fixture_tag_type,omitempty"`
 	// ExternalID holds the value of the "external_id" field.
-	ExternalID int `json:"external_id,omitempty"`
+	ExternalID int64 `json:"external_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -68,7 +68,7 @@ func (_m *Mysekaifixturetag) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaifixturetag.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -94,7 +94,7 @@ func (_m *Mysekaifixturetag) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
-				_m.ExternalID = int(value.Int64)
+				_m.ExternalID = value.Int64
 			}
 		case mysekaifixturetag.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

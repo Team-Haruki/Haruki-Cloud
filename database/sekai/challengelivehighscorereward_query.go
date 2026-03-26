@@ -262,7 +262,7 @@ func (_q *ChallengelivehighscorerewardQuery) Clone() *Challengelivehighscorerewa
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *ChallengelivehighscorerewardQuery) GroupBy(field string, fields ...str
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Challengelivehighscorereward.Query().

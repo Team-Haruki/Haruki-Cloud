@@ -30,14 +30,14 @@ func (_u *BoostitemUpdate) Where(ps ...predicate.Boostitem) *BoostitemUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BoostitemUpdate) SetGameID(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetGameID(v int64) *BoostitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableGameID(v *int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableGameID(v *int64) *BoostitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *BoostitemUpdate) SetNillableGameID(v *int) *BoostitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BoostitemUpdate) AddGameID(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddGameID(v int64) *BoostitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *BoostitemUpdate) SetSeq(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetSeq(v int64) *BoostitemUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableSeq(v *int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableSeq(v *int64) *BoostitemUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *BoostitemUpdate) SetNillableSeq(v *int) *BoostitemUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BoostitemUpdate) AddSeq(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddSeq(v int64) *BoostitemUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -98,14 +98,14 @@ func (_u *BoostitemUpdate) ClearName() *BoostitemUpdate {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_u *BoostitemUpdate) SetRecoveryValue(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetRecoveryValue(v int64) *BoostitemUpdate {
 	_u.mutation.ResetRecoveryValue()
 	_u.mutation.SetRecoveryValue(v)
 	return _u
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int64) *BoostitemUpdate {
 	if v != nil {
 		_u.SetRecoveryValue(*v)
 	}
@@ -113,7 +113,7 @@ func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int) *BoostitemUpdate {
 }
 
 // AddRecoveryValue adds value to the "recovery_value" field.
-func (_u *BoostitemUpdate) AddRecoveryValue(v int) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddRecoveryValue(v int64) *BoostitemUpdate {
 	_u.mutation.AddRecoveryValue(v)
 	return _u
 }
@@ -218,19 +218,19 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(boostitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(boostitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(boostitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(boostitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(boostitem.FieldName, field.TypeString, value)
@@ -239,13 +239,13 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(boostitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedRecoveryValue(); ok {
-		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
 	}
 	if _u.mutation.RecoveryValueCleared() {
-		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt)
+		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetBundleName(); ok {
 		_spec.SetField(boostitem.FieldAssetBundleName, field.TypeString, value)
@@ -288,14 +288,14 @@ type BoostitemUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BoostitemUpdateOne) SetGameID(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetGameID(v int64) *BoostitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableGameID(v *int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableGameID(v *int64) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -303,20 +303,20 @@ func (_u *BoostitemUpdateOne) SetNillableGameID(v *int) *BoostitemUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BoostitemUpdateOne) AddGameID(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddGameID(v int64) *BoostitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *BoostitemUpdateOne) SetSeq(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetSeq(v int64) *BoostitemUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableSeq(v *int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableSeq(v *int64) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -324,7 +324,7 @@ func (_u *BoostitemUpdateOne) SetNillableSeq(v *int) *BoostitemUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BoostitemUpdateOne) AddSeq(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddSeq(v int64) *BoostitemUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -356,14 +356,14 @@ func (_u *BoostitemUpdateOne) ClearName() *BoostitemUpdateOne {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_u *BoostitemUpdateOne) SetRecoveryValue(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetRecoveryValue(v int64) *BoostitemUpdateOne {
 	_u.mutation.ResetRecoveryValue()
 	_u.mutation.SetRecoveryValue(v)
 	return _u
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int64) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetRecoveryValue(*v)
 	}
@@ -371,7 +371,7 @@ func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int) *BoostitemUpdateO
 }
 
 // AddRecoveryValue adds value to the "recovery_value" field.
-func (_u *BoostitemUpdateOne) AddRecoveryValue(v int) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddRecoveryValue(v int64) *BoostitemUpdateOne {
 	_u.mutation.AddRecoveryValue(v)
 	return _u
 }
@@ -506,19 +506,19 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(boostitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(boostitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(boostitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(boostitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(boostitem.FieldName, field.TypeString, value)
@@ -527,13 +527,13 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 		_spec.ClearField(boostitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedRecoveryValue(); ok {
-		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt, value)
+		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
 	}
 	if _u.mutation.RecoveryValueCleared() {
-		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt)
+		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetBundleName(); ok {
 		_spec.SetField(boostitem.FieldAssetBundleName, field.TypeString, value)

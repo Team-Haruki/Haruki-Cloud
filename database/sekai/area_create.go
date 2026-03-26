@@ -21,7 +21,7 @@ type AreaCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *AreaCreate) SetGameID(v int) *AreaCreate {
+func (_c *AreaCreate) SetGameID(v int64) *AreaCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -41,13 +41,13 @@ func (_c *AreaCreate) SetNillableAssetbundleName(v *string) *AreaCreate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *AreaCreate) SetGroupID(v int) *AreaCreate {
+func (_c *AreaCreate) SetGroupID(v int64) *AreaCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableGroupID(v *int) *AreaCreate {
+func (_c *AreaCreate) SetNillableGroupID(v *int64) *AreaCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -107,13 +107,13 @@ func (_c *AreaCreate) SetNillableName(v *string) *AreaCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *AreaCreate) SetReleaseConditionID(v int) *AreaCreate {
+func (_c *AreaCreate) SetReleaseConditionID(v int64) *AreaCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableReleaseConditionID(v *int) *AreaCreate {
+func (_c *AreaCreate) SetNillableReleaseConditionID(v *int64) *AreaCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -149,13 +149,13 @@ func (_c *AreaCreate) SetNillableLabel(v *string) *AreaCreate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *AreaCreate) SetStartAt(v int) *AreaCreate {
+func (_c *AreaCreate) SetStartAt(v int64) *AreaCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableStartAt(v *int) *AreaCreate {
+func (_c *AreaCreate) SetNillableStartAt(v *int64) *AreaCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -163,13 +163,13 @@ func (_c *AreaCreate) SetNillableStartAt(v *int) *AreaCreate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *AreaCreate) SetEndAt(v int) *AreaCreate {
+func (_c *AreaCreate) SetEndAt(v int64) *AreaCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableEndAt(v *int) *AreaCreate {
+func (_c *AreaCreate) SetNillableEndAt(v *int64) *AreaCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -177,13 +177,13 @@ func (_c *AreaCreate) SetNillableEndAt(v *int) *AreaCreate {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_c *AreaCreate) SetReleaseConditionId2(v int) *AreaCreate {
+func (_c *AreaCreate) SetReleaseConditionId2(v int64) *AreaCreate {
 	_c.mutation.SetReleaseConditionId2(v)
 	return _c
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableReleaseConditionId2(v *int) *AreaCreate {
+func (_c *AreaCreate) SetNillableReleaseConditionId2(v *int64) *AreaCreate {
 	if v != nil {
 		_c.SetReleaseConditionId2(*v)
 	}
@@ -263,7 +263,7 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(area.Table, sqlgraph.NewFieldSpec(area.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -271,7 +271,7 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.IsBaseArea(); ok {
@@ -299,7 +299,7 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.SubName(); ok {
@@ -311,15 +311,15 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.Label = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
 		_node.ReleaseConditionId2 = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

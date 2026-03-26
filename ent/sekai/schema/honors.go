@@ -17,16 +17,16 @@ type Honor struct {
 
 func (Honor) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
-		field.Int("group_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
+		field.Int64("group_id").Optional(),
 		field.JSON("honor_rarity", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.JSON("levels", json.RawMessage{}).Optional(),
-		field.Int("honor_type_id").Optional(),
+		field.Int64("honor_type_id").Optional(),
 		field.String("honor_mission_type").Optional(),
-		field.Int("start_at").Optional(),
+		field.Int64("start_at").Optional(),
 		field.String("server_region"),
 	}
 }

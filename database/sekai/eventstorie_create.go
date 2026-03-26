@@ -21,19 +21,19 @@ type EventstorieCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventstorieCreate) SetGameID(v int) *EventstorieCreate {
+func (_c *EventstorieCreate) SetGameID(v int64) *EventstorieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventstorieCreate) SetEventID(v int) *EventstorieCreate {
+func (_c *EventstorieCreate) SetEventID(v int64) *EventstorieCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventstorieCreate) SetNillableEventID(v *int) *EventstorieCreate {
+func (_c *EventstorieCreate) SetNillableEventID(v *int64) *EventstorieCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *EventstorieCreate) SetNillableOutline(v *string) *EventstorieCreate {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_c *EventstorieCreate) SetBannerGameCharacterUnitID(v int) *EventstorieCreate {
+func (_c *EventstorieCreate) SetBannerGameCharacterUnitID(v int64) *EventstorieCreate {
 	_c.mutation.SetBannerGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_c *EventstorieCreate) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieCreate {
+func (_c *EventstorieCreate) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieCreate {
 	if v != nil {
 		_c.SetBannerGameCharacterUnitID(*v)
 	}
@@ -161,11 +161,11 @@ func (_c *EventstorieCreate) createSpec() (*Eventstorie, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(eventstorie.Table, sqlgraph.NewFieldSpec(eventstorie.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Outline(); ok {
@@ -173,7 +173,7 @@ func (_c *EventstorieCreate) createSpec() (*Eventstorie, *sqlgraph.CreateSpec) {
 		_node.Outline = value
 	}
 	if value, ok := _c.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
 		_node.BannerGameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

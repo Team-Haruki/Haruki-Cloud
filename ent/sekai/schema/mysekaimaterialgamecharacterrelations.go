@@ -15,10 +15,10 @@ type Mysekaimaterialgamecharacterrelation struct {
 
 func (Mysekaimaterialgamecharacterrelation) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("group_id").Optional(),
-		field.Int("mysekai_material_id").Optional(),
-		field.Int("game_character_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("group_id").Optional(),
+		field.Int64("mysekai_material_id").Optional(),
+		field.Int64("game_character_id").Optional(),
 		field.String("server_region"),
 	}
 }

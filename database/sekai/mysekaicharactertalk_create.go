@@ -21,19 +21,19 @@ type MysekaicharactertalkCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkCreate) SetGameID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetGameID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMysekaiGameCharacterUnitGroupID sets the "mysekai_game_character_unit_group_id" field.
-func (_c *MysekaicharactertalkCreate) SetMysekaiGameCharacterUnitGroupID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetMysekaiGameCharacterUnitGroupID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetMysekaiGameCharacterUnitGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiGameCharacterUnitGroupID sets the "mysekai_game_character_unit_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkCreate) SetNillableMysekaiGameCharacterUnitGroupID(v *int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetNillableMysekaiGameCharacterUnitGroupID(v *int64) *MysekaicharactertalkCreate {
 	if v != nil {
 		_c.SetMysekaiGameCharacterUnitGroupID(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *MysekaicharactertalkCreate) SetNillableMysekaiGameCharacterUnitGroupID
 }
 
 // SetMysekaiCharacterTalkConditionGroupID sets the "mysekai_character_talk_condition_group_id" field.
-func (_c *MysekaicharactertalkCreate) SetMysekaiCharacterTalkConditionGroupID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetMysekaiCharacterTalkConditionGroupID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkConditionGroupID sets the "mysekai_character_talk_condition_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkConditionGroupID(v *int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkConditionGroupID(v *int64) *MysekaicharactertalkCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkConditionGroupID(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkConditionGr
 }
 
 // SetMysekaiSiteGroupID sets the "mysekai_site_group_id" field.
-func (_c *MysekaicharactertalkCreate) SetMysekaiSiteGroupID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetMysekaiSiteGroupID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetMysekaiSiteGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiSiteGroupID sets the "mysekai_site_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkCreate) SetNillableMysekaiSiteGroupID(v *int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetNillableMysekaiSiteGroupID(v *int64) *MysekaicharactertalkCreate {
 	if v != nil {
 		_c.SetMysekaiSiteGroupID(*v)
 	}
@@ -69,13 +69,13 @@ func (_c *MysekaicharactertalkCreate) SetNillableMysekaiSiteGroupID(v *int) *Mys
 }
 
 // SetMysekaiCharacterTalkTermID sets the "mysekai_character_talk_term_id" field.
-func (_c *MysekaicharactertalkCreate) SetMysekaiCharacterTalkTermID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetMysekaiCharacterTalkTermID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetMysekaiCharacterTalkTermID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkTermID sets the "mysekai_character_talk_term_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkTermID(v *int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkTermID(v *int64) *MysekaicharactertalkCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkTermID(*v)
 	}
@@ -83,13 +83,13 @@ func (_c *MysekaicharactertalkCreate) SetNillableMysekaiCharacterTalkTermID(v *i
 }
 
 // SetCharacterArchiveMysekaiCharacterTalkGroupID sets the "character_archive_mysekai_character_talk_group_id" field.
-func (_c *MysekaicharactertalkCreate) SetCharacterArchiveMysekaiCharacterTalkGroupID(v int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetCharacterArchiveMysekaiCharacterTalkGroupID(v int64) *MysekaicharactertalkCreate {
 	_c.mutation.SetCharacterArchiveMysekaiCharacterTalkGroupID(v)
 	return _c
 }
 
 // SetNillableCharacterArchiveMysekaiCharacterTalkGroupID sets the "character_archive_mysekai_character_talk_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkCreate) SetNillableCharacterArchiveMysekaiCharacterTalkGroupID(v *int) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetNillableCharacterArchiveMysekaiCharacterTalkGroupID(v *int64) *MysekaicharactertalkCreate {
 	if v != nil {
 		_c.SetCharacterArchiveMysekaiCharacterTalkGroupID(*v)
 	}
@@ -203,27 +203,27 @@ func (_c *MysekaicharactertalkCreate) createSpec() (*Mysekaicharactertalk, *sqlg
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalk.Table, sqlgraph.NewFieldSpec(mysekaicharactertalk.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiGameCharacterUnitGroupID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID, field.TypeInt64, value)
 		_node.MysekaiGameCharacterUnitGroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionGroupID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID, field.TypeInt64, value)
 		_node.MysekaiCharacterTalkConditionGroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiSiteGroupID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldMysekaiSiteGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldMysekaiSiteGroupID, field.TypeInt64, value)
 		_node.MysekaiSiteGroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkTermID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldMysekaiCharacterTalkTermID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldMysekaiCharacterTalkTermID, field.TypeInt64, value)
 		_node.MysekaiCharacterTalkTermID = value
 	}
 	if value, ok := _c.mutation.CharacterArchiveMysekaiCharacterTalkGroupID(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID, field.TypeInt64, value)
 		_node.CharacterArchiveMysekaiCharacterTalkGroupID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

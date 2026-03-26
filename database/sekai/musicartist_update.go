@@ -28,14 +28,14 @@ func (_u *MusicArtistUpdate) Where(ps ...predicate.MusicArtist) *MusicArtistUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicArtistUpdate) SetGameID(v int) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) SetGameID(v int64) *MusicArtistUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicArtistUpdate) SetNillableGameID(v *int) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) SetNillableGameID(v *int64) *MusicArtistUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *MusicArtistUpdate) SetNillableGameID(v *int) *MusicArtistUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicArtistUpdate) AddGameID(v int) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) AddGameID(v int64) *MusicArtistUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -144,10 +144,10 @@ func (_u *MusicArtistUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicartist.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicartist.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(musicartist.FieldName, field.TypeString, value)
@@ -185,14 +185,14 @@ type MusicArtistUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicArtistUpdateOne) SetGameID(v int) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) SetGameID(v int64) *MusicArtistUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int64) *MusicArtistUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -200,7 +200,7 @@ func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int) *MusicArtistUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicArtistUpdateOne) AddGameID(v int) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) AddGameID(v int64) *MusicArtistUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -331,10 +331,10 @@ func (_u *MusicArtistUpdateOne) sqlSave(ctx context.Context) (_node *MusicArtist
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicartist.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicartist.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(musicartist.FieldName, field.TypeString, value)

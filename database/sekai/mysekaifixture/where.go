@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaifixture {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaifixture {
+func GameID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,27 +74,27 @@ func FlavorText(v string) predicate.Mysekaifixture {
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Mysekaifixture {
+func Seq(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldSeq, v))
 }
 
 // MysekaiFixtureMainGenreID applies equality check predicate on the "mysekai_fixture_main_genre_id" field. It's identical to MysekaiFixtureMainGenreIDEQ.
-func MysekaiFixtureMainGenreID(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureSubGenreID applies equality check predicate on the "mysekai_fixture_sub_genre_id" field. It's identical to MysekaiFixtureSubGenreIDEQ.
-func MysekaiFixtureSubGenreID(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixturePutSoundID applies equality check predicate on the "mysekai_fixture_put_sound_id" field. It's identical to MysekaiFixturePutSoundIDEQ.
-func MysekaiFixturePutSoundID(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixtureFootstepID applies equality check predicate on the "mysekai_fixture_footstep_id" field. It's identical to MysekaiFixtureFootstepIDEQ.
-func MysekaiFixtureFootstepID(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureFootstepID, v))
 }
 
@@ -119,12 +119,12 @@ func AssetbundleName(v string) predicate.Mysekaifixture {
 }
 
 // FirstPutCost applies equality check predicate on the "first_put_cost" field. It's identical to FirstPutCostEQ.
-func FirstPutCost(v int) predicate.Mysekaifixture {
+func FirstPutCost(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldFirstPutCost, v))
 }
 
 // SecondPutCost applies equality check predicate on the "second_put_cost" field. It's identical to SecondPutCostEQ.
-func SecondPutCost(v int) predicate.Mysekaifixture {
+func SecondPutCost(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldSecondPutCost, v))
 }
 
@@ -134,7 +134,7 @@ func ColorCode(v string) predicate.Mysekaifixture {
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusID applies equality check predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field. It's identical to MysekaiFixtureGameCharacterGroupPerformanceBonusIDEQ.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
@@ -144,42 +144,42 @@ func ServerRegion(v string) predicate.Mysekaifixture {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaifixture {
+func GameIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaifixture {
+func GameIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaifixture {
+func GameIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaifixture {
+func GameIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaifixture {
+func GameIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaifixture {
+func GameIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaifixture {
+func GameIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaifixture {
+func GameIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -419,42 +419,42 @@ func FlavorTextContainsFold(v string) predicate.Mysekaifixture {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Mysekaifixture {
+func SeqEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Mysekaifixture {
+func SeqNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Mysekaifixture {
+func SeqIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Mysekaifixture {
+func SeqNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Mysekaifixture {
+func SeqGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Mysekaifixture {
+func SeqGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Mysekaifixture {
+func SeqLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Mysekaifixture {
+func SeqLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -479,42 +479,42 @@ func GridSizeNotNil() predicate.Mysekaifixture {
 }
 
 // MysekaiFixtureMainGenreIDEQ applies the EQ predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureMainGenreIDNEQ applies the NEQ predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDNEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureMainGenreIDIn applies the In predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureMainGenreID, vs...))
 }
 
 // MysekaiFixtureMainGenreIDNotIn applies the NotIn predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDNotIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureMainGenreID, vs...))
 }
 
 // MysekaiFixtureMainGenreIDGT applies the GT predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDGT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureMainGenreIDGTE applies the GTE predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDGTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureMainGenreIDLT applies the LT predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDLT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureMainGenreID, v))
 }
 
 // MysekaiFixtureMainGenreIDLTE applies the LTE predicate on the "mysekai_fixture_main_genre_id" field.
-func MysekaiFixtureMainGenreIDLTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureMainGenreIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureMainGenreID, v))
 }
 
@@ -529,42 +529,42 @@ func MysekaiFixtureMainGenreIDNotNil() predicate.Mysekaifixture {
 }
 
 // MysekaiFixtureSubGenreIDEQ applies the EQ predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixtureSubGenreIDNEQ applies the NEQ predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDNEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixtureSubGenreIDIn applies the In predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureSubGenreID, vs...))
 }
 
 // MysekaiFixtureSubGenreIDNotIn applies the NotIn predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDNotIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureSubGenreID, vs...))
 }
 
 // MysekaiFixtureSubGenreIDGT applies the GT predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDGT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixtureSubGenreIDGTE applies the GTE predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDGTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixtureSubGenreIDLT applies the LT predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDLT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureSubGenreID, v))
 }
 
 // MysekaiFixtureSubGenreIDLTE applies the LTE predicate on the "mysekai_fixture_sub_genre_id" field.
-func MysekaiFixtureSubGenreIDLTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureSubGenreIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureSubGenreID, v))
 }
 
@@ -629,42 +629,42 @@ func MysekaiFixtureAnotherColorsNotNil() predicate.Mysekaifixture {
 }
 
 // MysekaiFixturePutSoundIDEQ applies the EQ predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixturePutSoundIDNEQ applies the NEQ predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDNEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixturePutSoundIDIn applies the In predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixturePutSoundID, vs...))
 }
 
 // MysekaiFixturePutSoundIDNotIn applies the NotIn predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDNotIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixturePutSoundID, vs...))
 }
 
 // MysekaiFixturePutSoundIDGT applies the GT predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDGT(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixturePutSoundIDGTE applies the GTE predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDGTE(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixturePutSoundIDLT applies the LT predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDLT(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixturePutSoundID, v))
 }
 
 // MysekaiFixturePutSoundIDLTE applies the LTE predicate on the "mysekai_fixture_put_sound_id" field.
-func MysekaiFixturePutSoundIDLTE(v int) predicate.Mysekaifixture {
+func MysekaiFixturePutSoundIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixturePutSoundID, v))
 }
 
@@ -679,42 +679,42 @@ func MysekaiFixturePutSoundIDNotNil() predicate.Mysekaifixture {
 }
 
 // MysekaiFixtureFootstepIDEQ applies the EQ predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureFootstepID, v))
 }
 
 // MysekaiFixtureFootstepIDNEQ applies the NEQ predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDNEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureFootstepID, v))
 }
 
 // MysekaiFixtureFootstepIDIn applies the In predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureFootstepID, vs...))
 }
 
 // MysekaiFixtureFootstepIDNotIn applies the NotIn predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDNotIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureFootstepID, vs...))
 }
 
 // MysekaiFixtureFootstepIDGT applies the GT predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDGT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureFootstepID, v))
 }
 
 // MysekaiFixtureFootstepIDGTE applies the GTE predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDGTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureFootstepID, v))
 }
 
 // MysekaiFixtureFootstepIDLT applies the LT predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDLT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureFootstepID, v))
 }
 
 // MysekaiFixtureFootstepIDLTE applies the LTE predicate on the "mysekai_fixture_footstep_id" field.
-func MysekaiFixtureFootstepIDLTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureFootstepIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureFootstepID, v))
 }
 
@@ -884,42 +884,42 @@ func AssetbundleNameContainsFold(v string) predicate.Mysekaifixture {
 }
 
 // FirstPutCostEQ applies the EQ predicate on the "first_put_cost" field.
-func FirstPutCostEQ(v int) predicate.Mysekaifixture {
+func FirstPutCostEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldFirstPutCost, v))
 }
 
 // FirstPutCostNEQ applies the NEQ predicate on the "first_put_cost" field.
-func FirstPutCostNEQ(v int) predicate.Mysekaifixture {
+func FirstPutCostNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldFirstPutCost, v))
 }
 
 // FirstPutCostIn applies the In predicate on the "first_put_cost" field.
-func FirstPutCostIn(vs ...int) predicate.Mysekaifixture {
+func FirstPutCostIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldFirstPutCost, vs...))
 }
 
 // FirstPutCostNotIn applies the NotIn predicate on the "first_put_cost" field.
-func FirstPutCostNotIn(vs ...int) predicate.Mysekaifixture {
+func FirstPutCostNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldFirstPutCost, vs...))
 }
 
 // FirstPutCostGT applies the GT predicate on the "first_put_cost" field.
-func FirstPutCostGT(v int) predicate.Mysekaifixture {
+func FirstPutCostGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldFirstPutCost, v))
 }
 
 // FirstPutCostGTE applies the GTE predicate on the "first_put_cost" field.
-func FirstPutCostGTE(v int) predicate.Mysekaifixture {
+func FirstPutCostGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldFirstPutCost, v))
 }
 
 // FirstPutCostLT applies the LT predicate on the "first_put_cost" field.
-func FirstPutCostLT(v int) predicate.Mysekaifixture {
+func FirstPutCostLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldFirstPutCost, v))
 }
 
 // FirstPutCostLTE applies the LTE predicate on the "first_put_cost" field.
-func FirstPutCostLTE(v int) predicate.Mysekaifixture {
+func FirstPutCostLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldFirstPutCost, v))
 }
 
@@ -934,42 +934,42 @@ func FirstPutCostNotNil() predicate.Mysekaifixture {
 }
 
 // SecondPutCostEQ applies the EQ predicate on the "second_put_cost" field.
-func SecondPutCostEQ(v int) predicate.Mysekaifixture {
+func SecondPutCostEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldSecondPutCost, v))
 }
 
 // SecondPutCostNEQ applies the NEQ predicate on the "second_put_cost" field.
-func SecondPutCostNEQ(v int) predicate.Mysekaifixture {
+func SecondPutCostNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldSecondPutCost, v))
 }
 
 // SecondPutCostIn applies the In predicate on the "second_put_cost" field.
-func SecondPutCostIn(vs ...int) predicate.Mysekaifixture {
+func SecondPutCostIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldSecondPutCost, vs...))
 }
 
 // SecondPutCostNotIn applies the NotIn predicate on the "second_put_cost" field.
-func SecondPutCostNotIn(vs ...int) predicate.Mysekaifixture {
+func SecondPutCostNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldSecondPutCost, vs...))
 }
 
 // SecondPutCostGT applies the GT predicate on the "second_put_cost" field.
-func SecondPutCostGT(v int) predicate.Mysekaifixture {
+func SecondPutCostGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldSecondPutCost, v))
 }
 
 // SecondPutCostGTE applies the GTE predicate on the "second_put_cost" field.
-func SecondPutCostGTE(v int) predicate.Mysekaifixture {
+func SecondPutCostGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldSecondPutCost, v))
 }
 
 // SecondPutCostLT applies the LT predicate on the "second_put_cost" field.
-func SecondPutCostLT(v int) predicate.Mysekaifixture {
+func SecondPutCostLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldSecondPutCost, v))
 }
 
 // SecondPutCostLTE applies the LTE predicate on the "second_put_cost" field.
-func SecondPutCostLTE(v int) predicate.Mysekaifixture {
+func SecondPutCostLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldSecondPutCost, v))
 }
 
@@ -1059,42 +1059,42 @@ func ColorCodeContainsFold(v string) predicate.Mysekaifixture {
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDEQ applies the EQ predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDNEQ applies the NEQ predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDNEQ(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDNEQ(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDIn applies the In predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, vs...))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDNotIn applies the NotIn predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDNotIn(vs ...int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDNotIn(vs ...int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, vs...))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDGT applies the GT predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDGT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDGT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDGTE applies the GTE predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDGTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDGTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDLT applies the LT predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDLT(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDLT(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusIDLTE applies the LTE predicate on the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func MysekaiFixtureGameCharacterGroupPerformanceBonusIDLTE(v int) predicate.Mysekaifixture {
+func MysekaiFixtureGameCharacterGroupPerformanceBonusIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, v))
 }
 

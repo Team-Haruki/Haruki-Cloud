@@ -17,7 +17,7 @@ type Gachaticket struct {
 
 func (Gachaticket) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.JSON("gacha_display_type", json.RawMessage{}).Optional(),

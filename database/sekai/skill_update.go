@@ -30,14 +30,14 @@ func (_u *SkillUpdate) Where(ps ...predicate.Skill) *SkillUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *SkillUpdate) SetGameID(v int) *SkillUpdate {
+func (_u *SkillUpdate) SetGameID(v int64) *SkillUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *SkillUpdate) SetNillableGameID(v *int) *SkillUpdate {
+func (_u *SkillUpdate) SetNillableGameID(v *int64) *SkillUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *SkillUpdate) SetNillableGameID(v *int) *SkillUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *SkillUpdate) AddGameID(v int) *SkillUpdate {
+func (_u *SkillUpdate) AddGameID(v int64) *SkillUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -109,14 +109,14 @@ func (_u *SkillUpdate) ClearDescriptionSpriteName() *SkillUpdate {
 }
 
 // SetSkillFilterID sets the "skill_filter_id" field.
-func (_u *SkillUpdate) SetSkillFilterID(v int) *SkillUpdate {
+func (_u *SkillUpdate) SetSkillFilterID(v int64) *SkillUpdate {
 	_u.mutation.ResetSkillFilterID()
 	_u.mutation.SetSkillFilterID(v)
 	return _u
 }
 
 // SetNillableSkillFilterID sets the "skill_filter_id" field if the given value is not nil.
-func (_u *SkillUpdate) SetNillableSkillFilterID(v *int) *SkillUpdate {
+func (_u *SkillUpdate) SetNillableSkillFilterID(v *int64) *SkillUpdate {
 	if v != nil {
 		_u.SetSkillFilterID(*v)
 	}
@@ -124,7 +124,7 @@ func (_u *SkillUpdate) SetNillableSkillFilterID(v *int) *SkillUpdate {
 }
 
 // AddSkillFilterID adds value to the "skill_filter_id" field.
-func (_u *SkillUpdate) AddSkillFilterID(v int) *SkillUpdate {
+func (_u *SkillUpdate) AddSkillFilterID(v int64) *SkillUpdate {
 	_u.mutation.AddSkillFilterID(v)
 	return _u
 }
@@ -209,10 +209,10 @@ func (_u *SkillUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(skill.FieldGameID, field.TypeInt, value)
+		_spec.SetField(skill.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(skill.FieldGameID, field.TypeInt, value)
+		_spec.AddField(skill.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ShortDescription(); ok {
 		_spec.SetField(skill.FieldShortDescription, field.TypeString, value)
@@ -238,13 +238,13 @@ func (_u *SkillUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.SkillFilterID(); ok {
-		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt, value)
+		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSkillFilterID(); ok {
-		_spec.AddField(skill.FieldSkillFilterID, field.TypeInt, value)
+		_spec.AddField(skill.FieldSkillFilterID, field.TypeInt64, value)
 	}
 	if _u.mutation.SkillFilterIDCleared() {
-		_spec.ClearField(skill.FieldSkillFilterID, field.TypeInt)
+		_spec.ClearField(skill.FieldSkillFilterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SkillEffects(); ok {
 		_spec.SetField(skill.FieldSkillEffects, field.TypeJSON, value)
@@ -281,14 +281,14 @@ type SkillUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *SkillUpdateOne) SetGameID(v int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) SetGameID(v int64) *SkillUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *SkillUpdateOne) SetNillableGameID(v *int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) SetNillableGameID(v *int64) *SkillUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -296,7 +296,7 @@ func (_u *SkillUpdateOne) SetNillableGameID(v *int) *SkillUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *SkillUpdateOne) AddGameID(v int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) AddGameID(v int64) *SkillUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -360,14 +360,14 @@ func (_u *SkillUpdateOne) ClearDescriptionSpriteName() *SkillUpdateOne {
 }
 
 // SetSkillFilterID sets the "skill_filter_id" field.
-func (_u *SkillUpdateOne) SetSkillFilterID(v int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) SetSkillFilterID(v int64) *SkillUpdateOne {
 	_u.mutation.ResetSkillFilterID()
 	_u.mutation.SetSkillFilterID(v)
 	return _u
 }
 
 // SetNillableSkillFilterID sets the "skill_filter_id" field if the given value is not nil.
-func (_u *SkillUpdateOne) SetNillableSkillFilterID(v *int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) SetNillableSkillFilterID(v *int64) *SkillUpdateOne {
 	if v != nil {
 		_u.SetSkillFilterID(*v)
 	}
@@ -375,7 +375,7 @@ func (_u *SkillUpdateOne) SetNillableSkillFilterID(v *int) *SkillUpdateOne {
 }
 
 // AddSkillFilterID adds value to the "skill_filter_id" field.
-func (_u *SkillUpdateOne) AddSkillFilterID(v int) *SkillUpdateOne {
+func (_u *SkillUpdateOne) AddSkillFilterID(v int64) *SkillUpdateOne {
 	_u.mutation.AddSkillFilterID(v)
 	return _u
 }
@@ -490,10 +490,10 @@ func (_u *SkillUpdateOne) sqlSave(ctx context.Context) (_node *Skill, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(skill.FieldGameID, field.TypeInt, value)
+		_spec.SetField(skill.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(skill.FieldGameID, field.TypeInt, value)
+		_spec.AddField(skill.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ShortDescription(); ok {
 		_spec.SetField(skill.FieldShortDescription, field.TypeString, value)
@@ -519,13 +519,13 @@ func (_u *SkillUpdateOne) sqlSave(ctx context.Context) (_node *Skill, err error)
 		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.SkillFilterID(); ok {
-		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt, value)
+		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSkillFilterID(); ok {
-		_spec.AddField(skill.FieldSkillFilterID, field.TypeInt, value)
+		_spec.AddField(skill.FieldSkillFilterID, field.TypeInt64, value)
 	}
 	if _u.mutation.SkillFilterIDCleared() {
-		_spec.ClearField(skill.FieldSkillFilterID, field.TypeInt)
+		_spec.ClearField(skill.FieldSkillFilterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SkillEffects(); ok {
 		_spec.SetField(skill.FieldSkillEffects, field.TypeJSON, value)

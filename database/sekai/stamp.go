@@ -18,11 +18,11 @@ type Stamp struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// StampType holds the value of the "stamp_type" field.
 	StampType json.RawMessage `json:"stamp_type,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -30,17 +30,17 @@ type Stamp struct {
 	// BalloonAssetbundleName holds the value of the "balloon_assetbundle_name" field.
 	BalloonAssetbundleName json.RawMessage `json:"balloon_assetbundle_name,omitempty"`
 	// CharacterId1 holds the value of the "character_id1" field.
-	CharacterId1 int `json:"character_id1,omitempty"`
+	CharacterId1 int64 `json:"character_id1,omitempty"`
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
-	GameCharacterUnitID int `json:"game_character_unit_id,omitempty"`
+	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
 	// ArchivePublishedAt holds the value of the "archive_published_at" field.
-	ArchivePublishedAt int `json:"archive_published_at,omitempty"`
+	ArchivePublishedAt int64 `json:"archive_published_at,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
 	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
 	// CharacterId2 holds the value of the "character_id2" field.
-	CharacterId2 int `json:"character_id2,omitempty"`
+	CharacterId2 int64 `json:"character_id2,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -82,7 +82,7 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case stamp.FieldStampType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -96,7 +96,7 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case stamp.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -122,19 +122,19 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id1", values[i])
 			} else if value.Valid {
-				_m.CharacterId1 = int(value.Int64)
+				_m.CharacterId1 = value.Int64
 			}
 		case stamp.FieldGameCharacterUnitID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitID = int(value.Int64)
+				_m.GameCharacterUnitID = value.Int64
 			}
 		case stamp.FieldArchivePublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_published_at", values[i])
 			} else if value.Valid {
-				_m.ArchivePublishedAt = int(value.Int64)
+				_m.ArchivePublishedAt = value.Int64
 			}
 		case stamp.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -154,7 +154,7 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id2", values[i])
 			} else if value.Valid {
-				_m.CharacterId2 = int(value.Int64)
+				_m.CharacterId2 = value.Int64
 			}
 		case stamp.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

@@ -18,7 +18,7 @@ type Mysekaiphenomenon struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiPhenomenaBrightnessType holds the value of the "mysekai_phenomena_brightness_type" field.
 	MysekaiPhenomenaBrightnessType json.RawMessage `json:"mysekai_phenomena_brightness_type,omitempty"`
 	// Name holds the value of the "name" field.
@@ -30,7 +30,7 @@ type Mysekaiphenomenon struct {
 	// MysekaiPhenomenaTimePeriodType holds the value of the "mysekai_phenomena_time_period_type" field.
 	MysekaiPhenomenaTimePeriodType json.RawMessage `json:"mysekai_phenomena_time_period_type,omitempty"`
 	// MysekaiPhenomenaBackgroundColorID holds the value of the "mysekai_phenomena_background_color_id" field.
-	MysekaiPhenomenaBackgroundColorID int `json:"mysekai_phenomena_background_color_id,omitempty"`
+	MysekaiPhenomenaBackgroundColorID int64 `json:"mysekai_phenomena_background_color_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// RampTextureAssetbundleName holds the value of the "ramp_texture_assetbundle_name" field.
@@ -78,7 +78,7 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -118,7 +118,7 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_background_color_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiPhenomenaBackgroundColorID = int(value.Int64)
+				_m.MysekaiPhenomenaBackgroundColorID = value.Int64
 			}
 		case mysekaiphenomenon.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {

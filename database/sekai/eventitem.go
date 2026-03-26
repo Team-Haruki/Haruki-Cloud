@@ -18,9 +18,9 @@ type Eventitem struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name json.RawMessage `json:"name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
@@ -28,7 +28,7 @@ type Eventitem struct {
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int `json:"game_character_id,omitempty"`
+	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -70,13 +70,13 @@ func (_m *Eventitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case eventitem.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case eventitem.FieldName:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -104,7 +104,7 @@ func (_m *Eventitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = int(value.Int64)
+				_m.GameCharacterID = value.Int64
 			}
 		case eventitem.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

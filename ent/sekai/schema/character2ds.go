@@ -17,10 +17,10 @@ type Character2D struct {
 
 func (Character2D) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("character_type", json.RawMessage{}).Optional(),
 		field.Bool("is_next_grade").Optional(),
-		field.Int("character_id").Optional(),
+		field.Int64("character_id").Optional(),
 		field.JSON("unit", json.RawMessage{}).Optional(),
 		field.Bool("is_enabled_flip_display").Optional(),
 		field.String("asset_name").Optional(),

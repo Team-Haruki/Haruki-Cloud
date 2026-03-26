@@ -18,15 +18,15 @@ type Eventexchangesummarie struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int `json:"start_at,omitempty"`
+	StartAt int64 `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
-	EndAt int `json:"end_at,omitempty"`
+	EndAt int64 `json:"end_at,omitempty"`
 	// EventExchanges holds the value of the "event_exchanges" field.
 	EventExchanges json.RawMessage `json:"event_exchanges,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -70,13 +70,13 @@ func (_m *Eventexchangesummarie) assignValues(columns []string, values []any) er
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case eventexchangesummarie.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case eventexchangesummarie.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,13 +88,13 @@ func (_m *Eventexchangesummarie) assignValues(columns []string, values []any) er
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = int(value.Int64)
+				_m.StartAt = value.Int64
 			}
 		case eventexchangesummarie.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = int(value.Int64)
+				_m.EndAt = value.Int64
 			}
 		case eventexchangesummarie.FieldEventExchanges:
 			if value, ok := values[i].(*[]byte); !ok {

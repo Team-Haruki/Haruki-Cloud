@@ -18,11 +18,11 @@ type Gamecharacter struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// ResourceID holds the value of the "resource_id" field.
-	ResourceID int `json:"resource_id,omitempty"`
+	ResourceID int64 `json:"resource_id,omitempty"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName string `json:"first_name,omitempty"`
 	// GivenName holds the value of the "given_name" field.
@@ -94,19 +94,19 @@ func (_m *Gamecharacter) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case gamecharacter.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case gamecharacter.FieldResourceID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_id", values[i])
 			} else if value.Valid {
-				_m.ResourceID = int(value.Int64)
+				_m.ResourceID = value.Int64
 			}
 		case gamecharacter.FieldFirstName:
 			if value, ok := values[i].(*sql.NullString); !ok {

@@ -262,7 +262,7 @@ func (_q *Cardcostume3DQuery) Clone() *Cardcostume3DQuery {
 // Example:
 //
 //	var v []struct {
-//		CardID int `json:"card_id,omitempty"`
+//		CardID int64 `json:"card_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *Cardcostume3DQuery) GroupBy(field string, fields ...string) *Cardcostu
 // Example:
 //
 //	var v []struct {
-//		CardID int `json:"card_id,omitempty"`
+//		CardID int64 `json:"card_id,omitempty"`
 //	}
 //
 //	client.Cardcostume3D.Query().

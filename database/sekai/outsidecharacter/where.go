@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Outsidecharacter {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Outsidecharacter {
+func GameID(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Outsidecharacter {
+func Seq(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -74,82 +74,82 @@ func ServerRegion(v string) predicate.Outsidecharacter {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Outsidecharacter {
+func GameIDEQ(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Outsidecharacter {
+func GameIDNEQ(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Outsidecharacter {
+func GameIDIn(vs ...int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Outsidecharacter {
+func GameIDNotIn(vs ...int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Outsidecharacter {
+func GameIDGT(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Outsidecharacter {
+func GameIDGTE(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Outsidecharacter {
+func GameIDLT(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Outsidecharacter {
+func GameIDLTE(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Outsidecharacter {
+func SeqEQ(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Outsidecharacter {
+func SeqNEQ(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Outsidecharacter {
+func SeqIn(vs ...int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Outsidecharacter {
+func SeqNotIn(vs ...int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Outsidecharacter {
+func SeqGT(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Outsidecharacter {
+func SeqGTE(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Outsidecharacter {
+func SeqLT(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Outsidecharacter {
+func SeqLTE(v int64) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLTE(FieldSeq, v))
 }
 

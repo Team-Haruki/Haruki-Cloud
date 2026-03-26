@@ -17,15 +17,15 @@ type Mysekaifixtureonlydisassemblematerial struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiFixtureID holds the value of the "mysekai_fixture_id" field.
-	MysekaiFixtureID int `json:"mysekai_fixture_id,omitempty"`
+	MysekaiFixtureID int64 `json:"mysekai_fixture_id,omitempty"`
 	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
-	MysekaiMaterialID int `json:"mysekai_material_id,omitempty"`
+	MysekaiMaterialID int64 `json:"mysekai_material_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// Quantity holds the value of the "quantity" field.
-	Quantity int `json:"quantity,omitempty"`
+	Quantity int64 `json:"quantity,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -65,31 +65,31 @@ func (_m *Mysekaifixtureonlydisassemblematerial) assignValues(columns []string, 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureID = int(value.Int64)
+				_m.MysekaiFixtureID = value.Int64
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiMaterialID = int(value.Int64)
+				_m.MysekaiMaterialID = value.Int64
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldQuantity:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field quantity", values[i])
 			} else if value.Valid {
-				_m.Quantity = int(value.Int64)
+				_m.Quantity = value.Int64
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

@@ -15,10 +15,10 @@ type Eventmusic struct {
 
 func (Eventmusic) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("event_id").Optional(),
-		field.Int("music_id").Optional(),
-		field.Int("seq").Optional(),
-		field.Int("release_condition_id").Optional(),
+		field.Int64("event_id").Optional(),
+		field.Int64("music_id").Optional(),
+		field.Int64("seq").Optional(),
+		field.Int64("release_condition_id").Optional(),
 		field.String("server_region"),
 	}
 }

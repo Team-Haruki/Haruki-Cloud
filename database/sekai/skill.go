@@ -18,7 +18,7 @@ type Skill struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// ShortDescription holds the value of the "short_description" field.
 	ShortDescription string `json:"short_description,omitempty"`
 	// Description holds the value of the "description" field.
@@ -26,7 +26,7 @@ type Skill struct {
 	// DescriptionSpriteName holds the value of the "description_sprite_name" field.
 	DescriptionSpriteName json.RawMessage `json:"description_sprite_name,omitempty"`
 	// SkillFilterID holds the value of the "skill_filter_id" field.
-	SkillFilterID int `json:"skill_filter_id,omitempty"`
+	SkillFilterID int64 `json:"skill_filter_id,omitempty"`
 	// SkillEffects holds the value of the "skill_effects" field.
 	SkillEffects json.RawMessage `json:"skill_effects,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -70,7 +70,7 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case skill.FieldShortDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -96,7 +96,7 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field skill_filter_id", values[i])
 			} else if value.Valid {
-				_m.SkillFilterID = int(value.Int64)
+				_m.SkillFilterID = value.Int64
 			}
 		case skill.FieldSkillEffects:
 			if value, ok := values[i].(*[]byte); !ok {

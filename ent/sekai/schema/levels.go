@@ -17,10 +17,10 @@ type Level struct {
 
 func (Level) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("level_type", json.RawMessage{}).Optional(),
-		field.Int("level").Optional(),
-		field.Int("total_exp").Optional(),
+		field.Int64("level").Optional(),
+		field.Int64("total_exp").Optional(),
 		field.String("server_region"),
 	}
 }

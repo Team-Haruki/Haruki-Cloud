@@ -48,14 +48,14 @@ func (_u *ResourceboxeUpdate) ClearResourceBoxPurpose() *ResourceboxeUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ResourceboxeUpdate) SetGameID(v int) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetGameID(v int64) *ResourceboxeUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ResourceboxeUpdate) SetNillableGameID(v *int) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetNillableGameID(v *int64) *ResourceboxeUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -63,7 +63,7 @@ func (_u *ResourceboxeUpdate) SetNillableGameID(v *int) *ResourceboxeUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ResourceboxeUpdate) AddGameID(v int) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) AddGameID(v int64) *ResourceboxeUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -231,10 +231,10 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt, value)
+		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
 		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
@@ -318,14 +318,14 @@ func (_u *ResourceboxeUpdateOne) ClearResourceBoxPurpose() *ResourceboxeUpdateOn
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ResourceboxeUpdateOne) SetGameID(v int) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetGameID(v int64) *ResourceboxeUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int64) *ResourceboxeUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -333,7 +333,7 @@ func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int) *ResourceboxeUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ResourceboxeUpdateOne) AddGameID(v int) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) AddGameID(v int64) *ResourceboxeUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -531,10 +531,10 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt, value)
+		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
 		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)

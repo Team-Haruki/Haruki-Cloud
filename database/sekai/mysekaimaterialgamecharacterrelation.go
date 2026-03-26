@@ -17,13 +17,13 @@ type Mysekaimaterialgamecharacterrelation struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
+	GroupID int64 `json:"group_id,omitempty"`
 	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
-	MysekaiMaterialID int `json:"mysekai_material_id,omitempty"`
+	MysekaiMaterialID int64 `json:"mysekai_material_id,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int `json:"game_character_id,omitempty"`
+	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -63,25 +63,25 @@ func (_m *Mysekaimaterialgamecharacterrelation) assignValues(columns []string, v
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaimaterialgamecharacterrelation.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = int(value.Int64)
+				_m.GroupID = value.Int64
 			}
 		case mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiMaterialID = int(value.Int64)
+				_m.MysekaiMaterialID = value.Int64
 			}
 		case mysekaimaterialgamecharacterrelation.FieldGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = int(value.Int64)
+				_m.GameCharacterID = value.Int64
 			}
 		case mysekaimaterialgamecharacterrelation.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

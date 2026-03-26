@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaimusicrecordcategorie {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaimusicrecordcategorie {
+func GameID(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -64,7 +64,7 @@ func Name(v string) predicate.Mysekaimusicrecordcategorie {
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Mysekaimusicrecordcategorie {
+func Seq(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -79,42 +79,42 @@ func ServerRegion(v string) predicate.Mysekaimusicrecordcategorie {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDEQ(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDNEQ(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
+func GameIDIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
+func GameIDNotIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDGT(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDGTE(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDLT(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaimusicrecordcategorie {
+func GameIDLTE(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -194,42 +194,42 @@ func NameContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqEQ(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqNEQ(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
+func SeqIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
+func SeqNotIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqGT(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqGTE(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqLT(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Mysekaimusicrecordcategorie {
+func SeqLTE(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldSeq, v))
 }
 

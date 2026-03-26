@@ -20,19 +20,19 @@ type MysekaiitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiitemCreate) SetGameID(v int) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetGameID(v int64) *MysekaiitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaiitemCreate) SetSeq(v int) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetSeq(v int64) *MysekaiitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaiitemCreate) SetNillableSeq(v *int) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetNillableSeq(v *int64) *MysekaiitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -182,11 +182,11 @@ func (_c *MysekaiitemCreate) createSpec() (*Mysekaiitem, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(mysekaiitem.Table, sqlgraph.NewFieldSpec(mysekaiitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiItemType(); ok {

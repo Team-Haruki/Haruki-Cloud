@@ -262,7 +262,7 @@ func (_q *EventmusicQuery) Clone() *EventmusicQuery {
 // Example:
 //
 //	var v []struct {
-//		EventID int `json:"event_id,omitempty"`
+//		EventID int64 `json:"event_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *EventmusicQuery) GroupBy(field string, fields ...string) *EventmusicGr
 // Example:
 //
 //	var v []struct {
-//		EventID int `json:"event_id,omitempty"`
+//		EventID int64 `json:"event_id,omitempty"`
 //	}
 //
 //	client.Eventmusic.Query().

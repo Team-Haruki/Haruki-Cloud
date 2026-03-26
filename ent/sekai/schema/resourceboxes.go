@@ -18,7 +18,7 @@ type Resourceboxe struct {
 func (Resourceboxe) Fields() []ent.Field {
 	return []ent.Field{
 		field.JSON("resource_box_purpose", json.RawMessage{}).Optional(),
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("resource_box_type", json.RawMessage{}).Optional(),
 		field.String("description").Optional(),
 		field.JSON("details", json.RawMessage{}).Optional(),

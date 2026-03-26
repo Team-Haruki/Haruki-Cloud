@@ -30,14 +30,14 @@ func (_u *MysekaifixturetagUpdate) Where(ps ...predicate.Mysekaifixturetag) *Mys
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturetagUpdate) SetGameID(v int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) SetGameID(v int64) *MysekaifixturetagUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturetagUpdate) SetNillableGameID(v *int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) SetNillableGameID(v *int64) *MysekaifixturetagUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaifixturetagUpdate) SetNillableGameID(v *int) *MysekaifixturetagU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturetagUpdate) AddGameID(v int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) AddGameID(v int64) *MysekaifixturetagUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -109,14 +109,14 @@ func (_u *MysekaifixturetagUpdate) ClearMysekaiFixtureTagType() *Mysekaifixturet
 }
 
 // SetExternalID sets the "external_id" field.
-func (_u *MysekaifixturetagUpdate) SetExternalID(v int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) SetExternalID(v int64) *MysekaifixturetagUpdate {
 	_u.mutation.ResetExternalID()
 	_u.mutation.SetExternalID(v)
 	return _u
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *MysekaifixturetagUpdate) SetNillableExternalID(v *int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) SetNillableExternalID(v *int64) *MysekaifixturetagUpdate {
 	if v != nil {
 		_u.SetExternalID(*v)
 	}
@@ -124,7 +124,7 @@ func (_u *MysekaifixturetagUpdate) SetNillableExternalID(v *int) *Mysekaifixture
 }
 
 // AddExternalID adds value to the "external_id" field.
-func (_u *MysekaifixturetagUpdate) AddExternalID(v int) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) AddExternalID(v int64) *MysekaifixturetagUpdate {
 	_u.mutation.AddExternalID(v)
 	return _u
 }
@@ -191,10 +191,10 @@ func (_u *MysekaifixturetagUpdate) sqlSave(ctx context.Context) (_node int, err 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturetag.FieldName, field.TypeString, value)
@@ -220,13 +220,13 @@ func (_u *MysekaifixturetagUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedExternalID(); ok {
-		_spec.AddField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
 	}
 	if _u.mutation.ExternalIDCleared() {
-		_spec.ClearField(mysekaifixturetag.FieldExternalID, field.TypeInt)
+		_spec.ClearField(mysekaifixturetag.FieldExternalID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixturetag.FieldServerRegion, field.TypeString, value)
@@ -252,14 +252,14 @@ type MysekaifixturetagUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturetagUpdateOne) SetGameID(v int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) SetGameID(v int64) *MysekaifixturetagUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturetagUpdateOne) SetNillableGameID(v *int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) SetNillableGameID(v *int64) *MysekaifixturetagUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -267,7 +267,7 @@ func (_u *MysekaifixturetagUpdateOne) SetNillableGameID(v *int) *Mysekaifixturet
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturetagUpdateOne) AddGameID(v int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) AddGameID(v int64) *MysekaifixturetagUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -331,14 +331,14 @@ func (_u *MysekaifixturetagUpdateOne) ClearMysekaiFixtureTagType() *Mysekaifixtu
 }
 
 // SetExternalID sets the "external_id" field.
-func (_u *MysekaifixturetagUpdateOne) SetExternalID(v int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) SetExternalID(v int64) *MysekaifixturetagUpdateOne {
 	_u.mutation.ResetExternalID()
 	_u.mutation.SetExternalID(v)
 	return _u
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *MysekaifixturetagUpdateOne) SetNillableExternalID(v *int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) SetNillableExternalID(v *int64) *MysekaifixturetagUpdateOne {
 	if v != nil {
 		_u.SetExternalID(*v)
 	}
@@ -346,7 +346,7 @@ func (_u *MysekaifixturetagUpdateOne) SetNillableExternalID(v *int) *Mysekaifixt
 }
 
 // AddExternalID adds value to the "external_id" field.
-func (_u *MysekaifixturetagUpdateOne) AddExternalID(v int) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) AddExternalID(v int64) *MysekaifixturetagUpdateOne {
 	_u.mutation.AddExternalID(v)
 	return _u
 }
@@ -443,10 +443,10 @@ func (_u *MysekaifixturetagUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturetag.FieldName, field.TypeString, value)
@@ -472,13 +472,13 @@ func (_u *MysekaifixturetagUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedExternalID(); ok {
-		_spec.AddField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
 	}
 	if _u.mutation.ExternalIDCleared() {
-		_spec.ClearField(mysekaifixturetag.FieldExternalID, field.TypeInt)
+		_spec.ClearField(mysekaifixturetag.FieldExternalID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixturetag.FieldServerRegion, field.TypeString, value)

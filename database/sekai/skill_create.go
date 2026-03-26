@@ -21,7 +21,7 @@ type SkillCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *SkillCreate) SetGameID(v int) *SkillCreate {
+func (_c *SkillCreate) SetGameID(v int64) *SkillCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -61,13 +61,13 @@ func (_c *SkillCreate) SetDescriptionSpriteName(v json.RawMessage) *SkillCreate 
 }
 
 // SetSkillFilterID sets the "skill_filter_id" field.
-func (_c *SkillCreate) SetSkillFilterID(v int) *SkillCreate {
+func (_c *SkillCreate) SetSkillFilterID(v int64) *SkillCreate {
 	_c.mutation.SetSkillFilterID(v)
 	return _c
 }
 
 // SetNillableSkillFilterID sets the "skill_filter_id" field if the given value is not nil.
-func (_c *SkillCreate) SetNillableSkillFilterID(v *int) *SkillCreate {
+func (_c *SkillCreate) SetNillableSkillFilterID(v *int64) *SkillCreate {
 	if v != nil {
 		_c.SetSkillFilterID(*v)
 	}
@@ -153,7 +153,7 @@ func (_c *SkillCreate) createSpec() (*Skill, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(skill.Table, sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(skill.FieldGameID, field.TypeInt, value)
+		_spec.SetField(skill.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ShortDescription(); ok {
@@ -169,7 +169,7 @@ func (_c *SkillCreate) createSpec() (*Skill, *sqlgraph.CreateSpec) {
 		_node.DescriptionSpriteName = value
 	}
 	if value, ok := _c.mutation.SkillFilterID(); ok {
-		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt, value)
+		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)
 		_node.SkillFilterID = value
 	}
 	if value, ok := _c.mutation.SkillEffects(); ok {

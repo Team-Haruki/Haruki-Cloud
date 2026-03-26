@@ -18,13 +18,13 @@ type Level struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// LevelType holds the value of the "level_type" field.
 	LevelType json.RawMessage `json:"level_type,omitempty"`
 	// Level holds the value of the "level" field.
-	Level int `json:"level,omitempty"`
+	Level int64 `json:"level,omitempty"`
 	// TotalExp holds the value of the "total_exp" field.
-	TotalExp int `json:"total_exp,omitempty"`
+	TotalExp int64 `json:"total_exp,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -66,7 +66,7 @@ func (_m *Level) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case level.FieldLevelType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -80,13 +80,13 @@ func (_m *Level) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = int(value.Int64)
+				_m.Level = value.Int64
 			}
 		case level.FieldTotalExp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field total_exp", values[i])
 			} else if value.Valid {
-				_m.TotalExp = int(value.Int64)
+				_m.TotalExp = value.Int64
 			}
 		case level.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

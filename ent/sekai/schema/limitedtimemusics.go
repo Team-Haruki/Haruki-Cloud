@@ -15,10 +15,10 @@ type Limitedtimemusic struct {
 
 func (Limitedtimemusic) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("music_id").Optional(),
-		field.Int("start_at").Optional(),
-		field.Int("end_at").Optional(),
+		field.Int64("game_id"),
+		field.Int64("music_id").Optional(),
+		field.Int64("start_at").Optional(),
+		field.Int64("end_at").Optional(),
 		field.String("server_region"),
 	}
 }

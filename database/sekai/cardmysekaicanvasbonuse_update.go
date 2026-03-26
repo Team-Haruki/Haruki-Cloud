@@ -28,14 +28,14 @@ func (_u *CardmysekaicanvasbonuseUpdate) Where(ps ...predicate.Cardmysekaicanvas
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CardmysekaicanvasbonuseUpdate) SetGameID(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetGameID(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdate) SetNillableGameID(v *int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetNillableGameID(v *int64) *CardmysekaicanvasbonuseUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *CardmysekaicanvasbonuseUpdate) SetNillableGameID(v *int) *Cardmysekaic
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardmysekaicanvasbonuseUpdate) AddGameID(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) AddGameID(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -69,14 +69,14 @@ func (_u *CardmysekaicanvasbonuseUpdate) ClearCardRarityType() *Cardmysekaicanva
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) SetPower1BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetPower1BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower1BonusFixed(v *int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower1BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdate {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -84,7 +84,7 @@ func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower1BonusFixed(v *int) *Ca
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) AddPower1BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) AddPower1BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -96,14 +96,14 @@ func (_u *CardmysekaicanvasbonuseUpdate) ClearPower1BonusFixed() *Cardmysekaican
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) SetPower2BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetPower2BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower2BonusFixed(v *int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower2BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdate {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -111,7 +111,7 @@ func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower2BonusFixed(v *int) *Ca
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) AddPower2BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) AddPower2BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -123,14 +123,14 @@ func (_u *CardmysekaicanvasbonuseUpdate) ClearPower2BonusFixed() *Cardmysekaican
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) SetPower3BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetPower3BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower3BonusFixed(v *int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower3BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdate {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -138,7 +138,7 @@ func (_u *CardmysekaicanvasbonuseUpdate) SetNillablePower3BonusFixed(v *int) *Ca
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdate) AddPower3BonusFixed(v int) *CardmysekaicanvasbonuseUpdate {
+func (_u *CardmysekaicanvasbonuseUpdate) AddPower3BonusFixed(v int64) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -205,10 +205,10 @@ func (_u *CardmysekaicanvasbonuseUpdate) sqlSave(ctx context.Context) (_node int
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString, value)
@@ -217,31 +217,31 @@ func (_u *CardmysekaicanvasbonuseUpdate) sqlSave(ctx context.Context) (_node int
 		_spec.ClearField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldServerRegion, field.TypeString, value)
@@ -267,14 +267,14 @@ type CardmysekaicanvasbonuseUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetGameID(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetGameID(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillableGameID(v *int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillableGameID(v *int64) *CardmysekaicanvasbonuseUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -282,7 +282,7 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillableGameID(v *int) *Cardmysek
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) AddGameID(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) AddGameID(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -308,14 +308,14 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) ClearCardRarityType() *Cardmysekaica
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower1BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower1BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower1BonusFixed(v *int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower1BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdateOne {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -323,7 +323,7 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower1BonusFixed(v *int) 
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower1BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower1BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -335,14 +335,14 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) ClearPower1BonusFixed() *Cardmysekai
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower2BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower2BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower2BonusFixed(v *int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower2BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdateOne {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -350,7 +350,7 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower2BonusFixed(v *int) 
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower2BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower2BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -362,14 +362,14 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) ClearPower2BonusFixed() *Cardmysekai
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower3BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetPower3BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower3BonusFixed(v *int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower3BonusFixed(v *int64) *CardmysekaicanvasbonuseUpdateOne {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -377,7 +377,7 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillablePower3BonusFixed(v *int) 
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower3BonusFixed(v int) *CardmysekaicanvasbonuseUpdateOne {
+func (_u *CardmysekaicanvasbonuseUpdateOne) AddPower3BonusFixed(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -474,10 +474,10 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) sqlSave(ctx context.Context) (_node 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString, value)
@@ -486,31 +486,31 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) sqlSave(ctx context.Context) (_node 
 		_spec.ClearField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldServerRegion, field.TypeString, value)

@@ -262,7 +262,7 @@ func (_q *BondshonorQuery) Clone() *BondshonorQuery {
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *BondshonorQuery) GroupBy(field string, fields ...string) *BondshonorGr
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Bondshonor.Query().

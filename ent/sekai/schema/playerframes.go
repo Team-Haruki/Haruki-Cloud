@@ -15,11 +15,11 @@ type Playerframe struct {
 
 func (Playerframe) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
-		field.Int("player_frame_group_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
+		field.Int64("player_frame_group_id").Optional(),
 		field.String("description").Optional(),
-		field.Int("game_character_id").Optional(),
+		field.Int64("game_character_id").Optional(),
 		field.String("server_region"),
 	}
 }

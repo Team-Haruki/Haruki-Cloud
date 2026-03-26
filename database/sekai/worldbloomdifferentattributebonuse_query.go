@@ -262,7 +262,7 @@ func (_q *WorldbloomdifferentattributebonuseQuery) Clone() *Worldbloomdifferenta
 // Example:
 //
 //	var v []struct {
-//		AttributeCount int `json:"attribute_count,omitempty"`
+//		AttributeCount int64 `json:"attribute_count,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *WorldbloomdifferentattributebonuseQuery) GroupBy(field string, fields 
 // Example:
 //
 //	var v []struct {
-//		AttributeCount int `json:"attribute_count,omitempty"`
+//		AttributeCount int64 `json:"attribute_count,omitempty"`
 //	}
 //
 //	client.Worldbloomdifferentattributebonuse.Query().

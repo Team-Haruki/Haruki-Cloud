@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Eventexchangesummarie {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Eventexchangesummarie {
+func GameID(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldGameID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int) predicate.Eventexchangesummarie {
+func EventID(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldEventID, v))
 }
 
@@ -69,12 +69,12 @@ func AssetbundleName(v string) predicate.Eventexchangesummarie {
 }
 
 // StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int) predicate.Eventexchangesummarie {
+func StartAt(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldStartAt, v))
 }
 
 // EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
-func EndAt(v int) predicate.Eventexchangesummarie {
+func EndAt(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldEndAt, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Eventexchangesummarie {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Eventexchangesummarie {
+func GameIDEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Eventexchangesummarie {
+func GameIDNEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Eventexchangesummarie {
+func GameIDIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Eventexchangesummarie {
+func GameIDNotIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Eventexchangesummarie {
+func GameIDGT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Eventexchangesummarie {
+func GameIDGTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Eventexchangesummarie {
+func GameIDLT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Eventexchangesummarie {
+func GameIDLTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLTE(FieldGameID, v))
 }
 
 // EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int) predicate.Eventexchangesummarie {
+func EventIDEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldEventID, v))
 }
 
 // EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int) predicate.Eventexchangesummarie {
+func EventIDNEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNEQ(FieldEventID, v))
 }
 
 // EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int) predicate.Eventexchangesummarie {
+func EventIDIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldIn(FieldEventID, vs...))
 }
 
 // EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int) predicate.Eventexchangesummarie {
+func EventIDNotIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNotIn(FieldEventID, vs...))
 }
 
 // EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int) predicate.Eventexchangesummarie {
+func EventIDGT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGT(FieldEventID, v))
 }
 
 // EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int) predicate.Eventexchangesummarie {
+func EventIDGTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGTE(FieldEventID, v))
 }
 
 // EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int) predicate.Eventexchangesummarie {
+func EventIDLT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLT(FieldEventID, v))
 }
 
 // EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int) predicate.Eventexchangesummarie {
+func EventIDLTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLTE(FieldEventID, v))
 }
 
@@ -249,42 +249,42 @@ func AssetbundleNameContainsFold(v string) predicate.Eventexchangesummarie {
 }
 
 // StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int) predicate.Eventexchangesummarie {
+func StartAtEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldStartAt, v))
 }
 
 // StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int) predicate.Eventexchangesummarie {
+func StartAtNEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNEQ(FieldStartAt, v))
 }
 
 // StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int) predicate.Eventexchangesummarie {
+func StartAtIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldIn(FieldStartAt, vs...))
 }
 
 // StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int) predicate.Eventexchangesummarie {
+func StartAtNotIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNotIn(FieldStartAt, vs...))
 }
 
 // StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int) predicate.Eventexchangesummarie {
+func StartAtGT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGT(FieldStartAt, v))
 }
 
 // StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int) predicate.Eventexchangesummarie {
+func StartAtGTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGTE(FieldStartAt, v))
 }
 
 // StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int) predicate.Eventexchangesummarie {
+func StartAtLT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLT(FieldStartAt, v))
 }
 
 // StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int) predicate.Eventexchangesummarie {
+func StartAtLTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLTE(FieldStartAt, v))
 }
 
@@ -299,42 +299,42 @@ func StartAtNotNil() predicate.Eventexchangesummarie {
 }
 
 // EndAtEQ applies the EQ predicate on the "end_at" field.
-func EndAtEQ(v int) predicate.Eventexchangesummarie {
+func EndAtEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldEQ(FieldEndAt, v))
 }
 
 // EndAtNEQ applies the NEQ predicate on the "end_at" field.
-func EndAtNEQ(v int) predicate.Eventexchangesummarie {
+func EndAtNEQ(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNEQ(FieldEndAt, v))
 }
 
 // EndAtIn applies the In predicate on the "end_at" field.
-func EndAtIn(vs ...int) predicate.Eventexchangesummarie {
+func EndAtIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldIn(FieldEndAt, vs...))
 }
 
 // EndAtNotIn applies the NotIn predicate on the "end_at" field.
-func EndAtNotIn(vs ...int) predicate.Eventexchangesummarie {
+func EndAtNotIn(vs ...int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldNotIn(FieldEndAt, vs...))
 }
 
 // EndAtGT applies the GT predicate on the "end_at" field.
-func EndAtGT(v int) predicate.Eventexchangesummarie {
+func EndAtGT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGT(FieldEndAt, v))
 }
 
 // EndAtGTE applies the GTE predicate on the "end_at" field.
-func EndAtGTE(v int) predicate.Eventexchangesummarie {
+func EndAtGTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldGTE(FieldEndAt, v))
 }
 
 // EndAtLT applies the LT predicate on the "end_at" field.
-func EndAtLT(v int) predicate.Eventexchangesummarie {
+func EndAtLT(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLT(FieldEndAt, v))
 }
 
 // EndAtLTE applies the LTE predicate on the "end_at" field.
-func EndAtLTE(v int) predicate.Eventexchangesummarie {
+func EndAtLTE(v int64) predicate.Eventexchangesummarie {
 	return predicate.Eventexchangesummarie(sql.FieldLTE(FieldEndAt, v))
 }
 

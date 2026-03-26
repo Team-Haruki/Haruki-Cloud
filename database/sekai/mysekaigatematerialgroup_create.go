@@ -20,19 +20,19 @@ type MysekaigatematerialgroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaigatematerialgroupCreate) SetGameID(v int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetGameID(v int64) *MysekaigatematerialgroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaigatematerialgroupCreate) SetGroupID(v int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetGroupID(v int64) *MysekaigatematerialgroupCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaigatematerialgroupCreate) SetNillableGroupID(v *int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetNillableGroupID(v *int64) *MysekaigatematerialgroupCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *MysekaigatematerialgroupCreate) SetNillableGroupID(v *int) *Mysekaigat
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_c *MysekaigatematerialgroupCreate) SetMysekaiMaterialID(v int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetMysekaiMaterialID(v int64) *MysekaigatematerialgroupCreate {
 	_c.mutation.SetMysekaiMaterialID(v)
 	return _c
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_c *MysekaigatematerialgroupCreate) SetNillableMysekaiMaterialID(v *int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetNillableMysekaiMaterialID(v *int64) *MysekaigatematerialgroupCreate {
 	if v != nil {
 		_c.SetMysekaiMaterialID(*v)
 	}
@@ -54,13 +54,13 @@ func (_c *MysekaigatematerialgroupCreate) SetNillableMysekaiMaterialID(v *int) *
 }
 
 // SetQuantity sets the "quantity" field.
-func (_c *MysekaigatematerialgroupCreate) SetQuantity(v int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetQuantity(v int64) *MysekaigatematerialgroupCreate {
 	_c.mutation.SetQuantity(v)
 	return _c
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_c *MysekaigatematerialgroupCreate) SetNillableQuantity(v *int) *MysekaigatematerialgroupCreate {
+func (_c *MysekaigatematerialgroupCreate) SetNillableQuantity(v *int64) *MysekaigatematerialgroupCreate {
 	if v != nil {
 		_c.SetQuantity(*v)
 	}
@@ -140,19 +140,19 @@ func (_c *MysekaigatematerialgroupCreate) createSpec() (*Mysekaigatematerialgrou
 		_spec = sqlgraph.NewCreateSpec(mysekaigatematerialgroup.Table, sqlgraph.NewFieldSpec(mysekaigatematerialgroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaigatematerialgroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigatematerialgroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaigatematerialgroup.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaigatematerialgroup.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaigatematerialgroup.FieldMysekaiMaterialID, field.TypeInt, value)
+		_spec.SetField(mysekaigatematerialgroup.FieldMysekaiMaterialID, field.TypeInt64, value)
 		_node.MysekaiMaterialID = value
 	}
 	if value, ok := _c.mutation.Quantity(); ok {
-		_spec.SetField(mysekaigatematerialgroup.FieldQuantity, field.TypeInt, value)
+		_spec.SetField(mysekaigatematerialgroup.FieldQuantity, field.TypeInt64, value)
 		_node.Quantity = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

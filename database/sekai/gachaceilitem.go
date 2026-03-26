@@ -18,17 +18,17 @@ type Gachaceilitem struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// GachaID holds the value of the "gacha_id" field.
-	GachaID int `json:"gacha_id,omitempty"`
+	GachaID int64 `json:"gacha_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
 	// ConvertStartAt holds the value of the "convert_start_at" field.
-	ConvertStartAt int `json:"convert_start_at,omitempty"`
+	ConvertStartAt int64 `json:"convert_start_at,omitempty"`
 	// ConvertResourceBoxID holds the value of the "convert_resource_box_id" field.
-	ConvertResourceBoxID int `json:"convert_resource_box_id,omitempty"`
+	ConvertResourceBoxID int64 `json:"convert_resource_box_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -70,13 +70,13 @@ func (_m *Gachaceilitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case gachaceilitem.FieldGachaID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_id", values[i])
 			} else if value.Valid {
-				_m.GachaID = int(value.Int64)
+				_m.GachaID = value.Int64
 			}
 		case gachaceilitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -96,13 +96,13 @@ func (_m *Gachaceilitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field convert_start_at", values[i])
 			} else if value.Valid {
-				_m.ConvertStartAt = int(value.Int64)
+				_m.ConvertStartAt = value.Int64
 			}
 		case gachaceilitem.FieldConvertResourceBoxID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field convert_resource_box_id", values[i])
 			} else if value.Valid {
-				_m.ConvertResourceBoxID = int(value.Int64)
+				_m.ConvertResourceBoxID = value.Int64
 			}
 		case gachaceilitem.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

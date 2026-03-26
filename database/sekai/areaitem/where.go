@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Areaitem {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Areaitem {
+func GameID(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // AreaID applies equality check predicate on the "area_id" field. It's identical to AreaIDEQ.
-func AreaID(v int) predicate.Areaitem {
+func AreaID(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldAreaID, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Areaitem {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Areaitem {
+func GameIDEQ(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Areaitem {
+func GameIDNEQ(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Areaitem {
+func GameIDIn(vs ...int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Areaitem {
+func GameIDNotIn(vs ...int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Areaitem {
+func GameIDGT(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Areaitem {
+func GameIDGTE(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Areaitem {
+func GameIDLT(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Areaitem {
+func GameIDLTE(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldLTE(FieldGameID, v))
 }
 
 // AreaIDEQ applies the EQ predicate on the "area_id" field.
-func AreaIDEQ(v int) predicate.Areaitem {
+func AreaIDEQ(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldAreaID, v))
 }
 
 // AreaIDNEQ applies the NEQ predicate on the "area_id" field.
-func AreaIDNEQ(v int) predicate.Areaitem {
+func AreaIDNEQ(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldNEQ(FieldAreaID, v))
 }
 
 // AreaIDIn applies the In predicate on the "area_id" field.
-func AreaIDIn(vs ...int) predicate.Areaitem {
+func AreaIDIn(vs ...int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldIn(FieldAreaID, vs...))
 }
 
 // AreaIDNotIn applies the NotIn predicate on the "area_id" field.
-func AreaIDNotIn(vs ...int) predicate.Areaitem {
+func AreaIDNotIn(vs ...int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldNotIn(FieldAreaID, vs...))
 }
 
 // AreaIDGT applies the GT predicate on the "area_id" field.
-func AreaIDGT(v int) predicate.Areaitem {
+func AreaIDGT(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldGT(FieldAreaID, v))
 }
 
 // AreaIDGTE applies the GTE predicate on the "area_id" field.
-func AreaIDGTE(v int) predicate.Areaitem {
+func AreaIDGTE(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldGTE(FieldAreaID, v))
 }
 
 // AreaIDLT applies the LT predicate on the "area_id" field.
-func AreaIDLT(v int) predicate.Areaitem {
+func AreaIDLT(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldLT(FieldAreaID, v))
 }
 
 // AreaIDLTE applies the LTE predicate on the "area_id" field.
-func AreaIDLTE(v int) predicate.Areaitem {
+func AreaIDLTE(v int64) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldLTE(FieldAreaID, v))
 }
 

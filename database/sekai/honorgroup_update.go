@@ -30,14 +30,14 @@ func (_u *HonorgroupUpdate) Where(ps ...predicate.Honorgroup) *HonorgroupUpdate 
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *HonorgroupUpdate) SetGameID(v int) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetGameID(v int64) *HonorgroupUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorgroupUpdate) SetNillableGameID(v *int) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetNillableGameID(v *int64) *HonorgroupUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *HonorgroupUpdate) SetNillableGameID(v *int) *HonorgroupUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorgroupUpdate) AddGameID(v int) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) AddGameID(v int64) *HonorgroupUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -204,10 +204,10 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honorgroup.FieldGameID, field.TypeInt, value)
+		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)
@@ -268,14 +268,14 @@ type HonorgroupUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *HonorgroupUpdateOne) SetGameID(v int) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetGameID(v int64) *HonorgroupUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int64) *HonorgroupUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -283,7 +283,7 @@ func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int) *HonorgroupUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorgroupUpdateOne) AddGameID(v int) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) AddGameID(v int64) *HonorgroupUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -472,10 +472,10 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honorgroup.FieldGameID, field.TypeInt, value)
+		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)

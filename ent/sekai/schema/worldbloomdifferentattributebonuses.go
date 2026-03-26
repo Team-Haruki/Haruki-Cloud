@@ -15,7 +15,7 @@ type Worldbloomdifferentattributebonuse struct {
 
 func (Worldbloomdifferentattributebonuse) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("attribute_count").Optional(),
+		field.Int64("attribute_count").Optional(),
 		field.Float("bonus_rate").Optional(),
 		field.String("server_region"),
 	}

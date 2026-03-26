@@ -27,7 +27,7 @@ func (_c *ResourceboxeCreate) SetResourceBoxPurpose(v json.RawMessage) *Resource
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *ResourceboxeCreate) SetGameID(v int) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetGameID(v int64) *ResourceboxeCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -163,7 +163,7 @@ func (_c *ResourceboxeCreate) createSpec() (*Resourceboxe, *sqlgraph.CreateSpec)
 		_node.ResourceBoxPurpose = value
 	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ResourceBoxType(); ok {

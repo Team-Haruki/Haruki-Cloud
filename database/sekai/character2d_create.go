@@ -21,7 +21,7 @@ type Character2DCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *Character2DCreate) SetGameID(v int) *Character2DCreate {
+func (_c *Character2DCreate) SetGameID(v int64) *Character2DCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -47,13 +47,13 @@ func (_c *Character2DCreate) SetNillableIsNextGrade(v *bool) *Character2DCreate 
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_c *Character2DCreate) SetCharacterID(v int) *Character2DCreate {
+func (_c *Character2DCreate) SetCharacterID(v int64) *Character2DCreate {
 	_c.mutation.SetCharacterID(v)
 	return _c
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableCharacterID(v *int) *Character2DCreate {
+func (_c *Character2DCreate) SetNillableCharacterID(v *int64) *Character2DCreate {
 	if v != nil {
 		_c.SetCharacterID(*v)
 	}
@@ -173,7 +173,7 @@ func (_c *Character2DCreate) createSpec() (*Character2D, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(character2d.Table, sqlgraph.NewFieldSpec(character2d.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CharacterType(); ok {
@@ -185,7 +185,7 @@ func (_c *Character2DCreate) createSpec() (*Character2D, *sqlgraph.CreateSpec) {
 		_node.IsNextGrade = value
 	}
 	if value, ok := _c.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {

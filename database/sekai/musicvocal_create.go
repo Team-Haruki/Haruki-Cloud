@@ -21,19 +21,19 @@ type MusicvocalCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MusicvocalCreate) SetGameID(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetGameID(v int64) *MusicvocalCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMusicID sets the "music_id" field.
-func (_c *MusicvocalCreate) SetMusicID(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetMusicID(v int64) *MusicvocalCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *MusicvocalCreate) SetNillableMusicID(v *int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetNillableMusicID(v *int64) *MusicvocalCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -47,13 +47,13 @@ func (_c *MusicvocalCreate) SetMusicVocalType(v json.RawMessage) *MusicvocalCrea
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MusicvocalCreate) SetSeq(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetSeq(v int64) *MusicvocalCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MusicvocalCreate) SetNillableSeq(v *int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetNillableSeq(v *int64) *MusicvocalCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -61,13 +61,13 @@ func (_c *MusicvocalCreate) SetNillableSeq(v *int) *MusicvocalCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *MusicvocalCreate) SetReleaseConditionID(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetReleaseConditionID(v int64) *MusicvocalCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *MusicvocalCreate) SetNillableReleaseConditionID(v *int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetNillableReleaseConditionID(v *int64) *MusicvocalCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -109,13 +109,13 @@ func (_c *MusicvocalCreate) SetNillableAssetbundleName(v *string) *MusicvocalCre
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_c *MusicvocalCreate) SetArchivePublishedAt(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetArchivePublishedAt(v int64) *MusicvocalCreate {
 	_c.mutation.SetArchivePublishedAt(v)
 	return _c
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_c *MusicvocalCreate) SetNillableArchivePublishedAt(v *int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetNillableArchivePublishedAt(v *int64) *MusicvocalCreate {
 	if v != nil {
 		_c.SetArchivePublishedAt(*v)
 	}
@@ -123,13 +123,13 @@ func (_c *MusicvocalCreate) SetNillableArchivePublishedAt(v *int) *MusicvocalCre
 }
 
 // SetSpecialSeasonID sets the "special_season_id" field.
-func (_c *MusicvocalCreate) SetSpecialSeasonID(v int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetSpecialSeasonID(v int64) *MusicvocalCreate {
 	_c.mutation.SetSpecialSeasonID(v)
 	return _c
 }
 
 // SetNillableSpecialSeasonID sets the "special_season_id" field if the given value is not nil.
-func (_c *MusicvocalCreate) SetNillableSpecialSeasonID(v *int) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetNillableSpecialSeasonID(v *int64) *MusicvocalCreate {
 	if v != nil {
 		_c.SetSpecialSeasonID(*v)
 	}
@@ -215,11 +215,11 @@ func (_c *MusicvocalCreate) createSpec() (*Musicvocal, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(musicvocal.Table, sqlgraph.NewFieldSpec(musicvocal.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musicvocal.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt64, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicVocalType(); ok {
@@ -227,11 +227,11 @@ func (_c *MusicvocalCreate) createSpec() (*Musicvocal, *sqlgraph.CreateSpec) {
 		_node.MusicVocalType = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(musicvocal.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt64, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.Caption(); ok {
@@ -247,11 +247,11 @@ func (_c *MusicvocalCreate) createSpec() (*Musicvocal, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt64, value)
 		_node.ArchivePublishedAt = value
 	}
 	if value, ok := _c.mutation.SpecialSeasonID(); ok {
-		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt64, value)
 		_node.SpecialSeasonID = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {

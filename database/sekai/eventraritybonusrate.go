@@ -18,11 +18,11 @@ type Eventraritybonusrate struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
 	// MasterRank holds the value of the "master_rank" field.
-	MasterRank int `json:"master_rank,omitempty"`
+	MasterRank int64 `json:"master_rank,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -68,7 +68,7 @@ func (_m *Eventraritybonusrate) assignValues(columns []string, values []any) err
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case eventraritybonusrate.FieldCardRarityType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -82,7 +82,7 @@ func (_m *Eventraritybonusrate) assignValues(columns []string, values []any) err
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field master_rank", values[i])
 			} else if value.Valid {
-				_m.MasterRank = int(value.Int64)
+				_m.MasterRank = value.Int64
 			}
 		case eventraritybonusrate.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

@@ -20,7 +20,7 @@ type MysekaifixturesubgenreCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturesubgenreCreate) SetGameID(v int) *MysekaifixturesubgenreCreate {
+func (_c *MysekaifixturesubgenreCreate) SetGameID(v int64) *MysekaifixturesubgenreCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -140,7 +140,7 @@ func (_c *MysekaifixturesubgenreCreate) createSpec() (*Mysekaifixturesubgenre, *
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturesubgenre.Table, sqlgraph.NewFieldSpec(mysekaifixturesubgenre.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

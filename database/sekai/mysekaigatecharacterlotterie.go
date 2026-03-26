@@ -17,13 +17,13 @@ type Mysekaigatecharacterlotterie struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiGateID holds the value of the "mysekai_gate_id" field.
-	MysekaiGateID int `json:"mysekai_gate_id,omitempty"`
+	MysekaiGateID int64 `json:"mysekai_gate_id,omitempty"`
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
-	GameCharacterUnitID int `json:"game_character_unit_id,omitempty"`
+	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
 	// VisitableMysekaiGateLevel holds the value of the "visitable_mysekai_gate_level" field.
-	VisitableMysekaiGateLevel int `json:"visitable_mysekai_gate_level,omitempty"`
+	VisitableMysekaiGateLevel int64 `json:"visitable_mysekai_gate_level,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -63,25 +63,25 @@ func (_m *Mysekaigatecharacterlotterie) assignValues(columns []string, values []
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaigatecharacterlotterie.FieldMysekaiGateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateID = int(value.Int64)
+				_m.MysekaiGateID = value.Int64
 			}
 		case mysekaigatecharacterlotterie.FieldGameCharacterUnitID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitID = int(value.Int64)
+				_m.GameCharacterUnitID = value.Int64
 			}
 		case mysekaigatecharacterlotterie.FieldVisitableMysekaiGateLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field visitable_mysekai_gate_level", values[i])
 			} else if value.Valid {
-				_m.VisitableMysekaiGateLevel = int(value.Int64)
+				_m.VisitableMysekaiGateLevel = value.Int64
 			}
 		case mysekaigatecharacterlotterie.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

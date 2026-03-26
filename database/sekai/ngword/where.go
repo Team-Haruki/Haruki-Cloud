@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Ngword {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Ngword {
+func GameID(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,42 +69,42 @@ func ServerRegion(v string) predicate.Ngword {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Ngword {
+func GameIDEQ(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Ngword {
+func GameIDNEQ(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Ngword {
+func GameIDIn(vs ...int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Ngword {
+func GameIDNotIn(vs ...int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Ngword {
+func GameIDGT(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Ngword {
+func GameIDGTE(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Ngword {
+func GameIDLT(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Ngword {
+func GameIDLTE(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldLTE(FieldGameID, v))
 }
 

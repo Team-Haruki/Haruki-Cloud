@@ -18,15 +18,15 @@ type Mysekaicharactertalkfixturecommon struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
-	GameCharacterUnitID int `json:"game_character_unit_id,omitempty"`
+	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonType holds the value of the "mysekai_character_talk_fixture_common_type" field.
 	MysekaiCharacterTalkFixtureCommonType json.RawMessage `json:"mysekai_character_talk_fixture_common_type,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID holds the value of the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-	MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID int `json:"mysekai_character_talk_fixture_common_mysekai_fixture_group_id,omitempty"`
+	MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID int64 `json:"mysekai_character_talk_fixture_common_mysekai_fixture_group_id,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonTweetGroupID holds the value of the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-	MysekaiCharacterTalkFixtureCommonTweetGroupID int `json:"mysekai_character_talk_fixture_common_tweet_group_id,omitempty"`
+	MysekaiCharacterTalkFixtureCommonTweetGroupID int64 `json:"mysekai_character_talk_fixture_common_tweet_group_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -68,13 +68,13 @@ func (_m *Mysekaicharactertalkfixturecommon) assignValues(columns []string, valu
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitID = int(value.Int64)
+				_m.GameCharacterUnitID = value.Int64
 			}
 		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -88,13 +88,13 @@ func (_m *Mysekaicharactertalkfixturecommon) assignValues(columns []string, valu
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_fixture_common_mysekai_fixture_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID = int(value.Int64)
+				_m.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID = value.Int64
 			}
 		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_fixture_common_tweet_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkFixtureCommonTweetGroupID = int(value.Int64)
+				_m.MysekaiCharacterTalkFixtureCommonTweetGroupID = value.Int64
 			}
 		case mysekaicharactertalkfixturecommon.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

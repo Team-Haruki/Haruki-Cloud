@@ -18,17 +18,17 @@ type Mysekaiblueprint struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiCraftType holds the value of the "mysekai_craft_type" field.
 	MysekaiCraftType json.RawMessage `json:"mysekai_craft_type,omitempty"`
 	// CraftTargetID holds the value of the "craft_target_id" field.
-	CraftTargetID int `json:"craft_target_id,omitempty"`
+	CraftTargetID int64 `json:"craft_target_id,omitempty"`
 	// IsEnableSketch holds the value of the "is_enable_sketch" field.
 	IsEnableSketch bool `json:"is_enable_sketch,omitempty"`
 	// IsObtainedByConvert holds the value of the "is_obtained_by_convert" field.
 	IsObtainedByConvert bool `json:"is_obtained_by_convert,omitempty"`
 	// CraftCountLimit holds the value of the "craft_count_limit" field.
-	CraftCountLimit int `json:"craft_count_limit,omitempty"`
+	CraftCountLimit int64 `json:"craft_count_limit,omitempty"`
 	// IsAvailableWithoutPossession holds the value of the "is_available_without_possession" field.
 	IsAvailableWithoutPossession bool `json:"is_available_without_possession,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -74,7 +74,7 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaiblueprint.FieldMysekaiCraftType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -88,7 +88,7 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field craft_target_id", values[i])
 			} else if value.Valid {
-				_m.CraftTargetID = int(value.Int64)
+				_m.CraftTargetID = value.Int64
 			}
 		case mysekaiblueprint.FieldIsEnableSketch:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -106,7 +106,7 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field craft_count_limit", values[i])
 			} else if value.Valid {
-				_m.CraftCountLimit = int(value.Int64)
+				_m.CraftCountLimit = value.Int64
 			}
 		case mysekaiblueprint.FieldIsAvailableWithoutPossession:
 			if value, ok := values[i].(*sql.NullBool); !ok {

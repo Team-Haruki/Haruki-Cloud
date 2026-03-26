@@ -17,13 +17,13 @@ type Shopitem struct {
 
 func (Shopitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("shop_id").Optional(),
-		field.Int("seq").Optional(),
-		field.Int("release_condition_id").Optional(),
-		field.Int("resource_box_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("shop_id").Optional(),
+		field.Int64("seq").Optional(),
+		field.Int64("release_condition_id").Optional(),
+		field.Int64("resource_box_id").Optional(),
 		field.JSON("costs", json.RawMessage{}).Optional(),
-		field.Int("start_at").Optional(),
+		field.Int64("start_at").Optional(),
 		field.String("server_region"),
 	}
 }

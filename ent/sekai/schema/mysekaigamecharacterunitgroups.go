@@ -15,12 +15,12 @@ type Mysekaigamecharacterunitgroup struct {
 
 func (Mysekaigamecharacterunitgroup) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("game_character_unit_id1").Optional(),
-		field.Int("game_character_unit_id2").Optional(),
-		field.Int("game_character_unit_id3").Optional(),
-		field.Int("game_character_unit_id4").Optional(),
-		field.Int("game_character_unit_id5").Optional(),
+		field.Int64("game_id"),
+		field.Int64("game_character_unit_id1").Optional(),
+		field.Int64("game_character_unit_id2").Optional(),
+		field.Int64("game_character_unit_id3").Optional(),
+		field.Int64("game_character_unit_id4").Optional(),
+		field.Int64("game_character_unit_id5").Optional(),
 		field.String("server_region"),
 	}
 }

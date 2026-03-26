@@ -17,8 +17,8 @@ type Mysekaimaterial struct {
 
 func (Mysekaimaterial) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
 		field.JSON("mysekai_material_type", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
 		field.String("pronunciation").Optional(),
@@ -27,7 +27,7 @@ func (Mysekaimaterial) Fields() []ent.Field {
 		field.String("icon_assetbundle_name").Optional(),
 		field.String("model_assetbundle_name").Optional(),
 		field.JSON("mysekai_site_ids", json.RawMessage{}).Optional(),
-		field.Int("mysekai_phenomena_group_id").Optional(),
+		field.Int64("mysekai_phenomena_group_id").Optional(),
 		field.String("server_region"),
 	}
 }

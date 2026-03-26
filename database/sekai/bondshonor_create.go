@@ -21,19 +21,19 @@ type BondshonorCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *BondshonorCreate) SetGameID(v int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetGameID(v int64) *BondshonorCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *BondshonorCreate) SetSeq(v int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetSeq(v int64) *BondshonorCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *BondshonorCreate) SetNillableSeq(v *int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetNillableSeq(v *int64) *BondshonorCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *BondshonorCreate) SetNillableSeq(v *int) *BondshonorCreate {
 }
 
 // SetBondsGroupID sets the "bonds_group_id" field.
-func (_c *BondshonorCreate) SetBondsGroupID(v int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetBondsGroupID(v int64) *BondshonorCreate {
 	_c.mutation.SetBondsGroupID(v)
 	return _c
 }
 
 // SetNillableBondsGroupID sets the "bonds_group_id" field if the given value is not nil.
-func (_c *BondshonorCreate) SetNillableBondsGroupID(v *int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetNillableBondsGroupID(v *int64) *BondshonorCreate {
 	if v != nil {
 		_c.SetBondsGroupID(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *BondshonorCreate) SetNillableBondsGroupID(v *int) *BondshonorCreate {
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (_c *BondshonorCreate) SetGameCharacterUnitId1(v int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetGameCharacterUnitId1(v int64) *BondshonorCreate {
 	_c.mutation.SetGameCharacterUnitId1(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitId1 sets the "game_character_unit_id1" field if the given value is not nil.
-func (_c *BondshonorCreate) SetNillableGameCharacterUnitId1(v *int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetNillableGameCharacterUnitId1(v *int64) *BondshonorCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitId1(*v)
 	}
@@ -69,13 +69,13 @@ func (_c *BondshonorCreate) SetNillableGameCharacterUnitId1(v *int) *BondshonorC
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (_c *BondshonorCreate) SetGameCharacterUnitId2(v int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetGameCharacterUnitId2(v int64) *BondshonorCreate {
 	_c.mutation.SetGameCharacterUnitId2(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitId2 sets the "game_character_unit_id2" field if the given value is not nil.
-func (_c *BondshonorCreate) SetNillableGameCharacterUnitId2(v *int) *BondshonorCreate {
+func (_c *BondshonorCreate) SetNillableGameCharacterUnitId2(v *int64) *BondshonorCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitId2(*v)
 	}
@@ -223,23 +223,23 @@ func (_c *BondshonorCreate) createSpec() (*Bondshonor, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(bondshonor.Table, sqlgraph.NewFieldSpec(bondshonor.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(bondshonor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(bondshonor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.BondsGroupID(); ok {
-		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt64, value)
 		_node.BondsGroupID = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitId1(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64, value)
 		_node.GameCharacterUnitId1 = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitId2(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64, value)
 		_node.GameCharacterUnitId2 = value
 	}
 	if value, ok := _c.mutation.HonorRarity(); ok {

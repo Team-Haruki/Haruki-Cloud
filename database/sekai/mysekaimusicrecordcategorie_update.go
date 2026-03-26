@@ -30,14 +30,14 @@ func (_u *MysekaimusicrecordcategorieUpdate) Where(ps ...predicate.Mysekaimusicr
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimusicrecordcategorieUpdate) SetGameID(v int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) SetGameID(v int64) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordcategorieUpdate) SetNillableGameID(v *int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) SetNillableGameID(v *int64) *MysekaimusicrecordcategorieUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaimusicrecordcategorieUpdate) SetNillableGameID(v *int) *Mysekaim
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimusicrecordcategorieUpdate) AddGameID(v int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) AddGameID(v int64) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -71,14 +71,14 @@ func (_u *MysekaimusicrecordcategorieUpdate) ClearName() *Mysekaimusicrecordcate
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaimusicrecordcategorieUpdate) SetSeq(v int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) SetSeq(v int64) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaimusicrecordcategorieUpdate) SetNillableSeq(v *int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) SetNillableSeq(v *int64) *MysekaimusicrecordcategorieUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -86,7 +86,7 @@ func (_u *MysekaimusicrecordcategorieUpdate) SetNillableSeq(v *int) *Mysekaimusi
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaimusicrecordcategorieUpdate) AddSeq(v int) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) AddSeq(v int64) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -191,10 +191,10 @@ func (_u *MysekaimusicrecordcategorieUpdate) sqlSave(ctx context.Context) (_node
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldName, field.TypeString, value)
@@ -203,13 +203,13 @@ func (_u *MysekaimusicrecordcategorieUpdate) sqlSave(ctx context.Context) (_node
 		_spec.ClearField(mysekaimusicrecordcategorie.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON, value)
@@ -252,14 +252,14 @@ type MysekaimusicrecordcategorieUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) SetGameID(v int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetGameID(v int64) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableGameID(v *int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableGameID(v *int64) *MysekaimusicrecordcategorieUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -267,7 +267,7 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableGameID(v *int) *Mysek
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) AddGameID(v int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) AddGameID(v int64) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -293,14 +293,14 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) ClearName() *Mysekaimusicrecordc
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) SetSeq(v int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetSeq(v int64) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableSeq(v *int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableSeq(v *int64) *MysekaimusicrecordcategorieUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -308,7 +308,7 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableSeq(v *int) *Mysekaim
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) AddSeq(v int) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) AddSeq(v int64) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -443,10 +443,10 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) sqlSave(ctx context.Context) (_n
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldName, field.TypeString, value)
@@ -455,13 +455,13 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) sqlSave(ctx context.Context) (_n
 		_spec.ClearField(mysekaimusicrecordcategorie.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON, value)

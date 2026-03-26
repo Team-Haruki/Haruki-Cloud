@@ -17,11 +17,11 @@ type Mysekaifixturemaingenre struct {
 
 func (Mysekaifixturemaingenre) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("name").Optional(),
 		field.JSON("mysekai_fixture_main_genre_type", json.RawMessage{}).Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.Int("group_id").Optional(),
+		field.Int64("group_id").Optional(),
 		field.String("server_region"),
 	}
 }

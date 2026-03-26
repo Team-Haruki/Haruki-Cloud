@@ -21,19 +21,19 @@ type EventstoryunitCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventstoryunitCreate) SetGameID(v int) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetGameID(v int64) *EventstoryunitCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *EventstoryunitCreate) SetSeq(v int) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetSeq(v int64) *EventstoryunitCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableSeq(v *int) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetNillableSeq(v *int64) *EventstoryunitCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *EventstoryunitCreate) SetNillableSeq(v *int) *EventstoryunitCreate {
 }
 
 // SetEventStoryID sets the "event_story_id" field.
-func (_c *EventstoryunitCreate) SetEventStoryID(v int) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetEventStoryID(v int64) *EventstoryunitCreate {
 	_c.mutation.SetEventStoryID(v)
 	return _c
 }
 
 // SetNillableEventStoryID sets the "event_story_id" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int64) *EventstoryunitCreate {
 	if v != nil {
 		_c.SetEventStoryID(*v)
 	}
@@ -139,15 +139,15 @@ func (_c *EventstoryunitCreate) createSpec() (*Eventstoryunit, *sqlgraph.CreateS
 		_spec = sqlgraph.NewCreateSpec(eventstoryunit.Table, sqlgraph.NewFieldSpec(eventstoryunit.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt, value)
+		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.EventStoryID(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
 		_node.EventStoryID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {

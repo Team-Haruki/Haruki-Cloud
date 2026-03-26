@@ -30,14 +30,14 @@ func (_u *HonorUpdate) Where(ps ...predicate.Honor) *HonorUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *HonorUpdate) SetGameID(v int) *HonorUpdate {
+func (_u *HonorUpdate) SetGameID(v int64) *HonorUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorUpdate) SetNillableGameID(v *int) *HonorUpdate {
+func (_u *HonorUpdate) SetNillableGameID(v *int64) *HonorUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *HonorUpdate) SetNillableGameID(v *int) *HonorUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorUpdate) AddGameID(v int) *HonorUpdate {
+func (_u *HonorUpdate) AddGameID(v int64) *HonorUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *HonorUpdate) SetSeq(v int) *HonorUpdate {
+func (_u *HonorUpdate) SetSeq(v int64) *HonorUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *HonorUpdate) SetNillableSeq(v *int) *HonorUpdate {
+func (_u *HonorUpdate) SetNillableSeq(v *int64) *HonorUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *HonorUpdate) SetNillableSeq(v *int) *HonorUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *HonorUpdate) AddSeq(v int) *HonorUpdate {
+func (_u *HonorUpdate) AddSeq(v int64) *HonorUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *HonorUpdate) ClearSeq() *HonorUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *HonorUpdate) SetGroupID(v int) *HonorUpdate {
+func (_u *HonorUpdate) SetGroupID(v int64) *HonorUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *HonorUpdate) SetNillableGroupID(v *int) *HonorUpdate {
+func (_u *HonorUpdate) SetNillableGroupID(v *int64) *HonorUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *HonorUpdate) SetNillableGroupID(v *int) *HonorUpdate {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *HonorUpdate) AddGroupID(v int) *HonorUpdate {
+func (_u *HonorUpdate) AddGroupID(v int64) *HonorUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -181,14 +181,14 @@ func (_u *HonorUpdate) ClearLevels() *HonorUpdate {
 }
 
 // SetHonorTypeID sets the "honor_type_id" field.
-func (_u *HonorUpdate) SetHonorTypeID(v int) *HonorUpdate {
+func (_u *HonorUpdate) SetHonorTypeID(v int64) *HonorUpdate {
 	_u.mutation.ResetHonorTypeID()
 	_u.mutation.SetHonorTypeID(v)
 	return _u
 }
 
 // SetNillableHonorTypeID sets the "honor_type_id" field if the given value is not nil.
-func (_u *HonorUpdate) SetNillableHonorTypeID(v *int) *HonorUpdate {
+func (_u *HonorUpdate) SetNillableHonorTypeID(v *int64) *HonorUpdate {
 	if v != nil {
 		_u.SetHonorTypeID(*v)
 	}
@@ -196,7 +196,7 @@ func (_u *HonorUpdate) SetNillableHonorTypeID(v *int) *HonorUpdate {
 }
 
 // AddHonorTypeID adds value to the "honor_type_id" field.
-func (_u *HonorUpdate) AddHonorTypeID(v int) *HonorUpdate {
+func (_u *HonorUpdate) AddHonorTypeID(v int64) *HonorUpdate {
 	_u.mutation.AddHonorTypeID(v)
 	return _u
 }
@@ -228,14 +228,14 @@ func (_u *HonorUpdate) ClearHonorMissionType() *HonorUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *HonorUpdate) SetStartAt(v int) *HonorUpdate {
+func (_u *HonorUpdate) SetStartAt(v int64) *HonorUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *HonorUpdate) SetNillableStartAt(v *int) *HonorUpdate {
+func (_u *HonorUpdate) SetNillableStartAt(v *int64) *HonorUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -243,7 +243,7 @@ func (_u *HonorUpdate) SetNillableStartAt(v *int) *HonorUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *HonorUpdate) AddStartAt(v int) *HonorUpdate {
+func (_u *HonorUpdate) AddStartAt(v int64) *HonorUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -310,28 +310,28 @@ func (_u *HonorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(honor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(honor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(honor.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(honor.FieldSeq, field.TypeInt, value)
+		_spec.AddField(honor.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(honor.FieldSeq, field.TypeInt)
+		_spec.ClearField(honor.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(honor.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(honor.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(honor.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(honor.FieldGroupID, field.TypeInt)
+		_spec.ClearField(honor.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
 		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
@@ -368,13 +368,13 @@ func (_u *HonorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(honor.FieldLevels, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.HonorTypeID(); ok {
-		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt, value)
+		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedHonorTypeID(); ok {
-		_spec.AddField(honor.FieldHonorTypeID, field.TypeInt, value)
+		_spec.AddField(honor.FieldHonorTypeID, field.TypeInt64, value)
 	}
 	if _u.mutation.HonorTypeIDCleared() {
-		_spec.ClearField(honor.FieldHonorTypeID, field.TypeInt)
+		_spec.ClearField(honor.FieldHonorTypeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorMissionType(); ok {
 		_spec.SetField(honor.FieldHonorMissionType, field.TypeString, value)
@@ -383,13 +383,13 @@ func (_u *HonorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(honor.FieldHonorMissionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(honor.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(honor.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(honor.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(honor.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(honor.FieldStartAt, field.TypeInt)
+		_spec.ClearField(honor.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(honor.FieldServerRegion, field.TypeString, value)
@@ -415,14 +415,14 @@ type HonorUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *HonorUpdateOne) SetGameID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetGameID(v int64) *HonorUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorUpdateOne) SetNillableGameID(v *int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetNillableGameID(v *int64) *HonorUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -430,20 +430,20 @@ func (_u *HonorUpdateOne) SetNillableGameID(v *int) *HonorUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorUpdateOne) AddGameID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) AddGameID(v int64) *HonorUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *HonorUpdateOne) SetSeq(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetSeq(v int64) *HonorUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *HonorUpdateOne) SetNillableSeq(v *int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetNillableSeq(v *int64) *HonorUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -451,7 +451,7 @@ func (_u *HonorUpdateOne) SetNillableSeq(v *int) *HonorUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *HonorUpdateOne) AddSeq(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) AddSeq(v int64) *HonorUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -463,14 +463,14 @@ func (_u *HonorUpdateOne) ClearSeq() *HonorUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *HonorUpdateOne) SetGroupID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetGroupID(v int64) *HonorUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *HonorUpdateOne) SetNillableGroupID(v *int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetNillableGroupID(v *int64) *HonorUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -478,7 +478,7 @@ func (_u *HonorUpdateOne) SetNillableGroupID(v *int) *HonorUpdateOne {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *HonorUpdateOne) AddGroupID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) AddGroupID(v int64) *HonorUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -566,14 +566,14 @@ func (_u *HonorUpdateOne) ClearLevels() *HonorUpdateOne {
 }
 
 // SetHonorTypeID sets the "honor_type_id" field.
-func (_u *HonorUpdateOne) SetHonorTypeID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetHonorTypeID(v int64) *HonorUpdateOne {
 	_u.mutation.ResetHonorTypeID()
 	_u.mutation.SetHonorTypeID(v)
 	return _u
 }
 
 // SetNillableHonorTypeID sets the "honor_type_id" field if the given value is not nil.
-func (_u *HonorUpdateOne) SetNillableHonorTypeID(v *int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetNillableHonorTypeID(v *int64) *HonorUpdateOne {
 	if v != nil {
 		_u.SetHonorTypeID(*v)
 	}
@@ -581,7 +581,7 @@ func (_u *HonorUpdateOne) SetNillableHonorTypeID(v *int) *HonorUpdateOne {
 }
 
 // AddHonorTypeID adds value to the "honor_type_id" field.
-func (_u *HonorUpdateOne) AddHonorTypeID(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) AddHonorTypeID(v int64) *HonorUpdateOne {
 	_u.mutation.AddHonorTypeID(v)
 	return _u
 }
@@ -613,14 +613,14 @@ func (_u *HonorUpdateOne) ClearHonorMissionType() *HonorUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *HonorUpdateOne) SetStartAt(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetStartAt(v int64) *HonorUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *HonorUpdateOne) SetNillableStartAt(v *int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetNillableStartAt(v *int64) *HonorUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -628,7 +628,7 @@ func (_u *HonorUpdateOne) SetNillableStartAt(v *int) *HonorUpdateOne {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *HonorUpdateOne) AddStartAt(v int) *HonorUpdateOne {
+func (_u *HonorUpdateOne) AddStartAt(v int64) *HonorUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -725,28 +725,28 @@ func (_u *HonorUpdateOne) sqlSave(ctx context.Context) (_node *Honor, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(honor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(honor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(honor.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(honor.FieldSeq, field.TypeInt, value)
+		_spec.AddField(honor.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(honor.FieldSeq, field.TypeInt)
+		_spec.ClearField(honor.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(honor.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(honor.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(honor.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(honor.FieldGroupID, field.TypeInt)
+		_spec.ClearField(honor.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
 		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
@@ -783,13 +783,13 @@ func (_u *HonorUpdateOne) sqlSave(ctx context.Context) (_node *Honor, err error)
 		_spec.ClearField(honor.FieldLevels, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.HonorTypeID(); ok {
-		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt, value)
+		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedHonorTypeID(); ok {
-		_spec.AddField(honor.FieldHonorTypeID, field.TypeInt, value)
+		_spec.AddField(honor.FieldHonorTypeID, field.TypeInt64, value)
 	}
 	if _u.mutation.HonorTypeIDCleared() {
-		_spec.ClearField(honor.FieldHonorTypeID, field.TypeInt)
+		_spec.ClearField(honor.FieldHonorTypeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorMissionType(); ok {
 		_spec.SetField(honor.FieldHonorMissionType, field.TypeString, value)
@@ -798,13 +798,13 @@ func (_u *HonorUpdateOne) sqlSave(ctx context.Context) (_node *Honor, err error)
 		_spec.ClearField(honor.FieldHonorMissionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(honor.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(honor.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(honor.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(honor.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(honor.FieldStartAt, field.TypeInt)
+		_spec.ClearField(honor.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(honor.FieldServerRegion, field.TypeString, value)

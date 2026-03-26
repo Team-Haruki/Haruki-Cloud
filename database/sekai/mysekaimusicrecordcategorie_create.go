@@ -21,7 +21,7 @@ type MysekaimusicrecordcategorieCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetGameID(v int) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetGameID(v int64) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -41,13 +41,13 @@ func (_c *MysekaimusicrecordcategorieCreate) SetNillableName(v *string) *Mysekai
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetSeq(v int) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetSeq(v int64) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int64) *MysekaimusicrecordcategorieCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -147,7 +147,7 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 		_spec = sqlgraph.NewCreateSpec(mysekaimusicrecordcategorie.Table, sqlgraph.NewFieldSpec(mysekaimusicrecordcategorie.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -155,7 +155,7 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {

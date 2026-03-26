@@ -30,14 +30,14 @@ func (_u *Character2DUpdate) Where(ps ...predicate.Character2D) *Character2DUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *Character2DUpdate) SetGameID(v int) *Character2DUpdate {
+func (_u *Character2DUpdate) SetGameID(v int64) *Character2DUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableGameID(v *int) *Character2DUpdate {
+func (_u *Character2DUpdate) SetNillableGameID(v *int64) *Character2DUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *Character2DUpdate) SetNillableGameID(v *int) *Character2DUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Character2DUpdate) AddGameID(v int) *Character2DUpdate {
+func (_u *Character2DUpdate) AddGameID(v int64) *Character2DUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -89,14 +89,14 @@ func (_u *Character2DUpdate) ClearIsNextGrade() *Character2DUpdate {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Character2DUpdate) SetCharacterID(v int) *Character2DUpdate {
+func (_u *Character2DUpdate) SetCharacterID(v int64) *Character2DUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableCharacterID(v *int) *Character2DUpdate {
+func (_u *Character2DUpdate) SetNillableCharacterID(v *int64) *Character2DUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -104,7 +104,7 @@ func (_u *Character2DUpdate) SetNillableCharacterID(v *int) *Character2DUpdate {
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Character2DUpdate) AddCharacterID(v int) *Character2DUpdate {
+func (_u *Character2DUpdate) AddCharacterID(v int64) *Character2DUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -247,10 +247,10 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(character2d.FieldGameID, field.TypeInt, value)
+		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CharacterType(); ok {
 		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
@@ -270,13 +270,13 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(character2d.FieldIsNextGrade, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(character2d.FieldCharacterID, field.TypeInt, value)
+		_spec.AddField(character2d.FieldCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt)
+		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(character2d.FieldUnit, field.TypeJSON, value)
@@ -336,14 +336,14 @@ type Character2DUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *Character2DUpdateOne) SetGameID(v int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetGameID(v int64) *Character2DUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableGameID(v *int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetNillableGameID(v *int64) *Character2DUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -351,7 +351,7 @@ func (_u *Character2DUpdateOne) SetNillableGameID(v *int) *Character2DUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Character2DUpdateOne) AddGameID(v int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) AddGameID(v int64) *Character2DUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -395,14 +395,14 @@ func (_u *Character2DUpdateOne) ClearIsNextGrade() *Character2DUpdateOne {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Character2DUpdateOne) SetCharacterID(v int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetCharacterID(v int64) *Character2DUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int64) *Character2DUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -410,7 +410,7 @@ func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int) *Character2DUpdat
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Character2DUpdateOne) AddCharacterID(v int) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) AddCharacterID(v int64) *Character2DUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -583,10 +583,10 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(character2d.FieldGameID, field.TypeInt, value)
+		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CharacterType(); ok {
 		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
@@ -606,13 +606,13 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 		_spec.ClearField(character2d.FieldIsNextGrade, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(character2d.FieldCharacterID, field.TypeInt, value)
+		_spec.AddField(character2d.FieldCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt)
+		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(character2d.FieldUnit, field.TypeJSON, value)

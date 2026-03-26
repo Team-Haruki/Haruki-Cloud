@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Gachaticket {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Gachaticket {
+func GameID(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,42 +74,42 @@ func ServerRegion(v string) predicate.Gachaticket {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Gachaticket {
+func GameIDEQ(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Gachaticket {
+func GameIDNEQ(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Gachaticket {
+func GameIDIn(vs ...int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Gachaticket {
+func GameIDNotIn(vs ...int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Gachaticket {
+func GameIDGT(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Gachaticket {
+func GameIDGTE(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Gachaticket {
+func GameIDLT(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Gachaticket {
+func GameIDLTE(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldLTE(FieldGameID, v))
 }
 

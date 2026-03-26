@@ -20,19 +20,19 @@ type OutsidecharacterCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *OutsidecharacterCreate) SetGameID(v int) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetGameID(v int64) *OutsidecharacterCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *OutsidecharacterCreate) SetSeq(v int) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetSeq(v int64) *OutsidecharacterCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *OutsidecharacterCreate) SetNillableSeq(v *int) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetNillableSeq(v *int64) *OutsidecharacterCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -126,11 +126,11 @@ func (_c *OutsidecharacterCreate) createSpec() (*Outsidecharacter, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(outsidecharacter.Table, sqlgraph.NewFieldSpec(outsidecharacter.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt, value)
+		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt, value)
+		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

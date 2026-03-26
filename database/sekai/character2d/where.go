@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Character2D {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Character2D {
+func GameID(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -64,7 +64,7 @@ func IsNextGrade(v bool) predicate.Character2D {
 }
 
 // CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
-func CharacterID(v int) predicate.Character2D {
+func CharacterID(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldCharacterID, v))
 }
 
@@ -84,42 +84,42 @@ func ServerRegion(v string) predicate.Character2D {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Character2D {
+func GameIDEQ(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Character2D {
+func GameIDNEQ(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Character2D {
+func GameIDIn(vs ...int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Character2D {
+func GameIDNotIn(vs ...int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Character2D {
+func GameIDGT(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Character2D {
+func GameIDGTE(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Character2D {
+func GameIDLT(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Character2D {
+func GameIDLTE(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -154,42 +154,42 @@ func IsNextGradeNotNil() predicate.Character2D {
 }
 
 // CharacterIDEQ applies the EQ predicate on the "character_id" field.
-func CharacterIDEQ(v int) predicate.Character2D {
+func CharacterIDEQ(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
-func CharacterIDNEQ(v int) predicate.Character2D {
+func CharacterIDNEQ(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldNEQ(FieldCharacterID, v))
 }
 
 // CharacterIDIn applies the In predicate on the "character_id" field.
-func CharacterIDIn(vs ...int) predicate.Character2D {
+func CharacterIDIn(vs ...int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
-func CharacterIDNotIn(vs ...int) predicate.Character2D {
+func CharacterIDNotIn(vs ...int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDGT applies the GT predicate on the "character_id" field.
-func CharacterIDGT(v int) predicate.Character2D {
+func CharacterIDGT(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldGT(FieldCharacterID, v))
 }
 
 // CharacterIDGTE applies the GTE predicate on the "character_id" field.
-func CharacterIDGTE(v int) predicate.Character2D {
+func CharacterIDGTE(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldGTE(FieldCharacterID, v))
 }
 
 // CharacterIDLT applies the LT predicate on the "character_id" field.
-func CharacterIDLT(v int) predicate.Character2D {
+func CharacterIDLT(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldLT(FieldCharacterID, v))
 }
 
 // CharacterIDLTE applies the LTE predicate on the "character_id" field.
-func CharacterIDLTE(v int) predicate.Character2D {
+func CharacterIDLTE(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldLTE(FieldCharacterID, v))
 }
 

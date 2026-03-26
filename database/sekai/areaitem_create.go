@@ -21,19 +21,19 @@ type AreaitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *AreaitemCreate) SetGameID(v int) *AreaitemCreate {
+func (_c *AreaitemCreate) SetGameID(v int64) *AreaitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetAreaID sets the "area_id" field.
-func (_c *AreaitemCreate) SetAreaID(v int) *AreaitemCreate {
+func (_c *AreaitemCreate) SetAreaID(v int64) *AreaitemCreate {
 	_c.mutation.SetAreaID(v)
 	return _c
 }
 
 // SetNillableAreaID sets the "area_id" field if the given value is not nil.
-func (_c *AreaitemCreate) SetNillableAreaID(v *int) *AreaitemCreate {
+func (_c *AreaitemCreate) SetNillableAreaID(v *int64) *AreaitemCreate {
 	if v != nil {
 		_c.SetAreaID(*v)
 	}
@@ -161,11 +161,11 @@ func (_c *AreaitemCreate) createSpec() (*Areaitem, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(areaitem.Table, sqlgraph.NewFieldSpec(areaitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(areaitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(areaitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.AreaID(); ok {
-		_spec.SetField(areaitem.FieldAreaID, field.TypeInt, value)
+		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)
 		_node.AreaID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

@@ -15,8 +15,8 @@ type Cardcostume3D struct {
 
 func (Cardcostume3D) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("card_id").Optional(),
-		field.Int("costume3_d_id").Optional(),
+		field.Int64("card_id").Optional(),
+		field.Int64("costume3_d_id").Optional(),
 		field.Bool("is_initial_obtain_hair").Optional(),
 		field.String("server_region"),
 	}

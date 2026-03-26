@@ -20,19 +20,19 @@ type MysekaicharactertalkconditiongroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetGameID(v int) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetGameID(v int64) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetGroupID(v int) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetGroupID(v int64) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int64) *MysekaicharactertalkconditiongroupCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int) *
 }
 
 // SetMysekaiCharacterTalkConditionID sets the "mysekai_character_talk_condition_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetMysekaiCharacterTalkConditionID(v int) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetMysekaiCharacterTalkConditionID(v int64) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkConditionID sets the "mysekai_character_talk_condition_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableMysekaiCharacterTalkConditionID(v *int) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableMysekaiCharacterTalkConditionID(v *int64) *MysekaicharactertalkconditiongroupCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkConditionID(*v)
 	}
@@ -126,15 +126,15 @@ func (_c *MysekaicharactertalkconditiongroupCreate) createSpec() (*Mysekaicharac
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalkconditiongroup.Table, sqlgraph.NewFieldSpec(mysekaicharactertalkconditiongroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID, field.TypeInt64, value)
 		_node.MysekaiCharacterTalkConditionID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Eventraritybonusrate {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Eventraritybonusrate {
+func GameID(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
 }
 
 // MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
-func MasterRank(v int) predicate.Eventraritybonusrate {
+func MasterRank(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
 }
 
@@ -74,42 +74,42 @@ func ServerRegion(v string) predicate.Eventraritybonusrate {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Eventraritybonusrate {
+func GameIDEQ(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Eventraritybonusrate {
+func GameIDNEQ(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Eventraritybonusrate {
+func GameIDIn(vs ...int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Eventraritybonusrate {
+func GameIDNotIn(vs ...int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Eventraritybonusrate {
+func GameIDGT(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Eventraritybonusrate {
+func GameIDGTE(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Eventraritybonusrate {
+func GameIDLT(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Eventraritybonusrate {
+func GameIDLTE(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -124,42 +124,42 @@ func CardRarityTypeNotNil() predicate.Eventraritybonusrate {
 }
 
 // MasterRankEQ applies the EQ predicate on the "master_rank" field.
-func MasterRankEQ(v int) predicate.Eventraritybonusrate {
+func MasterRankEQ(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
 }
 
 // MasterRankNEQ applies the NEQ predicate on the "master_rank" field.
-func MasterRankNEQ(v int) predicate.Eventraritybonusrate {
+func MasterRankNEQ(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldMasterRank, v))
 }
 
 // MasterRankIn applies the In predicate on the "master_rank" field.
-func MasterRankIn(vs ...int) predicate.Eventraritybonusrate {
+func MasterRankIn(vs ...int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldIn(FieldMasterRank, vs...))
 }
 
 // MasterRankNotIn applies the NotIn predicate on the "master_rank" field.
-func MasterRankNotIn(vs ...int) predicate.Eventraritybonusrate {
+func MasterRankNotIn(vs ...int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldMasterRank, vs...))
 }
 
 // MasterRankGT applies the GT predicate on the "master_rank" field.
-func MasterRankGT(v int) predicate.Eventraritybonusrate {
+func MasterRankGT(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldGT(FieldMasterRank, v))
 }
 
 // MasterRankGTE applies the GTE predicate on the "master_rank" field.
-func MasterRankGTE(v int) predicate.Eventraritybonusrate {
+func MasterRankGTE(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldMasterRank, v))
 }
 
 // MasterRankLT applies the LT predicate on the "master_rank" field.
-func MasterRankLT(v int) predicate.Eventraritybonusrate {
+func MasterRankLT(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLT(FieldMasterRank, v))
 }
 
 // MasterRankLTE applies the LTE predicate on the "master_rank" field.
-func MasterRankLTE(v int) predicate.Eventraritybonusrate {
+func MasterRankLTE(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldMasterRank, v))
 }
 

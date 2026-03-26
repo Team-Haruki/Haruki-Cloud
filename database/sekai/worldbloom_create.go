@@ -21,19 +21,19 @@ type WorldbloomCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *WorldbloomCreate) SetGameID(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetGameID(v int64) *WorldbloomCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *WorldbloomCreate) SetEventID(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetEventID(v int64) *WorldbloomCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableEventID(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableEventID(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *WorldbloomCreate) SetNillableEventID(v *int) *WorldbloomCreate {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *WorldbloomCreate) SetGameCharacterID(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetGameCharacterID(v int64) *WorldbloomCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableGameCharacterID(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableGameCharacterID(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
@@ -61,13 +61,13 @@ func (_c *WorldbloomCreate) SetWorldBloomChapterType(v json.RawMessage) *Worldbl
 }
 
 // SetChapterNo sets the "chapter_no" field.
-func (_c *WorldbloomCreate) SetChapterNo(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetChapterNo(v int64) *WorldbloomCreate {
 	_c.mutation.SetChapterNo(v)
 	return _c
 }
 
 // SetNillableChapterNo sets the "chapter_no" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableChapterNo(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableChapterNo(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetChapterNo(*v)
 	}
@@ -75,13 +75,13 @@ func (_c *WorldbloomCreate) SetNillableChapterNo(v *int) *WorldbloomCreate {
 }
 
 // SetChapterStartAt sets the "chapter_start_at" field.
-func (_c *WorldbloomCreate) SetChapterStartAt(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetChapterStartAt(v int64) *WorldbloomCreate {
 	_c.mutation.SetChapterStartAt(v)
 	return _c
 }
 
 // SetNillableChapterStartAt sets the "chapter_start_at" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableChapterStartAt(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableChapterStartAt(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetChapterStartAt(*v)
 	}
@@ -89,13 +89,13 @@ func (_c *WorldbloomCreate) SetNillableChapterStartAt(v *int) *WorldbloomCreate 
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (_c *WorldbloomCreate) SetAggregateAt(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetAggregateAt(v int64) *WorldbloomCreate {
 	_c.mutation.SetAggregateAt(v)
 	return _c
 }
 
 // SetNillableAggregateAt sets the "aggregate_at" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableAggregateAt(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableAggregateAt(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetAggregateAt(*v)
 	}
@@ -103,13 +103,13 @@ func (_c *WorldbloomCreate) SetNillableAggregateAt(v *int) *WorldbloomCreate {
 }
 
 // SetChapterEndAt sets the "chapter_end_at" field.
-func (_c *WorldbloomCreate) SetChapterEndAt(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetChapterEndAt(v int64) *WorldbloomCreate {
 	_c.mutation.SetChapterEndAt(v)
 	return _c
 }
 
 // SetNillableChapterEndAt sets the "chapter_end_at" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableChapterEndAt(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableChapterEndAt(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetChapterEndAt(*v)
 	}
@@ -131,13 +131,13 @@ func (_c *WorldbloomCreate) SetNillableIsSupplemental(v *bool) *WorldbloomCreate
 }
 
 // SetCostume2DID sets the "costume2_d_id" field.
-func (_c *WorldbloomCreate) SetCostume2DID(v int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetCostume2DID(v int64) *WorldbloomCreate {
 	_c.mutation.SetCostume2DID(v)
 	return _c
 }
 
 // SetNillableCostume2DID sets the "costume2_d_id" field if the given value is not nil.
-func (_c *WorldbloomCreate) SetNillableCostume2DID(v *int) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetNillableCostume2DID(v *int64) *WorldbloomCreate {
 	if v != nil {
 		_c.SetCostume2DID(*v)
 	}
@@ -217,15 +217,15 @@ func (_c *WorldbloomCreate) createSpec() (*Worldbloom, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(worldbloom.Table, sqlgraph.NewFieldSpec(worldbloom.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(worldbloom.FieldGameID, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(worldbloom.FieldEventID, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.WorldBloomChapterType(); ok {
@@ -233,19 +233,19 @@ func (_c *WorldbloomCreate) createSpec() (*Worldbloom, *sqlgraph.CreateSpec) {
 		_node.WorldBloomChapterType = value
 	}
 	if value, ok := _c.mutation.ChapterNo(); ok {
-		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt64, value)
 		_node.ChapterNo = value
 	}
 	if value, ok := _c.mutation.ChapterStartAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt64, value)
 		_node.ChapterStartAt = value
 	}
 	if value, ok := _c.mutation.AggregateAt(); ok {
-		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt64, value)
 		_node.AggregateAt = value
 	}
 	if value, ok := _c.mutation.ChapterEndAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt64, value)
 		_node.ChapterEndAt = value
 	}
 	if value, ok := _c.mutation.IsSupplemental(); ok {
@@ -253,7 +253,7 @@ func (_c *WorldbloomCreate) createSpec() (*Worldbloom, *sqlgraph.CreateSpec) {
 		_node.IsSupplemental = value
 	}
 	if value, ok := _c.mutation.Costume2DID(); ok {
-		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt, value)
+		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt64, value)
 		_node.Costume2DID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

@@ -20,19 +20,19 @@ type CheerfulcarnivalteamCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *CheerfulcarnivalteamCreate) SetGameID(v int) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetGameID(v int64) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *CheerfulcarnivalteamCreate) SetEventID(v int) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetEventID(v int64) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int64) *CheerfulcarnivalteamCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int) *Cheerfulcarniv
 }
 
 // SetSeq sets the "seq" field.
-func (_c *CheerfulcarnivalteamCreate) SetSeq(v int) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetSeq(v int64) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *CheerfulcarnivalteamCreate) SetNillableSeq(v *int) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetNillableSeq(v *int64) *CheerfulcarnivalteamCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -154,15 +154,15 @@ func (_c *CheerfulcarnivalteamCreate) createSpec() (*Cheerfulcarnivalteam, *sqlg
 		_spec = sqlgraph.NewCreateSpec(cheerfulcarnivalteam.Table, sqlgraph.NewFieldSpec(cheerfulcarnivalteam.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.TeamName(); ok {

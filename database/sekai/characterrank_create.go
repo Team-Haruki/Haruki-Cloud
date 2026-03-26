@@ -21,19 +21,19 @@ type CharacterrankCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *CharacterrankCreate) SetGameID(v int) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetGameID(v int64) *CharacterrankCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_c *CharacterrankCreate) SetCharacterID(v int) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetCharacterID(v int64) *CharacterrankCreate {
 	_c.mutation.SetCharacterID(v)
 	return _c
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_c *CharacterrankCreate) SetNillableCharacterID(v *int) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetNillableCharacterID(v *int64) *CharacterrankCreate {
 	if v != nil {
 		_c.SetCharacterID(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *CharacterrankCreate) SetNillableCharacterID(v *int) *CharacterrankCrea
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_c *CharacterrankCreate) SetCharacterRank(v int) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetCharacterRank(v int64) *CharacterrankCreate {
 	_c.mutation.SetCharacterRank(v)
 	return _c
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_c *CharacterrankCreate) SetNillableCharacterRank(v *int) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetNillableCharacterRank(v *int64) *CharacterrankCreate {
 	if v != nil {
 		_c.SetCharacterRank(*v)
 	}
@@ -181,15 +181,15 @@ func (_c *CharacterrankCreate) createSpec() (*Characterrank, *sqlgraph.CreateSpe
 		_spec = sqlgraph.NewCreateSpec(characterrank.Table, sqlgraph.NewFieldSpec(characterrank.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
 		_node.CharacterRank = value
 	}
 	if value, ok := _c.mutation.Power1BonusRate(); ok {

@@ -30,14 +30,14 @@ func (_u *MusicdifficultieUpdate) Where(ps ...predicate.Musicdifficultie) *Music
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicdifficultieUpdate) SetGameID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetGameID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdate) SetNillableGameID(v *int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetNillableGameID(v *int64) *MusicdifficultieUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *MusicdifficultieUpdate) SetNillableGameID(v *int) *MusicdifficultieUpd
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicdifficultieUpdate) AddGameID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) AddGameID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusicdifficultieUpdate) SetMusicID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetMusicID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdate) SetNillableMusicID(v *int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetNillableMusicID(v *int64) *MusicdifficultieUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *MusicdifficultieUpdate) SetNillableMusicID(v *int) *MusicdifficultieUp
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusicdifficultieUpdate) AddMusicID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) AddMusicID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -96,14 +96,14 @@ func (_u *MusicdifficultieUpdate) ClearMusicDifficulty() *MusicdifficultieUpdate
 }
 
 // SetPlayLevel sets the "play_level" field.
-func (_u *MusicdifficultieUpdate) SetPlayLevel(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetPlayLevel(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetPlayLevel()
 	_u.mutation.SetPlayLevel(v)
 	return _u
 }
 
 // SetNillablePlayLevel sets the "play_level" field if the given value is not nil.
-func (_u *MusicdifficultieUpdate) SetNillablePlayLevel(v *int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetNillablePlayLevel(v *int64) *MusicdifficultieUpdate {
 	if v != nil {
 		_u.SetPlayLevel(*v)
 	}
@@ -111,7 +111,7 @@ func (_u *MusicdifficultieUpdate) SetNillablePlayLevel(v *int) *Musicdifficultie
 }
 
 // AddPlayLevel adds value to the "play_level" field.
-func (_u *MusicdifficultieUpdate) AddPlayLevel(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) AddPlayLevel(v int64) *MusicdifficultieUpdate {
 	_u.mutation.AddPlayLevel(v)
 	return _u
 }
@@ -123,14 +123,14 @@ func (_u *MusicdifficultieUpdate) ClearPlayLevel() *MusicdifficultieUpdate {
 }
 
 // SetTotalNoteCount sets the "total_note_count" field.
-func (_u *MusicdifficultieUpdate) SetTotalNoteCount(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetTotalNoteCount(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetTotalNoteCount()
 	_u.mutation.SetTotalNoteCount(v)
 	return _u
 }
 
 // SetNillableTotalNoteCount sets the "total_note_count" field if the given value is not nil.
-func (_u *MusicdifficultieUpdate) SetNillableTotalNoteCount(v *int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetNillableTotalNoteCount(v *int64) *MusicdifficultieUpdate {
 	if v != nil {
 		_u.SetTotalNoteCount(*v)
 	}
@@ -138,7 +138,7 @@ func (_u *MusicdifficultieUpdate) SetNillableTotalNoteCount(v *int) *Musicdiffic
 }
 
 // AddTotalNoteCount adds value to the "total_note_count" field.
-func (_u *MusicdifficultieUpdate) AddTotalNoteCount(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) AddTotalNoteCount(v int64) *MusicdifficultieUpdate {
 	_u.mutation.AddTotalNoteCount(v)
 	return _u
 }
@@ -150,14 +150,14 @@ func (_u *MusicdifficultieUpdate) ClearTotalNoteCount() *MusicdifficultieUpdate 
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *MusicdifficultieUpdate) SetReleaseConditionID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetReleaseConditionID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdate) SetNillableReleaseConditionID(v *int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetNillableReleaseConditionID(v *int64) *MusicdifficultieUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -165,7 +165,7 @@ func (_u *MusicdifficultieUpdate) SetNillableReleaseConditionID(v *int) *Musicdi
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *MusicdifficultieUpdate) AddReleaseConditionID(v int) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) AddReleaseConditionID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -232,19 +232,19 @@ func (_u *MusicdifficultieUpdate) sqlSave(ctx context.Context) (_node int, err e
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musicdifficultie.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicDifficulty(); ok {
 		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
@@ -258,31 +258,31 @@ func (_u *MusicdifficultieUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.PlayLevel(); ok {
-		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPlayLevel(); ok {
-		_spec.AddField(musicdifficultie.FieldPlayLevel, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
 	}
 	if _u.mutation.PlayLevelCleared() {
-		_spec.ClearField(musicdifficultie.FieldPlayLevel, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldPlayLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TotalNoteCount(); ok {
-		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedTotalNoteCount(); ok {
-		_spec.AddField(musicdifficultie.FieldTotalNoteCount, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64, value)
 	}
 	if _u.mutation.TotalNoteCountCleared() {
-		_spec.ClearField(musicdifficultie.FieldTotalNoteCount, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(musicdifficultie.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(musicdifficultie.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musicdifficultie.FieldServerRegion, field.TypeString, value)
@@ -308,14 +308,14 @@ type MusicdifficultieUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicdifficultieUpdateOne) SetGameID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetGameID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdateOne) SetNillableGameID(v *int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetNillableGameID(v *int64) *MusicdifficultieUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -323,20 +323,20 @@ func (_u *MusicdifficultieUpdateOne) SetNillableGameID(v *int) *Musicdifficultie
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicdifficultieUpdateOne) AddGameID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) AddGameID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusicdifficultieUpdateOne) SetMusicID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetMusicID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdateOne) SetNillableMusicID(v *int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetNillableMusicID(v *int64) *MusicdifficultieUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -344,7 +344,7 @@ func (_u *MusicdifficultieUpdateOne) SetNillableMusicID(v *int) *Musicdifficulti
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusicdifficultieUpdateOne) AddMusicID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) AddMusicID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -374,14 +374,14 @@ func (_u *MusicdifficultieUpdateOne) ClearMusicDifficulty() *MusicdifficultieUpd
 }
 
 // SetPlayLevel sets the "play_level" field.
-func (_u *MusicdifficultieUpdateOne) SetPlayLevel(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetPlayLevel(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.ResetPlayLevel()
 	_u.mutation.SetPlayLevel(v)
 	return _u
 }
 
 // SetNillablePlayLevel sets the "play_level" field if the given value is not nil.
-func (_u *MusicdifficultieUpdateOne) SetNillablePlayLevel(v *int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetNillablePlayLevel(v *int64) *MusicdifficultieUpdateOne {
 	if v != nil {
 		_u.SetPlayLevel(*v)
 	}
@@ -389,7 +389,7 @@ func (_u *MusicdifficultieUpdateOne) SetNillablePlayLevel(v *int) *Musicdifficul
 }
 
 // AddPlayLevel adds value to the "play_level" field.
-func (_u *MusicdifficultieUpdateOne) AddPlayLevel(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) AddPlayLevel(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddPlayLevel(v)
 	return _u
 }
@@ -401,14 +401,14 @@ func (_u *MusicdifficultieUpdateOne) ClearPlayLevel() *MusicdifficultieUpdateOne
 }
 
 // SetTotalNoteCount sets the "total_note_count" field.
-func (_u *MusicdifficultieUpdateOne) SetTotalNoteCount(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetTotalNoteCount(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.ResetTotalNoteCount()
 	_u.mutation.SetTotalNoteCount(v)
 	return _u
 }
 
 // SetNillableTotalNoteCount sets the "total_note_count" field if the given value is not nil.
-func (_u *MusicdifficultieUpdateOne) SetNillableTotalNoteCount(v *int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetNillableTotalNoteCount(v *int64) *MusicdifficultieUpdateOne {
 	if v != nil {
 		_u.SetTotalNoteCount(*v)
 	}
@@ -416,7 +416,7 @@ func (_u *MusicdifficultieUpdateOne) SetNillableTotalNoteCount(v *int) *Musicdif
 }
 
 // AddTotalNoteCount adds value to the "total_note_count" field.
-func (_u *MusicdifficultieUpdateOne) AddTotalNoteCount(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) AddTotalNoteCount(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddTotalNoteCount(v)
 	return _u
 }
@@ -428,14 +428,14 @@ func (_u *MusicdifficultieUpdateOne) ClearTotalNoteCount() *MusicdifficultieUpda
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *MusicdifficultieUpdateOne) SetReleaseConditionID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetReleaseConditionID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *MusicdifficultieUpdateOne) SetNillableReleaseConditionID(v *int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetNillableReleaseConditionID(v *int64) *MusicdifficultieUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -443,7 +443,7 @@ func (_u *MusicdifficultieUpdateOne) SetNillableReleaseConditionID(v *int) *Musi
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *MusicdifficultieUpdateOne) AddReleaseConditionID(v int) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) AddReleaseConditionID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -540,19 +540,19 @@ func (_u *MusicdifficultieUpdateOne) sqlSave(ctx context.Context) (_node *Musicd
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musicdifficultie.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicDifficulty(); ok {
 		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
@@ -566,31 +566,31 @@ func (_u *MusicdifficultieUpdateOne) sqlSave(ctx context.Context) (_node *Musicd
 		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.PlayLevel(); ok {
-		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPlayLevel(); ok {
-		_spec.AddField(musicdifficultie.FieldPlayLevel, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
 	}
 	if _u.mutation.PlayLevelCleared() {
-		_spec.ClearField(musicdifficultie.FieldPlayLevel, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldPlayLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TotalNoteCount(); ok {
-		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedTotalNoteCount(); ok {
-		_spec.AddField(musicdifficultie.FieldTotalNoteCount, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64, value)
 	}
 	if _u.mutation.TotalNoteCountCleared() {
-		_spec.ClearField(musicdifficultie.FieldTotalNoteCount, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(musicdifficultie.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(musicdifficultie.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musicdifficultie.FieldServerRegion, field.TypeString, value)

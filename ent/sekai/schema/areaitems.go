@@ -17,8 +17,8 @@ type Areaitem struct {
 
 func (Areaitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("area_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("area_id").Optional(),
 		field.String("name").Optional(),
 		field.String("flavor_text").Optional(),
 		field.JSON("spawn_point", json.RawMessage{}).Optional(),

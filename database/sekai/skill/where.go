@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Skill {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Skill {
+func GameID(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,7 +69,7 @@ func Description(v string) predicate.Skill {
 }
 
 // SkillFilterID applies equality check predicate on the "skill_filter_id" field. It's identical to SkillFilterIDEQ.
-func SkillFilterID(v int) predicate.Skill {
+func SkillFilterID(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldSkillFilterID, v))
 }
 
@@ -79,42 +79,42 @@ func ServerRegion(v string) predicate.Skill {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Skill {
+func GameIDEQ(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Skill {
+func GameIDNEQ(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Skill {
+func GameIDIn(vs ...int64) predicate.Skill {
 	return predicate.Skill(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Skill {
+func GameIDNotIn(vs ...int64) predicate.Skill {
 	return predicate.Skill(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Skill {
+func GameIDGT(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Skill {
+func GameIDGTE(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Skill {
+func GameIDLT(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Skill {
+func GameIDLTE(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -279,42 +279,42 @@ func DescriptionSpriteNameNotNil() predicate.Skill {
 }
 
 // SkillFilterIDEQ applies the EQ predicate on the "skill_filter_id" field.
-func SkillFilterIDEQ(v int) predicate.Skill {
+func SkillFilterIDEQ(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDNEQ applies the NEQ predicate on the "skill_filter_id" field.
-func SkillFilterIDNEQ(v int) predicate.Skill {
+func SkillFilterIDNEQ(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldNEQ(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDIn applies the In predicate on the "skill_filter_id" field.
-func SkillFilterIDIn(vs ...int) predicate.Skill {
+func SkillFilterIDIn(vs ...int64) predicate.Skill {
 	return predicate.Skill(sql.FieldIn(FieldSkillFilterID, vs...))
 }
 
 // SkillFilterIDNotIn applies the NotIn predicate on the "skill_filter_id" field.
-func SkillFilterIDNotIn(vs ...int) predicate.Skill {
+func SkillFilterIDNotIn(vs ...int64) predicate.Skill {
 	return predicate.Skill(sql.FieldNotIn(FieldSkillFilterID, vs...))
 }
 
 // SkillFilterIDGT applies the GT predicate on the "skill_filter_id" field.
-func SkillFilterIDGT(v int) predicate.Skill {
+func SkillFilterIDGT(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldGT(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDGTE applies the GTE predicate on the "skill_filter_id" field.
-func SkillFilterIDGTE(v int) predicate.Skill {
+func SkillFilterIDGTE(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldGTE(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDLT applies the LT predicate on the "skill_filter_id" field.
-func SkillFilterIDLT(v int) predicate.Skill {
+func SkillFilterIDLT(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldLT(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDLTE applies the LTE predicate on the "skill_filter_id" field.
-func SkillFilterIDLTE(v int) predicate.Skill {
+func SkillFilterIDLTE(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldSkillFilterID, v))
 }
 

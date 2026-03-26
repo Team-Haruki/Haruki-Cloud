@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaiphenomenon {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaiphenomenon {
+func GameID(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,7 +74,7 @@ func Description(v string) predicate.Mysekaiphenomenon {
 }
 
 // MysekaiPhenomenaBackgroundColorID applies equality check predicate on the "mysekai_phenomena_background_color_id" field. It's identical to MysekaiPhenomenaBackgroundColorIDEQ.
-func MysekaiPhenomenaBackgroundColorID(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorID(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
@@ -99,42 +99,42 @@ func ServerRegion(v string) predicate.Mysekaiphenomenon {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaiphenomenon {
+func GameIDEQ(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaiphenomenon {
+func GameIDNEQ(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaiphenomenon {
+func GameIDIn(vs ...int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaiphenomenon {
+func GameIDNotIn(vs ...int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaiphenomenon {
+func GameIDGT(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaiphenomenon {
+func GameIDGTE(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaiphenomenon {
+func GameIDLT(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaiphenomenon {
+func GameIDLTE(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -384,42 +384,42 @@ func MysekaiPhenomenaTimePeriodTypeNotNil() predicate.Mysekaiphenomenon {
 }
 
 // MysekaiPhenomenaBackgroundColorIDEQ applies the EQ predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDEQ(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDEQ(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDNEQ applies the NEQ predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDNEQ(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDNEQ(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDIn applies the In predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDIn(vs ...int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDIn(vs ...int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldMysekaiPhenomenaBackgroundColorID, vs...))
 }
 
 // MysekaiPhenomenaBackgroundColorIDNotIn applies the NotIn predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDNotIn(vs ...int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDNotIn(vs ...int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldMysekaiPhenomenaBackgroundColorID, vs...))
 }
 
 // MysekaiPhenomenaBackgroundColorIDGT applies the GT predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDGT(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDGT(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDGTE applies the GTE predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDGTE(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDGTE(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDLT applies the LT predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDLT(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDLT(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDLTE applies the LTE predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDLTE(v int) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDLTE(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 

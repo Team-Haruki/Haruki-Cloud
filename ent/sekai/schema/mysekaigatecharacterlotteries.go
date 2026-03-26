@@ -15,10 +15,10 @@ type Mysekaigatecharacterlotterie struct {
 
 func (Mysekaigatecharacterlotterie) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("mysekai_gate_id").Optional(),
-		field.Int("game_character_unit_id").Optional(),
-		field.Int("visitable_mysekai_gate_level").Optional(),
+		field.Int64("game_id"),
+		field.Int64("mysekai_gate_id").Optional(),
+		field.Int64("game_character_unit_id").Optional(),
+		field.Int64("visitable_mysekai_gate_level").Optional(),
 		field.String("server_region"),
 	}
 }

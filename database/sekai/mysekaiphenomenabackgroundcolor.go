@@ -17,7 +17,7 @@ type Mysekaiphenomenabackgroundcolor struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// BaseColor holds the value of the "base_color" field.
 	BaseColor string `json:"base_color,omitempty"`
 	// GroundColor holds the value of the "ground_color" field.
@@ -67,7 +67,7 @@ func (_m *Mysekaiphenomenabackgroundcolor) assignValues(columns []string, values
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaiphenomenabackgroundcolor.FieldBaseColor:
 			if value, ok := values[i].(*sql.NullString); !ok {

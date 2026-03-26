@@ -17,21 +17,21 @@ type Area struct {
 
 func (Area) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("assetbundle_name").Optional(),
-		field.Int("group_id").Optional(),
+		field.Int64("group_id").Optional(),
 		field.Bool("is_base_area").Optional(),
 		field.JSON("area_type", json.RawMessage{}).Optional(),
 		field.JSON("view_type", json.RawMessage{}).Optional(),
 		field.JSON("display_timeline_type", json.RawMessage{}).Optional(),
 		field.JSON("additional_area_type", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
-		field.Int("release_condition_id").Optional(),
+		field.Int64("release_condition_id").Optional(),
 		field.String("sub_name").Optional(),
 		field.String("label").Optional(),
-		field.Int("start_at").Optional(),
-		field.Int("end_at").Optional(),
-		field.Int("release_condition_id2").Optional(),
+		field.Int64("start_at").Optional(),
+		field.Int64("end_at").Optional(),
+		field.Int64("release_condition_id2").Optional(),
 		field.String("server_region"),
 	}
 }

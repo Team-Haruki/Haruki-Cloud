@@ -18,11 +18,11 @@ type Masterlesson struct {
 func (Masterlesson) Fields() []ent.Field {
 	return []ent.Field{
 		field.JSON("card_rarity_type", json.RawMessage{}).Optional(),
-		field.Int("master_rank").Optional(),
-		field.Int("power1_bonus_fixed").Optional(),
-		field.Int("power2_bonus_fixed").Optional(),
-		field.Int("power3_bonus_fixed").Optional(),
-		field.Int("character_rank_exp").Optional(),
+		field.Int64("master_rank").Optional(),
+		field.Int64("power1_bonus_fixed").Optional(),
+		field.Int64("power2_bonus_fixed").Optional(),
+		field.Int64("power3_bonus_fixed").Optional(),
+		field.Int64("character_rank_exp").Optional(),
 		field.JSON("costs", json.RawMessage{}).Optional(),
 		field.JSON("rewards", json.RawMessage{}).Optional(),
 		field.String("server_region"),

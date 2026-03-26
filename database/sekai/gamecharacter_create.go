@@ -21,19 +21,19 @@ type GamecharacterCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *GamecharacterCreate) SetGameID(v int) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetGameID(v int64) *GamecharacterCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *GamecharacterCreate) SetSeq(v int) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetSeq(v int64) *GamecharacterCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableSeq(v *int) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetNillableSeq(v *int64) *GamecharacterCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *GamecharacterCreate) SetNillableSeq(v *int) *GamecharacterCreate {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_c *GamecharacterCreate) SetResourceID(v int) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetResourceID(v int64) *GamecharacterCreate {
 	_c.mutation.SetResourceID(v)
 	return _c
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableResourceID(v *int) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetNillableResourceID(v *int64) *GamecharacterCreate {
 	if v != nil {
 		_c.SetResourceID(*v)
 	}
@@ -283,15 +283,15 @@ func (_c *GamecharacterCreate) createSpec() (*Gamecharacter, *sqlgraph.CreateSpe
 		_spec = sqlgraph.NewCreateSpec(gamecharacter.Table, sqlgraph.NewFieldSpec(gamecharacter.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
 		_node.ResourceID = value
 	}
 	if value, ok := _c.mutation.FirstName(); ok {

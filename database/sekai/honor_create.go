@@ -21,19 +21,19 @@ type HonorCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *HonorCreate) SetGameID(v int) *HonorCreate {
+func (_c *HonorCreate) SetGameID(v int64) *HonorCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *HonorCreate) SetSeq(v int) *HonorCreate {
+func (_c *HonorCreate) SetSeq(v int64) *HonorCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableSeq(v *int) *HonorCreate {
+func (_c *HonorCreate) SetNillableSeq(v *int64) *HonorCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *HonorCreate) SetNillableSeq(v *int) *HonorCreate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *HonorCreate) SetGroupID(v int) *HonorCreate {
+func (_c *HonorCreate) SetGroupID(v int64) *HonorCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableGroupID(v *int) *HonorCreate {
+func (_c *HonorCreate) SetNillableGroupID(v *int64) *HonorCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -95,13 +95,13 @@ func (_c *HonorCreate) SetLevels(v json.RawMessage) *HonorCreate {
 }
 
 // SetHonorTypeID sets the "honor_type_id" field.
-func (_c *HonorCreate) SetHonorTypeID(v int) *HonorCreate {
+func (_c *HonorCreate) SetHonorTypeID(v int64) *HonorCreate {
 	_c.mutation.SetHonorTypeID(v)
 	return _c
 }
 
 // SetNillableHonorTypeID sets the "honor_type_id" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableHonorTypeID(v *int) *HonorCreate {
+func (_c *HonorCreate) SetNillableHonorTypeID(v *int64) *HonorCreate {
 	if v != nil {
 		_c.SetHonorTypeID(*v)
 	}
@@ -123,13 +123,13 @@ func (_c *HonorCreate) SetNillableHonorMissionType(v *string) *HonorCreate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *HonorCreate) SetStartAt(v int) *HonorCreate {
+func (_c *HonorCreate) SetStartAt(v int64) *HonorCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableStartAt(v *int) *HonorCreate {
+func (_c *HonorCreate) SetNillableStartAt(v *int64) *HonorCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -209,15 +209,15 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(honor.Table, sqlgraph.NewFieldSpec(honor.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(honor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(honor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(honor.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(honor.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(honor.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.HonorRarity(); ok {
@@ -237,7 +237,7 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node.Levels = value
 	}
 	if value, ok := _c.mutation.HonorTypeID(); ok {
-		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt, value)
+		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt64, value)
 		_node.HonorTypeID = value
 	}
 	if value, ok := _c.mutation.HonorMissionType(); ok {
@@ -245,7 +245,7 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node.HonorMissionType = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(honor.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(honor.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

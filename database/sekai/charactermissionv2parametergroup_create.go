@@ -20,19 +20,19 @@ type Charactermissionv2ParametergroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *Charactermissionv2ParametergroupCreate) SetGameID(v int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetGameID(v int64) *Charactermissionv2ParametergroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *Charactermissionv2ParametergroupCreate) SetSeq(v int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetSeq(v int64) *Charactermissionv2ParametergroupCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *Charactermissionv2ParametergroupCreate) SetNillableSeq(v *int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetNillableSeq(v *int64) *Charactermissionv2ParametergroupCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *Charactermissionv2ParametergroupCreate) SetNillableSeq(v *int) *Charac
 }
 
 // SetRequirement sets the "requirement" field.
-func (_c *Charactermissionv2ParametergroupCreate) SetRequirement(v int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetRequirement(v int64) *Charactermissionv2ParametergroupCreate {
 	_c.mutation.SetRequirement(v)
 	return _c
 }
 
 // SetNillableRequirement sets the "requirement" field if the given value is not nil.
-func (_c *Charactermissionv2ParametergroupCreate) SetNillableRequirement(v *int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetNillableRequirement(v *int64) *Charactermissionv2ParametergroupCreate {
 	if v != nil {
 		_c.SetRequirement(*v)
 	}
@@ -54,13 +54,13 @@ func (_c *Charactermissionv2ParametergroupCreate) SetNillableRequirement(v *int)
 }
 
 // SetExp sets the "exp" field.
-func (_c *Charactermissionv2ParametergroupCreate) SetExp(v int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetExp(v int64) *Charactermissionv2ParametergroupCreate {
 	_c.mutation.SetExp(v)
 	return _c
 }
 
 // SetNillableExp sets the "exp" field if the given value is not nil.
-func (_c *Charactermissionv2ParametergroupCreate) SetNillableExp(v *int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetNillableExp(v *int64) *Charactermissionv2ParametergroupCreate {
 	if v != nil {
 		_c.SetExp(*v)
 	}
@@ -68,13 +68,13 @@ func (_c *Charactermissionv2ParametergroupCreate) SetNillableExp(v *int) *Charac
 }
 
 // SetQuantity sets the "quantity" field.
-func (_c *Charactermissionv2ParametergroupCreate) SetQuantity(v int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetQuantity(v int64) *Charactermissionv2ParametergroupCreate {
 	_c.mutation.SetQuantity(v)
 	return _c
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_c *Charactermissionv2ParametergroupCreate) SetNillableQuantity(v *int) *Charactermissionv2ParametergroupCreate {
+func (_c *Charactermissionv2ParametergroupCreate) SetNillableQuantity(v *int64) *Charactermissionv2ParametergroupCreate {
 	if v != nil {
 		_c.SetQuantity(*v)
 	}
@@ -154,23 +154,23 @@ func (_c *Charactermissionv2ParametergroupCreate) createSpec() (*Charactermissio
 		_spec = sqlgraph.NewCreateSpec(charactermissionv2parametergroup.Table, sqlgraph.NewFieldSpec(charactermissionv2parametergroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Requirement(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64, value)
 		_node.Requirement = value
 	}
 	if value, ok := _c.mutation.Exp(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt64, value)
 		_node.Exp = value
 	}
 	if value, ok := _c.mutation.Quantity(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64, value)
 		_node.Quantity = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

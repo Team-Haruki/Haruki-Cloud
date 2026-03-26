@@ -28,14 +28,14 @@ func (_u *MysekaiitemUpdate) Where(ps ...predicate.Mysekaiitem) *MysekaiitemUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiitemUpdate) SetGameID(v int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetGameID(v int64) *MysekaiitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiitemUpdate) SetNillableGameID(v *int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetNillableGameID(v *int64) *MysekaiitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *MysekaiitemUpdate) SetNillableGameID(v *int) *MysekaiitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiitemUpdate) AddGameID(v int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) AddGameID(v int64) *MysekaiitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaiitemUpdate) SetSeq(v int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetSeq(v int64) *MysekaiitemUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiitemUpdate) SetNillableSeq(v *int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetNillableSeq(v *int64) *MysekaiitemUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *MysekaiitemUpdate) SetNillableSeq(v *int) *MysekaiitemUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiitemUpdate) AddSeq(v int) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) AddSeq(v int64) *MysekaiitemUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -231,19 +231,19 @@ func (_u *MysekaiitemUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiItemType(); ok {
 		_spec.SetField(mysekaiitem.FieldMysekaiItemType, field.TypeString, value)
@@ -299,14 +299,14 @@ type MysekaiitemUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiitemUpdateOne) SetGameID(v int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetGameID(v int64) *MysekaiitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int64) *MysekaiitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -314,20 +314,20 @@ func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int) *MysekaiitemUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiitemUpdateOne) AddGameID(v int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) AddGameID(v int64) *MysekaiitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaiitemUpdateOne) SetSeq(v int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetSeq(v int64) *MysekaiitemUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int64) *MysekaiitemUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -335,7 +335,7 @@ func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int) *MysekaiitemUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiitemUpdateOne) AddSeq(v int) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) AddSeq(v int64) *MysekaiitemUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -532,19 +532,19 @@ func (_u *MysekaiitemUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaiitem
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiItemType(); ok {
 		_spec.SetField(mysekaiitem.FieldMysekaiItemType, field.TypeString, value)

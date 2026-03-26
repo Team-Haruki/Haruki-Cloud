@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Mysekaimusicrecord {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaimusicrecord {
+func GameID(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldEQ(FieldGameID, v))
 }
 
 // ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
-func ExternalID(v int) predicate.Mysekaimusicrecord {
+func ExternalID(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldEQ(FieldExternalID, v))
 }
 
@@ -69,42 +69,42 @@ func ServerRegion(v string) predicate.Mysekaimusicrecord {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaimusicrecord {
+func GameIDEQ(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaimusicrecord {
+func GameIDNEQ(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaimusicrecord {
+func GameIDIn(vs ...int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaimusicrecord {
+func GameIDNotIn(vs ...int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaimusicrecord {
+func GameIDGT(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaimusicrecord {
+func GameIDGTE(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaimusicrecord {
+func GameIDLT(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaimusicrecord {
+func GameIDLTE(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -119,42 +119,42 @@ func MysekaiMusicTrackTypeNotNil() predicate.Mysekaimusicrecord {
 }
 
 // ExternalIDEQ applies the EQ predicate on the "external_id" field.
-func ExternalIDEQ(v int) predicate.Mysekaimusicrecord {
+func ExternalIDEQ(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldEQ(FieldExternalID, v))
 }
 
 // ExternalIDNEQ applies the NEQ predicate on the "external_id" field.
-func ExternalIDNEQ(v int) predicate.Mysekaimusicrecord {
+func ExternalIDNEQ(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldNEQ(FieldExternalID, v))
 }
 
 // ExternalIDIn applies the In predicate on the "external_id" field.
-func ExternalIDIn(vs ...int) predicate.Mysekaimusicrecord {
+func ExternalIDIn(vs ...int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldIn(FieldExternalID, vs...))
 }
 
 // ExternalIDNotIn applies the NotIn predicate on the "external_id" field.
-func ExternalIDNotIn(vs ...int) predicate.Mysekaimusicrecord {
+func ExternalIDNotIn(vs ...int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldNotIn(FieldExternalID, vs...))
 }
 
 // ExternalIDGT applies the GT predicate on the "external_id" field.
-func ExternalIDGT(v int) predicate.Mysekaimusicrecord {
+func ExternalIDGT(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldGT(FieldExternalID, v))
 }
 
 // ExternalIDGTE applies the GTE predicate on the "external_id" field.
-func ExternalIDGTE(v int) predicate.Mysekaimusicrecord {
+func ExternalIDGTE(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldGTE(FieldExternalID, v))
 }
 
 // ExternalIDLT applies the LT predicate on the "external_id" field.
-func ExternalIDLT(v int) predicate.Mysekaimusicrecord {
+func ExternalIDLT(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldLT(FieldExternalID, v))
 }
 
 // ExternalIDLTE applies the LTE predicate on the "external_id" field.
-func ExternalIDLTE(v int) predicate.Mysekaimusicrecord {
+func ExternalIDLTE(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldLTE(FieldExternalID, v))
 }
 

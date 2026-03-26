@@ -17,15 +17,15 @@ type Charactermissionv2Parametergroup struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// Requirement holds the value of the "requirement" field.
-	Requirement int `json:"requirement,omitempty"`
+	Requirement int64 `json:"requirement,omitempty"`
 	// Exp holds the value of the "exp" field.
-	Exp int `json:"exp,omitempty"`
+	Exp int64 `json:"exp,omitempty"`
 	// Quantity holds the value of the "quantity" field.
-	Quantity int `json:"quantity,omitempty"`
+	Quantity int64 `json:"quantity,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -65,31 +65,31 @@ func (_m *Charactermissionv2Parametergroup) assignValues(columns []string, value
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case charactermissionv2parametergroup.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case charactermissionv2parametergroup.FieldRequirement:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field requirement", values[i])
 			} else if value.Valid {
-				_m.Requirement = int(value.Int64)
+				_m.Requirement = value.Int64
 			}
 		case charactermissionv2parametergroup.FieldExp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field exp", values[i])
 			} else if value.Valid {
-				_m.Exp = int(value.Int64)
+				_m.Exp = value.Int64
 			}
 		case charactermissionv2parametergroup.FieldQuantity:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field quantity", values[i])
 			} else if value.Valid {
-				_m.Quantity = int(value.Int64)
+				_m.Quantity = value.Int64
 			}
 		case charactermissionv2parametergroup.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

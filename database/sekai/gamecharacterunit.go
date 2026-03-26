@@ -18,9 +18,9 @@ type Gamecharacterunit struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int `json:"game_character_id,omitempty"`
+	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// Unit holds the value of the "unit" field.
 	Unit json.RawMessage `json:"unit,omitempty"`
 	// ColorCode holds the value of the "color_code" field.
@@ -72,13 +72,13 @@ func (_m *Gamecharacterunit) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case gamecharacterunit.FieldGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = int(value.Int64)
+				_m.GameCharacterID = value.Int64
 			}
 		case gamecharacterunit.FieldUnit:
 			if value, ok := values[i].(*[]byte); !ok {

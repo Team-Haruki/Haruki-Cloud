@@ -17,7 +17,7 @@ type Worldbloomdifferentattributebonuse struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// AttributeCount holds the value of the "attribute_count" field.
-	AttributeCount int `json:"attribute_count,omitempty"`
+	AttributeCount int64 `json:"attribute_count,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -61,7 +61,7 @@ func (_m *Worldbloomdifferentattributebonuse) assignValues(columns []string, val
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field attribute_count", values[i])
 			} else if value.Valid {
-				_m.AttributeCount = int(value.Int64)
+				_m.AttributeCount = value.Int64
 			}
 		case worldbloomdifferentattributebonuse.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

@@ -30,14 +30,14 @@ func (_u *AreaUpdate) Where(ps ...predicate.Area) *AreaUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *AreaUpdate) SetGameID(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetGameID(v int64) *AreaUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableGameID(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableGameID(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *AreaUpdate) SetNillableGameID(v *int) *AreaUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaUpdate) AddGameID(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddGameID(v int64) *AreaUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -71,14 +71,14 @@ func (_u *AreaUpdate) ClearAssetbundleName() *AreaUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *AreaUpdate) SetGroupID(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetGroupID(v int64) *AreaUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableGroupID(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableGroupID(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -86,7 +86,7 @@ func (_u *AreaUpdate) SetNillableGroupID(v *int) *AreaUpdate {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *AreaUpdate) AddGroupID(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddGroupID(v int64) *AreaUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -210,14 +210,14 @@ func (_u *AreaUpdate) ClearName() *AreaUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *AreaUpdate) SetReleaseConditionID(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetReleaseConditionID(v int64) *AreaUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -225,7 +225,7 @@ func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int) *AreaUpdate {
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *AreaUpdate) AddReleaseConditionID(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddReleaseConditionID(v int64) *AreaUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -277,14 +277,14 @@ func (_u *AreaUpdate) ClearLabel() *AreaUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *AreaUpdate) SetStartAt(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetStartAt(v int64) *AreaUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableStartAt(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableStartAt(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -292,7 +292,7 @@ func (_u *AreaUpdate) SetNillableStartAt(v *int) *AreaUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *AreaUpdate) AddStartAt(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddStartAt(v int64) *AreaUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -304,14 +304,14 @@ func (_u *AreaUpdate) ClearStartAt() *AreaUpdate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *AreaUpdate) SetEndAt(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetEndAt(v int64) *AreaUpdate {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableEndAt(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableEndAt(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -319,7 +319,7 @@ func (_u *AreaUpdate) SetNillableEndAt(v *int) *AreaUpdate {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *AreaUpdate) AddEndAt(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddEndAt(v int64) *AreaUpdate {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -331,14 +331,14 @@ func (_u *AreaUpdate) ClearEndAt() *AreaUpdate {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_u *AreaUpdate) SetReleaseConditionId2(v int) *AreaUpdate {
+func (_u *AreaUpdate) SetReleaseConditionId2(v int64) *AreaUpdate {
 	_u.mutation.ResetReleaseConditionId2()
 	_u.mutation.SetReleaseConditionId2(v)
 	return _u
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int64) *AreaUpdate {
 	if v != nil {
 		_u.SetReleaseConditionId2(*v)
 	}
@@ -346,7 +346,7 @@ func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int) *AreaUpdate {
 }
 
 // AddReleaseConditionId2 adds value to the "release_condition_id2" field.
-func (_u *AreaUpdate) AddReleaseConditionId2(v int) *AreaUpdate {
+func (_u *AreaUpdate) AddReleaseConditionId2(v int64) *AreaUpdate {
 	_u.mutation.AddReleaseConditionId2(v)
 	return _u
 }
@@ -413,10 +413,10 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(area.FieldGameID, field.TypeInt, value)
+		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)
@@ -425,13 +425,13 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(area.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(area.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(area.FieldGroupID, field.TypeInt)
+		_spec.ClearField(area.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsBaseArea(); ok {
 		_spec.SetField(area.FieldIsBaseArea, field.TypeBool, value)
@@ -490,13 +490,13 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SubName(); ok {
 		_spec.SetField(area.FieldSubName, field.TypeString, value)
@@ -511,31 +511,31 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldLabel, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(area.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(area.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(area.FieldStartAt, field.TypeInt)
+		_spec.ClearField(area.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(area.FieldEndAt, field.TypeInt, value)
+		_spec.AddField(area.FieldEndAt, field.TypeInt64, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(area.FieldEndAt, field.TypeInt)
+		_spec.ClearField(area.FieldEndAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionId2(); ok {
-		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt, value)
+		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionId2Cleared() {
-		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt)
+		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
@@ -561,14 +561,14 @@ type AreaUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *AreaUpdateOne) SetGameID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetGameID(v int64) *AreaUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableGameID(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableGameID(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -576,7 +576,7 @@ func (_u *AreaUpdateOne) SetNillableGameID(v *int) *AreaUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaUpdateOne) AddGameID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddGameID(v int64) *AreaUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -602,14 +602,14 @@ func (_u *AreaUpdateOne) ClearAssetbundleName() *AreaUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *AreaUpdateOne) SetGroupID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetGroupID(v int64) *AreaUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableGroupID(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableGroupID(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -617,7 +617,7 @@ func (_u *AreaUpdateOne) SetNillableGroupID(v *int) *AreaUpdateOne {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *AreaUpdateOne) AddGroupID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddGroupID(v int64) *AreaUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -741,14 +741,14 @@ func (_u *AreaUpdateOne) ClearName() *AreaUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *AreaUpdateOne) SetReleaseConditionID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetReleaseConditionID(v int64) *AreaUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -756,7 +756,7 @@ func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int) *AreaUpdateOne {
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *AreaUpdateOne) AddReleaseConditionID(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddReleaseConditionID(v int64) *AreaUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -808,14 +808,14 @@ func (_u *AreaUpdateOne) ClearLabel() *AreaUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *AreaUpdateOne) SetStartAt(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetStartAt(v int64) *AreaUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableStartAt(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableStartAt(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -823,7 +823,7 @@ func (_u *AreaUpdateOne) SetNillableStartAt(v *int) *AreaUpdateOne {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *AreaUpdateOne) AddStartAt(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddStartAt(v int64) *AreaUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -835,14 +835,14 @@ func (_u *AreaUpdateOne) ClearStartAt() *AreaUpdateOne {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *AreaUpdateOne) SetEndAt(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetEndAt(v int64) *AreaUpdateOne {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableEndAt(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableEndAt(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -850,7 +850,7 @@ func (_u *AreaUpdateOne) SetNillableEndAt(v *int) *AreaUpdateOne {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *AreaUpdateOne) AddEndAt(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddEndAt(v int64) *AreaUpdateOne {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -862,14 +862,14 @@ func (_u *AreaUpdateOne) ClearEndAt() *AreaUpdateOne {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_u *AreaUpdateOne) SetReleaseConditionId2(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetReleaseConditionId2(v int64) *AreaUpdateOne {
 	_u.mutation.ResetReleaseConditionId2()
 	_u.mutation.SetReleaseConditionId2(v)
 	return _u
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int64) *AreaUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionId2(*v)
 	}
@@ -877,7 +877,7 @@ func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int) *AreaUpdateOne {
 }
 
 // AddReleaseConditionId2 adds value to the "release_condition_id2" field.
-func (_u *AreaUpdateOne) AddReleaseConditionId2(v int) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddReleaseConditionId2(v int64) *AreaUpdateOne {
 	_u.mutation.AddReleaseConditionId2(v)
 	return _u
 }
@@ -974,10 +974,10 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(area.FieldGameID, field.TypeInt, value)
+		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)
@@ -986,13 +986,13 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(area.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(area.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(area.FieldGroupID, field.TypeInt)
+		_spec.ClearField(area.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsBaseArea(); ok {
 		_spec.SetField(area.FieldIsBaseArea, field.TypeBool, value)
@@ -1051,13 +1051,13 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SubName(); ok {
 		_spec.SetField(area.FieldSubName, field.TypeString, value)
@@ -1072,31 +1072,31 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldLabel, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(area.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(area.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(area.FieldStartAt, field.TypeInt)
+		_spec.ClearField(area.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(area.FieldEndAt, field.TypeInt, value)
+		_spec.AddField(area.FieldEndAt, field.TypeInt64, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(area.FieldEndAt, field.TypeInt)
+		_spec.ClearField(area.FieldEndAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionId2(); ok {
-		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt, value)
+		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionId2Cleared() {
-		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt)
+		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(area.FieldServerRegion, field.TypeString, value)

@@ -30,14 +30,14 @@ func (_u *MysekaisiteharvestfixtureUpdate) Where(ps ...predicate.Mysekaisiteharv
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaisiteharvestfixtureUpdate) SetGameID(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetGameID(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdate) SetNillableGameID(v *int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetNillableGameID(v *int64) *MysekaisiteharvestfixtureUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaisiteharvestfixtureUpdate) SetNillableGameID(v *int) *Mysekaisit
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaisiteharvestfixtureUpdate) AddGameID(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) AddGameID(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -71,14 +71,14 @@ func (_u *MysekaisiteharvestfixtureUpdate) ClearMysekaiSiteHarvestFixtureType() 
 }
 
 // SetHp sets the "hp" field.
-func (_u *MysekaisiteharvestfixtureUpdate) SetHp(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetHp(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.ResetHp()
 	_u.mutation.SetHp(v)
 	return _u
 }
 
 // SetNillableHp sets the "hp" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdate) SetNillableHp(v *int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetNillableHp(v *int64) *MysekaisiteharvestfixtureUpdate {
 	if v != nil {
 		_u.SetHp(*v)
 	}
@@ -86,7 +86,7 @@ func (_u *MysekaisiteharvestfixtureUpdate) SetNillableHp(v *int) *Mysekaisitehar
 }
 
 // AddHp adds value to the "hp" field.
-func (_u *MysekaisiteharvestfixtureUpdate) AddHp(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) AddHp(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.AddHp(v)
 	return _u
 }
@@ -98,14 +98,14 @@ func (_u *MysekaisiteharvestfixtureUpdate) ClearHp() *MysekaisiteharvestfixtureU
 }
 
 // SetLastAttackStamina sets the "last_attack_stamina" field.
-func (_u *MysekaisiteharvestfixtureUpdate) SetLastAttackStamina(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetLastAttackStamina(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.ResetLastAttackStamina()
 	_u.mutation.SetLastAttackStamina(v)
 	return _u
 }
 
 // SetNillableLastAttackStamina sets the "last_attack_stamina" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdate) SetNillableLastAttackStamina(v *int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetNillableLastAttackStamina(v *int64) *MysekaisiteharvestfixtureUpdate {
 	if v != nil {
 		_u.SetLastAttackStamina(*v)
 	}
@@ -113,7 +113,7 @@ func (_u *MysekaisiteharvestfixtureUpdate) SetNillableLastAttackStamina(v *int) 
 }
 
 // AddLastAttackStamina adds value to the "last_attack_stamina" field.
-func (_u *MysekaisiteharvestfixtureUpdate) AddLastAttackStamina(v int) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) AddLastAttackStamina(v int64) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.AddLastAttackStamina(v)
 	return _u
 }
@@ -218,10 +218,10 @@ func (_u *MysekaisiteharvestfixtureUpdate) sqlSave(ctx context.Context) (_node i
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString, value)
@@ -230,22 +230,22 @@ func (_u *MysekaisiteharvestfixtureUpdate) sqlSave(ctx context.Context) (_node i
 		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Hp(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedHp(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldHp, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64, value)
 	}
 	if _u.mutation.HpCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldHp, field.TypeInt)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.LastAttackStamina(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedLastAttackStamina(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64, value)
 	}
 	if _u.mutation.LastAttackStaminaCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON, value)
@@ -288,14 +288,14 @@ type MysekaisiteharvestfixtureUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetGameID(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetGameID(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableGameID(v *int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableGameID(v *int64) *MysekaisiteharvestfixtureUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -303,7 +303,7 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableGameID(v *int) *Mysekai
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) AddGameID(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) AddGameID(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -329,14 +329,14 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) ClearMysekaiSiteHarvestFixtureType
 }
 
 // SetHp sets the "hp" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetHp(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetHp(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.ResetHp()
 	_u.mutation.SetHp(v)
 	return _u
 }
 
 // SetNillableHp sets the "hp" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableHp(v *int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableHp(v *int64) *MysekaisiteharvestfixtureUpdateOne {
 	if v != nil {
 		_u.SetHp(*v)
 	}
@@ -344,7 +344,7 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableHp(v *int) *Mysekaisite
 }
 
 // AddHp adds value to the "hp" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) AddHp(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) AddHp(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.AddHp(v)
 	return _u
 }
@@ -356,14 +356,14 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) ClearHp() *Mysekaisiteharvestfixtu
 }
 
 // SetLastAttackStamina sets the "last_attack_stamina" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetLastAttackStamina(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetLastAttackStamina(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.ResetLastAttackStamina()
 	_u.mutation.SetLastAttackStamina(v)
 	return _u
 }
 
 // SetNillableLastAttackStamina sets the "last_attack_stamina" field if the given value is not nil.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableLastAttackStamina(v *int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableLastAttackStamina(v *int64) *MysekaisiteharvestfixtureUpdateOne {
 	if v != nil {
 		_u.SetLastAttackStamina(*v)
 	}
@@ -371,7 +371,7 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableLastAttackStamina(v *in
 }
 
 // AddLastAttackStamina adds value to the "last_attack_stamina" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) AddLastAttackStamina(v int) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) AddLastAttackStamina(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.AddLastAttackStamina(v)
 	return _u
 }
@@ -506,10 +506,10 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) sqlSave(ctx context.Context) (_nod
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString, value)
@@ -518,22 +518,22 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) sqlSave(ctx context.Context) (_nod
 		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Hp(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedHp(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldHp, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64, value)
 	}
 	if _u.mutation.HpCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldHp, field.TypeInt)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.LastAttackStamina(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedLastAttackStamina(); ok {
-		_spec.AddField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt, value)
+		_spec.AddField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64, value)
 	}
 	if _u.mutation.LastAttackStaminaCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON, value)

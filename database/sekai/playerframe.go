@@ -17,15 +17,15 @@ type Playerframe struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// PlayerFrameGroupID holds the value of the "player_frame_group_id" field.
-	PlayerFrameGroupID int `json:"player_frame_group_id,omitempty"`
+	PlayerFrameGroupID int64 `json:"player_frame_group_id,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int `json:"game_character_id,omitempty"`
+	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -65,19 +65,19 @@ func (_m *Playerframe) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case playerframe.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case playerframe.FieldPlayerFrameGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field player_frame_group_id", values[i])
 			} else if value.Valid {
-				_m.PlayerFrameGroupID = int(value.Int64)
+				_m.PlayerFrameGroupID = value.Int64
 			}
 		case playerframe.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -89,7 +89,7 @@ func (_m *Playerframe) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = int(value.Int64)
+				_m.GameCharacterID = value.Int64
 			}
 		case playerframe.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

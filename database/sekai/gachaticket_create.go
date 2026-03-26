@@ -21,7 +21,7 @@ type GachaticketCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *GachaticketCreate) SetGameID(v int) *GachaticketCreate {
+func (_c *GachaticketCreate) SetGameID(v int64) *GachaticketCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -133,7 +133,7 @@ func (_c *GachaticketCreate) createSpec() (*Gachaticket, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(gachaticket.Table, sqlgraph.NewFieldSpec(gachaticket.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

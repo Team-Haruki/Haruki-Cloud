@@ -54,37 +54,37 @@ func IDLTE(id int) predicate.Card {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Card {
+func GameID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Card {
+func Seq(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSeq, v))
 }
 
 // CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
-func CharacterID(v int) predicate.Card {
+func CharacterID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // SpecialTrainingPower1BonusFixed applies equality check predicate on the "special_training_power1_bonus_fixed" field. It's identical to SpecialTrainingPower1BonusFixedEQ.
-func SpecialTrainingPower1BonusFixed(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixed(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixed applies equality check predicate on the "special_training_power2_bonus_fixed" field. It's identical to SpecialTrainingPower2BonusFixedEQ.
-func SpecialTrainingPower2BonusFixed(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixed(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixed applies equality check predicate on the "special_training_power3_bonus_fixed" field. It's identical to SpecialTrainingPower3BonusFixedEQ.
-func SpecialTrainingPower3BonusFixed(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixed(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SkillID applies equality check predicate on the "skill_id" field. It's identical to SkillIDEQ.
-func SkillID(v int) predicate.Card {
+func SkillID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSkillID, v))
 }
 
@@ -109,22 +109,22 @@ func GachaPhrase(v string) predicate.Card {
 }
 
 // ReleaseAt applies equality check predicate on the "release_at" field. It's identical to ReleaseAtEQ.
-func ReleaseAt(v int) predicate.Card {
+func ReleaseAt(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldReleaseAt, v))
 }
 
 // ArchivePublishedAt applies equality check predicate on the "archive_published_at" field. It's identical to ArchivePublishedAtEQ.
-func ArchivePublishedAt(v int) predicate.Card {
+func ArchivePublishedAt(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // CardSupplyID applies equality check predicate on the "card_supply_id" field. It's identical to CardSupplyIDEQ.
-func CardSupplyID(v int) predicate.Card {
+func CardSupplyID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCardSupplyID, v))
 }
 
 // SpecialTrainingSkillID applies equality check predicate on the "special_training_skill_id" field. It's identical to SpecialTrainingSkillIDEQ.
-func SpecialTrainingSkillID(v int) predicate.Card {
+func SpecialTrainingSkillID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingSkillID, v))
 }
 
@@ -134,7 +134,7 @@ func SpecialTrainingSkillName(v string) predicate.Card {
 }
 
 // SpecialTrainingRewardResourceBoxID applies equality check predicate on the "special_training_reward_resource_box_id" field. It's identical to SpecialTrainingRewardResourceBoxIDEQ.
-func SpecialTrainingRewardResourceBoxID(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
@@ -144,82 +144,82 @@ func ServerRegion(v string) predicate.Card {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Card {
+func GameIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Card {
+func GameIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Card {
+func GameIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Card {
+func GameIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Card {
+func GameIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Card {
+func GameIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Card {
+func GameIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Card {
+func GameIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Card {
+func SeqEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Card {
+func SeqNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Card {
+func SeqIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Card {
+func SeqNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Card {
+func SeqGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Card {
+func SeqGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Card {
+func SeqLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Card {
+func SeqLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -234,42 +234,42 @@ func SeqNotNil() predicate.Card {
 }
 
 // CharacterIDEQ applies the EQ predicate on the "character_id" field.
-func CharacterIDEQ(v int) predicate.Card {
+func CharacterIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
-func CharacterIDNEQ(v int) predicate.Card {
+func CharacterIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldCharacterID, v))
 }
 
 // CharacterIDIn applies the In predicate on the "character_id" field.
-func CharacterIDIn(vs ...int) predicate.Card {
+func CharacterIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
-func CharacterIDNotIn(vs ...int) predicate.Card {
+func CharacterIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDGT applies the GT predicate on the "character_id" field.
-func CharacterIDGT(v int) predicate.Card {
+func CharacterIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldCharacterID, v))
 }
 
 // CharacterIDGTE applies the GTE predicate on the "character_id" field.
-func CharacterIDGTE(v int) predicate.Card {
+func CharacterIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldCharacterID, v))
 }
 
 // CharacterIDLT applies the LT predicate on the "character_id" field.
-func CharacterIDLT(v int) predicate.Card {
+func CharacterIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldCharacterID, v))
 }
 
 // CharacterIDLTE applies the LTE predicate on the "character_id" field.
-func CharacterIDLTE(v int) predicate.Card {
+func CharacterIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldCharacterID, v))
 }
 
@@ -294,42 +294,42 @@ func CardRarityTypeNotNil() predicate.Card {
 }
 
 // SpecialTrainingPower1BonusFixedEQ applies the EQ predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedEQ(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower1BonusFixedNEQ applies the NEQ predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedNEQ(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower1BonusFixedIn applies the In predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedIn(vs ...int) predicate.Card {
+func SpecialTrainingPower1BonusFixedIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSpecialTrainingPower1BonusFixed, vs...))
 }
 
 // SpecialTrainingPower1BonusFixedNotIn applies the NotIn predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedNotIn(vs ...int) predicate.Card {
+func SpecialTrainingPower1BonusFixedNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSpecialTrainingPower1BonusFixed, vs...))
 }
 
 // SpecialTrainingPower1BonusFixedGT applies the GT predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedGT(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower1BonusFixedGTE applies the GTE predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedGTE(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower1BonusFixedLT applies the LT predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedLT(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
 // SpecialTrainingPower1BonusFixedLTE applies the LTE predicate on the "special_training_power1_bonus_fixed" field.
-func SpecialTrainingPower1BonusFixedLTE(v int) predicate.Card {
+func SpecialTrainingPower1BonusFixedLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSpecialTrainingPower1BonusFixed, v))
 }
 
@@ -344,42 +344,42 @@ func SpecialTrainingPower1BonusFixedNotNil() predicate.Card {
 }
 
 // SpecialTrainingPower2BonusFixedEQ applies the EQ predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedEQ(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixedNEQ applies the NEQ predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedNEQ(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixedIn applies the In predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedIn(vs ...int) predicate.Card {
+func SpecialTrainingPower2BonusFixedIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSpecialTrainingPower2BonusFixed, vs...))
 }
 
 // SpecialTrainingPower2BonusFixedNotIn applies the NotIn predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedNotIn(vs ...int) predicate.Card {
+func SpecialTrainingPower2BonusFixedNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSpecialTrainingPower2BonusFixed, vs...))
 }
 
 // SpecialTrainingPower2BonusFixedGT applies the GT predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedGT(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixedGTE applies the GTE predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedGTE(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixedLT applies the LT predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedLT(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
 // SpecialTrainingPower2BonusFixedLTE applies the LTE predicate on the "special_training_power2_bonus_fixed" field.
-func SpecialTrainingPower2BonusFixedLTE(v int) predicate.Card {
+func SpecialTrainingPower2BonusFixedLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSpecialTrainingPower2BonusFixed, v))
 }
 
@@ -394,42 +394,42 @@ func SpecialTrainingPower2BonusFixedNotNil() predicate.Card {
 }
 
 // SpecialTrainingPower3BonusFixedEQ applies the EQ predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedEQ(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixedNEQ applies the NEQ predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedNEQ(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixedIn applies the In predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedIn(vs ...int) predicate.Card {
+func SpecialTrainingPower3BonusFixedIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSpecialTrainingPower3BonusFixed, vs...))
 }
 
 // SpecialTrainingPower3BonusFixedNotIn applies the NotIn predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedNotIn(vs ...int) predicate.Card {
+func SpecialTrainingPower3BonusFixedNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSpecialTrainingPower3BonusFixed, vs...))
 }
 
 // SpecialTrainingPower3BonusFixedGT applies the GT predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedGT(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixedGTE applies the GTE predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedGTE(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixedLT applies the LT predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedLT(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
 // SpecialTrainingPower3BonusFixedLTE applies the LTE predicate on the "special_training_power3_bonus_fixed" field.
-func SpecialTrainingPower3BonusFixedLTE(v int) predicate.Card {
+func SpecialTrainingPower3BonusFixedLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSpecialTrainingPower3BonusFixed, v))
 }
 
@@ -464,42 +464,42 @@ func SupportUnitNotNil() predicate.Card {
 }
 
 // SkillIDEQ applies the EQ predicate on the "skill_id" field.
-func SkillIDEQ(v int) predicate.Card {
+func SkillIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSkillID, v))
 }
 
 // SkillIDNEQ applies the NEQ predicate on the "skill_id" field.
-func SkillIDNEQ(v int) predicate.Card {
+func SkillIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSkillID, v))
 }
 
 // SkillIDIn applies the In predicate on the "skill_id" field.
-func SkillIDIn(vs ...int) predicate.Card {
+func SkillIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSkillID, vs...))
 }
 
 // SkillIDNotIn applies the NotIn predicate on the "skill_id" field.
-func SkillIDNotIn(vs ...int) predicate.Card {
+func SkillIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSkillID, vs...))
 }
 
 // SkillIDGT applies the GT predicate on the "skill_id" field.
-func SkillIDGT(v int) predicate.Card {
+func SkillIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSkillID, v))
 }
 
 // SkillIDGTE applies the GTE predicate on the "skill_id" field.
-func SkillIDGTE(v int) predicate.Card {
+func SkillIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSkillID, v))
 }
 
 // SkillIDLT applies the LT predicate on the "skill_id" field.
-func SkillIDLT(v int) predicate.Card {
+func SkillIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSkillID, v))
 }
 
 // SkillIDLTE applies the LTE predicate on the "skill_id" field.
-func SkillIDLTE(v int) predicate.Card {
+func SkillIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSkillID, v))
 }
 
@@ -824,42 +824,42 @@ func FlavorTextNotNil() predicate.Card {
 }
 
 // ReleaseAtEQ applies the EQ predicate on the "release_at" field.
-func ReleaseAtEQ(v int) predicate.Card {
+func ReleaseAtEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldReleaseAt, v))
 }
 
 // ReleaseAtNEQ applies the NEQ predicate on the "release_at" field.
-func ReleaseAtNEQ(v int) predicate.Card {
+func ReleaseAtNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldReleaseAt, v))
 }
 
 // ReleaseAtIn applies the In predicate on the "release_at" field.
-func ReleaseAtIn(vs ...int) predicate.Card {
+func ReleaseAtIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldReleaseAt, vs...))
 }
 
 // ReleaseAtNotIn applies the NotIn predicate on the "release_at" field.
-func ReleaseAtNotIn(vs ...int) predicate.Card {
+func ReleaseAtNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldReleaseAt, vs...))
 }
 
 // ReleaseAtGT applies the GT predicate on the "release_at" field.
-func ReleaseAtGT(v int) predicate.Card {
+func ReleaseAtGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldReleaseAt, v))
 }
 
 // ReleaseAtGTE applies the GTE predicate on the "release_at" field.
-func ReleaseAtGTE(v int) predicate.Card {
+func ReleaseAtGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldReleaseAt, v))
 }
 
 // ReleaseAtLT applies the LT predicate on the "release_at" field.
-func ReleaseAtLT(v int) predicate.Card {
+func ReleaseAtLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldReleaseAt, v))
 }
 
 // ReleaseAtLTE applies the LTE predicate on the "release_at" field.
-func ReleaseAtLTE(v int) predicate.Card {
+func ReleaseAtLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldReleaseAt, v))
 }
 
@@ -874,42 +874,42 @@ func ReleaseAtNotNil() predicate.Card {
 }
 
 // ArchivePublishedAtEQ applies the EQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtEQ(v int) predicate.Card {
+func ArchivePublishedAtEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtNEQ applies the NEQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtNEQ(v int) predicate.Card {
+func ArchivePublishedAtNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtIn applies the In predicate on the "archive_published_at" field.
-func ArchivePublishedAtIn(vs ...int) predicate.Card {
+func ArchivePublishedAtIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtNotIn applies the NotIn predicate on the "archive_published_at" field.
-func ArchivePublishedAtNotIn(vs ...int) predicate.Card {
+func ArchivePublishedAtNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtGT applies the GT predicate on the "archive_published_at" field.
-func ArchivePublishedAtGT(v int) predicate.Card {
+func ArchivePublishedAtGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtGTE applies the GTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtGTE(v int) predicate.Card {
+func ArchivePublishedAtGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLT applies the LT predicate on the "archive_published_at" field.
-func ArchivePublishedAtLT(v int) predicate.Card {
+func ArchivePublishedAtLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLTE applies the LTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtLTE(v int) predicate.Card {
+func ArchivePublishedAtLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldArchivePublishedAt, v))
 }
 
@@ -924,42 +924,42 @@ func ArchivePublishedAtNotNil() predicate.Card {
 }
 
 // CardSupplyIDEQ applies the EQ predicate on the "card_supply_id" field.
-func CardSupplyIDEQ(v int) predicate.Card {
+func CardSupplyIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCardSupplyID, v))
 }
 
 // CardSupplyIDNEQ applies the NEQ predicate on the "card_supply_id" field.
-func CardSupplyIDNEQ(v int) predicate.Card {
+func CardSupplyIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldCardSupplyID, v))
 }
 
 // CardSupplyIDIn applies the In predicate on the "card_supply_id" field.
-func CardSupplyIDIn(vs ...int) predicate.Card {
+func CardSupplyIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldCardSupplyID, vs...))
 }
 
 // CardSupplyIDNotIn applies the NotIn predicate on the "card_supply_id" field.
-func CardSupplyIDNotIn(vs ...int) predicate.Card {
+func CardSupplyIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldCardSupplyID, vs...))
 }
 
 // CardSupplyIDGT applies the GT predicate on the "card_supply_id" field.
-func CardSupplyIDGT(v int) predicate.Card {
+func CardSupplyIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldCardSupplyID, v))
 }
 
 // CardSupplyIDGTE applies the GTE predicate on the "card_supply_id" field.
-func CardSupplyIDGTE(v int) predicate.Card {
+func CardSupplyIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldCardSupplyID, v))
 }
 
 // CardSupplyIDLT applies the LT predicate on the "card_supply_id" field.
-func CardSupplyIDLT(v int) predicate.Card {
+func CardSupplyIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldCardSupplyID, v))
 }
 
 // CardSupplyIDLTE applies the LTE predicate on the "card_supply_id" field.
-func CardSupplyIDLTE(v int) predicate.Card {
+func CardSupplyIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldCardSupplyID, v))
 }
 
@@ -1024,42 +1024,42 @@ func ArchiveDisplayTypeNotNil() predicate.Card {
 }
 
 // SpecialTrainingSkillIDEQ applies the EQ predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDEQ(v int) predicate.Card {
+func SpecialTrainingSkillIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingSkillID, v))
 }
 
 // SpecialTrainingSkillIDNEQ applies the NEQ predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDNEQ(v int) predicate.Card {
+func SpecialTrainingSkillIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSpecialTrainingSkillID, v))
 }
 
 // SpecialTrainingSkillIDIn applies the In predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDIn(vs ...int) predicate.Card {
+func SpecialTrainingSkillIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSpecialTrainingSkillID, vs...))
 }
 
 // SpecialTrainingSkillIDNotIn applies the NotIn predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDNotIn(vs ...int) predicate.Card {
+func SpecialTrainingSkillIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSpecialTrainingSkillID, vs...))
 }
 
 // SpecialTrainingSkillIDGT applies the GT predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDGT(v int) predicate.Card {
+func SpecialTrainingSkillIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSpecialTrainingSkillID, v))
 }
 
 // SpecialTrainingSkillIDGTE applies the GTE predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDGTE(v int) predicate.Card {
+func SpecialTrainingSkillIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSpecialTrainingSkillID, v))
 }
 
 // SpecialTrainingSkillIDLT applies the LT predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDLT(v int) predicate.Card {
+func SpecialTrainingSkillIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSpecialTrainingSkillID, v))
 }
 
 // SpecialTrainingSkillIDLTE applies the LTE predicate on the "special_training_skill_id" field.
-func SpecialTrainingSkillIDLTE(v int) predicate.Card {
+func SpecialTrainingSkillIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSpecialTrainingSkillID, v))
 }
 
@@ -1149,42 +1149,42 @@ func SpecialTrainingSkillNameContainsFold(v string) predicate.Card {
 }
 
 // SpecialTrainingRewardResourceBoxIDEQ applies the EQ predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDEQ(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
 // SpecialTrainingRewardResourceBoxIDNEQ applies the NEQ predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDNEQ(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDNEQ(v int64) predicate.Card {
 	return predicate.Card(sql.FieldNEQ(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
 // SpecialTrainingRewardResourceBoxIDIn applies the In predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDIn(vs ...int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldIn(FieldSpecialTrainingRewardResourceBoxID, vs...))
 }
 
 // SpecialTrainingRewardResourceBoxIDNotIn applies the NotIn predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDNotIn(vs ...int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDNotIn(vs ...int64) predicate.Card {
 	return predicate.Card(sql.FieldNotIn(FieldSpecialTrainingRewardResourceBoxID, vs...))
 }
 
 // SpecialTrainingRewardResourceBoxIDGT applies the GT predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDGT(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDGT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGT(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
 // SpecialTrainingRewardResourceBoxIDGTE applies the GTE predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDGTE(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDGTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldGTE(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
 // SpecialTrainingRewardResourceBoxIDLT applies the LT predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDLT(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDLT(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLT(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 
 // SpecialTrainingRewardResourceBoxIDLTE applies the LTE predicate on the "special_training_reward_resource_box_id" field.
-func SpecialTrainingRewardResourceBoxIDLTE(v int) predicate.Card {
+func SpecialTrainingRewardResourceBoxIDLTE(v int64) predicate.Card {
 	return predicate.Card(sql.FieldLTE(FieldSpecialTrainingRewardResourceBoxID, v))
 }
 

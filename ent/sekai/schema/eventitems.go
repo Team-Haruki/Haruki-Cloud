@@ -17,12 +17,12 @@ type Eventitem struct {
 
 func (Eventitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("event_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("event_id").Optional(),
 		field.JSON("name", json.RawMessage{}).Optional(),
 		field.JSON("flavor_text", json.RawMessage{}).Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.Int("game_character_id").Optional(),
+		field.Int64("game_character_id").Optional(),
 		field.String("server_region"),
 	}
 }

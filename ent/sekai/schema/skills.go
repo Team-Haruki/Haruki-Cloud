@@ -17,11 +17,11 @@ type Skill struct {
 
 func (Skill) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("short_description").Optional(),
 		field.String("description").Optional(),
 		field.JSON("description_sprite_name", json.RawMessage{}).Optional(),
-		field.Int("skill_filter_id").Optional(),
+		field.Int64("skill_filter_id").Optional(),
 		field.JSON("skill_effects", json.RawMessage{}).Optional(),
 		field.String("server_region"),
 	}

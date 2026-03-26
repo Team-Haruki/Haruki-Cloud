@@ -17,13 +17,13 @@ type Challengelivehighscorereward struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int `json:"character_id,omitempty"`
+	CharacterID int64 `json:"character_id,omitempty"`
 	// HighScore holds the value of the "high_score" field.
-	HighScore int `json:"high_score,omitempty"`
+	HighScore int64 `json:"high_score,omitempty"`
 	// ResourceBoxID holds the value of the "resource_box_id" field.
-	ResourceBoxID int `json:"resource_box_id,omitempty"`
+	ResourceBoxID int64 `json:"resource_box_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -63,25 +63,25 @@ func (_m *Challengelivehighscorereward) assignValues(columns []string, values []
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case challengelivehighscorereward.FieldCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = int(value.Int64)
+				_m.CharacterID = value.Int64
 			}
 		case challengelivehighscorereward.FieldHighScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field high_score", values[i])
 			} else if value.Valid {
-				_m.HighScore = int(value.Int64)
+				_m.HighScore = value.Int64
 			}
 		case challengelivehighscorereward.FieldResourceBoxID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_box_id", values[i])
 			} else if value.Valid {
-				_m.ResourceBoxID = int(value.Int64)
+				_m.ResourceBoxID = value.Int64
 			}
 		case challengelivehighscorereward.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

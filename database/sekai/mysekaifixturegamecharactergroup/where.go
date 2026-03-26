@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Mysekaifixturegamecharactergroup {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameID(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGameID, v))
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupID(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
-func GameCharacterID(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterID(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
@@ -74,82 +74,82 @@ func ServerRegion(v string) predicate.Mysekaifixturegamecharactergroup {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDNEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDNotIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDGT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDGTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDLT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameIDLTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLTE(FieldGameID, v))
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDNEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDNotIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDGT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDGTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDLT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GroupIDLTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLTE(FieldGroupID, v))
 }
 
@@ -164,42 +164,42 @@ func GroupIDNotNil() predicate.Mysekaifixturegamecharactergroup {
 }
 
 // GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
-func GameCharacterIDEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
-func GameCharacterIDNEQ(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDNEQ(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDIn applies the In predicate on the "game_character_id" field.
-func GameCharacterIDIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
-func GameCharacterIDNotIn(vs ...int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDNotIn(vs ...int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldNotIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
-func GameCharacterIDGT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDGT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
-func GameCharacterIDGTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDGTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldGTE(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
-func GameCharacterIDLT(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDLT(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
-func GameCharacterIDLTE(v int) predicate.Mysekaifixturegamecharactergroup {
+func GameCharacterIDLTE(v int64) predicate.Mysekaifixturegamecharactergroup {
 	return predicate.Mysekaifixturegamecharactergroup(sql.FieldLTE(FieldGameCharacterID, v))
 }
 

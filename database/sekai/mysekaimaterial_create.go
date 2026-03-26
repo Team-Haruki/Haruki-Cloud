@@ -21,19 +21,19 @@ type MysekaimaterialCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimaterialCreate) SetGameID(v int) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetGameID(v int64) *MysekaimaterialCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaimaterialCreate) SetSeq(v int) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetSeq(v int64) *MysekaimaterialCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaimaterialCreate) SetNillableSeq(v *int) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetNillableSeq(v *int64) *MysekaimaterialCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -129,13 +129,13 @@ func (_c *MysekaimaterialCreate) SetMysekaiSiteIds(v json.RawMessage) *Mysekaima
 }
 
 // SetMysekaiPhenomenaGroupID sets the "mysekai_phenomena_group_id" field.
-func (_c *MysekaimaterialCreate) SetMysekaiPhenomenaGroupID(v int) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiPhenomenaGroupID(v int64) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiPhenomenaGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiPhenomenaGroupID sets the "mysekai_phenomena_group_id" field if the given value is not nil.
-func (_c *MysekaimaterialCreate) SetNillableMysekaiPhenomenaGroupID(v *int) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetNillableMysekaiPhenomenaGroupID(v *int64) *MysekaimaterialCreate {
 	if v != nil {
 		_c.SetMysekaiPhenomenaGroupID(*v)
 	}
@@ -215,11 +215,11 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_spec = sqlgraph.NewCreateSpec(mysekaimaterial.Table, sqlgraph.NewFieldSpec(mysekaimaterial.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimaterial.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimaterial.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaimaterial.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaimaterial.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialType(); ok {
@@ -255,7 +255,7 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_node.MysekaiSiteIds = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaGroupID(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiPhenomenaGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaimaterial.FieldMysekaiPhenomenaGroupID, field.TypeInt64, value)
 		_node.MysekaiPhenomenaGroupID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

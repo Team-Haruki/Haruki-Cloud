@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Eventcard {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Eventcard {
+func GameID(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldGameID, v))
 }
 
 // CardID applies equality check predicate on the "card_id" field. It's identical to CardIDEQ.
-func CardID(v int) predicate.Eventcard {
+func CardID(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldCardID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int) predicate.Eventcard {
+func EventID(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldEventID, v))
 }
 
@@ -89,82 +89,82 @@ func ServerRegion(v string) predicate.Eventcard {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Eventcard {
+func GameIDEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Eventcard {
+func GameIDNEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Eventcard {
+func GameIDIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Eventcard {
+func GameIDNotIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Eventcard {
+func GameIDGT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Eventcard {
+func GameIDGTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Eventcard {
+func GameIDLT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Eventcard {
+func GameIDLTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLTE(FieldGameID, v))
 }
 
 // CardIDEQ applies the EQ predicate on the "card_id" field.
-func CardIDEQ(v int) predicate.Eventcard {
+func CardIDEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldCardID, v))
 }
 
 // CardIDNEQ applies the NEQ predicate on the "card_id" field.
-func CardIDNEQ(v int) predicate.Eventcard {
+func CardIDNEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNEQ(FieldCardID, v))
 }
 
 // CardIDIn applies the In predicate on the "card_id" field.
-func CardIDIn(vs ...int) predicate.Eventcard {
+func CardIDIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldIn(FieldCardID, vs...))
 }
 
 // CardIDNotIn applies the NotIn predicate on the "card_id" field.
-func CardIDNotIn(vs ...int) predicate.Eventcard {
+func CardIDNotIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNotIn(FieldCardID, vs...))
 }
 
 // CardIDGT applies the GT predicate on the "card_id" field.
-func CardIDGT(v int) predicate.Eventcard {
+func CardIDGT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGT(FieldCardID, v))
 }
 
 // CardIDGTE applies the GTE predicate on the "card_id" field.
-func CardIDGTE(v int) predicate.Eventcard {
+func CardIDGTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGTE(FieldCardID, v))
 }
 
 // CardIDLT applies the LT predicate on the "card_id" field.
-func CardIDLT(v int) predicate.Eventcard {
+func CardIDLT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLT(FieldCardID, v))
 }
 
 // CardIDLTE applies the LTE predicate on the "card_id" field.
-func CardIDLTE(v int) predicate.Eventcard {
+func CardIDLTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLTE(FieldCardID, v))
 }
 
@@ -179,42 +179,42 @@ func CardIDNotNil() predicate.Eventcard {
 }
 
 // EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int) predicate.Eventcard {
+func EventIDEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldEventID, v))
 }
 
 // EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int) predicate.Eventcard {
+func EventIDNEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNEQ(FieldEventID, v))
 }
 
 // EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int) predicate.Eventcard {
+func EventIDIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldIn(FieldEventID, vs...))
 }
 
 // EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int) predicate.Eventcard {
+func EventIDNotIn(vs ...int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldNotIn(FieldEventID, vs...))
 }
 
 // EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int) predicate.Eventcard {
+func EventIDGT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGT(FieldEventID, v))
 }
 
 // EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int) predicate.Eventcard {
+func EventIDGTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldGTE(FieldEventID, v))
 }
 
 // EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int) predicate.Eventcard {
+func EventIDLT(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLT(FieldEventID, v))
 }
 
 // EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int) predicate.Eventcard {
+func EventIDLTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLTE(FieldEventID, v))
 }
 

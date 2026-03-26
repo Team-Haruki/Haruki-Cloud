@@ -15,8 +15,8 @@ type Mysekaiitem struct {
 
 func (Mysekaiitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
 		field.String("mysekai_item_type").Optional(),
 		field.String("name").Optional(),
 		field.String("pronunciation").Optional(),

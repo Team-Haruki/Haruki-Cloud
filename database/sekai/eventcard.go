@@ -17,11 +17,11 @@ type Eventcard struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// CardID holds the value of the "card_id" field.
-	CardID int `json:"card_id,omitempty"`
+	CardID int64 `json:"card_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// LeaderBonusRate holds the value of the "leader_bonus_rate" field.
@@ -71,19 +71,19 @@ func (_m *Eventcard) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case eventcard.FieldCardID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_id", values[i])
 			} else if value.Valid {
-				_m.CardID = int(value.Int64)
+				_m.CardID = value.Int64
 			}
 		case eventcard.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case eventcard.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

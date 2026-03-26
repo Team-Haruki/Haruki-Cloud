@@ -17,9 +17,9 @@ type Mysekaicharactertalkcondition struct {
 
 func (Mysekaicharactertalkcondition) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("mysekai_character_talk_condition_type", json.RawMessage{}).Optional(),
-		field.Int("mysekai_character_talk_condition_type_value").Optional(),
+		field.Int64("mysekai_character_talk_condition_type_value").Optional(),
 		field.String("server_region"),
 	}
 }

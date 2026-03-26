@@ -21,7 +21,7 @@ type MysekaiphenomenonCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiphenomenonCreate) SetGameID(v int) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetGameID(v int64) *MysekaiphenomenonCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -81,13 +81,13 @@ func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaTimePeriodType(v json.RawM
 }
 
 // SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaBackgroundColorID(v)
 	return _c
 }
 
 // SetNillableMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field if the given value is not nil.
-func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int64) *MysekaiphenomenonCreate {
 	if v != nil {
 		_c.SetMysekaiPhenomenaBackgroundColorID(*v)
 	}
@@ -209,7 +209,7 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_spec = sqlgraph.NewCreateSpec(mysekaiphenomenon.Table, sqlgraph.NewFieldSpec(mysekaiphenomenon.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBrightnessType(); ok {
@@ -233,7 +233,7 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_node.MysekaiPhenomenaTimePeriodType = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
 		_node.MysekaiPhenomenaBackgroundColorID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

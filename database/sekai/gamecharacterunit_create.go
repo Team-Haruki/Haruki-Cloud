@@ -21,19 +21,19 @@ type GamecharacterunitCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *GamecharacterunitCreate) SetGameID(v int) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetGameID(v int64) *GamecharacterunitCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *GamecharacterunitCreate) SetGameCharacterID(v int) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetGameCharacterID(v int64) *GamecharacterunitCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *GamecharacterunitCreate) SetNillableGameCharacterID(v *int) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetNillableGameCharacterID(v *int64) *GamecharacterunitCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
@@ -151,11 +151,11 @@ func (_c *GamecharacterunitCreate) createSpec() (*Gamecharacterunit, *sqlgraph.C
 		_spec = sqlgraph.NewCreateSpec(gamecharacterunit.Table, sqlgraph.NewFieldSpec(gamecharacterunit.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {

@@ -20,19 +20,19 @@ type LimitedtimemusicCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *LimitedtimemusicCreate) SetGameID(v int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetGameID(v int64) *LimitedtimemusicCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMusicID sets the "music_id" field.
-func (_c *LimitedtimemusicCreate) SetMusicID(v int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetMusicID(v int64) *LimitedtimemusicCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int64) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int) *LimitedtimemusicCr
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *LimitedtimemusicCreate) SetStartAt(v int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetStartAt(v int64) *LimitedtimemusicCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int64) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -54,13 +54,13 @@ func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int) *LimitedtimemusicCr
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *LimitedtimemusicCreate) SetEndAt(v int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetEndAt(v int64) *LimitedtimemusicCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableEndAt(v *int) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableEndAt(v *int64) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -140,19 +140,19 @@ func (_c *LimitedtimemusicCreate) createSpec() (*Limitedtimemusic, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(limitedtimemusic.Table, sqlgraph.NewFieldSpec(limitedtimemusic.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

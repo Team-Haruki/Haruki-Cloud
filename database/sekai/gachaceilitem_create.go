@@ -21,19 +21,19 @@ type GachaceilitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *GachaceilitemCreate) SetGameID(v int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetGameID(v int64) *GachaceilitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetGachaID sets the "gacha_id" field.
-func (_c *GachaceilitemCreate) SetGachaID(v int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetGachaID(v int64) *GachaceilitemCreate {
 	_c.mutation.SetGachaID(v)
 	return _c
 }
 
 // SetNillableGachaID sets the "gacha_id" field if the given value is not nil.
-func (_c *GachaceilitemCreate) SetNillableGachaID(v *int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetNillableGachaID(v *int64) *GachaceilitemCreate {
 	if v != nil {
 		_c.SetGachaID(*v)
 	}
@@ -61,13 +61,13 @@ func (_c *GachaceilitemCreate) SetAssetbundleName(v json.RawMessage) *Gachaceili
 }
 
 // SetConvertStartAt sets the "convert_start_at" field.
-func (_c *GachaceilitemCreate) SetConvertStartAt(v int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetConvertStartAt(v int64) *GachaceilitemCreate {
 	_c.mutation.SetConvertStartAt(v)
 	return _c
 }
 
 // SetNillableConvertStartAt sets the "convert_start_at" field if the given value is not nil.
-func (_c *GachaceilitemCreate) SetNillableConvertStartAt(v *int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetNillableConvertStartAt(v *int64) *GachaceilitemCreate {
 	if v != nil {
 		_c.SetConvertStartAt(*v)
 	}
@@ -75,13 +75,13 @@ func (_c *GachaceilitemCreate) SetNillableConvertStartAt(v *int) *GachaceilitemC
 }
 
 // SetConvertResourceBoxID sets the "convert_resource_box_id" field.
-func (_c *GachaceilitemCreate) SetConvertResourceBoxID(v int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetConvertResourceBoxID(v int64) *GachaceilitemCreate {
 	_c.mutation.SetConvertResourceBoxID(v)
 	return _c
 }
 
 // SetNillableConvertResourceBoxID sets the "convert_resource_box_id" field if the given value is not nil.
-func (_c *GachaceilitemCreate) SetNillableConvertResourceBoxID(v *int) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetNillableConvertResourceBoxID(v *int64) *GachaceilitemCreate {
 	if v != nil {
 		_c.SetConvertResourceBoxID(*v)
 	}
@@ -161,11 +161,11 @@ func (_c *GachaceilitemCreate) createSpec() (*Gachaceilitem, *sqlgraph.CreateSpe
 		_spec = sqlgraph.NewCreateSpec(gachaceilitem.Table, sqlgraph.NewFieldSpec(gachaceilitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GachaID(); ok {
-		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 		_node.GachaID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -177,11 +177,11 @@ func (_c *GachaceilitemCreate) createSpec() (*Gachaceilitem, *sqlgraph.CreateSpe
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.ConvertStartAt(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
 		_node.ConvertStartAt = value
 	}
 	if value, ok := _c.mutation.ConvertResourceBoxID(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64, value)
 		_node.ConvertResourceBoxID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

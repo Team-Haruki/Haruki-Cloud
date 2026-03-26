@@ -17,7 +17,7 @@ type Ngword struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Word holds the value of the "word" field.
 	Word string `json:"word,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -59,7 +59,7 @@ func (_m *Ngword) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case ngword.FieldWord:
 			if value, ok := values[i].(*sql.NullString); !ok {

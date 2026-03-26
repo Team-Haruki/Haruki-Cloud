@@ -30,14 +30,14 @@ func (_u *GachaceilitemUpdate) Where(ps ...predicate.Gachaceilitem) *Gachaceilit
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GachaceilitemUpdate) SetGameID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetGameID(v int64) *GachaceilitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdate) SetNillableGameID(v *int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetNillableGameID(v *int64) *GachaceilitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *GachaceilitemUpdate) SetNillableGameID(v *int) *GachaceilitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaceilitemUpdate) AddGameID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) AddGameID(v int64) *GachaceilitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGachaID sets the "gacha_id" field.
-func (_u *GachaceilitemUpdate) SetGachaID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetGachaID(v int64) *GachaceilitemUpdate {
 	_u.mutation.ResetGachaID()
 	_u.mutation.SetGachaID(v)
 	return _u
 }
 
 // SetNillableGachaID sets the "gacha_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdate) SetNillableGachaID(v *int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetNillableGachaID(v *int64) *GachaceilitemUpdate {
 	if v != nil {
 		_u.SetGachaID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *GachaceilitemUpdate) SetNillableGachaID(v *int) *GachaceilitemUpdate {
 }
 
 // AddGachaID adds value to the "gacha_id" field.
-func (_u *GachaceilitemUpdate) AddGachaID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) AddGachaID(v int64) *GachaceilitemUpdate {
 	_u.mutation.AddGachaID(v)
 	return _u
 }
@@ -116,14 +116,14 @@ func (_u *GachaceilitemUpdate) ClearAssetbundleName() *GachaceilitemUpdate {
 }
 
 // SetConvertStartAt sets the "convert_start_at" field.
-func (_u *GachaceilitemUpdate) SetConvertStartAt(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetConvertStartAt(v int64) *GachaceilitemUpdate {
 	_u.mutation.ResetConvertStartAt()
 	_u.mutation.SetConvertStartAt(v)
 	return _u
 }
 
 // SetNillableConvertStartAt sets the "convert_start_at" field if the given value is not nil.
-func (_u *GachaceilitemUpdate) SetNillableConvertStartAt(v *int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetNillableConvertStartAt(v *int64) *GachaceilitemUpdate {
 	if v != nil {
 		_u.SetConvertStartAt(*v)
 	}
@@ -131,7 +131,7 @@ func (_u *GachaceilitemUpdate) SetNillableConvertStartAt(v *int) *GachaceilitemU
 }
 
 // AddConvertStartAt adds value to the "convert_start_at" field.
-func (_u *GachaceilitemUpdate) AddConvertStartAt(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) AddConvertStartAt(v int64) *GachaceilitemUpdate {
 	_u.mutation.AddConvertStartAt(v)
 	return _u
 }
@@ -143,14 +143,14 @@ func (_u *GachaceilitemUpdate) ClearConvertStartAt() *GachaceilitemUpdate {
 }
 
 // SetConvertResourceBoxID sets the "convert_resource_box_id" field.
-func (_u *GachaceilitemUpdate) SetConvertResourceBoxID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetConvertResourceBoxID(v int64) *GachaceilitemUpdate {
 	_u.mutation.ResetConvertResourceBoxID()
 	_u.mutation.SetConvertResourceBoxID(v)
 	return _u
 }
 
 // SetNillableConvertResourceBoxID sets the "convert_resource_box_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdate) SetNillableConvertResourceBoxID(v *int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetNillableConvertResourceBoxID(v *int64) *GachaceilitemUpdate {
 	if v != nil {
 		_u.SetConvertResourceBoxID(*v)
 	}
@@ -158,7 +158,7 @@ func (_u *GachaceilitemUpdate) SetNillableConvertResourceBoxID(v *int) *Gachacei
 }
 
 // AddConvertResourceBoxID adds value to the "convert_resource_box_id" field.
-func (_u *GachaceilitemUpdate) AddConvertResourceBoxID(v int) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) AddConvertResourceBoxID(v int64) *GachaceilitemUpdate {
 	_u.mutation.AddConvertResourceBoxID(v)
 	return _u
 }
@@ -225,19 +225,19 @@ func (_u *GachaceilitemUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GachaID(); ok {
-		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGachaID(); ok {
-		_spec.AddField(gachaceilitem.FieldGachaID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 	}
 	if _u.mutation.GachaIDCleared() {
-		_spec.ClearField(gachaceilitem.FieldGachaID, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldGachaID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaceilitem.FieldName, field.TypeString, value)
@@ -257,22 +257,22 @@ func (_u *GachaceilitemUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ConvertStartAt(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedConvertStartAt(); ok {
-		_spec.AddField(gachaceilitem.FieldConvertStartAt, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.ConvertStartAtCleared() {
-		_spec.ClearField(gachaceilitem.FieldConvertStartAt, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldConvertStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ConvertResourceBoxID(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedConvertResourceBoxID(); ok {
-		_spec.AddField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64, value)
 	}
 	if _u.mutation.ConvertResourceBoxIDCleared() {
-		_spec.ClearField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gachaceilitem.FieldServerRegion, field.TypeString, value)
@@ -298,14 +298,14 @@ type GachaceilitemUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GachaceilitemUpdateOne) SetGameID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetGameID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdateOne) SetNillableGameID(v *int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetNillableGameID(v *int64) *GachaceilitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -313,20 +313,20 @@ func (_u *GachaceilitemUpdateOne) SetNillableGameID(v *int) *GachaceilitemUpdate
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaceilitemUpdateOne) AddGameID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) AddGameID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGachaID sets the "gacha_id" field.
-func (_u *GachaceilitemUpdateOne) SetGachaID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetGachaID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.ResetGachaID()
 	_u.mutation.SetGachaID(v)
 	return _u
 }
 
 // SetNillableGachaID sets the "gacha_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdateOne) SetNillableGachaID(v *int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetNillableGachaID(v *int64) *GachaceilitemUpdateOne {
 	if v != nil {
 		_u.SetGachaID(*v)
 	}
@@ -334,7 +334,7 @@ func (_u *GachaceilitemUpdateOne) SetNillableGachaID(v *int) *GachaceilitemUpdat
 }
 
 // AddGachaID adds value to the "gacha_id" field.
-func (_u *GachaceilitemUpdateOne) AddGachaID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) AddGachaID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.AddGachaID(v)
 	return _u
 }
@@ -384,14 +384,14 @@ func (_u *GachaceilitemUpdateOne) ClearAssetbundleName() *GachaceilitemUpdateOne
 }
 
 // SetConvertStartAt sets the "convert_start_at" field.
-func (_u *GachaceilitemUpdateOne) SetConvertStartAt(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetConvertStartAt(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.ResetConvertStartAt()
 	_u.mutation.SetConvertStartAt(v)
 	return _u
 }
 
 // SetNillableConvertStartAt sets the "convert_start_at" field if the given value is not nil.
-func (_u *GachaceilitemUpdateOne) SetNillableConvertStartAt(v *int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetNillableConvertStartAt(v *int64) *GachaceilitemUpdateOne {
 	if v != nil {
 		_u.SetConvertStartAt(*v)
 	}
@@ -399,7 +399,7 @@ func (_u *GachaceilitemUpdateOne) SetNillableConvertStartAt(v *int) *Gachaceilit
 }
 
 // AddConvertStartAt adds value to the "convert_start_at" field.
-func (_u *GachaceilitemUpdateOne) AddConvertStartAt(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) AddConvertStartAt(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.AddConvertStartAt(v)
 	return _u
 }
@@ -411,14 +411,14 @@ func (_u *GachaceilitemUpdateOne) ClearConvertStartAt() *GachaceilitemUpdateOne 
 }
 
 // SetConvertResourceBoxID sets the "convert_resource_box_id" field.
-func (_u *GachaceilitemUpdateOne) SetConvertResourceBoxID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetConvertResourceBoxID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.ResetConvertResourceBoxID()
 	_u.mutation.SetConvertResourceBoxID(v)
 	return _u
 }
 
 // SetNillableConvertResourceBoxID sets the "convert_resource_box_id" field if the given value is not nil.
-func (_u *GachaceilitemUpdateOne) SetNillableConvertResourceBoxID(v *int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetNillableConvertResourceBoxID(v *int64) *GachaceilitemUpdateOne {
 	if v != nil {
 		_u.SetConvertResourceBoxID(*v)
 	}
@@ -426,7 +426,7 @@ func (_u *GachaceilitemUpdateOne) SetNillableConvertResourceBoxID(v *int) *Gacha
 }
 
 // AddConvertResourceBoxID adds value to the "convert_resource_box_id" field.
-func (_u *GachaceilitemUpdateOne) AddConvertResourceBoxID(v int) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) AddConvertResourceBoxID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.AddConvertResourceBoxID(v)
 	return _u
 }
@@ -523,19 +523,19 @@ func (_u *GachaceilitemUpdateOne) sqlSave(ctx context.Context) (_node *Gachaceil
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GachaID(); ok {
-		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGachaID(); ok {
-		_spec.AddField(gachaceilitem.FieldGachaID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 	}
 	if _u.mutation.GachaIDCleared() {
-		_spec.ClearField(gachaceilitem.FieldGachaID, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldGachaID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaceilitem.FieldName, field.TypeString, value)
@@ -555,22 +555,22 @@ func (_u *GachaceilitemUpdateOne) sqlSave(ctx context.Context) (_node *Gachaceil
 		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ConvertStartAt(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedConvertStartAt(); ok {
-		_spec.AddField(gachaceilitem.FieldConvertStartAt, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.ConvertStartAtCleared() {
-		_spec.ClearField(gachaceilitem.FieldConvertStartAt, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldConvertStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ConvertResourceBoxID(); ok {
-		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt, value)
+		_spec.SetField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedConvertResourceBoxID(); ok {
-		_spec.AddField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt, value)
+		_spec.AddField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64, value)
 	}
 	if _u.mutation.ConvertResourceBoxIDCleared() {
-		_spec.ClearField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt)
+		_spec.ClearField(gachaceilitem.FieldConvertResourceBoxID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gachaceilitem.FieldServerRegion, field.TypeString, value)

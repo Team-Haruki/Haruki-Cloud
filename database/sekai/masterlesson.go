@@ -20,15 +20,15 @@ type Masterlesson struct {
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
 	// MasterRank holds the value of the "master_rank" field.
-	MasterRank int `json:"master_rank,omitempty"`
+	MasterRank int64 `json:"master_rank,omitempty"`
 	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
-	Power1BonusFixed int `json:"power1_bonus_fixed,omitempty"`
+	Power1BonusFixed int64 `json:"power1_bonus_fixed,omitempty"`
 	// Power2BonusFixed holds the value of the "power2_bonus_fixed" field.
-	Power2BonusFixed int `json:"power2_bonus_fixed,omitempty"`
+	Power2BonusFixed int64 `json:"power2_bonus_fixed,omitempty"`
 	// Power3BonusFixed holds the value of the "power3_bonus_fixed" field.
-	Power3BonusFixed int `json:"power3_bonus_fixed,omitempty"`
+	Power3BonusFixed int64 `json:"power3_bonus_fixed,omitempty"`
 	// CharacterRankExp holds the value of the "character_rank_exp" field.
-	CharacterRankExp int `json:"character_rank_exp,omitempty"`
+	CharacterRankExp int64 `json:"character_rank_exp,omitempty"`
 	// Costs holds the value of the "costs" field.
 	Costs json.RawMessage `json:"costs,omitempty"`
 	// Rewards holds the value of the "rewards" field.
@@ -82,31 +82,31 @@ func (_m *Masterlesson) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field master_rank", values[i])
 			} else if value.Valid {
-				_m.MasterRank = int(value.Int64)
+				_m.MasterRank = value.Int64
 			}
 		case masterlesson.FieldPower1BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power1_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power1BonusFixed = int(value.Int64)
+				_m.Power1BonusFixed = value.Int64
 			}
 		case masterlesson.FieldPower2BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power2_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power2BonusFixed = int(value.Int64)
+				_m.Power2BonusFixed = value.Int64
 			}
 		case masterlesson.FieldPower3BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power3_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power3BonusFixed = int(value.Int64)
+				_m.Power3BonusFixed = value.Int64
 			}
 		case masterlesson.FieldCharacterRankExp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_rank_exp", values[i])
 			} else if value.Valid {
-				_m.CharacterRankExp = int(value.Int64)
+				_m.CharacterRankExp = value.Int64
 			}
 		case masterlesson.FieldCosts:
 			if value, ok := values[i].(*[]byte); !ok {

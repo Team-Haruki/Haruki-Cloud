@@ -17,11 +17,11 @@ type Cheerfulcarnivalteam struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// TeamName holds the value of the "team_name" field.
 	TeamName string `json:"team_name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -65,19 +65,19 @@ func (_m *Cheerfulcarnivalteam) assignValues(columns []string, values []any) err
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case cheerfulcarnivalteam.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case cheerfulcarnivalteam.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case cheerfulcarnivalteam.FieldTeamName:
 			if value, ok := values[i].(*sql.NullString); !ok {

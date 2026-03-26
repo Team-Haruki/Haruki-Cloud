@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Costume3D {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Costume3D {
+func GameID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Costume3D {
+func Seq(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldSeq, v))
 }
 
 // Costume3DGroupID applies equality check predicate on the "costume3_d_group_id" field. It's identical to Costume3DGroupIDEQ.
-func Costume3DGroupID(v int) predicate.Costume3D {
+func Costume3DGroupID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DGroupID, v))
 }
 
@@ -74,7 +74,7 @@ func Name(v string) predicate.Costume3D {
 }
 
 // ColorID applies equality check predicate on the "color_id" field. It's identical to ColorIDEQ.
-func ColorID(v int) predicate.Costume3D {
+func ColorID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldColorID, v))
 }
 
@@ -84,7 +84,7 @@ func ColorName(v string) predicate.Costume3D {
 }
 
 // CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
-func CharacterID(v int) predicate.Costume3D {
+func CharacterID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCharacterID, v))
 }
 
@@ -104,12 +104,12 @@ func Designer(v string) predicate.Costume3D {
 }
 
 // ArchivePublishedAt applies equality check predicate on the "archive_published_at" field. It's identical to ArchivePublishedAtEQ.
-func ArchivePublishedAt(v int) predicate.Costume3D {
+func ArchivePublishedAt(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // PublishedAt applies equality check predicate on the "published_at" field. It's identical to PublishedAtEQ.
-func PublishedAt(v int) predicate.Costume3D {
+func PublishedAt(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldPublishedAt, v))
 }
 
@@ -119,82 +119,82 @@ func ServerRegion(v string) predicate.Costume3D {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Costume3D {
+func GameIDEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Costume3D {
+func GameIDNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Costume3D {
+func GameIDIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Costume3D {
+func GameIDNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Costume3D {
+func GameIDGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Costume3D {
+func GameIDGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Costume3D {
+func GameIDLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Costume3D {
+func GameIDLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Costume3D {
+func SeqEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Costume3D {
+func SeqNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Costume3D {
+func SeqIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Costume3D {
+func SeqNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Costume3D {
+func SeqGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Costume3D {
+func SeqGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Costume3D {
+func SeqLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Costume3D {
+func SeqLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -209,42 +209,42 @@ func SeqNotNil() predicate.Costume3D {
 }
 
 // Costume3DGroupIDEQ applies the EQ predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDEQ(v int) predicate.Costume3D {
+func Costume3DGroupIDEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DGroupID, v))
 }
 
 // Costume3DGroupIDNEQ applies the NEQ predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDNEQ(v int) predicate.Costume3D {
+func Costume3DGroupIDNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldCostume3DGroupID, v))
 }
 
 // Costume3DGroupIDIn applies the In predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDIn(vs ...int) predicate.Costume3D {
+func Costume3DGroupIDIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldCostume3DGroupID, vs...))
 }
 
 // Costume3DGroupIDNotIn applies the NotIn predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDNotIn(vs ...int) predicate.Costume3D {
+func Costume3DGroupIDNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldCostume3DGroupID, vs...))
 }
 
 // Costume3DGroupIDGT applies the GT predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDGT(v int) predicate.Costume3D {
+func Costume3DGroupIDGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldCostume3DGroupID, v))
 }
 
 // Costume3DGroupIDGTE applies the GTE predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDGTE(v int) predicate.Costume3D {
+func Costume3DGroupIDGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldCostume3DGroupID, v))
 }
 
 // Costume3DGroupIDLT applies the LT predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDLT(v int) predicate.Costume3D {
+func Costume3DGroupIDLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldCostume3DGroupID, v))
 }
 
 // Costume3DGroupIDLTE applies the LTE predicate on the "costume3_d_group_id" field.
-func Costume3DGroupIDLTE(v int) predicate.Costume3D {
+func Costume3DGroupIDLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldCostume3DGroupID, v))
 }
 
@@ -354,42 +354,42 @@ func PartTypeNotNil() predicate.Costume3D {
 }
 
 // ColorIDEQ applies the EQ predicate on the "color_id" field.
-func ColorIDEQ(v int) predicate.Costume3D {
+func ColorIDEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldColorID, v))
 }
 
 // ColorIDNEQ applies the NEQ predicate on the "color_id" field.
-func ColorIDNEQ(v int) predicate.Costume3D {
+func ColorIDNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldColorID, v))
 }
 
 // ColorIDIn applies the In predicate on the "color_id" field.
-func ColorIDIn(vs ...int) predicate.Costume3D {
+func ColorIDIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldColorID, vs...))
 }
 
 // ColorIDNotIn applies the NotIn predicate on the "color_id" field.
-func ColorIDNotIn(vs ...int) predicate.Costume3D {
+func ColorIDNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldColorID, vs...))
 }
 
 // ColorIDGT applies the GT predicate on the "color_id" field.
-func ColorIDGT(v int) predicate.Costume3D {
+func ColorIDGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldColorID, v))
 }
 
 // ColorIDGTE applies the GTE predicate on the "color_id" field.
-func ColorIDGTE(v int) predicate.Costume3D {
+func ColorIDGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldColorID, v))
 }
 
 // ColorIDLT applies the LT predicate on the "color_id" field.
-func ColorIDLT(v int) predicate.Costume3D {
+func ColorIDLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldColorID, v))
 }
 
 // ColorIDLTE applies the LTE predicate on the "color_id" field.
-func ColorIDLTE(v int) predicate.Costume3D {
+func ColorIDLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldColorID, v))
 }
 
@@ -479,42 +479,42 @@ func ColorNameContainsFold(v string) predicate.Costume3D {
 }
 
 // CharacterIDEQ applies the EQ predicate on the "character_id" field.
-func CharacterIDEQ(v int) predicate.Costume3D {
+func CharacterIDEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
-func CharacterIDNEQ(v int) predicate.Costume3D {
+func CharacterIDNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldCharacterID, v))
 }
 
 // CharacterIDIn applies the In predicate on the "character_id" field.
-func CharacterIDIn(vs ...int) predicate.Costume3D {
+func CharacterIDIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
-func CharacterIDNotIn(vs ...int) predicate.Costume3D {
+func CharacterIDNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDGT applies the GT predicate on the "character_id" field.
-func CharacterIDGT(v int) predicate.Costume3D {
+func CharacterIDGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldCharacterID, v))
 }
 
 // CharacterIDGTE applies the GTE predicate on the "character_id" field.
-func CharacterIDGTE(v int) predicate.Costume3D {
+func CharacterIDGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldCharacterID, v))
 }
 
 // CharacterIDLT applies the LT predicate on the "character_id" field.
-func CharacterIDLT(v int) predicate.Costume3D {
+func CharacterIDLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldCharacterID, v))
 }
 
 // CharacterIDLTE applies the LTE predicate on the "character_id" field.
-func CharacterIDLTE(v int) predicate.Costume3D {
+func CharacterIDLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldCharacterID, v))
 }
 
@@ -774,42 +774,42 @@ func ArchiveDisplayTypeNotNil() predicate.Costume3D {
 }
 
 // ArchivePublishedAtEQ applies the EQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtEQ(v int) predicate.Costume3D {
+func ArchivePublishedAtEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtNEQ applies the NEQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtNEQ(v int) predicate.Costume3D {
+func ArchivePublishedAtNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtIn applies the In predicate on the "archive_published_at" field.
-func ArchivePublishedAtIn(vs ...int) predicate.Costume3D {
+func ArchivePublishedAtIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtNotIn applies the NotIn predicate on the "archive_published_at" field.
-func ArchivePublishedAtNotIn(vs ...int) predicate.Costume3D {
+func ArchivePublishedAtNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtGT applies the GT predicate on the "archive_published_at" field.
-func ArchivePublishedAtGT(v int) predicate.Costume3D {
+func ArchivePublishedAtGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtGTE applies the GTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtGTE(v int) predicate.Costume3D {
+func ArchivePublishedAtGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLT applies the LT predicate on the "archive_published_at" field.
-func ArchivePublishedAtLT(v int) predicate.Costume3D {
+func ArchivePublishedAtLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLTE applies the LTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtLTE(v int) predicate.Costume3D {
+func ArchivePublishedAtLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldArchivePublishedAt, v))
 }
 
@@ -824,42 +824,42 @@ func ArchivePublishedAtNotNil() predicate.Costume3D {
 }
 
 // PublishedAtEQ applies the EQ predicate on the "published_at" field.
-func PublishedAtEQ(v int) predicate.Costume3D {
+func PublishedAtEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldPublishedAt, v))
 }
 
 // PublishedAtNEQ applies the NEQ predicate on the "published_at" field.
-func PublishedAtNEQ(v int) predicate.Costume3D {
+func PublishedAtNEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNEQ(FieldPublishedAt, v))
 }
 
 // PublishedAtIn applies the In predicate on the "published_at" field.
-func PublishedAtIn(vs ...int) predicate.Costume3D {
+func PublishedAtIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIn(FieldPublishedAt, vs...))
 }
 
 // PublishedAtNotIn applies the NotIn predicate on the "published_at" field.
-func PublishedAtNotIn(vs ...int) predicate.Costume3D {
+func PublishedAtNotIn(vs ...int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotIn(FieldPublishedAt, vs...))
 }
 
 // PublishedAtGT applies the GT predicate on the "published_at" field.
-func PublishedAtGT(v int) predicate.Costume3D {
+func PublishedAtGT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGT(FieldPublishedAt, v))
 }
 
 // PublishedAtGTE applies the GTE predicate on the "published_at" field.
-func PublishedAtGTE(v int) predicate.Costume3D {
+func PublishedAtGTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldGTE(FieldPublishedAt, v))
 }
 
 // PublishedAtLT applies the LT predicate on the "published_at" field.
-func PublishedAtLT(v int) predicate.Costume3D {
+func PublishedAtLT(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLT(FieldPublishedAt, v))
 }
 
 // PublishedAtLTE applies the LTE predicate on the "published_at" field.
-func PublishedAtLTE(v int) predicate.Costume3D {
+func PublishedAtLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldPublishedAt, v))
 }
 

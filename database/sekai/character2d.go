@@ -18,13 +18,13 @@ type Character2D struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// CharacterType holds the value of the "character_type" field.
 	CharacterType json.RawMessage `json:"character_type,omitempty"`
 	// IsNextGrade holds the value of the "is_next_grade" field.
 	IsNextGrade bool `json:"is_next_grade,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int `json:"character_id,omitempty"`
+	CharacterID int64 `json:"character_id,omitempty"`
 	// Unit holds the value of the "unit" field.
 	Unit json.RawMessage `json:"unit,omitempty"`
 	// IsEnabledFlipDisplay holds the value of the "is_enabled_flip_display" field.
@@ -76,7 +76,7 @@ func (_m *Character2D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case character2d.FieldCharacterType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -96,7 +96,7 @@ func (_m *Character2D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = int(value.Int64)
+				_m.CharacterID = value.Int64
 			}
 		case character2d.FieldUnit:
 			if value, ok := values[i].(*[]byte); !ok {

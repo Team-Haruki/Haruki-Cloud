@@ -17,12 +17,12 @@ type Mysekaicharactertalk struct {
 
 func (Mysekaicharactertalk) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("mysekai_game_character_unit_group_id").Optional(),
-		field.Int("mysekai_character_talk_condition_group_id").Optional(),
-		field.Int("mysekai_site_group_id").Optional(),
-		field.Int("mysekai_character_talk_term_id").Optional(),
-		field.Int("character_archive_mysekai_character_talk_group_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("mysekai_game_character_unit_group_id").Optional(),
+		field.Int64("mysekai_character_talk_condition_group_id").Optional(),
+		field.Int64("mysekai_site_group_id").Optional(),
+		field.Int64("mysekai_character_talk_term_id").Optional(),
+		field.Int64("character_archive_mysekai_character_talk_group_id").Optional(),
 		field.JSON("assetbundle_name", json.RawMessage{}).Optional(),
 		field.String("lua").Optional(),
 		field.Bool("is_enabled_for_multi").Optional(),

@@ -54,27 +54,27 @@ func IDLTE(id int) predicate.Mysekaiblueprintmysekaimaterialcost {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameID(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldGameID, v))
 }
 
 // MysekaiBlueprintID applies equality check predicate on the "mysekai_blueprint_id" field. It's identical to MysekaiBlueprintIDEQ.
-func MysekaiBlueprintID(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintID(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
-func MysekaiMaterialID(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialID(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiMaterialID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func Seq(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldSeq, v))
 }
 
 // Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
-func Quantity(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func Quantity(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldQuantity, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDNEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDNotIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDGT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDGTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDLT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func GameIDLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldGameID, v))
 }
 
 // MysekaiBlueprintIDEQ applies the EQ predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiBlueprintIDNEQ applies the NEQ predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDNEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDNEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiBlueprintIDIn applies the In predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldMysekaiBlueprintID, vs...))
 }
 
 // MysekaiBlueprintIDNotIn applies the NotIn predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDNotIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDNotIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldMysekaiBlueprintID, vs...))
 }
 
 // MysekaiBlueprintIDGT applies the GT predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDGT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDGT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiBlueprintIDGTE applies the GTE predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDGTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDGTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiBlueprintIDLT applies the LT predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDLT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDLT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldMysekaiBlueprintID, v))
 }
 
 // MysekaiBlueprintIDLTE applies the LTE predicate on the "mysekai_blueprint_id" field.
-func MysekaiBlueprintIDLTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiBlueprintIDLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldMysekaiBlueprintID, v))
 }
 
@@ -174,42 +174,42 @@ func MysekaiBlueprintIDNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 }
 
 // MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiMaterialID, v))
 }
 
 // MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDNEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldMysekaiMaterialID, v))
 }
 
 // MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldMysekaiMaterialID, vs...))
 }
 
 // MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDNotIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
 }
 
 // MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDGT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldMysekaiMaterialID, v))
 }
 
 // MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDGTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldMysekaiMaterialID, v))
 }
 
 // MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDLT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldMysekaiMaterialID, v))
 }
 
 // MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func MysekaiMaterialIDLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldMysekaiMaterialID, v))
 }
 
@@ -224,42 +224,42 @@ func MysekaiMaterialIDNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqNEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqNotIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqGT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqGTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqLT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func SeqLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -274,42 +274,42 @@ func SeqNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 }
 
 // QuantityEQ applies the EQ predicate on the "quantity" field.
-func QuantityEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldQuantity, v))
 }
 
 // QuantityNEQ applies the NEQ predicate on the "quantity" field.
-func QuantityNEQ(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityNEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldQuantity, v))
 }
 
 // QuantityIn applies the In predicate on the "quantity" field.
-func QuantityIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldQuantity, vs...))
 }
 
 // QuantityNotIn applies the NotIn predicate on the "quantity" field.
-func QuantityNotIn(vs ...int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityNotIn(vs ...int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldQuantity, vs...))
 }
 
 // QuantityGT applies the GT predicate on the "quantity" field.
-func QuantityGT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityGT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldQuantity, v))
 }
 
 // QuantityGTE applies the GTE predicate on the "quantity" field.
-func QuantityGTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityGTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldQuantity, v))
 }
 
 // QuantityLT applies the LT predicate on the "quantity" field.
-func QuantityLT(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityLT(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldQuantity, v))
 }
 
 // QuantityLTE applies the LTE predicate on the "quantity" field.
-func QuantityLTE(v int) predicate.Mysekaiblueprintmysekaimaterialcost {
+func QuantityLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldQuantity, v))
 }
 

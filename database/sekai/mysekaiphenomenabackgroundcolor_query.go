@@ -262,7 +262,7 @@ func (_q *MysekaiphenomenabackgroundcolorQuery) Clone() *Mysekaiphenomenabackgro
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *MysekaiphenomenabackgroundcolorQuery) GroupBy(field string, fields ...
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaiphenomenabackgroundcolor.Query().

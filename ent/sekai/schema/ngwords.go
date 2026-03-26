@@ -15,7 +15,7 @@ type Ngword struct {
 
 func (Ngword) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("word").Optional(),
 		field.String("server_region"),
 	}

@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Cardmysekaicanvasbonuse {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Cardmysekaicanvasbonuse {
+func GameID(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -64,17 +64,17 @@ func CardRarityType(v string) predicate.Cardmysekaicanvasbonuse {
 }
 
 // Power1BonusFixed applies equality check predicate on the "power1_bonus_fixed" field. It's identical to Power1BonusFixedEQ.
-func Power1BonusFixed(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixed(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower1BonusFixed, v))
 }
 
 // Power2BonusFixed applies equality check predicate on the "power2_bonus_fixed" field. It's identical to Power2BonusFixedEQ.
-func Power2BonusFixed(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixed(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower2BonusFixed, v))
 }
 
 // Power3BonusFixed applies equality check predicate on the "power3_bonus_fixed" field. It's identical to Power3BonusFixedEQ.
-func Power3BonusFixed(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixed(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower3BonusFixed, v))
 }
 
@@ -84,42 +84,42 @@ func ServerRegion(v string) predicate.Cardmysekaicanvasbonuse {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDNEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func GameIDIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func GameIDNotIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDGT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDGTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDLT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Cardmysekaicanvasbonuse {
+func GameIDLTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -199,42 +199,42 @@ func CardRarityTypeContainsFold(v string) predicate.Cardmysekaicanvasbonuse {
 }
 
 // Power1BonusFixedEQ applies the EQ predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower1BonusFixed, v))
 }
 
 // Power1BonusFixedNEQ applies the NEQ predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedNEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedNEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNEQ(FieldPower1BonusFixed, v))
 }
 
 // Power1BonusFixedIn applies the In predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldIn(FieldPower1BonusFixed, vs...))
 }
 
 // Power1BonusFixedNotIn applies the NotIn predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedNotIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedNotIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNotIn(FieldPower1BonusFixed, vs...))
 }
 
 // Power1BonusFixedGT applies the GT predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedGT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedGT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGT(FieldPower1BonusFixed, v))
 }
 
 // Power1BonusFixedGTE applies the GTE predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedGTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedGTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGTE(FieldPower1BonusFixed, v))
 }
 
 // Power1BonusFixedLT applies the LT predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedLT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedLT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLT(FieldPower1BonusFixed, v))
 }
 
 // Power1BonusFixedLTE applies the LTE predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedLTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power1BonusFixedLTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLTE(FieldPower1BonusFixed, v))
 }
 
@@ -249,42 +249,42 @@ func Power1BonusFixedNotNil() predicate.Cardmysekaicanvasbonuse {
 }
 
 // Power2BonusFixedEQ applies the EQ predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower2BonusFixed, v))
 }
 
 // Power2BonusFixedNEQ applies the NEQ predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedNEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedNEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNEQ(FieldPower2BonusFixed, v))
 }
 
 // Power2BonusFixedIn applies the In predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldIn(FieldPower2BonusFixed, vs...))
 }
 
 // Power2BonusFixedNotIn applies the NotIn predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedNotIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedNotIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNotIn(FieldPower2BonusFixed, vs...))
 }
 
 // Power2BonusFixedGT applies the GT predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedGT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedGT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGT(FieldPower2BonusFixed, v))
 }
 
 // Power2BonusFixedGTE applies the GTE predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedGTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedGTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGTE(FieldPower2BonusFixed, v))
 }
 
 // Power2BonusFixedLT applies the LT predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedLT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedLT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLT(FieldPower2BonusFixed, v))
 }
 
 // Power2BonusFixedLTE applies the LTE predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedLTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power2BonusFixedLTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLTE(FieldPower2BonusFixed, v))
 }
 
@@ -299,42 +299,42 @@ func Power2BonusFixedNotNil() predicate.Cardmysekaicanvasbonuse {
 }
 
 // Power3BonusFixedEQ applies the EQ predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldPower3BonusFixed, v))
 }
 
 // Power3BonusFixedNEQ applies the NEQ predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedNEQ(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedNEQ(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNEQ(FieldPower3BonusFixed, v))
 }
 
 // Power3BonusFixedIn applies the In predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldIn(FieldPower3BonusFixed, vs...))
 }
 
 // Power3BonusFixedNotIn applies the NotIn predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedNotIn(vs ...int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedNotIn(vs ...int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldNotIn(FieldPower3BonusFixed, vs...))
 }
 
 // Power3BonusFixedGT applies the GT predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedGT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedGT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGT(FieldPower3BonusFixed, v))
 }
 
 // Power3BonusFixedGTE applies the GTE predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedGTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedGTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldGTE(FieldPower3BonusFixed, v))
 }
 
 // Power3BonusFixedLT applies the LT predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedLT(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedLT(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLT(FieldPower3BonusFixed, v))
 }
 
 // Power3BonusFixedLTE applies the LTE predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedLTE(v int) predicate.Cardmysekaicanvasbonuse {
+func Power3BonusFixedLTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLTE(FieldPower3BonusFixed, v))
 }
 

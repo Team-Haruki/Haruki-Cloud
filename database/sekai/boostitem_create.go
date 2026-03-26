@@ -21,19 +21,19 @@ type BoostitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *BoostitemCreate) SetGameID(v int) *BoostitemCreate {
+func (_c *BoostitemCreate) SetGameID(v int64) *BoostitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *BoostitemCreate) SetSeq(v int) *BoostitemCreate {
+func (_c *BoostitemCreate) SetSeq(v int64) *BoostitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableSeq(v *int) *BoostitemCreate {
+func (_c *BoostitemCreate) SetNillableSeq(v *int64) *BoostitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *BoostitemCreate) SetNillableName(v *string) *BoostitemCreate {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_c *BoostitemCreate) SetRecoveryValue(v int) *BoostitemCreate {
+func (_c *BoostitemCreate) SetRecoveryValue(v int64) *BoostitemCreate {
 	_c.mutation.SetRecoveryValue(v)
 	return _c
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableRecoveryValue(v *int) *BoostitemCreate {
+func (_c *BoostitemCreate) SetNillableRecoveryValue(v *int64) *BoostitemCreate {
 	if v != nil {
 		_c.SetRecoveryValue(*v)
 	}
@@ -161,11 +161,11 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(boostitem.Table, sqlgraph.NewFieldSpec(boostitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -173,7 +173,7 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
 		_node.RecoveryValue = value
 	}
 	if value, ok := _c.mutation.AssetBundleName(); ok {

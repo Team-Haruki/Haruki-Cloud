@@ -30,14 +30,14 @@ func (_u *MysekaimusicrecordUpdate) Where(ps ...predicate.Mysekaimusicrecord) *M
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimusicrecordUpdate) SetGameID(v int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) SetGameID(v int64) *MysekaimusicrecordUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordUpdate) SetNillableGameID(v *int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) SetNillableGameID(v *int64) *MysekaimusicrecordUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaimusicrecordUpdate) SetNillableGameID(v *int) *Mysekaimusicrecor
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimusicrecordUpdate) AddGameID(v int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) AddGameID(v int64) *MysekaimusicrecordUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -69,14 +69,14 @@ func (_u *MysekaimusicrecordUpdate) ClearMysekaiMusicTrackType() *Mysekaimusicre
 }
 
 // SetExternalID sets the "external_id" field.
-func (_u *MysekaimusicrecordUpdate) SetExternalID(v int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) SetExternalID(v int64) *MysekaimusicrecordUpdate {
 	_u.mutation.ResetExternalID()
 	_u.mutation.SetExternalID(v)
 	return _u
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordUpdate) SetNillableExternalID(v *int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) SetNillableExternalID(v *int64) *MysekaimusicrecordUpdate {
 	if v != nil {
 		_u.SetExternalID(*v)
 	}
@@ -84,7 +84,7 @@ func (_u *MysekaimusicrecordUpdate) SetNillableExternalID(v *int) *Mysekaimusicr
 }
 
 // AddExternalID adds value to the "external_id" field.
-func (_u *MysekaimusicrecordUpdate) AddExternalID(v int) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) AddExternalID(v int64) *MysekaimusicrecordUpdate {
 	_u.mutation.AddExternalID(v)
 	return _u
 }
@@ -151,10 +151,10 @@ func (_u *MysekaimusicrecordUpdate) sqlSave(ctx context.Context) (_node int, err
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
@@ -168,13 +168,13 @@ func (_u *MysekaimusicrecordUpdate) sqlSave(ctx context.Context) (_node int, err
 		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedExternalID(); ok {
-		_spec.AddField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
 	}
 	if _u.mutation.ExternalIDCleared() {
-		_spec.ClearField(mysekaimusicrecord.FieldExternalID, field.TypeInt)
+		_spec.ClearField(mysekaimusicrecord.FieldExternalID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldServerRegion, field.TypeString, value)
@@ -200,14 +200,14 @@ type MysekaimusicrecordUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimusicrecordUpdateOne) SetGameID(v int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) SetGameID(v int64) *MysekaimusicrecordUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordUpdateOne) SetNillableGameID(v *int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) SetNillableGameID(v *int64) *MysekaimusicrecordUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -215,7 +215,7 @@ func (_u *MysekaimusicrecordUpdateOne) SetNillableGameID(v *int) *Mysekaimusicre
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimusicrecordUpdateOne) AddGameID(v int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) AddGameID(v int64) *MysekaimusicrecordUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -239,14 +239,14 @@ func (_u *MysekaimusicrecordUpdateOne) ClearMysekaiMusicTrackType() *Mysekaimusi
 }
 
 // SetExternalID sets the "external_id" field.
-func (_u *MysekaimusicrecordUpdateOne) SetExternalID(v int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) SetExternalID(v int64) *MysekaimusicrecordUpdateOne {
 	_u.mutation.ResetExternalID()
 	_u.mutation.SetExternalID(v)
 	return _u
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *MysekaimusicrecordUpdateOne) SetNillableExternalID(v *int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) SetNillableExternalID(v *int64) *MysekaimusicrecordUpdateOne {
 	if v != nil {
 		_u.SetExternalID(*v)
 	}
@@ -254,7 +254,7 @@ func (_u *MysekaimusicrecordUpdateOne) SetNillableExternalID(v *int) *Mysekaimus
 }
 
 // AddExternalID adds value to the "external_id" field.
-func (_u *MysekaimusicrecordUpdateOne) AddExternalID(v int) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) AddExternalID(v int64) *MysekaimusicrecordUpdateOne {
 	_u.mutation.AddExternalID(v)
 	return _u
 }
@@ -351,10 +351,10 @@ func (_u *MysekaimusicrecordUpdateOne) sqlSave(ctx context.Context) (_node *Myse
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
@@ -368,13 +368,13 @@ func (_u *MysekaimusicrecordUpdateOne) sqlSave(ctx context.Context) (_node *Myse
 		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedExternalID(); ok {
-		_spec.AddField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
+		_spec.AddField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
 	}
 	if _u.mutation.ExternalIDCleared() {
-		_spec.ClearField(mysekaimusicrecord.FieldExternalID, field.TypeInt)
+		_spec.ClearField(mysekaimusicrecord.FieldExternalID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldServerRegion, field.TypeString, value)

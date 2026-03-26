@@ -20,7 +20,7 @@ type MusicArtistCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MusicArtistCreate) SetGameID(v int) *MusicArtistCreate {
+func (_c *MusicArtistCreate) SetGameID(v int64) *MusicArtistCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -126,7 +126,7 @@ func (_c *MusicArtistCreate) createSpec() (*MusicArtist, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(musicartist.Table, sqlgraph.NewFieldSpec(musicartist.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

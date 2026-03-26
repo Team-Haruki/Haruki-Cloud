@@ -21,19 +21,19 @@ type MusictagCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MusictagCreate) SetGameID(v int) *MusictagCreate {
+func (_c *MusictagCreate) SetGameID(v int64) *MusictagCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMusicID sets the "music_id" field.
-func (_c *MusictagCreate) SetMusicID(v int) *MusictagCreate {
+func (_c *MusictagCreate) SetMusicID(v int64) *MusictagCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableMusicID(v *int) *MusictagCreate {
+func (_c *MusictagCreate) SetNillableMusicID(v *int64) *MusictagCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -47,13 +47,13 @@ func (_c *MusictagCreate) SetMusicTag(v json.RawMessage) *MusictagCreate {
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MusictagCreate) SetSeq(v int) *MusictagCreate {
+func (_c *MusictagCreate) SetSeq(v int64) *MusictagCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableSeq(v *int) *MusictagCreate {
+func (_c *MusictagCreate) SetNillableSeq(v *int64) *MusictagCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -133,11 +133,11 @@ func (_c *MusictagCreate) createSpec() (*Musictag, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(musictag.Table, sqlgraph.NewFieldSpec(musictag.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicTag(); ok {
@@ -145,7 +145,7 @@ func (_c *MusictagCreate) createSpec() (*Musictag, *sqlgraph.CreateSpec) {
 		_node.MusicTag = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

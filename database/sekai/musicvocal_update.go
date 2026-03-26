@@ -30,14 +30,14 @@ func (_u *MusicvocalUpdate) Where(ps ...predicate.Musicvocal) *MusicvocalUpdate 
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicvocalUpdate) SetGameID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetGameID(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableGameID(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableGameID(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *MusicvocalUpdate) SetNillableGameID(v *int) *MusicvocalUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicvocalUpdate) AddGameID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddGameID(v int64) *MusicvocalUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusicvocalUpdate) SetMusicID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetMusicID(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableMusicID(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableMusicID(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *MusicvocalUpdate) SetNillableMusicID(v *int) *MusicvocalUpdate {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusicvocalUpdate) AddMusicID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddMusicID(v int64) *MusicvocalUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -96,14 +96,14 @@ func (_u *MusicvocalUpdate) ClearMusicVocalType() *MusicvocalUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusicvocalUpdate) SetSeq(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetSeq(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableSeq(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableSeq(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -111,7 +111,7 @@ func (_u *MusicvocalUpdate) SetNillableSeq(v *int) *MusicvocalUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusicvocalUpdate) AddSeq(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddSeq(v int64) *MusicvocalUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -123,14 +123,14 @@ func (_u *MusicvocalUpdate) ClearSeq() *MusicvocalUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *MusicvocalUpdate) SetReleaseConditionID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetReleaseConditionID(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableReleaseConditionID(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableReleaseConditionID(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -138,7 +138,7 @@ func (_u *MusicvocalUpdate) SetNillableReleaseConditionID(v *int) *MusicvocalUpd
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *MusicvocalUpdate) AddReleaseConditionID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddReleaseConditionID(v int64) *MusicvocalUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -208,14 +208,14 @@ func (_u *MusicvocalUpdate) ClearAssetbundleName() *MusicvocalUpdate {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *MusicvocalUpdate) SetArchivePublishedAt(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetArchivePublishedAt(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableArchivePublishedAt(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableArchivePublishedAt(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -223,7 +223,7 @@ func (_u *MusicvocalUpdate) SetNillableArchivePublishedAt(v *int) *MusicvocalUpd
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *MusicvocalUpdate) AddArchivePublishedAt(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddArchivePublishedAt(v int64) *MusicvocalUpdate {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -235,14 +235,14 @@ func (_u *MusicvocalUpdate) ClearArchivePublishedAt() *MusicvocalUpdate {
 }
 
 // SetSpecialSeasonID sets the "special_season_id" field.
-func (_u *MusicvocalUpdate) SetSpecialSeasonID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetSpecialSeasonID(v int64) *MusicvocalUpdate {
 	_u.mutation.ResetSpecialSeasonID()
 	_u.mutation.SetSpecialSeasonID(v)
 	return _u
 }
 
 // SetNillableSpecialSeasonID sets the "special_season_id" field if the given value is not nil.
-func (_u *MusicvocalUpdate) SetNillableSpecialSeasonID(v *int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetNillableSpecialSeasonID(v *int64) *MusicvocalUpdate {
 	if v != nil {
 		_u.SetSpecialSeasonID(*v)
 	}
@@ -250,7 +250,7 @@ func (_u *MusicvocalUpdate) SetNillableSpecialSeasonID(v *int) *MusicvocalUpdate
 }
 
 // AddSpecialSeasonID adds value to the "special_season_id" field.
-func (_u *MusicvocalUpdate) AddSpecialSeasonID(v int) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) AddSpecialSeasonID(v int64) *MusicvocalUpdate {
 	_u.mutation.AddSpecialSeasonID(v)
 	return _u
 }
@@ -335,19 +335,19 @@ func (_u *MusicvocalUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicvocal.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicvocal.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musicvocal.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicVocalType(); ok {
 		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeJSON, value)
@@ -361,22 +361,22 @@ func (_u *MusicvocalUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musicvocal.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musicvocal.FieldSeq, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musicvocal.FieldSeq, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(musicvocal.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(musicvocal.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Caption(); ok {
 		_spec.SetField(musicvocal.FieldCaption, field.TypeString, value)
@@ -402,22 +402,22 @@ func (_u *MusicvocalUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(musicvocal.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(musicvocal.FieldArchivePublishedAt, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldArchivePublishedAt, field.TypeInt64, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(musicvocal.FieldArchivePublishedAt, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldArchivePublishedAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SpecialSeasonID(); ok {
-		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSpecialSeasonID(); ok {
-		_spec.AddField(musicvocal.FieldSpecialSeasonID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldSpecialSeasonID, field.TypeInt64, value)
 	}
 	if _u.mutation.SpecialSeasonIDCleared() {
-		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
 		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeJSON, value)
@@ -454,14 +454,14 @@ type MusicvocalUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusicvocalUpdateOne) SetGameID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetGameID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableGameID(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableGameID(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -469,20 +469,20 @@ func (_u *MusicvocalUpdateOne) SetNillableGameID(v *int) *MusicvocalUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicvocalUpdateOne) AddGameID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddGameID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusicvocalUpdateOne) SetMusicID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetMusicID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableMusicID(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableMusicID(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -490,7 +490,7 @@ func (_u *MusicvocalUpdateOne) SetNillableMusicID(v *int) *MusicvocalUpdateOne {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusicvocalUpdateOne) AddMusicID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddMusicID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -520,14 +520,14 @@ func (_u *MusicvocalUpdateOne) ClearMusicVocalType() *MusicvocalUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusicvocalUpdateOne) SetSeq(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetSeq(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableSeq(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableSeq(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -535,7 +535,7 @@ func (_u *MusicvocalUpdateOne) SetNillableSeq(v *int) *MusicvocalUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusicvocalUpdateOne) AddSeq(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddSeq(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -547,14 +547,14 @@ func (_u *MusicvocalUpdateOne) ClearSeq() *MusicvocalUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *MusicvocalUpdateOne) SetReleaseConditionID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetReleaseConditionID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableReleaseConditionID(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableReleaseConditionID(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -562,7 +562,7 @@ func (_u *MusicvocalUpdateOne) SetNillableReleaseConditionID(v *int) *Musicvocal
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *MusicvocalUpdateOne) AddReleaseConditionID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddReleaseConditionID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -632,14 +632,14 @@ func (_u *MusicvocalUpdateOne) ClearAssetbundleName() *MusicvocalUpdateOne {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *MusicvocalUpdateOne) SetArchivePublishedAt(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetArchivePublishedAt(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableArchivePublishedAt(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableArchivePublishedAt(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -647,7 +647,7 @@ func (_u *MusicvocalUpdateOne) SetNillableArchivePublishedAt(v *int) *Musicvocal
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *MusicvocalUpdateOne) AddArchivePublishedAt(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddArchivePublishedAt(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -659,14 +659,14 @@ func (_u *MusicvocalUpdateOne) ClearArchivePublishedAt() *MusicvocalUpdateOne {
 }
 
 // SetSpecialSeasonID sets the "special_season_id" field.
-func (_u *MusicvocalUpdateOne) SetSpecialSeasonID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetSpecialSeasonID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.ResetSpecialSeasonID()
 	_u.mutation.SetSpecialSeasonID(v)
 	return _u
 }
 
 // SetNillableSpecialSeasonID sets the "special_season_id" field if the given value is not nil.
-func (_u *MusicvocalUpdateOne) SetNillableSpecialSeasonID(v *int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetNillableSpecialSeasonID(v *int64) *MusicvocalUpdateOne {
 	if v != nil {
 		_u.SetSpecialSeasonID(*v)
 	}
@@ -674,7 +674,7 @@ func (_u *MusicvocalUpdateOne) SetNillableSpecialSeasonID(v *int) *MusicvocalUpd
 }
 
 // AddSpecialSeasonID adds value to the "special_season_id" field.
-func (_u *MusicvocalUpdateOne) AddSpecialSeasonID(v int) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) AddSpecialSeasonID(v int64) *MusicvocalUpdateOne {
 	_u.mutation.AddSpecialSeasonID(v)
 	return _u
 }
@@ -789,19 +789,19 @@ func (_u *MusicvocalUpdateOne) sqlSave(ctx context.Context) (_node *Musicvocal, 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicvocal.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicvocal.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musicvocal.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicVocalType(); ok {
 		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeJSON, value)
@@ -815,22 +815,22 @@ func (_u *MusicvocalUpdateOne) sqlSave(ctx context.Context) (_node *Musicvocal, 
 		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musicvocal.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musicvocal.FieldSeq, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musicvocal.FieldSeq, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(musicvocal.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(musicvocal.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Caption(); ok {
 		_spec.SetField(musicvocal.FieldCaption, field.TypeString, value)
@@ -856,22 +856,22 @@ func (_u *MusicvocalUpdateOne) sqlSave(ctx context.Context) (_node *Musicvocal, 
 		_spec.ClearField(musicvocal.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldArchivePublishedAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(musicvocal.FieldArchivePublishedAt, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldArchivePublishedAt, field.TypeInt64, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(musicvocal.FieldArchivePublishedAt, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldArchivePublishedAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SpecialSeasonID(); ok {
-		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt, value)
+		_spec.SetField(musicvocal.FieldSpecialSeasonID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSpecialSeasonID(); ok {
-		_spec.AddField(musicvocal.FieldSpecialSeasonID, field.TypeInt, value)
+		_spec.AddField(musicvocal.FieldSpecialSeasonID, field.TypeInt64, value)
 	}
 	if _u.mutation.SpecialSeasonIDCleared() {
-		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt)
+		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
 		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeJSON, value)

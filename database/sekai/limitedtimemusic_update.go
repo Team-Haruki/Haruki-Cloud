@@ -28,14 +28,14 @@ func (_u *LimitedtimemusicUpdate) Where(ps ...predicate.Limitedtimemusic) *Limit
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *LimitedtimemusicUpdate) SetGameID(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetGameID(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdate) SetNillableGameID(v *int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetNillableGameID(v *int64) *LimitedtimemusicUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *LimitedtimemusicUpdate) SetNillableGameID(v *int) *LimitedtimemusicUpd
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *LimitedtimemusicUpdate) AddGameID(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) AddGameID(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *LimitedtimemusicUpdate) SetMusicID(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetMusicID(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdate) SetNillableMusicID(v *int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetNillableMusicID(v *int64) *LimitedtimemusicUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *LimitedtimemusicUpdate) SetNillableMusicID(v *int) *LimitedtimemusicUp
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *LimitedtimemusicUpdate) AddMusicID(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) AddMusicID(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -76,14 +76,14 @@ func (_u *LimitedtimemusicUpdate) ClearMusicID() *LimitedtimemusicUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *LimitedtimemusicUpdate) SetStartAt(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetStartAt(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdate) SetNillableStartAt(v *int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetNillableStartAt(v *int64) *LimitedtimemusicUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -91,7 +91,7 @@ func (_u *LimitedtimemusicUpdate) SetNillableStartAt(v *int) *LimitedtimemusicUp
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *LimitedtimemusicUpdate) AddStartAt(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) AddStartAt(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -103,14 +103,14 @@ func (_u *LimitedtimemusicUpdate) ClearStartAt() *LimitedtimemusicUpdate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *LimitedtimemusicUpdate) SetEndAt(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetEndAt(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdate) SetNillableEndAt(v *int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) SetNillableEndAt(v *int64) *LimitedtimemusicUpdate {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -118,7 +118,7 @@ func (_u *LimitedtimemusicUpdate) SetNillableEndAt(v *int) *LimitedtimemusicUpda
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *LimitedtimemusicUpdate) AddEndAt(v int) *LimitedtimemusicUpdate {
+func (_u *LimitedtimemusicUpdate) AddEndAt(v int64) *LimitedtimemusicUpdate {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -185,37 +185,37 @@ func (_u *LimitedtimemusicUpdate) sqlSave(ctx context.Context) (_node int, err e
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(limitedtimemusic.FieldGameID, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(limitedtimemusic.FieldMusicID, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(limitedtimemusic.FieldStartAt, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)
@@ -241,14 +241,14 @@ type LimitedtimemusicUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *LimitedtimemusicUpdateOne) SetGameID(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetGameID(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdateOne) SetNillableGameID(v *int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetNillableGameID(v *int64) *LimitedtimemusicUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -256,20 +256,20 @@ func (_u *LimitedtimemusicUpdateOne) SetNillableGameID(v *int) *Limitedtimemusic
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *LimitedtimemusicUpdateOne) AddGameID(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) AddGameID(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *LimitedtimemusicUpdateOne) SetMusicID(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetMusicID(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdateOne) SetNillableMusicID(v *int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetNillableMusicID(v *int64) *LimitedtimemusicUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -277,7 +277,7 @@ func (_u *LimitedtimemusicUpdateOne) SetNillableMusicID(v *int) *Limitedtimemusi
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *LimitedtimemusicUpdateOne) AddMusicID(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) AddMusicID(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -289,14 +289,14 @@ func (_u *LimitedtimemusicUpdateOne) ClearMusicID() *LimitedtimemusicUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *LimitedtimemusicUpdateOne) SetStartAt(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetStartAt(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdateOne) SetNillableStartAt(v *int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetNillableStartAt(v *int64) *LimitedtimemusicUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -304,7 +304,7 @@ func (_u *LimitedtimemusicUpdateOne) SetNillableStartAt(v *int) *Limitedtimemusi
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *LimitedtimemusicUpdateOne) AddStartAt(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) AddStartAt(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -316,14 +316,14 @@ func (_u *LimitedtimemusicUpdateOne) ClearStartAt() *LimitedtimemusicUpdateOne {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *LimitedtimemusicUpdateOne) SetEndAt(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetEndAt(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *LimitedtimemusicUpdateOne) SetNillableEndAt(v *int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) SetNillableEndAt(v *int64) *LimitedtimemusicUpdateOne {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -331,7 +331,7 @@ func (_u *LimitedtimemusicUpdateOne) SetNillableEndAt(v *int) *LimitedtimemusicU
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *LimitedtimemusicUpdateOne) AddEndAt(v int) *LimitedtimemusicUpdateOne {
+func (_u *LimitedtimemusicUpdateOne) AddEndAt(v int64) *LimitedtimemusicUpdateOne {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -428,37 +428,37 @@ func (_u *LimitedtimemusicUpdateOne) sqlSave(ctx context.Context) (_node *Limite
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(limitedtimemusic.FieldGameID, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(limitedtimemusic.FieldMusicID, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(limitedtimemusic.FieldStartAt, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
+		_spec.AddField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt)
+		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)

@@ -17,11 +17,11 @@ type Mysekaicharactertalkconditiongroup struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
+	GroupID int64 `json:"group_id,omitempty"`
 	// MysekaiCharacterTalkConditionID holds the value of the "mysekai_character_talk_condition_id" field.
-	MysekaiCharacterTalkConditionID int `json:"mysekai_character_talk_condition_id,omitempty"`
+	MysekaiCharacterTalkConditionID int64 `json:"mysekai_character_talk_condition_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -61,19 +61,19 @@ func (_m *Mysekaicharactertalkconditiongroup) assignValues(columns []string, val
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaicharactertalkconditiongroup.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = int(value.Int64)
+				_m.GroupID = value.Int64
 			}
 		case mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkConditionID = int(value.Int64)
+				_m.MysekaiCharacterTalkConditionID = value.Int64
 			}
 		case mysekaicharactertalkconditiongroup.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

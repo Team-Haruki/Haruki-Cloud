@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.MusicArtist {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.MusicArtist {
+func GameID(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,42 +74,42 @@ func ServerRegion(v string) predicate.MusicArtist {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.MusicArtist {
+func GameIDEQ(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.MusicArtist {
+func GameIDNEQ(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.MusicArtist {
+func GameIDIn(vs ...int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.MusicArtist {
+func GameIDNotIn(vs ...int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.MusicArtist {
+func GameIDGT(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.MusicArtist {
+func GameIDGTE(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.MusicArtist {
+func GameIDLT(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.MusicArtist {
+func GameIDLTE(v int64) predicate.MusicArtist {
 	return predicate.MusicArtist(sql.FieldLTE(FieldGameID, v))
 }
 

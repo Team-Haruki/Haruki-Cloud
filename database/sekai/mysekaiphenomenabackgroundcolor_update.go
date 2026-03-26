@@ -28,14 +28,14 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) Where(ps ...predicate.Mysekaiph
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetGameID(v int) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetGameID(v int64) *MysekaiphenomenabackgroundcolorUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int) *Myse
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) AddGameID(v int) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) AddGameID(v int64) *MysekaiphenomenabackgroundcolorUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -204,10 +204,10 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) sqlSave(ctx context.Context) (_
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)
@@ -263,14 +263,14 @@ type MysekaiphenomenabackgroundcolorUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetGameID(v int) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetGameID(v int64) *MysekaiphenomenabackgroundcolorUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -278,7 +278,7 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int) *M
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) AddGameID(v int) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) AddGameID(v int64) *MysekaiphenomenabackgroundcolorUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -469,10 +469,10 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) sqlSave(ctx context.Context)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)

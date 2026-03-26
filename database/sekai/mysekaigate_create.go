@@ -20,7 +20,7 @@ type MysekaigateCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaigateCreate) SetGameID(v int) *MysekaigateCreate {
+func (_c *MysekaigateCreate) SetGameID(v int64) *MysekaigateCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -140,7 +140,7 @@ func (_c *MysekaigateCreate) createSpec() (*Mysekaigate, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(mysekaigate.Table, sqlgraph.NewFieldSpec(mysekaigate.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {

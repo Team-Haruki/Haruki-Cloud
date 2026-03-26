@@ -30,14 +30,14 @@ func (_u *MysekaicharactertalkconditionUpdate) Where(ps ...predicate.Mysekaichar
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaicharactertalkconditionUpdate) SetGameID(v int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) SetGameID(v int64) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaicharactertalkconditionUpdate) SetNillableGameID(v *int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) SetNillableGameID(v *int64) *MysekaicharactertalkconditionUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaicharactertalkconditionUpdate) SetNillableGameID(v *int) *Myseka
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaicharactertalkconditionUpdate) AddGameID(v int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) AddGameID(v int64) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -69,14 +69,14 @@ func (_u *MysekaicharactertalkconditionUpdate) ClearMysekaiCharacterTalkConditio
 }
 
 // SetMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field.
-func (_u *MysekaicharactertalkconditionUpdate) SetMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) SetMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.ResetMysekaiCharacterTalkConditionTypeValue()
 	_u.mutation.SetMysekaiCharacterTalkConditionTypeValue(v)
 	return _u
 }
 
 // SetNillableMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field if the given value is not nil.
-func (_u *MysekaicharactertalkconditionUpdate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int64) *MysekaicharactertalkconditionUpdate {
 	if v != nil {
 		_u.SetMysekaiCharacterTalkConditionTypeValue(*v)
 	}
@@ -84,7 +84,7 @@ func (_u *MysekaicharactertalkconditionUpdate) SetNillableMysekaiCharacterTalkCo
 }
 
 // AddMysekaiCharacterTalkConditionTypeValue adds value to the "mysekai_character_talk_condition_type_value" field.
-func (_u *MysekaicharactertalkconditionUpdate) AddMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) AddMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.AddMysekaiCharacterTalkConditionTypeValue(v)
 	return _u
 }
@@ -151,10 +151,10 @@ func (_u *MysekaicharactertalkconditionUpdate) sqlSave(ctx context.Context) (_no
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
@@ -168,13 +168,13 @@ func (_u *MysekaicharactertalkconditionUpdate) sqlSave(ctx context.Context) (_no
 		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.AddField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
+		_spec.AddField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkConditionTypeValueCleared() {
-		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt)
+		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldServerRegion, field.TypeString, value)
@@ -200,14 +200,14 @@ type MysekaicharactertalkconditionUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) SetGameID(v int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) SetGameID(v int64) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableGameID(v *int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableGameID(v *int64) *MysekaicharactertalkconditionUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -215,7 +215,7 @@ func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableGameID(v *int) *Mys
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) AddGameID(v int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) AddGameID(v int64) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -239,14 +239,14 @@ func (_u *MysekaicharactertalkconditionUpdateOne) ClearMysekaiCharacterTalkCondi
 }
 
 // SetMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) SetMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) SetMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.ResetMysekaiCharacterTalkConditionTypeValue()
 	_u.mutation.SetMysekaiCharacterTalkConditionTypeValue(v)
 	return _u
 }
 
 // SetNillableMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field if the given value is not nil.
-func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int64) *MysekaicharactertalkconditionUpdateOne {
 	if v != nil {
 		_u.SetMysekaiCharacterTalkConditionTypeValue(*v)
 	}
@@ -254,7 +254,7 @@ func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableMysekaiCharacterTal
 }
 
 // AddMysekaiCharacterTalkConditionTypeValue adds value to the "mysekai_character_talk_condition_type_value" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) AddMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) AddMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.AddMysekaiCharacterTalkConditionTypeValue(v)
 	return _u
 }
@@ -351,10 +351,10 @@ func (_u *MysekaicharactertalkconditionUpdateOne) sqlSave(ctx context.Context) (
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
@@ -368,13 +368,13 @@ func (_u *MysekaicharactertalkconditionUpdateOne) sqlSave(ctx context.Context) (
 		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.AddField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
+		_spec.AddField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkConditionTypeValueCleared() {
-		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt)
+		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldServerRegion, field.TypeString, value)

@@ -21,7 +21,7 @@ type MysekaimusicrecordCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimusicrecordCreate) SetGameID(v int) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetGameID(v int64) *MysekaimusicrecordCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -33,13 +33,13 @@ func (_c *MysekaimusicrecordCreate) SetMysekaiMusicTrackType(v json.RawMessage) 
 }
 
 // SetExternalID sets the "external_id" field.
-func (_c *MysekaimusicrecordCreate) SetExternalID(v int) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetExternalID(v int64) *MysekaimusicrecordCreate {
 	_c.mutation.SetExternalID(v)
 	return _c
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_c *MysekaimusicrecordCreate) SetNillableExternalID(v *int) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetNillableExternalID(v *int64) *MysekaimusicrecordCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
 	}
@@ -119,7 +119,7 @@ func (_c *MysekaimusicrecordCreate) createSpec() (*Mysekaimusicrecord, *sqlgraph
 		_spec = sqlgraph.NewCreateSpec(mysekaimusicrecord.Table, sqlgraph.NewFieldSpec(mysekaimusicrecord.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {
@@ -127,7 +127,7 @@ func (_c *MysekaimusicrecordCreate) createSpec() (*Mysekaimusicrecord, *sqlgraph
 		_node.MysekaiMusicTrackType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
 		_node.ExternalID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

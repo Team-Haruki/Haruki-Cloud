@@ -262,7 +262,7 @@ func (_q *EventexchangesummarieQuery) Clone() *EventexchangesummarieQuery {
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *EventexchangesummarieQuery) GroupBy(field string, fields ...string) *E
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Eventexchangesummarie.Query().

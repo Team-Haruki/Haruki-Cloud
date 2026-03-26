@@ -28,14 +28,14 @@ func (_u *NgwordUpdate) Where(ps ...predicate.Ngword) *NgwordUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *NgwordUpdate) SetGameID(v int) *NgwordUpdate {
+func (_u *NgwordUpdate) SetGameID(v int64) *NgwordUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *NgwordUpdate) SetNillableGameID(v *int) *NgwordUpdate {
+func (_u *NgwordUpdate) SetNillableGameID(v *int64) *NgwordUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *NgwordUpdate) SetNillableGameID(v *int) *NgwordUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *NgwordUpdate) AddGameID(v int) *NgwordUpdate {
+func (_u *NgwordUpdate) AddGameID(v int64) *NgwordUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -124,10 +124,10 @@ func (_u *NgwordUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(ngword.FieldGameID, field.TypeInt, value)
+		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)
@@ -159,14 +159,14 @@ type NgwordUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *NgwordUpdateOne) SetGameID(v int) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) SetGameID(v int64) *NgwordUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *NgwordUpdateOne) SetNillableGameID(v *int) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) SetNillableGameID(v *int64) *NgwordUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -174,7 +174,7 @@ func (_u *NgwordUpdateOne) SetNillableGameID(v *int) *NgwordUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *NgwordUpdateOne) AddGameID(v int) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) AddGameID(v int64) *NgwordUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -285,10 +285,10 @@ func (_u *NgwordUpdateOne) sqlSave(ctx context.Context) (_node *Ngword, err erro
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(ngword.FieldGameID, field.TypeInt, value)
+		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)

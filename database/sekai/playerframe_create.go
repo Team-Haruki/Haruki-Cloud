@@ -20,19 +20,19 @@ type PlayerframeCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *PlayerframeCreate) SetGameID(v int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetGameID(v int64) *PlayerframeCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *PlayerframeCreate) SetSeq(v int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetSeq(v int64) *PlayerframeCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillableSeq(v *int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillableSeq(v *int64) *PlayerframeCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *PlayerframeCreate) SetNillableSeq(v *int) *PlayerframeCreate {
 }
 
 // SetPlayerFrameGroupID sets the "player_frame_group_id" field.
-func (_c *PlayerframeCreate) SetPlayerFrameGroupID(v int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetPlayerFrameGroupID(v int64) *PlayerframeCreate {
 	_c.mutation.SetPlayerFrameGroupID(v)
 	return _c
 }
 
 // SetNillablePlayerFrameGroupID sets the "player_frame_group_id" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillablePlayerFrameGroupID(v *int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillablePlayerFrameGroupID(v *int64) *PlayerframeCreate {
 	if v != nil {
 		_c.SetPlayerFrameGroupID(*v)
 	}
@@ -68,13 +68,13 @@ func (_c *PlayerframeCreate) SetNillableDescription(v *string) *PlayerframeCreat
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *PlayerframeCreate) SetGameCharacterID(v int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetGameCharacterID(v int64) *PlayerframeCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillableGameCharacterID(v *int) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillableGameCharacterID(v *int64) *PlayerframeCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
@@ -154,15 +154,15 @@ func (_c *PlayerframeCreate) createSpec() (*Playerframe, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(playerframe.Table, sqlgraph.NewFieldSpec(playerframe.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(playerframe.FieldGameID, field.TypeInt, value)
+		_spec.SetField(playerframe.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(playerframe.FieldSeq, field.TypeInt, value)
+		_spec.SetField(playerframe.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.PlayerFrameGroupID(); ok {
-		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
+		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
 		_node.PlayerFrameGroupID = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
@@ -170,7 +170,7 @@ func (_c *PlayerframeCreate) createSpec() (*Playerframe, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

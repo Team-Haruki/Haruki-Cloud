@@ -18,9 +18,9 @@ type Areaitem struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// AreaID holds the value of the "area_id" field.
-	AreaID int `json:"area_id,omitempty"`
+	AreaID int64 `json:"area_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
@@ -70,13 +70,13 @@ func (_m *Areaitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case areaitem.FieldAreaID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field area_id", values[i])
 			} else if value.Valid {
-				_m.AreaID = int(value.Int64)
+				_m.AreaID = value.Int64
 			}
 		case areaitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {

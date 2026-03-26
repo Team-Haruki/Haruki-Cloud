@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Area {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Area {
+func GameID(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -64,7 +64,7 @@ func AssetbundleName(v string) predicate.Area {
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int) predicate.Area {
+func GroupID(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldGroupID, v))
 }
 
@@ -79,7 +79,7 @@ func Name(v string) predicate.Area {
 }
 
 // ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
-func ReleaseConditionID(v int) predicate.Area {
+func ReleaseConditionID(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldReleaseConditionID, v))
 }
 
@@ -89,17 +89,17 @@ func SubName(v string) predicate.Area {
 }
 
 // StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int) predicate.Area {
+func StartAt(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldStartAt, v))
 }
 
 // EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
-func EndAt(v int) predicate.Area {
+func EndAt(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldEndAt, v))
 }
 
 // ReleaseConditionId2 applies equality check predicate on the "release_condition_id2" field. It's identical to ReleaseConditionId2EQ.
-func ReleaseConditionId2(v int) predicate.Area {
+func ReleaseConditionId2(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldReleaseConditionId2, v))
 }
 
@@ -109,42 +109,42 @@ func ServerRegion(v string) predicate.Area {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Area {
+func GameIDEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Area {
+func GameIDNEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Area {
+func GameIDIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Area {
+func GameIDNotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Area {
+func GameIDGT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Area {
+func GameIDGTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Area {
+func GameIDLT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Area {
+func GameIDLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -224,42 +224,42 @@ func AssetbundleNameContainsFold(v string) predicate.Area {
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int) predicate.Area {
+func GroupIDEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int) predicate.Area {
+func GroupIDNEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int) predicate.Area {
+func GroupIDIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int) predicate.Area {
+func GroupIDNotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int) predicate.Area {
+func GroupIDGT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int) predicate.Area {
+func GroupIDGTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int) predicate.Area {
+func GroupIDLT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int) predicate.Area {
+func GroupIDLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldGroupID, v))
 }
 
@@ -409,42 +409,42 @@ func NameContainsFold(v string) predicate.Area {
 }
 
 // ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDEQ(v int) predicate.Area {
+func ReleaseConditionIDEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDNEQ(v int) predicate.Area {
+func ReleaseConditionIDNEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
-func ReleaseConditionIDIn(vs ...int) predicate.Area {
+func ReleaseConditionIDIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldReleaseConditionID, vs...))
 }
 
 // ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotIn(vs ...int) predicate.Area {
+func ReleaseConditionIDNotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldReleaseConditionID, vs...))
 }
 
 // ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
-func ReleaseConditionIDGT(v int) predicate.Area {
+func ReleaseConditionIDGT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDGTE(v int) predicate.Area {
+func ReleaseConditionIDGTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
-func ReleaseConditionIDLT(v int) predicate.Area {
+func ReleaseConditionIDLT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDLTE(v int) predicate.Area {
+func ReleaseConditionIDLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldReleaseConditionID, v))
 }
 
@@ -609,42 +609,42 @@ func LabelContainsFold(v string) predicate.Area {
 }
 
 // StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int) predicate.Area {
+func StartAtEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldStartAt, v))
 }
 
 // StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int) predicate.Area {
+func StartAtNEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldStartAt, v))
 }
 
 // StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int) predicate.Area {
+func StartAtIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldStartAt, vs...))
 }
 
 // StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int) predicate.Area {
+func StartAtNotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldStartAt, vs...))
 }
 
 // StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int) predicate.Area {
+func StartAtGT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldStartAt, v))
 }
 
 // StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int) predicate.Area {
+func StartAtGTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldStartAt, v))
 }
 
 // StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int) predicate.Area {
+func StartAtLT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldStartAt, v))
 }
 
 // StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int) predicate.Area {
+func StartAtLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldStartAt, v))
 }
 
@@ -659,42 +659,42 @@ func StartAtNotNil() predicate.Area {
 }
 
 // EndAtEQ applies the EQ predicate on the "end_at" field.
-func EndAtEQ(v int) predicate.Area {
+func EndAtEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldEndAt, v))
 }
 
 // EndAtNEQ applies the NEQ predicate on the "end_at" field.
-func EndAtNEQ(v int) predicate.Area {
+func EndAtNEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldEndAt, v))
 }
 
 // EndAtIn applies the In predicate on the "end_at" field.
-func EndAtIn(vs ...int) predicate.Area {
+func EndAtIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldEndAt, vs...))
 }
 
 // EndAtNotIn applies the NotIn predicate on the "end_at" field.
-func EndAtNotIn(vs ...int) predicate.Area {
+func EndAtNotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldEndAt, vs...))
 }
 
 // EndAtGT applies the GT predicate on the "end_at" field.
-func EndAtGT(v int) predicate.Area {
+func EndAtGT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldEndAt, v))
 }
 
 // EndAtGTE applies the GTE predicate on the "end_at" field.
-func EndAtGTE(v int) predicate.Area {
+func EndAtGTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldEndAt, v))
 }
 
 // EndAtLT applies the LT predicate on the "end_at" field.
-func EndAtLT(v int) predicate.Area {
+func EndAtLT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldEndAt, v))
 }
 
 // EndAtLTE applies the LTE predicate on the "end_at" field.
-func EndAtLTE(v int) predicate.Area {
+func EndAtLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldEndAt, v))
 }
 
@@ -709,42 +709,42 @@ func EndAtNotNil() predicate.Area {
 }
 
 // ReleaseConditionId2EQ applies the EQ predicate on the "release_condition_id2" field.
-func ReleaseConditionId2EQ(v int) predicate.Area {
+func ReleaseConditionId2EQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldReleaseConditionId2, v))
 }
 
 // ReleaseConditionId2NEQ applies the NEQ predicate on the "release_condition_id2" field.
-func ReleaseConditionId2NEQ(v int) predicate.Area {
+func ReleaseConditionId2NEQ(v int64) predicate.Area {
 	return predicate.Area(sql.FieldNEQ(FieldReleaseConditionId2, v))
 }
 
 // ReleaseConditionId2In applies the In predicate on the "release_condition_id2" field.
-func ReleaseConditionId2In(vs ...int) predicate.Area {
+func ReleaseConditionId2In(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldIn(FieldReleaseConditionId2, vs...))
 }
 
 // ReleaseConditionId2NotIn applies the NotIn predicate on the "release_condition_id2" field.
-func ReleaseConditionId2NotIn(vs ...int) predicate.Area {
+func ReleaseConditionId2NotIn(vs ...int64) predicate.Area {
 	return predicate.Area(sql.FieldNotIn(FieldReleaseConditionId2, vs...))
 }
 
 // ReleaseConditionId2GT applies the GT predicate on the "release_condition_id2" field.
-func ReleaseConditionId2GT(v int) predicate.Area {
+func ReleaseConditionId2GT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGT(FieldReleaseConditionId2, v))
 }
 
 // ReleaseConditionId2GTE applies the GTE predicate on the "release_condition_id2" field.
-func ReleaseConditionId2GTE(v int) predicate.Area {
+func ReleaseConditionId2GTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldGTE(FieldReleaseConditionId2, v))
 }
 
 // ReleaseConditionId2LT applies the LT predicate on the "release_condition_id2" field.
-func ReleaseConditionId2LT(v int) predicate.Area {
+func ReleaseConditionId2LT(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLT(FieldReleaseConditionId2, v))
 }
 
 // ReleaseConditionId2LTE applies the LTE predicate on the "release_condition_id2" field.
-func ReleaseConditionId2LTE(v int) predicate.Area {
+func ReleaseConditionId2LTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldReleaseConditionId2, v))
 }
 

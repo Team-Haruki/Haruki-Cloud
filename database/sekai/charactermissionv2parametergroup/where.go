@@ -54,27 +54,27 @@ func IDLTE(id int) predicate.Charactermissionv2Parametergroup {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Charactermissionv2Parametergroup {
+func GameID(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Charactermissionv2Parametergroup {
+func Seq(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldSeq, v))
 }
 
 // Requirement applies equality check predicate on the "requirement" field. It's identical to RequirementEQ.
-func Requirement(v int) predicate.Charactermissionv2Parametergroup {
+func Requirement(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldRequirement, v))
 }
 
 // Exp applies equality check predicate on the "exp" field. It's identical to ExpEQ.
-func Exp(v int) predicate.Charactermissionv2Parametergroup {
+func Exp(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldExp, v))
 }
 
 // Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
-func Quantity(v int) predicate.Charactermissionv2Parametergroup {
+func Quantity(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldQuantity, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Charactermissionv2Parametergroup {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDNEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func GameIDIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func GameIDNotIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDGT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDGTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDLT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Charactermissionv2Parametergroup {
+func GameIDLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Charactermissionv2Parametergroup {
+func SeqEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Charactermissionv2Parametergroup {
+func SeqNEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func SeqIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func SeqNotIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Charactermissionv2Parametergroup {
+func SeqGT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Charactermissionv2Parametergroup {
+func SeqGTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Charactermissionv2Parametergroup {
+func SeqLT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Charactermissionv2Parametergroup {
+func SeqLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -174,42 +174,42 @@ func SeqNotNil() predicate.Charactermissionv2Parametergroup {
 }
 
 // RequirementEQ applies the EQ predicate on the "requirement" field.
-func RequirementEQ(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldRequirement, v))
 }
 
 // RequirementNEQ applies the NEQ predicate on the "requirement" field.
-func RequirementNEQ(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementNEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNEQ(FieldRequirement, v))
 }
 
 // RequirementIn applies the In predicate on the "requirement" field.
-func RequirementIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func RequirementIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldIn(FieldRequirement, vs...))
 }
 
 // RequirementNotIn applies the NotIn predicate on the "requirement" field.
-func RequirementNotIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func RequirementNotIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNotIn(FieldRequirement, vs...))
 }
 
 // RequirementGT applies the GT predicate on the "requirement" field.
-func RequirementGT(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementGT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGT(FieldRequirement, v))
 }
 
 // RequirementGTE applies the GTE predicate on the "requirement" field.
-func RequirementGTE(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementGTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGTE(FieldRequirement, v))
 }
 
 // RequirementLT applies the LT predicate on the "requirement" field.
-func RequirementLT(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementLT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLT(FieldRequirement, v))
 }
 
 // RequirementLTE applies the LTE predicate on the "requirement" field.
-func RequirementLTE(v int) predicate.Charactermissionv2Parametergroup {
+func RequirementLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldRequirement, v))
 }
 
@@ -224,42 +224,42 @@ func RequirementNotNil() predicate.Charactermissionv2Parametergroup {
 }
 
 // ExpEQ applies the EQ predicate on the "exp" field.
-func ExpEQ(v int) predicate.Charactermissionv2Parametergroup {
+func ExpEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldExp, v))
 }
 
 // ExpNEQ applies the NEQ predicate on the "exp" field.
-func ExpNEQ(v int) predicate.Charactermissionv2Parametergroup {
+func ExpNEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNEQ(FieldExp, v))
 }
 
 // ExpIn applies the In predicate on the "exp" field.
-func ExpIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func ExpIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldIn(FieldExp, vs...))
 }
 
 // ExpNotIn applies the NotIn predicate on the "exp" field.
-func ExpNotIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func ExpNotIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNotIn(FieldExp, vs...))
 }
 
 // ExpGT applies the GT predicate on the "exp" field.
-func ExpGT(v int) predicate.Charactermissionv2Parametergroup {
+func ExpGT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGT(FieldExp, v))
 }
 
 // ExpGTE applies the GTE predicate on the "exp" field.
-func ExpGTE(v int) predicate.Charactermissionv2Parametergroup {
+func ExpGTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGTE(FieldExp, v))
 }
 
 // ExpLT applies the LT predicate on the "exp" field.
-func ExpLT(v int) predicate.Charactermissionv2Parametergroup {
+func ExpLT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLT(FieldExp, v))
 }
 
 // ExpLTE applies the LTE predicate on the "exp" field.
-func ExpLTE(v int) predicate.Charactermissionv2Parametergroup {
+func ExpLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldExp, v))
 }
 
@@ -274,42 +274,42 @@ func ExpNotNil() predicate.Charactermissionv2Parametergroup {
 }
 
 // QuantityEQ applies the EQ predicate on the "quantity" field.
-func QuantityEQ(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldQuantity, v))
 }
 
 // QuantityNEQ applies the NEQ predicate on the "quantity" field.
-func QuantityNEQ(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityNEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNEQ(FieldQuantity, v))
 }
 
 // QuantityIn applies the In predicate on the "quantity" field.
-func QuantityIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func QuantityIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldIn(FieldQuantity, vs...))
 }
 
 // QuantityNotIn applies the NotIn predicate on the "quantity" field.
-func QuantityNotIn(vs ...int) predicate.Charactermissionv2Parametergroup {
+func QuantityNotIn(vs ...int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldNotIn(FieldQuantity, vs...))
 }
 
 // QuantityGT applies the GT predicate on the "quantity" field.
-func QuantityGT(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityGT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGT(FieldQuantity, v))
 }
 
 // QuantityGTE applies the GTE predicate on the "quantity" field.
-func QuantityGTE(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityGTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldGTE(FieldQuantity, v))
 }
 
 // QuantityLT applies the LT predicate on the "quantity" field.
-func QuantityLT(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityLT(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLT(FieldQuantity, v))
 }
 
 // QuantityLTE applies the LTE predicate on the "quantity" field.
-func QuantityLTE(v int) predicate.Charactermissionv2Parametergroup {
+func QuantityLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldQuantity, v))
 }
 

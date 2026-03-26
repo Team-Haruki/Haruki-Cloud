@@ -18,13 +18,13 @@ type Eventstorie struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// Outline holds the value of the "outline" field.
 	Outline string `json:"outline,omitempty"`
 	// BannerGameCharacterUnitID holds the value of the "banner_game_character_unit_id" field.
-	BannerGameCharacterUnitID int `json:"banner_game_character_unit_id,omitempty"`
+	BannerGameCharacterUnitID int64 `json:"banner_game_character_unit_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// EventStoryEpisodes holds the value of the "event_story_episodes" field.
@@ -70,13 +70,13 @@ func (_m *Eventstorie) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case eventstorie.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case eventstorie.FieldOutline:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,7 +88,7 @@ func (_m *Eventstorie) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field banner_game_character_unit_id", values[i])
 			} else if value.Valid {
-				_m.BannerGameCharacterUnitID = int(value.Int64)
+				_m.BannerGameCharacterUnitID = value.Int64
 			}
 		case eventstorie.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {

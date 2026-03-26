@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Mysekaiitem {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaiitem {
+func GameID(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Mysekaiitem {
+func Seq(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -94,82 +94,82 @@ func ServerRegion(v string) predicate.Mysekaiitem {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaiitem {
+func GameIDEQ(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaiitem {
+func GameIDNEQ(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaiitem {
+func GameIDIn(vs ...int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaiitem {
+func GameIDNotIn(vs ...int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaiitem {
+func GameIDGT(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaiitem {
+func GameIDGTE(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaiitem {
+func GameIDLT(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaiitem {
+func GameIDLTE(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Mysekaiitem {
+func SeqEQ(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Mysekaiitem {
+func SeqNEQ(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Mysekaiitem {
+func SeqIn(vs ...int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Mysekaiitem {
+func SeqNotIn(vs ...int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Mysekaiitem {
+func SeqGT(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Mysekaiitem {
+func SeqGTE(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Mysekaiitem {
+func SeqLT(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Mysekaiitem {
+func SeqLTE(v int64) predicate.Mysekaiitem {
 	return predicate.Mysekaiitem(sql.FieldLTE(FieldSeq, v))
 }
 

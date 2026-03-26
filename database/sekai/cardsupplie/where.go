@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Cardsupplie {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Cardsupplie {
+func GameID(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,42 +74,42 @@ func ServerRegion(v string) predicate.Cardsupplie {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Cardsupplie {
+func GameIDEQ(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Cardsupplie {
+func GameIDNEQ(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Cardsupplie {
+func GameIDIn(vs ...int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Cardsupplie {
+func GameIDNotIn(vs ...int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Cardsupplie {
+func GameIDGT(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Cardsupplie {
+func GameIDGTE(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Cardsupplie {
+func GameIDLT(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Cardsupplie {
+func GameIDLTE(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLTE(FieldGameID, v))
 }
 

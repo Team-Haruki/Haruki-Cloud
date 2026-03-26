@@ -54,22 +54,22 @@ func IDLTE(id int) predicate.Bond {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Bond {
+func GameID(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldGameID, v))
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int) predicate.Bond {
+func GroupID(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldGroupID, v))
 }
 
 // CharacterId1 applies equality check predicate on the "character_id1" field. It's identical to CharacterId1EQ.
-func CharacterId1(v int) predicate.Bond {
+func CharacterId1(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldCharacterId1, v))
 }
 
 // CharacterId2 applies equality check predicate on the "character_id2" field. It's identical to CharacterId2EQ.
-func CharacterId2(v int) predicate.Bond {
+func CharacterId2(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldCharacterId2, v))
 }
 
@@ -79,82 +79,82 @@ func ServerRegion(v string) predicate.Bond {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Bond {
+func GameIDEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Bond {
+func GameIDNEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Bond {
+func GameIDIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Bond {
+func GameIDNotIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Bond {
+func GameIDGT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Bond {
+func GameIDGTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Bond {
+func GameIDLT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Bond {
+func GameIDLTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLTE(FieldGameID, v))
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int) predicate.Bond {
+func GroupIDEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int) predicate.Bond {
+func GroupIDNEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int) predicate.Bond {
+func GroupIDIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int) predicate.Bond {
+func GroupIDNotIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int) predicate.Bond {
+func GroupIDGT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int) predicate.Bond {
+func GroupIDGTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int) predicate.Bond {
+func GroupIDLT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int) predicate.Bond {
+func GroupIDLTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLTE(FieldGroupID, v))
 }
 
@@ -169,42 +169,42 @@ func GroupIDNotNil() predicate.Bond {
 }
 
 // CharacterId1EQ applies the EQ predicate on the "character_id1" field.
-func CharacterId1EQ(v int) predicate.Bond {
+func CharacterId1EQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldCharacterId1, v))
 }
 
 // CharacterId1NEQ applies the NEQ predicate on the "character_id1" field.
-func CharacterId1NEQ(v int) predicate.Bond {
+func CharacterId1NEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNEQ(FieldCharacterId1, v))
 }
 
 // CharacterId1In applies the In predicate on the "character_id1" field.
-func CharacterId1In(vs ...int) predicate.Bond {
+func CharacterId1In(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldIn(FieldCharacterId1, vs...))
 }
 
 // CharacterId1NotIn applies the NotIn predicate on the "character_id1" field.
-func CharacterId1NotIn(vs ...int) predicate.Bond {
+func CharacterId1NotIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNotIn(FieldCharacterId1, vs...))
 }
 
 // CharacterId1GT applies the GT predicate on the "character_id1" field.
-func CharacterId1GT(v int) predicate.Bond {
+func CharacterId1GT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGT(FieldCharacterId1, v))
 }
 
 // CharacterId1GTE applies the GTE predicate on the "character_id1" field.
-func CharacterId1GTE(v int) predicate.Bond {
+func CharacterId1GTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGTE(FieldCharacterId1, v))
 }
 
 // CharacterId1LT applies the LT predicate on the "character_id1" field.
-func CharacterId1LT(v int) predicate.Bond {
+func CharacterId1LT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLT(FieldCharacterId1, v))
 }
 
 // CharacterId1LTE applies the LTE predicate on the "character_id1" field.
-func CharacterId1LTE(v int) predicate.Bond {
+func CharacterId1LTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLTE(FieldCharacterId1, v))
 }
 
@@ -219,42 +219,42 @@ func CharacterId1NotNil() predicate.Bond {
 }
 
 // CharacterId2EQ applies the EQ predicate on the "character_id2" field.
-func CharacterId2EQ(v int) predicate.Bond {
+func CharacterId2EQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldCharacterId2, v))
 }
 
 // CharacterId2NEQ applies the NEQ predicate on the "character_id2" field.
-func CharacterId2NEQ(v int) predicate.Bond {
+func CharacterId2NEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNEQ(FieldCharacterId2, v))
 }
 
 // CharacterId2In applies the In predicate on the "character_id2" field.
-func CharacterId2In(vs ...int) predicate.Bond {
+func CharacterId2In(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldIn(FieldCharacterId2, vs...))
 }
 
 // CharacterId2NotIn applies the NotIn predicate on the "character_id2" field.
-func CharacterId2NotIn(vs ...int) predicate.Bond {
+func CharacterId2NotIn(vs ...int64) predicate.Bond {
 	return predicate.Bond(sql.FieldNotIn(FieldCharacterId2, vs...))
 }
 
 // CharacterId2GT applies the GT predicate on the "character_id2" field.
-func CharacterId2GT(v int) predicate.Bond {
+func CharacterId2GT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGT(FieldCharacterId2, v))
 }
 
 // CharacterId2GTE applies the GTE predicate on the "character_id2" field.
-func CharacterId2GTE(v int) predicate.Bond {
+func CharacterId2GTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldGTE(FieldCharacterId2, v))
 }
 
 // CharacterId2LT applies the LT predicate on the "character_id2" field.
-func CharacterId2LT(v int) predicate.Bond {
+func CharacterId2LT(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLT(FieldCharacterId2, v))
 }
 
 // CharacterId2LTE applies the LTE predicate on the "character_id2" field.
-func CharacterId2LTE(v int) predicate.Bond {
+func CharacterId2LTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLTE(FieldCharacterId2, v))
 }
 

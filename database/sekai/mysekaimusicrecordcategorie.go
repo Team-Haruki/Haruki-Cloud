@@ -18,11 +18,11 @@ type Mysekaimusicrecordcategorie struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
 	MysekaiMusicTrackType json.RawMessage `json:"mysekai_music_track_type,omitempty"`
 	// Unit holds the value of the "unit" field.
@@ -68,7 +68,7 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaimusicrecordcategorie.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -80,7 +80,7 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType:
 			if value, ok := values[i].(*[]byte); !ok {

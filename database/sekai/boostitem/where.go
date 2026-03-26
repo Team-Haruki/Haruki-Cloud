@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Boostitem {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Boostitem {
+func GameID(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Boostitem {
+func Seq(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -69,7 +69,7 @@ func Name(v string) predicate.Boostitem {
 }
 
 // RecoveryValue applies equality check predicate on the "recovery_value" field. It's identical to RecoveryValueEQ.
-func RecoveryValue(v int) predicate.Boostitem {
+func RecoveryValue(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldRecoveryValue, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Boostitem {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Boostitem {
+func GameIDEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Boostitem {
+func GameIDNEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Boostitem {
+func GameIDIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Boostitem {
+func GameIDNotIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Boostitem {
+func GameIDGT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Boostitem {
+func GameIDGTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Boostitem {
+func GameIDLT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Boostitem {
+func GameIDLTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Boostitem {
+func SeqEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Boostitem {
+func SeqNEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Boostitem {
+func SeqIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Boostitem {
+func SeqNotIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Boostitem {
+func SeqGT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Boostitem {
+func SeqGTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Boostitem {
+func SeqLT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Boostitem {
+func SeqLTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -249,42 +249,42 @@ func NameContainsFold(v string) predicate.Boostitem {
 }
 
 // RecoveryValueEQ applies the EQ predicate on the "recovery_value" field.
-func RecoveryValueEQ(v int) predicate.Boostitem {
+func RecoveryValueEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldRecoveryValue, v))
 }
 
 // RecoveryValueNEQ applies the NEQ predicate on the "recovery_value" field.
-func RecoveryValueNEQ(v int) predicate.Boostitem {
+func RecoveryValueNEQ(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldRecoveryValue, v))
 }
 
 // RecoveryValueIn applies the In predicate on the "recovery_value" field.
-func RecoveryValueIn(vs ...int) predicate.Boostitem {
+func RecoveryValueIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldRecoveryValue, vs...))
 }
 
 // RecoveryValueNotIn applies the NotIn predicate on the "recovery_value" field.
-func RecoveryValueNotIn(vs ...int) predicate.Boostitem {
+func RecoveryValueNotIn(vs ...int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldRecoveryValue, vs...))
 }
 
 // RecoveryValueGT applies the GT predicate on the "recovery_value" field.
-func RecoveryValueGT(v int) predicate.Boostitem {
+func RecoveryValueGT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldRecoveryValue, v))
 }
 
 // RecoveryValueGTE applies the GTE predicate on the "recovery_value" field.
-func RecoveryValueGTE(v int) predicate.Boostitem {
+func RecoveryValueGTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldRecoveryValue, v))
 }
 
 // RecoveryValueLT applies the LT predicate on the "recovery_value" field.
-func RecoveryValueLT(v int) predicate.Boostitem {
+func RecoveryValueLT(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldRecoveryValue, v))
 }
 
 // RecoveryValueLTE applies the LTE predicate on the "recovery_value" field.
-func RecoveryValueLTE(v int) predicate.Boostitem {
+func RecoveryValueLTE(v int64) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldRecoveryValue, v))
 }
 

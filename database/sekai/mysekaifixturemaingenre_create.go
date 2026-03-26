@@ -21,7 +21,7 @@ type MysekaifixturemaingenreCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturemaingenreCreate) SetGameID(v int) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetGameID(v int64) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -61,13 +61,13 @@ func (_c *MysekaifixturemaingenreCreate) SetNillableAssetbundleName(v *string) *
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaifixturemaingenreCreate) SetGroupID(v int) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetGroupID(v int64) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaifixturemaingenreCreate) SetNillableGroupID(v *int) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetNillableGroupID(v *int64) *MysekaifixturemaingenreCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -147,7 +147,7 @@ func (_c *MysekaifixturemaingenreCreate) createSpec() (*Mysekaifixturemaingenre,
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturemaingenre.Table, sqlgraph.NewFieldSpec(mysekaifixturemaingenre.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -163,7 +163,7 @@ func (_c *MysekaifixturemaingenreCreate) createSpec() (*Mysekaifixturemaingenre,
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

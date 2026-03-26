@@ -20,19 +20,19 @@ type MysekaigatelevelCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaigatelevelCreate) SetGameID(v int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetGameID(v int64) *MysekaigatelevelCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (_c *MysekaigatelevelCreate) SetMysekaiGateID(v int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetMysekaiGateID(v int64) *MysekaigatelevelCreate {
 	_c.mutation.SetMysekaiGateID(v)
 	return _c
 }
 
 // SetNillableMysekaiGateID sets the "mysekai_gate_id" field if the given value is not nil.
-func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateID(v *int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateID(v *int64) *MysekaigatelevelCreate {
 	if v != nil {
 		_c.SetMysekaiGateID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateID(v *int) *Mysekaigatel
 }
 
 // SetLevel sets the "level" field.
-func (_c *MysekaigatelevelCreate) SetLevel(v int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetLevel(v int64) *MysekaigatelevelCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_c *MysekaigatelevelCreate) SetNillableLevel(v *int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetNillableLevel(v *int64) *MysekaigatelevelCreate {
 	if v != nil {
 		_c.SetLevel(*v)
 	}
@@ -54,13 +54,13 @@ func (_c *MysekaigatelevelCreate) SetNillableLevel(v *int) *MysekaigatelevelCrea
 }
 
 // SetMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field.
-func (_c *MysekaigatelevelCreate) SetMysekaiGateMaterialGroupID(v int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetMysekaiGateMaterialGroupID(v int64) *MysekaigatelevelCreate {
 	_c.mutation.SetMysekaiGateMaterialGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field if the given value is not nil.
-func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateMaterialGroupID(v *int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateMaterialGroupID(v *int64) *MysekaigatelevelCreate {
 	if v != nil {
 		_c.SetMysekaiGateMaterialGroupID(*v)
 	}
@@ -68,13 +68,13 @@ func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateMaterialGroupID(v *int) 
 }
 
 // SetMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field.
-func (_c *MysekaigatelevelCreate) SetMysekaiGateCharacterVisitCountRateID(v int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetMysekaiGateCharacterVisitCountRateID(v int64) *MysekaigatelevelCreate {
 	_c.mutation.SetMysekaiGateCharacterVisitCountRateID(v)
 	return _c
 }
 
 // SetNillableMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field if the given value is not nil.
-func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateCharacterVisitCountRateID(v *int) *MysekaigatelevelCreate {
+func (_c *MysekaigatelevelCreate) SetNillableMysekaiGateCharacterVisitCountRateID(v *int64) *MysekaigatelevelCreate {
 	if v != nil {
 		_c.SetMysekaiGateCharacterVisitCountRateID(*v)
 	}
@@ -168,23 +168,23 @@ func (_c *MysekaigatelevelCreate) createSpec() (*Mysekaigatelevel, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(mysekaigatelevel.Table, sqlgraph.NewFieldSpec(mysekaigatelevel.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiGateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64, value)
 		_node.MysekaiGateID = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt, value)
+		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt64, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.MysekaiGateMaterialGroupID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64, value)
 		_node.MysekaiGateMaterialGroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiGateCharacterVisitCountRateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64, value)
 		_node.MysekaiGateCharacterVisitCountRateID = value
 	}
 	if value, ok := _c.mutation.PowerBonusRate(); ok {

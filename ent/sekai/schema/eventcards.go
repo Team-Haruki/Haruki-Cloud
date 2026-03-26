@@ -15,9 +15,9 @@ type Eventcard struct {
 
 func (Eventcard) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("card_id").Optional(),
-		field.Int("event_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("card_id").Optional(),
+		field.Int64("event_id").Optional(),
 		field.Float("bonus_rate").Optional(),
 		field.Float("leader_bonus_rate").Optional(),
 		field.Bool("is_display_card_story").Optional(),

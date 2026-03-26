@@ -30,14 +30,14 @@ func (_u *GamecharacterunitUpdate) Where(ps ...predicate.Gamecharacterunit) *Gam
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterunitUpdate) SetGameID(v int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetGameID(v int64) *GamecharacterunitUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterunitUpdate) SetNillableGameID(v *int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetNillableGameID(v *int64) *GamecharacterunitUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *GamecharacterunitUpdate) SetNillableGameID(v *int) *GamecharacterunitU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterunitUpdate) AddGameID(v int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) AddGameID(v int64) *GamecharacterunitUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *GamecharacterunitUpdate) SetGameCharacterID(v int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetGameCharacterID(v int64) *GamecharacterunitUpdate {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *GamecharacterunitUpdate) SetNillableGameCharacterID(v *int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetNillableGameCharacterID(v *int64) *GamecharacterunitUpdate {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *GamecharacterunitUpdate) SetNillableGameCharacterID(v *int) *Gamechara
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *GamecharacterunitUpdate) AddGameCharacterID(v int) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) AddGameCharacterID(v int64) *GamecharacterunitUpdate {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -225,19 +225,19 @@ func (_u *GamecharacterunitUpdate) sqlSave(ctx context.Context) (_node int, err 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacterunit.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gamecharacterunit.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(gamecharacterunit.FieldGameCharacterID, field.TypeInt, value)
+		_spec.AddField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt)
+		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeJSON, value)
@@ -313,14 +313,14 @@ type GamecharacterunitUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterunitUpdateOne) SetGameID(v int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetGameID(v int64) *GamecharacterunitUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterunitUpdateOne) SetNillableGameID(v *int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetNillableGameID(v *int64) *GamecharacterunitUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -328,20 +328,20 @@ func (_u *GamecharacterunitUpdateOne) SetNillableGameID(v *int) *Gamecharacterun
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterunitUpdateOne) AddGameID(v int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) AddGameID(v int64) *GamecharacterunitUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *GamecharacterunitUpdateOne) SetGameCharacterID(v int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetGameCharacterID(v int64) *GamecharacterunitUpdateOne {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *GamecharacterunitUpdateOne) SetNillableGameCharacterID(v *int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetNillableGameCharacterID(v *int64) *GamecharacterunitUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -349,7 +349,7 @@ func (_u *GamecharacterunitUpdateOne) SetNillableGameCharacterID(v *int) *Gamech
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *GamecharacterunitUpdateOne) AddGameCharacterID(v int) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) AddGameCharacterID(v int64) *GamecharacterunitUpdateOne {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -538,19 +538,19 @@ func (_u *GamecharacterunitUpdateOne) sqlSave(ctx context.Context) (_node *Gamec
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacterunit.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gamecharacterunit.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(gamecharacterunit.FieldGameCharacterID, field.TypeInt, value)
+		_spec.AddField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt)
+		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeJSON, value)

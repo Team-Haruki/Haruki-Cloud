@@ -20,19 +20,19 @@ type EventcardCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventcardCreate) SetGameID(v int) *EventcardCreate {
+func (_c *EventcardCreate) SetGameID(v int64) *EventcardCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetCardID sets the "card_id" field.
-func (_c *EventcardCreate) SetCardID(v int) *EventcardCreate {
+func (_c *EventcardCreate) SetCardID(v int64) *EventcardCreate {
 	_c.mutation.SetCardID(v)
 	return _c
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_c *EventcardCreate) SetNillableCardID(v *int) *EventcardCreate {
+func (_c *EventcardCreate) SetNillableCardID(v *int64) *EventcardCreate {
 	if v != nil {
 		_c.SetCardID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *EventcardCreate) SetNillableCardID(v *int) *EventcardCreate {
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventcardCreate) SetEventID(v int) *EventcardCreate {
+func (_c *EventcardCreate) SetEventID(v int64) *EventcardCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventcardCreate) SetNillableEventID(v *int) *EventcardCreate {
+func (_c *EventcardCreate) SetNillableEventID(v *int64) *EventcardCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -168,15 +168,15 @@ func (_c *EventcardCreate) createSpec() (*Eventcard, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(eventcard.Table, sqlgraph.NewFieldSpec(eventcard.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventcard.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardID(); ok {
-		_spec.SetField(eventcard.FieldCardID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldCardID, field.TypeInt64, value)
 		_node.CardID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventcard.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventcard.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {

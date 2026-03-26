@@ -21,7 +21,7 @@ type MysekaifixturetagCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturetagCreate) SetGameID(v int) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetGameID(v int64) *MysekaifixturetagCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -61,13 +61,13 @@ func (_c *MysekaifixturetagCreate) SetMysekaiFixtureTagType(v json.RawMessage) *
 }
 
 // SetExternalID sets the "external_id" field.
-func (_c *MysekaifixturetagCreate) SetExternalID(v int) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetExternalID(v int64) *MysekaifixturetagCreate {
 	_c.mutation.SetExternalID(v)
 	return _c
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_c *MysekaifixturetagCreate) SetNillableExternalID(v *int) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetNillableExternalID(v *int64) *MysekaifixturetagCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
 	}
@@ -147,7 +147,7 @@ func (_c *MysekaifixturetagCreate) createSpec() (*Mysekaifixturetag, *sqlgraph.C
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturetag.Table, sqlgraph.NewFieldSpec(mysekaifixturetag.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -163,7 +163,7 @@ func (_c *MysekaifixturetagCreate) createSpec() (*Mysekaifixturetag, *sqlgraph.C
 		_node.MysekaiFixtureTagType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
 		_node.ExternalID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

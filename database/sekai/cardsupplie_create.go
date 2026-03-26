@@ -20,7 +20,7 @@ type CardsupplieCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *CardsupplieCreate) SetGameID(v int) *CardsupplieCreate {
+func (_c *CardsupplieCreate) SetGameID(v int64) *CardsupplieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -126,7 +126,7 @@ func (_c *CardsupplieCreate) createSpec() (*Cardsupplie, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(cardsupplie.Table, sqlgraph.NewFieldSpec(cardsupplie.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardSupplyType(); ok {

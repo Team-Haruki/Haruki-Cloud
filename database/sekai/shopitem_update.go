@@ -30,14 +30,14 @@ func (_u *ShopitemUpdate) Where(ps ...predicate.Shopitem) *ShopitemUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ShopitemUpdate) SetGameID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetGameID(v int64) *ShopitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableGameID(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableGameID(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *ShopitemUpdate) SetNillableGameID(v *int) *ShopitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ShopitemUpdate) AddGameID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddGameID(v int64) *ShopitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetShopID sets the "shop_id" field.
-func (_u *ShopitemUpdate) SetShopID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetShopID(v int64) *ShopitemUpdate {
 	_u.mutation.ResetShopID()
 	_u.mutation.SetShopID(v)
 	return _u
 }
 
 // SetNillableShopID sets the "shop_id" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableShopID(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableShopID(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetShopID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *ShopitemUpdate) SetNillableShopID(v *int) *ShopitemUpdate {
 }
 
 // AddShopID adds value to the "shop_id" field.
-func (_u *ShopitemUpdate) AddShopID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddShopID(v int64) *ShopitemUpdate {
 	_u.mutation.AddShopID(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *ShopitemUpdate) ClearShopID() *ShopitemUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *ShopitemUpdate) SetSeq(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetSeq(v int64) *ShopitemUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableSeq(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableSeq(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *ShopitemUpdate) SetNillableSeq(v *int) *ShopitemUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *ShopitemUpdate) AddSeq(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddSeq(v int64) *ShopitemUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -105,14 +105,14 @@ func (_u *ShopitemUpdate) ClearSeq() *ShopitemUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *ShopitemUpdate) SetReleaseConditionID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetReleaseConditionID(v int64) *ShopitemUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableReleaseConditionID(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableReleaseConditionID(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -120,7 +120,7 @@ func (_u *ShopitemUpdate) SetNillableReleaseConditionID(v *int) *ShopitemUpdate 
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *ShopitemUpdate) AddReleaseConditionID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddReleaseConditionID(v int64) *ShopitemUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -132,14 +132,14 @@ func (_u *ShopitemUpdate) ClearReleaseConditionID() *ShopitemUpdate {
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_u *ShopitemUpdate) SetResourceBoxID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetResourceBoxID(v int64) *ShopitemUpdate {
 	_u.mutation.ResetResourceBoxID()
 	_u.mutation.SetResourceBoxID(v)
 	return _u
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableResourceBoxID(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableResourceBoxID(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetResourceBoxID(*v)
 	}
@@ -147,7 +147,7 @@ func (_u *ShopitemUpdate) SetNillableResourceBoxID(v *int) *ShopitemUpdate {
 }
 
 // AddResourceBoxID adds value to the "resource_box_id" field.
-func (_u *ShopitemUpdate) AddResourceBoxID(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddResourceBoxID(v int64) *ShopitemUpdate {
 	_u.mutation.AddResourceBoxID(v)
 	return _u
 }
@@ -177,14 +177,14 @@ func (_u *ShopitemUpdate) ClearCosts() *ShopitemUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *ShopitemUpdate) SetStartAt(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetStartAt(v int64) *ShopitemUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *ShopitemUpdate) SetNillableStartAt(v *int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) SetNillableStartAt(v *int64) *ShopitemUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -192,7 +192,7 @@ func (_u *ShopitemUpdate) SetNillableStartAt(v *int) *ShopitemUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *ShopitemUpdate) AddStartAt(v int) *ShopitemUpdate {
+func (_u *ShopitemUpdate) AddStartAt(v int64) *ShopitemUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -259,46 +259,46 @@ func (_u *ShopitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(shopitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(shopitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ShopID(); ok {
-		_spec.SetField(shopitem.FieldShopID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedShopID(); ok {
-		_spec.AddField(shopitem.FieldShopID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldShopID, field.TypeInt64, value)
 	}
 	if _u.mutation.ShopIDCleared() {
-		_spec.ClearField(shopitem.FieldShopID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldShopID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(shopitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(shopitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(shopitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(shopitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(shopitem.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceBoxID(); ok {
-		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedResourceBoxID(); ok {
-		_spec.AddField(shopitem.FieldResourceBoxID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
 	}
 	if _u.mutation.ResourceBoxIDCleared() {
-		_spec.ClearField(shopitem.FieldResourceBoxID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldResourceBoxID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costs(); ok {
 		_spec.SetField(shopitem.FieldCosts, field.TypeJSON, value)
@@ -312,13 +312,13 @@ func (_u *ShopitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(shopitem.FieldCosts, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(shopitem.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(shopitem.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(shopitem.FieldStartAt, field.TypeInt)
+		_spec.ClearField(shopitem.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(shopitem.FieldServerRegion, field.TypeString, value)
@@ -344,14 +344,14 @@ type ShopitemUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ShopitemUpdateOne) SetGameID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetGameID(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableGameID(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableGameID(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -359,20 +359,20 @@ func (_u *ShopitemUpdateOne) SetNillableGameID(v *int) *ShopitemUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ShopitemUpdateOne) AddGameID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddGameID(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetShopID sets the "shop_id" field.
-func (_u *ShopitemUpdateOne) SetShopID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetShopID(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetShopID()
 	_u.mutation.SetShopID(v)
 	return _u
 }
 
 // SetNillableShopID sets the "shop_id" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableShopID(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableShopID(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetShopID(*v)
 	}
@@ -380,7 +380,7 @@ func (_u *ShopitemUpdateOne) SetNillableShopID(v *int) *ShopitemUpdateOne {
 }
 
 // AddShopID adds value to the "shop_id" field.
-func (_u *ShopitemUpdateOne) AddShopID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddShopID(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddShopID(v)
 	return _u
 }
@@ -392,14 +392,14 @@ func (_u *ShopitemUpdateOne) ClearShopID() *ShopitemUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *ShopitemUpdateOne) SetSeq(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetSeq(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableSeq(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableSeq(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -407,7 +407,7 @@ func (_u *ShopitemUpdateOne) SetNillableSeq(v *int) *ShopitemUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *ShopitemUpdateOne) AddSeq(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddSeq(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -419,14 +419,14 @@ func (_u *ShopitemUpdateOne) ClearSeq() *ShopitemUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *ShopitemUpdateOne) SetReleaseConditionID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetReleaseConditionID(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableReleaseConditionID(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableReleaseConditionID(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -434,7 +434,7 @@ func (_u *ShopitemUpdateOne) SetNillableReleaseConditionID(v *int) *ShopitemUpda
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *ShopitemUpdateOne) AddReleaseConditionID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddReleaseConditionID(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -446,14 +446,14 @@ func (_u *ShopitemUpdateOne) ClearReleaseConditionID() *ShopitemUpdateOne {
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_u *ShopitemUpdateOne) SetResourceBoxID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetResourceBoxID(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetResourceBoxID()
 	_u.mutation.SetResourceBoxID(v)
 	return _u
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableResourceBoxID(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableResourceBoxID(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetResourceBoxID(*v)
 	}
@@ -461,7 +461,7 @@ func (_u *ShopitemUpdateOne) SetNillableResourceBoxID(v *int) *ShopitemUpdateOne
 }
 
 // AddResourceBoxID adds value to the "resource_box_id" field.
-func (_u *ShopitemUpdateOne) AddResourceBoxID(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddResourceBoxID(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddResourceBoxID(v)
 	return _u
 }
@@ -491,14 +491,14 @@ func (_u *ShopitemUpdateOne) ClearCosts() *ShopitemUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *ShopitemUpdateOne) SetStartAt(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetStartAt(v int64) *ShopitemUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *ShopitemUpdateOne) SetNillableStartAt(v *int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) SetNillableStartAt(v *int64) *ShopitemUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -506,7 +506,7 @@ func (_u *ShopitemUpdateOne) SetNillableStartAt(v *int) *ShopitemUpdateOne {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *ShopitemUpdateOne) AddStartAt(v int) *ShopitemUpdateOne {
+func (_u *ShopitemUpdateOne) AddStartAt(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -603,46 +603,46 @@ func (_u *ShopitemUpdateOne) sqlSave(ctx context.Context) (_node *Shopitem, err 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(shopitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(shopitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.ShopID(); ok {
-		_spec.SetField(shopitem.FieldShopID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedShopID(); ok {
-		_spec.AddField(shopitem.FieldShopID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldShopID, field.TypeInt64, value)
 	}
 	if _u.mutation.ShopIDCleared() {
-		_spec.ClearField(shopitem.FieldShopID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldShopID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(shopitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(shopitem.FieldSeq, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(shopitem.FieldSeq, field.TypeInt)
+		_spec.ClearField(shopitem.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(shopitem.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceBoxID(); ok {
-		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedResourceBoxID(); ok {
-		_spec.AddField(shopitem.FieldResourceBoxID, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
 	}
 	if _u.mutation.ResourceBoxIDCleared() {
-		_spec.ClearField(shopitem.FieldResourceBoxID, field.TypeInt)
+		_spec.ClearField(shopitem.FieldResourceBoxID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costs(); ok {
 		_spec.SetField(shopitem.FieldCosts, field.TypeJSON, value)
@@ -656,13 +656,13 @@ func (_u *ShopitemUpdateOne) sqlSave(ctx context.Context) (_node *Shopitem, err 
 		_spec.ClearField(shopitem.FieldCosts, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(shopitem.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldStartAt, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(shopitem.FieldStartAt, field.TypeInt, value)
+		_spec.AddField(shopitem.FieldStartAt, field.TypeInt64, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(shopitem.FieldStartAt, field.TypeInt)
+		_spec.ClearField(shopitem.FieldStartAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(shopitem.FieldServerRegion, field.TypeString, value)

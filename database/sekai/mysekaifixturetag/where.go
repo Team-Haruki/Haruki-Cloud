@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaifixturetag {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaifixturetag {
+func GameID(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,7 +69,7 @@ func Pronunciation(v string) predicate.Mysekaifixturetag {
 }
 
 // ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
-func ExternalID(v int) predicate.Mysekaifixturetag {
+func ExternalID(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldExternalID, v))
 }
 
@@ -79,42 +79,42 @@ func ServerRegion(v string) predicate.Mysekaifixturetag {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaifixturetag {
+func GameIDEQ(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaifixturetag {
+func GameIDNEQ(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaifixturetag {
+func GameIDIn(vs ...int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaifixturetag {
+func GameIDNotIn(vs ...int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaifixturetag {
+func GameIDGT(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaifixturetag {
+func GameIDGTE(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaifixturetag {
+func GameIDLT(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaifixturetag {
+func GameIDLTE(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -279,42 +279,42 @@ func MysekaiFixtureTagTypeNotNil() predicate.Mysekaifixturetag {
 }
 
 // ExternalIDEQ applies the EQ predicate on the "external_id" field.
-func ExternalIDEQ(v int) predicate.Mysekaifixturetag {
+func ExternalIDEQ(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldExternalID, v))
 }
 
 // ExternalIDNEQ applies the NEQ predicate on the "external_id" field.
-func ExternalIDNEQ(v int) predicate.Mysekaifixturetag {
+func ExternalIDNEQ(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldNEQ(FieldExternalID, v))
 }
 
 // ExternalIDIn applies the In predicate on the "external_id" field.
-func ExternalIDIn(vs ...int) predicate.Mysekaifixturetag {
+func ExternalIDIn(vs ...int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldIn(FieldExternalID, vs...))
 }
 
 // ExternalIDNotIn applies the NotIn predicate on the "external_id" field.
-func ExternalIDNotIn(vs ...int) predicate.Mysekaifixturetag {
+func ExternalIDNotIn(vs ...int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldNotIn(FieldExternalID, vs...))
 }
 
 // ExternalIDGT applies the GT predicate on the "external_id" field.
-func ExternalIDGT(v int) predicate.Mysekaifixturetag {
+func ExternalIDGT(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldGT(FieldExternalID, v))
 }
 
 // ExternalIDGTE applies the GTE predicate on the "external_id" field.
-func ExternalIDGTE(v int) predicate.Mysekaifixturetag {
+func ExternalIDGTE(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldGTE(FieldExternalID, v))
 }
 
 // ExternalIDLT applies the LT predicate on the "external_id" field.
-func ExternalIDLT(v int) predicate.Mysekaifixturetag {
+func ExternalIDLT(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldLT(FieldExternalID, v))
 }
 
 // ExternalIDLTE applies the LTE predicate on the "external_id" field.
-func ExternalIDLTE(v int) predicate.Mysekaifixturetag {
+func ExternalIDLTE(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldLTE(FieldExternalID, v))
 }
 

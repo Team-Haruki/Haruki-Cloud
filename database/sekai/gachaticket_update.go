@@ -30,14 +30,14 @@ func (_u *GachaticketUpdate) Where(ps ...predicate.Gachaticket) *GachaticketUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GachaticketUpdate) SetGameID(v int) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetGameID(v int64) *GachaticketUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaticketUpdate) SetNillableGameID(v *int) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetNillableGameID(v *int64) *GachaticketUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *GachaticketUpdate) SetNillableGameID(v *int) *GachaticketUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaticketUpdate) AddGameID(v int) *GachaticketUpdate {
+func (_u *GachaticketUpdate) AddGameID(v int64) *GachaticketUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -164,10 +164,10 @@ func (_u *GachaticketUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaticket.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gachaticket.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaticket.FieldName, field.TypeString, value)
@@ -216,14 +216,14 @@ type GachaticketUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GachaticketUpdateOne) SetGameID(v int) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetGameID(v int64) *GachaticketUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaticketUpdateOne) SetNillableGameID(v *int) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetNillableGameID(v *int64) *GachaticketUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -231,7 +231,7 @@ func (_u *GachaticketUpdateOne) SetNillableGameID(v *int) *GachaticketUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaticketUpdateOne) AddGameID(v int) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) AddGameID(v int64) *GachaticketUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -380,10 +380,10 @@ func (_u *GachaticketUpdateOne) sqlSave(ctx context.Context) (_node *Gachaticket
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaticket.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gachaticket.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaticket.FieldName, field.TypeString, value)

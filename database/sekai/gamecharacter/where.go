@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Gamecharacter {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Gamecharacter {
+func GameID(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Gamecharacter {
+func Seq(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
 // ResourceID applies equality check predicate on the "resource_id" field. It's identical to ResourceIDEQ.
-func ResourceID(v int) predicate.Gamecharacter {
+func ResourceID(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldResourceID, v))
 }
 
@@ -119,82 +119,82 @@ func ServerRegion(v string) predicate.Gamecharacter {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Gamecharacter {
+func GameIDEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Gamecharacter {
+func GameIDNEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Gamecharacter {
+func GameIDIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Gamecharacter {
+func GameIDNotIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Gamecharacter {
+func GameIDGT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Gamecharacter {
+func GameIDGTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Gamecharacter {
+func GameIDLT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Gamecharacter {
+func GameIDLTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Gamecharacter {
+func SeqEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Gamecharacter {
+func SeqNEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Gamecharacter {
+func SeqIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Gamecharacter {
+func SeqNotIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Gamecharacter {
+func SeqGT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Gamecharacter {
+func SeqGTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Gamecharacter {
+func SeqLT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Gamecharacter {
+func SeqLTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -209,42 +209,42 @@ func SeqNotNil() predicate.Gamecharacter {
 }
 
 // ResourceIDEQ applies the EQ predicate on the "resource_id" field.
-func ResourceIDEQ(v int) predicate.Gamecharacter {
+func ResourceIDEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldResourceID, v))
 }
 
 // ResourceIDNEQ applies the NEQ predicate on the "resource_id" field.
-func ResourceIDNEQ(v int) predicate.Gamecharacter {
+func ResourceIDNEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNEQ(FieldResourceID, v))
 }
 
 // ResourceIDIn applies the In predicate on the "resource_id" field.
-func ResourceIDIn(vs ...int) predicate.Gamecharacter {
+func ResourceIDIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIn(FieldResourceID, vs...))
 }
 
 // ResourceIDNotIn applies the NotIn predicate on the "resource_id" field.
-func ResourceIDNotIn(vs ...int) predicate.Gamecharacter {
+func ResourceIDNotIn(vs ...int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotIn(FieldResourceID, vs...))
 }
 
 // ResourceIDGT applies the GT predicate on the "resource_id" field.
-func ResourceIDGT(v int) predicate.Gamecharacter {
+func ResourceIDGT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGT(FieldResourceID, v))
 }
 
 // ResourceIDGTE applies the GTE predicate on the "resource_id" field.
-func ResourceIDGTE(v int) predicate.Gamecharacter {
+func ResourceIDGTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldGTE(FieldResourceID, v))
 }
 
 // ResourceIDLT applies the LT predicate on the "resource_id" field.
-func ResourceIDLT(v int) predicate.Gamecharacter {
+func ResourceIDLT(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLT(FieldResourceID, v))
 }
 
 // ResourceIDLTE applies the LTE predicate on the "resource_id" field.
-func ResourceIDLTE(v int) predicate.Gamecharacter {
+func ResourceIDLTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLTE(FieldResourceID, v))
 }
 

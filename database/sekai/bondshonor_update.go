@@ -30,14 +30,14 @@ func (_u *BondshonorUpdate) Where(ps ...predicate.Bondshonor) *BondshonorUpdate 
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BondshonorUpdate) SetGameID(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetGameID(v int64) *BondshonorUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BondshonorUpdate) SetNillableGameID(v *int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetNillableGameID(v *int64) *BondshonorUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *BondshonorUpdate) SetNillableGameID(v *int) *BondshonorUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BondshonorUpdate) AddGameID(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) AddGameID(v int64) *BondshonorUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *BondshonorUpdate) SetSeq(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetSeq(v int64) *BondshonorUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BondshonorUpdate) SetNillableSeq(v *int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetNillableSeq(v *int64) *BondshonorUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *BondshonorUpdate) SetNillableSeq(v *int) *BondshonorUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BondshonorUpdate) AddSeq(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) AddSeq(v int64) *BondshonorUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *BondshonorUpdate) ClearSeq() *BondshonorUpdate {
 }
 
 // SetBondsGroupID sets the "bonds_group_id" field.
-func (_u *BondshonorUpdate) SetBondsGroupID(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetBondsGroupID(v int64) *BondshonorUpdate {
 	_u.mutation.ResetBondsGroupID()
 	_u.mutation.SetBondsGroupID(v)
 	return _u
 }
 
 // SetNillableBondsGroupID sets the "bonds_group_id" field if the given value is not nil.
-func (_u *BondshonorUpdate) SetNillableBondsGroupID(v *int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetNillableBondsGroupID(v *int64) *BondshonorUpdate {
 	if v != nil {
 		_u.SetBondsGroupID(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *BondshonorUpdate) SetNillableBondsGroupID(v *int) *BondshonorUpdate {
 }
 
 // AddBondsGroupID adds value to the "bonds_group_id" field.
-func (_u *BondshonorUpdate) AddBondsGroupID(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) AddBondsGroupID(v int64) *BondshonorUpdate {
 	_u.mutation.AddBondsGroupID(v)
 	return _u
 }
@@ -105,14 +105,14 @@ func (_u *BondshonorUpdate) ClearBondsGroupID() *BondshonorUpdate {
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (_u *BondshonorUpdate) SetGameCharacterUnitId1(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetGameCharacterUnitId1(v int64) *BondshonorUpdate {
 	_u.mutation.ResetGameCharacterUnitId1()
 	_u.mutation.SetGameCharacterUnitId1(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId1 sets the "game_character_unit_id1" field if the given value is not nil.
-func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId1(v *int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId1(v *int64) *BondshonorUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId1(*v)
 	}
@@ -120,7 +120,7 @@ func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId1(v *int) *BondshonorU
 }
 
 // AddGameCharacterUnitId1 adds value to the "game_character_unit_id1" field.
-func (_u *BondshonorUpdate) AddGameCharacterUnitId1(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) AddGameCharacterUnitId1(v int64) *BondshonorUpdate {
 	_u.mutation.AddGameCharacterUnitId1(v)
 	return _u
 }
@@ -132,14 +132,14 @@ func (_u *BondshonorUpdate) ClearGameCharacterUnitId1() *BondshonorUpdate {
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (_u *BondshonorUpdate) SetGameCharacterUnitId2(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetGameCharacterUnitId2(v int64) *BondshonorUpdate {
 	_u.mutation.ResetGameCharacterUnitId2()
 	_u.mutation.SetGameCharacterUnitId2(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId2 sets the "game_character_unit_id2" field if the given value is not nil.
-func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId2(v *int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId2(v *int64) *BondshonorUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId2(*v)
 	}
@@ -147,7 +147,7 @@ func (_u *BondshonorUpdate) SetNillableGameCharacterUnitId2(v *int) *BondshonorU
 }
 
 // AddGameCharacterUnitId2 adds value to the "game_character_unit_id2" field.
-func (_u *BondshonorUpdate) AddGameCharacterUnitId2(v int) *BondshonorUpdate {
+func (_u *BondshonorUpdate) AddGameCharacterUnitId2(v int64) *BondshonorUpdate {
 	_u.mutation.AddGameCharacterUnitId2(v)
 	return _u
 }
@@ -330,46 +330,46 @@ func (_u *BondshonorUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(bondshonor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(bondshonor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(bondshonor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(bondshonor.FieldSeq, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(bondshonor.FieldSeq, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BondsGroupID(); ok {
-		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedBondsGroupID(); ok {
-		_spec.AddField(bondshonor.FieldBondsGroupID, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldBondsGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.BondsGroupIDCleared() {
-		_spec.ClearField(bondshonor.FieldBondsGroupID, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldBondsGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId1(); ok {
-		_spec.AddField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitId1Cleared() {
-		_spec.ClearField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId2(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId2(); ok {
-		_spec.AddField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitId2Cleared() {
-		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
 		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeJSON, value)
@@ -441,14 +441,14 @@ type BondshonorUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BondshonorUpdateOne) SetGameID(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetGameID(v int64) *BondshonorUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BondshonorUpdateOne) SetNillableGameID(v *int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetNillableGameID(v *int64) *BondshonorUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -456,20 +456,20 @@ func (_u *BondshonorUpdateOne) SetNillableGameID(v *int) *BondshonorUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BondshonorUpdateOne) AddGameID(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) AddGameID(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *BondshonorUpdateOne) SetSeq(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetSeq(v int64) *BondshonorUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BondshonorUpdateOne) SetNillableSeq(v *int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetNillableSeq(v *int64) *BondshonorUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -477,7 +477,7 @@ func (_u *BondshonorUpdateOne) SetNillableSeq(v *int) *BondshonorUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BondshonorUpdateOne) AddSeq(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) AddSeq(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -489,14 +489,14 @@ func (_u *BondshonorUpdateOne) ClearSeq() *BondshonorUpdateOne {
 }
 
 // SetBondsGroupID sets the "bonds_group_id" field.
-func (_u *BondshonorUpdateOne) SetBondsGroupID(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetBondsGroupID(v int64) *BondshonorUpdateOne {
 	_u.mutation.ResetBondsGroupID()
 	_u.mutation.SetBondsGroupID(v)
 	return _u
 }
 
 // SetNillableBondsGroupID sets the "bonds_group_id" field if the given value is not nil.
-func (_u *BondshonorUpdateOne) SetNillableBondsGroupID(v *int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetNillableBondsGroupID(v *int64) *BondshonorUpdateOne {
 	if v != nil {
 		_u.SetBondsGroupID(*v)
 	}
@@ -504,7 +504,7 @@ func (_u *BondshonorUpdateOne) SetNillableBondsGroupID(v *int) *BondshonorUpdate
 }
 
 // AddBondsGroupID adds value to the "bonds_group_id" field.
-func (_u *BondshonorUpdateOne) AddBondsGroupID(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) AddBondsGroupID(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddBondsGroupID(v)
 	return _u
 }
@@ -516,14 +516,14 @@ func (_u *BondshonorUpdateOne) ClearBondsGroupID() *BondshonorUpdateOne {
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (_u *BondshonorUpdateOne) SetGameCharacterUnitId1(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetGameCharacterUnitId1(v int64) *BondshonorUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId1()
 	_u.mutation.SetGameCharacterUnitId1(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId1 sets the "game_character_unit_id1" field if the given value is not nil.
-func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId1(v *int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId1(v *int64) *BondshonorUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId1(*v)
 	}
@@ -531,7 +531,7 @@ func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId1(v *int) *Bondshon
 }
 
 // AddGameCharacterUnitId1 adds value to the "game_character_unit_id1" field.
-func (_u *BondshonorUpdateOne) AddGameCharacterUnitId1(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) AddGameCharacterUnitId1(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddGameCharacterUnitId1(v)
 	return _u
 }
@@ -543,14 +543,14 @@ func (_u *BondshonorUpdateOne) ClearGameCharacterUnitId1() *BondshonorUpdateOne 
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (_u *BondshonorUpdateOne) SetGameCharacterUnitId2(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetGameCharacterUnitId2(v int64) *BondshonorUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId2()
 	_u.mutation.SetGameCharacterUnitId2(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId2 sets the "game_character_unit_id2" field if the given value is not nil.
-func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId2(v *int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId2(v *int64) *BondshonorUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId2(*v)
 	}
@@ -558,7 +558,7 @@ func (_u *BondshonorUpdateOne) SetNillableGameCharacterUnitId2(v *int) *Bondshon
 }
 
 // AddGameCharacterUnitId2 adds value to the "game_character_unit_id2" field.
-func (_u *BondshonorUpdateOne) AddGameCharacterUnitId2(v int) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) AddGameCharacterUnitId2(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddGameCharacterUnitId2(v)
 	return _u
 }
@@ -771,46 +771,46 @@ func (_u *BondshonorUpdateOne) sqlSave(ctx context.Context) (_node *Bondshonor, 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(bondshonor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(bondshonor.FieldGameID, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(bondshonor.FieldSeq, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(bondshonor.FieldSeq, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(bondshonor.FieldSeq, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BondsGroupID(); ok {
-		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldBondsGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedBondsGroupID(); ok {
-		_spec.AddField(bondshonor.FieldBondsGroupID, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldBondsGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.BondsGroupIDCleared() {
-		_spec.ClearField(bondshonor.FieldBondsGroupID, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldBondsGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId1(); ok {
-		_spec.AddField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitId1Cleared() {
-		_spec.ClearField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldGameCharacterUnitId1, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId2(); ok {
-		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt, value)
+		_spec.SetField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId2(); ok {
-		_spec.AddField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt, value)
+		_spec.AddField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitId2Cleared() {
-		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt)
+		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
 		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeJSON, value)

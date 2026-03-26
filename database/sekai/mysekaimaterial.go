@@ -18,9 +18,9 @@ type Mysekaimaterial struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// MysekaiMaterialType holds the value of the "mysekai_material_type" field.
 	MysekaiMaterialType json.RawMessage `json:"mysekai_material_type,omitempty"`
 	// Name holds the value of the "name" field.
@@ -38,7 +38,7 @@ type Mysekaimaterial struct {
 	// MysekaiSiteIds holds the value of the "mysekai_site_ids" field.
 	MysekaiSiteIds json.RawMessage `json:"mysekai_site_ids,omitempty"`
 	// MysekaiPhenomenaGroupID holds the value of the "mysekai_phenomena_group_id" field.
-	MysekaiPhenomenaGroupID int `json:"mysekai_phenomena_group_id,omitempty"`
+	MysekaiPhenomenaGroupID int64 `json:"mysekai_phenomena_group_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -80,13 +80,13 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaimaterial.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case mysekaimaterial.FieldMysekaiMaterialType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -146,7 +146,7 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiPhenomenaGroupID = int(value.Int64)
+				_m.MysekaiPhenomenaGroupID = value.Int64
 			}
 		case mysekaimaterial.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

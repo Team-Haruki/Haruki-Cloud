@@ -30,14 +30,14 @@ func (_u *MysekaiphenomenonUpdate) Where(ps ...predicate.Mysekaiphenomenon) *Mys
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenonUpdate) SetGameID(v int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetGameID(v int64) *MysekaiphenomenonUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenonUpdate) SetNillableGameID(v *int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetNillableGameID(v *int64) *MysekaiphenomenonUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaiphenomenonUpdate) SetNillableGameID(v *int) *MysekaiphenomenonU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenonUpdate) AddGameID(v int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) AddGameID(v int64) *MysekaiphenomenonUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -147,14 +147,14 @@ func (_u *MysekaiphenomenonUpdate) ClearMysekaiPhenomenaTimePeriodType() *Myseka
 }
 
 // SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
-func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonUpdate {
 	_u.mutation.ResetMysekaiPhenomenaBackgroundColorID()
 	_u.mutation.SetMysekaiPhenomenaBackgroundColorID(v)
 	return _u
 }
 
 // SetNillableMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field if the given value is not nil.
-func (_u *MysekaiphenomenonUpdate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int64) *MysekaiphenomenonUpdate {
 	if v != nil {
 		_u.SetMysekaiPhenomenaBackgroundColorID(*v)
 	}
@@ -162,7 +162,7 @@ func (_u *MysekaiphenomenonUpdate) SetNillableMysekaiPhenomenaBackgroundColorID(
 }
 
 // AddMysekaiPhenomenaBackgroundColorID adds value to the "mysekai_phenomena_background_color_id" field.
-func (_u *MysekaiphenomenonUpdate) AddMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) AddMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonUpdate {
 	_u.mutation.AddMysekaiPhenomenaBackgroundColorID(v)
 	return _u
 }
@@ -289,10 +289,10 @@ func (_u *MysekaiphenomenonUpdate) sqlSave(ctx context.Context) (_node int, err 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
@@ -335,13 +335,13 @@ func (_u *MysekaiphenomenonUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.AddField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiPhenomenaBackgroundColorIDCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldAssetbundleName, field.TypeString, value)
@@ -385,14 +385,14 @@ type MysekaiphenomenonUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenonUpdateOne) SetGameID(v int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetGameID(v int64) *MysekaiphenomenonUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenonUpdateOne) SetNillableGameID(v *int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetNillableGameID(v *int64) *MysekaiphenomenonUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -400,7 +400,7 @@ func (_u *MysekaiphenomenonUpdateOne) SetNillableGameID(v *int) *Mysekaiphenomen
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenonUpdateOne) AddGameID(v int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) AddGameID(v int64) *MysekaiphenomenonUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -502,14 +502,14 @@ func (_u *MysekaiphenomenonUpdateOne) ClearMysekaiPhenomenaTimePeriodType() *Mys
 }
 
 // SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
-func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonUpdateOne {
 	_u.mutation.ResetMysekaiPhenomenaBackgroundColorID()
 	_u.mutation.SetMysekaiPhenomenaBackgroundColorID(v)
 	return _u
 }
 
 // SetNillableMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field if the given value is not nil.
-func (_u *MysekaiphenomenonUpdateOne) SetNillableMysekaiPhenomenaBackgroundColorID(v *int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetNillableMysekaiPhenomenaBackgroundColorID(v *int64) *MysekaiphenomenonUpdateOne {
 	if v != nil {
 		_u.SetMysekaiPhenomenaBackgroundColorID(*v)
 	}
@@ -517,7 +517,7 @@ func (_u *MysekaiphenomenonUpdateOne) SetNillableMysekaiPhenomenaBackgroundColor
 }
 
 // AddMysekaiPhenomenaBackgroundColorID adds value to the "mysekai_phenomena_background_color_id" field.
-func (_u *MysekaiphenomenonUpdateOne) AddMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) AddMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonUpdateOne {
 	_u.mutation.AddMysekaiPhenomenaBackgroundColorID(v)
 	return _u
 }
@@ -674,10 +674,10 @@ func (_u *MysekaiphenomenonUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
@@ -720,13 +720,13 @@ func (_u *MysekaiphenomenonUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.AddField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
+		_spec.AddField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiPhenomenaBackgroundColorIDCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldAssetbundleName, field.TypeString, value)

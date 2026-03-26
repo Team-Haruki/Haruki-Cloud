@@ -17,13 +17,13 @@ type Mysekaiphenomenon struct {
 
 func (Mysekaiphenomenon) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("mysekai_phenomena_brightness_type", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
 		field.String("english_name").Optional(),
 		field.String("description").Optional(),
 		field.JSON("mysekai_phenomena_time_period_type", json.RawMessage{}).Optional(),
-		field.Int("mysekai_phenomena_background_color_id").Optional(),
+		field.Int64("mysekai_phenomena_background_color_id").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("ramp_texture_assetbundle_name").Optional(),
 		field.String("icon_assetbundle_name").Optional(),

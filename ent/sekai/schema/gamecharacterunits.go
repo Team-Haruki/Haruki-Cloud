@@ -17,8 +17,8 @@ type Gamecharacterunit struct {
 
 func (Gamecharacterunit) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("game_character_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("game_character_id").Optional(),
 		field.JSON("unit", json.RawMessage{}).Optional(),
 		field.String("color_code").Optional(),
 		field.JSON("skin_color_code", json.RawMessage{}).Optional(),

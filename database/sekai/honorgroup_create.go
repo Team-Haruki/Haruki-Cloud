@@ -21,7 +21,7 @@ type HonorgroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *HonorgroupCreate) SetGameID(v int) *HonorgroupCreate {
+func (_c *HonorgroupCreate) SetGameID(v int64) *HonorgroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -161,7 +161,7 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(honorgroup.Table, sqlgraph.NewFieldSpec(honorgroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

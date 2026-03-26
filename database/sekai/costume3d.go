@@ -18,11 +18,11 @@ type Costume3D struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// Costume3DGroupID holds the value of the "costume3_d_group_id" field.
-	Costume3DGroupID int `json:"costume3_d_group_id,omitempty"`
+	Costume3DGroupID int64 `json:"costume3_d_group_id,omitempty"`
 	// Costume3DType holds the value of the "costume3_d_type" field.
 	Costume3DType json.RawMessage `json:"costume3_d_type,omitempty"`
 	// Name holds the value of the "name" field.
@@ -30,11 +30,11 @@ type Costume3D struct {
 	// PartType holds the value of the "part_type" field.
 	PartType json.RawMessage `json:"part_type,omitempty"`
 	// ColorID holds the value of the "color_id" field.
-	ColorID int `json:"color_id,omitempty"`
+	ColorID int64 `json:"color_id,omitempty"`
 	// ColorName holds the value of the "color_name" field.
 	ColorName string `json:"color_name,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int `json:"character_id,omitempty"`
+	CharacterID int64 `json:"character_id,omitempty"`
 	// Costume3DRarity holds the value of the "costume3_d_rarity" field.
 	Costume3DRarity json.RawMessage `json:"costume3_d_rarity,omitempty"`
 	// HowToObtain holds the value of the "how_to_obtain" field.
@@ -46,9 +46,9 @@ type Costume3D struct {
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
 	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
 	// ArchivePublishedAt holds the value of the "archive_published_at" field.
-	ArchivePublishedAt int `json:"archive_published_at,omitempty"`
+	ArchivePublishedAt int64 `json:"archive_published_at,omitempty"`
 	// PublishedAt holds the value of the "published_at" field.
-	PublishedAt int `json:"published_at,omitempty"`
+	PublishedAt int64 `json:"published_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -90,19 +90,19 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case costume3d.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case costume3d.FieldCostume3DGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_group_id", values[i])
 			} else if value.Valid {
-				_m.Costume3DGroupID = int(value.Int64)
+				_m.Costume3DGroupID = value.Int64
 			}
 		case costume3d.FieldCostume3DType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -130,7 +130,7 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field color_id", values[i])
 			} else if value.Valid {
-				_m.ColorID = int(value.Int64)
+				_m.ColorID = value.Int64
 			}
 		case costume3d.FieldColorName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -142,7 +142,7 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = int(value.Int64)
+				_m.CharacterID = value.Int64
 			}
 		case costume3d.FieldCostume3DRarity:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -182,13 +182,13 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_published_at", values[i])
 			} else if value.Valid {
-				_m.ArchivePublishedAt = int(value.Int64)
+				_m.ArchivePublishedAt = value.Int64
 			}
 		case costume3d.FieldPublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field published_at", values[i])
 			} else if value.Valid {
-				_m.PublishedAt = int(value.Int64)
+				_m.PublishedAt = value.Int64
 			}
 		case costume3d.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

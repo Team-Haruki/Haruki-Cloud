@@ -17,9 +17,9 @@ type Eventdeckbonuse struct {
 
 func (Eventdeckbonuse) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("event_id").Optional(),
-		field.Int("game_character_unit_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("event_id").Optional(),
+		field.Int64("game_character_unit_id").Optional(),
 		field.JSON("card_attr", json.RawMessage{}).Optional(),
 		field.Float("bonus_rate").Optional(),
 		field.String("server_region"),

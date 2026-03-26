@@ -20,19 +20,19 @@ type PlayerframegroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *PlayerframegroupCreate) SetGameID(v int) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetGameID(v int64) *PlayerframegroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *PlayerframegroupCreate) SetSeq(v int) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetSeq(v int64) *PlayerframegroupCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *PlayerframegroupCreate) SetNillableSeq(v *int) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetNillableSeq(v *int64) *PlayerframegroupCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -140,11 +140,11 @@ func (_c *PlayerframegroupCreate) createSpec() (*Playerframegroup, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(playerframegroup.Table, sqlgraph.NewFieldSpec(playerframegroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt, value)
+		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

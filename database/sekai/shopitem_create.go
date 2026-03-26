@@ -21,19 +21,19 @@ type ShopitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *ShopitemCreate) SetGameID(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetGameID(v int64) *ShopitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetShopID sets the "shop_id" field.
-func (_c *ShopitemCreate) SetShopID(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetShopID(v int64) *ShopitemCreate {
 	_c.mutation.SetShopID(v)
 	return _c
 }
 
 // SetNillableShopID sets the "shop_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableShopID(v *int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableShopID(v *int64) *ShopitemCreate {
 	if v != nil {
 		_c.SetShopID(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *ShopitemCreate) SetNillableShopID(v *int) *ShopitemCreate {
 }
 
 // SetSeq sets the "seq" field.
-func (_c *ShopitemCreate) SetSeq(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetSeq(v int64) *ShopitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableSeq(v *int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableSeq(v *int64) *ShopitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *ShopitemCreate) SetNillableSeq(v *int) *ShopitemCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *ShopitemCreate) SetReleaseConditionID(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetReleaseConditionID(v int64) *ShopitemCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int64) *ShopitemCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -69,13 +69,13 @@ func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int) *ShopitemCreate 
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_c *ShopitemCreate) SetResourceBoxID(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetResourceBoxID(v int64) *ShopitemCreate {
 	_c.mutation.SetResourceBoxID(v)
 	return _c
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableResourceBoxID(v *int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableResourceBoxID(v *int64) *ShopitemCreate {
 	if v != nil {
 		_c.SetResourceBoxID(*v)
 	}
@@ -89,13 +89,13 @@ func (_c *ShopitemCreate) SetCosts(v json.RawMessage) *ShopitemCreate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *ShopitemCreate) SetStartAt(v int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetStartAt(v int64) *ShopitemCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableStartAt(v *int) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableStartAt(v *int64) *ShopitemCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -175,23 +175,23 @@ func (_c *ShopitemCreate) createSpec() (*Shopitem, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(shopitem.Table, sqlgraph.NewFieldSpec(shopitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(shopitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ShopID(); ok {
-		_spec.SetField(shopitem.FieldShopID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)
 		_node.ShopID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(shopitem.FieldSeq, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.ResourceBoxID(); ok {
-		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
 		_node.ResourceBoxID = value
 	}
 	if value, ok := _c.mutation.Costs(); ok {
@@ -199,7 +199,7 @@ func (_c *ShopitemCreate) createSpec() (*Shopitem, *sqlgraph.CreateSpec) {
 		_node.Costs = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(shopitem.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(shopitem.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

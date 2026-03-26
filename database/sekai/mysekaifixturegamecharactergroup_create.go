@@ -20,19 +20,19 @@ type MysekaifixturegamecharactergroupCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGameID(v int) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGameID(v int64) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGroupID(v int) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGroupID(v int64) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int64) *MysekaifixturegamecharactergroupCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int) *My
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGameCharacterID(v int) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGameCharacterID(v int64) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameCharacterID(v *int) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameCharacterID(v *int64) *MysekaifixturegamecharactergroupCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
@@ -126,15 +126,15 @@ func (_c *MysekaifixturegamecharactergroupCreate) createSpec() (*Mysekaifixtureg
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturegamecharactergroup.Table, sqlgraph.NewFieldSpec(mysekaifixturegamecharactergroup.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

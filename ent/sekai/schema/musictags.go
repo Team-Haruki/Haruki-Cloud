@@ -17,10 +17,10 @@ type Musictag struct {
 
 func (Musictag) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("music_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("music_id").Optional(),
 		field.JSON("music_tag", json.RawMessage{}).Optional(),
-		field.Int("seq").Optional(),
+		field.Int64("seq").Optional(),
 		field.String("server_region"),
 	}
 }

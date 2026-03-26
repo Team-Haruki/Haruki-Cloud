@@ -15,7 +15,7 @@ type Mysekaiphenomenabackgroundcolor struct {
 
 func (Mysekaiphenomenabackgroundcolor) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.String("base_color").Optional(),
 		field.String("ground_color").Optional(),
 		field.String("gradation_color").Optional(),

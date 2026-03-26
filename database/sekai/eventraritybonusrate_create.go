@@ -21,7 +21,7 @@ type EventraritybonusrateCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventraritybonusrateCreate) SetGameID(v int) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetGameID(v int64) *EventraritybonusrateCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -33,13 +33,13 @@ func (_c *EventraritybonusrateCreate) SetCardRarityType(v json.RawMessage) *Even
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_c *EventraritybonusrateCreate) SetMasterRank(v int) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetMasterRank(v int64) *EventraritybonusrateCreate {
 	_c.mutation.SetMasterRank(v)
 	return _c
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_c *EventraritybonusrateCreate) SetNillableMasterRank(v *int) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetNillableMasterRank(v *int64) *EventraritybonusrateCreate {
 	if v != nil {
 		_c.SetMasterRank(*v)
 	}
@@ -133,7 +133,7 @@ func (_c *EventraritybonusrateCreate) createSpec() (*Eventraritybonusrate, *sqlg
 		_spec = sqlgraph.NewCreateSpec(eventraritybonusrate.Table, sqlgraph.NewFieldSpec(eventraritybonusrate.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardRarityType(); ok {
@@ -141,7 +141,7 @@ func (_c *EventraritybonusrateCreate) createSpec() (*Eventraritybonusrate, *sqlg
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {
-		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
+		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
 		_node.MasterRank = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {

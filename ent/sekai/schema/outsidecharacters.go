@@ -15,8 +15,8 @@ type Outsidecharacter struct {
 
 func (Outsidecharacter) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
 		field.String("name").Optional(),
 		field.String("server_region"),
 	}

@@ -17,16 +17,16 @@ type Virtuallive struct {
 
 func (Virtuallive) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("virtual_live_type", json.RawMessage{}).Optional(),
 		field.JSON("virtual_live_platform", json.RawMessage{}).Optional(),
-		field.Int("seq").Optional(),
+		field.Int64("seq").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.Int("screen_mv_music_vocal_id").Optional(),
-		field.Int("start_at").Optional(),
-		field.Int("end_at").Optional(),
-		field.Int("ranking_announce_at").Optional(),
+		field.Int64("screen_mv_music_vocal_id").Optional(),
+		field.Int64("start_at").Optional(),
+		field.Int64("end_at").Optional(),
+		field.Int64("ranking_announce_at").Optional(),
 		field.JSON("virtual_live_setlists", json.RawMessage{}).Optional(),
 		field.JSON("virtual_live_beginner_schedules", json.RawMessage{}).Optional(),
 		field.JSON("virtual_live_schedules", json.RawMessage{}).Optional(),
@@ -38,9 +38,9 @@ func (Virtuallive) Fields() []ent.Field {
 		field.JSON("virtual_live_appeals", json.RawMessage{}).Optional(),
 		field.JSON("virtual_live_background_musics", json.RawMessage{}).Optional(),
 		field.JSON("virtual_live_information", json.RawMessage{}).Optional(),
-		field.Int("archive_release_condition_id").Optional(),
-		field.Int("sub_game_character_penlight_color_group_id").Optional(),
-		field.Int("virtual_live_group_id").Optional(),
+		field.Int64("archive_release_condition_id").Optional(),
+		field.Int64("sub_game_character_penlight_color_group_id").Optional(),
+		field.Int64("virtual_live_group_id").Optional(),
 		field.String("server_region"),
 	}
 }

@@ -30,14 +30,14 @@ func (_u *CharacterrankUpdate) Where(ps ...predicate.Characterrank) *Characterra
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CharacterrankUpdate) SetGameID(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetGameID(v int64) *CharacterrankUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableGameID(v *int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableGameID(v *int64) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *CharacterrankUpdate) SetNillableGameID(v *int) *CharacterrankUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CharacterrankUpdate) AddGameID(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddGameID(v int64) *CharacterrankUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *CharacterrankUpdate) SetCharacterID(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetCharacterID(v int64) *CharacterrankUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int64) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int) *CharacterrankUpda
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *CharacterrankUpdate) AddCharacterID(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddCharacterID(v int64) *CharacterrankUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *CharacterrankUpdate) ClearCharacterID() *CharacterrankUpdate {
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_u *CharacterrankUpdate) SetCharacterRank(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetCharacterRank(v int64) *CharacterrankUpdate {
 	_u.mutation.ResetCharacterRank()
 	_u.mutation.SetCharacterRank(v)
 	return _u
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int64) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetCharacterRank(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int) *CharacterrankUp
 }
 
 // AddCharacterRank adds value to the "character_rank" field.
-func (_u *CharacterrankUpdate) AddCharacterRank(v int) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddCharacterRank(v int64) *CharacterrankUpdate {
 	_u.mutation.AddCharacterRank(v)
 	return _u
 }
@@ -277,28 +277,28 @@ func (_u *CharacterrankUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(characterrank.FieldGameID, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt)
+		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRank(); ok {
-		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterRankCleared() {
-		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt)
+		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(characterrank.FieldPower1BonusRate, field.TypeFloat64, value)
@@ -373,14 +373,14 @@ type CharacterrankUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CharacterrankUpdateOne) SetGameID(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetGameID(v int64) *CharacterrankUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int64) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -388,20 +388,20 @@ func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int) *CharacterrankUpdate
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CharacterrankUpdateOne) AddGameID(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddGameID(v int64) *CharacterrankUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *CharacterrankUpdateOne) SetCharacterID(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetCharacterID(v int64) *CharacterrankUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int64) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -409,7 +409,7 @@ func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int) *CharacterrankU
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *CharacterrankUpdateOne) AddCharacterID(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddCharacterID(v int64) *CharacterrankUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -421,14 +421,14 @@ func (_u *CharacterrankUpdateOne) ClearCharacterID() *CharacterrankUpdateOne {
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_u *CharacterrankUpdateOne) SetCharacterRank(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetCharacterRank(v int64) *CharacterrankUpdateOne {
 	_u.mutation.ResetCharacterRank()
 	_u.mutation.SetCharacterRank(v)
 	return _u
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int64) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetCharacterRank(*v)
 	}
@@ -436,7 +436,7 @@ func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int) *Characterran
 }
 
 // AddCharacterRank adds value to the "character_rank" field.
-func (_u *CharacterrankUpdateOne) AddCharacterRank(v int) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddCharacterRank(v int64) *CharacterrankUpdateOne {
 	_u.mutation.AddCharacterRank(v)
 	return _u
 }
@@ -650,28 +650,28 @@ func (_u *CharacterrankUpdateOne) sqlSave(ctx context.Context) (_node *Character
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(characterrank.FieldGameID, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt)
+		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRank(); ok {
-		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt, value)
+		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterRankCleared() {
-		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt)
+		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(characterrank.FieldPower1BonusRate, field.TypeFloat64, value)

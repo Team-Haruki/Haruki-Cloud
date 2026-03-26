@@ -17,15 +17,15 @@ type Mysekaigatelevel struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiGateID holds the value of the "mysekai_gate_id" field.
-	MysekaiGateID int `json:"mysekai_gate_id,omitempty"`
+	MysekaiGateID int64 `json:"mysekai_gate_id,omitempty"`
 	// Level holds the value of the "level" field.
-	Level int `json:"level,omitempty"`
+	Level int64 `json:"level,omitempty"`
 	// MysekaiGateMaterialGroupID holds the value of the "mysekai_gate_material_group_id" field.
-	MysekaiGateMaterialGroupID int `json:"mysekai_gate_material_group_id,omitempty"`
+	MysekaiGateMaterialGroupID int64 `json:"mysekai_gate_material_group_id,omitempty"`
 	// MysekaiGateCharacterVisitCountRateID holds the value of the "mysekai_gate_character_visit_count_rate_id" field.
-	MysekaiGateCharacterVisitCountRateID int `json:"mysekai_gate_character_visit_count_rate_id,omitempty"`
+	MysekaiGateCharacterVisitCountRateID int64 `json:"mysekai_gate_character_visit_count_rate_id,omitempty"`
 	// PowerBonusRate holds the value of the "power_bonus_rate" field.
 	PowerBonusRate float64 `json:"power_bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -69,31 +69,31 @@ func (_m *Mysekaigatelevel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaigatelevel.FieldMysekaiGateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateID = int(value.Int64)
+				_m.MysekaiGateID = value.Int64
 			}
 		case mysekaigatelevel.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = int(value.Int64)
+				_m.Level = value.Int64
 			}
 		case mysekaigatelevel.FieldMysekaiGateMaterialGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_material_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateMaterialGroupID = int(value.Int64)
+				_m.MysekaiGateMaterialGroupID = value.Int64
 			}
 		case mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_character_visit_count_rate_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateCharacterVisitCountRateID = int(value.Int64)
+				_m.MysekaiGateCharacterVisitCountRateID = value.Int64
 			}
 		case mysekaigatelevel.FieldPowerBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

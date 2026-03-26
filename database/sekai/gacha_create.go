@@ -21,7 +21,7 @@ type GachaCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *GachaCreate) SetGameID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGameID(v int64) *GachaCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -47,13 +47,13 @@ func (_c *GachaCreate) SetNillableName(v *string) *GachaCreate {
 }
 
 // SetSeq sets the "seq" field.
-func (_c *GachaCreate) SetSeq(v int) *GachaCreate {
+func (_c *GachaCreate) SetSeq(v int64) *GachaCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableSeq(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableSeq(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -75,13 +75,13 @@ func (_c *GachaCreate) SetNillableAssetbundleName(v *string) *GachaCreate {
 }
 
 // SetGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field.
-func (_c *GachaCreate) SetGachaCardRarityRateGroupID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGachaCardRarityRateGroupID(v int64) *GachaCreate {
 	_c.mutation.SetGachaCardRarityRateGroupID(v)
 	return _c
 }
 
 // SetNillableGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableGachaCardRarityRateGroupID(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableGachaCardRarityRateGroupID(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetGachaCardRarityRateGroupID(*v)
 	}
@@ -89,13 +89,13 @@ func (_c *GachaCreate) SetNillableGachaCardRarityRateGroupID(v *int) *GachaCreat
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *GachaCreate) SetStartAt(v int) *GachaCreate {
+func (_c *GachaCreate) SetStartAt(v int64) *GachaCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableStartAt(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableStartAt(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -103,13 +103,13 @@ func (_c *GachaCreate) SetNillableStartAt(v *int) *GachaCreate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *GachaCreate) SetEndAt(v int) *GachaCreate {
+func (_c *GachaCreate) SetEndAt(v int64) *GachaCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableEndAt(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableEndAt(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -131,13 +131,13 @@ func (_c *GachaCreate) SetNillableIsShowPeriod(v *bool) *GachaCreate {
 }
 
 // SetGachaCeilItemID sets the "gacha_ceil_item_id" field.
-func (_c *GachaCreate) SetGachaCeilItemID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGachaCeilItemID(v int64) *GachaCreate {
 	_c.mutation.SetGachaCeilItemID(v)
 	return _c
 }
 
 // SetNillableGachaCeilItemID sets the "gacha_ceil_item_id" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableGachaCeilItemID(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableGachaCeilItemID(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetGachaCeilItemID(*v)
 	}
@@ -145,13 +145,13 @@ func (_c *GachaCreate) SetNillableGachaCeilItemID(v *int) *GachaCreate {
 }
 
 // SetWishSelectCount sets the "wish_select_count" field.
-func (_c *GachaCreate) SetWishSelectCount(v int) *GachaCreate {
+func (_c *GachaCreate) SetWishSelectCount(v int64) *GachaCreate {
 	_c.mutation.SetWishSelectCount(v)
 	return _c
 }
 
 // SetNillableWishSelectCount sets the "wish_select_count" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableWishSelectCount(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableWishSelectCount(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetWishSelectCount(*v)
 	}
@@ -159,13 +159,13 @@ func (_c *GachaCreate) SetNillableWishSelectCount(v *int) *GachaCreate {
 }
 
 // SetWishFixedSelectCount sets the "wish_fixed_select_count" field.
-func (_c *GachaCreate) SetWishFixedSelectCount(v int) *GachaCreate {
+func (_c *GachaCreate) SetWishFixedSelectCount(v int64) *GachaCreate {
 	_c.mutation.SetWishFixedSelectCount(v)
 	return _c
 }
 
 // SetNillableWishFixedSelectCount sets the "wish_fixed_select_count" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableWishFixedSelectCount(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableWishFixedSelectCount(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetWishFixedSelectCount(*v)
 	}
@@ -173,13 +173,13 @@ func (_c *GachaCreate) SetNillableWishFixedSelectCount(v *int) *GachaCreate {
 }
 
 // SetWishLimitedSelectCount sets the "wish_limited_select_count" field.
-func (_c *GachaCreate) SetWishLimitedSelectCount(v int) *GachaCreate {
+func (_c *GachaCreate) SetWishLimitedSelectCount(v int64) *GachaCreate {
 	_c.mutation.SetWishLimitedSelectCount(v)
 	return _c
 }
 
 // SetNillableWishLimitedSelectCount sets the "wish_limited_select_count" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableWishLimitedSelectCount(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableWishLimitedSelectCount(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetWishLimitedSelectCount(*v)
 	}
@@ -223,13 +223,13 @@ func (_c *GachaCreate) SetGachaInformation(v json.RawMessage) *GachaCreate {
 }
 
 // SetDrawableGachaHour sets the "drawable_gacha_hour" field.
-func (_c *GachaCreate) SetDrawableGachaHour(v int) *GachaCreate {
+func (_c *GachaCreate) SetDrawableGachaHour(v int64) *GachaCreate {
 	_c.mutation.SetDrawableGachaHour(v)
 	return _c
 }
 
 // SetNillableDrawableGachaHour sets the "drawable_gacha_hour" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableDrawableGachaHour(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableDrawableGachaHour(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetDrawableGachaHour(*v)
 	}
@@ -237,13 +237,13 @@ func (_c *GachaCreate) SetNillableDrawableGachaHour(v *int) *GachaCreate {
 }
 
 // SetGachaBonusID sets the "gacha_bonus_id" field.
-func (_c *GachaCreate) SetGachaBonusID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGachaBonusID(v int64) *GachaCreate {
 	_c.mutation.SetGachaBonusID(v)
 	return _c
 }
 
 // SetNillableGachaBonusID sets the "gacha_bonus_id" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableGachaBonusID(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableGachaBonusID(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetGachaBonusID(*v)
 	}
@@ -251,13 +251,13 @@ func (_c *GachaCreate) SetNillableGachaBonusID(v *int) *GachaCreate {
 }
 
 // SetSpinLimit sets the "spin_limit" field.
-func (_c *GachaCreate) SetSpinLimit(v int) *GachaCreate {
+func (_c *GachaCreate) SetSpinLimit(v int64) *GachaCreate {
 	_c.mutation.SetSpinLimit(v)
 	return _c
 }
 
 // SetNillableSpinLimit sets the "spin_limit" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableSpinLimit(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableSpinLimit(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetSpinLimit(*v)
 	}
@@ -265,13 +265,13 @@ func (_c *GachaCreate) SetNillableSpinLimit(v *int) *GachaCreate {
 }
 
 // SetGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field.
-func (_c *GachaCreate) SetGachaBonusItemReceivableRewardGroupID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGachaBonusItemReceivableRewardGroupID(v int64) *GachaCreate {
 	_c.mutation.SetGachaBonusItemReceivableRewardGroupID(v)
 	return _c
 }
 
 // SetNillableGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetGachaBonusItemReceivableRewardGroupID(*v)
 	}
@@ -279,13 +279,13 @@ func (_c *GachaCreate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int) 
 }
 
 // SetGachaFreebieGroupID sets the "gacha_freebie_group_id" field.
-func (_c *GachaCreate) SetGachaFreebieGroupID(v int) *GachaCreate {
+func (_c *GachaCreate) SetGachaFreebieGroupID(v int64) *GachaCreate {
 	_c.mutation.SetGachaFreebieGroupID(v)
 	return _c
 }
 
 // SetNillableGachaFreebieGroupID sets the "gacha_freebie_group_id" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableGachaFreebieGroupID(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableGachaFreebieGroupID(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetGachaFreebieGroupID(*v)
 	}
@@ -293,13 +293,13 @@ func (_c *GachaCreate) SetNillableGachaFreebieGroupID(v *int) *GachaCreate {
 }
 
 // SetDailySpinLimit sets the "daily_spin_limit" field.
-func (_c *GachaCreate) SetDailySpinLimit(v int) *GachaCreate {
+func (_c *GachaCreate) SetDailySpinLimit(v int64) *GachaCreate {
 	_c.mutation.SetDailySpinLimit(v)
 	return _c
 }
 
 // SetNillableDailySpinLimit sets the "daily_spin_limit" field if the given value is not nil.
-func (_c *GachaCreate) SetNillableDailySpinLimit(v *int) *GachaCreate {
+func (_c *GachaCreate) SetNillableDailySpinLimit(v *int64) *GachaCreate {
 	if v != nil {
 		_c.SetDailySpinLimit(*v)
 	}
@@ -379,7 +379,7 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(gacha.Table, sqlgraph.NewFieldSpec(gacha.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gacha.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GachaType(); ok {
@@ -391,7 +391,7 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(gacha.FieldSeq, field.TypeInt, value)
+		_spec.SetField(gacha.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -399,15 +399,15 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GachaCardRarityRateGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64, value)
 		_node.GachaCardRarityRateGroupID = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(gacha.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(gacha.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(gacha.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(gacha.FieldEndAt, field.TypeInt64, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.IsShowPeriod(); ok {
@@ -415,19 +415,19 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_node.IsShowPeriod = value
 	}
 	if value, ok := _c.mutation.GachaCeilItemID(); ok {
-		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt64, value)
 		_node.GachaCeilItemID = value
 	}
 	if value, ok := _c.mutation.WishSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt, value)
+		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt64, value)
 		_node.WishSelectCount = value
 	}
 	if value, ok := _c.mutation.WishFixedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt, value)
+		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt64, value)
 		_node.WishFixedSelectCount = value
 	}
 	if value, ok := _c.mutation.WishLimitedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt, value)
+		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt64, value)
 		_node.WishLimitedSelectCount = value
 	}
 	if value, ok := _c.mutation.GachaCardRarityRates(); ok {
@@ -455,27 +455,27 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_node.GachaInformation = value
 	}
 	if value, ok := _c.mutation.DrawableGachaHour(); ok {
-		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt, value)
+		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt64, value)
 		_node.DrawableGachaHour = value
 	}
 	if value, ok := _c.mutation.GachaBonusID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt64, value)
 		_node.GachaBonusID = value
 	}
 	if value, ok := _c.mutation.SpinLimit(); ok {
-		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt, value)
+		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt64, value)
 		_node.SpinLimit = value
 	}
 	if value, ok := _c.mutation.GachaBonusItemReceivableRewardGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64, value)
 		_node.GachaBonusItemReceivableRewardGroupID = value
 	}
 	if value, ok := _c.mutation.GachaFreebieGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt, value)
+		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt64, value)
 		_node.GachaFreebieGroupID = value
 	}
 	if value, ok := _c.mutation.DailySpinLimit(); ok {
-		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt, value)
+		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
 		_node.DailySpinLimit = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

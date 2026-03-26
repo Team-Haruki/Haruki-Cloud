@@ -20,19 +20,19 @@ type MysekaigatecharacterlotterieCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaigatecharacterlotterieCreate) SetGameID(v int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetGameID(v int64) *MysekaigatecharacterlotterieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (_c *MysekaigatecharacterlotterieCreate) SetMysekaiGateID(v int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetMysekaiGateID(v int64) *MysekaigatecharacterlotterieCreate {
 	_c.mutation.SetMysekaiGateID(v)
 	return _c
 }
 
 // SetNillableMysekaiGateID sets the "mysekai_gate_id" field if the given value is not nil.
-func (_c *MysekaigatecharacterlotterieCreate) SetNillableMysekaiGateID(v *int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetNillableMysekaiGateID(v *int64) *MysekaigatecharacterlotterieCreate {
 	if v != nil {
 		_c.SetMysekaiGateID(*v)
 	}
@@ -40,13 +40,13 @@ func (_c *MysekaigatecharacterlotterieCreate) SetNillableMysekaiGateID(v *int) *
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_c *MysekaigatecharacterlotterieCreate) SetGameCharacterUnitID(v int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetGameCharacterUnitID(v int64) *MysekaigatecharacterlotterieCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_c *MysekaigatecharacterlotterieCreate) SetNillableGameCharacterUnitID(v *int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetNillableGameCharacterUnitID(v *int64) *MysekaigatecharacterlotterieCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitID(*v)
 	}
@@ -54,13 +54,13 @@ func (_c *MysekaigatecharacterlotterieCreate) SetNillableGameCharacterUnitID(v *
 }
 
 // SetVisitableMysekaiGateLevel sets the "visitable_mysekai_gate_level" field.
-func (_c *MysekaigatecharacterlotterieCreate) SetVisitableMysekaiGateLevel(v int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetVisitableMysekaiGateLevel(v int64) *MysekaigatecharacterlotterieCreate {
 	_c.mutation.SetVisitableMysekaiGateLevel(v)
 	return _c
 }
 
 // SetNillableVisitableMysekaiGateLevel sets the "visitable_mysekai_gate_level" field if the given value is not nil.
-func (_c *MysekaigatecharacterlotterieCreate) SetNillableVisitableMysekaiGateLevel(v *int) *MysekaigatecharacterlotterieCreate {
+func (_c *MysekaigatecharacterlotterieCreate) SetNillableVisitableMysekaiGateLevel(v *int64) *MysekaigatecharacterlotterieCreate {
 	if v != nil {
 		_c.SetVisitableMysekaiGateLevel(*v)
 	}
@@ -140,19 +140,19 @@ func (_c *MysekaigatecharacterlotterieCreate) createSpec() (*Mysekaigatecharacte
 		_spec = sqlgraph.NewCreateSpec(mysekaigatecharacterlotterie.Table, sqlgraph.NewFieldSpec(mysekaigatecharacterlotterie.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiGateID(); ok {
-		_spec.SetField(mysekaigatecharacterlotterie.FieldMysekaiGateID, field.TypeInt, value)
+		_spec.SetField(mysekaigatecharacterlotterie.FieldMysekaiGateID, field.TypeInt64, value)
 		_node.MysekaiGateID = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(mysekaigatecharacterlotterie.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(mysekaigatecharacterlotterie.FieldGameCharacterUnitID, field.TypeInt64, value)
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.VisitableMysekaiGateLevel(); ok {
-		_spec.SetField(mysekaigatecharacterlotterie.FieldVisitableMysekaiGateLevel, field.TypeInt, value)
+		_spec.SetField(mysekaigatecharacterlotterie.FieldVisitableMysekaiGateLevel, field.TypeInt64, value)
 		_node.VisitableMysekaiGateLevel = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

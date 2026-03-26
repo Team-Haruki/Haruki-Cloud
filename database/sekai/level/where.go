@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Level {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Level {
+func GameID(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldGameID, v))
 }
 
 // Level applies equality check predicate on the "level" field. It's identical to LevelEQ.
-func Level(v int) predicate.Level {
+func Level(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldLevel, v))
 }
 
 // TotalExp applies equality check predicate on the "total_exp" field. It's identical to TotalExpEQ.
-func TotalExp(v int) predicate.Level {
+func TotalExp(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldTotalExp, v))
 }
 
@@ -74,42 +74,42 @@ func ServerRegion(v string) predicate.Level {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Level {
+func GameIDEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Level {
+func GameIDNEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Level {
+func GameIDIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Level {
+func GameIDNotIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Level {
+func GameIDGT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Level {
+func GameIDGTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Level {
+func GameIDLT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Level {
+func GameIDLTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -124,42 +124,42 @@ func LevelTypeNotNil() predicate.Level {
 }
 
 // LevelEQ applies the EQ predicate on the "level" field.
-func LevelEQ(v int) predicate.Level {
+func LevelEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldLevel, v))
 }
 
 // LevelNEQ applies the NEQ predicate on the "level" field.
-func LevelNEQ(v int) predicate.Level {
+func LevelNEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldNEQ(FieldLevel, v))
 }
 
 // LevelIn applies the In predicate on the "level" field.
-func LevelIn(vs ...int) predicate.Level {
+func LevelIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldIn(FieldLevel, vs...))
 }
 
 // LevelNotIn applies the NotIn predicate on the "level" field.
-func LevelNotIn(vs ...int) predicate.Level {
+func LevelNotIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldNotIn(FieldLevel, vs...))
 }
 
 // LevelGT applies the GT predicate on the "level" field.
-func LevelGT(v int) predicate.Level {
+func LevelGT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGT(FieldLevel, v))
 }
 
 // LevelGTE applies the GTE predicate on the "level" field.
-func LevelGTE(v int) predicate.Level {
+func LevelGTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGTE(FieldLevel, v))
 }
 
 // LevelLT applies the LT predicate on the "level" field.
-func LevelLT(v int) predicate.Level {
+func LevelLT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLT(FieldLevel, v))
 }
 
 // LevelLTE applies the LTE predicate on the "level" field.
-func LevelLTE(v int) predicate.Level {
+func LevelLTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLTE(FieldLevel, v))
 }
 
@@ -174,42 +174,42 @@ func LevelNotNil() predicate.Level {
 }
 
 // TotalExpEQ applies the EQ predicate on the "total_exp" field.
-func TotalExpEQ(v int) predicate.Level {
+func TotalExpEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldTotalExp, v))
 }
 
 // TotalExpNEQ applies the NEQ predicate on the "total_exp" field.
-func TotalExpNEQ(v int) predicate.Level {
+func TotalExpNEQ(v int64) predicate.Level {
 	return predicate.Level(sql.FieldNEQ(FieldTotalExp, v))
 }
 
 // TotalExpIn applies the In predicate on the "total_exp" field.
-func TotalExpIn(vs ...int) predicate.Level {
+func TotalExpIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldIn(FieldTotalExp, vs...))
 }
 
 // TotalExpNotIn applies the NotIn predicate on the "total_exp" field.
-func TotalExpNotIn(vs ...int) predicate.Level {
+func TotalExpNotIn(vs ...int64) predicate.Level {
 	return predicate.Level(sql.FieldNotIn(FieldTotalExp, vs...))
 }
 
 // TotalExpGT applies the GT predicate on the "total_exp" field.
-func TotalExpGT(v int) predicate.Level {
+func TotalExpGT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGT(FieldTotalExp, v))
 }
 
 // TotalExpGTE applies the GTE predicate on the "total_exp" field.
-func TotalExpGTE(v int) predicate.Level {
+func TotalExpGTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldGTE(FieldTotalExp, v))
 }
 
 // TotalExpLT applies the LT predicate on the "total_exp" field.
-func TotalExpLT(v int) predicate.Level {
+func TotalExpLT(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLT(FieldTotalExp, v))
 }
 
 // TotalExpLTE applies the LTE predicate on the "total_exp" field.
-func TotalExpLTE(v int) predicate.Level {
+func TotalExpLTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLTE(FieldTotalExp, v))
 }
 

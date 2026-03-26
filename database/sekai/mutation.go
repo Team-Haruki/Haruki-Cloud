@@ -189,11 +189,11 @@ type AreaMutation struct {
 	op                          Op
 	typ                         string
 	id                          *int
-	game_id                     *int
-	addgame_id                  *int
+	game_id                     *int64
+	addgame_id                  *int64
 	assetbundle_name            *string
-	group_id                    *int
-	addgroup_id                 *int
+	group_id                    *int64
+	addgroup_id                 *int64
 	is_base_area                *bool
 	area_type                   *json.RawMessage
 	appendarea_type             json.RawMessage
@@ -204,16 +204,16 @@ type AreaMutation struct {
 	additional_area_type        *json.RawMessage
 	appendadditional_area_type  json.RawMessage
 	name                        *string
-	release_condition_id        *int
-	addrelease_condition_id     *int
+	release_condition_id        *int64
+	addrelease_condition_id     *int64
 	sub_name                    *string
 	label                       *string
-	start_at                    *int
-	addstart_at                 *int
-	end_at                      *int
-	addend_at                   *int
-	release_condition_id2       *int
-	addrelease_condition_id2    *int
+	start_at                    *int64
+	addstart_at                 *int64
+	end_at                      *int64
+	addend_at                   *int64
+	release_condition_id2       *int64
+	addrelease_condition_id2    *int64
 	server_region               *string
 	clearedFields               map[string]struct{}
 	done                        bool
@@ -320,13 +320,13 @@ func (m *AreaMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *AreaMutation) SetGameID(i int) {
+func (m *AreaMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *AreaMutation) GameID() (r int, exists bool) {
+func (m *AreaMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -337,7 +337,7 @@ func (m *AreaMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -352,7 +352,7 @@ func (m *AreaMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *AreaMutation) AddGameID(i int) {
+func (m *AreaMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -361,7 +361,7 @@ func (m *AreaMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *AreaMutation) AddedGameID() (r int, exists bool) {
+func (m *AreaMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -425,13 +425,13 @@ func (m *AreaMutation) ResetAssetbundleName() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *AreaMutation) SetGroupID(i int) {
+func (m *AreaMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *AreaMutation) GroupID() (r int, exists bool) {
+func (m *AreaMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -442,7 +442,7 @@ func (m *AreaMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -457,7 +457,7 @@ func (m *AreaMutation) OldGroupID(ctx context.Context) (v int, err error) {
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *AreaMutation) AddGroupID(i int) {
+func (m *AreaMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -466,7 +466,7 @@ func (m *AreaMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *AreaMutation) AddedGroupID() (r int, exists bool) {
+func (m *AreaMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -853,13 +853,13 @@ func (m *AreaMutation) ResetName() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *AreaMutation) SetReleaseConditionID(i int) {
+func (m *AreaMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *AreaMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *AreaMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -870,7 +870,7 @@ func (m *AreaMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -885,7 +885,7 @@ func (m *AreaMutation) OldReleaseConditionID(ctx context.Context) (v int, err er
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *AreaMutation) AddReleaseConditionID(i int) {
+func (m *AreaMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -894,7 +894,7 @@ func (m *AreaMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *AreaMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *AreaMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -1021,13 +1021,13 @@ func (m *AreaMutation) ResetLabel() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *AreaMutation) SetStartAt(i int) {
+func (m *AreaMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *AreaMutation) StartAt() (r int, exists bool) {
+func (m *AreaMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -1038,7 +1038,7 @@ func (m *AreaMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -1053,7 +1053,7 @@ func (m *AreaMutation) OldStartAt(ctx context.Context) (v int, err error) {
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *AreaMutation) AddStartAt(i int) {
+func (m *AreaMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -1062,7 +1062,7 @@ func (m *AreaMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *AreaMutation) AddedStartAt() (r int, exists bool) {
+func (m *AreaMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -1091,13 +1091,13 @@ func (m *AreaMutation) ResetStartAt() {
 }
 
 // SetEndAt sets the "end_at" field.
-func (m *AreaMutation) SetEndAt(i int) {
+func (m *AreaMutation) SetEndAt(i int64) {
 	m.end_at = &i
 	m.addend_at = nil
 }
 
 // EndAt returns the value of the "end_at" field in the mutation.
-func (m *AreaMutation) EndAt() (r int, exists bool) {
+func (m *AreaMutation) EndAt() (r int64, exists bool) {
 	v := m.end_at
 	if v == nil {
 		return
@@ -1108,7 +1108,7 @@ func (m *AreaMutation) EndAt() (r int, exists bool) {
 // OldEndAt returns the old "end_at" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldEndAt(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEndAt is only allowed on UpdateOne operations")
 	}
@@ -1123,7 +1123,7 @@ func (m *AreaMutation) OldEndAt(ctx context.Context) (v int, err error) {
 }
 
 // AddEndAt adds i to the "end_at" field.
-func (m *AreaMutation) AddEndAt(i int) {
+func (m *AreaMutation) AddEndAt(i int64) {
 	if m.addend_at != nil {
 		*m.addend_at += i
 	} else {
@@ -1132,7 +1132,7 @@ func (m *AreaMutation) AddEndAt(i int) {
 }
 
 // AddedEndAt returns the value that was added to the "end_at" field in this mutation.
-func (m *AreaMutation) AddedEndAt() (r int, exists bool) {
+func (m *AreaMutation) AddedEndAt() (r int64, exists bool) {
 	v := m.addend_at
 	if v == nil {
 		return
@@ -1161,13 +1161,13 @@ func (m *AreaMutation) ResetEndAt() {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (m *AreaMutation) SetReleaseConditionId2(i int) {
+func (m *AreaMutation) SetReleaseConditionId2(i int64) {
 	m.release_condition_id2 = &i
 	m.addrelease_condition_id2 = nil
 }
 
 // ReleaseConditionId2 returns the value of the "release_condition_id2" field in the mutation.
-func (m *AreaMutation) ReleaseConditionId2() (r int, exists bool) {
+func (m *AreaMutation) ReleaseConditionId2() (r int64, exists bool) {
 	v := m.release_condition_id2
 	if v == nil {
 		return
@@ -1178,7 +1178,7 @@ func (m *AreaMutation) ReleaseConditionId2() (r int, exists bool) {
 // OldReleaseConditionId2 returns the old "release_condition_id2" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldReleaseConditionId2(ctx context.Context) (v int, err error) {
+func (m *AreaMutation) OldReleaseConditionId2(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionId2 is only allowed on UpdateOne operations")
 	}
@@ -1193,7 +1193,7 @@ func (m *AreaMutation) OldReleaseConditionId2(ctx context.Context) (v int, err e
 }
 
 // AddReleaseConditionId2 adds i to the "release_condition_id2" field.
-func (m *AreaMutation) AddReleaseConditionId2(i int) {
+func (m *AreaMutation) AddReleaseConditionId2(i int64) {
 	if m.addrelease_condition_id2 != nil {
 		*m.addrelease_condition_id2 += i
 	} else {
@@ -1202,7 +1202,7 @@ func (m *AreaMutation) AddReleaseConditionId2(i int) {
 }
 
 // AddedReleaseConditionId2 returns the value that was added to the "release_condition_id2" field in this mutation.
-func (m *AreaMutation) AddedReleaseConditionId2() (r int, exists bool) {
+func (m *AreaMutation) AddedReleaseConditionId2() (r int64, exists bool) {
 	v := m.addrelease_condition_id2
 	if v == nil {
 		return
@@ -1440,7 +1440,7 @@ func (m *AreaMutation) OldField(ctx context.Context, name string) (ent.Value, er
 func (m *AreaMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case area.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1454,7 +1454,7 @@ func (m *AreaMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case area.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1503,7 +1503,7 @@ func (m *AreaMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case area.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1524,21 +1524,21 @@ func (m *AreaMutation) SetField(name string, value ent.Value) error {
 		m.SetLabel(v)
 		return nil
 	case area.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case area.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEndAt(v)
 		return nil
 	case area.FieldReleaseConditionId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1607,42 +1607,42 @@ func (m *AreaMutation) AddedField(name string) (ent.Value, bool) {
 func (m *AreaMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case area.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case area.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case area.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseConditionID(v)
 		return nil
 	case area.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case area.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEndAt(v)
 		return nil
 	case area.FieldReleaseConditionId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1868,10 +1868,10 @@ type AreaitemMutation struct {
 	op                Op
 	typ               string
 	id                *int
-	game_id           *int
-	addgame_id        *int
-	area_id           *int
-	addarea_id        *int
+	game_id           *int64
+	addgame_id        *int64
+	area_id           *int64
+	addarea_id        *int64
 	name              *string
 	flavor_text       *string
 	spawn_point       *json.RawMessage
@@ -1983,13 +1983,13 @@ func (m *AreaitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *AreaitemMutation) SetGameID(i int) {
+func (m *AreaitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *AreaitemMutation) GameID() (r int, exists bool) {
+func (m *AreaitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -2000,7 +2000,7 @@ func (m *AreaitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Areaitem entity.
 // If the Areaitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *AreaitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -2015,7 +2015,7 @@ func (m *AreaitemMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *AreaitemMutation) AddGameID(i int) {
+func (m *AreaitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -2024,7 +2024,7 @@ func (m *AreaitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *AreaitemMutation) AddedGameID() (r int, exists bool) {
+func (m *AreaitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -2039,13 +2039,13 @@ func (m *AreaitemMutation) ResetGameID() {
 }
 
 // SetAreaID sets the "area_id" field.
-func (m *AreaitemMutation) SetAreaID(i int) {
+func (m *AreaitemMutation) SetAreaID(i int64) {
 	m.area_id = &i
 	m.addarea_id = nil
 }
 
 // AreaID returns the value of the "area_id" field in the mutation.
-func (m *AreaitemMutation) AreaID() (r int, exists bool) {
+func (m *AreaitemMutation) AreaID() (r int64, exists bool) {
 	v := m.area_id
 	if v == nil {
 		return
@@ -2056,7 +2056,7 @@ func (m *AreaitemMutation) AreaID() (r int, exists bool) {
 // OldAreaID returns the old "area_id" field's value of the Areaitem entity.
 // If the Areaitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemMutation) OldAreaID(ctx context.Context) (v int, err error) {
+func (m *AreaitemMutation) OldAreaID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAreaID is only allowed on UpdateOne operations")
 	}
@@ -2071,7 +2071,7 @@ func (m *AreaitemMutation) OldAreaID(ctx context.Context) (v int, err error) {
 }
 
 // AddAreaID adds i to the "area_id" field.
-func (m *AreaitemMutation) AddAreaID(i int) {
+func (m *AreaitemMutation) AddAreaID(i int64) {
 	if m.addarea_id != nil {
 		*m.addarea_id += i
 	} else {
@@ -2080,7 +2080,7 @@ func (m *AreaitemMutation) AddAreaID(i int) {
 }
 
 // AddedAreaID returns the value that was added to the "area_id" field in this mutation.
-func (m *AreaitemMutation) AddedAreaID() (r int, exists bool) {
+func (m *AreaitemMutation) AddedAreaID() (r int64, exists bool) {
 	v := m.addarea_id
 	if v == nil {
 		return
@@ -2467,14 +2467,14 @@ func (m *AreaitemMutation) OldField(ctx context.Context, name string) (ent.Value
 func (m *AreaitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case areaitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case areaitem.FieldAreaID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2551,14 +2551,14 @@ func (m *AreaitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *AreaitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case areaitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case areaitem.FieldAreaID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2703,16 +2703,16 @@ type AreaitemlevelMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	area_item_id                   *int
-	addarea_item_id                *int
-	level                          *int
-	addlevel                       *int
+	area_item_id                   *int64
+	addarea_item_id                *int64
+	level                          *int64
+	addlevel                       *int64
 	target_unit                    *json.RawMessage
 	appendtarget_unit              json.RawMessage
 	target_card_attr               *json.RawMessage
 	appendtarget_card_attr         json.RawMessage
-	target_game_character_id       *int
-	addtarget_game_character_id    *int
+	target_game_character_id       *int64
+	addtarget_game_character_id    *int64
 	power1_bonus_rate              *float64
 	addpower1_bonus_rate           *float64
 	power1_all_match_bonus_rate    *float64
@@ -2832,13 +2832,13 @@ func (m *AreaitemlevelMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetAreaItemID sets the "area_item_id" field.
-func (m *AreaitemlevelMutation) SetAreaItemID(i int) {
+func (m *AreaitemlevelMutation) SetAreaItemID(i int64) {
 	m.area_item_id = &i
 	m.addarea_item_id = nil
 }
 
 // AreaItemID returns the value of the "area_item_id" field in the mutation.
-func (m *AreaitemlevelMutation) AreaItemID() (r int, exists bool) {
+func (m *AreaitemlevelMutation) AreaItemID() (r int64, exists bool) {
 	v := m.area_item_id
 	if v == nil {
 		return
@@ -2849,7 +2849,7 @@ func (m *AreaitemlevelMutation) AreaItemID() (r int, exists bool) {
 // OldAreaItemID returns the old "area_item_id" field's value of the Areaitemlevel entity.
 // If the Areaitemlevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemlevelMutation) OldAreaItemID(ctx context.Context) (v int, err error) {
+func (m *AreaitemlevelMutation) OldAreaItemID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAreaItemID is only allowed on UpdateOne operations")
 	}
@@ -2864,7 +2864,7 @@ func (m *AreaitemlevelMutation) OldAreaItemID(ctx context.Context) (v int, err e
 }
 
 // AddAreaItemID adds i to the "area_item_id" field.
-func (m *AreaitemlevelMutation) AddAreaItemID(i int) {
+func (m *AreaitemlevelMutation) AddAreaItemID(i int64) {
 	if m.addarea_item_id != nil {
 		*m.addarea_item_id += i
 	} else {
@@ -2873,7 +2873,7 @@ func (m *AreaitemlevelMutation) AddAreaItemID(i int) {
 }
 
 // AddedAreaItemID returns the value that was added to the "area_item_id" field in this mutation.
-func (m *AreaitemlevelMutation) AddedAreaItemID() (r int, exists bool) {
+func (m *AreaitemlevelMutation) AddedAreaItemID() (r int64, exists bool) {
 	v := m.addarea_item_id
 	if v == nil {
 		return
@@ -2902,13 +2902,13 @@ func (m *AreaitemlevelMutation) ResetAreaItemID() {
 }
 
 // SetLevel sets the "level" field.
-func (m *AreaitemlevelMutation) SetLevel(i int) {
+func (m *AreaitemlevelMutation) SetLevel(i int64) {
 	m.level = &i
 	m.addlevel = nil
 }
 
 // Level returns the value of the "level" field in the mutation.
-func (m *AreaitemlevelMutation) Level() (r int, exists bool) {
+func (m *AreaitemlevelMutation) Level() (r int64, exists bool) {
 	v := m.level
 	if v == nil {
 		return
@@ -2919,7 +2919,7 @@ func (m *AreaitemlevelMutation) Level() (r int, exists bool) {
 // OldLevel returns the old "level" field's value of the Areaitemlevel entity.
 // If the Areaitemlevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemlevelMutation) OldLevel(ctx context.Context) (v int, err error) {
+func (m *AreaitemlevelMutation) OldLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLevel is only allowed on UpdateOne operations")
 	}
@@ -2934,7 +2934,7 @@ func (m *AreaitemlevelMutation) OldLevel(ctx context.Context) (v int, err error)
 }
 
 // AddLevel adds i to the "level" field.
-func (m *AreaitemlevelMutation) AddLevel(i int) {
+func (m *AreaitemlevelMutation) AddLevel(i int64) {
 	if m.addlevel != nil {
 		*m.addlevel += i
 	} else {
@@ -2943,7 +2943,7 @@ func (m *AreaitemlevelMutation) AddLevel(i int) {
 }
 
 // AddedLevel returns the value that was added to the "level" field in this mutation.
-func (m *AreaitemlevelMutation) AddedLevel() (r int, exists bool) {
+func (m *AreaitemlevelMutation) AddedLevel() (r int64, exists bool) {
 	v := m.addlevel
 	if v == nil {
 		return
@@ -3102,13 +3102,13 @@ func (m *AreaitemlevelMutation) ResetTargetCardAttr() {
 }
 
 // SetTargetGameCharacterID sets the "target_game_character_id" field.
-func (m *AreaitemlevelMutation) SetTargetGameCharacterID(i int) {
+func (m *AreaitemlevelMutation) SetTargetGameCharacterID(i int64) {
 	m.target_game_character_id = &i
 	m.addtarget_game_character_id = nil
 }
 
 // TargetGameCharacterID returns the value of the "target_game_character_id" field in the mutation.
-func (m *AreaitemlevelMutation) TargetGameCharacterID() (r int, exists bool) {
+func (m *AreaitemlevelMutation) TargetGameCharacterID() (r int64, exists bool) {
 	v := m.target_game_character_id
 	if v == nil {
 		return
@@ -3119,7 +3119,7 @@ func (m *AreaitemlevelMutation) TargetGameCharacterID() (r int, exists bool) {
 // OldTargetGameCharacterID returns the old "target_game_character_id" field's value of the Areaitemlevel entity.
 // If the Areaitemlevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemlevelMutation) OldTargetGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *AreaitemlevelMutation) OldTargetGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTargetGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -3134,7 +3134,7 @@ func (m *AreaitemlevelMutation) OldTargetGameCharacterID(ctx context.Context) (v
 }
 
 // AddTargetGameCharacterID adds i to the "target_game_character_id" field.
-func (m *AreaitemlevelMutation) AddTargetGameCharacterID(i int) {
+func (m *AreaitemlevelMutation) AddTargetGameCharacterID(i int64) {
 	if m.addtarget_game_character_id != nil {
 		*m.addtarget_game_character_id += i
 	} else {
@@ -3143,7 +3143,7 @@ func (m *AreaitemlevelMutation) AddTargetGameCharacterID(i int) {
 }
 
 // AddedTargetGameCharacterID returns the value that was added to the "target_game_character_id" field in this mutation.
-func (m *AreaitemlevelMutation) AddedTargetGameCharacterID() (r int, exists bool) {
+func (m *AreaitemlevelMutation) AddedTargetGameCharacterID() (r int64, exists bool) {
 	v := m.addtarget_game_character_id
 	if v == nil {
 		return
@@ -3829,14 +3829,14 @@ func (m *AreaitemlevelMutation) OldField(ctx context.Context, name string) (ent.
 func (m *AreaitemlevelMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case areaitemlevel.FieldAreaItemID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAreaItemID(v)
 		return nil
 	case areaitemlevel.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -3857,7 +3857,7 @@ func (m *AreaitemlevelMutation) SetField(name string, value ent.Value) error {
 		m.SetTargetCardAttr(v)
 		return nil
 	case areaitemlevel.FieldTargetGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -3990,21 +3990,21 @@ func (m *AreaitemlevelMutation) AddedField(name string) (ent.Value, bool) {
 func (m *AreaitemlevelMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case areaitemlevel.FieldAreaItemID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddAreaItemID(v)
 		return nil
 	case areaitemlevel.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLevel(v)
 		return nil
 	case areaitemlevel.FieldTargetGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4251,14 +4251,14 @@ type BondMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
-	group_id         *int
-	addgroup_id      *int
-	character_id1    *int
-	addcharacter_id1 *int
-	character_id2    *int
-	addcharacter_id2 *int
+	game_id          *int64
+	addgame_id       *int64
+	group_id         *int64
+	addgroup_id      *int64
+	character_id1    *int64
+	addcharacter_id1 *int64
+	character_id2    *int64
+	addcharacter_id2 *int64
 	server_region    *string
 	clearedFields    map[string]struct{}
 	done             bool
@@ -4365,13 +4365,13 @@ func (m *BondMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *BondMutation) SetGameID(i int) {
+func (m *BondMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *BondMutation) GameID() (r int, exists bool) {
+func (m *BondMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -4382,7 +4382,7 @@ func (m *BondMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Bond entity.
 // If the Bond object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *BondMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -4397,7 +4397,7 @@ func (m *BondMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *BondMutation) AddGameID(i int) {
+func (m *BondMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -4406,7 +4406,7 @@ func (m *BondMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *BondMutation) AddedGameID() (r int, exists bool) {
+func (m *BondMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -4421,13 +4421,13 @@ func (m *BondMutation) ResetGameID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *BondMutation) SetGroupID(i int) {
+func (m *BondMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *BondMutation) GroupID() (r int, exists bool) {
+func (m *BondMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -4438,7 +4438,7 @@ func (m *BondMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Bond entity.
 // If the Bond object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *BondMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -4453,7 +4453,7 @@ func (m *BondMutation) OldGroupID(ctx context.Context) (v int, err error) {
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *BondMutation) AddGroupID(i int) {
+func (m *BondMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -4462,7 +4462,7 @@ func (m *BondMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *BondMutation) AddedGroupID() (r int, exists bool) {
+func (m *BondMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -4491,13 +4491,13 @@ func (m *BondMutation) ResetGroupID() {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (m *BondMutation) SetCharacterId1(i int) {
+func (m *BondMutation) SetCharacterId1(i int64) {
 	m.character_id1 = &i
 	m.addcharacter_id1 = nil
 }
 
 // CharacterId1 returns the value of the "character_id1" field in the mutation.
-func (m *BondMutation) CharacterId1() (r int, exists bool) {
+func (m *BondMutation) CharacterId1() (r int64, exists bool) {
 	v := m.character_id1
 	if v == nil {
 		return
@@ -4508,7 +4508,7 @@ func (m *BondMutation) CharacterId1() (r int, exists bool) {
 // OldCharacterId1 returns the old "character_id1" field's value of the Bond entity.
 // If the Bond object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondMutation) OldCharacterId1(ctx context.Context) (v int, err error) {
+func (m *BondMutation) OldCharacterId1(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterId1 is only allowed on UpdateOne operations")
 	}
@@ -4523,7 +4523,7 @@ func (m *BondMutation) OldCharacterId1(ctx context.Context) (v int, err error) {
 }
 
 // AddCharacterId1 adds i to the "character_id1" field.
-func (m *BondMutation) AddCharacterId1(i int) {
+func (m *BondMutation) AddCharacterId1(i int64) {
 	if m.addcharacter_id1 != nil {
 		*m.addcharacter_id1 += i
 	} else {
@@ -4532,7 +4532,7 @@ func (m *BondMutation) AddCharacterId1(i int) {
 }
 
 // AddedCharacterId1 returns the value that was added to the "character_id1" field in this mutation.
-func (m *BondMutation) AddedCharacterId1() (r int, exists bool) {
+func (m *BondMutation) AddedCharacterId1() (r int64, exists bool) {
 	v := m.addcharacter_id1
 	if v == nil {
 		return
@@ -4561,13 +4561,13 @@ func (m *BondMutation) ResetCharacterId1() {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (m *BondMutation) SetCharacterId2(i int) {
+func (m *BondMutation) SetCharacterId2(i int64) {
 	m.character_id2 = &i
 	m.addcharacter_id2 = nil
 }
 
 // CharacterId2 returns the value of the "character_id2" field in the mutation.
-func (m *BondMutation) CharacterId2() (r int, exists bool) {
+func (m *BondMutation) CharacterId2() (r int64, exists bool) {
 	v := m.character_id2
 	if v == nil {
 		return
@@ -4578,7 +4578,7 @@ func (m *BondMutation) CharacterId2() (r int, exists bool) {
 // OldCharacterId2 returns the old "character_id2" field's value of the Bond entity.
 // If the Bond object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondMutation) OldCharacterId2(ctx context.Context) (v int, err error) {
+func (m *BondMutation) OldCharacterId2(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterId2 is only allowed on UpdateOne operations")
 	}
@@ -4593,7 +4593,7 @@ func (m *BondMutation) OldCharacterId2(ctx context.Context) (v int, err error) {
 }
 
 // AddCharacterId2 adds i to the "character_id2" field.
-func (m *BondMutation) AddCharacterId2(i int) {
+func (m *BondMutation) AddCharacterId2(i int64) {
 	if m.addcharacter_id2 != nil {
 		*m.addcharacter_id2 += i
 	} else {
@@ -4602,7 +4602,7 @@ func (m *BondMutation) AddCharacterId2(i int) {
 }
 
 // AddedCharacterId2 returns the value that was added to the "character_id2" field in this mutation.
-func (m *BondMutation) AddedCharacterId2() (r int, exists bool) {
+func (m *BondMutation) AddedCharacterId2() (r int64, exists bool) {
 	v := m.addcharacter_id2
 	if v == nil {
 		return
@@ -4763,28 +4763,28 @@ func (m *BondMutation) OldField(ctx context.Context, name string) (ent.Value, er
 func (m *BondMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case bond.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case bond.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
 		return nil
 	case bond.FieldCharacterId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCharacterId1(v)
 		return nil
 	case bond.FieldCharacterId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4843,28 +4843,28 @@ func (m *BondMutation) AddedField(name string) (ent.Value, bool) {
 func (m *BondMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case bond.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case bond.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case bond.FieldCharacterId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterId1(v)
 		return nil
 	case bond.FieldCharacterId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4991,16 +4991,16 @@ type BondshonorMutation struct {
 	op                               Op
 	typ                              string
 	id                               *int
-	game_id                          *int
-	addgame_id                       *int
-	seq                              *int
-	addseq                           *int
-	bonds_group_id                   *int
-	addbonds_group_id                *int
-	game_character_unit_id1          *int
-	addgame_character_unit_id1       *int
-	game_character_unit_id2          *int
-	addgame_character_unit_id2       *int
+	game_id                          *int64
+	addgame_id                       *int64
+	seq                              *int64
+	addseq                           *int64
+	bonds_group_id                   *int64
+	addbonds_group_id                *int64
+	game_character_unit_id1          *int64
+	addgame_character_unit_id1       *int64
+	game_character_unit_id2          *int64
+	addgame_character_unit_id2       *int64
 	honor_rarity                     *json.RawMessage
 	appendhonor_rarity               json.RawMessage
 	name                             *string
@@ -5115,13 +5115,13 @@ func (m *BondshonorMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *BondshonorMutation) SetGameID(i int) {
+func (m *BondshonorMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *BondshonorMutation) GameID() (r int, exists bool) {
+func (m *BondshonorMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -5132,7 +5132,7 @@ func (m *BondshonorMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *BondshonorMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -5147,7 +5147,7 @@ func (m *BondshonorMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *BondshonorMutation) AddGameID(i int) {
+func (m *BondshonorMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -5156,7 +5156,7 @@ func (m *BondshonorMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *BondshonorMutation) AddedGameID() (r int, exists bool) {
+func (m *BondshonorMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -5171,13 +5171,13 @@ func (m *BondshonorMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *BondshonorMutation) SetSeq(i int) {
+func (m *BondshonorMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *BondshonorMutation) Seq() (r int, exists bool) {
+func (m *BondshonorMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -5188,7 +5188,7 @@ func (m *BondshonorMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *BondshonorMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -5203,7 +5203,7 @@ func (m *BondshonorMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *BondshonorMutation) AddSeq(i int) {
+func (m *BondshonorMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -5212,7 +5212,7 @@ func (m *BondshonorMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *BondshonorMutation) AddedSeq() (r int, exists bool) {
+func (m *BondshonorMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -5241,13 +5241,13 @@ func (m *BondshonorMutation) ResetSeq() {
 }
 
 // SetBondsGroupID sets the "bonds_group_id" field.
-func (m *BondshonorMutation) SetBondsGroupID(i int) {
+func (m *BondshonorMutation) SetBondsGroupID(i int64) {
 	m.bonds_group_id = &i
 	m.addbonds_group_id = nil
 }
 
 // BondsGroupID returns the value of the "bonds_group_id" field in the mutation.
-func (m *BondshonorMutation) BondsGroupID() (r int, exists bool) {
+func (m *BondshonorMutation) BondsGroupID() (r int64, exists bool) {
 	v := m.bonds_group_id
 	if v == nil {
 		return
@@ -5258,7 +5258,7 @@ func (m *BondshonorMutation) BondsGroupID() (r int, exists bool) {
 // OldBondsGroupID returns the old "bonds_group_id" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldBondsGroupID(ctx context.Context) (v int, err error) {
+func (m *BondshonorMutation) OldBondsGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBondsGroupID is only allowed on UpdateOne operations")
 	}
@@ -5273,7 +5273,7 @@ func (m *BondshonorMutation) OldBondsGroupID(ctx context.Context) (v int, err er
 }
 
 // AddBondsGroupID adds i to the "bonds_group_id" field.
-func (m *BondshonorMutation) AddBondsGroupID(i int) {
+func (m *BondshonorMutation) AddBondsGroupID(i int64) {
 	if m.addbonds_group_id != nil {
 		*m.addbonds_group_id += i
 	} else {
@@ -5282,7 +5282,7 @@ func (m *BondshonorMutation) AddBondsGroupID(i int) {
 }
 
 // AddedBondsGroupID returns the value that was added to the "bonds_group_id" field in this mutation.
-func (m *BondshonorMutation) AddedBondsGroupID() (r int, exists bool) {
+func (m *BondshonorMutation) AddedBondsGroupID() (r int64, exists bool) {
 	v := m.addbonds_group_id
 	if v == nil {
 		return
@@ -5311,13 +5311,13 @@ func (m *BondshonorMutation) ResetBondsGroupID() {
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (m *BondshonorMutation) SetGameCharacterUnitId1(i int) {
+func (m *BondshonorMutation) SetGameCharacterUnitId1(i int64) {
 	m.game_character_unit_id1 = &i
 	m.addgame_character_unit_id1 = nil
 }
 
 // GameCharacterUnitId1 returns the value of the "game_character_unit_id1" field in the mutation.
-func (m *BondshonorMutation) GameCharacterUnitId1() (r int, exists bool) {
+func (m *BondshonorMutation) GameCharacterUnitId1() (r int64, exists bool) {
 	v := m.game_character_unit_id1
 	if v == nil {
 		return
@@ -5328,7 +5328,7 @@ func (m *BondshonorMutation) GameCharacterUnitId1() (r int, exists bool) {
 // OldGameCharacterUnitId1 returns the old "game_character_unit_id1" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldGameCharacterUnitId1(ctx context.Context) (v int, err error) {
+func (m *BondshonorMutation) OldGameCharacterUnitId1(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId1 is only allowed on UpdateOne operations")
 	}
@@ -5343,7 +5343,7 @@ func (m *BondshonorMutation) OldGameCharacterUnitId1(ctx context.Context) (v int
 }
 
 // AddGameCharacterUnitId1 adds i to the "game_character_unit_id1" field.
-func (m *BondshonorMutation) AddGameCharacterUnitId1(i int) {
+func (m *BondshonorMutation) AddGameCharacterUnitId1(i int64) {
 	if m.addgame_character_unit_id1 != nil {
 		*m.addgame_character_unit_id1 += i
 	} else {
@@ -5352,7 +5352,7 @@ func (m *BondshonorMutation) AddGameCharacterUnitId1(i int) {
 }
 
 // AddedGameCharacterUnitId1 returns the value that was added to the "game_character_unit_id1" field in this mutation.
-func (m *BondshonorMutation) AddedGameCharacterUnitId1() (r int, exists bool) {
+func (m *BondshonorMutation) AddedGameCharacterUnitId1() (r int64, exists bool) {
 	v := m.addgame_character_unit_id1
 	if v == nil {
 		return
@@ -5381,13 +5381,13 @@ func (m *BondshonorMutation) ResetGameCharacterUnitId1() {
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (m *BondshonorMutation) SetGameCharacterUnitId2(i int) {
+func (m *BondshonorMutation) SetGameCharacterUnitId2(i int64) {
 	m.game_character_unit_id2 = &i
 	m.addgame_character_unit_id2 = nil
 }
 
 // GameCharacterUnitId2 returns the value of the "game_character_unit_id2" field in the mutation.
-func (m *BondshonorMutation) GameCharacterUnitId2() (r int, exists bool) {
+func (m *BondshonorMutation) GameCharacterUnitId2() (r int64, exists bool) {
 	v := m.game_character_unit_id2
 	if v == nil {
 		return
@@ -5398,7 +5398,7 @@ func (m *BondshonorMutation) GameCharacterUnitId2() (r int, exists bool) {
 // OldGameCharacterUnitId2 returns the old "game_character_unit_id2" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldGameCharacterUnitId2(ctx context.Context) (v int, err error) {
+func (m *BondshonorMutation) OldGameCharacterUnitId2(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId2 is only allowed on UpdateOne operations")
 	}
@@ -5413,7 +5413,7 @@ func (m *BondshonorMutation) OldGameCharacterUnitId2(ctx context.Context) (v int
 }
 
 // AddGameCharacterUnitId2 adds i to the "game_character_unit_id2" field.
-func (m *BondshonorMutation) AddGameCharacterUnitId2(i int) {
+func (m *BondshonorMutation) AddGameCharacterUnitId2(i int64) {
 	if m.addgame_character_unit_id2 != nil {
 		*m.addgame_character_unit_id2 += i
 	} else {
@@ -5422,7 +5422,7 @@ func (m *BondshonorMutation) AddGameCharacterUnitId2(i int) {
 }
 
 // AddedGameCharacterUnitId2 returns the value that was added to the "game_character_unit_id2" field in this mutation.
-func (m *BondshonorMutation) AddedGameCharacterUnitId2() (r int, exists bool) {
+func (m *BondshonorMutation) AddedGameCharacterUnitId2() (r int64, exists bool) {
 	v := m.addgame_character_unit_id2
 	if v == nil {
 		return
@@ -5958,35 +5958,35 @@ func (m *BondshonorMutation) OldField(ctx context.Context, name string) (ent.Val
 func (m *BondshonorMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case bondshonor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case bondshonor.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case bondshonor.FieldBondsGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBondsGroupID(v)
 		return nil
 	case bondshonor.FieldGameCharacterUnitId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitId1(v)
 		return nil
 	case bondshonor.FieldGameCharacterUnitId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6092,35 +6092,35 @@ func (m *BondshonorMutation) AddedField(name string) (ent.Value, bool) {
 func (m *BondshonorMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case bondshonor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case bondshonor.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case bondshonor.FieldBondsGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddBondsGroupID(v)
 		return nil
 	case bondshonor.FieldGameCharacterUnitId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitId1(v)
 		return nil
 	case bondshonor.FieldGameCharacterUnitId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6310,13 +6310,13 @@ type BoostitemMutation struct {
 	op                Op
 	typ               string
 	id                *int
-	game_id           *int
-	addgame_id        *int
-	seq               *int
-	addseq            *int
+	game_id           *int64
+	addgame_id        *int64
+	seq               *int64
+	addseq            *int64
 	name              *string
-	recovery_value    *int
-	addrecovery_value *int
+	recovery_value    *int64
+	addrecovery_value *int64
 	asset_bundle_name *string
 	flavor_text       *json.RawMessage
 	appendflavor_text json.RawMessage
@@ -6426,13 +6426,13 @@ func (m *BoostitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *BoostitemMutation) SetGameID(i int) {
+func (m *BoostitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *BoostitemMutation) GameID() (r int, exists bool) {
+func (m *BoostitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -6443,7 +6443,7 @@ func (m *BoostitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Boostitem entity.
 // If the Boostitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BoostitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *BoostitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -6458,7 +6458,7 @@ func (m *BoostitemMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *BoostitemMutation) AddGameID(i int) {
+func (m *BoostitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -6467,7 +6467,7 @@ func (m *BoostitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *BoostitemMutation) AddedGameID() (r int, exists bool) {
+func (m *BoostitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -6482,13 +6482,13 @@ func (m *BoostitemMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *BoostitemMutation) SetSeq(i int) {
+func (m *BoostitemMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *BoostitemMutation) Seq() (r int, exists bool) {
+func (m *BoostitemMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -6499,7 +6499,7 @@ func (m *BoostitemMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Boostitem entity.
 // If the Boostitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BoostitemMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *BoostitemMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -6514,7 +6514,7 @@ func (m *BoostitemMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *BoostitemMutation) AddSeq(i int) {
+func (m *BoostitemMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -6523,7 +6523,7 @@ func (m *BoostitemMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *BoostitemMutation) AddedSeq() (r int, exists bool) {
+func (m *BoostitemMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -6601,13 +6601,13 @@ func (m *BoostitemMutation) ResetName() {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (m *BoostitemMutation) SetRecoveryValue(i int) {
+func (m *BoostitemMutation) SetRecoveryValue(i int64) {
 	m.recovery_value = &i
 	m.addrecovery_value = nil
 }
 
 // RecoveryValue returns the value of the "recovery_value" field in the mutation.
-func (m *BoostitemMutation) RecoveryValue() (r int, exists bool) {
+func (m *BoostitemMutation) RecoveryValue() (r int64, exists bool) {
 	v := m.recovery_value
 	if v == nil {
 		return
@@ -6618,7 +6618,7 @@ func (m *BoostitemMutation) RecoveryValue() (r int, exists bool) {
 // OldRecoveryValue returns the old "recovery_value" field's value of the Boostitem entity.
 // If the Boostitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BoostitemMutation) OldRecoveryValue(ctx context.Context) (v int, err error) {
+func (m *BoostitemMutation) OldRecoveryValue(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRecoveryValue is only allowed on UpdateOne operations")
 	}
@@ -6633,7 +6633,7 @@ func (m *BoostitemMutation) OldRecoveryValue(ctx context.Context) (v int, err er
 }
 
 // AddRecoveryValue adds i to the "recovery_value" field.
-func (m *BoostitemMutation) AddRecoveryValue(i int) {
+func (m *BoostitemMutation) AddRecoveryValue(i int64) {
 	if m.addrecovery_value != nil {
 		*m.addrecovery_value += i
 	} else {
@@ -6642,7 +6642,7 @@ func (m *BoostitemMutation) AddRecoveryValue(i int) {
 }
 
 // AddedRecoveryValue returns the value that was added to the "recovery_value" field in this mutation.
-func (m *BoostitemMutation) AddedRecoveryValue() (r int, exists bool) {
+func (m *BoostitemMutation) AddedRecoveryValue() (r int64, exists bool) {
 	v := m.addrecovery_value
 	if v == nil {
 		return
@@ -6931,14 +6931,14 @@ func (m *BoostitemMutation) OldField(ctx context.Context, name string) (ent.Valu
 func (m *BoostitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case boostitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case boostitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6952,7 +6952,7 @@ func (m *BoostitemMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case boostitem.FieldRecoveryValue:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7020,21 +7020,21 @@ func (m *BoostitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *BoostitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case boostitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case boostitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case boostitem.FieldRecoveryValue:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7179,38 +7179,38 @@ type CardMutation struct {
 	op                                         Op
 	typ                                        string
 	id                                         *int
-	game_id                                    *int
-	addgame_id                                 *int
-	seq                                        *int
-	addseq                                     *int
-	character_id                               *int
-	addcharacter_id                            *int
+	game_id                                    *int64
+	addgame_id                                 *int64
+	seq                                        *int64
+	addseq                                     *int64
+	character_id                               *int64
+	addcharacter_id                            *int64
 	card_rarity_type                           *json.RawMessage
 	appendcard_rarity_type                     json.RawMessage
-	special_training_power1_bonus_fixed        *int
-	addspecial_training_power1_bonus_fixed     *int
-	special_training_power2_bonus_fixed        *int
-	addspecial_training_power2_bonus_fixed     *int
-	special_training_power3_bonus_fixed        *int
-	addspecial_training_power3_bonus_fixed     *int
+	special_training_power1_bonus_fixed        *int64
+	addspecial_training_power1_bonus_fixed     *int64
+	special_training_power2_bonus_fixed        *int64
+	addspecial_training_power2_bonus_fixed     *int64
+	special_training_power3_bonus_fixed        *int64
+	addspecial_training_power3_bonus_fixed     *int64
 	attr                                       *json.RawMessage
 	appendattr                                 json.RawMessage
 	support_unit                               *json.RawMessage
 	appendsupport_unit                         json.RawMessage
-	skill_id                                   *int
-	addskill_id                                *int
+	skill_id                                   *int64
+	addskill_id                                *int64
 	card_skill_name                            *string
 	prefix                                     *string
 	assetbundle_name                           *string
 	gacha_phrase                               *string
 	flavor_text                                *json.RawMessage
 	appendflavor_text                          json.RawMessage
-	release_at                                 *int
-	addrelease_at                              *int
-	archive_published_at                       *int
-	addarchive_published_at                    *int
-	card_supply_id                             *int
-	addcard_supply_id                          *int
+	release_at                                 *int64
+	addrelease_at                              *int64
+	archive_published_at                       *int64
+	addarchive_published_at                    *int64
+	card_supply_id                             *int64
+	addcard_supply_id                          *int64
 	card_parameters                            *json.RawMessage
 	appendcard_parameters                      json.RawMessage
 	special_training_costs                     *json.RawMessage
@@ -7221,11 +7221,11 @@ type CardMutation struct {
 	appendinitial_special_training_status      json.RawMessage
 	archive_display_type                       *json.RawMessage
 	appendarchive_display_type                 json.RawMessage
-	special_training_skill_id                  *int
-	addspecial_training_skill_id               *int
+	special_training_skill_id                  *int64
+	addspecial_training_skill_id               *int64
 	special_training_skill_name                *string
-	special_training_reward_resource_box_id    *int
-	addspecial_training_reward_resource_box_id *int
+	special_training_reward_resource_box_id    *int64
+	addspecial_training_reward_resource_box_id *int64
 	server_region                              *string
 	clearedFields                              map[string]struct{}
 	done                                       bool
@@ -7332,13 +7332,13 @@ func (m *CardMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CardMutation) SetGameID(i int) {
+func (m *CardMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CardMutation) GameID() (r int, exists bool) {
+func (m *CardMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -7349,7 +7349,7 @@ func (m *CardMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -7364,7 +7364,7 @@ func (m *CardMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CardMutation) AddGameID(i int) {
+func (m *CardMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -7373,7 +7373,7 @@ func (m *CardMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CardMutation) AddedGameID() (r int, exists bool) {
+func (m *CardMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -7388,13 +7388,13 @@ func (m *CardMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *CardMutation) SetSeq(i int) {
+func (m *CardMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *CardMutation) Seq() (r int, exists bool) {
+func (m *CardMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -7405,7 +7405,7 @@ func (m *CardMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -7420,7 +7420,7 @@ func (m *CardMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *CardMutation) AddSeq(i int) {
+func (m *CardMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -7429,7 +7429,7 @@ func (m *CardMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *CardMutation) AddedSeq() (r int, exists bool) {
+func (m *CardMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -7458,13 +7458,13 @@ func (m *CardMutation) ResetSeq() {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (m *CardMutation) SetCharacterID(i int) {
+func (m *CardMutation) SetCharacterID(i int64) {
 	m.character_id = &i
 	m.addcharacter_id = nil
 }
 
 // CharacterID returns the value of the "character_id" field in the mutation.
-func (m *CardMutation) CharacterID() (r int, exists bool) {
+func (m *CardMutation) CharacterID() (r int64, exists bool) {
 	v := m.character_id
 	if v == nil {
 		return
@@ -7475,7 +7475,7 @@ func (m *CardMutation) CharacterID() (r int, exists bool) {
 // OldCharacterID returns the old "character_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldCharacterID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
 	}
@@ -7490,7 +7490,7 @@ func (m *CardMutation) OldCharacterID(ctx context.Context) (v int, err error) {
 }
 
 // AddCharacterID adds i to the "character_id" field.
-func (m *CardMutation) AddCharacterID(i int) {
+func (m *CardMutation) AddCharacterID(i int64) {
 	if m.addcharacter_id != nil {
 		*m.addcharacter_id += i
 	} else {
@@ -7499,7 +7499,7 @@ func (m *CardMutation) AddCharacterID(i int) {
 }
 
 // AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
-func (m *CardMutation) AddedCharacterID() (r int, exists bool) {
+func (m *CardMutation) AddedCharacterID() (r int64, exists bool) {
 	v := m.addcharacter_id
 	if v == nil {
 		return
@@ -7593,13 +7593,13 @@ func (m *CardMutation) ResetCardRarityType() {
 }
 
 // SetSpecialTrainingPower1BonusFixed sets the "special_training_power1_bonus_fixed" field.
-func (m *CardMutation) SetSpecialTrainingPower1BonusFixed(i int) {
+func (m *CardMutation) SetSpecialTrainingPower1BonusFixed(i int64) {
 	m.special_training_power1_bonus_fixed = &i
 	m.addspecial_training_power1_bonus_fixed = nil
 }
 
 // SpecialTrainingPower1BonusFixed returns the value of the "special_training_power1_bonus_fixed" field in the mutation.
-func (m *CardMutation) SpecialTrainingPower1BonusFixed() (r int, exists bool) {
+func (m *CardMutation) SpecialTrainingPower1BonusFixed() (r int64, exists bool) {
 	v := m.special_training_power1_bonus_fixed
 	if v == nil {
 		return
@@ -7610,7 +7610,7 @@ func (m *CardMutation) SpecialTrainingPower1BonusFixed() (r int, exists bool) {
 // OldSpecialTrainingPower1BonusFixed returns the old "special_training_power1_bonus_fixed" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSpecialTrainingPower1BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSpecialTrainingPower1BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialTrainingPower1BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -7625,7 +7625,7 @@ func (m *CardMutation) OldSpecialTrainingPower1BonusFixed(ctx context.Context) (
 }
 
 // AddSpecialTrainingPower1BonusFixed adds i to the "special_training_power1_bonus_fixed" field.
-func (m *CardMutation) AddSpecialTrainingPower1BonusFixed(i int) {
+func (m *CardMutation) AddSpecialTrainingPower1BonusFixed(i int64) {
 	if m.addspecial_training_power1_bonus_fixed != nil {
 		*m.addspecial_training_power1_bonus_fixed += i
 	} else {
@@ -7634,7 +7634,7 @@ func (m *CardMutation) AddSpecialTrainingPower1BonusFixed(i int) {
 }
 
 // AddedSpecialTrainingPower1BonusFixed returns the value that was added to the "special_training_power1_bonus_fixed" field in this mutation.
-func (m *CardMutation) AddedSpecialTrainingPower1BonusFixed() (r int, exists bool) {
+func (m *CardMutation) AddedSpecialTrainingPower1BonusFixed() (r int64, exists bool) {
 	v := m.addspecial_training_power1_bonus_fixed
 	if v == nil {
 		return
@@ -7663,13 +7663,13 @@ func (m *CardMutation) ResetSpecialTrainingPower1BonusFixed() {
 }
 
 // SetSpecialTrainingPower2BonusFixed sets the "special_training_power2_bonus_fixed" field.
-func (m *CardMutation) SetSpecialTrainingPower2BonusFixed(i int) {
+func (m *CardMutation) SetSpecialTrainingPower2BonusFixed(i int64) {
 	m.special_training_power2_bonus_fixed = &i
 	m.addspecial_training_power2_bonus_fixed = nil
 }
 
 // SpecialTrainingPower2BonusFixed returns the value of the "special_training_power2_bonus_fixed" field in the mutation.
-func (m *CardMutation) SpecialTrainingPower2BonusFixed() (r int, exists bool) {
+func (m *CardMutation) SpecialTrainingPower2BonusFixed() (r int64, exists bool) {
 	v := m.special_training_power2_bonus_fixed
 	if v == nil {
 		return
@@ -7680,7 +7680,7 @@ func (m *CardMutation) SpecialTrainingPower2BonusFixed() (r int, exists bool) {
 // OldSpecialTrainingPower2BonusFixed returns the old "special_training_power2_bonus_fixed" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSpecialTrainingPower2BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSpecialTrainingPower2BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialTrainingPower2BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -7695,7 +7695,7 @@ func (m *CardMutation) OldSpecialTrainingPower2BonusFixed(ctx context.Context) (
 }
 
 // AddSpecialTrainingPower2BonusFixed adds i to the "special_training_power2_bonus_fixed" field.
-func (m *CardMutation) AddSpecialTrainingPower2BonusFixed(i int) {
+func (m *CardMutation) AddSpecialTrainingPower2BonusFixed(i int64) {
 	if m.addspecial_training_power2_bonus_fixed != nil {
 		*m.addspecial_training_power2_bonus_fixed += i
 	} else {
@@ -7704,7 +7704,7 @@ func (m *CardMutation) AddSpecialTrainingPower2BonusFixed(i int) {
 }
 
 // AddedSpecialTrainingPower2BonusFixed returns the value that was added to the "special_training_power2_bonus_fixed" field in this mutation.
-func (m *CardMutation) AddedSpecialTrainingPower2BonusFixed() (r int, exists bool) {
+func (m *CardMutation) AddedSpecialTrainingPower2BonusFixed() (r int64, exists bool) {
 	v := m.addspecial_training_power2_bonus_fixed
 	if v == nil {
 		return
@@ -7733,13 +7733,13 @@ func (m *CardMutation) ResetSpecialTrainingPower2BonusFixed() {
 }
 
 // SetSpecialTrainingPower3BonusFixed sets the "special_training_power3_bonus_fixed" field.
-func (m *CardMutation) SetSpecialTrainingPower3BonusFixed(i int) {
+func (m *CardMutation) SetSpecialTrainingPower3BonusFixed(i int64) {
 	m.special_training_power3_bonus_fixed = &i
 	m.addspecial_training_power3_bonus_fixed = nil
 }
 
 // SpecialTrainingPower3BonusFixed returns the value of the "special_training_power3_bonus_fixed" field in the mutation.
-func (m *CardMutation) SpecialTrainingPower3BonusFixed() (r int, exists bool) {
+func (m *CardMutation) SpecialTrainingPower3BonusFixed() (r int64, exists bool) {
 	v := m.special_training_power3_bonus_fixed
 	if v == nil {
 		return
@@ -7750,7 +7750,7 @@ func (m *CardMutation) SpecialTrainingPower3BonusFixed() (r int, exists bool) {
 // OldSpecialTrainingPower3BonusFixed returns the old "special_training_power3_bonus_fixed" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSpecialTrainingPower3BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSpecialTrainingPower3BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialTrainingPower3BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -7765,7 +7765,7 @@ func (m *CardMutation) OldSpecialTrainingPower3BonusFixed(ctx context.Context) (
 }
 
 // AddSpecialTrainingPower3BonusFixed adds i to the "special_training_power3_bonus_fixed" field.
-func (m *CardMutation) AddSpecialTrainingPower3BonusFixed(i int) {
+func (m *CardMutation) AddSpecialTrainingPower3BonusFixed(i int64) {
 	if m.addspecial_training_power3_bonus_fixed != nil {
 		*m.addspecial_training_power3_bonus_fixed += i
 	} else {
@@ -7774,7 +7774,7 @@ func (m *CardMutation) AddSpecialTrainingPower3BonusFixed(i int) {
 }
 
 // AddedSpecialTrainingPower3BonusFixed returns the value that was added to the "special_training_power3_bonus_fixed" field in this mutation.
-func (m *CardMutation) AddedSpecialTrainingPower3BonusFixed() (r int, exists bool) {
+func (m *CardMutation) AddedSpecialTrainingPower3BonusFixed() (r int64, exists bool) {
 	v := m.addspecial_training_power3_bonus_fixed
 	if v == nil {
 		return
@@ -7933,13 +7933,13 @@ func (m *CardMutation) ResetSupportUnit() {
 }
 
 // SetSkillID sets the "skill_id" field.
-func (m *CardMutation) SetSkillID(i int) {
+func (m *CardMutation) SetSkillID(i int64) {
 	m.skill_id = &i
 	m.addskill_id = nil
 }
 
 // SkillID returns the value of the "skill_id" field in the mutation.
-func (m *CardMutation) SkillID() (r int, exists bool) {
+func (m *CardMutation) SkillID() (r int64, exists bool) {
 	v := m.skill_id
 	if v == nil {
 		return
@@ -7950,7 +7950,7 @@ func (m *CardMutation) SkillID() (r int, exists bool) {
 // OldSkillID returns the old "skill_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSkillID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSkillID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSkillID is only allowed on UpdateOne operations")
 	}
@@ -7965,7 +7965,7 @@ func (m *CardMutation) OldSkillID(ctx context.Context) (v int, err error) {
 }
 
 // AddSkillID adds i to the "skill_id" field.
-func (m *CardMutation) AddSkillID(i int) {
+func (m *CardMutation) AddSkillID(i int64) {
 	if m.addskill_id != nil {
 		*m.addskill_id += i
 	} else {
@@ -7974,7 +7974,7 @@ func (m *CardMutation) AddSkillID(i int) {
 }
 
 // AddedSkillID returns the value that was added to the "skill_id" field in this mutation.
-func (m *CardMutation) AddedSkillID() (r int, exists bool) {
+func (m *CardMutation) AddedSkillID() (r int64, exists bool) {
 	v := m.addskill_id
 	if v == nil {
 		return
@@ -8264,13 +8264,13 @@ func (m *CardMutation) ResetFlavorText() {
 }
 
 // SetReleaseAt sets the "release_at" field.
-func (m *CardMutation) SetReleaseAt(i int) {
+func (m *CardMutation) SetReleaseAt(i int64) {
 	m.release_at = &i
 	m.addrelease_at = nil
 }
 
 // ReleaseAt returns the value of the "release_at" field in the mutation.
-func (m *CardMutation) ReleaseAt() (r int, exists bool) {
+func (m *CardMutation) ReleaseAt() (r int64, exists bool) {
 	v := m.release_at
 	if v == nil {
 		return
@@ -8281,7 +8281,7 @@ func (m *CardMutation) ReleaseAt() (r int, exists bool) {
 // OldReleaseAt returns the old "release_at" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldReleaseAt(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldReleaseAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseAt is only allowed on UpdateOne operations")
 	}
@@ -8296,7 +8296,7 @@ func (m *CardMutation) OldReleaseAt(ctx context.Context) (v int, err error) {
 }
 
 // AddReleaseAt adds i to the "release_at" field.
-func (m *CardMutation) AddReleaseAt(i int) {
+func (m *CardMutation) AddReleaseAt(i int64) {
 	if m.addrelease_at != nil {
 		*m.addrelease_at += i
 	} else {
@@ -8305,7 +8305,7 @@ func (m *CardMutation) AddReleaseAt(i int) {
 }
 
 // AddedReleaseAt returns the value that was added to the "release_at" field in this mutation.
-func (m *CardMutation) AddedReleaseAt() (r int, exists bool) {
+func (m *CardMutation) AddedReleaseAt() (r int64, exists bool) {
 	v := m.addrelease_at
 	if v == nil {
 		return
@@ -8334,13 +8334,13 @@ func (m *CardMutation) ResetReleaseAt() {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (m *CardMutation) SetArchivePublishedAt(i int) {
+func (m *CardMutation) SetArchivePublishedAt(i int64) {
 	m.archive_published_at = &i
 	m.addarchive_published_at = nil
 }
 
 // ArchivePublishedAt returns the value of the "archive_published_at" field in the mutation.
-func (m *CardMutation) ArchivePublishedAt() (r int, exists bool) {
+func (m *CardMutation) ArchivePublishedAt() (r int64, exists bool) {
 	v := m.archive_published_at
 	if v == nil {
 		return
@@ -8351,7 +8351,7 @@ func (m *CardMutation) ArchivePublishedAt() (r int, exists bool) {
 // OldArchivePublishedAt returns the old "archive_published_at" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldArchivePublishedAt(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldArchivePublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchivePublishedAt is only allowed on UpdateOne operations")
 	}
@@ -8366,7 +8366,7 @@ func (m *CardMutation) OldArchivePublishedAt(ctx context.Context) (v int, err er
 }
 
 // AddArchivePublishedAt adds i to the "archive_published_at" field.
-func (m *CardMutation) AddArchivePublishedAt(i int) {
+func (m *CardMutation) AddArchivePublishedAt(i int64) {
 	if m.addarchive_published_at != nil {
 		*m.addarchive_published_at += i
 	} else {
@@ -8375,7 +8375,7 @@ func (m *CardMutation) AddArchivePublishedAt(i int) {
 }
 
 // AddedArchivePublishedAt returns the value that was added to the "archive_published_at" field in this mutation.
-func (m *CardMutation) AddedArchivePublishedAt() (r int, exists bool) {
+func (m *CardMutation) AddedArchivePublishedAt() (r int64, exists bool) {
 	v := m.addarchive_published_at
 	if v == nil {
 		return
@@ -8404,13 +8404,13 @@ func (m *CardMutation) ResetArchivePublishedAt() {
 }
 
 // SetCardSupplyID sets the "card_supply_id" field.
-func (m *CardMutation) SetCardSupplyID(i int) {
+func (m *CardMutation) SetCardSupplyID(i int64) {
 	m.card_supply_id = &i
 	m.addcard_supply_id = nil
 }
 
 // CardSupplyID returns the value of the "card_supply_id" field in the mutation.
-func (m *CardMutation) CardSupplyID() (r int, exists bool) {
+func (m *CardMutation) CardSupplyID() (r int64, exists bool) {
 	v := m.card_supply_id
 	if v == nil {
 		return
@@ -8421,7 +8421,7 @@ func (m *CardMutation) CardSupplyID() (r int, exists bool) {
 // OldCardSupplyID returns the old "card_supply_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldCardSupplyID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldCardSupplyID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardSupplyID is only allowed on UpdateOne operations")
 	}
@@ -8436,7 +8436,7 @@ func (m *CardMutation) OldCardSupplyID(ctx context.Context) (v int, err error) {
 }
 
 // AddCardSupplyID adds i to the "card_supply_id" field.
-func (m *CardMutation) AddCardSupplyID(i int) {
+func (m *CardMutation) AddCardSupplyID(i int64) {
 	if m.addcard_supply_id != nil {
 		*m.addcard_supply_id += i
 	} else {
@@ -8445,7 +8445,7 @@ func (m *CardMutation) AddCardSupplyID(i int) {
 }
 
 // AddedCardSupplyID returns the value that was added to the "card_supply_id" field in this mutation.
-func (m *CardMutation) AddedCardSupplyID() (r int, exists bool) {
+func (m *CardMutation) AddedCardSupplyID() (r int64, exists bool) {
 	v := m.addcard_supply_id
 	if v == nil {
 		return
@@ -8799,13 +8799,13 @@ func (m *CardMutation) ResetArchiveDisplayType() {
 }
 
 // SetSpecialTrainingSkillID sets the "special_training_skill_id" field.
-func (m *CardMutation) SetSpecialTrainingSkillID(i int) {
+func (m *CardMutation) SetSpecialTrainingSkillID(i int64) {
 	m.special_training_skill_id = &i
 	m.addspecial_training_skill_id = nil
 }
 
 // SpecialTrainingSkillID returns the value of the "special_training_skill_id" field in the mutation.
-func (m *CardMutation) SpecialTrainingSkillID() (r int, exists bool) {
+func (m *CardMutation) SpecialTrainingSkillID() (r int64, exists bool) {
 	v := m.special_training_skill_id
 	if v == nil {
 		return
@@ -8816,7 +8816,7 @@ func (m *CardMutation) SpecialTrainingSkillID() (r int, exists bool) {
 // OldSpecialTrainingSkillID returns the old "special_training_skill_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSpecialTrainingSkillID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSpecialTrainingSkillID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialTrainingSkillID is only allowed on UpdateOne operations")
 	}
@@ -8831,7 +8831,7 @@ func (m *CardMutation) OldSpecialTrainingSkillID(ctx context.Context) (v int, er
 }
 
 // AddSpecialTrainingSkillID adds i to the "special_training_skill_id" field.
-func (m *CardMutation) AddSpecialTrainingSkillID(i int) {
+func (m *CardMutation) AddSpecialTrainingSkillID(i int64) {
 	if m.addspecial_training_skill_id != nil {
 		*m.addspecial_training_skill_id += i
 	} else {
@@ -8840,7 +8840,7 @@ func (m *CardMutation) AddSpecialTrainingSkillID(i int) {
 }
 
 // AddedSpecialTrainingSkillID returns the value that was added to the "special_training_skill_id" field in this mutation.
-func (m *CardMutation) AddedSpecialTrainingSkillID() (r int, exists bool) {
+func (m *CardMutation) AddedSpecialTrainingSkillID() (r int64, exists bool) {
 	v := m.addspecial_training_skill_id
 	if v == nil {
 		return
@@ -8918,13 +8918,13 @@ func (m *CardMutation) ResetSpecialTrainingSkillName() {
 }
 
 // SetSpecialTrainingRewardResourceBoxID sets the "special_training_reward_resource_box_id" field.
-func (m *CardMutation) SetSpecialTrainingRewardResourceBoxID(i int) {
+func (m *CardMutation) SetSpecialTrainingRewardResourceBoxID(i int64) {
 	m.special_training_reward_resource_box_id = &i
 	m.addspecial_training_reward_resource_box_id = nil
 }
 
 // SpecialTrainingRewardResourceBoxID returns the value of the "special_training_reward_resource_box_id" field in the mutation.
-func (m *CardMutation) SpecialTrainingRewardResourceBoxID() (r int, exists bool) {
+func (m *CardMutation) SpecialTrainingRewardResourceBoxID() (r int64, exists bool) {
 	v := m.special_training_reward_resource_box_id
 	if v == nil {
 		return
@@ -8935,7 +8935,7 @@ func (m *CardMutation) SpecialTrainingRewardResourceBoxID() (r int, exists bool)
 // OldSpecialTrainingRewardResourceBoxID returns the old "special_training_reward_resource_box_id" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSpecialTrainingRewardResourceBoxID(ctx context.Context) (v int, err error) {
+func (m *CardMutation) OldSpecialTrainingRewardResourceBoxID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialTrainingRewardResourceBoxID is only allowed on UpdateOne operations")
 	}
@@ -8950,7 +8950,7 @@ func (m *CardMutation) OldSpecialTrainingRewardResourceBoxID(ctx context.Context
 }
 
 // AddSpecialTrainingRewardResourceBoxID adds i to the "special_training_reward_resource_box_id" field.
-func (m *CardMutation) AddSpecialTrainingRewardResourceBoxID(i int) {
+func (m *CardMutation) AddSpecialTrainingRewardResourceBoxID(i int64) {
 	if m.addspecial_training_reward_resource_box_id != nil {
 		*m.addspecial_training_reward_resource_box_id += i
 	} else {
@@ -8959,7 +8959,7 @@ func (m *CardMutation) AddSpecialTrainingRewardResourceBoxID(i int) {
 }
 
 // AddedSpecialTrainingRewardResourceBoxID returns the value that was added to the "special_training_reward_resource_box_id" field in this mutation.
-func (m *CardMutation) AddedSpecialTrainingRewardResourceBoxID() (r int, exists bool) {
+func (m *CardMutation) AddedSpecialTrainingRewardResourceBoxID() (r int64, exists bool) {
 	v := m.addspecial_training_reward_resource_box_id
 	if v == nil {
 		return
@@ -9274,21 +9274,21 @@ func (m *CardMutation) OldField(ctx context.Context, name string) (ent.Value, er
 func (m *CardMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case card.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case card.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case card.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9302,21 +9302,21 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetCardRarityType(v)
 		return nil
 	case card.FieldSpecialTrainingPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSpecialTrainingPower1BonusFixed(v)
 		return nil
 	case card.FieldSpecialTrainingPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSpecialTrainingPower2BonusFixed(v)
 		return nil
 	case card.FieldSpecialTrainingPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9337,7 +9337,7 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetSupportUnit(v)
 		return nil
 	case card.FieldSkillID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9379,21 +9379,21 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetFlavorText(v)
 		return nil
 	case card.FieldReleaseAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReleaseAt(v)
 		return nil
 	case card.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetArchivePublishedAt(v)
 		return nil
 	case card.FieldCardSupplyID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9435,7 +9435,7 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetArchiveDisplayType(v)
 		return nil
 	case card.FieldSpecialTrainingSkillID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9449,7 +9449,7 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetSpecialTrainingSkillName(v)
 		return nil
 	case card.FieldSpecialTrainingRewardResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9548,84 +9548,84 @@ func (m *CardMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CardMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case card.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case card.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case card.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterID(v)
 		return nil
 	case card.FieldSpecialTrainingPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSpecialTrainingPower1BonusFixed(v)
 		return nil
 	case card.FieldSpecialTrainingPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSpecialTrainingPower2BonusFixed(v)
 		return nil
 	case card.FieldSpecialTrainingPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSpecialTrainingPower3BonusFixed(v)
 		return nil
 	case card.FieldSkillID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSkillID(v)
 		return nil
 	case card.FieldReleaseAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseAt(v)
 		return nil
 	case card.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddArchivePublishedAt(v)
 		return nil
 	case card.FieldCardSupplyID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCardSupplyID(v)
 		return nil
 	case card.FieldSpecialTrainingSkillID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSpecialTrainingSkillID(v)
 		return nil
 	case card.FieldSpecialTrainingRewardResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9950,10 +9950,10 @@ type Cardcostume3DMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	card_id                *int
-	addcard_id             *int
-	costume3_d_id          *int
-	addcostume3_d_id       *int
+	card_id                *int64
+	addcard_id             *int64
+	costume3_d_id          *int64
+	addcostume3_d_id       *int64
 	is_initial_obtain_hair *bool
 	server_region          *string
 	clearedFields          map[string]struct{}
@@ -10061,13 +10061,13 @@ func (m *Cardcostume3DMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetCardID sets the "card_id" field.
-func (m *Cardcostume3DMutation) SetCardID(i int) {
+func (m *Cardcostume3DMutation) SetCardID(i int64) {
 	m.card_id = &i
 	m.addcard_id = nil
 }
 
 // CardID returns the value of the "card_id" field in the mutation.
-func (m *Cardcostume3DMutation) CardID() (r int, exists bool) {
+func (m *Cardcostume3DMutation) CardID() (r int64, exists bool) {
 	v := m.card_id
 	if v == nil {
 		return
@@ -10078,7 +10078,7 @@ func (m *Cardcostume3DMutation) CardID() (r int, exists bool) {
 // OldCardID returns the old "card_id" field's value of the Cardcostume3D entity.
 // If the Cardcostume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Cardcostume3DMutation) OldCardID(ctx context.Context) (v int, err error) {
+func (m *Cardcostume3DMutation) OldCardID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardID is only allowed on UpdateOne operations")
 	}
@@ -10093,7 +10093,7 @@ func (m *Cardcostume3DMutation) OldCardID(ctx context.Context) (v int, err error
 }
 
 // AddCardID adds i to the "card_id" field.
-func (m *Cardcostume3DMutation) AddCardID(i int) {
+func (m *Cardcostume3DMutation) AddCardID(i int64) {
 	if m.addcard_id != nil {
 		*m.addcard_id += i
 	} else {
@@ -10102,7 +10102,7 @@ func (m *Cardcostume3DMutation) AddCardID(i int) {
 }
 
 // AddedCardID returns the value that was added to the "card_id" field in this mutation.
-func (m *Cardcostume3DMutation) AddedCardID() (r int, exists bool) {
+func (m *Cardcostume3DMutation) AddedCardID() (r int64, exists bool) {
 	v := m.addcard_id
 	if v == nil {
 		return
@@ -10131,13 +10131,13 @@ func (m *Cardcostume3DMutation) ResetCardID() {
 }
 
 // SetCostume3DID sets the "costume3_d_id" field.
-func (m *Cardcostume3DMutation) SetCostume3DID(i int) {
+func (m *Cardcostume3DMutation) SetCostume3DID(i int64) {
 	m.costume3_d_id = &i
 	m.addcostume3_d_id = nil
 }
 
 // Costume3DID returns the value of the "costume3_d_id" field in the mutation.
-func (m *Cardcostume3DMutation) Costume3DID() (r int, exists bool) {
+func (m *Cardcostume3DMutation) Costume3DID() (r int64, exists bool) {
 	v := m.costume3_d_id
 	if v == nil {
 		return
@@ -10148,7 +10148,7 @@ func (m *Cardcostume3DMutation) Costume3DID() (r int, exists bool) {
 // OldCostume3DID returns the old "costume3_d_id" field's value of the Cardcostume3D entity.
 // If the Cardcostume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Cardcostume3DMutation) OldCostume3DID(ctx context.Context) (v int, err error) {
+func (m *Cardcostume3DMutation) OldCostume3DID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCostume3DID is only allowed on UpdateOne operations")
 	}
@@ -10163,7 +10163,7 @@ func (m *Cardcostume3DMutation) OldCostume3DID(ctx context.Context) (v int, err 
 }
 
 // AddCostume3DID adds i to the "costume3_d_id" field.
-func (m *Cardcostume3DMutation) AddCostume3DID(i int) {
+func (m *Cardcostume3DMutation) AddCostume3DID(i int64) {
 	if m.addcostume3_d_id != nil {
 		*m.addcostume3_d_id += i
 	} else {
@@ -10172,7 +10172,7 @@ func (m *Cardcostume3DMutation) AddCostume3DID(i int) {
 }
 
 // AddedCostume3DID returns the value that was added to the "costume3_d_id" field in this mutation.
-func (m *Cardcostume3DMutation) AddedCostume3DID() (r int, exists bool) {
+func (m *Cardcostume3DMutation) AddedCostume3DID() (r int64, exists bool) {
 	v := m.addcostume3_d_id
 	if v == nil {
 		return
@@ -10375,14 +10375,14 @@ func (m *Cardcostume3DMutation) OldField(ctx context.Context, name string) (ent.
 func (m *Cardcostume3DMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case cardcostume3d.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCardID(v)
 		return nil
 	case cardcostume3d.FieldCostume3DID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -10438,14 +10438,14 @@ func (m *Cardcostume3DMutation) AddedField(name string) (ent.Value, bool) {
 func (m *Cardcostume3DMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cardcostume3d.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCardID(v)
 		return nil
 	case cardcostume3d.FieldCostume3DID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -10569,23 +10569,23 @@ type CardepisodeMutation struct {
 	op                            Op
 	typ                           string
 	id                            *int
-	game_id                       *int
-	addgame_id                    *int
-	seq                           *int
-	addseq                        *int
-	card_id                       *int
-	addcard_id                    *int
+	game_id                       *int64
+	addgame_id                    *int64
+	seq                           *int64
+	addseq                        *int64
+	card_id                       *int64
+	addcard_id                    *int64
 	title                         *string
 	scenario_id                   *string
 	assetbundle_name              *string
-	release_condition_id          *int
-	addrelease_condition_id       *int
-	power1_bonus_fixed            *int
-	addpower1_bonus_fixed         *int
-	power2_bonus_fixed            *int
-	addpower2_bonus_fixed         *int
-	power3_bonus_fixed            *int
-	addpower3_bonus_fixed         *int
+	release_condition_id          *int64
+	addrelease_condition_id       *int64
+	power1_bonus_fixed            *int64
+	addpower1_bonus_fixed         *int64
+	power2_bonus_fixed            *int64
+	addpower2_bonus_fixed         *int64
+	power3_bonus_fixed            *int64
+	addpower3_bonus_fixed         *int64
 	reward_resource_box_ids       *json.RawMessage
 	appendreward_resource_box_ids json.RawMessage
 	costs                         *json.RawMessage
@@ -10698,13 +10698,13 @@ func (m *CardepisodeMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CardepisodeMutation) SetGameID(i int) {
+func (m *CardepisodeMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CardepisodeMutation) GameID() (r int, exists bool) {
+func (m *CardepisodeMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -10715,7 +10715,7 @@ func (m *CardepisodeMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -10730,7 +10730,7 @@ func (m *CardepisodeMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CardepisodeMutation) AddGameID(i int) {
+func (m *CardepisodeMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -10739,7 +10739,7 @@ func (m *CardepisodeMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CardepisodeMutation) AddedGameID() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -10754,13 +10754,13 @@ func (m *CardepisodeMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *CardepisodeMutation) SetSeq(i int) {
+func (m *CardepisodeMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *CardepisodeMutation) Seq() (r int, exists bool) {
+func (m *CardepisodeMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -10771,7 +10771,7 @@ func (m *CardepisodeMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -10786,7 +10786,7 @@ func (m *CardepisodeMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *CardepisodeMutation) AddSeq(i int) {
+func (m *CardepisodeMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -10795,7 +10795,7 @@ func (m *CardepisodeMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *CardepisodeMutation) AddedSeq() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -10824,13 +10824,13 @@ func (m *CardepisodeMutation) ResetSeq() {
 }
 
 // SetCardID sets the "card_id" field.
-func (m *CardepisodeMutation) SetCardID(i int) {
+func (m *CardepisodeMutation) SetCardID(i int64) {
 	m.card_id = &i
 	m.addcard_id = nil
 }
 
 // CardID returns the value of the "card_id" field in the mutation.
-func (m *CardepisodeMutation) CardID() (r int, exists bool) {
+func (m *CardepisodeMutation) CardID() (r int64, exists bool) {
 	v := m.card_id
 	if v == nil {
 		return
@@ -10841,7 +10841,7 @@ func (m *CardepisodeMutation) CardID() (r int, exists bool) {
 // OldCardID returns the old "card_id" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldCardID(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldCardID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardID is only allowed on UpdateOne operations")
 	}
@@ -10856,7 +10856,7 @@ func (m *CardepisodeMutation) OldCardID(ctx context.Context) (v int, err error) 
 }
 
 // AddCardID adds i to the "card_id" field.
-func (m *CardepisodeMutation) AddCardID(i int) {
+func (m *CardepisodeMutation) AddCardID(i int64) {
 	if m.addcard_id != nil {
 		*m.addcard_id += i
 	} else {
@@ -10865,7 +10865,7 @@ func (m *CardepisodeMutation) AddCardID(i int) {
 }
 
 // AddedCardID returns the value that was added to the "card_id" field in this mutation.
-func (m *CardepisodeMutation) AddedCardID() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedCardID() (r int64, exists bool) {
 	v := m.addcard_id
 	if v == nil {
 		return
@@ -11041,13 +11041,13 @@ func (m *CardepisodeMutation) ResetAssetbundleName() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *CardepisodeMutation) SetReleaseConditionID(i int) {
+func (m *CardepisodeMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *CardepisodeMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *CardepisodeMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -11058,7 +11058,7 @@ func (m *CardepisodeMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -11073,7 +11073,7 @@ func (m *CardepisodeMutation) OldReleaseConditionID(ctx context.Context) (v int,
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *CardepisodeMutation) AddReleaseConditionID(i int) {
+func (m *CardepisodeMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -11082,7 +11082,7 @@ func (m *CardepisodeMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *CardepisodeMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -11111,13 +11111,13 @@ func (m *CardepisodeMutation) ResetReleaseConditionID() {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (m *CardepisodeMutation) SetPower1BonusFixed(i int) {
+func (m *CardepisodeMutation) SetPower1BonusFixed(i int64) {
 	m.power1_bonus_fixed = &i
 	m.addpower1_bonus_fixed = nil
 }
 
 // Power1BonusFixed returns the value of the "power1_bonus_fixed" field in the mutation.
-func (m *CardepisodeMutation) Power1BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) Power1BonusFixed() (r int64, exists bool) {
 	v := m.power1_bonus_fixed
 	if v == nil {
 		return
@@ -11128,7 +11128,7 @@ func (m *CardepisodeMutation) Power1BonusFixed() (r int, exists bool) {
 // OldPower1BonusFixed returns the old "power1_bonus_fixed" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldPower1BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldPower1BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower1BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -11143,7 +11143,7 @@ func (m *CardepisodeMutation) OldPower1BonusFixed(ctx context.Context) (v int, e
 }
 
 // AddPower1BonusFixed adds i to the "power1_bonus_fixed" field.
-func (m *CardepisodeMutation) AddPower1BonusFixed(i int) {
+func (m *CardepisodeMutation) AddPower1BonusFixed(i int64) {
 	if m.addpower1_bonus_fixed != nil {
 		*m.addpower1_bonus_fixed += i
 	} else {
@@ -11152,7 +11152,7 @@ func (m *CardepisodeMutation) AddPower1BonusFixed(i int) {
 }
 
 // AddedPower1BonusFixed returns the value that was added to the "power1_bonus_fixed" field in this mutation.
-func (m *CardepisodeMutation) AddedPower1BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedPower1BonusFixed() (r int64, exists bool) {
 	v := m.addpower1_bonus_fixed
 	if v == nil {
 		return
@@ -11181,13 +11181,13 @@ func (m *CardepisodeMutation) ResetPower1BonusFixed() {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (m *CardepisodeMutation) SetPower2BonusFixed(i int) {
+func (m *CardepisodeMutation) SetPower2BonusFixed(i int64) {
 	m.power2_bonus_fixed = &i
 	m.addpower2_bonus_fixed = nil
 }
 
 // Power2BonusFixed returns the value of the "power2_bonus_fixed" field in the mutation.
-func (m *CardepisodeMutation) Power2BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) Power2BonusFixed() (r int64, exists bool) {
 	v := m.power2_bonus_fixed
 	if v == nil {
 		return
@@ -11198,7 +11198,7 @@ func (m *CardepisodeMutation) Power2BonusFixed() (r int, exists bool) {
 // OldPower2BonusFixed returns the old "power2_bonus_fixed" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldPower2BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldPower2BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower2BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -11213,7 +11213,7 @@ func (m *CardepisodeMutation) OldPower2BonusFixed(ctx context.Context) (v int, e
 }
 
 // AddPower2BonusFixed adds i to the "power2_bonus_fixed" field.
-func (m *CardepisodeMutation) AddPower2BonusFixed(i int) {
+func (m *CardepisodeMutation) AddPower2BonusFixed(i int64) {
 	if m.addpower2_bonus_fixed != nil {
 		*m.addpower2_bonus_fixed += i
 	} else {
@@ -11222,7 +11222,7 @@ func (m *CardepisodeMutation) AddPower2BonusFixed(i int) {
 }
 
 // AddedPower2BonusFixed returns the value that was added to the "power2_bonus_fixed" field in this mutation.
-func (m *CardepisodeMutation) AddedPower2BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedPower2BonusFixed() (r int64, exists bool) {
 	v := m.addpower2_bonus_fixed
 	if v == nil {
 		return
@@ -11251,13 +11251,13 @@ func (m *CardepisodeMutation) ResetPower2BonusFixed() {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (m *CardepisodeMutation) SetPower3BonusFixed(i int) {
+func (m *CardepisodeMutation) SetPower3BonusFixed(i int64) {
 	m.power3_bonus_fixed = &i
 	m.addpower3_bonus_fixed = nil
 }
 
 // Power3BonusFixed returns the value of the "power3_bonus_fixed" field in the mutation.
-func (m *CardepisodeMutation) Power3BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) Power3BonusFixed() (r int64, exists bool) {
 	v := m.power3_bonus_fixed
 	if v == nil {
 		return
@@ -11268,7 +11268,7 @@ func (m *CardepisodeMutation) Power3BonusFixed() (r int, exists bool) {
 // OldPower3BonusFixed returns the old "power3_bonus_fixed" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldPower3BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardepisodeMutation) OldPower3BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower3BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -11283,7 +11283,7 @@ func (m *CardepisodeMutation) OldPower3BonusFixed(ctx context.Context) (v int, e
 }
 
 // AddPower3BonusFixed adds i to the "power3_bonus_fixed" field.
-func (m *CardepisodeMutation) AddPower3BonusFixed(i int) {
+func (m *CardepisodeMutation) AddPower3BonusFixed(i int64) {
 	if m.addpower3_bonus_fixed != nil {
 		*m.addpower3_bonus_fixed += i
 	} else {
@@ -11292,7 +11292,7 @@ func (m *CardepisodeMutation) AddPower3BonusFixed(i int) {
 }
 
 // AddedPower3BonusFixed returns the value that was added to the "power3_bonus_fixed" field in this mutation.
-func (m *CardepisodeMutation) AddedPower3BonusFixed() (r int, exists bool) {
+func (m *CardepisodeMutation) AddedPower3BonusFixed() (r int64, exists bool) {
 	v := m.addpower3_bonus_fixed
 	if v == nil {
 		return
@@ -11711,21 +11711,21 @@ func (m *CardepisodeMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *CardepisodeMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case cardepisode.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case cardepisode.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case cardepisode.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -11753,28 +11753,28 @@ func (m *CardepisodeMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case cardepisode.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReleaseConditionID(v)
 		return nil
 	case cardepisode.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower1BonusFixed(v)
 		return nil
 	case cardepisode.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower2BonusFixed(v)
 		return nil
 	case cardepisode.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -11869,49 +11869,49 @@ func (m *CardepisodeMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CardepisodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cardepisode.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case cardepisode.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case cardepisode.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCardID(v)
 		return nil
 	case cardepisode.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseConditionID(v)
 		return nil
 	case cardepisode.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower1BonusFixed(v)
 		return nil
 	case cardepisode.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower2BonusFixed(v)
 		return nil
 	case cardepisode.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -12119,15 +12119,15 @@ type CardmysekaicanvasbonuseMutation struct {
 	op                    Op
 	typ                   string
 	id                    *int
-	game_id               *int
-	addgame_id            *int
+	game_id               *int64
+	addgame_id            *int64
 	card_rarity_type      *string
-	power1_bonus_fixed    *int
-	addpower1_bonus_fixed *int
-	power2_bonus_fixed    *int
-	addpower2_bonus_fixed *int
-	power3_bonus_fixed    *int
-	addpower3_bonus_fixed *int
+	power1_bonus_fixed    *int64
+	addpower1_bonus_fixed *int64
+	power2_bonus_fixed    *int64
+	addpower2_bonus_fixed *int64
+	power3_bonus_fixed    *int64
+	addpower3_bonus_fixed *int64
 	server_region         *string
 	clearedFields         map[string]struct{}
 	done                  bool
@@ -12234,13 +12234,13 @@ func (m *CardmysekaicanvasbonuseMutation) IDs(ctx context.Context) ([]int, error
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CardmysekaicanvasbonuseMutation) SetGameID(i int) {
+func (m *CardmysekaicanvasbonuseMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CardmysekaicanvasbonuseMutation) GameID() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -12251,7 +12251,7 @@ func (m *CardmysekaicanvasbonuseMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Cardmysekaicanvasbonuse entity.
 // If the Cardmysekaicanvasbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardmysekaicanvasbonuseMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CardmysekaicanvasbonuseMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -12266,7 +12266,7 @@ func (m *CardmysekaicanvasbonuseMutation) OldGameID(ctx context.Context) (v int,
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CardmysekaicanvasbonuseMutation) AddGameID(i int) {
+func (m *CardmysekaicanvasbonuseMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -12275,7 +12275,7 @@ func (m *CardmysekaicanvasbonuseMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CardmysekaicanvasbonuseMutation) AddedGameID() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -12339,13 +12339,13 @@ func (m *CardmysekaicanvasbonuseMutation) ResetCardRarityType() {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) SetPower1BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) SetPower1BonusFixed(i int64) {
 	m.power1_bonus_fixed = &i
 	m.addpower1_bonus_fixed = nil
 }
 
 // Power1BonusFixed returns the value of the "power1_bonus_fixed" field in the mutation.
-func (m *CardmysekaicanvasbonuseMutation) Power1BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) Power1BonusFixed() (r int64, exists bool) {
 	v := m.power1_bonus_fixed
 	if v == nil {
 		return
@@ -12356,7 +12356,7 @@ func (m *CardmysekaicanvasbonuseMutation) Power1BonusFixed() (r int, exists bool
 // OldPower1BonusFixed returns the old "power1_bonus_fixed" field's value of the Cardmysekaicanvasbonuse entity.
 // If the Cardmysekaicanvasbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardmysekaicanvasbonuseMutation) OldPower1BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardmysekaicanvasbonuseMutation) OldPower1BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower1BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -12371,7 +12371,7 @@ func (m *CardmysekaicanvasbonuseMutation) OldPower1BonusFixed(ctx context.Contex
 }
 
 // AddPower1BonusFixed adds i to the "power1_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) AddPower1BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) AddPower1BonusFixed(i int64) {
 	if m.addpower1_bonus_fixed != nil {
 		*m.addpower1_bonus_fixed += i
 	} else {
@@ -12380,7 +12380,7 @@ func (m *CardmysekaicanvasbonuseMutation) AddPower1BonusFixed(i int) {
 }
 
 // AddedPower1BonusFixed returns the value that was added to the "power1_bonus_fixed" field in this mutation.
-func (m *CardmysekaicanvasbonuseMutation) AddedPower1BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) AddedPower1BonusFixed() (r int64, exists bool) {
 	v := m.addpower1_bonus_fixed
 	if v == nil {
 		return
@@ -12409,13 +12409,13 @@ func (m *CardmysekaicanvasbonuseMutation) ResetPower1BonusFixed() {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) SetPower2BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) SetPower2BonusFixed(i int64) {
 	m.power2_bonus_fixed = &i
 	m.addpower2_bonus_fixed = nil
 }
 
 // Power2BonusFixed returns the value of the "power2_bonus_fixed" field in the mutation.
-func (m *CardmysekaicanvasbonuseMutation) Power2BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) Power2BonusFixed() (r int64, exists bool) {
 	v := m.power2_bonus_fixed
 	if v == nil {
 		return
@@ -12426,7 +12426,7 @@ func (m *CardmysekaicanvasbonuseMutation) Power2BonusFixed() (r int, exists bool
 // OldPower2BonusFixed returns the old "power2_bonus_fixed" field's value of the Cardmysekaicanvasbonuse entity.
 // If the Cardmysekaicanvasbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardmysekaicanvasbonuseMutation) OldPower2BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardmysekaicanvasbonuseMutation) OldPower2BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower2BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -12441,7 +12441,7 @@ func (m *CardmysekaicanvasbonuseMutation) OldPower2BonusFixed(ctx context.Contex
 }
 
 // AddPower2BonusFixed adds i to the "power2_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) AddPower2BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) AddPower2BonusFixed(i int64) {
 	if m.addpower2_bonus_fixed != nil {
 		*m.addpower2_bonus_fixed += i
 	} else {
@@ -12450,7 +12450,7 @@ func (m *CardmysekaicanvasbonuseMutation) AddPower2BonusFixed(i int) {
 }
 
 // AddedPower2BonusFixed returns the value that was added to the "power2_bonus_fixed" field in this mutation.
-func (m *CardmysekaicanvasbonuseMutation) AddedPower2BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) AddedPower2BonusFixed() (r int64, exists bool) {
 	v := m.addpower2_bonus_fixed
 	if v == nil {
 		return
@@ -12479,13 +12479,13 @@ func (m *CardmysekaicanvasbonuseMutation) ResetPower2BonusFixed() {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) SetPower3BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) SetPower3BonusFixed(i int64) {
 	m.power3_bonus_fixed = &i
 	m.addpower3_bonus_fixed = nil
 }
 
 // Power3BonusFixed returns the value of the "power3_bonus_fixed" field in the mutation.
-func (m *CardmysekaicanvasbonuseMutation) Power3BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) Power3BonusFixed() (r int64, exists bool) {
 	v := m.power3_bonus_fixed
 	if v == nil {
 		return
@@ -12496,7 +12496,7 @@ func (m *CardmysekaicanvasbonuseMutation) Power3BonusFixed() (r int, exists bool
 // OldPower3BonusFixed returns the old "power3_bonus_fixed" field's value of the Cardmysekaicanvasbonuse entity.
 // If the Cardmysekaicanvasbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardmysekaicanvasbonuseMutation) OldPower3BonusFixed(ctx context.Context) (v int, err error) {
+func (m *CardmysekaicanvasbonuseMutation) OldPower3BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower3BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -12511,7 +12511,7 @@ func (m *CardmysekaicanvasbonuseMutation) OldPower3BonusFixed(ctx context.Contex
 }
 
 // AddPower3BonusFixed adds i to the "power3_bonus_fixed" field.
-func (m *CardmysekaicanvasbonuseMutation) AddPower3BonusFixed(i int) {
+func (m *CardmysekaicanvasbonuseMutation) AddPower3BonusFixed(i int64) {
 	if m.addpower3_bonus_fixed != nil {
 		*m.addpower3_bonus_fixed += i
 	} else {
@@ -12520,7 +12520,7 @@ func (m *CardmysekaicanvasbonuseMutation) AddPower3BonusFixed(i int) {
 }
 
 // AddedPower3BonusFixed returns the value that was added to the "power3_bonus_fixed" field in this mutation.
-func (m *CardmysekaicanvasbonuseMutation) AddedPower3BonusFixed() (r int, exists bool) {
+func (m *CardmysekaicanvasbonuseMutation) AddedPower3BonusFixed() (r int64, exists bool) {
 	v := m.addpower3_bonus_fixed
 	if v == nil {
 		return
@@ -12688,7 +12688,7 @@ func (m *CardmysekaicanvasbonuseMutation) OldField(ctx context.Context, name str
 func (m *CardmysekaicanvasbonuseMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case cardmysekaicanvasbonuse.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -12702,21 +12702,21 @@ func (m *CardmysekaicanvasbonuseMutation) SetField(name string, value ent.Value)
 		m.SetCardRarityType(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower1BonusFixed(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower2BonusFixed(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -12775,28 +12775,28 @@ func (m *CardmysekaicanvasbonuseMutation) AddedField(name string) (ent.Value, bo
 func (m *CardmysekaicanvasbonuseMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cardmysekaicanvasbonuse.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower1BonusFixed(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower2BonusFixed(v)
 		return nil
 	case cardmysekaicanvasbonuse.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -12933,14 +12933,14 @@ type CardraritieMutation struct {
 	typ                   string
 	id                    *int
 	card_rarity_type      *string
-	seq                   *int
-	addseq                *int
-	max_level             *int
-	addmax_level          *int
-	max_skill_level       *int
-	addmax_skill_level    *int
-	training_max_level    *int
-	addtraining_max_level *int
+	seq                   *int64
+	addseq                *int64
+	max_level             *int64
+	addmax_level          *int64
+	max_skill_level       *int64
+	addmax_skill_level    *int64
+	training_max_level    *int64
+	addtraining_max_level *int64
 	server_region         *string
 	clearedFields         map[string]struct{}
 	done                  bool
@@ -13096,13 +13096,13 @@ func (m *CardraritieMutation) ResetCardRarityType() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *CardraritieMutation) SetSeq(i int) {
+func (m *CardraritieMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *CardraritieMutation) Seq() (r int, exists bool) {
+func (m *CardraritieMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -13113,7 +13113,7 @@ func (m *CardraritieMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Cardraritie entity.
 // If the Cardraritie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardraritieMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *CardraritieMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -13128,7 +13128,7 @@ func (m *CardraritieMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *CardraritieMutation) AddSeq(i int) {
+func (m *CardraritieMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -13137,7 +13137,7 @@ func (m *CardraritieMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *CardraritieMutation) AddedSeq() (r int, exists bool) {
+func (m *CardraritieMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -13166,13 +13166,13 @@ func (m *CardraritieMutation) ResetSeq() {
 }
 
 // SetMaxLevel sets the "max_level" field.
-func (m *CardraritieMutation) SetMaxLevel(i int) {
+func (m *CardraritieMutation) SetMaxLevel(i int64) {
 	m.max_level = &i
 	m.addmax_level = nil
 }
 
 // MaxLevel returns the value of the "max_level" field in the mutation.
-func (m *CardraritieMutation) MaxLevel() (r int, exists bool) {
+func (m *CardraritieMutation) MaxLevel() (r int64, exists bool) {
 	v := m.max_level
 	if v == nil {
 		return
@@ -13183,7 +13183,7 @@ func (m *CardraritieMutation) MaxLevel() (r int, exists bool) {
 // OldMaxLevel returns the old "max_level" field's value of the Cardraritie entity.
 // If the Cardraritie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardraritieMutation) OldMaxLevel(ctx context.Context) (v int, err error) {
+func (m *CardraritieMutation) OldMaxLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMaxLevel is only allowed on UpdateOne operations")
 	}
@@ -13198,7 +13198,7 @@ func (m *CardraritieMutation) OldMaxLevel(ctx context.Context) (v int, err error
 }
 
 // AddMaxLevel adds i to the "max_level" field.
-func (m *CardraritieMutation) AddMaxLevel(i int) {
+func (m *CardraritieMutation) AddMaxLevel(i int64) {
 	if m.addmax_level != nil {
 		*m.addmax_level += i
 	} else {
@@ -13207,7 +13207,7 @@ func (m *CardraritieMutation) AddMaxLevel(i int) {
 }
 
 // AddedMaxLevel returns the value that was added to the "max_level" field in this mutation.
-func (m *CardraritieMutation) AddedMaxLevel() (r int, exists bool) {
+func (m *CardraritieMutation) AddedMaxLevel() (r int64, exists bool) {
 	v := m.addmax_level
 	if v == nil {
 		return
@@ -13236,13 +13236,13 @@ func (m *CardraritieMutation) ResetMaxLevel() {
 }
 
 // SetMaxSkillLevel sets the "max_skill_level" field.
-func (m *CardraritieMutation) SetMaxSkillLevel(i int) {
+func (m *CardraritieMutation) SetMaxSkillLevel(i int64) {
 	m.max_skill_level = &i
 	m.addmax_skill_level = nil
 }
 
 // MaxSkillLevel returns the value of the "max_skill_level" field in the mutation.
-func (m *CardraritieMutation) MaxSkillLevel() (r int, exists bool) {
+func (m *CardraritieMutation) MaxSkillLevel() (r int64, exists bool) {
 	v := m.max_skill_level
 	if v == nil {
 		return
@@ -13253,7 +13253,7 @@ func (m *CardraritieMutation) MaxSkillLevel() (r int, exists bool) {
 // OldMaxSkillLevel returns the old "max_skill_level" field's value of the Cardraritie entity.
 // If the Cardraritie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardraritieMutation) OldMaxSkillLevel(ctx context.Context) (v int, err error) {
+func (m *CardraritieMutation) OldMaxSkillLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMaxSkillLevel is only allowed on UpdateOne operations")
 	}
@@ -13268,7 +13268,7 @@ func (m *CardraritieMutation) OldMaxSkillLevel(ctx context.Context) (v int, err 
 }
 
 // AddMaxSkillLevel adds i to the "max_skill_level" field.
-func (m *CardraritieMutation) AddMaxSkillLevel(i int) {
+func (m *CardraritieMutation) AddMaxSkillLevel(i int64) {
 	if m.addmax_skill_level != nil {
 		*m.addmax_skill_level += i
 	} else {
@@ -13277,7 +13277,7 @@ func (m *CardraritieMutation) AddMaxSkillLevel(i int) {
 }
 
 // AddedMaxSkillLevel returns the value that was added to the "max_skill_level" field in this mutation.
-func (m *CardraritieMutation) AddedMaxSkillLevel() (r int, exists bool) {
+func (m *CardraritieMutation) AddedMaxSkillLevel() (r int64, exists bool) {
 	v := m.addmax_skill_level
 	if v == nil {
 		return
@@ -13306,13 +13306,13 @@ func (m *CardraritieMutation) ResetMaxSkillLevel() {
 }
 
 // SetTrainingMaxLevel sets the "training_max_level" field.
-func (m *CardraritieMutation) SetTrainingMaxLevel(i int) {
+func (m *CardraritieMutation) SetTrainingMaxLevel(i int64) {
 	m.training_max_level = &i
 	m.addtraining_max_level = nil
 }
 
 // TrainingMaxLevel returns the value of the "training_max_level" field in the mutation.
-func (m *CardraritieMutation) TrainingMaxLevel() (r int, exists bool) {
+func (m *CardraritieMutation) TrainingMaxLevel() (r int64, exists bool) {
 	v := m.training_max_level
 	if v == nil {
 		return
@@ -13323,7 +13323,7 @@ func (m *CardraritieMutation) TrainingMaxLevel() (r int, exists bool) {
 // OldTrainingMaxLevel returns the old "training_max_level" field's value of the Cardraritie entity.
 // If the Cardraritie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardraritieMutation) OldTrainingMaxLevel(ctx context.Context) (v int, err error) {
+func (m *CardraritieMutation) OldTrainingMaxLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTrainingMaxLevel is only allowed on UpdateOne operations")
 	}
@@ -13338,7 +13338,7 @@ func (m *CardraritieMutation) OldTrainingMaxLevel(ctx context.Context) (v int, e
 }
 
 // AddTrainingMaxLevel adds i to the "training_max_level" field.
-func (m *CardraritieMutation) AddTrainingMaxLevel(i int) {
+func (m *CardraritieMutation) AddTrainingMaxLevel(i int64) {
 	if m.addtraining_max_level != nil {
 		*m.addtraining_max_level += i
 	} else {
@@ -13347,7 +13347,7 @@ func (m *CardraritieMutation) AddTrainingMaxLevel(i int) {
 }
 
 // AddedTrainingMaxLevel returns the value that was added to the "training_max_level" field in this mutation.
-func (m *CardraritieMutation) AddedTrainingMaxLevel() (r int, exists bool) {
+func (m *CardraritieMutation) AddedTrainingMaxLevel() (r int64, exists bool) {
 	v := m.addtraining_max_level
 	if v == nil {
 		return
@@ -13522,28 +13522,28 @@ func (m *CardraritieMutation) SetField(name string, value ent.Value) error {
 		m.SetCardRarityType(v)
 		return nil
 	case cardraritie.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case cardraritie.FieldMaxLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMaxLevel(v)
 		return nil
 	case cardraritie.FieldMaxSkillLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMaxSkillLevel(v)
 		return nil
 	case cardraritie.FieldTrainingMaxLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -13602,28 +13602,28 @@ func (m *CardraritieMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CardraritieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cardraritie.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case cardraritie.FieldMaxLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMaxLevel(v)
 		return nil
 	case cardraritie.FieldMaxSkillLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMaxSkillLevel(v)
 		return nil
 	case cardraritie.FieldTrainingMaxLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -13765,8 +13765,8 @@ type CardsupplieMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
+	game_id          *int64
+	addgame_id       *int64
 	card_supply_type *string
 	assetbundle_name *string
 	server_region    *string
@@ -13875,13 +13875,13 @@ func (m *CardsupplieMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CardsupplieMutation) SetGameID(i int) {
+func (m *CardsupplieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CardsupplieMutation) GameID() (r int, exists bool) {
+func (m *CardsupplieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -13892,7 +13892,7 @@ func (m *CardsupplieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Cardsupplie entity.
 // If the Cardsupplie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardsupplieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CardsupplieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -13907,7 +13907,7 @@ func (m *CardsupplieMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CardsupplieMutation) AddGameID(i int) {
+func (m *CardsupplieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -13916,7 +13916,7 @@ func (m *CardsupplieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CardsupplieMutation) AddedGameID() (r int, exists bool) {
+func (m *CardsupplieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -14154,7 +14154,7 @@ func (m *CardsupplieMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *CardsupplieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case cardsupplie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -14212,7 +14212,7 @@ func (m *CardsupplieMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CardsupplieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cardsupplie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -14330,14 +14330,14 @@ type ChallengelivehighscorerewardMutation struct {
 	op                 Op
 	typ                string
 	id                 *int
-	game_id            *int
-	addgame_id         *int
-	character_id       *int
-	addcharacter_id    *int
-	high_score         *int
-	addhigh_score      *int
-	resource_box_id    *int
-	addresource_box_id *int
+	game_id            *int64
+	addgame_id         *int64
+	character_id       *int64
+	addcharacter_id    *int64
+	high_score         *int64
+	addhigh_score      *int64
+	resource_box_id    *int64
+	addresource_box_id *int64
 	server_region      *string
 	clearedFields      map[string]struct{}
 	done               bool
@@ -14444,13 +14444,13 @@ func (m *ChallengelivehighscorerewardMutation) IDs(ctx context.Context) ([]int, 
 }
 
 // SetGameID sets the "game_id" field.
-func (m *ChallengelivehighscorerewardMutation) SetGameID(i int) {
+func (m *ChallengelivehighscorerewardMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *ChallengelivehighscorerewardMutation) GameID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -14461,7 +14461,7 @@ func (m *ChallengelivehighscorerewardMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Challengelivehighscorereward entity.
 // If the Challengelivehighscorereward object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChallengelivehighscorerewardMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *ChallengelivehighscorerewardMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -14476,7 +14476,7 @@ func (m *ChallengelivehighscorerewardMutation) OldGameID(ctx context.Context) (v
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *ChallengelivehighscorerewardMutation) AddGameID(i int) {
+func (m *ChallengelivehighscorerewardMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -14485,7 +14485,7 @@ func (m *ChallengelivehighscorerewardMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *ChallengelivehighscorerewardMutation) AddedGameID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -14500,13 +14500,13 @@ func (m *ChallengelivehighscorerewardMutation) ResetGameID() {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (m *ChallengelivehighscorerewardMutation) SetCharacterID(i int) {
+func (m *ChallengelivehighscorerewardMutation) SetCharacterID(i int64) {
 	m.character_id = &i
 	m.addcharacter_id = nil
 }
 
 // CharacterID returns the value of the "character_id" field in the mutation.
-func (m *ChallengelivehighscorerewardMutation) CharacterID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) CharacterID() (r int64, exists bool) {
 	v := m.character_id
 	if v == nil {
 		return
@@ -14517,7 +14517,7 @@ func (m *ChallengelivehighscorerewardMutation) CharacterID() (r int, exists bool
 // OldCharacterID returns the old "character_id" field's value of the Challengelivehighscorereward entity.
 // If the Challengelivehighscorereward object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChallengelivehighscorerewardMutation) OldCharacterID(ctx context.Context) (v int, err error) {
+func (m *ChallengelivehighscorerewardMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
 	}
@@ -14532,7 +14532,7 @@ func (m *ChallengelivehighscorerewardMutation) OldCharacterID(ctx context.Contex
 }
 
 // AddCharacterID adds i to the "character_id" field.
-func (m *ChallengelivehighscorerewardMutation) AddCharacterID(i int) {
+func (m *ChallengelivehighscorerewardMutation) AddCharacterID(i int64) {
 	if m.addcharacter_id != nil {
 		*m.addcharacter_id += i
 	} else {
@@ -14541,7 +14541,7 @@ func (m *ChallengelivehighscorerewardMutation) AddCharacterID(i int) {
 }
 
 // AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
-func (m *ChallengelivehighscorerewardMutation) AddedCharacterID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) AddedCharacterID() (r int64, exists bool) {
 	v := m.addcharacter_id
 	if v == nil {
 		return
@@ -14570,13 +14570,13 @@ func (m *ChallengelivehighscorerewardMutation) ResetCharacterID() {
 }
 
 // SetHighScore sets the "high_score" field.
-func (m *ChallengelivehighscorerewardMutation) SetHighScore(i int) {
+func (m *ChallengelivehighscorerewardMutation) SetHighScore(i int64) {
 	m.high_score = &i
 	m.addhigh_score = nil
 }
 
 // HighScore returns the value of the "high_score" field in the mutation.
-func (m *ChallengelivehighscorerewardMutation) HighScore() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) HighScore() (r int64, exists bool) {
 	v := m.high_score
 	if v == nil {
 		return
@@ -14587,7 +14587,7 @@ func (m *ChallengelivehighscorerewardMutation) HighScore() (r int, exists bool) 
 // OldHighScore returns the old "high_score" field's value of the Challengelivehighscorereward entity.
 // If the Challengelivehighscorereward object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChallengelivehighscorerewardMutation) OldHighScore(ctx context.Context) (v int, err error) {
+func (m *ChallengelivehighscorerewardMutation) OldHighScore(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHighScore is only allowed on UpdateOne operations")
 	}
@@ -14602,7 +14602,7 @@ func (m *ChallengelivehighscorerewardMutation) OldHighScore(ctx context.Context)
 }
 
 // AddHighScore adds i to the "high_score" field.
-func (m *ChallengelivehighscorerewardMutation) AddHighScore(i int) {
+func (m *ChallengelivehighscorerewardMutation) AddHighScore(i int64) {
 	if m.addhigh_score != nil {
 		*m.addhigh_score += i
 	} else {
@@ -14611,7 +14611,7 @@ func (m *ChallengelivehighscorerewardMutation) AddHighScore(i int) {
 }
 
 // AddedHighScore returns the value that was added to the "high_score" field in this mutation.
-func (m *ChallengelivehighscorerewardMutation) AddedHighScore() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) AddedHighScore() (r int64, exists bool) {
 	v := m.addhigh_score
 	if v == nil {
 		return
@@ -14640,13 +14640,13 @@ func (m *ChallengelivehighscorerewardMutation) ResetHighScore() {
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (m *ChallengelivehighscorerewardMutation) SetResourceBoxID(i int) {
+func (m *ChallengelivehighscorerewardMutation) SetResourceBoxID(i int64) {
 	m.resource_box_id = &i
 	m.addresource_box_id = nil
 }
 
 // ResourceBoxID returns the value of the "resource_box_id" field in the mutation.
-func (m *ChallengelivehighscorerewardMutation) ResourceBoxID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) ResourceBoxID() (r int64, exists bool) {
 	v := m.resource_box_id
 	if v == nil {
 		return
@@ -14657,7 +14657,7 @@ func (m *ChallengelivehighscorerewardMutation) ResourceBoxID() (r int, exists bo
 // OldResourceBoxID returns the old "resource_box_id" field's value of the Challengelivehighscorereward entity.
 // If the Challengelivehighscorereward object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChallengelivehighscorerewardMutation) OldResourceBoxID(ctx context.Context) (v int, err error) {
+func (m *ChallengelivehighscorerewardMutation) OldResourceBoxID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceBoxID is only allowed on UpdateOne operations")
 	}
@@ -14672,7 +14672,7 @@ func (m *ChallengelivehighscorerewardMutation) OldResourceBoxID(ctx context.Cont
 }
 
 // AddResourceBoxID adds i to the "resource_box_id" field.
-func (m *ChallengelivehighscorerewardMutation) AddResourceBoxID(i int) {
+func (m *ChallengelivehighscorerewardMutation) AddResourceBoxID(i int64) {
 	if m.addresource_box_id != nil {
 		*m.addresource_box_id += i
 	} else {
@@ -14681,7 +14681,7 @@ func (m *ChallengelivehighscorerewardMutation) AddResourceBoxID(i int) {
 }
 
 // AddedResourceBoxID returns the value that was added to the "resource_box_id" field in this mutation.
-func (m *ChallengelivehighscorerewardMutation) AddedResourceBoxID() (r int, exists bool) {
+func (m *ChallengelivehighscorerewardMutation) AddedResourceBoxID() (r int64, exists bool) {
 	v := m.addresource_box_id
 	if v == nil {
 		return
@@ -14842,28 +14842,28 @@ func (m *ChallengelivehighscorerewardMutation) OldField(ctx context.Context, nam
 func (m *ChallengelivehighscorerewardMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case challengelivehighscorereward.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case challengelivehighscorereward.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCharacterID(v)
 		return nil
 	case challengelivehighscorereward.FieldHighScore:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHighScore(v)
 		return nil
 	case challengelivehighscorereward.FieldResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -14922,28 +14922,28 @@ func (m *ChallengelivehighscorerewardMutation) AddedField(name string) (ent.Valu
 func (m *ChallengelivehighscorerewardMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case challengelivehighscorereward.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case challengelivehighscorereward.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterID(v)
 		return nil
 	case challengelivehighscorereward.FieldHighScore:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddHighScore(v)
 		return nil
 	case challengelivehighscorereward.FieldResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -15070,13 +15070,13 @@ type Character2DMutation struct {
 	op                                    Op
 	typ                                   string
 	id                                    *int
-	game_id                               *int
-	addgame_id                            *int
+	game_id                               *int64
+	addgame_id                            *int64
 	character_type                        *json.RawMessage
 	appendcharacter_type                  json.RawMessage
 	is_next_grade                         *bool
-	character_id                          *int
-	addcharacter_id                       *int
+	character_id                          *int64
+	addcharacter_id                       *int64
 	unit                                  *json.RawMessage
 	appendunit                            json.RawMessage
 	is_enabled_flip_display               *bool
@@ -15189,13 +15189,13 @@ func (m *Character2DMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *Character2DMutation) SetGameID(i int) {
+func (m *Character2DMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *Character2DMutation) GameID() (r int, exists bool) {
+func (m *Character2DMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -15206,7 +15206,7 @@ func (m *Character2DMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Character2D entity.
 // If the Character2D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Character2DMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *Character2DMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -15221,7 +15221,7 @@ func (m *Character2DMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *Character2DMutation) AddGameID(i int) {
+func (m *Character2DMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -15230,7 +15230,7 @@ func (m *Character2DMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *Character2DMutation) AddedGameID() (r int, exists bool) {
+func (m *Character2DMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -15359,13 +15359,13 @@ func (m *Character2DMutation) ResetIsNextGrade() {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (m *Character2DMutation) SetCharacterID(i int) {
+func (m *Character2DMutation) SetCharacterID(i int64) {
 	m.character_id = &i
 	m.addcharacter_id = nil
 }
 
 // CharacterID returns the value of the "character_id" field in the mutation.
-func (m *Character2DMutation) CharacterID() (r int, exists bool) {
+func (m *Character2DMutation) CharacterID() (r int64, exists bool) {
 	v := m.character_id
 	if v == nil {
 		return
@@ -15376,7 +15376,7 @@ func (m *Character2DMutation) CharacterID() (r int, exists bool) {
 // OldCharacterID returns the old "character_id" field's value of the Character2D entity.
 // If the Character2D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Character2DMutation) OldCharacterID(ctx context.Context) (v int, err error) {
+func (m *Character2DMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
 	}
@@ -15391,7 +15391,7 @@ func (m *Character2DMutation) OldCharacterID(ctx context.Context) (v int, err er
 }
 
 // AddCharacterID adds i to the "character_id" field.
-func (m *Character2DMutation) AddCharacterID(i int) {
+func (m *Character2DMutation) AddCharacterID(i int64) {
 	if m.addcharacter_id != nil {
 		*m.addcharacter_id += i
 	} else {
@@ -15400,7 +15400,7 @@ func (m *Character2DMutation) AddCharacterID(i int) {
 }
 
 // AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
-func (m *Character2DMutation) AddedCharacterID() (r int, exists bool) {
+func (m *Character2DMutation) AddedCharacterID() (r int64, exists bool) {
 	v := m.addcharacter_id
 	if v == nil {
 		return
@@ -15817,7 +15817,7 @@ func (m *Character2DMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *Character2DMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case character2d.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -15838,7 +15838,7 @@ func (m *Character2DMutation) SetField(name string, value ent.Value) error {
 		m.SetIsNextGrade(v)
 		return nil
 	case character2d.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -15915,14 +15915,14 @@ func (m *Character2DMutation) AddedField(name string) (ent.Value, bool) {
 func (m *Character2DMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case character2d.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case character2d.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -16085,16 +16085,16 @@ type Charactermissionv2ParametergroupMutation struct {
 	op             Op
 	typ            string
 	id             *int
-	game_id        *int
-	addgame_id     *int
-	seq            *int
-	addseq         *int
-	requirement    *int
-	addrequirement *int
-	exp            *int
-	addexp         *int
-	quantity       *int
-	addquantity    *int
+	game_id        *int64
+	addgame_id     *int64
+	seq            *int64
+	addseq         *int64
+	requirement    *int64
+	addrequirement *int64
+	exp            *int64
+	addexp         *int64
+	quantity       *int64
+	addquantity    *int64
 	server_region  *string
 	clearedFields  map[string]struct{}
 	done           bool
@@ -16201,13 +16201,13 @@ func (m *Charactermissionv2ParametergroupMutation) IDs(ctx context.Context) ([]i
 }
 
 // SetGameID sets the "game_id" field.
-func (m *Charactermissionv2ParametergroupMutation) SetGameID(i int) {
+func (m *Charactermissionv2ParametergroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *Charactermissionv2ParametergroupMutation) GameID() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -16218,7 +16218,7 @@ func (m *Charactermissionv2ParametergroupMutation) GameID() (r int, exists bool)
 // OldGameID returns the old "game_id" field's value of the Charactermissionv2Parametergroup entity.
 // If the Charactermissionv2Parametergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Charactermissionv2ParametergroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *Charactermissionv2ParametergroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -16233,7 +16233,7 @@ func (m *Charactermissionv2ParametergroupMutation) OldGameID(ctx context.Context
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *Charactermissionv2ParametergroupMutation) AddGameID(i int) {
+func (m *Charactermissionv2ParametergroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -16242,7 +16242,7 @@ func (m *Charactermissionv2ParametergroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *Charactermissionv2ParametergroupMutation) AddedGameID() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -16257,13 +16257,13 @@ func (m *Charactermissionv2ParametergroupMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *Charactermissionv2ParametergroupMutation) SetSeq(i int) {
+func (m *Charactermissionv2ParametergroupMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *Charactermissionv2ParametergroupMutation) Seq() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -16274,7 +16274,7 @@ func (m *Charactermissionv2ParametergroupMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Charactermissionv2Parametergroup entity.
 // If the Charactermissionv2Parametergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Charactermissionv2ParametergroupMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *Charactermissionv2ParametergroupMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -16289,7 +16289,7 @@ func (m *Charactermissionv2ParametergroupMutation) OldSeq(ctx context.Context) (
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *Charactermissionv2ParametergroupMutation) AddSeq(i int) {
+func (m *Charactermissionv2ParametergroupMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -16298,7 +16298,7 @@ func (m *Charactermissionv2ParametergroupMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *Charactermissionv2ParametergroupMutation) AddedSeq() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -16327,13 +16327,13 @@ func (m *Charactermissionv2ParametergroupMutation) ResetSeq() {
 }
 
 // SetRequirement sets the "requirement" field.
-func (m *Charactermissionv2ParametergroupMutation) SetRequirement(i int) {
+func (m *Charactermissionv2ParametergroupMutation) SetRequirement(i int64) {
 	m.requirement = &i
 	m.addrequirement = nil
 }
 
 // Requirement returns the value of the "requirement" field in the mutation.
-func (m *Charactermissionv2ParametergroupMutation) Requirement() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) Requirement() (r int64, exists bool) {
 	v := m.requirement
 	if v == nil {
 		return
@@ -16344,7 +16344,7 @@ func (m *Charactermissionv2ParametergroupMutation) Requirement() (r int, exists 
 // OldRequirement returns the old "requirement" field's value of the Charactermissionv2Parametergroup entity.
 // If the Charactermissionv2Parametergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Charactermissionv2ParametergroupMutation) OldRequirement(ctx context.Context) (v int, err error) {
+func (m *Charactermissionv2ParametergroupMutation) OldRequirement(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRequirement is only allowed on UpdateOne operations")
 	}
@@ -16359,7 +16359,7 @@ func (m *Charactermissionv2ParametergroupMutation) OldRequirement(ctx context.Co
 }
 
 // AddRequirement adds i to the "requirement" field.
-func (m *Charactermissionv2ParametergroupMutation) AddRequirement(i int) {
+func (m *Charactermissionv2ParametergroupMutation) AddRequirement(i int64) {
 	if m.addrequirement != nil {
 		*m.addrequirement += i
 	} else {
@@ -16368,7 +16368,7 @@ func (m *Charactermissionv2ParametergroupMutation) AddRequirement(i int) {
 }
 
 // AddedRequirement returns the value that was added to the "requirement" field in this mutation.
-func (m *Charactermissionv2ParametergroupMutation) AddedRequirement() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) AddedRequirement() (r int64, exists bool) {
 	v := m.addrequirement
 	if v == nil {
 		return
@@ -16397,13 +16397,13 @@ func (m *Charactermissionv2ParametergroupMutation) ResetRequirement() {
 }
 
 // SetExp sets the "exp" field.
-func (m *Charactermissionv2ParametergroupMutation) SetExp(i int) {
+func (m *Charactermissionv2ParametergroupMutation) SetExp(i int64) {
 	m.exp = &i
 	m.addexp = nil
 }
 
 // Exp returns the value of the "exp" field in the mutation.
-func (m *Charactermissionv2ParametergroupMutation) Exp() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) Exp() (r int64, exists bool) {
 	v := m.exp
 	if v == nil {
 		return
@@ -16414,7 +16414,7 @@ func (m *Charactermissionv2ParametergroupMutation) Exp() (r int, exists bool) {
 // OldExp returns the old "exp" field's value of the Charactermissionv2Parametergroup entity.
 // If the Charactermissionv2Parametergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Charactermissionv2ParametergroupMutation) OldExp(ctx context.Context) (v int, err error) {
+func (m *Charactermissionv2ParametergroupMutation) OldExp(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldExp is only allowed on UpdateOne operations")
 	}
@@ -16429,7 +16429,7 @@ func (m *Charactermissionv2ParametergroupMutation) OldExp(ctx context.Context) (
 }
 
 // AddExp adds i to the "exp" field.
-func (m *Charactermissionv2ParametergroupMutation) AddExp(i int) {
+func (m *Charactermissionv2ParametergroupMutation) AddExp(i int64) {
 	if m.addexp != nil {
 		*m.addexp += i
 	} else {
@@ -16438,7 +16438,7 @@ func (m *Charactermissionv2ParametergroupMutation) AddExp(i int) {
 }
 
 // AddedExp returns the value that was added to the "exp" field in this mutation.
-func (m *Charactermissionv2ParametergroupMutation) AddedExp() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) AddedExp() (r int64, exists bool) {
 	v := m.addexp
 	if v == nil {
 		return
@@ -16467,13 +16467,13 @@ func (m *Charactermissionv2ParametergroupMutation) ResetExp() {
 }
 
 // SetQuantity sets the "quantity" field.
-func (m *Charactermissionv2ParametergroupMutation) SetQuantity(i int) {
+func (m *Charactermissionv2ParametergroupMutation) SetQuantity(i int64) {
 	m.quantity = &i
 	m.addquantity = nil
 }
 
 // Quantity returns the value of the "quantity" field in the mutation.
-func (m *Charactermissionv2ParametergroupMutation) Quantity() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) Quantity() (r int64, exists bool) {
 	v := m.quantity
 	if v == nil {
 		return
@@ -16484,7 +16484,7 @@ func (m *Charactermissionv2ParametergroupMutation) Quantity() (r int, exists boo
 // OldQuantity returns the old "quantity" field's value of the Charactermissionv2Parametergroup entity.
 // If the Charactermissionv2Parametergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Charactermissionv2ParametergroupMutation) OldQuantity(ctx context.Context) (v int, err error) {
+func (m *Charactermissionv2ParametergroupMutation) OldQuantity(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
 	}
@@ -16499,7 +16499,7 @@ func (m *Charactermissionv2ParametergroupMutation) OldQuantity(ctx context.Conte
 }
 
 // AddQuantity adds i to the "quantity" field.
-func (m *Charactermissionv2ParametergroupMutation) AddQuantity(i int) {
+func (m *Charactermissionv2ParametergroupMutation) AddQuantity(i int64) {
 	if m.addquantity != nil {
 		*m.addquantity += i
 	} else {
@@ -16508,7 +16508,7 @@ func (m *Charactermissionv2ParametergroupMutation) AddQuantity(i int) {
 }
 
 // AddedQuantity returns the value that was added to the "quantity" field in this mutation.
-func (m *Charactermissionv2ParametergroupMutation) AddedQuantity() (r int, exists bool) {
+func (m *Charactermissionv2ParametergroupMutation) AddedQuantity() (r int64, exists bool) {
 	v := m.addquantity
 	if v == nil {
 		return
@@ -16676,35 +16676,35 @@ func (m *Charactermissionv2ParametergroupMutation) OldField(ctx context.Context,
 func (m *Charactermissionv2ParametergroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case charactermissionv2parametergroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case charactermissionv2parametergroup.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case charactermissionv2parametergroup.FieldRequirement:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRequirement(v)
 		return nil
 	case charactermissionv2parametergroup.FieldExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetExp(v)
 		return nil
 	case charactermissionv2parametergroup.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -16768,35 +16768,35 @@ func (m *Charactermissionv2ParametergroupMutation) AddedField(name string) (ent.
 func (m *Charactermissionv2ParametergroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case charactermissionv2parametergroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case charactermissionv2parametergroup.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case charactermissionv2parametergroup.FieldRequirement:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRequirement(v)
 		return nil
 	case charactermissionv2parametergroup.FieldExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddExp(v)
 		return nil
 	case charactermissionv2parametergroup.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -16932,12 +16932,12 @@ type CharacterrankMutation struct {
 	op                                     Op
 	typ                                    string
 	id                                     *int
-	game_id                                *int
-	addgame_id                             *int
-	character_id                           *int
-	addcharacter_id                        *int
-	character_rank                         *int
-	addcharacter_rank                      *int
+	game_id                                *int64
+	addgame_id                             *int64
+	character_id                           *int64
+	addcharacter_id                        *int64
+	character_rank                         *int64
+	addcharacter_rank                      *int64
 	power1_bonus_rate                      *float64
 	addpower1_bonus_rate                   *float64
 	power2_bonus_rate                      *float64
@@ -17054,13 +17054,13 @@ func (m *CharacterrankMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CharacterrankMutation) SetGameID(i int) {
+func (m *CharacterrankMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CharacterrankMutation) GameID() (r int, exists bool) {
+func (m *CharacterrankMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -17071,7 +17071,7 @@ func (m *CharacterrankMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Characterrank entity.
 // If the Characterrank object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CharacterrankMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CharacterrankMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -17086,7 +17086,7 @@ func (m *CharacterrankMutation) OldGameID(ctx context.Context) (v int, err error
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CharacterrankMutation) AddGameID(i int) {
+func (m *CharacterrankMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -17095,7 +17095,7 @@ func (m *CharacterrankMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CharacterrankMutation) AddedGameID() (r int, exists bool) {
+func (m *CharacterrankMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -17110,13 +17110,13 @@ func (m *CharacterrankMutation) ResetGameID() {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (m *CharacterrankMutation) SetCharacterID(i int) {
+func (m *CharacterrankMutation) SetCharacterID(i int64) {
 	m.character_id = &i
 	m.addcharacter_id = nil
 }
 
 // CharacterID returns the value of the "character_id" field in the mutation.
-func (m *CharacterrankMutation) CharacterID() (r int, exists bool) {
+func (m *CharacterrankMutation) CharacterID() (r int64, exists bool) {
 	v := m.character_id
 	if v == nil {
 		return
@@ -17127,7 +17127,7 @@ func (m *CharacterrankMutation) CharacterID() (r int, exists bool) {
 // OldCharacterID returns the old "character_id" field's value of the Characterrank entity.
 // If the Characterrank object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CharacterrankMutation) OldCharacterID(ctx context.Context) (v int, err error) {
+func (m *CharacterrankMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
 	}
@@ -17142,7 +17142,7 @@ func (m *CharacterrankMutation) OldCharacterID(ctx context.Context) (v int, err 
 }
 
 // AddCharacterID adds i to the "character_id" field.
-func (m *CharacterrankMutation) AddCharacterID(i int) {
+func (m *CharacterrankMutation) AddCharacterID(i int64) {
 	if m.addcharacter_id != nil {
 		*m.addcharacter_id += i
 	} else {
@@ -17151,7 +17151,7 @@ func (m *CharacterrankMutation) AddCharacterID(i int) {
 }
 
 // AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
-func (m *CharacterrankMutation) AddedCharacterID() (r int, exists bool) {
+func (m *CharacterrankMutation) AddedCharacterID() (r int64, exists bool) {
 	v := m.addcharacter_id
 	if v == nil {
 		return
@@ -17180,13 +17180,13 @@ func (m *CharacterrankMutation) ResetCharacterID() {
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (m *CharacterrankMutation) SetCharacterRank(i int) {
+func (m *CharacterrankMutation) SetCharacterRank(i int64) {
 	m.character_rank = &i
 	m.addcharacter_rank = nil
 }
 
 // CharacterRank returns the value of the "character_rank" field in the mutation.
-func (m *CharacterrankMutation) CharacterRank() (r int, exists bool) {
+func (m *CharacterrankMutation) CharacterRank() (r int64, exists bool) {
 	v := m.character_rank
 	if v == nil {
 		return
@@ -17197,7 +17197,7 @@ func (m *CharacterrankMutation) CharacterRank() (r int, exists bool) {
 // OldCharacterRank returns the old "character_rank" field's value of the Characterrank entity.
 // If the Characterrank object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CharacterrankMutation) OldCharacterRank(ctx context.Context) (v int, err error) {
+func (m *CharacterrankMutation) OldCharacterRank(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterRank is only allowed on UpdateOne operations")
 	}
@@ -17212,7 +17212,7 @@ func (m *CharacterrankMutation) OldCharacterRank(ctx context.Context) (v int, er
 }
 
 // AddCharacterRank adds i to the "character_rank" field.
-func (m *CharacterrankMutation) AddCharacterRank(i int) {
+func (m *CharacterrankMutation) AddCharacterRank(i int64) {
 	if m.addcharacter_rank != nil {
 		*m.addcharacter_rank += i
 	} else {
@@ -17221,7 +17221,7 @@ func (m *CharacterrankMutation) AddCharacterRank(i int) {
 }
 
 // AddedCharacterRank returns the value that was added to the "character_rank" field in this mutation.
-func (m *CharacterrankMutation) AddedCharacterRank() (r int, exists bool) {
+func (m *CharacterrankMutation) AddedCharacterRank() (r int64, exists bool) {
 	v := m.addcharacter_rank
 	if v == nil {
 		return
@@ -17750,21 +17750,21 @@ func (m *CharacterrankMutation) OldField(ctx context.Context, name string) (ent.
 func (m *CharacterrankMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case characterrank.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case characterrank.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCharacterID(v)
 		return nil
 	case characterrank.FieldCharacterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -17868,21 +17868,21 @@ func (m *CharacterrankMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CharacterrankMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case characterrank.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case characterrank.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterID(v)
 		return nil
 	case characterrank.FieldCharacterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -18066,12 +18066,12 @@ type CheerfulcarnivalteamMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
-	event_id         *int
-	addevent_id      *int
-	seq              *int
-	addseq           *int
+	game_id          *int64
+	addgame_id       *int64
+	event_id         *int64
+	addevent_id      *int64
+	seq              *int64
+	addseq           *int64
 	team_name        *string
 	assetbundle_name *string
 	server_region    *string
@@ -18180,13 +18180,13 @@ func (m *CheerfulcarnivalteamMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *CheerfulcarnivalteamMutation) SetGameID(i int) {
+func (m *CheerfulcarnivalteamMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *CheerfulcarnivalteamMutation) GameID() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -18197,7 +18197,7 @@ func (m *CheerfulcarnivalteamMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Cheerfulcarnivalteam entity.
 // If the Cheerfulcarnivalteam object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CheerfulcarnivalteamMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *CheerfulcarnivalteamMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -18212,7 +18212,7 @@ func (m *CheerfulcarnivalteamMutation) OldGameID(ctx context.Context) (v int, er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *CheerfulcarnivalteamMutation) AddGameID(i int) {
+func (m *CheerfulcarnivalteamMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -18221,7 +18221,7 @@ func (m *CheerfulcarnivalteamMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *CheerfulcarnivalteamMutation) AddedGameID() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -18236,13 +18236,13 @@ func (m *CheerfulcarnivalteamMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *CheerfulcarnivalteamMutation) SetEventID(i int) {
+func (m *CheerfulcarnivalteamMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *CheerfulcarnivalteamMutation) EventID() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -18253,7 +18253,7 @@ func (m *CheerfulcarnivalteamMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Cheerfulcarnivalteam entity.
 // If the Cheerfulcarnivalteam object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CheerfulcarnivalteamMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *CheerfulcarnivalteamMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -18268,7 +18268,7 @@ func (m *CheerfulcarnivalteamMutation) OldEventID(ctx context.Context) (v int, e
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *CheerfulcarnivalteamMutation) AddEventID(i int) {
+func (m *CheerfulcarnivalteamMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -18277,7 +18277,7 @@ func (m *CheerfulcarnivalteamMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *CheerfulcarnivalteamMutation) AddedEventID() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -18306,13 +18306,13 @@ func (m *CheerfulcarnivalteamMutation) ResetEventID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *CheerfulcarnivalteamMutation) SetSeq(i int) {
+func (m *CheerfulcarnivalteamMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *CheerfulcarnivalteamMutation) Seq() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -18323,7 +18323,7 @@ func (m *CheerfulcarnivalteamMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Cheerfulcarnivalteam entity.
 // If the Cheerfulcarnivalteam object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CheerfulcarnivalteamMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *CheerfulcarnivalteamMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -18338,7 +18338,7 @@ func (m *CheerfulcarnivalteamMutation) OldSeq(ctx context.Context) (v int, err e
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *CheerfulcarnivalteamMutation) AddSeq(i int) {
+func (m *CheerfulcarnivalteamMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -18347,7 +18347,7 @@ func (m *CheerfulcarnivalteamMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *CheerfulcarnivalteamMutation) AddedSeq() (r int, exists bool) {
+func (m *CheerfulcarnivalteamMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -18613,21 +18613,21 @@ func (m *CheerfulcarnivalteamMutation) OldField(ctx context.Context, name string
 func (m *CheerfulcarnivalteamMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case cheerfulcarnivalteam.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case cheerfulcarnivalteam.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventID(v)
 		return nil
 	case cheerfulcarnivalteam.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -18695,21 +18695,21 @@ func (m *CheerfulcarnivalteamMutation) AddedField(name string) (ent.Value, bool)
 func (m *CheerfulcarnivalteamMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case cheerfulcarnivalteam.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case cheerfulcarnivalteam.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case cheerfulcarnivalteam.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -18845,22 +18845,22 @@ type Costume3DMutation struct {
 	op                         Op
 	typ                        string
 	id                         *int
-	game_id                    *int
-	addgame_id                 *int
-	seq                        *int
-	addseq                     *int
-	costume3_d_group_id        *int
-	addcostume3_d_group_id     *int
+	game_id                    *int64
+	addgame_id                 *int64
+	seq                        *int64
+	addseq                     *int64
+	costume3_d_group_id        *int64
+	addcostume3_d_group_id     *int64
 	costume3_d_type            *json.RawMessage
 	appendcostume3_d_type      json.RawMessage
 	name                       *string
 	part_type                  *json.RawMessage
 	appendpart_type            json.RawMessage
-	color_id                   *int
-	addcolor_id                *int
+	color_id                   *int64
+	addcolor_id                *int64
 	color_name                 *string
-	character_id               *int
-	addcharacter_id            *int
+	character_id               *int64
+	addcharacter_id            *int64
 	costume3_d_rarity          *json.RawMessage
 	appendcostume3_d_rarity    json.RawMessage
 	how_to_obtain              *string
@@ -18868,10 +18868,10 @@ type Costume3DMutation struct {
 	designer                   *string
 	archive_display_type       *json.RawMessage
 	appendarchive_display_type json.RawMessage
-	archive_published_at       *int
-	addarchive_published_at    *int
-	published_at               *int
-	addpublished_at            *int
+	archive_published_at       *int64
+	addarchive_published_at    *int64
+	published_at               *int64
+	addpublished_at            *int64
 	server_region              *string
 	clearedFields              map[string]struct{}
 	done                       bool
@@ -18978,13 +18978,13 @@ func (m *Costume3DMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *Costume3DMutation) SetGameID(i int) {
+func (m *Costume3DMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *Costume3DMutation) GameID() (r int, exists bool) {
+func (m *Costume3DMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -18995,7 +18995,7 @@ func (m *Costume3DMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -19010,7 +19010,7 @@ func (m *Costume3DMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *Costume3DMutation) AddGameID(i int) {
+func (m *Costume3DMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -19019,7 +19019,7 @@ func (m *Costume3DMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *Costume3DMutation) AddedGameID() (r int, exists bool) {
+func (m *Costume3DMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -19034,13 +19034,13 @@ func (m *Costume3DMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *Costume3DMutation) SetSeq(i int) {
+func (m *Costume3DMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *Costume3DMutation) Seq() (r int, exists bool) {
+func (m *Costume3DMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -19051,7 +19051,7 @@ func (m *Costume3DMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -19066,7 +19066,7 @@ func (m *Costume3DMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *Costume3DMutation) AddSeq(i int) {
+func (m *Costume3DMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -19075,7 +19075,7 @@ func (m *Costume3DMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *Costume3DMutation) AddedSeq() (r int, exists bool) {
+func (m *Costume3DMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -19104,13 +19104,13 @@ func (m *Costume3DMutation) ResetSeq() {
 }
 
 // SetCostume3DGroupID sets the "costume3_d_group_id" field.
-func (m *Costume3DMutation) SetCostume3DGroupID(i int) {
+func (m *Costume3DMutation) SetCostume3DGroupID(i int64) {
 	m.costume3_d_group_id = &i
 	m.addcostume3_d_group_id = nil
 }
 
 // Costume3DGroupID returns the value of the "costume3_d_group_id" field in the mutation.
-func (m *Costume3DMutation) Costume3DGroupID() (r int, exists bool) {
+func (m *Costume3DMutation) Costume3DGroupID() (r int64, exists bool) {
 	v := m.costume3_d_group_id
 	if v == nil {
 		return
@@ -19121,7 +19121,7 @@ func (m *Costume3DMutation) Costume3DGroupID() (r int, exists bool) {
 // OldCostume3DGroupID returns the old "costume3_d_group_id" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldCostume3DGroupID(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldCostume3DGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCostume3DGroupID is only allowed on UpdateOne operations")
 	}
@@ -19136,7 +19136,7 @@ func (m *Costume3DMutation) OldCostume3DGroupID(ctx context.Context) (v int, err
 }
 
 // AddCostume3DGroupID adds i to the "costume3_d_group_id" field.
-func (m *Costume3DMutation) AddCostume3DGroupID(i int) {
+func (m *Costume3DMutation) AddCostume3DGroupID(i int64) {
 	if m.addcostume3_d_group_id != nil {
 		*m.addcostume3_d_group_id += i
 	} else {
@@ -19145,7 +19145,7 @@ func (m *Costume3DMutation) AddCostume3DGroupID(i int) {
 }
 
 // AddedCostume3DGroupID returns the value that was added to the "costume3_d_group_id" field in this mutation.
-func (m *Costume3DMutation) AddedCostume3DGroupID() (r int, exists bool) {
+func (m *Costume3DMutation) AddedCostume3DGroupID() (r int64, exists bool) {
 	v := m.addcostume3_d_group_id
 	if v == nil {
 		return
@@ -19353,13 +19353,13 @@ func (m *Costume3DMutation) ResetPartType() {
 }
 
 // SetColorID sets the "color_id" field.
-func (m *Costume3DMutation) SetColorID(i int) {
+func (m *Costume3DMutation) SetColorID(i int64) {
 	m.color_id = &i
 	m.addcolor_id = nil
 }
 
 // ColorID returns the value of the "color_id" field in the mutation.
-func (m *Costume3DMutation) ColorID() (r int, exists bool) {
+func (m *Costume3DMutation) ColorID() (r int64, exists bool) {
 	v := m.color_id
 	if v == nil {
 		return
@@ -19370,7 +19370,7 @@ func (m *Costume3DMutation) ColorID() (r int, exists bool) {
 // OldColorID returns the old "color_id" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldColorID(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldColorID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldColorID is only allowed on UpdateOne operations")
 	}
@@ -19385,7 +19385,7 @@ func (m *Costume3DMutation) OldColorID(ctx context.Context) (v int, err error) {
 }
 
 // AddColorID adds i to the "color_id" field.
-func (m *Costume3DMutation) AddColorID(i int) {
+func (m *Costume3DMutation) AddColorID(i int64) {
 	if m.addcolor_id != nil {
 		*m.addcolor_id += i
 	} else {
@@ -19394,7 +19394,7 @@ func (m *Costume3DMutation) AddColorID(i int) {
 }
 
 // AddedColorID returns the value that was added to the "color_id" field in this mutation.
-func (m *Costume3DMutation) AddedColorID() (r int, exists bool) {
+func (m *Costume3DMutation) AddedColorID() (r int64, exists bool) {
 	v := m.addcolor_id
 	if v == nil {
 		return
@@ -19472,13 +19472,13 @@ func (m *Costume3DMutation) ResetColorName() {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (m *Costume3DMutation) SetCharacterID(i int) {
+func (m *Costume3DMutation) SetCharacterID(i int64) {
 	m.character_id = &i
 	m.addcharacter_id = nil
 }
 
 // CharacterID returns the value of the "character_id" field in the mutation.
-func (m *Costume3DMutation) CharacterID() (r int, exists bool) {
+func (m *Costume3DMutation) CharacterID() (r int64, exists bool) {
 	v := m.character_id
 	if v == nil {
 		return
@@ -19489,7 +19489,7 @@ func (m *Costume3DMutation) CharacterID() (r int, exists bool) {
 // OldCharacterID returns the old "character_id" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldCharacterID(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
 	}
@@ -19504,7 +19504,7 @@ func (m *Costume3DMutation) OldCharacterID(ctx context.Context) (v int, err erro
 }
 
 // AddCharacterID adds i to the "character_id" field.
-func (m *Costume3DMutation) AddCharacterID(i int) {
+func (m *Costume3DMutation) AddCharacterID(i int64) {
 	if m.addcharacter_id != nil {
 		*m.addcharacter_id += i
 	} else {
@@ -19513,7 +19513,7 @@ func (m *Costume3DMutation) AddCharacterID(i int) {
 }
 
 // AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
-func (m *Costume3DMutation) AddedCharacterID() (r int, exists bool) {
+func (m *Costume3DMutation) AddedCharacterID() (r int64, exists bool) {
 	v := m.addcharacter_id
 	if v == nil {
 		return
@@ -19819,13 +19819,13 @@ func (m *Costume3DMutation) ResetArchiveDisplayType() {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (m *Costume3DMutation) SetArchivePublishedAt(i int) {
+func (m *Costume3DMutation) SetArchivePublishedAt(i int64) {
 	m.archive_published_at = &i
 	m.addarchive_published_at = nil
 }
 
 // ArchivePublishedAt returns the value of the "archive_published_at" field in the mutation.
-func (m *Costume3DMutation) ArchivePublishedAt() (r int, exists bool) {
+func (m *Costume3DMutation) ArchivePublishedAt() (r int64, exists bool) {
 	v := m.archive_published_at
 	if v == nil {
 		return
@@ -19836,7 +19836,7 @@ func (m *Costume3DMutation) ArchivePublishedAt() (r int, exists bool) {
 // OldArchivePublishedAt returns the old "archive_published_at" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldArchivePublishedAt(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldArchivePublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchivePublishedAt is only allowed on UpdateOne operations")
 	}
@@ -19851,7 +19851,7 @@ func (m *Costume3DMutation) OldArchivePublishedAt(ctx context.Context) (v int, e
 }
 
 // AddArchivePublishedAt adds i to the "archive_published_at" field.
-func (m *Costume3DMutation) AddArchivePublishedAt(i int) {
+func (m *Costume3DMutation) AddArchivePublishedAt(i int64) {
 	if m.addarchive_published_at != nil {
 		*m.addarchive_published_at += i
 	} else {
@@ -19860,7 +19860,7 @@ func (m *Costume3DMutation) AddArchivePublishedAt(i int) {
 }
 
 // AddedArchivePublishedAt returns the value that was added to the "archive_published_at" field in this mutation.
-func (m *Costume3DMutation) AddedArchivePublishedAt() (r int, exists bool) {
+func (m *Costume3DMutation) AddedArchivePublishedAt() (r int64, exists bool) {
 	v := m.addarchive_published_at
 	if v == nil {
 		return
@@ -19889,13 +19889,13 @@ func (m *Costume3DMutation) ResetArchivePublishedAt() {
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (m *Costume3DMutation) SetPublishedAt(i int) {
+func (m *Costume3DMutation) SetPublishedAt(i int64) {
 	m.published_at = &i
 	m.addpublished_at = nil
 }
 
 // PublishedAt returns the value of the "published_at" field in the mutation.
-func (m *Costume3DMutation) PublishedAt() (r int, exists bool) {
+func (m *Costume3DMutation) PublishedAt() (r int64, exists bool) {
 	v := m.published_at
 	if v == nil {
 		return
@@ -19906,7 +19906,7 @@ func (m *Costume3DMutation) PublishedAt() (r int, exists bool) {
 // OldPublishedAt returns the old "published_at" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldPublishedAt(ctx context.Context) (v int, err error) {
+func (m *Costume3DMutation) OldPublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPublishedAt is only allowed on UpdateOne operations")
 	}
@@ -19921,7 +19921,7 @@ func (m *Costume3DMutation) OldPublishedAt(ctx context.Context) (v int, err erro
 }
 
 // AddPublishedAt adds i to the "published_at" field.
-func (m *Costume3DMutation) AddPublishedAt(i int) {
+func (m *Costume3DMutation) AddPublishedAt(i int64) {
 	if m.addpublished_at != nil {
 		*m.addpublished_at += i
 	} else {
@@ -19930,7 +19930,7 @@ func (m *Costume3DMutation) AddPublishedAt(i int) {
 }
 
 // AddedPublishedAt returns the value that was added to the "published_at" field in this mutation.
-func (m *Costume3DMutation) AddedPublishedAt() (r int, exists bool) {
+func (m *Costume3DMutation) AddedPublishedAt() (r int64, exists bool) {
 	v := m.addpublished_at
 	if v == nil {
 		return
@@ -20175,21 +20175,21 @@ func (m *Costume3DMutation) OldField(ctx context.Context, name string) (ent.Valu
 func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case costume3d.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case costume3d.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case costume3d.FieldCostume3DGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20217,7 +20217,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetPartType(v)
 		return nil
 	case costume3d.FieldColorID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20231,7 +20231,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetColorName(v)
 		return nil
 	case costume3d.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20273,14 +20273,14 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetArchiveDisplayType(v)
 		return nil
 	case costume3d.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetArchivePublishedAt(v)
 		return nil
 	case costume3d.FieldPublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20354,49 +20354,49 @@ func (m *Costume3DMutation) AddedField(name string) (ent.Value, bool) {
 func (m *Costume3DMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case costume3d.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case costume3d.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case costume3d.FieldCostume3DGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCostume3DGroupID(v)
 		return nil
 	case costume3d.FieldColorID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddColorID(v)
 		return nil
 	case costume3d.FieldCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterID(v)
 		return nil
 	case costume3d.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddArchivePublishedAt(v)
 		return nil
 	case costume3d.FieldPublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20631,31 +20631,31 @@ type EventMutation struct {
 	op                                       Op
 	typ                                      string
 	id                                       *int
-	game_id                                  *int
-	addgame_id                               *int
+	game_id                                  *int64
+	addgame_id                               *int64
 	event_type                               *json.RawMessage
 	appendevent_type                         json.RawMessage
 	name                                     *string
 	assetbundle_name                         *string
 	bgm_assetbundle_name                     *string
-	event_only_component_display_start_at    *int
-	addevent_only_component_display_start_at *int
-	start_at                                 *int
-	addstart_at                              *int
-	aggregate_at                             *int
-	addaggregate_at                          *int
-	ranking_announce_at                      *int
-	addranking_announce_at                   *int
-	distribution_start_at                    *int
-	adddistribution_start_at                 *int
-	event_only_component_display_end_at      *int
-	addevent_only_component_display_end_at   *int
-	closed_at                                *int
-	addclosed_at                             *int
-	distribution_end_at                      *int
-	adddistribution_end_at                   *int
-	virtual_live_id                          *int
-	addvirtual_live_id                       *int
+	event_only_component_display_start_at    *int64
+	addevent_only_component_display_start_at *int64
+	start_at                                 *int64
+	addstart_at                              *int64
+	aggregate_at                             *int64
+	addaggregate_at                          *int64
+	ranking_announce_at                      *int64
+	addranking_announce_at                   *int64
+	distribution_start_at                    *int64
+	adddistribution_start_at                 *int64
+	event_only_component_display_end_at      *int64
+	addevent_only_component_display_end_at   *int64
+	closed_at                                *int64
+	addclosed_at                             *int64
+	distribution_end_at                      *int64
+	adddistribution_end_at                   *int64
+	virtual_live_id                          *int64
+	addvirtual_live_id                       *int64
 	unit                                     *json.RawMessage
 	appendunit                               json.RawMessage
 	is_count_leader_character_play           *bool
@@ -20663,8 +20663,8 @@ type EventMutation struct {
 	appendevent_ranking_reward_ranges        json.RawMessage
 	event_point_assetbundle_name             *json.RawMessage
 	appendevent_point_assetbundle_name       json.RawMessage
-	standby_screen_display_start_at          *int
-	addstandby_screen_display_start_at       *int
+	standby_screen_display_start_at          *int64
+	addstandby_screen_display_start_at       *int64
 	server_region                            *string
 	clearedFields                            map[string]struct{}
 	done                                     bool
@@ -20771,13 +20771,13 @@ func (m *EventMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventMutation) SetGameID(i int) {
+func (m *EventMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventMutation) GameID() (r int, exists bool) {
+func (m *EventMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -20788,7 +20788,7 @@ func (m *EventMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -20803,7 +20803,7 @@ func (m *EventMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventMutation) AddGameID(i int) {
+func (m *EventMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -20812,7 +20812,7 @@ func (m *EventMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventMutation) AddedGameID() (r int, exists bool) {
+func (m *EventMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -21039,13 +21039,13 @@ func (m *EventMutation) ResetBgmAssetbundleName() {
 }
 
 // SetEventOnlyComponentDisplayStartAt sets the "event_only_component_display_start_at" field.
-func (m *EventMutation) SetEventOnlyComponentDisplayStartAt(i int) {
+func (m *EventMutation) SetEventOnlyComponentDisplayStartAt(i int64) {
 	m.event_only_component_display_start_at = &i
 	m.addevent_only_component_display_start_at = nil
 }
 
 // EventOnlyComponentDisplayStartAt returns the value of the "event_only_component_display_start_at" field in the mutation.
-func (m *EventMutation) EventOnlyComponentDisplayStartAt() (r int, exists bool) {
+func (m *EventMutation) EventOnlyComponentDisplayStartAt() (r int64, exists bool) {
 	v := m.event_only_component_display_start_at
 	if v == nil {
 		return
@@ -21056,7 +21056,7 @@ func (m *EventMutation) EventOnlyComponentDisplayStartAt() (r int, exists bool) 
 // OldEventOnlyComponentDisplayStartAt returns the old "event_only_component_display_start_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldEventOnlyComponentDisplayStartAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldEventOnlyComponentDisplayStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventOnlyComponentDisplayStartAt is only allowed on UpdateOne operations")
 	}
@@ -21071,7 +21071,7 @@ func (m *EventMutation) OldEventOnlyComponentDisplayStartAt(ctx context.Context)
 }
 
 // AddEventOnlyComponentDisplayStartAt adds i to the "event_only_component_display_start_at" field.
-func (m *EventMutation) AddEventOnlyComponentDisplayStartAt(i int) {
+func (m *EventMutation) AddEventOnlyComponentDisplayStartAt(i int64) {
 	if m.addevent_only_component_display_start_at != nil {
 		*m.addevent_only_component_display_start_at += i
 	} else {
@@ -21080,7 +21080,7 @@ func (m *EventMutation) AddEventOnlyComponentDisplayStartAt(i int) {
 }
 
 // AddedEventOnlyComponentDisplayStartAt returns the value that was added to the "event_only_component_display_start_at" field in this mutation.
-func (m *EventMutation) AddedEventOnlyComponentDisplayStartAt() (r int, exists bool) {
+func (m *EventMutation) AddedEventOnlyComponentDisplayStartAt() (r int64, exists bool) {
 	v := m.addevent_only_component_display_start_at
 	if v == nil {
 		return
@@ -21109,13 +21109,13 @@ func (m *EventMutation) ResetEventOnlyComponentDisplayStartAt() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *EventMutation) SetStartAt(i int) {
+func (m *EventMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *EventMutation) StartAt() (r int, exists bool) {
+func (m *EventMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -21126,7 +21126,7 @@ func (m *EventMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -21141,7 +21141,7 @@ func (m *EventMutation) OldStartAt(ctx context.Context) (v int, err error) {
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *EventMutation) AddStartAt(i int) {
+func (m *EventMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -21150,7 +21150,7 @@ func (m *EventMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *EventMutation) AddedStartAt() (r int, exists bool) {
+func (m *EventMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -21179,13 +21179,13 @@ func (m *EventMutation) ResetStartAt() {
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (m *EventMutation) SetAggregateAt(i int) {
+func (m *EventMutation) SetAggregateAt(i int64) {
 	m.aggregate_at = &i
 	m.addaggregate_at = nil
 }
 
 // AggregateAt returns the value of the "aggregate_at" field in the mutation.
-func (m *EventMutation) AggregateAt() (r int, exists bool) {
+func (m *EventMutation) AggregateAt() (r int64, exists bool) {
 	v := m.aggregate_at
 	if v == nil {
 		return
@@ -21196,7 +21196,7 @@ func (m *EventMutation) AggregateAt() (r int, exists bool) {
 // OldAggregateAt returns the old "aggregate_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldAggregateAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldAggregateAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAggregateAt is only allowed on UpdateOne operations")
 	}
@@ -21211,7 +21211,7 @@ func (m *EventMutation) OldAggregateAt(ctx context.Context) (v int, err error) {
 }
 
 // AddAggregateAt adds i to the "aggregate_at" field.
-func (m *EventMutation) AddAggregateAt(i int) {
+func (m *EventMutation) AddAggregateAt(i int64) {
 	if m.addaggregate_at != nil {
 		*m.addaggregate_at += i
 	} else {
@@ -21220,7 +21220,7 @@ func (m *EventMutation) AddAggregateAt(i int) {
 }
 
 // AddedAggregateAt returns the value that was added to the "aggregate_at" field in this mutation.
-func (m *EventMutation) AddedAggregateAt() (r int, exists bool) {
+func (m *EventMutation) AddedAggregateAt() (r int64, exists bool) {
 	v := m.addaggregate_at
 	if v == nil {
 		return
@@ -21249,13 +21249,13 @@ func (m *EventMutation) ResetAggregateAt() {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (m *EventMutation) SetRankingAnnounceAt(i int) {
+func (m *EventMutation) SetRankingAnnounceAt(i int64) {
 	m.ranking_announce_at = &i
 	m.addranking_announce_at = nil
 }
 
 // RankingAnnounceAt returns the value of the "ranking_announce_at" field in the mutation.
-func (m *EventMutation) RankingAnnounceAt() (r int, exists bool) {
+func (m *EventMutation) RankingAnnounceAt() (r int64, exists bool) {
 	v := m.ranking_announce_at
 	if v == nil {
 		return
@@ -21266,7 +21266,7 @@ func (m *EventMutation) RankingAnnounceAt() (r int, exists bool) {
 // OldRankingAnnounceAt returns the old "ranking_announce_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldRankingAnnounceAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldRankingAnnounceAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRankingAnnounceAt is only allowed on UpdateOne operations")
 	}
@@ -21281,7 +21281,7 @@ func (m *EventMutation) OldRankingAnnounceAt(ctx context.Context) (v int, err er
 }
 
 // AddRankingAnnounceAt adds i to the "ranking_announce_at" field.
-func (m *EventMutation) AddRankingAnnounceAt(i int) {
+func (m *EventMutation) AddRankingAnnounceAt(i int64) {
 	if m.addranking_announce_at != nil {
 		*m.addranking_announce_at += i
 	} else {
@@ -21290,7 +21290,7 @@ func (m *EventMutation) AddRankingAnnounceAt(i int) {
 }
 
 // AddedRankingAnnounceAt returns the value that was added to the "ranking_announce_at" field in this mutation.
-func (m *EventMutation) AddedRankingAnnounceAt() (r int, exists bool) {
+func (m *EventMutation) AddedRankingAnnounceAt() (r int64, exists bool) {
 	v := m.addranking_announce_at
 	if v == nil {
 		return
@@ -21319,13 +21319,13 @@ func (m *EventMutation) ResetRankingAnnounceAt() {
 }
 
 // SetDistributionStartAt sets the "distribution_start_at" field.
-func (m *EventMutation) SetDistributionStartAt(i int) {
+func (m *EventMutation) SetDistributionStartAt(i int64) {
 	m.distribution_start_at = &i
 	m.adddistribution_start_at = nil
 }
 
 // DistributionStartAt returns the value of the "distribution_start_at" field in the mutation.
-func (m *EventMutation) DistributionStartAt() (r int, exists bool) {
+func (m *EventMutation) DistributionStartAt() (r int64, exists bool) {
 	v := m.distribution_start_at
 	if v == nil {
 		return
@@ -21336,7 +21336,7 @@ func (m *EventMutation) DistributionStartAt() (r int, exists bool) {
 // OldDistributionStartAt returns the old "distribution_start_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldDistributionStartAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldDistributionStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDistributionStartAt is only allowed on UpdateOne operations")
 	}
@@ -21351,7 +21351,7 @@ func (m *EventMutation) OldDistributionStartAt(ctx context.Context) (v int, err 
 }
 
 // AddDistributionStartAt adds i to the "distribution_start_at" field.
-func (m *EventMutation) AddDistributionStartAt(i int) {
+func (m *EventMutation) AddDistributionStartAt(i int64) {
 	if m.adddistribution_start_at != nil {
 		*m.adddistribution_start_at += i
 	} else {
@@ -21360,7 +21360,7 @@ func (m *EventMutation) AddDistributionStartAt(i int) {
 }
 
 // AddedDistributionStartAt returns the value that was added to the "distribution_start_at" field in this mutation.
-func (m *EventMutation) AddedDistributionStartAt() (r int, exists bool) {
+func (m *EventMutation) AddedDistributionStartAt() (r int64, exists bool) {
 	v := m.adddistribution_start_at
 	if v == nil {
 		return
@@ -21389,13 +21389,13 @@ func (m *EventMutation) ResetDistributionStartAt() {
 }
 
 // SetEventOnlyComponentDisplayEndAt sets the "event_only_component_display_end_at" field.
-func (m *EventMutation) SetEventOnlyComponentDisplayEndAt(i int) {
+func (m *EventMutation) SetEventOnlyComponentDisplayEndAt(i int64) {
 	m.event_only_component_display_end_at = &i
 	m.addevent_only_component_display_end_at = nil
 }
 
 // EventOnlyComponentDisplayEndAt returns the value of the "event_only_component_display_end_at" field in the mutation.
-func (m *EventMutation) EventOnlyComponentDisplayEndAt() (r int, exists bool) {
+func (m *EventMutation) EventOnlyComponentDisplayEndAt() (r int64, exists bool) {
 	v := m.event_only_component_display_end_at
 	if v == nil {
 		return
@@ -21406,7 +21406,7 @@ func (m *EventMutation) EventOnlyComponentDisplayEndAt() (r int, exists bool) {
 // OldEventOnlyComponentDisplayEndAt returns the old "event_only_component_display_end_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldEventOnlyComponentDisplayEndAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldEventOnlyComponentDisplayEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventOnlyComponentDisplayEndAt is only allowed on UpdateOne operations")
 	}
@@ -21421,7 +21421,7 @@ func (m *EventMutation) OldEventOnlyComponentDisplayEndAt(ctx context.Context) (
 }
 
 // AddEventOnlyComponentDisplayEndAt adds i to the "event_only_component_display_end_at" field.
-func (m *EventMutation) AddEventOnlyComponentDisplayEndAt(i int) {
+func (m *EventMutation) AddEventOnlyComponentDisplayEndAt(i int64) {
 	if m.addevent_only_component_display_end_at != nil {
 		*m.addevent_only_component_display_end_at += i
 	} else {
@@ -21430,7 +21430,7 @@ func (m *EventMutation) AddEventOnlyComponentDisplayEndAt(i int) {
 }
 
 // AddedEventOnlyComponentDisplayEndAt returns the value that was added to the "event_only_component_display_end_at" field in this mutation.
-func (m *EventMutation) AddedEventOnlyComponentDisplayEndAt() (r int, exists bool) {
+func (m *EventMutation) AddedEventOnlyComponentDisplayEndAt() (r int64, exists bool) {
 	v := m.addevent_only_component_display_end_at
 	if v == nil {
 		return
@@ -21459,13 +21459,13 @@ func (m *EventMutation) ResetEventOnlyComponentDisplayEndAt() {
 }
 
 // SetClosedAt sets the "closed_at" field.
-func (m *EventMutation) SetClosedAt(i int) {
+func (m *EventMutation) SetClosedAt(i int64) {
 	m.closed_at = &i
 	m.addclosed_at = nil
 }
 
 // ClosedAt returns the value of the "closed_at" field in the mutation.
-func (m *EventMutation) ClosedAt() (r int, exists bool) {
+func (m *EventMutation) ClosedAt() (r int64, exists bool) {
 	v := m.closed_at
 	if v == nil {
 		return
@@ -21476,7 +21476,7 @@ func (m *EventMutation) ClosedAt() (r int, exists bool) {
 // OldClosedAt returns the old "closed_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldClosedAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldClosedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldClosedAt is only allowed on UpdateOne operations")
 	}
@@ -21491,7 +21491,7 @@ func (m *EventMutation) OldClosedAt(ctx context.Context) (v int, err error) {
 }
 
 // AddClosedAt adds i to the "closed_at" field.
-func (m *EventMutation) AddClosedAt(i int) {
+func (m *EventMutation) AddClosedAt(i int64) {
 	if m.addclosed_at != nil {
 		*m.addclosed_at += i
 	} else {
@@ -21500,7 +21500,7 @@ func (m *EventMutation) AddClosedAt(i int) {
 }
 
 // AddedClosedAt returns the value that was added to the "closed_at" field in this mutation.
-func (m *EventMutation) AddedClosedAt() (r int, exists bool) {
+func (m *EventMutation) AddedClosedAt() (r int64, exists bool) {
 	v := m.addclosed_at
 	if v == nil {
 		return
@@ -21529,13 +21529,13 @@ func (m *EventMutation) ResetClosedAt() {
 }
 
 // SetDistributionEndAt sets the "distribution_end_at" field.
-func (m *EventMutation) SetDistributionEndAt(i int) {
+func (m *EventMutation) SetDistributionEndAt(i int64) {
 	m.distribution_end_at = &i
 	m.adddistribution_end_at = nil
 }
 
 // DistributionEndAt returns the value of the "distribution_end_at" field in the mutation.
-func (m *EventMutation) DistributionEndAt() (r int, exists bool) {
+func (m *EventMutation) DistributionEndAt() (r int64, exists bool) {
 	v := m.distribution_end_at
 	if v == nil {
 		return
@@ -21546,7 +21546,7 @@ func (m *EventMutation) DistributionEndAt() (r int, exists bool) {
 // OldDistributionEndAt returns the old "distribution_end_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldDistributionEndAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldDistributionEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDistributionEndAt is only allowed on UpdateOne operations")
 	}
@@ -21561,7 +21561,7 @@ func (m *EventMutation) OldDistributionEndAt(ctx context.Context) (v int, err er
 }
 
 // AddDistributionEndAt adds i to the "distribution_end_at" field.
-func (m *EventMutation) AddDistributionEndAt(i int) {
+func (m *EventMutation) AddDistributionEndAt(i int64) {
 	if m.adddistribution_end_at != nil {
 		*m.adddistribution_end_at += i
 	} else {
@@ -21570,7 +21570,7 @@ func (m *EventMutation) AddDistributionEndAt(i int) {
 }
 
 // AddedDistributionEndAt returns the value that was added to the "distribution_end_at" field in this mutation.
-func (m *EventMutation) AddedDistributionEndAt() (r int, exists bool) {
+func (m *EventMutation) AddedDistributionEndAt() (r int64, exists bool) {
 	v := m.adddistribution_end_at
 	if v == nil {
 		return
@@ -21599,13 +21599,13 @@ func (m *EventMutation) ResetDistributionEndAt() {
 }
 
 // SetVirtualLiveID sets the "virtual_live_id" field.
-func (m *EventMutation) SetVirtualLiveID(i int) {
+func (m *EventMutation) SetVirtualLiveID(i int64) {
 	m.virtual_live_id = &i
 	m.addvirtual_live_id = nil
 }
 
 // VirtualLiveID returns the value of the "virtual_live_id" field in the mutation.
-func (m *EventMutation) VirtualLiveID() (r int, exists bool) {
+func (m *EventMutation) VirtualLiveID() (r int64, exists bool) {
 	v := m.virtual_live_id
 	if v == nil {
 		return
@@ -21616,7 +21616,7 @@ func (m *EventMutation) VirtualLiveID() (r int, exists bool) {
 // OldVirtualLiveID returns the old "virtual_live_id" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldVirtualLiveID(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldVirtualLiveID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldVirtualLiveID is only allowed on UpdateOne operations")
 	}
@@ -21631,7 +21631,7 @@ func (m *EventMutation) OldVirtualLiveID(ctx context.Context) (v int, err error)
 }
 
 // AddVirtualLiveID adds i to the "virtual_live_id" field.
-func (m *EventMutation) AddVirtualLiveID(i int) {
+func (m *EventMutation) AddVirtualLiveID(i int64) {
 	if m.addvirtual_live_id != nil {
 		*m.addvirtual_live_id += i
 	} else {
@@ -21640,7 +21640,7 @@ func (m *EventMutation) AddVirtualLiveID(i int) {
 }
 
 // AddedVirtualLiveID returns the value that was added to the "virtual_live_id" field in this mutation.
-func (m *EventMutation) AddedVirtualLiveID() (r int, exists bool) {
+func (m *EventMutation) AddedVirtualLiveID() (r int64, exists bool) {
 	v := m.addvirtual_live_id
 	if v == nil {
 		return
@@ -21913,13 +21913,13 @@ func (m *EventMutation) ResetEventPointAssetbundleName() {
 }
 
 // SetStandbyScreenDisplayStartAt sets the "standby_screen_display_start_at" field.
-func (m *EventMutation) SetStandbyScreenDisplayStartAt(i int) {
+func (m *EventMutation) SetStandbyScreenDisplayStartAt(i int64) {
 	m.standby_screen_display_start_at = &i
 	m.addstandby_screen_display_start_at = nil
 }
 
 // StandbyScreenDisplayStartAt returns the value of the "standby_screen_display_start_at" field in the mutation.
-func (m *EventMutation) StandbyScreenDisplayStartAt() (r int, exists bool) {
+func (m *EventMutation) StandbyScreenDisplayStartAt() (r int64, exists bool) {
 	v := m.standby_screen_display_start_at
 	if v == nil {
 		return
@@ -21930,7 +21930,7 @@ func (m *EventMutation) StandbyScreenDisplayStartAt() (r int, exists bool) {
 // OldStandbyScreenDisplayStartAt returns the old "standby_screen_display_start_at" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldStandbyScreenDisplayStartAt(ctx context.Context) (v int, err error) {
+func (m *EventMutation) OldStandbyScreenDisplayStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStandbyScreenDisplayStartAt is only allowed on UpdateOne operations")
 	}
@@ -21945,7 +21945,7 @@ func (m *EventMutation) OldStandbyScreenDisplayStartAt(ctx context.Context) (v i
 }
 
 // AddStandbyScreenDisplayStartAt adds i to the "standby_screen_display_start_at" field.
-func (m *EventMutation) AddStandbyScreenDisplayStartAt(i int) {
+func (m *EventMutation) AddStandbyScreenDisplayStartAt(i int64) {
 	if m.addstandby_screen_display_start_at != nil {
 		*m.addstandby_screen_display_start_at += i
 	} else {
@@ -21954,7 +21954,7 @@ func (m *EventMutation) AddStandbyScreenDisplayStartAt(i int) {
 }
 
 // AddedStandbyScreenDisplayStartAt returns the value that was added to the "standby_screen_display_start_at" field in this mutation.
-func (m *EventMutation) AddedStandbyScreenDisplayStartAt() (r int, exists bool) {
+func (m *EventMutation) AddedStandbyScreenDisplayStartAt() (r int64, exists bool) {
 	v := m.addstandby_screen_display_start_at
 	if v == nil {
 		return
@@ -22220,7 +22220,7 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *EventMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case event.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22255,63 +22255,63 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		m.SetBgmAssetbundleName(v)
 		return nil
 	case event.FieldEventOnlyComponentDisplayStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventOnlyComponentDisplayStartAt(v)
 		return nil
 	case event.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case event.FieldAggregateAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAggregateAt(v)
 		return nil
 	case event.FieldRankingAnnounceAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRankingAnnounceAt(v)
 		return nil
 	case event.FieldDistributionStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDistributionStartAt(v)
 		return nil
 	case event.FieldEventOnlyComponentDisplayEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventOnlyComponentDisplayEndAt(v)
 		return nil
 	case event.FieldClosedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetClosedAt(v)
 		return nil
 	case event.FieldDistributionEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDistributionEndAt(v)
 		return nil
 	case event.FieldVirtualLiveID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22346,7 +22346,7 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		m.SetEventPointAssetbundleName(v)
 		return nil
 	case event.FieldStandbyScreenDisplayStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22440,77 +22440,77 @@ func (m *EventMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case event.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case event.FieldEventOnlyComponentDisplayStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventOnlyComponentDisplayStartAt(v)
 		return nil
 	case event.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case event.FieldAggregateAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddAggregateAt(v)
 		return nil
 	case event.FieldRankingAnnounceAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRankingAnnounceAt(v)
 		return nil
 	case event.FieldDistributionStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddDistributionStartAt(v)
 		return nil
 	case event.FieldEventOnlyComponentDisplayEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventOnlyComponentDisplayEndAt(v)
 		return nil
 	case event.FieldClosedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddClosedAt(v)
 		return nil
 	case event.FieldDistributionEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddDistributionEndAt(v)
 		return nil
 	case event.FieldVirtualLiveID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddVirtualLiveID(v)
 		return nil
 	case event.FieldStandbyScreenDisplayStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22772,12 +22772,12 @@ type EventcardMutation struct {
 	op                    Op
 	typ                   string
 	id                    *int
-	game_id               *int
-	addgame_id            *int
-	card_id               *int
-	addcard_id            *int
-	event_id              *int
-	addevent_id           *int
+	game_id               *int64
+	addgame_id            *int64
+	card_id               *int64
+	addcard_id            *int64
+	event_id              *int64
+	addevent_id           *int64
 	bonus_rate            *float64
 	addbonus_rate         *float64
 	leader_bonus_rate     *float64
@@ -22889,13 +22889,13 @@ func (m *EventcardMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventcardMutation) SetGameID(i int) {
+func (m *EventcardMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventcardMutation) GameID() (r int, exists bool) {
+func (m *EventcardMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -22906,7 +22906,7 @@ func (m *EventcardMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventcard entity.
 // If the Eventcard object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventcardMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventcardMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -22921,7 +22921,7 @@ func (m *EventcardMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventcardMutation) AddGameID(i int) {
+func (m *EventcardMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -22930,7 +22930,7 @@ func (m *EventcardMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventcardMutation) AddedGameID() (r int, exists bool) {
+func (m *EventcardMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -22945,13 +22945,13 @@ func (m *EventcardMutation) ResetGameID() {
 }
 
 // SetCardID sets the "card_id" field.
-func (m *EventcardMutation) SetCardID(i int) {
+func (m *EventcardMutation) SetCardID(i int64) {
 	m.card_id = &i
 	m.addcard_id = nil
 }
 
 // CardID returns the value of the "card_id" field in the mutation.
-func (m *EventcardMutation) CardID() (r int, exists bool) {
+func (m *EventcardMutation) CardID() (r int64, exists bool) {
 	v := m.card_id
 	if v == nil {
 		return
@@ -22962,7 +22962,7 @@ func (m *EventcardMutation) CardID() (r int, exists bool) {
 // OldCardID returns the old "card_id" field's value of the Eventcard entity.
 // If the Eventcard object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventcardMutation) OldCardID(ctx context.Context) (v int, err error) {
+func (m *EventcardMutation) OldCardID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardID is only allowed on UpdateOne operations")
 	}
@@ -22977,7 +22977,7 @@ func (m *EventcardMutation) OldCardID(ctx context.Context) (v int, err error) {
 }
 
 // AddCardID adds i to the "card_id" field.
-func (m *EventcardMutation) AddCardID(i int) {
+func (m *EventcardMutation) AddCardID(i int64) {
 	if m.addcard_id != nil {
 		*m.addcard_id += i
 	} else {
@@ -22986,7 +22986,7 @@ func (m *EventcardMutation) AddCardID(i int) {
 }
 
 // AddedCardID returns the value that was added to the "card_id" field in this mutation.
-func (m *EventcardMutation) AddedCardID() (r int, exists bool) {
+func (m *EventcardMutation) AddedCardID() (r int64, exists bool) {
 	v := m.addcard_id
 	if v == nil {
 		return
@@ -23015,13 +23015,13 @@ func (m *EventcardMutation) ResetCardID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventcardMutation) SetEventID(i int) {
+func (m *EventcardMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventcardMutation) EventID() (r int, exists bool) {
+func (m *EventcardMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -23032,7 +23032,7 @@ func (m *EventcardMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventcard entity.
 // If the Eventcard object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventcardMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventcardMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -23047,7 +23047,7 @@ func (m *EventcardMutation) OldEventID(ctx context.Context) (v int, err error) {
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventcardMutation) AddEventID(i int) {
+func (m *EventcardMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -23056,7 +23056,7 @@ func (m *EventcardMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventcardMutation) AddedEventID() (r int, exists bool) {
+func (m *EventcardMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -23420,21 +23420,21 @@ func (m *EventcardMutation) OldField(ctx context.Context, name string) (ent.Valu
 func (m *EventcardMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventcard.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventcard.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCardID(v)
 		return nil
 	case eventcard.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -23519,21 +23519,21 @@ func (m *EventcardMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventcardMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventcard.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventcard.FieldCardID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCardID(v)
 		return nil
 	case eventcard.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -23692,12 +23692,12 @@ type EventdeckbonuseMutation struct {
 	op                        Op
 	typ                       string
 	id                        *int
-	game_id                   *int
-	addgame_id                *int
-	event_id                  *int
-	addevent_id               *int
-	game_character_unit_id    *int
-	addgame_character_unit_id *int
+	game_id                   *int64
+	addgame_id                *int64
+	event_id                  *int64
+	addevent_id               *int64
+	game_character_unit_id    *int64
+	addgame_character_unit_id *int64
 	card_attr                 *json.RawMessage
 	appendcard_attr           json.RawMessage
 	bonus_rate                *float64
@@ -23808,13 +23808,13 @@ func (m *EventdeckbonuseMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventdeckbonuseMutation) SetGameID(i int) {
+func (m *EventdeckbonuseMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventdeckbonuseMutation) GameID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -23825,7 +23825,7 @@ func (m *EventdeckbonuseMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventdeckbonuse entity.
 // If the Eventdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventdeckbonuseMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventdeckbonuseMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -23840,7 +23840,7 @@ func (m *EventdeckbonuseMutation) OldGameID(ctx context.Context) (v int, err err
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventdeckbonuseMutation) AddGameID(i int) {
+func (m *EventdeckbonuseMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -23849,7 +23849,7 @@ func (m *EventdeckbonuseMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventdeckbonuseMutation) AddedGameID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -23864,13 +23864,13 @@ func (m *EventdeckbonuseMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventdeckbonuseMutation) SetEventID(i int) {
+func (m *EventdeckbonuseMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventdeckbonuseMutation) EventID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -23881,7 +23881,7 @@ func (m *EventdeckbonuseMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventdeckbonuse entity.
 // If the Eventdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventdeckbonuseMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventdeckbonuseMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -23896,7 +23896,7 @@ func (m *EventdeckbonuseMutation) OldEventID(ctx context.Context) (v int, err er
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventdeckbonuseMutation) AddEventID(i int) {
+func (m *EventdeckbonuseMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -23905,7 +23905,7 @@ func (m *EventdeckbonuseMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventdeckbonuseMutation) AddedEventID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -23934,13 +23934,13 @@ func (m *EventdeckbonuseMutation) ResetEventID() {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (m *EventdeckbonuseMutation) SetGameCharacterUnitID(i int) {
+func (m *EventdeckbonuseMutation) SetGameCharacterUnitID(i int64) {
 	m.game_character_unit_id = &i
 	m.addgame_character_unit_id = nil
 }
 
 // GameCharacterUnitID returns the value of the "game_character_unit_id" field in the mutation.
-func (m *EventdeckbonuseMutation) GameCharacterUnitID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) GameCharacterUnitID() (r int64, exists bool) {
 	v := m.game_character_unit_id
 	if v == nil {
 		return
@@ -23951,7 +23951,7 @@ func (m *EventdeckbonuseMutation) GameCharacterUnitID() (r int, exists bool) {
 // OldGameCharacterUnitID returns the old "game_character_unit_id" field's value of the Eventdeckbonuse entity.
 // If the Eventdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventdeckbonuseMutation) OldGameCharacterUnitID(ctx context.Context) (v int, err error) {
+func (m *EventdeckbonuseMutation) OldGameCharacterUnitID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitID is only allowed on UpdateOne operations")
 	}
@@ -23966,7 +23966,7 @@ func (m *EventdeckbonuseMutation) OldGameCharacterUnitID(ctx context.Context) (v
 }
 
 // AddGameCharacterUnitID adds i to the "game_character_unit_id" field.
-func (m *EventdeckbonuseMutation) AddGameCharacterUnitID(i int) {
+func (m *EventdeckbonuseMutation) AddGameCharacterUnitID(i int64) {
 	if m.addgame_character_unit_id != nil {
 		*m.addgame_character_unit_id += i
 	} else {
@@ -23975,7 +23975,7 @@ func (m *EventdeckbonuseMutation) AddGameCharacterUnitID(i int) {
 }
 
 // AddedGameCharacterUnitID returns the value that was added to the "game_character_unit_id" field in this mutation.
-func (m *EventdeckbonuseMutation) AddedGameCharacterUnitID() (r int, exists bool) {
+func (m *EventdeckbonuseMutation) AddedGameCharacterUnitID() (r int64, exists bool) {
 	v := m.addgame_character_unit_id
 	if v == nil {
 		return
@@ -24278,21 +24278,21 @@ func (m *EventdeckbonuseMutation) OldField(ctx context.Context, name string) (en
 func (m *EventdeckbonuseMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventdeckbonuse.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventdeckbonuse.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventID(v)
 		return nil
 	case eventdeckbonuse.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -24365,21 +24365,21 @@ func (m *EventdeckbonuseMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventdeckbonuseMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventdeckbonuse.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventdeckbonuse.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case eventdeckbonuse.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -24522,15 +24522,15 @@ type EventexchangesummarieMutation struct {
 	op                    Op
 	typ                   string
 	id                    *int
-	game_id               *int
-	addgame_id            *int
-	event_id              *int
-	addevent_id           *int
+	game_id               *int64
+	addgame_id            *int64
+	event_id              *int64
+	addevent_id           *int64
 	assetbundle_name      *string
-	start_at              *int
-	addstart_at           *int
-	end_at                *int
-	addend_at             *int
+	start_at              *int64
+	addstart_at           *int64
+	end_at                *int64
+	addend_at             *int64
 	event_exchanges       *json.RawMessage
 	appendevent_exchanges json.RawMessage
 	server_region         *string
@@ -24639,13 +24639,13 @@ func (m *EventexchangesummarieMutation) IDs(ctx context.Context) ([]int, error) 
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventexchangesummarieMutation) SetGameID(i int) {
+func (m *EventexchangesummarieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventexchangesummarieMutation) GameID() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -24656,7 +24656,7 @@ func (m *EventexchangesummarieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventexchangesummarie entity.
 // If the Eventexchangesummarie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventexchangesummarieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventexchangesummarieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -24671,7 +24671,7 @@ func (m *EventexchangesummarieMutation) OldGameID(ctx context.Context) (v int, e
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventexchangesummarieMutation) AddGameID(i int) {
+func (m *EventexchangesummarieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -24680,7 +24680,7 @@ func (m *EventexchangesummarieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventexchangesummarieMutation) AddedGameID() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -24695,13 +24695,13 @@ func (m *EventexchangesummarieMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventexchangesummarieMutation) SetEventID(i int) {
+func (m *EventexchangesummarieMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventexchangesummarieMutation) EventID() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -24712,7 +24712,7 @@ func (m *EventexchangesummarieMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventexchangesummarie entity.
 // If the Eventexchangesummarie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventexchangesummarieMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventexchangesummarieMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -24727,7 +24727,7 @@ func (m *EventexchangesummarieMutation) OldEventID(ctx context.Context) (v int, 
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventexchangesummarieMutation) AddEventID(i int) {
+func (m *EventexchangesummarieMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -24736,7 +24736,7 @@ func (m *EventexchangesummarieMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventexchangesummarieMutation) AddedEventID() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -24814,13 +24814,13 @@ func (m *EventexchangesummarieMutation) ResetAssetbundleName() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *EventexchangesummarieMutation) SetStartAt(i int) {
+func (m *EventexchangesummarieMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *EventexchangesummarieMutation) StartAt() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -24831,7 +24831,7 @@ func (m *EventexchangesummarieMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Eventexchangesummarie entity.
 // If the Eventexchangesummarie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventexchangesummarieMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *EventexchangesummarieMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -24846,7 +24846,7 @@ func (m *EventexchangesummarieMutation) OldStartAt(ctx context.Context) (v int, 
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *EventexchangesummarieMutation) AddStartAt(i int) {
+func (m *EventexchangesummarieMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -24855,7 +24855,7 @@ func (m *EventexchangesummarieMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *EventexchangesummarieMutation) AddedStartAt() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -24884,13 +24884,13 @@ func (m *EventexchangesummarieMutation) ResetStartAt() {
 }
 
 // SetEndAt sets the "end_at" field.
-func (m *EventexchangesummarieMutation) SetEndAt(i int) {
+func (m *EventexchangesummarieMutation) SetEndAt(i int64) {
 	m.end_at = &i
 	m.addend_at = nil
 }
 
 // EndAt returns the value of the "end_at" field in the mutation.
-func (m *EventexchangesummarieMutation) EndAt() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) EndAt() (r int64, exists bool) {
 	v := m.end_at
 	if v == nil {
 		return
@@ -24901,7 +24901,7 @@ func (m *EventexchangesummarieMutation) EndAt() (r int, exists bool) {
 // OldEndAt returns the old "end_at" field's value of the Eventexchangesummarie entity.
 // If the Eventexchangesummarie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventexchangesummarieMutation) OldEndAt(ctx context.Context) (v int, err error) {
+func (m *EventexchangesummarieMutation) OldEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEndAt is only allowed on UpdateOne operations")
 	}
@@ -24916,7 +24916,7 @@ func (m *EventexchangesummarieMutation) OldEndAt(ctx context.Context) (v int, er
 }
 
 // AddEndAt adds i to the "end_at" field.
-func (m *EventexchangesummarieMutation) AddEndAt(i int) {
+func (m *EventexchangesummarieMutation) AddEndAt(i int64) {
 	if m.addend_at != nil {
 		*m.addend_at += i
 	} else {
@@ -24925,7 +24925,7 @@ func (m *EventexchangesummarieMutation) AddEndAt(i int) {
 }
 
 // AddedEndAt returns the value that was added to the "end_at" field in this mutation.
-func (m *EventexchangesummarieMutation) AddedEndAt() (r int, exists bool) {
+func (m *EventexchangesummarieMutation) AddedEndAt() (r int64, exists bool) {
 	v := m.addend_at
 	if v == nil {
 		return
@@ -25165,14 +25165,14 @@ func (m *EventexchangesummarieMutation) OldField(ctx context.Context, name strin
 func (m *EventexchangesummarieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventexchangesummarie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventexchangesummarie.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -25186,14 +25186,14 @@ func (m *EventexchangesummarieMutation) SetField(name string, value ent.Value) e
 		m.SetAssetbundleName(v)
 		return nil
 	case eventexchangesummarie.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case eventexchangesummarie.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -25259,28 +25259,28 @@ func (m *EventexchangesummarieMutation) AddedField(name string) (ent.Value, bool
 func (m *EventexchangesummarieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventexchangesummarie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventexchangesummarie.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case eventexchangesummarie.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case eventexchangesummarie.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -25425,17 +25425,17 @@ type EventitemMutation struct {
 	op                   Op
 	typ                  string
 	id                   *int
-	game_id              *int
-	addgame_id           *int
-	event_id             *int
-	addevent_id          *int
+	game_id              *int64
+	addgame_id           *int64
+	event_id             *int64
+	addevent_id          *int64
 	name                 *json.RawMessage
 	appendname           json.RawMessage
 	flavor_text          *json.RawMessage
 	appendflavor_text    json.RawMessage
 	assetbundle_name     *string
-	game_character_id    *int
-	addgame_character_id *int
+	game_character_id    *int64
+	addgame_character_id *int64
 	server_region        *string
 	clearedFields        map[string]struct{}
 	done                 bool
@@ -25542,13 +25542,13 @@ func (m *EventitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventitemMutation) SetGameID(i int) {
+func (m *EventitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventitemMutation) GameID() (r int, exists bool) {
+func (m *EventitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -25559,7 +25559,7 @@ func (m *EventitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventitem entity.
 // If the Eventitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -25574,7 +25574,7 @@ func (m *EventitemMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventitemMutation) AddGameID(i int) {
+func (m *EventitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -25583,7 +25583,7 @@ func (m *EventitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventitemMutation) AddedGameID() (r int, exists bool) {
+func (m *EventitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -25598,13 +25598,13 @@ func (m *EventitemMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventitemMutation) SetEventID(i int) {
+func (m *EventitemMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventitemMutation) EventID() (r int, exists bool) {
+func (m *EventitemMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -25615,7 +25615,7 @@ func (m *EventitemMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventitem entity.
 // If the Eventitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventitemMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventitemMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -25630,7 +25630,7 @@ func (m *EventitemMutation) OldEventID(ctx context.Context) (v int, err error) {
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventitemMutation) AddEventID(i int) {
+func (m *EventitemMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -25639,7 +25639,7 @@ func (m *EventitemMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventitemMutation) AddedEventID() (r int, exists bool) {
+func (m *EventitemMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -25847,13 +25847,13 @@ func (m *EventitemMutation) ResetAssetbundleName() {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *EventitemMutation) SetGameCharacterID(i int) {
+func (m *EventitemMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *EventitemMutation) GameCharacterID() (r int, exists bool) {
+func (m *EventitemMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -25864,7 +25864,7 @@ func (m *EventitemMutation) GameCharacterID() (r int, exists bool) {
 // OldGameCharacterID returns the old "game_character_id" field's value of the Eventitem entity.
 // If the Eventitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventitemMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *EventitemMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -25879,7 +25879,7 @@ func (m *EventitemMutation) OldGameCharacterID(ctx context.Context) (v int, err 
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *EventitemMutation) AddGameCharacterID(i int) {
+func (m *EventitemMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -25888,7 +25888,7 @@ func (m *EventitemMutation) AddGameCharacterID(i int) {
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *EventitemMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *EventitemMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -26063,14 +26063,14 @@ func (m *EventitemMutation) OldField(ctx context.Context, name string) (ent.Valu
 func (m *EventitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventitem.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -26098,7 +26098,7 @@ func (m *EventitemMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case eventitem.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -26152,21 +26152,21 @@ func (m *EventitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventitem.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case eventitem.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -26311,14 +26311,14 @@ type EventmusicMutation struct {
 	op                      Op
 	typ                     string
 	id                      *int
-	event_id                *int
-	addevent_id             *int
-	music_id                *int
-	addmusic_id             *int
-	seq                     *int
-	addseq                  *int
-	release_condition_id    *int
-	addrelease_condition_id *int
+	event_id                *int64
+	addevent_id             *int64
+	music_id                *int64
+	addmusic_id             *int64
+	seq                     *int64
+	addseq                  *int64
+	release_condition_id    *int64
+	addrelease_condition_id *int64
 	server_region           *string
 	clearedFields           map[string]struct{}
 	done                    bool
@@ -26425,13 +26425,13 @@ func (m *EventmusicMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventmusicMutation) SetEventID(i int) {
+func (m *EventmusicMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventmusicMutation) EventID() (r int, exists bool) {
+func (m *EventmusicMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -26442,7 +26442,7 @@ func (m *EventmusicMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventmusic entity.
 // If the Eventmusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventmusicMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventmusicMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -26457,7 +26457,7 @@ func (m *EventmusicMutation) OldEventID(ctx context.Context) (v int, err error) 
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventmusicMutation) AddEventID(i int) {
+func (m *EventmusicMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -26466,7 +26466,7 @@ func (m *EventmusicMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventmusicMutation) AddedEventID() (r int, exists bool) {
+func (m *EventmusicMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -26495,13 +26495,13 @@ func (m *EventmusicMutation) ResetEventID() {
 }
 
 // SetMusicID sets the "music_id" field.
-func (m *EventmusicMutation) SetMusicID(i int) {
+func (m *EventmusicMutation) SetMusicID(i int64) {
 	m.music_id = &i
 	m.addmusic_id = nil
 }
 
 // MusicID returns the value of the "music_id" field in the mutation.
-func (m *EventmusicMutation) MusicID() (r int, exists bool) {
+func (m *EventmusicMutation) MusicID() (r int64, exists bool) {
 	v := m.music_id
 	if v == nil {
 		return
@@ -26512,7 +26512,7 @@ func (m *EventmusicMutation) MusicID() (r int, exists bool) {
 // OldMusicID returns the old "music_id" field's value of the Eventmusic entity.
 // If the Eventmusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventmusicMutation) OldMusicID(ctx context.Context) (v int, err error) {
+func (m *EventmusicMutation) OldMusicID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
 	}
@@ -26527,7 +26527,7 @@ func (m *EventmusicMutation) OldMusicID(ctx context.Context) (v int, err error) 
 }
 
 // AddMusicID adds i to the "music_id" field.
-func (m *EventmusicMutation) AddMusicID(i int) {
+func (m *EventmusicMutation) AddMusicID(i int64) {
 	if m.addmusic_id != nil {
 		*m.addmusic_id += i
 	} else {
@@ -26536,7 +26536,7 @@ func (m *EventmusicMutation) AddMusicID(i int) {
 }
 
 // AddedMusicID returns the value that was added to the "music_id" field in this mutation.
-func (m *EventmusicMutation) AddedMusicID() (r int, exists bool) {
+func (m *EventmusicMutation) AddedMusicID() (r int64, exists bool) {
 	v := m.addmusic_id
 	if v == nil {
 		return
@@ -26565,13 +26565,13 @@ func (m *EventmusicMutation) ResetMusicID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *EventmusicMutation) SetSeq(i int) {
+func (m *EventmusicMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *EventmusicMutation) Seq() (r int, exists bool) {
+func (m *EventmusicMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -26582,7 +26582,7 @@ func (m *EventmusicMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Eventmusic entity.
 // If the Eventmusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventmusicMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *EventmusicMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -26597,7 +26597,7 @@ func (m *EventmusicMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *EventmusicMutation) AddSeq(i int) {
+func (m *EventmusicMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -26606,7 +26606,7 @@ func (m *EventmusicMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *EventmusicMutation) AddedSeq() (r int, exists bool) {
+func (m *EventmusicMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -26635,13 +26635,13 @@ func (m *EventmusicMutation) ResetSeq() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *EventmusicMutation) SetReleaseConditionID(i int) {
+func (m *EventmusicMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *EventmusicMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *EventmusicMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -26652,7 +26652,7 @@ func (m *EventmusicMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Eventmusic entity.
 // If the Eventmusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventmusicMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *EventmusicMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -26667,7 +26667,7 @@ func (m *EventmusicMutation) OldReleaseConditionID(ctx context.Context) (v int, 
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *EventmusicMutation) AddReleaseConditionID(i int) {
+func (m *EventmusicMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -26676,7 +26676,7 @@ func (m *EventmusicMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *EventmusicMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *EventmusicMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -26837,28 +26837,28 @@ func (m *EventmusicMutation) OldField(ctx context.Context, name string) (ent.Val
 func (m *EventmusicMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventmusic.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventID(v)
 		return nil
 	case eventmusic.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMusicID(v)
 		return nil
 	case eventmusic.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case eventmusic.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -26917,28 +26917,28 @@ func (m *EventmusicMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventmusicMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventmusic.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case eventmusic.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMusicID(v)
 		return nil
 	case eventmusic.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case eventmusic.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -27071,12 +27071,12 @@ type EventraritybonusrateMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	game_id                *int
-	addgame_id             *int
+	game_id                *int64
+	addgame_id             *int64
 	card_rarity_type       *json.RawMessage
 	appendcard_rarity_type json.RawMessage
-	master_rank            *int
-	addmaster_rank         *int
+	master_rank            *int64
+	addmaster_rank         *int64
 	bonus_rate             *float64
 	addbonus_rate          *float64
 	server_region          *string
@@ -27185,13 +27185,13 @@ func (m *EventraritybonusrateMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventraritybonusrateMutation) SetGameID(i int) {
+func (m *EventraritybonusrateMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventraritybonusrateMutation) GameID() (r int, exists bool) {
+func (m *EventraritybonusrateMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -27202,7 +27202,7 @@ func (m *EventraritybonusrateMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventraritybonusrate entity.
 // If the Eventraritybonusrate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventraritybonusrateMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventraritybonusrateMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -27217,7 +27217,7 @@ func (m *EventraritybonusrateMutation) OldGameID(ctx context.Context) (v int, er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventraritybonusrateMutation) AddGameID(i int) {
+func (m *EventraritybonusrateMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -27226,7 +27226,7 @@ func (m *EventraritybonusrateMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventraritybonusrateMutation) AddedGameID() (r int, exists bool) {
+func (m *EventraritybonusrateMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -27306,13 +27306,13 @@ func (m *EventraritybonusrateMutation) ResetCardRarityType() {
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (m *EventraritybonusrateMutation) SetMasterRank(i int) {
+func (m *EventraritybonusrateMutation) SetMasterRank(i int64) {
 	m.master_rank = &i
 	m.addmaster_rank = nil
 }
 
 // MasterRank returns the value of the "master_rank" field in the mutation.
-func (m *EventraritybonusrateMutation) MasterRank() (r int, exists bool) {
+func (m *EventraritybonusrateMutation) MasterRank() (r int64, exists bool) {
 	v := m.master_rank
 	if v == nil {
 		return
@@ -27323,7 +27323,7 @@ func (m *EventraritybonusrateMutation) MasterRank() (r int, exists bool) {
 // OldMasterRank returns the old "master_rank" field's value of the Eventraritybonusrate entity.
 // If the Eventraritybonusrate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventraritybonusrateMutation) OldMasterRank(ctx context.Context) (v int, err error) {
+func (m *EventraritybonusrateMutation) OldMasterRank(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMasterRank is only allowed on UpdateOne operations")
 	}
@@ -27338,7 +27338,7 @@ func (m *EventraritybonusrateMutation) OldMasterRank(ctx context.Context) (v int
 }
 
 // AddMasterRank adds i to the "master_rank" field.
-func (m *EventraritybonusrateMutation) AddMasterRank(i int) {
+func (m *EventraritybonusrateMutation) AddMasterRank(i int64) {
 	if m.addmaster_rank != nil {
 		*m.addmaster_rank += i
 	} else {
@@ -27347,7 +27347,7 @@ func (m *EventraritybonusrateMutation) AddMasterRank(i int) {
 }
 
 // AddedMasterRank returns the value that was added to the "master_rank" field in this mutation.
-func (m *EventraritybonusrateMutation) AddedMasterRank() (r int, exists bool) {
+func (m *EventraritybonusrateMutation) AddedMasterRank() (r int64, exists bool) {
 	v := m.addmaster_rank
 	if v == nil {
 		return
@@ -27578,7 +27578,7 @@ func (m *EventraritybonusrateMutation) OldField(ctx context.Context, name string
 func (m *EventraritybonusrateMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventraritybonusrate.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -27592,7 +27592,7 @@ func (m *EventraritybonusrateMutation) SetField(name string, value ent.Value) er
 		m.SetCardRarityType(v)
 		return nil
 	case eventraritybonusrate.FieldMasterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -27653,14 +27653,14 @@ func (m *EventraritybonusrateMutation) AddedField(name string) (ent.Value, bool)
 func (m *EventraritybonusrateMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventraritybonusrate.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventraritybonusrate.FieldMasterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -27794,13 +27794,13 @@ type EventstorieMutation struct {
 	op                               Op
 	typ                              string
 	id                               *int
-	game_id                          *int
-	addgame_id                       *int
-	event_id                         *int
-	addevent_id                      *int
+	game_id                          *int64
+	addgame_id                       *int64
+	event_id                         *int64
+	addevent_id                      *int64
 	outline                          *string
-	banner_game_character_unit_id    *int
-	addbanner_game_character_unit_id *int
+	banner_game_character_unit_id    *int64
+	addbanner_game_character_unit_id *int64
 	assetbundle_name                 *string
 	event_story_episodes             *json.RawMessage
 	appendevent_story_episodes       json.RawMessage
@@ -27910,13 +27910,13 @@ func (m *EventstorieMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventstorieMutation) SetGameID(i int) {
+func (m *EventstorieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventstorieMutation) GameID() (r int, exists bool) {
+func (m *EventstorieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -27927,7 +27927,7 @@ func (m *EventstorieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventstorie entity.
 // If the Eventstorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstorieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventstorieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -27942,7 +27942,7 @@ func (m *EventstorieMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventstorieMutation) AddGameID(i int) {
+func (m *EventstorieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -27951,7 +27951,7 @@ func (m *EventstorieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventstorieMutation) AddedGameID() (r int, exists bool) {
+func (m *EventstorieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -27966,13 +27966,13 @@ func (m *EventstorieMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *EventstorieMutation) SetEventID(i int) {
+func (m *EventstorieMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *EventstorieMutation) EventID() (r int, exists bool) {
+func (m *EventstorieMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -27983,7 +27983,7 @@ func (m *EventstorieMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Eventstorie entity.
 // If the Eventstorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstorieMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *EventstorieMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -27998,7 +27998,7 @@ func (m *EventstorieMutation) OldEventID(ctx context.Context) (v int, err error)
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *EventstorieMutation) AddEventID(i int) {
+func (m *EventstorieMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -28007,7 +28007,7 @@ func (m *EventstorieMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *EventstorieMutation) AddedEventID() (r int, exists bool) {
+func (m *EventstorieMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -28085,13 +28085,13 @@ func (m *EventstorieMutation) ResetOutline() {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (m *EventstorieMutation) SetBannerGameCharacterUnitID(i int) {
+func (m *EventstorieMutation) SetBannerGameCharacterUnitID(i int64) {
 	m.banner_game_character_unit_id = &i
 	m.addbanner_game_character_unit_id = nil
 }
 
 // BannerGameCharacterUnitID returns the value of the "banner_game_character_unit_id" field in the mutation.
-func (m *EventstorieMutation) BannerGameCharacterUnitID() (r int, exists bool) {
+func (m *EventstorieMutation) BannerGameCharacterUnitID() (r int64, exists bool) {
 	v := m.banner_game_character_unit_id
 	if v == nil {
 		return
@@ -28102,7 +28102,7 @@ func (m *EventstorieMutation) BannerGameCharacterUnitID() (r int, exists bool) {
 // OldBannerGameCharacterUnitID returns the old "banner_game_character_unit_id" field's value of the Eventstorie entity.
 // If the Eventstorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstorieMutation) OldBannerGameCharacterUnitID(ctx context.Context) (v int, err error) {
+func (m *EventstorieMutation) OldBannerGameCharacterUnitID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBannerGameCharacterUnitID is only allowed on UpdateOne operations")
 	}
@@ -28117,7 +28117,7 @@ func (m *EventstorieMutation) OldBannerGameCharacterUnitID(ctx context.Context) 
 }
 
 // AddBannerGameCharacterUnitID adds i to the "banner_game_character_unit_id" field.
-func (m *EventstorieMutation) AddBannerGameCharacterUnitID(i int) {
+func (m *EventstorieMutation) AddBannerGameCharacterUnitID(i int64) {
 	if m.addbanner_game_character_unit_id != nil {
 		*m.addbanner_game_character_unit_id += i
 	} else {
@@ -28126,7 +28126,7 @@ func (m *EventstorieMutation) AddBannerGameCharacterUnitID(i int) {
 }
 
 // AddedBannerGameCharacterUnitID returns the value that was added to the "banner_game_character_unit_id" field in this mutation.
-func (m *EventstorieMutation) AddedBannerGameCharacterUnitID() (r int, exists bool) {
+func (m *EventstorieMutation) AddedBannerGameCharacterUnitID() (r int64, exists bool) {
 	v := m.addbanner_game_character_unit_id
 	if v == nil {
 		return
@@ -28415,14 +28415,14 @@ func (m *EventstorieMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *EventstorieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventstorie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventstorie.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -28436,7 +28436,7 @@ func (m *EventstorieMutation) SetField(name string, value ent.Value) error {
 		m.SetOutline(v)
 		return nil
 	case eventstorie.FieldBannerGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -28504,21 +28504,21 @@ func (m *EventstorieMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventstorieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventstorie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventstorie.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case eventstorie.FieldBannerGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -28663,12 +28663,12 @@ type EventstoryunitMutation struct {
 	op                              Op
 	typ                             string
 	id                              *int
-	game_id                         *int
-	addgame_id                      *int
-	seq                             *int
-	addseq                          *int
-	event_story_id                  *int
-	addevent_story_id               *int
+	game_id                         *int64
+	addgame_id                      *int64
+	seq                             *int64
+	addseq                          *int64
+	event_story_id                  *int64
+	addevent_story_id               *int64
 	unit                            *json.RawMessage
 	appendunit                      json.RawMessage
 	event_story_unit_relation       *json.RawMessage
@@ -28779,13 +28779,13 @@ func (m *EventstoryunitMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *EventstoryunitMutation) SetGameID(i int) {
+func (m *EventstoryunitMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *EventstoryunitMutation) GameID() (r int, exists bool) {
+func (m *EventstoryunitMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -28796,7 +28796,7 @@ func (m *EventstoryunitMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Eventstoryunit entity.
 // If the Eventstoryunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstoryunitMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *EventstoryunitMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -28811,7 +28811,7 @@ func (m *EventstoryunitMutation) OldGameID(ctx context.Context) (v int, err erro
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *EventstoryunitMutation) AddGameID(i int) {
+func (m *EventstoryunitMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -28820,7 +28820,7 @@ func (m *EventstoryunitMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *EventstoryunitMutation) AddedGameID() (r int, exists bool) {
+func (m *EventstoryunitMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -28835,13 +28835,13 @@ func (m *EventstoryunitMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *EventstoryunitMutation) SetSeq(i int) {
+func (m *EventstoryunitMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *EventstoryunitMutation) Seq() (r int, exists bool) {
+func (m *EventstoryunitMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -28852,7 +28852,7 @@ func (m *EventstoryunitMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Eventstoryunit entity.
 // If the Eventstoryunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstoryunitMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *EventstoryunitMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -28867,7 +28867,7 @@ func (m *EventstoryunitMutation) OldSeq(ctx context.Context) (v int, err error) 
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *EventstoryunitMutation) AddSeq(i int) {
+func (m *EventstoryunitMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -28876,7 +28876,7 @@ func (m *EventstoryunitMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *EventstoryunitMutation) AddedSeq() (r int, exists bool) {
+func (m *EventstoryunitMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -28905,13 +28905,13 @@ func (m *EventstoryunitMutation) ResetSeq() {
 }
 
 // SetEventStoryID sets the "event_story_id" field.
-func (m *EventstoryunitMutation) SetEventStoryID(i int) {
+func (m *EventstoryunitMutation) SetEventStoryID(i int64) {
 	m.event_story_id = &i
 	m.addevent_story_id = nil
 }
 
 // EventStoryID returns the value of the "event_story_id" field in the mutation.
-func (m *EventstoryunitMutation) EventStoryID() (r int, exists bool) {
+func (m *EventstoryunitMutation) EventStoryID() (r int64, exists bool) {
 	v := m.event_story_id
 	if v == nil {
 		return
@@ -28922,7 +28922,7 @@ func (m *EventstoryunitMutation) EventStoryID() (r int, exists bool) {
 // OldEventStoryID returns the old "event_story_id" field's value of the Eventstoryunit entity.
 // If the Eventstoryunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstoryunitMutation) OldEventStoryID(ctx context.Context) (v int, err error) {
+func (m *EventstoryunitMutation) OldEventStoryID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventStoryID is only allowed on UpdateOne operations")
 	}
@@ -28937,7 +28937,7 @@ func (m *EventstoryunitMutation) OldEventStoryID(ctx context.Context) (v int, er
 }
 
 // AddEventStoryID adds i to the "event_story_id" field.
-func (m *EventstoryunitMutation) AddEventStoryID(i int) {
+func (m *EventstoryunitMutation) AddEventStoryID(i int64) {
 	if m.addevent_story_id != nil {
 		*m.addevent_story_id += i
 	} else {
@@ -28946,7 +28946,7 @@ func (m *EventstoryunitMutation) AddEventStoryID(i int) {
 }
 
 // AddedEventStoryID returns the value that was added to the "event_story_id" field in this mutation.
-func (m *EventstoryunitMutation) AddedEventStoryID() (r int, exists bool) {
+func (m *EventstoryunitMutation) AddedEventStoryID() (r int64, exists bool) {
 	v := m.addevent_story_id
 	if v == nil {
 		return
@@ -29244,21 +29244,21 @@ func (m *EventstoryunitMutation) OldField(ctx context.Context, name string) (ent
 func (m *EventstoryunitMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case eventstoryunit.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case eventstoryunit.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case eventstoryunit.FieldEventStoryID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -29326,21 +29326,21 @@ func (m *EventstoryunitMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EventstoryunitMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case eventstoryunit.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case eventstoryunit.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case eventstoryunit.FieldEventStoryID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -29476,29 +29476,29 @@ type GachaMutation struct {
 	op                                             Op
 	typ                                            string
 	id                                             *int
-	game_id                                        *int
-	addgame_id                                     *int
+	game_id                                        *int64
+	addgame_id                                     *int64
 	gacha_type                                     *json.RawMessage
 	appendgacha_type                               json.RawMessage
 	name                                           *string
-	seq                                            *int
-	addseq                                         *int
+	seq                                            *int64
+	addseq                                         *int64
 	assetbundle_name                               *string
-	gacha_card_rarity_rate_group_id                *int
-	addgacha_card_rarity_rate_group_id             *int
-	start_at                                       *int
-	addstart_at                                    *int
-	end_at                                         *int
-	addend_at                                      *int
+	gacha_card_rarity_rate_group_id                *int64
+	addgacha_card_rarity_rate_group_id             *int64
+	start_at                                       *int64
+	addstart_at                                    *int64
+	end_at                                         *int64
+	addend_at                                      *int64
 	is_show_period                                 *bool
-	gacha_ceil_item_id                             *int
-	addgacha_ceil_item_id                          *int
-	wish_select_count                              *int
-	addwish_select_count                           *int
-	wish_fixed_select_count                        *int
-	addwish_fixed_select_count                     *int
-	wish_limited_select_count                      *int
-	addwish_limited_select_count                   *int
+	gacha_ceil_item_id                             *int64
+	addgacha_ceil_item_id                          *int64
+	wish_select_count                              *int64
+	addwish_select_count                           *int64
+	wish_fixed_select_count                        *int64
+	addwish_fixed_select_count                     *int64
+	wish_limited_select_count                      *int64
+	addwish_limited_select_count                   *int64
 	gacha_card_rarity_rates                        *json.RawMessage
 	appendgacha_card_rarity_rates                  json.RawMessage
 	gacha_details                                  *json.RawMessage
@@ -29511,18 +29511,18 @@ type GachaMutation struct {
 	appendgacha_pickup_costumes                    json.RawMessage
 	gacha_information                              *json.RawMessage
 	appendgacha_information                        json.RawMessage
-	drawable_gacha_hour                            *int
-	adddrawable_gacha_hour                         *int
-	gacha_bonus_id                                 *int
-	addgacha_bonus_id                              *int
-	spin_limit                                     *int
-	addspin_limit                                  *int
-	gacha_bonus_item_receivable_reward_group_id    *int
-	addgacha_bonus_item_receivable_reward_group_id *int
-	gacha_freebie_group_id                         *int
-	addgacha_freebie_group_id                      *int
-	daily_spin_limit                               *int
-	adddaily_spin_limit                            *int
+	drawable_gacha_hour                            *int64
+	adddrawable_gacha_hour                         *int64
+	gacha_bonus_id                                 *int64
+	addgacha_bonus_id                              *int64
+	spin_limit                                     *int64
+	addspin_limit                                  *int64
+	gacha_bonus_item_receivable_reward_group_id    *int64
+	addgacha_bonus_item_receivable_reward_group_id *int64
+	gacha_freebie_group_id                         *int64
+	addgacha_freebie_group_id                      *int64
+	daily_spin_limit                               *int64
+	adddaily_spin_limit                            *int64
 	server_region                                  *string
 	clearedFields                                  map[string]struct{}
 	done                                           bool
@@ -29629,13 +29629,13 @@ func (m *GachaMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *GachaMutation) SetGameID(i int) {
+func (m *GachaMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *GachaMutation) GameID() (r int, exists bool) {
+func (m *GachaMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -29646,7 +29646,7 @@ func (m *GachaMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -29661,7 +29661,7 @@ func (m *GachaMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *GachaMutation) AddGameID(i int) {
+func (m *GachaMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -29670,7 +29670,7 @@ func (m *GachaMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *GachaMutation) AddedGameID() (r int, exists bool) {
+func (m *GachaMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -29799,13 +29799,13 @@ func (m *GachaMutation) ResetName() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *GachaMutation) SetSeq(i int) {
+func (m *GachaMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *GachaMutation) Seq() (r int, exists bool) {
+func (m *GachaMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -29816,7 +29816,7 @@ func (m *GachaMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -29831,7 +29831,7 @@ func (m *GachaMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *GachaMutation) AddSeq(i int) {
+func (m *GachaMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -29840,7 +29840,7 @@ func (m *GachaMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *GachaMutation) AddedSeq() (r int, exists bool) {
+func (m *GachaMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -29918,13 +29918,13 @@ func (m *GachaMutation) ResetAssetbundleName() {
 }
 
 // SetGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field.
-func (m *GachaMutation) SetGachaCardRarityRateGroupID(i int) {
+func (m *GachaMutation) SetGachaCardRarityRateGroupID(i int64) {
 	m.gacha_card_rarity_rate_group_id = &i
 	m.addgacha_card_rarity_rate_group_id = nil
 }
 
 // GachaCardRarityRateGroupID returns the value of the "gacha_card_rarity_rate_group_id" field in the mutation.
-func (m *GachaMutation) GachaCardRarityRateGroupID() (r int, exists bool) {
+func (m *GachaMutation) GachaCardRarityRateGroupID() (r int64, exists bool) {
 	v := m.gacha_card_rarity_rate_group_id
 	if v == nil {
 		return
@@ -29935,7 +29935,7 @@ func (m *GachaMutation) GachaCardRarityRateGroupID() (r int, exists bool) {
 // OldGachaCardRarityRateGroupID returns the old "gacha_card_rarity_rate_group_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaCardRarityRateGroupID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGachaCardRarityRateGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaCardRarityRateGroupID is only allowed on UpdateOne operations")
 	}
@@ -29950,7 +29950,7 @@ func (m *GachaMutation) OldGachaCardRarityRateGroupID(ctx context.Context) (v in
 }
 
 // AddGachaCardRarityRateGroupID adds i to the "gacha_card_rarity_rate_group_id" field.
-func (m *GachaMutation) AddGachaCardRarityRateGroupID(i int) {
+func (m *GachaMutation) AddGachaCardRarityRateGroupID(i int64) {
 	if m.addgacha_card_rarity_rate_group_id != nil {
 		*m.addgacha_card_rarity_rate_group_id += i
 	} else {
@@ -29959,7 +29959,7 @@ func (m *GachaMutation) AddGachaCardRarityRateGroupID(i int) {
 }
 
 // AddedGachaCardRarityRateGroupID returns the value that was added to the "gacha_card_rarity_rate_group_id" field in this mutation.
-func (m *GachaMutation) AddedGachaCardRarityRateGroupID() (r int, exists bool) {
+func (m *GachaMutation) AddedGachaCardRarityRateGroupID() (r int64, exists bool) {
 	v := m.addgacha_card_rarity_rate_group_id
 	if v == nil {
 		return
@@ -29988,13 +29988,13 @@ func (m *GachaMutation) ResetGachaCardRarityRateGroupID() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *GachaMutation) SetStartAt(i int) {
+func (m *GachaMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *GachaMutation) StartAt() (r int, exists bool) {
+func (m *GachaMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -30005,7 +30005,7 @@ func (m *GachaMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -30020,7 +30020,7 @@ func (m *GachaMutation) OldStartAt(ctx context.Context) (v int, err error) {
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *GachaMutation) AddStartAt(i int) {
+func (m *GachaMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -30029,7 +30029,7 @@ func (m *GachaMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *GachaMutation) AddedStartAt() (r int, exists bool) {
+func (m *GachaMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -30058,13 +30058,13 @@ func (m *GachaMutation) ResetStartAt() {
 }
 
 // SetEndAt sets the "end_at" field.
-func (m *GachaMutation) SetEndAt(i int) {
+func (m *GachaMutation) SetEndAt(i int64) {
 	m.end_at = &i
 	m.addend_at = nil
 }
 
 // EndAt returns the value of the "end_at" field in the mutation.
-func (m *GachaMutation) EndAt() (r int, exists bool) {
+func (m *GachaMutation) EndAt() (r int64, exists bool) {
 	v := m.end_at
 	if v == nil {
 		return
@@ -30075,7 +30075,7 @@ func (m *GachaMutation) EndAt() (r int, exists bool) {
 // OldEndAt returns the old "end_at" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldEndAt(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEndAt is only allowed on UpdateOne operations")
 	}
@@ -30090,7 +30090,7 @@ func (m *GachaMutation) OldEndAt(ctx context.Context) (v int, err error) {
 }
 
 // AddEndAt adds i to the "end_at" field.
-func (m *GachaMutation) AddEndAt(i int) {
+func (m *GachaMutation) AddEndAt(i int64) {
 	if m.addend_at != nil {
 		*m.addend_at += i
 	} else {
@@ -30099,7 +30099,7 @@ func (m *GachaMutation) AddEndAt(i int) {
 }
 
 // AddedEndAt returns the value that was added to the "end_at" field in this mutation.
-func (m *GachaMutation) AddedEndAt() (r int, exists bool) {
+func (m *GachaMutation) AddedEndAt() (r int64, exists bool) {
 	v := m.addend_at
 	if v == nil {
 		return
@@ -30177,13 +30177,13 @@ func (m *GachaMutation) ResetIsShowPeriod() {
 }
 
 // SetGachaCeilItemID sets the "gacha_ceil_item_id" field.
-func (m *GachaMutation) SetGachaCeilItemID(i int) {
+func (m *GachaMutation) SetGachaCeilItemID(i int64) {
 	m.gacha_ceil_item_id = &i
 	m.addgacha_ceil_item_id = nil
 }
 
 // GachaCeilItemID returns the value of the "gacha_ceil_item_id" field in the mutation.
-func (m *GachaMutation) GachaCeilItemID() (r int, exists bool) {
+func (m *GachaMutation) GachaCeilItemID() (r int64, exists bool) {
 	v := m.gacha_ceil_item_id
 	if v == nil {
 		return
@@ -30194,7 +30194,7 @@ func (m *GachaMutation) GachaCeilItemID() (r int, exists bool) {
 // OldGachaCeilItemID returns the old "gacha_ceil_item_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaCeilItemID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGachaCeilItemID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaCeilItemID is only allowed on UpdateOne operations")
 	}
@@ -30209,7 +30209,7 @@ func (m *GachaMutation) OldGachaCeilItemID(ctx context.Context) (v int, err erro
 }
 
 // AddGachaCeilItemID adds i to the "gacha_ceil_item_id" field.
-func (m *GachaMutation) AddGachaCeilItemID(i int) {
+func (m *GachaMutation) AddGachaCeilItemID(i int64) {
 	if m.addgacha_ceil_item_id != nil {
 		*m.addgacha_ceil_item_id += i
 	} else {
@@ -30218,7 +30218,7 @@ func (m *GachaMutation) AddGachaCeilItemID(i int) {
 }
 
 // AddedGachaCeilItemID returns the value that was added to the "gacha_ceil_item_id" field in this mutation.
-func (m *GachaMutation) AddedGachaCeilItemID() (r int, exists bool) {
+func (m *GachaMutation) AddedGachaCeilItemID() (r int64, exists bool) {
 	v := m.addgacha_ceil_item_id
 	if v == nil {
 		return
@@ -30247,13 +30247,13 @@ func (m *GachaMutation) ResetGachaCeilItemID() {
 }
 
 // SetWishSelectCount sets the "wish_select_count" field.
-func (m *GachaMutation) SetWishSelectCount(i int) {
+func (m *GachaMutation) SetWishSelectCount(i int64) {
 	m.wish_select_count = &i
 	m.addwish_select_count = nil
 }
 
 // WishSelectCount returns the value of the "wish_select_count" field in the mutation.
-func (m *GachaMutation) WishSelectCount() (r int, exists bool) {
+func (m *GachaMutation) WishSelectCount() (r int64, exists bool) {
 	v := m.wish_select_count
 	if v == nil {
 		return
@@ -30264,7 +30264,7 @@ func (m *GachaMutation) WishSelectCount() (r int, exists bool) {
 // OldWishSelectCount returns the old "wish_select_count" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldWishSelectCount(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldWishSelectCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWishSelectCount is only allowed on UpdateOne operations")
 	}
@@ -30279,7 +30279,7 @@ func (m *GachaMutation) OldWishSelectCount(ctx context.Context) (v int, err erro
 }
 
 // AddWishSelectCount adds i to the "wish_select_count" field.
-func (m *GachaMutation) AddWishSelectCount(i int) {
+func (m *GachaMutation) AddWishSelectCount(i int64) {
 	if m.addwish_select_count != nil {
 		*m.addwish_select_count += i
 	} else {
@@ -30288,7 +30288,7 @@ func (m *GachaMutation) AddWishSelectCount(i int) {
 }
 
 // AddedWishSelectCount returns the value that was added to the "wish_select_count" field in this mutation.
-func (m *GachaMutation) AddedWishSelectCount() (r int, exists bool) {
+func (m *GachaMutation) AddedWishSelectCount() (r int64, exists bool) {
 	v := m.addwish_select_count
 	if v == nil {
 		return
@@ -30317,13 +30317,13 @@ func (m *GachaMutation) ResetWishSelectCount() {
 }
 
 // SetWishFixedSelectCount sets the "wish_fixed_select_count" field.
-func (m *GachaMutation) SetWishFixedSelectCount(i int) {
+func (m *GachaMutation) SetWishFixedSelectCount(i int64) {
 	m.wish_fixed_select_count = &i
 	m.addwish_fixed_select_count = nil
 }
 
 // WishFixedSelectCount returns the value of the "wish_fixed_select_count" field in the mutation.
-func (m *GachaMutation) WishFixedSelectCount() (r int, exists bool) {
+func (m *GachaMutation) WishFixedSelectCount() (r int64, exists bool) {
 	v := m.wish_fixed_select_count
 	if v == nil {
 		return
@@ -30334,7 +30334,7 @@ func (m *GachaMutation) WishFixedSelectCount() (r int, exists bool) {
 // OldWishFixedSelectCount returns the old "wish_fixed_select_count" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldWishFixedSelectCount(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldWishFixedSelectCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWishFixedSelectCount is only allowed on UpdateOne operations")
 	}
@@ -30349,7 +30349,7 @@ func (m *GachaMutation) OldWishFixedSelectCount(ctx context.Context) (v int, err
 }
 
 // AddWishFixedSelectCount adds i to the "wish_fixed_select_count" field.
-func (m *GachaMutation) AddWishFixedSelectCount(i int) {
+func (m *GachaMutation) AddWishFixedSelectCount(i int64) {
 	if m.addwish_fixed_select_count != nil {
 		*m.addwish_fixed_select_count += i
 	} else {
@@ -30358,7 +30358,7 @@ func (m *GachaMutation) AddWishFixedSelectCount(i int) {
 }
 
 // AddedWishFixedSelectCount returns the value that was added to the "wish_fixed_select_count" field in this mutation.
-func (m *GachaMutation) AddedWishFixedSelectCount() (r int, exists bool) {
+func (m *GachaMutation) AddedWishFixedSelectCount() (r int64, exists bool) {
 	v := m.addwish_fixed_select_count
 	if v == nil {
 		return
@@ -30387,13 +30387,13 @@ func (m *GachaMutation) ResetWishFixedSelectCount() {
 }
 
 // SetWishLimitedSelectCount sets the "wish_limited_select_count" field.
-func (m *GachaMutation) SetWishLimitedSelectCount(i int) {
+func (m *GachaMutation) SetWishLimitedSelectCount(i int64) {
 	m.wish_limited_select_count = &i
 	m.addwish_limited_select_count = nil
 }
 
 // WishLimitedSelectCount returns the value of the "wish_limited_select_count" field in the mutation.
-func (m *GachaMutation) WishLimitedSelectCount() (r int, exists bool) {
+func (m *GachaMutation) WishLimitedSelectCount() (r int64, exists bool) {
 	v := m.wish_limited_select_count
 	if v == nil {
 		return
@@ -30404,7 +30404,7 @@ func (m *GachaMutation) WishLimitedSelectCount() (r int, exists bool) {
 // OldWishLimitedSelectCount returns the old "wish_limited_select_count" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldWishLimitedSelectCount(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldWishLimitedSelectCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWishLimitedSelectCount is only allowed on UpdateOne operations")
 	}
@@ -30419,7 +30419,7 @@ func (m *GachaMutation) OldWishLimitedSelectCount(ctx context.Context) (v int, e
 }
 
 // AddWishLimitedSelectCount adds i to the "wish_limited_select_count" field.
-func (m *GachaMutation) AddWishLimitedSelectCount(i int) {
+func (m *GachaMutation) AddWishLimitedSelectCount(i int64) {
 	if m.addwish_limited_select_count != nil {
 		*m.addwish_limited_select_count += i
 	} else {
@@ -30428,7 +30428,7 @@ func (m *GachaMutation) AddWishLimitedSelectCount(i int) {
 }
 
 // AddedWishLimitedSelectCount returns the value that was added to the "wish_limited_select_count" field in this mutation.
-func (m *GachaMutation) AddedWishLimitedSelectCount() (r int, exists bool) {
+func (m *GachaMutation) AddedWishLimitedSelectCount() (r int64, exists bool) {
 	v := m.addwish_limited_select_count
 	if v == nil {
 		return
@@ -30847,13 +30847,13 @@ func (m *GachaMutation) ResetGachaInformation() {
 }
 
 // SetDrawableGachaHour sets the "drawable_gacha_hour" field.
-func (m *GachaMutation) SetDrawableGachaHour(i int) {
+func (m *GachaMutation) SetDrawableGachaHour(i int64) {
 	m.drawable_gacha_hour = &i
 	m.adddrawable_gacha_hour = nil
 }
 
 // DrawableGachaHour returns the value of the "drawable_gacha_hour" field in the mutation.
-func (m *GachaMutation) DrawableGachaHour() (r int, exists bool) {
+func (m *GachaMutation) DrawableGachaHour() (r int64, exists bool) {
 	v := m.drawable_gacha_hour
 	if v == nil {
 		return
@@ -30864,7 +30864,7 @@ func (m *GachaMutation) DrawableGachaHour() (r int, exists bool) {
 // OldDrawableGachaHour returns the old "drawable_gacha_hour" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldDrawableGachaHour(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldDrawableGachaHour(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDrawableGachaHour is only allowed on UpdateOne operations")
 	}
@@ -30879,7 +30879,7 @@ func (m *GachaMutation) OldDrawableGachaHour(ctx context.Context) (v int, err er
 }
 
 // AddDrawableGachaHour adds i to the "drawable_gacha_hour" field.
-func (m *GachaMutation) AddDrawableGachaHour(i int) {
+func (m *GachaMutation) AddDrawableGachaHour(i int64) {
 	if m.adddrawable_gacha_hour != nil {
 		*m.adddrawable_gacha_hour += i
 	} else {
@@ -30888,7 +30888,7 @@ func (m *GachaMutation) AddDrawableGachaHour(i int) {
 }
 
 // AddedDrawableGachaHour returns the value that was added to the "drawable_gacha_hour" field in this mutation.
-func (m *GachaMutation) AddedDrawableGachaHour() (r int, exists bool) {
+func (m *GachaMutation) AddedDrawableGachaHour() (r int64, exists bool) {
 	v := m.adddrawable_gacha_hour
 	if v == nil {
 		return
@@ -30917,13 +30917,13 @@ func (m *GachaMutation) ResetDrawableGachaHour() {
 }
 
 // SetGachaBonusID sets the "gacha_bonus_id" field.
-func (m *GachaMutation) SetGachaBonusID(i int) {
+func (m *GachaMutation) SetGachaBonusID(i int64) {
 	m.gacha_bonus_id = &i
 	m.addgacha_bonus_id = nil
 }
 
 // GachaBonusID returns the value of the "gacha_bonus_id" field in the mutation.
-func (m *GachaMutation) GachaBonusID() (r int, exists bool) {
+func (m *GachaMutation) GachaBonusID() (r int64, exists bool) {
 	v := m.gacha_bonus_id
 	if v == nil {
 		return
@@ -30934,7 +30934,7 @@ func (m *GachaMutation) GachaBonusID() (r int, exists bool) {
 // OldGachaBonusID returns the old "gacha_bonus_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaBonusID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGachaBonusID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaBonusID is only allowed on UpdateOne operations")
 	}
@@ -30949,7 +30949,7 @@ func (m *GachaMutation) OldGachaBonusID(ctx context.Context) (v int, err error) 
 }
 
 // AddGachaBonusID adds i to the "gacha_bonus_id" field.
-func (m *GachaMutation) AddGachaBonusID(i int) {
+func (m *GachaMutation) AddGachaBonusID(i int64) {
 	if m.addgacha_bonus_id != nil {
 		*m.addgacha_bonus_id += i
 	} else {
@@ -30958,7 +30958,7 @@ func (m *GachaMutation) AddGachaBonusID(i int) {
 }
 
 // AddedGachaBonusID returns the value that was added to the "gacha_bonus_id" field in this mutation.
-func (m *GachaMutation) AddedGachaBonusID() (r int, exists bool) {
+func (m *GachaMutation) AddedGachaBonusID() (r int64, exists bool) {
 	v := m.addgacha_bonus_id
 	if v == nil {
 		return
@@ -30987,13 +30987,13 @@ func (m *GachaMutation) ResetGachaBonusID() {
 }
 
 // SetSpinLimit sets the "spin_limit" field.
-func (m *GachaMutation) SetSpinLimit(i int) {
+func (m *GachaMutation) SetSpinLimit(i int64) {
 	m.spin_limit = &i
 	m.addspin_limit = nil
 }
 
 // SpinLimit returns the value of the "spin_limit" field in the mutation.
-func (m *GachaMutation) SpinLimit() (r int, exists bool) {
+func (m *GachaMutation) SpinLimit() (r int64, exists bool) {
 	v := m.spin_limit
 	if v == nil {
 		return
@@ -31004,7 +31004,7 @@ func (m *GachaMutation) SpinLimit() (r int, exists bool) {
 // OldSpinLimit returns the old "spin_limit" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldSpinLimit(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldSpinLimit(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpinLimit is only allowed on UpdateOne operations")
 	}
@@ -31019,7 +31019,7 @@ func (m *GachaMutation) OldSpinLimit(ctx context.Context) (v int, err error) {
 }
 
 // AddSpinLimit adds i to the "spin_limit" field.
-func (m *GachaMutation) AddSpinLimit(i int) {
+func (m *GachaMutation) AddSpinLimit(i int64) {
 	if m.addspin_limit != nil {
 		*m.addspin_limit += i
 	} else {
@@ -31028,7 +31028,7 @@ func (m *GachaMutation) AddSpinLimit(i int) {
 }
 
 // AddedSpinLimit returns the value that was added to the "spin_limit" field in this mutation.
-func (m *GachaMutation) AddedSpinLimit() (r int, exists bool) {
+func (m *GachaMutation) AddedSpinLimit() (r int64, exists bool) {
 	v := m.addspin_limit
 	if v == nil {
 		return
@@ -31057,13 +31057,13 @@ func (m *GachaMutation) ResetSpinLimit() {
 }
 
 // SetGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field.
-func (m *GachaMutation) SetGachaBonusItemReceivableRewardGroupID(i int) {
+func (m *GachaMutation) SetGachaBonusItemReceivableRewardGroupID(i int64) {
 	m.gacha_bonus_item_receivable_reward_group_id = &i
 	m.addgacha_bonus_item_receivable_reward_group_id = nil
 }
 
 // GachaBonusItemReceivableRewardGroupID returns the value of the "gacha_bonus_item_receivable_reward_group_id" field in the mutation.
-func (m *GachaMutation) GachaBonusItemReceivableRewardGroupID() (r int, exists bool) {
+func (m *GachaMutation) GachaBonusItemReceivableRewardGroupID() (r int64, exists bool) {
 	v := m.gacha_bonus_item_receivable_reward_group_id
 	if v == nil {
 		return
@@ -31074,7 +31074,7 @@ func (m *GachaMutation) GachaBonusItemReceivableRewardGroupID() (r int, exists b
 // OldGachaBonusItemReceivableRewardGroupID returns the old "gacha_bonus_item_receivable_reward_group_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaBonusItemReceivableRewardGroupID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGachaBonusItemReceivableRewardGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaBonusItemReceivableRewardGroupID is only allowed on UpdateOne operations")
 	}
@@ -31089,7 +31089,7 @@ func (m *GachaMutation) OldGachaBonusItemReceivableRewardGroupID(ctx context.Con
 }
 
 // AddGachaBonusItemReceivableRewardGroupID adds i to the "gacha_bonus_item_receivable_reward_group_id" field.
-func (m *GachaMutation) AddGachaBonusItemReceivableRewardGroupID(i int) {
+func (m *GachaMutation) AddGachaBonusItemReceivableRewardGroupID(i int64) {
 	if m.addgacha_bonus_item_receivable_reward_group_id != nil {
 		*m.addgacha_bonus_item_receivable_reward_group_id += i
 	} else {
@@ -31098,7 +31098,7 @@ func (m *GachaMutation) AddGachaBonusItemReceivableRewardGroupID(i int) {
 }
 
 // AddedGachaBonusItemReceivableRewardGroupID returns the value that was added to the "gacha_bonus_item_receivable_reward_group_id" field in this mutation.
-func (m *GachaMutation) AddedGachaBonusItemReceivableRewardGroupID() (r int, exists bool) {
+func (m *GachaMutation) AddedGachaBonusItemReceivableRewardGroupID() (r int64, exists bool) {
 	v := m.addgacha_bonus_item_receivable_reward_group_id
 	if v == nil {
 		return
@@ -31127,13 +31127,13 @@ func (m *GachaMutation) ResetGachaBonusItemReceivableRewardGroupID() {
 }
 
 // SetGachaFreebieGroupID sets the "gacha_freebie_group_id" field.
-func (m *GachaMutation) SetGachaFreebieGroupID(i int) {
+func (m *GachaMutation) SetGachaFreebieGroupID(i int64) {
 	m.gacha_freebie_group_id = &i
 	m.addgacha_freebie_group_id = nil
 }
 
 // GachaFreebieGroupID returns the value of the "gacha_freebie_group_id" field in the mutation.
-func (m *GachaMutation) GachaFreebieGroupID() (r int, exists bool) {
+func (m *GachaMutation) GachaFreebieGroupID() (r int64, exists bool) {
 	v := m.gacha_freebie_group_id
 	if v == nil {
 		return
@@ -31144,7 +31144,7 @@ func (m *GachaMutation) GachaFreebieGroupID() (r int, exists bool) {
 // OldGachaFreebieGroupID returns the old "gacha_freebie_group_id" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaFreebieGroupID(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldGachaFreebieGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaFreebieGroupID is only allowed on UpdateOne operations")
 	}
@@ -31159,7 +31159,7 @@ func (m *GachaMutation) OldGachaFreebieGroupID(ctx context.Context) (v int, err 
 }
 
 // AddGachaFreebieGroupID adds i to the "gacha_freebie_group_id" field.
-func (m *GachaMutation) AddGachaFreebieGroupID(i int) {
+func (m *GachaMutation) AddGachaFreebieGroupID(i int64) {
 	if m.addgacha_freebie_group_id != nil {
 		*m.addgacha_freebie_group_id += i
 	} else {
@@ -31168,7 +31168,7 @@ func (m *GachaMutation) AddGachaFreebieGroupID(i int) {
 }
 
 // AddedGachaFreebieGroupID returns the value that was added to the "gacha_freebie_group_id" field in this mutation.
-func (m *GachaMutation) AddedGachaFreebieGroupID() (r int, exists bool) {
+func (m *GachaMutation) AddedGachaFreebieGroupID() (r int64, exists bool) {
 	v := m.addgacha_freebie_group_id
 	if v == nil {
 		return
@@ -31197,13 +31197,13 @@ func (m *GachaMutation) ResetGachaFreebieGroupID() {
 }
 
 // SetDailySpinLimit sets the "daily_spin_limit" field.
-func (m *GachaMutation) SetDailySpinLimit(i int) {
+func (m *GachaMutation) SetDailySpinLimit(i int64) {
 	m.daily_spin_limit = &i
 	m.adddaily_spin_limit = nil
 }
 
 // DailySpinLimit returns the value of the "daily_spin_limit" field in the mutation.
-func (m *GachaMutation) DailySpinLimit() (r int, exists bool) {
+func (m *GachaMutation) DailySpinLimit() (r int64, exists bool) {
 	v := m.daily_spin_limit
 	if v == nil {
 		return
@@ -31214,7 +31214,7 @@ func (m *GachaMutation) DailySpinLimit() (r int, exists bool) {
 // OldDailySpinLimit returns the old "daily_spin_limit" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldDailySpinLimit(ctx context.Context) (v int, err error) {
+func (m *GachaMutation) OldDailySpinLimit(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDailySpinLimit is only allowed on UpdateOne operations")
 	}
@@ -31229,7 +31229,7 @@ func (m *GachaMutation) OldDailySpinLimit(ctx context.Context) (v int, err error
 }
 
 // AddDailySpinLimit adds i to the "daily_spin_limit" field.
-func (m *GachaMutation) AddDailySpinLimit(i int) {
+func (m *GachaMutation) AddDailySpinLimit(i int64) {
 	if m.adddaily_spin_limit != nil {
 		*m.adddaily_spin_limit += i
 	} else {
@@ -31238,7 +31238,7 @@ func (m *GachaMutation) AddDailySpinLimit(i int) {
 }
 
 // AddedDailySpinLimit returns the value that was added to the "daily_spin_limit" field in this mutation.
-func (m *GachaMutation) AddedDailySpinLimit() (r int, exists bool) {
+func (m *GachaMutation) AddedDailySpinLimit() (r int64, exists bool) {
 	v := m.adddaily_spin_limit
 	if v == nil {
 		return
@@ -31546,7 +31546,7 @@ func (m *GachaMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *GachaMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case gacha.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -31567,7 +31567,7 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case gacha.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -31581,21 +31581,21 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case gacha.FieldGachaCardRarityRateGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGachaCardRarityRateGroupID(v)
 		return nil
 	case gacha.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case gacha.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -31609,28 +31609,28 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		m.SetIsShowPeriod(v)
 		return nil
 	case gacha.FieldGachaCeilItemID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGachaCeilItemID(v)
 		return nil
 	case gacha.FieldWishSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetWishSelectCount(v)
 		return nil
 	case gacha.FieldWishFixedSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetWishFixedSelectCount(v)
 		return nil
 	case gacha.FieldWishLimitedSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -31679,42 +31679,42 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		m.SetGachaInformation(v)
 		return nil
 	case gacha.FieldDrawableGachaHour:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDrawableGachaHour(v)
 		return nil
 	case gacha.FieldGachaBonusID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGachaBonusID(v)
 		return nil
 	case gacha.FieldSpinLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSpinLimit(v)
 		return nil
 	case gacha.FieldGachaBonusItemReceivableRewardGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGachaBonusItemReceivableRewardGroupID(v)
 		return nil
 	case gacha.FieldGachaFreebieGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGachaFreebieGroupID(v)
 		return nil
 	case gacha.FieldDailySpinLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -31828,105 +31828,105 @@ func (m *GachaMutation) AddedField(name string) (ent.Value, bool) {
 func (m *GachaMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case gacha.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case gacha.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case gacha.FieldGachaCardRarityRateGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaCardRarityRateGroupID(v)
 		return nil
 	case gacha.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case gacha.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEndAt(v)
 		return nil
 	case gacha.FieldGachaCeilItemID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaCeilItemID(v)
 		return nil
 	case gacha.FieldWishSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddWishSelectCount(v)
 		return nil
 	case gacha.FieldWishFixedSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddWishFixedSelectCount(v)
 		return nil
 	case gacha.FieldWishLimitedSelectCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddWishLimitedSelectCount(v)
 		return nil
 	case gacha.FieldDrawableGachaHour:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddDrawableGachaHour(v)
 		return nil
 	case gacha.FieldGachaBonusID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaBonusID(v)
 		return nil
 	case gacha.FieldSpinLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSpinLimit(v)
 		return nil
 	case gacha.FieldGachaBonusItemReceivableRewardGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaBonusItemReceivableRewardGroupID(v)
 		return nil
 	case gacha.FieldGachaFreebieGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaFreebieGroupID(v)
 		return nil
 	case gacha.FieldDailySpinLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -32242,17 +32242,17 @@ type GachaceilitemMutation struct {
 	op                         Op
 	typ                        string
 	id                         *int
-	game_id                    *int
-	addgame_id                 *int
-	gacha_id                   *int
-	addgacha_id                *int
+	game_id                    *int64
+	addgame_id                 *int64
+	gacha_id                   *int64
+	addgacha_id                *int64
 	name                       *string
 	assetbundle_name           *json.RawMessage
 	appendassetbundle_name     json.RawMessage
-	convert_start_at           *int
-	addconvert_start_at        *int
-	convert_resource_box_id    *int
-	addconvert_resource_box_id *int
+	convert_start_at           *int64
+	addconvert_start_at        *int64
+	convert_resource_box_id    *int64
+	addconvert_resource_box_id *int64
 	server_region              *string
 	clearedFields              map[string]struct{}
 	done                       bool
@@ -32359,13 +32359,13 @@ func (m *GachaceilitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *GachaceilitemMutation) SetGameID(i int) {
+func (m *GachaceilitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *GachaceilitemMutation) GameID() (r int, exists bool) {
+func (m *GachaceilitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -32376,7 +32376,7 @@ func (m *GachaceilitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Gachaceilitem entity.
 // If the Gachaceilitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaceilitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *GachaceilitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -32391,7 +32391,7 @@ func (m *GachaceilitemMutation) OldGameID(ctx context.Context) (v int, err error
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *GachaceilitemMutation) AddGameID(i int) {
+func (m *GachaceilitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -32400,7 +32400,7 @@ func (m *GachaceilitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *GachaceilitemMutation) AddedGameID() (r int, exists bool) {
+func (m *GachaceilitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -32415,13 +32415,13 @@ func (m *GachaceilitemMutation) ResetGameID() {
 }
 
 // SetGachaID sets the "gacha_id" field.
-func (m *GachaceilitemMutation) SetGachaID(i int) {
+func (m *GachaceilitemMutation) SetGachaID(i int64) {
 	m.gacha_id = &i
 	m.addgacha_id = nil
 }
 
 // GachaID returns the value of the "gacha_id" field in the mutation.
-func (m *GachaceilitemMutation) GachaID() (r int, exists bool) {
+func (m *GachaceilitemMutation) GachaID() (r int64, exists bool) {
 	v := m.gacha_id
 	if v == nil {
 		return
@@ -32432,7 +32432,7 @@ func (m *GachaceilitemMutation) GachaID() (r int, exists bool) {
 // OldGachaID returns the old "gacha_id" field's value of the Gachaceilitem entity.
 // If the Gachaceilitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaceilitemMutation) OldGachaID(ctx context.Context) (v int, err error) {
+func (m *GachaceilitemMutation) OldGachaID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaID is only allowed on UpdateOne operations")
 	}
@@ -32447,7 +32447,7 @@ func (m *GachaceilitemMutation) OldGachaID(ctx context.Context) (v int, err erro
 }
 
 // AddGachaID adds i to the "gacha_id" field.
-func (m *GachaceilitemMutation) AddGachaID(i int) {
+func (m *GachaceilitemMutation) AddGachaID(i int64) {
 	if m.addgacha_id != nil {
 		*m.addgacha_id += i
 	} else {
@@ -32456,7 +32456,7 @@ func (m *GachaceilitemMutation) AddGachaID(i int) {
 }
 
 // AddedGachaID returns the value that was added to the "gacha_id" field in this mutation.
-func (m *GachaceilitemMutation) AddedGachaID() (r int, exists bool) {
+func (m *GachaceilitemMutation) AddedGachaID() (r int64, exists bool) {
 	v := m.addgacha_id
 	if v == nil {
 		return
@@ -32599,13 +32599,13 @@ func (m *GachaceilitemMutation) ResetAssetbundleName() {
 }
 
 // SetConvertStartAt sets the "convert_start_at" field.
-func (m *GachaceilitemMutation) SetConvertStartAt(i int) {
+func (m *GachaceilitemMutation) SetConvertStartAt(i int64) {
 	m.convert_start_at = &i
 	m.addconvert_start_at = nil
 }
 
 // ConvertStartAt returns the value of the "convert_start_at" field in the mutation.
-func (m *GachaceilitemMutation) ConvertStartAt() (r int, exists bool) {
+func (m *GachaceilitemMutation) ConvertStartAt() (r int64, exists bool) {
 	v := m.convert_start_at
 	if v == nil {
 		return
@@ -32616,7 +32616,7 @@ func (m *GachaceilitemMutation) ConvertStartAt() (r int, exists bool) {
 // OldConvertStartAt returns the old "convert_start_at" field's value of the Gachaceilitem entity.
 // If the Gachaceilitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaceilitemMutation) OldConvertStartAt(ctx context.Context) (v int, err error) {
+func (m *GachaceilitemMutation) OldConvertStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldConvertStartAt is only allowed on UpdateOne operations")
 	}
@@ -32631,7 +32631,7 @@ func (m *GachaceilitemMutation) OldConvertStartAt(ctx context.Context) (v int, e
 }
 
 // AddConvertStartAt adds i to the "convert_start_at" field.
-func (m *GachaceilitemMutation) AddConvertStartAt(i int) {
+func (m *GachaceilitemMutation) AddConvertStartAt(i int64) {
 	if m.addconvert_start_at != nil {
 		*m.addconvert_start_at += i
 	} else {
@@ -32640,7 +32640,7 @@ func (m *GachaceilitemMutation) AddConvertStartAt(i int) {
 }
 
 // AddedConvertStartAt returns the value that was added to the "convert_start_at" field in this mutation.
-func (m *GachaceilitemMutation) AddedConvertStartAt() (r int, exists bool) {
+func (m *GachaceilitemMutation) AddedConvertStartAt() (r int64, exists bool) {
 	v := m.addconvert_start_at
 	if v == nil {
 		return
@@ -32669,13 +32669,13 @@ func (m *GachaceilitemMutation) ResetConvertStartAt() {
 }
 
 // SetConvertResourceBoxID sets the "convert_resource_box_id" field.
-func (m *GachaceilitemMutation) SetConvertResourceBoxID(i int) {
+func (m *GachaceilitemMutation) SetConvertResourceBoxID(i int64) {
 	m.convert_resource_box_id = &i
 	m.addconvert_resource_box_id = nil
 }
 
 // ConvertResourceBoxID returns the value of the "convert_resource_box_id" field in the mutation.
-func (m *GachaceilitemMutation) ConvertResourceBoxID() (r int, exists bool) {
+func (m *GachaceilitemMutation) ConvertResourceBoxID() (r int64, exists bool) {
 	v := m.convert_resource_box_id
 	if v == nil {
 		return
@@ -32686,7 +32686,7 @@ func (m *GachaceilitemMutation) ConvertResourceBoxID() (r int, exists bool) {
 // OldConvertResourceBoxID returns the old "convert_resource_box_id" field's value of the Gachaceilitem entity.
 // If the Gachaceilitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaceilitemMutation) OldConvertResourceBoxID(ctx context.Context) (v int, err error) {
+func (m *GachaceilitemMutation) OldConvertResourceBoxID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldConvertResourceBoxID is only allowed on UpdateOne operations")
 	}
@@ -32701,7 +32701,7 @@ func (m *GachaceilitemMutation) OldConvertResourceBoxID(ctx context.Context) (v 
 }
 
 // AddConvertResourceBoxID adds i to the "convert_resource_box_id" field.
-func (m *GachaceilitemMutation) AddConvertResourceBoxID(i int) {
+func (m *GachaceilitemMutation) AddConvertResourceBoxID(i int64) {
 	if m.addconvert_resource_box_id != nil {
 		*m.addconvert_resource_box_id += i
 	} else {
@@ -32710,7 +32710,7 @@ func (m *GachaceilitemMutation) AddConvertResourceBoxID(i int) {
 }
 
 // AddedConvertResourceBoxID returns the value that was added to the "convert_resource_box_id" field in this mutation.
-func (m *GachaceilitemMutation) AddedConvertResourceBoxID() (r int, exists bool) {
+func (m *GachaceilitemMutation) AddedConvertResourceBoxID() (r int64, exists bool) {
 	v := m.addconvert_resource_box_id
 	if v == nil {
 		return
@@ -32885,14 +32885,14 @@ func (m *GachaceilitemMutation) OldField(ctx context.Context, name string) (ent.
 func (m *GachaceilitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case gachaceilitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case gachaceilitem.FieldGachaID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -32913,14 +32913,14 @@ func (m *GachaceilitemMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case gachaceilitem.FieldConvertStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConvertStartAt(v)
 		return nil
 	case gachaceilitem.FieldConvertResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -32979,28 +32979,28 @@ func (m *GachaceilitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *GachaceilitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case gachaceilitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case gachaceilitem.FieldGachaID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGachaID(v)
 		return nil
 	case gachaceilitem.FieldConvertStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddConvertStartAt(v)
 		return nil
 	case gachaceilitem.FieldConvertResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -33145,8 +33145,8 @@ type GachaticketMutation struct {
 	op                       Op
 	typ                      string
 	id                       *int
-	game_id                  *int
-	addgame_id               *int
+	game_id                  *int64
+	addgame_id               *int64
 	name                     *string
 	assetbundle_name         *string
 	gacha_display_type       *json.RawMessage
@@ -33257,13 +33257,13 @@ func (m *GachaticketMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *GachaticketMutation) SetGameID(i int) {
+func (m *GachaticketMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *GachaticketMutation) GameID() (r int, exists bool) {
+func (m *GachaticketMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -33274,7 +33274,7 @@ func (m *GachaticketMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Gachaticket entity.
 // If the Gachaticket object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaticketMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *GachaticketMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -33289,7 +33289,7 @@ func (m *GachaticketMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *GachaticketMutation) AddGameID(i int) {
+func (m *GachaticketMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -33298,7 +33298,7 @@ func (m *GachaticketMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *GachaticketMutation) AddedGameID() (r int, exists bool) {
+func (m *GachaticketMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -33608,7 +33608,7 @@ func (m *GachaticketMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *GachaticketMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case gachaticket.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -33673,7 +33673,7 @@ func (m *GachaticketMutation) AddedField(name string) (ent.Value, bool) {
 func (m *GachaticketMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case gachaticket.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -33800,12 +33800,12 @@ type GamecharacterMutation struct {
 	op                           Op
 	typ                          string
 	id                           *int
-	game_id                      *int
-	addgame_id                   *int
-	seq                          *int
-	addseq                       *int
-	resource_id                  *int
-	addresource_id               *int
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	resource_id                  *int64
+	addresource_id               *int64
 	first_name                   *string
 	given_name                   *string
 	first_name_ruby              *string
@@ -33933,13 +33933,13 @@ func (m *GamecharacterMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *GamecharacterMutation) SetGameID(i int) {
+func (m *GamecharacterMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *GamecharacterMutation) GameID() (r int, exists bool) {
+func (m *GamecharacterMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -33950,7 +33950,7 @@ func (m *GamecharacterMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *GamecharacterMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -33965,7 +33965,7 @@ func (m *GamecharacterMutation) OldGameID(ctx context.Context) (v int, err error
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *GamecharacterMutation) AddGameID(i int) {
+func (m *GamecharacterMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -33974,7 +33974,7 @@ func (m *GamecharacterMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *GamecharacterMutation) AddedGameID() (r int, exists bool) {
+func (m *GamecharacterMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -33989,13 +33989,13 @@ func (m *GamecharacterMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *GamecharacterMutation) SetSeq(i int) {
+func (m *GamecharacterMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *GamecharacterMutation) Seq() (r int, exists bool) {
+func (m *GamecharacterMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -34006,7 +34006,7 @@ func (m *GamecharacterMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *GamecharacterMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -34021,7 +34021,7 @@ func (m *GamecharacterMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *GamecharacterMutation) AddSeq(i int) {
+func (m *GamecharacterMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -34030,7 +34030,7 @@ func (m *GamecharacterMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *GamecharacterMutation) AddedSeq() (r int, exists bool) {
+func (m *GamecharacterMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -34059,13 +34059,13 @@ func (m *GamecharacterMutation) ResetSeq() {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (m *GamecharacterMutation) SetResourceID(i int) {
+func (m *GamecharacterMutation) SetResourceID(i int64) {
 	m.resource_id = &i
 	m.addresource_id = nil
 }
 
 // ResourceID returns the value of the "resource_id" field in the mutation.
-func (m *GamecharacterMutation) ResourceID() (r int, exists bool) {
+func (m *GamecharacterMutation) ResourceID() (r int64, exists bool) {
 	v := m.resource_id
 	if v == nil {
 		return
@@ -34076,7 +34076,7 @@ func (m *GamecharacterMutation) ResourceID() (r int, exists bool) {
 // OldResourceID returns the old "resource_id" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldResourceID(ctx context.Context) (v int, err error) {
+func (m *GamecharacterMutation) OldResourceID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
 	}
@@ -34091,7 +34091,7 @@ func (m *GamecharacterMutation) OldResourceID(ctx context.Context) (v int, err e
 }
 
 // AddResourceID adds i to the "resource_id" field.
-func (m *GamecharacterMutation) AddResourceID(i int) {
+func (m *GamecharacterMutation) AddResourceID(i int64) {
 	if m.addresource_id != nil {
 		*m.addresource_id += i
 	} else {
@@ -34100,7 +34100,7 @@ func (m *GamecharacterMutation) AddResourceID(i int) {
 }
 
 // AddedResourceID returns the value that was added to the "resource_id" field in this mutation.
-func (m *GamecharacterMutation) AddedResourceID() (r int, exists bool) {
+func (m *GamecharacterMutation) AddedResourceID() (r int64, exists bool) {
 	v := m.addresource_id
 	if v == nil {
 		return
@@ -35160,21 +35160,21 @@ func (m *GamecharacterMutation) OldField(ctx context.Context, name string) (ent.
 func (m *GamecharacterMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case gamecharacter.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case gamecharacter.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case gamecharacter.FieldResourceID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -35336,21 +35336,21 @@ func (m *GamecharacterMutation) AddedField(name string) (ent.Value, bool) {
 func (m *GamecharacterMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case gamecharacter.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case gamecharacter.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case gamecharacter.FieldResourceID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -35608,10 +35608,10 @@ type GamecharacterunitMutation struct {
 	op                            Op
 	typ                           string
 	id                            *int
-	game_id                       *int
-	addgame_id                    *int
-	game_character_id             *int
-	addgame_character_id          *int
+	game_id                       *int64
+	addgame_id                    *int64
+	game_character_id             *int64
+	addgame_character_id          *int64
 	unit                          *json.RawMessage
 	appendunit                    json.RawMessage
 	color_code                    *string
@@ -35727,13 +35727,13 @@ func (m *GamecharacterunitMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *GamecharacterunitMutation) SetGameID(i int) {
+func (m *GamecharacterunitMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *GamecharacterunitMutation) GameID() (r int, exists bool) {
+func (m *GamecharacterunitMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -35744,7 +35744,7 @@ func (m *GamecharacterunitMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *GamecharacterunitMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -35759,7 +35759,7 @@ func (m *GamecharacterunitMutation) OldGameID(ctx context.Context) (v int, err e
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *GamecharacterunitMutation) AddGameID(i int) {
+func (m *GamecharacterunitMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -35768,7 +35768,7 @@ func (m *GamecharacterunitMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *GamecharacterunitMutation) AddedGameID() (r int, exists bool) {
+func (m *GamecharacterunitMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -35783,13 +35783,13 @@ func (m *GamecharacterunitMutation) ResetGameID() {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *GamecharacterunitMutation) SetGameCharacterID(i int) {
+func (m *GamecharacterunitMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *GamecharacterunitMutation) GameCharacterID() (r int, exists bool) {
+func (m *GamecharacterunitMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -35800,7 +35800,7 @@ func (m *GamecharacterunitMutation) GameCharacterID() (r int, exists bool) {
 // OldGameCharacterID returns the old "game_character_id" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *GamecharacterunitMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -35815,7 +35815,7 @@ func (m *GamecharacterunitMutation) OldGameCharacterID(ctx context.Context) (v i
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *GamecharacterunitMutation) AddGameCharacterID(i int) {
+func (m *GamecharacterunitMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -35824,7 +35824,7 @@ func (m *GamecharacterunitMutation) AddGameCharacterID(i int) {
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *GamecharacterunitMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *GamecharacterunitMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -36315,14 +36315,14 @@ func (m *GamecharacterunitMutation) OldField(ctx context.Context, name string) (
 func (m *GamecharacterunitMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case gamecharacterunit.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case gamecharacterunit.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -36406,14 +36406,14 @@ func (m *GamecharacterunitMutation) AddedField(name string) (ent.Value, bool) {
 func (m *GamecharacterunitMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case gamecharacterunit.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case gamecharacterunit.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -36567,23 +36567,23 @@ type HonorMutation struct {
 	op                 Op
 	typ                string
 	id                 *int
-	game_id            *int
-	addgame_id         *int
-	seq                *int
-	addseq             *int
-	group_id           *int
-	addgroup_id        *int
+	game_id            *int64
+	addgame_id         *int64
+	seq                *int64
+	addseq             *int64
+	group_id           *int64
+	addgroup_id        *int64
 	honor_rarity       *json.RawMessage
 	appendhonor_rarity json.RawMessage
 	name               *string
 	assetbundle_name   *string
 	levels             *json.RawMessage
 	appendlevels       json.RawMessage
-	honor_type_id      *int
-	addhonor_type_id   *int
+	honor_type_id      *int64
+	addhonor_type_id   *int64
 	honor_mission_type *string
-	start_at           *int
-	addstart_at        *int
+	start_at           *int64
+	addstart_at        *int64
 	server_region      *string
 	clearedFields      map[string]struct{}
 	done               bool
@@ -36690,13 +36690,13 @@ func (m *HonorMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *HonorMutation) SetGameID(i int) {
+func (m *HonorMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *HonorMutation) GameID() (r int, exists bool) {
+func (m *HonorMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -36707,7 +36707,7 @@ func (m *HonorMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *HonorMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -36722,7 +36722,7 @@ func (m *HonorMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *HonorMutation) AddGameID(i int) {
+func (m *HonorMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -36731,7 +36731,7 @@ func (m *HonorMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *HonorMutation) AddedGameID() (r int, exists bool) {
+func (m *HonorMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -36746,13 +36746,13 @@ func (m *HonorMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *HonorMutation) SetSeq(i int) {
+func (m *HonorMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *HonorMutation) Seq() (r int, exists bool) {
+func (m *HonorMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -36763,7 +36763,7 @@ func (m *HonorMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *HonorMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -36778,7 +36778,7 @@ func (m *HonorMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *HonorMutation) AddSeq(i int) {
+func (m *HonorMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -36787,7 +36787,7 @@ func (m *HonorMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *HonorMutation) AddedSeq() (r int, exists bool) {
+func (m *HonorMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -36816,13 +36816,13 @@ func (m *HonorMutation) ResetSeq() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *HonorMutation) SetGroupID(i int) {
+func (m *HonorMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *HonorMutation) GroupID() (r int, exists bool) {
+func (m *HonorMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -36833,7 +36833,7 @@ func (m *HonorMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *HonorMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -36848,7 +36848,7 @@ func (m *HonorMutation) OldGroupID(ctx context.Context) (v int, err error) {
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *HonorMutation) AddGroupID(i int) {
+func (m *HonorMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -36857,7 +36857,7 @@ func (m *HonorMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *HonorMutation) AddedGroupID() (r int, exists bool) {
+func (m *HonorMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -37114,13 +37114,13 @@ func (m *HonorMutation) ResetLevels() {
 }
 
 // SetHonorTypeID sets the "honor_type_id" field.
-func (m *HonorMutation) SetHonorTypeID(i int) {
+func (m *HonorMutation) SetHonorTypeID(i int64) {
 	m.honor_type_id = &i
 	m.addhonor_type_id = nil
 }
 
 // HonorTypeID returns the value of the "honor_type_id" field in the mutation.
-func (m *HonorMutation) HonorTypeID() (r int, exists bool) {
+func (m *HonorMutation) HonorTypeID() (r int64, exists bool) {
 	v := m.honor_type_id
 	if v == nil {
 		return
@@ -37131,7 +37131,7 @@ func (m *HonorMutation) HonorTypeID() (r int, exists bool) {
 // OldHonorTypeID returns the old "honor_type_id" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldHonorTypeID(ctx context.Context) (v int, err error) {
+func (m *HonorMutation) OldHonorTypeID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHonorTypeID is only allowed on UpdateOne operations")
 	}
@@ -37146,7 +37146,7 @@ func (m *HonorMutation) OldHonorTypeID(ctx context.Context) (v int, err error) {
 }
 
 // AddHonorTypeID adds i to the "honor_type_id" field.
-func (m *HonorMutation) AddHonorTypeID(i int) {
+func (m *HonorMutation) AddHonorTypeID(i int64) {
 	if m.addhonor_type_id != nil {
 		*m.addhonor_type_id += i
 	} else {
@@ -37155,7 +37155,7 @@ func (m *HonorMutation) AddHonorTypeID(i int) {
 }
 
 // AddedHonorTypeID returns the value that was added to the "honor_type_id" field in this mutation.
-func (m *HonorMutation) AddedHonorTypeID() (r int, exists bool) {
+func (m *HonorMutation) AddedHonorTypeID() (r int64, exists bool) {
 	v := m.addhonor_type_id
 	if v == nil {
 		return
@@ -37233,13 +37233,13 @@ func (m *HonorMutation) ResetHonorMissionType() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *HonorMutation) SetStartAt(i int) {
+func (m *HonorMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *HonorMutation) StartAt() (r int, exists bool) {
+func (m *HonorMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -37250,7 +37250,7 @@ func (m *HonorMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *HonorMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -37265,7 +37265,7 @@ func (m *HonorMutation) OldStartAt(ctx context.Context) (v int, err error) {
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *HonorMutation) AddStartAt(i int) {
+func (m *HonorMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -37274,7 +37274,7 @@ func (m *HonorMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *HonorMutation) AddedStartAt() (r int, exists bool) {
+func (m *HonorMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -37477,21 +37477,21 @@ func (m *HonorMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *HonorMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case honor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case honor.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case honor.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37526,7 +37526,7 @@ func (m *HonorMutation) SetField(name string, value ent.Value) error {
 		m.SetLevels(v)
 		return nil
 	case honor.FieldHonorTypeID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37540,7 +37540,7 @@ func (m *HonorMutation) SetField(name string, value ent.Value) error {
 		m.SetHonorMissionType(v)
 		return nil
 	case honor.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37604,35 +37604,35 @@ func (m *HonorMutation) AddedField(name string) (ent.Value, bool) {
 func (m *HonorMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case honor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case honor.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case honor.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case honor.FieldHonorTypeID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddHonorTypeID(v)
 		return nil
 	case honor.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37813,8 +37813,8 @@ type HonorgroupMutation struct {
 	op                          Op
 	typ                         string
 	id                          *int
-	game_id                     *int
-	addgame_id                  *int
+	game_id                     *int64
+	addgame_id                  *int64
 	name                        *string
 	pronunciation               *string
 	honor_type                  *json.RawMessage
@@ -37927,13 +37927,13 @@ func (m *HonorgroupMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *HonorgroupMutation) SetGameID(i int) {
+func (m *HonorgroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *HonorgroupMutation) GameID() (r int, exists bool) {
+func (m *HonorgroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -37944,7 +37944,7 @@ func (m *HonorgroupMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Honorgroup entity.
 // If the Honorgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorgroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *HonorgroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -37959,7 +37959,7 @@ func (m *HonorgroupMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *HonorgroupMutation) AddGameID(i int) {
+func (m *HonorgroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -37968,7 +37968,7 @@ func (m *HonorgroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *HonorgroupMutation) AddedGameID() (r int, exists bool) {
+func (m *HonorgroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -38390,7 +38390,7 @@ func (m *HonorgroupMutation) OldField(ctx context.Context, name string) (ent.Val
 func (m *HonorgroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case honorgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -38469,7 +38469,7 @@ func (m *HonorgroupMutation) AddedField(name string) (ent.Value, bool) {
 func (m *HonorgroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case honorgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -38614,14 +38614,14 @@ type LevelMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
+	game_id          *int64
+	addgame_id       *int64
 	level_type       *json.RawMessage
 	appendlevel_type json.RawMessage
-	level            *int
-	addlevel         *int
-	total_exp        *int
-	addtotal_exp     *int
+	level            *int64
+	addlevel         *int64
+	total_exp        *int64
+	addtotal_exp     *int64
 	server_region    *string
 	clearedFields    map[string]struct{}
 	done             bool
@@ -38728,13 +38728,13 @@ func (m *LevelMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *LevelMutation) SetGameID(i int) {
+func (m *LevelMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *LevelMutation) GameID() (r int, exists bool) {
+func (m *LevelMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -38745,7 +38745,7 @@ func (m *LevelMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Level entity.
 // If the Level object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LevelMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *LevelMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -38760,7 +38760,7 @@ func (m *LevelMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *LevelMutation) AddGameID(i int) {
+func (m *LevelMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -38769,7 +38769,7 @@ func (m *LevelMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *LevelMutation) AddedGameID() (r int, exists bool) {
+func (m *LevelMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -38849,13 +38849,13 @@ func (m *LevelMutation) ResetLevelType() {
 }
 
 // SetLevel sets the "level" field.
-func (m *LevelMutation) SetLevel(i int) {
+func (m *LevelMutation) SetLevel(i int64) {
 	m.level = &i
 	m.addlevel = nil
 }
 
 // Level returns the value of the "level" field in the mutation.
-func (m *LevelMutation) Level() (r int, exists bool) {
+func (m *LevelMutation) Level() (r int64, exists bool) {
 	v := m.level
 	if v == nil {
 		return
@@ -38866,7 +38866,7 @@ func (m *LevelMutation) Level() (r int, exists bool) {
 // OldLevel returns the old "level" field's value of the Level entity.
 // If the Level object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LevelMutation) OldLevel(ctx context.Context) (v int, err error) {
+func (m *LevelMutation) OldLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLevel is only allowed on UpdateOne operations")
 	}
@@ -38881,7 +38881,7 @@ func (m *LevelMutation) OldLevel(ctx context.Context) (v int, err error) {
 }
 
 // AddLevel adds i to the "level" field.
-func (m *LevelMutation) AddLevel(i int) {
+func (m *LevelMutation) AddLevel(i int64) {
 	if m.addlevel != nil {
 		*m.addlevel += i
 	} else {
@@ -38890,7 +38890,7 @@ func (m *LevelMutation) AddLevel(i int) {
 }
 
 // AddedLevel returns the value that was added to the "level" field in this mutation.
-func (m *LevelMutation) AddedLevel() (r int, exists bool) {
+func (m *LevelMutation) AddedLevel() (r int64, exists bool) {
 	v := m.addlevel
 	if v == nil {
 		return
@@ -38919,13 +38919,13 @@ func (m *LevelMutation) ResetLevel() {
 }
 
 // SetTotalExp sets the "total_exp" field.
-func (m *LevelMutation) SetTotalExp(i int) {
+func (m *LevelMutation) SetTotalExp(i int64) {
 	m.total_exp = &i
 	m.addtotal_exp = nil
 }
 
 // TotalExp returns the value of the "total_exp" field in the mutation.
-func (m *LevelMutation) TotalExp() (r int, exists bool) {
+func (m *LevelMutation) TotalExp() (r int64, exists bool) {
 	v := m.total_exp
 	if v == nil {
 		return
@@ -38936,7 +38936,7 @@ func (m *LevelMutation) TotalExp() (r int, exists bool) {
 // OldTotalExp returns the old "total_exp" field's value of the Level entity.
 // If the Level object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LevelMutation) OldTotalExp(ctx context.Context) (v int, err error) {
+func (m *LevelMutation) OldTotalExp(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTotalExp is only allowed on UpdateOne operations")
 	}
@@ -38951,7 +38951,7 @@ func (m *LevelMutation) OldTotalExp(ctx context.Context) (v int, err error) {
 }
 
 // AddTotalExp adds i to the "total_exp" field.
-func (m *LevelMutation) AddTotalExp(i int) {
+func (m *LevelMutation) AddTotalExp(i int64) {
 	if m.addtotal_exp != nil {
 		*m.addtotal_exp += i
 	} else {
@@ -38960,7 +38960,7 @@ func (m *LevelMutation) AddTotalExp(i int) {
 }
 
 // AddedTotalExp returns the value that was added to the "total_exp" field in this mutation.
-func (m *LevelMutation) AddedTotalExp() (r int, exists bool) {
+func (m *LevelMutation) AddedTotalExp() (r int64, exists bool) {
 	v := m.addtotal_exp
 	if v == nil {
 		return
@@ -39121,7 +39121,7 @@ func (m *LevelMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *LevelMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case level.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -39135,14 +39135,14 @@ func (m *LevelMutation) SetField(name string, value ent.Value) error {
 		m.SetLevelType(v)
 		return nil
 	case level.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLevel(v)
 		return nil
 	case level.FieldTotalExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -39196,21 +39196,21 @@ func (m *LevelMutation) AddedField(name string) (ent.Value, bool) {
 func (m *LevelMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case level.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case level.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLevel(v)
 		return nil
 	case level.FieldTotalExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -39337,14 +39337,14 @@ type LimitedtimemusicMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	game_id       *int
-	addgame_id    *int
-	music_id      *int
-	addmusic_id   *int
-	start_at      *int
-	addstart_at   *int
-	end_at        *int
-	addend_at     *int
+	game_id       *int64
+	addgame_id    *int64
+	music_id      *int64
+	addmusic_id   *int64
+	start_at      *int64
+	addstart_at   *int64
+	end_at        *int64
+	addend_at     *int64
 	server_region *string
 	clearedFields map[string]struct{}
 	done          bool
@@ -39451,13 +39451,13 @@ func (m *LimitedtimemusicMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *LimitedtimemusicMutation) SetGameID(i int) {
+func (m *LimitedtimemusicMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *LimitedtimemusicMutation) GameID() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -39468,7 +39468,7 @@ func (m *LimitedtimemusicMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Limitedtimemusic entity.
 // If the Limitedtimemusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LimitedtimemusicMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *LimitedtimemusicMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -39483,7 +39483,7 @@ func (m *LimitedtimemusicMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *LimitedtimemusicMutation) AddGameID(i int) {
+func (m *LimitedtimemusicMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -39492,7 +39492,7 @@ func (m *LimitedtimemusicMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *LimitedtimemusicMutation) AddedGameID() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -39507,13 +39507,13 @@ func (m *LimitedtimemusicMutation) ResetGameID() {
 }
 
 // SetMusicID sets the "music_id" field.
-func (m *LimitedtimemusicMutation) SetMusicID(i int) {
+func (m *LimitedtimemusicMutation) SetMusicID(i int64) {
 	m.music_id = &i
 	m.addmusic_id = nil
 }
 
 // MusicID returns the value of the "music_id" field in the mutation.
-func (m *LimitedtimemusicMutation) MusicID() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) MusicID() (r int64, exists bool) {
 	v := m.music_id
 	if v == nil {
 		return
@@ -39524,7 +39524,7 @@ func (m *LimitedtimemusicMutation) MusicID() (r int, exists bool) {
 // OldMusicID returns the old "music_id" field's value of the Limitedtimemusic entity.
 // If the Limitedtimemusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LimitedtimemusicMutation) OldMusicID(ctx context.Context) (v int, err error) {
+func (m *LimitedtimemusicMutation) OldMusicID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
 	}
@@ -39539,7 +39539,7 @@ func (m *LimitedtimemusicMutation) OldMusicID(ctx context.Context) (v int, err e
 }
 
 // AddMusicID adds i to the "music_id" field.
-func (m *LimitedtimemusicMutation) AddMusicID(i int) {
+func (m *LimitedtimemusicMutation) AddMusicID(i int64) {
 	if m.addmusic_id != nil {
 		*m.addmusic_id += i
 	} else {
@@ -39548,7 +39548,7 @@ func (m *LimitedtimemusicMutation) AddMusicID(i int) {
 }
 
 // AddedMusicID returns the value that was added to the "music_id" field in this mutation.
-func (m *LimitedtimemusicMutation) AddedMusicID() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) AddedMusicID() (r int64, exists bool) {
 	v := m.addmusic_id
 	if v == nil {
 		return
@@ -39577,13 +39577,13 @@ func (m *LimitedtimemusicMutation) ResetMusicID() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *LimitedtimemusicMutation) SetStartAt(i int) {
+func (m *LimitedtimemusicMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *LimitedtimemusicMutation) StartAt() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -39594,7 +39594,7 @@ func (m *LimitedtimemusicMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Limitedtimemusic entity.
 // If the Limitedtimemusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LimitedtimemusicMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *LimitedtimemusicMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -39609,7 +39609,7 @@ func (m *LimitedtimemusicMutation) OldStartAt(ctx context.Context) (v int, err e
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *LimitedtimemusicMutation) AddStartAt(i int) {
+func (m *LimitedtimemusicMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -39618,7 +39618,7 @@ func (m *LimitedtimemusicMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *LimitedtimemusicMutation) AddedStartAt() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -39647,13 +39647,13 @@ func (m *LimitedtimemusicMutation) ResetStartAt() {
 }
 
 // SetEndAt sets the "end_at" field.
-func (m *LimitedtimemusicMutation) SetEndAt(i int) {
+func (m *LimitedtimemusicMutation) SetEndAt(i int64) {
 	m.end_at = &i
 	m.addend_at = nil
 }
 
 // EndAt returns the value of the "end_at" field in the mutation.
-func (m *LimitedtimemusicMutation) EndAt() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) EndAt() (r int64, exists bool) {
 	v := m.end_at
 	if v == nil {
 		return
@@ -39664,7 +39664,7 @@ func (m *LimitedtimemusicMutation) EndAt() (r int, exists bool) {
 // OldEndAt returns the old "end_at" field's value of the Limitedtimemusic entity.
 // If the Limitedtimemusic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LimitedtimemusicMutation) OldEndAt(ctx context.Context) (v int, err error) {
+func (m *LimitedtimemusicMutation) OldEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEndAt is only allowed on UpdateOne operations")
 	}
@@ -39679,7 +39679,7 @@ func (m *LimitedtimemusicMutation) OldEndAt(ctx context.Context) (v int, err err
 }
 
 // AddEndAt adds i to the "end_at" field.
-func (m *LimitedtimemusicMutation) AddEndAt(i int) {
+func (m *LimitedtimemusicMutation) AddEndAt(i int64) {
 	if m.addend_at != nil {
 		*m.addend_at += i
 	} else {
@@ -39688,7 +39688,7 @@ func (m *LimitedtimemusicMutation) AddEndAt(i int) {
 }
 
 // AddedEndAt returns the value that was added to the "end_at" field in this mutation.
-func (m *LimitedtimemusicMutation) AddedEndAt() (r int, exists bool) {
+func (m *LimitedtimemusicMutation) AddedEndAt() (r int64, exists bool) {
 	v := m.addend_at
 	if v == nil {
 		return
@@ -39849,28 +39849,28 @@ func (m *LimitedtimemusicMutation) OldField(ctx context.Context, name string) (e
 func (m *LimitedtimemusicMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case limitedtimemusic.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case limitedtimemusic.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMusicID(v)
 		return nil
 	case limitedtimemusic.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case limitedtimemusic.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -39929,28 +39929,28 @@ func (m *LimitedtimemusicMutation) AddedField(name string) (ent.Value, bool) {
 func (m *LimitedtimemusicMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case limitedtimemusic.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case limitedtimemusic.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMusicID(v)
 		return nil
 	case limitedtimemusic.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case limitedtimemusic.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -40079,16 +40079,16 @@ type MasterlessonMutation struct {
 	id                     *int
 	card_rarity_type       *json.RawMessage
 	appendcard_rarity_type json.RawMessage
-	master_rank            *int
-	addmaster_rank         *int
-	power1_bonus_fixed     *int
-	addpower1_bonus_fixed  *int
-	power2_bonus_fixed     *int
-	addpower2_bonus_fixed  *int
-	power3_bonus_fixed     *int
-	addpower3_bonus_fixed  *int
-	character_rank_exp     *int
-	addcharacter_rank_exp  *int
+	master_rank            *int64
+	addmaster_rank         *int64
+	power1_bonus_fixed     *int64
+	addpower1_bonus_fixed  *int64
+	power2_bonus_fixed     *int64
+	addpower2_bonus_fixed  *int64
+	power3_bonus_fixed     *int64
+	addpower3_bonus_fixed  *int64
+	character_rank_exp     *int64
+	addcharacter_rank_exp  *int64
 	costs                  *json.RawMessage
 	appendcosts            json.RawMessage
 	rewards                *json.RawMessage
@@ -40264,13 +40264,13 @@ func (m *MasterlessonMutation) ResetCardRarityType() {
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (m *MasterlessonMutation) SetMasterRank(i int) {
+func (m *MasterlessonMutation) SetMasterRank(i int64) {
 	m.master_rank = &i
 	m.addmaster_rank = nil
 }
 
 // MasterRank returns the value of the "master_rank" field in the mutation.
-func (m *MasterlessonMutation) MasterRank() (r int, exists bool) {
+func (m *MasterlessonMutation) MasterRank() (r int64, exists bool) {
 	v := m.master_rank
 	if v == nil {
 		return
@@ -40281,7 +40281,7 @@ func (m *MasterlessonMutation) MasterRank() (r int, exists bool) {
 // OldMasterRank returns the old "master_rank" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldMasterRank(ctx context.Context) (v int, err error) {
+func (m *MasterlessonMutation) OldMasterRank(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMasterRank is only allowed on UpdateOne operations")
 	}
@@ -40296,7 +40296,7 @@ func (m *MasterlessonMutation) OldMasterRank(ctx context.Context) (v int, err er
 }
 
 // AddMasterRank adds i to the "master_rank" field.
-func (m *MasterlessonMutation) AddMasterRank(i int) {
+func (m *MasterlessonMutation) AddMasterRank(i int64) {
 	if m.addmaster_rank != nil {
 		*m.addmaster_rank += i
 	} else {
@@ -40305,7 +40305,7 @@ func (m *MasterlessonMutation) AddMasterRank(i int) {
 }
 
 // AddedMasterRank returns the value that was added to the "master_rank" field in this mutation.
-func (m *MasterlessonMutation) AddedMasterRank() (r int, exists bool) {
+func (m *MasterlessonMutation) AddedMasterRank() (r int64, exists bool) {
 	v := m.addmaster_rank
 	if v == nil {
 		return
@@ -40334,13 +40334,13 @@ func (m *MasterlessonMutation) ResetMasterRank() {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (m *MasterlessonMutation) SetPower1BonusFixed(i int) {
+func (m *MasterlessonMutation) SetPower1BonusFixed(i int64) {
 	m.power1_bonus_fixed = &i
 	m.addpower1_bonus_fixed = nil
 }
 
 // Power1BonusFixed returns the value of the "power1_bonus_fixed" field in the mutation.
-func (m *MasterlessonMutation) Power1BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) Power1BonusFixed() (r int64, exists bool) {
 	v := m.power1_bonus_fixed
 	if v == nil {
 		return
@@ -40351,7 +40351,7 @@ func (m *MasterlessonMutation) Power1BonusFixed() (r int, exists bool) {
 // OldPower1BonusFixed returns the old "power1_bonus_fixed" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldPower1BonusFixed(ctx context.Context) (v int, err error) {
+func (m *MasterlessonMutation) OldPower1BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower1BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -40366,7 +40366,7 @@ func (m *MasterlessonMutation) OldPower1BonusFixed(ctx context.Context) (v int, 
 }
 
 // AddPower1BonusFixed adds i to the "power1_bonus_fixed" field.
-func (m *MasterlessonMutation) AddPower1BonusFixed(i int) {
+func (m *MasterlessonMutation) AddPower1BonusFixed(i int64) {
 	if m.addpower1_bonus_fixed != nil {
 		*m.addpower1_bonus_fixed += i
 	} else {
@@ -40375,7 +40375,7 @@ func (m *MasterlessonMutation) AddPower1BonusFixed(i int) {
 }
 
 // AddedPower1BonusFixed returns the value that was added to the "power1_bonus_fixed" field in this mutation.
-func (m *MasterlessonMutation) AddedPower1BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) AddedPower1BonusFixed() (r int64, exists bool) {
 	v := m.addpower1_bonus_fixed
 	if v == nil {
 		return
@@ -40404,13 +40404,13 @@ func (m *MasterlessonMutation) ResetPower1BonusFixed() {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (m *MasterlessonMutation) SetPower2BonusFixed(i int) {
+func (m *MasterlessonMutation) SetPower2BonusFixed(i int64) {
 	m.power2_bonus_fixed = &i
 	m.addpower2_bonus_fixed = nil
 }
 
 // Power2BonusFixed returns the value of the "power2_bonus_fixed" field in the mutation.
-func (m *MasterlessonMutation) Power2BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) Power2BonusFixed() (r int64, exists bool) {
 	v := m.power2_bonus_fixed
 	if v == nil {
 		return
@@ -40421,7 +40421,7 @@ func (m *MasterlessonMutation) Power2BonusFixed() (r int, exists bool) {
 // OldPower2BonusFixed returns the old "power2_bonus_fixed" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldPower2BonusFixed(ctx context.Context) (v int, err error) {
+func (m *MasterlessonMutation) OldPower2BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower2BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -40436,7 +40436,7 @@ func (m *MasterlessonMutation) OldPower2BonusFixed(ctx context.Context) (v int, 
 }
 
 // AddPower2BonusFixed adds i to the "power2_bonus_fixed" field.
-func (m *MasterlessonMutation) AddPower2BonusFixed(i int) {
+func (m *MasterlessonMutation) AddPower2BonusFixed(i int64) {
 	if m.addpower2_bonus_fixed != nil {
 		*m.addpower2_bonus_fixed += i
 	} else {
@@ -40445,7 +40445,7 @@ func (m *MasterlessonMutation) AddPower2BonusFixed(i int) {
 }
 
 // AddedPower2BonusFixed returns the value that was added to the "power2_bonus_fixed" field in this mutation.
-func (m *MasterlessonMutation) AddedPower2BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) AddedPower2BonusFixed() (r int64, exists bool) {
 	v := m.addpower2_bonus_fixed
 	if v == nil {
 		return
@@ -40474,13 +40474,13 @@ func (m *MasterlessonMutation) ResetPower2BonusFixed() {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (m *MasterlessonMutation) SetPower3BonusFixed(i int) {
+func (m *MasterlessonMutation) SetPower3BonusFixed(i int64) {
 	m.power3_bonus_fixed = &i
 	m.addpower3_bonus_fixed = nil
 }
 
 // Power3BonusFixed returns the value of the "power3_bonus_fixed" field in the mutation.
-func (m *MasterlessonMutation) Power3BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) Power3BonusFixed() (r int64, exists bool) {
 	v := m.power3_bonus_fixed
 	if v == nil {
 		return
@@ -40491,7 +40491,7 @@ func (m *MasterlessonMutation) Power3BonusFixed() (r int, exists bool) {
 // OldPower3BonusFixed returns the old "power3_bonus_fixed" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldPower3BonusFixed(ctx context.Context) (v int, err error) {
+func (m *MasterlessonMutation) OldPower3BonusFixed(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPower3BonusFixed is only allowed on UpdateOne operations")
 	}
@@ -40506,7 +40506,7 @@ func (m *MasterlessonMutation) OldPower3BonusFixed(ctx context.Context) (v int, 
 }
 
 // AddPower3BonusFixed adds i to the "power3_bonus_fixed" field.
-func (m *MasterlessonMutation) AddPower3BonusFixed(i int) {
+func (m *MasterlessonMutation) AddPower3BonusFixed(i int64) {
 	if m.addpower3_bonus_fixed != nil {
 		*m.addpower3_bonus_fixed += i
 	} else {
@@ -40515,7 +40515,7 @@ func (m *MasterlessonMutation) AddPower3BonusFixed(i int) {
 }
 
 // AddedPower3BonusFixed returns the value that was added to the "power3_bonus_fixed" field in this mutation.
-func (m *MasterlessonMutation) AddedPower3BonusFixed() (r int, exists bool) {
+func (m *MasterlessonMutation) AddedPower3BonusFixed() (r int64, exists bool) {
 	v := m.addpower3_bonus_fixed
 	if v == nil {
 		return
@@ -40544,13 +40544,13 @@ func (m *MasterlessonMutation) ResetPower3BonusFixed() {
 }
 
 // SetCharacterRankExp sets the "character_rank_exp" field.
-func (m *MasterlessonMutation) SetCharacterRankExp(i int) {
+func (m *MasterlessonMutation) SetCharacterRankExp(i int64) {
 	m.character_rank_exp = &i
 	m.addcharacter_rank_exp = nil
 }
 
 // CharacterRankExp returns the value of the "character_rank_exp" field in the mutation.
-func (m *MasterlessonMutation) CharacterRankExp() (r int, exists bool) {
+func (m *MasterlessonMutation) CharacterRankExp() (r int64, exists bool) {
 	v := m.character_rank_exp
 	if v == nil {
 		return
@@ -40561,7 +40561,7 @@ func (m *MasterlessonMutation) CharacterRankExp() (r int, exists bool) {
 // OldCharacterRankExp returns the old "character_rank_exp" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldCharacterRankExp(ctx context.Context) (v int, err error) {
+func (m *MasterlessonMutation) OldCharacterRankExp(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterRankExp is only allowed on UpdateOne operations")
 	}
@@ -40576,7 +40576,7 @@ func (m *MasterlessonMutation) OldCharacterRankExp(ctx context.Context) (v int, 
 }
 
 // AddCharacterRankExp adds i to the "character_rank_exp" field.
-func (m *MasterlessonMutation) AddCharacterRankExp(i int) {
+func (m *MasterlessonMutation) AddCharacterRankExp(i int64) {
 	if m.addcharacter_rank_exp != nil {
 		*m.addcharacter_rank_exp += i
 	} else {
@@ -40585,7 +40585,7 @@ func (m *MasterlessonMutation) AddCharacterRankExp(i int) {
 }
 
 // AddedCharacterRankExp returns the value that was added to the "character_rank_exp" field in this mutation.
-func (m *MasterlessonMutation) AddedCharacterRankExp() (r int, exists bool) {
+func (m *MasterlessonMutation) AddedCharacterRankExp() (r int64, exists bool) {
 	v := m.addcharacter_rank_exp
 	if v == nil {
 		return
@@ -40911,35 +40911,35 @@ func (m *MasterlessonMutation) SetField(name string, value ent.Value) error {
 		m.SetCardRarityType(v)
 		return nil
 	case masterlesson.FieldMasterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMasterRank(v)
 		return nil
 	case masterlesson.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower1BonusFixed(v)
 		return nil
 	case masterlesson.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower2BonusFixed(v)
 		return nil
 	case masterlesson.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPower3BonusFixed(v)
 		return nil
 	case masterlesson.FieldCharacterRankExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -41017,35 +41017,35 @@ func (m *MasterlessonMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MasterlessonMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case masterlesson.FieldMasterRank:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMasterRank(v)
 		return nil
 	case masterlesson.FieldPower1BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower1BonusFixed(v)
 		return nil
 	case masterlesson.FieldPower2BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower2BonusFixed(v)
 		return nil
 	case masterlesson.FieldPower3BonusFixed:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPower3BonusFixed(v)
 		return nil
 	case masterlesson.FieldCharacterRankExp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -41214,40 +41214,40 @@ type MusicMutation struct {
 	op                                          Op
 	typ                                         string
 	id                                          *int
-	game_id                                     *int
-	addgame_id                                  *int
-	seq                                         *int
-	addseq                                      *int
-	release_condition_id                        *int
-	addrelease_condition_id                     *int
+	game_id                                     *int64
+	addgame_id                                  *int64
+	seq                                         *int64
+	addseq                                      *int64
+	release_condition_id                        *int64
+	addrelease_condition_id                     *int64
 	categories                                  *json.RawMessage
 	appendcategories                            json.RawMessage
 	title                                       *string
 	pronunciation                               *string
-	creator_artist_id                           *int
-	addcreator_artist_id                        *int
+	creator_artist_id                           *int64
+	addcreator_artist_id                        *int64
 	lyricist                                    *string
 	composer                                    *string
 	arranger                                    *string
-	dancer_count                                *int
-	adddancer_count                             *int
-	self_dancer_position                        *int
-	addself_dancer_position                     *int
+	dancer_count                                *int64
+	adddancer_count                             *int64
+	self_dancer_position                        *int64
+	addself_dancer_position                     *int64
 	assetbundle_name                            *string
 	live_talk_background_assetbundle_name       *json.RawMessage
 	appendlive_talk_background_assetbundle_name json.RawMessage
-	published_at                                *int
-	addpublished_at                             *int
-	released_at                                 *int
-	addreleased_at                              *int
-	live_stage_id                               *int
-	addlive_stage_id                            *int
+	published_at                                *int64
+	addpublished_at                             *int64
+	released_at                                 *int64
+	addreleased_at                              *int64
+	live_stage_id                               *int64
+	addlive_stage_id                            *int64
 	filler_sec                                  *float64
 	addfiller_sec                               *float64
 	is_newly_written_music                      *bool
 	is_full_length                              *bool
-	music_collaboration_id                      *int
-	addmusic_collaboration_id                   *int
+	music_collaboration_id                      *int64
+	addmusic_collaboration_id                   *int64
 	infos                                       *json.RawMessage
 	appendinfos                                 json.RawMessage
 	server_region                               *string
@@ -41356,13 +41356,13 @@ func (m *MusicMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MusicMutation) SetGameID(i int) {
+func (m *MusicMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MusicMutation) GameID() (r int, exists bool) {
+func (m *MusicMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -41373,7 +41373,7 @@ func (m *MusicMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -41388,7 +41388,7 @@ func (m *MusicMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MusicMutation) AddGameID(i int) {
+func (m *MusicMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -41397,7 +41397,7 @@ func (m *MusicMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MusicMutation) AddedGameID() (r int, exists bool) {
+func (m *MusicMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -41412,13 +41412,13 @@ func (m *MusicMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MusicMutation) SetSeq(i int) {
+func (m *MusicMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MusicMutation) Seq() (r int, exists bool) {
+func (m *MusicMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -41429,7 +41429,7 @@ func (m *MusicMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -41444,7 +41444,7 @@ func (m *MusicMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MusicMutation) AddSeq(i int) {
+func (m *MusicMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -41453,7 +41453,7 @@ func (m *MusicMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MusicMutation) AddedSeq() (r int, exists bool) {
+func (m *MusicMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -41482,13 +41482,13 @@ func (m *MusicMutation) ResetSeq() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *MusicMutation) SetReleaseConditionID(i int) {
+func (m *MusicMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *MusicMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *MusicMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -41499,7 +41499,7 @@ func (m *MusicMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -41514,7 +41514,7 @@ func (m *MusicMutation) OldReleaseConditionID(ctx context.Context) (v int, err e
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *MusicMutation) AddReleaseConditionID(i int) {
+func (m *MusicMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -41523,7 +41523,7 @@ func (m *MusicMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *MusicMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *MusicMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -41715,13 +41715,13 @@ func (m *MusicMutation) ResetPronunciation() {
 }
 
 // SetCreatorArtistID sets the "creator_artist_id" field.
-func (m *MusicMutation) SetCreatorArtistID(i int) {
+func (m *MusicMutation) SetCreatorArtistID(i int64) {
 	m.creator_artist_id = &i
 	m.addcreator_artist_id = nil
 }
 
 // CreatorArtistID returns the value of the "creator_artist_id" field in the mutation.
-func (m *MusicMutation) CreatorArtistID() (r int, exists bool) {
+func (m *MusicMutation) CreatorArtistID() (r int64, exists bool) {
 	v := m.creator_artist_id
 	if v == nil {
 		return
@@ -41732,7 +41732,7 @@ func (m *MusicMutation) CreatorArtistID() (r int, exists bool) {
 // OldCreatorArtistID returns the old "creator_artist_id" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldCreatorArtistID(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldCreatorArtistID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatorArtistID is only allowed on UpdateOne operations")
 	}
@@ -41747,7 +41747,7 @@ func (m *MusicMutation) OldCreatorArtistID(ctx context.Context) (v int, err erro
 }
 
 // AddCreatorArtistID adds i to the "creator_artist_id" field.
-func (m *MusicMutation) AddCreatorArtistID(i int) {
+func (m *MusicMutation) AddCreatorArtistID(i int64) {
 	if m.addcreator_artist_id != nil {
 		*m.addcreator_artist_id += i
 	} else {
@@ -41756,7 +41756,7 @@ func (m *MusicMutation) AddCreatorArtistID(i int) {
 }
 
 // AddedCreatorArtistID returns the value that was added to the "creator_artist_id" field in this mutation.
-func (m *MusicMutation) AddedCreatorArtistID() (r int, exists bool) {
+func (m *MusicMutation) AddedCreatorArtistID() (r int64, exists bool) {
 	v := m.addcreator_artist_id
 	if v == nil {
 		return
@@ -41932,13 +41932,13 @@ func (m *MusicMutation) ResetArranger() {
 }
 
 // SetDancerCount sets the "dancer_count" field.
-func (m *MusicMutation) SetDancerCount(i int) {
+func (m *MusicMutation) SetDancerCount(i int64) {
 	m.dancer_count = &i
 	m.adddancer_count = nil
 }
 
 // DancerCount returns the value of the "dancer_count" field in the mutation.
-func (m *MusicMutation) DancerCount() (r int, exists bool) {
+func (m *MusicMutation) DancerCount() (r int64, exists bool) {
 	v := m.dancer_count
 	if v == nil {
 		return
@@ -41949,7 +41949,7 @@ func (m *MusicMutation) DancerCount() (r int, exists bool) {
 // OldDancerCount returns the old "dancer_count" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldDancerCount(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldDancerCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDancerCount is only allowed on UpdateOne operations")
 	}
@@ -41964,7 +41964,7 @@ func (m *MusicMutation) OldDancerCount(ctx context.Context) (v int, err error) {
 }
 
 // AddDancerCount adds i to the "dancer_count" field.
-func (m *MusicMutation) AddDancerCount(i int) {
+func (m *MusicMutation) AddDancerCount(i int64) {
 	if m.adddancer_count != nil {
 		*m.adddancer_count += i
 	} else {
@@ -41973,7 +41973,7 @@ func (m *MusicMutation) AddDancerCount(i int) {
 }
 
 // AddedDancerCount returns the value that was added to the "dancer_count" field in this mutation.
-func (m *MusicMutation) AddedDancerCount() (r int, exists bool) {
+func (m *MusicMutation) AddedDancerCount() (r int64, exists bool) {
 	v := m.adddancer_count
 	if v == nil {
 		return
@@ -42002,13 +42002,13 @@ func (m *MusicMutation) ResetDancerCount() {
 }
 
 // SetSelfDancerPosition sets the "self_dancer_position" field.
-func (m *MusicMutation) SetSelfDancerPosition(i int) {
+func (m *MusicMutation) SetSelfDancerPosition(i int64) {
 	m.self_dancer_position = &i
 	m.addself_dancer_position = nil
 }
 
 // SelfDancerPosition returns the value of the "self_dancer_position" field in the mutation.
-func (m *MusicMutation) SelfDancerPosition() (r int, exists bool) {
+func (m *MusicMutation) SelfDancerPosition() (r int64, exists bool) {
 	v := m.self_dancer_position
 	if v == nil {
 		return
@@ -42019,7 +42019,7 @@ func (m *MusicMutation) SelfDancerPosition() (r int, exists bool) {
 // OldSelfDancerPosition returns the old "self_dancer_position" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldSelfDancerPosition(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldSelfDancerPosition(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSelfDancerPosition is only allowed on UpdateOne operations")
 	}
@@ -42034,7 +42034,7 @@ func (m *MusicMutation) OldSelfDancerPosition(ctx context.Context) (v int, err e
 }
 
 // AddSelfDancerPosition adds i to the "self_dancer_position" field.
-func (m *MusicMutation) AddSelfDancerPosition(i int) {
+func (m *MusicMutation) AddSelfDancerPosition(i int64) {
 	if m.addself_dancer_position != nil {
 		*m.addself_dancer_position += i
 	} else {
@@ -42043,7 +42043,7 @@ func (m *MusicMutation) AddSelfDancerPosition(i int) {
 }
 
 // AddedSelfDancerPosition returns the value that was added to the "self_dancer_position" field in this mutation.
-func (m *MusicMutation) AddedSelfDancerPosition() (r int, exists bool) {
+func (m *MusicMutation) AddedSelfDancerPosition() (r int64, exists bool) {
 	v := m.addself_dancer_position
 	if v == nil {
 		return
@@ -42186,13 +42186,13 @@ func (m *MusicMutation) ResetLiveTalkBackgroundAssetbundleName() {
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (m *MusicMutation) SetPublishedAt(i int) {
+func (m *MusicMutation) SetPublishedAt(i int64) {
 	m.published_at = &i
 	m.addpublished_at = nil
 }
 
 // PublishedAt returns the value of the "published_at" field in the mutation.
-func (m *MusicMutation) PublishedAt() (r int, exists bool) {
+func (m *MusicMutation) PublishedAt() (r int64, exists bool) {
 	v := m.published_at
 	if v == nil {
 		return
@@ -42203,7 +42203,7 @@ func (m *MusicMutation) PublishedAt() (r int, exists bool) {
 // OldPublishedAt returns the old "published_at" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldPublishedAt(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldPublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPublishedAt is only allowed on UpdateOne operations")
 	}
@@ -42218,7 +42218,7 @@ func (m *MusicMutation) OldPublishedAt(ctx context.Context) (v int, err error) {
 }
 
 // AddPublishedAt adds i to the "published_at" field.
-func (m *MusicMutation) AddPublishedAt(i int) {
+func (m *MusicMutation) AddPublishedAt(i int64) {
 	if m.addpublished_at != nil {
 		*m.addpublished_at += i
 	} else {
@@ -42227,7 +42227,7 @@ func (m *MusicMutation) AddPublishedAt(i int) {
 }
 
 // AddedPublishedAt returns the value that was added to the "published_at" field in this mutation.
-func (m *MusicMutation) AddedPublishedAt() (r int, exists bool) {
+func (m *MusicMutation) AddedPublishedAt() (r int64, exists bool) {
 	v := m.addpublished_at
 	if v == nil {
 		return
@@ -42256,13 +42256,13 @@ func (m *MusicMutation) ResetPublishedAt() {
 }
 
 // SetReleasedAt sets the "released_at" field.
-func (m *MusicMutation) SetReleasedAt(i int) {
+func (m *MusicMutation) SetReleasedAt(i int64) {
 	m.released_at = &i
 	m.addreleased_at = nil
 }
 
 // ReleasedAt returns the value of the "released_at" field in the mutation.
-func (m *MusicMutation) ReleasedAt() (r int, exists bool) {
+func (m *MusicMutation) ReleasedAt() (r int64, exists bool) {
 	v := m.released_at
 	if v == nil {
 		return
@@ -42273,7 +42273,7 @@ func (m *MusicMutation) ReleasedAt() (r int, exists bool) {
 // OldReleasedAt returns the old "released_at" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldReleasedAt(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldReleasedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleasedAt is only allowed on UpdateOne operations")
 	}
@@ -42288,7 +42288,7 @@ func (m *MusicMutation) OldReleasedAt(ctx context.Context) (v int, err error) {
 }
 
 // AddReleasedAt adds i to the "released_at" field.
-func (m *MusicMutation) AddReleasedAt(i int) {
+func (m *MusicMutation) AddReleasedAt(i int64) {
 	if m.addreleased_at != nil {
 		*m.addreleased_at += i
 	} else {
@@ -42297,7 +42297,7 @@ func (m *MusicMutation) AddReleasedAt(i int) {
 }
 
 // AddedReleasedAt returns the value that was added to the "released_at" field in this mutation.
-func (m *MusicMutation) AddedReleasedAt() (r int, exists bool) {
+func (m *MusicMutation) AddedReleasedAt() (r int64, exists bool) {
 	v := m.addreleased_at
 	if v == nil {
 		return
@@ -42326,13 +42326,13 @@ func (m *MusicMutation) ResetReleasedAt() {
 }
 
 // SetLiveStageID sets the "live_stage_id" field.
-func (m *MusicMutation) SetLiveStageID(i int) {
+func (m *MusicMutation) SetLiveStageID(i int64) {
 	m.live_stage_id = &i
 	m.addlive_stage_id = nil
 }
 
 // LiveStageID returns the value of the "live_stage_id" field in the mutation.
-func (m *MusicMutation) LiveStageID() (r int, exists bool) {
+func (m *MusicMutation) LiveStageID() (r int64, exists bool) {
 	v := m.live_stage_id
 	if v == nil {
 		return
@@ -42343,7 +42343,7 @@ func (m *MusicMutation) LiveStageID() (r int, exists bool) {
 // OldLiveStageID returns the old "live_stage_id" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldLiveStageID(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldLiveStageID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLiveStageID is only allowed on UpdateOne operations")
 	}
@@ -42358,7 +42358,7 @@ func (m *MusicMutation) OldLiveStageID(ctx context.Context) (v int, err error) {
 }
 
 // AddLiveStageID adds i to the "live_stage_id" field.
-func (m *MusicMutation) AddLiveStageID(i int) {
+func (m *MusicMutation) AddLiveStageID(i int64) {
 	if m.addlive_stage_id != nil {
 		*m.addlive_stage_id += i
 	} else {
@@ -42367,7 +42367,7 @@ func (m *MusicMutation) AddLiveStageID(i int) {
 }
 
 // AddedLiveStageID returns the value that was added to the "live_stage_id" field in this mutation.
-func (m *MusicMutation) AddedLiveStageID() (r int, exists bool) {
+func (m *MusicMutation) AddedLiveStageID() (r int64, exists bool) {
 	v := m.addlive_stage_id
 	if v == nil {
 		return
@@ -42564,13 +42564,13 @@ func (m *MusicMutation) ResetIsFullLength() {
 }
 
 // SetMusicCollaborationID sets the "music_collaboration_id" field.
-func (m *MusicMutation) SetMusicCollaborationID(i int) {
+func (m *MusicMutation) SetMusicCollaborationID(i int64) {
 	m.music_collaboration_id = &i
 	m.addmusic_collaboration_id = nil
 }
 
 // MusicCollaborationID returns the value of the "music_collaboration_id" field in the mutation.
-func (m *MusicMutation) MusicCollaborationID() (r int, exists bool) {
+func (m *MusicMutation) MusicCollaborationID() (r int64, exists bool) {
 	v := m.music_collaboration_id
 	if v == nil {
 		return
@@ -42581,7 +42581,7 @@ func (m *MusicMutation) MusicCollaborationID() (r int, exists bool) {
 // OldMusicCollaborationID returns the old "music_collaboration_id" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldMusicCollaborationID(ctx context.Context) (v int, err error) {
+func (m *MusicMutation) OldMusicCollaborationID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicCollaborationID is only allowed on UpdateOne operations")
 	}
@@ -42596,7 +42596,7 @@ func (m *MusicMutation) OldMusicCollaborationID(ctx context.Context) (v int, err
 }
 
 // AddMusicCollaborationID adds i to the "music_collaboration_id" field.
-func (m *MusicMutation) AddMusicCollaborationID(i int) {
+func (m *MusicMutation) AddMusicCollaborationID(i int64) {
 	if m.addmusic_collaboration_id != nil {
 		*m.addmusic_collaboration_id += i
 	} else {
@@ -42605,7 +42605,7 @@ func (m *MusicMutation) AddMusicCollaborationID(i int) {
 }
 
 // AddedMusicCollaborationID returns the value that was added to the "music_collaboration_id" field in this mutation.
-func (m *MusicMutation) AddedMusicCollaborationID() (r int, exists bool) {
+func (m *MusicMutation) AddedMusicCollaborationID() (r int64, exists bool) {
 	v := m.addmusic_collaboration_id
 	if v == nil {
 		return
@@ -42957,21 +42957,21 @@ func (m *MusicMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *MusicMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case music.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case music.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case music.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -42999,7 +42999,7 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		m.SetPronunciation(v)
 		return nil
 	case music.FieldCreatorArtistID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43027,14 +43027,14 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		m.SetArranger(v)
 		return nil
 	case music.FieldDancerCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDancerCount(v)
 		return nil
 	case music.FieldSelfDancerPosition:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43055,21 +43055,21 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		m.SetLiveTalkBackgroundAssetbundleName(v)
 		return nil
 	case music.FieldPublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPublishedAt(v)
 		return nil
 	case music.FieldReleasedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReleasedAt(v)
 		return nil
 	case music.FieldLiveStageID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43097,7 +43097,7 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		m.SetIsFullLength(v)
 		return nil
 	case music.FieldMusicCollaborationID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43198,63 +43198,63 @@ func (m *MusicMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MusicMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case music.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case music.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case music.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseConditionID(v)
 		return nil
 	case music.FieldCreatorArtistID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCreatorArtistID(v)
 		return nil
 	case music.FieldDancerCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddDancerCount(v)
 		return nil
 	case music.FieldSelfDancerPosition:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSelfDancerPosition(v)
 		return nil
 	case music.FieldPublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPublishedAt(v)
 		return nil
 	case music.FieldReleasedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleasedAt(v)
 		return nil
 	case music.FieldLiveStageID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43268,7 +43268,7 @@ func (m *MusicMutation) AddField(name string, value ent.Value) error {
 		m.AddFillerSec(v)
 		return nil
 	case music.FieldMusicCollaborationID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -43557,8 +43557,8 @@ type MusicArtistMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	game_id       *int
-	addgame_id    *int
+	game_id       *int64
+	addgame_id    *int64
 	name          *string
 	pronunciation *string
 	server_region *string
@@ -43667,13 +43667,13 @@ func (m *MusicArtistMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MusicArtistMutation) SetGameID(i int) {
+func (m *MusicArtistMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MusicArtistMutation) GameID() (r int, exists bool) {
+func (m *MusicArtistMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -43684,7 +43684,7 @@ func (m *MusicArtistMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the MusicArtist entity.
 // If the MusicArtist object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicArtistMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MusicArtistMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -43699,7 +43699,7 @@ func (m *MusicArtistMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MusicArtistMutation) AddGameID(i int) {
+func (m *MusicArtistMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -43708,7 +43708,7 @@ func (m *MusicArtistMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MusicArtistMutation) AddedGameID() (r int, exists bool) {
+func (m *MusicArtistMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -43946,7 +43946,7 @@ func (m *MusicArtistMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *MusicArtistMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case musicartist.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -44004,7 +44004,7 @@ func (m *MusicArtistMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MusicArtistMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case musicartist.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -44122,18 +44122,18 @@ type MusicdifficultieMutation struct {
 	op                      Op
 	typ                     string
 	id                      *int
-	game_id                 *int
-	addgame_id              *int
-	music_id                *int
-	addmusic_id             *int
+	game_id                 *int64
+	addgame_id              *int64
+	music_id                *int64
+	addmusic_id             *int64
 	music_difficulty        *json.RawMessage
 	appendmusic_difficulty  json.RawMessage
-	play_level              *int
-	addplay_level           *int
-	total_note_count        *int
-	addtotal_note_count     *int
-	release_condition_id    *int
-	addrelease_condition_id *int
+	play_level              *int64
+	addplay_level           *int64
+	total_note_count        *int64
+	addtotal_note_count     *int64
+	release_condition_id    *int64
+	addrelease_condition_id *int64
 	server_region           *string
 	clearedFields           map[string]struct{}
 	done                    bool
@@ -44240,13 +44240,13 @@ func (m *MusicdifficultieMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MusicdifficultieMutation) SetGameID(i int) {
+func (m *MusicdifficultieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MusicdifficultieMutation) GameID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -44257,7 +44257,7 @@ func (m *MusicdifficultieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MusicdifficultieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -44272,7 +44272,7 @@ func (m *MusicdifficultieMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MusicdifficultieMutation) AddGameID(i int) {
+func (m *MusicdifficultieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -44281,7 +44281,7 @@ func (m *MusicdifficultieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MusicdifficultieMutation) AddedGameID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -44296,13 +44296,13 @@ func (m *MusicdifficultieMutation) ResetGameID() {
 }
 
 // SetMusicID sets the "music_id" field.
-func (m *MusicdifficultieMutation) SetMusicID(i int) {
+func (m *MusicdifficultieMutation) SetMusicID(i int64) {
 	m.music_id = &i
 	m.addmusic_id = nil
 }
 
 // MusicID returns the value of the "music_id" field in the mutation.
-func (m *MusicdifficultieMutation) MusicID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) MusicID() (r int64, exists bool) {
 	v := m.music_id
 	if v == nil {
 		return
@@ -44313,7 +44313,7 @@ func (m *MusicdifficultieMutation) MusicID() (r int, exists bool) {
 // OldMusicID returns the old "music_id" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldMusicID(ctx context.Context) (v int, err error) {
+func (m *MusicdifficultieMutation) OldMusicID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
 	}
@@ -44328,7 +44328,7 @@ func (m *MusicdifficultieMutation) OldMusicID(ctx context.Context) (v int, err e
 }
 
 // AddMusicID adds i to the "music_id" field.
-func (m *MusicdifficultieMutation) AddMusicID(i int) {
+func (m *MusicdifficultieMutation) AddMusicID(i int64) {
 	if m.addmusic_id != nil {
 		*m.addmusic_id += i
 	} else {
@@ -44337,7 +44337,7 @@ func (m *MusicdifficultieMutation) AddMusicID(i int) {
 }
 
 // AddedMusicID returns the value that was added to the "music_id" field in this mutation.
-func (m *MusicdifficultieMutation) AddedMusicID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) AddedMusicID() (r int64, exists bool) {
 	v := m.addmusic_id
 	if v == nil {
 		return
@@ -44431,13 +44431,13 @@ func (m *MusicdifficultieMutation) ResetMusicDifficulty() {
 }
 
 // SetPlayLevel sets the "play_level" field.
-func (m *MusicdifficultieMutation) SetPlayLevel(i int) {
+func (m *MusicdifficultieMutation) SetPlayLevel(i int64) {
 	m.play_level = &i
 	m.addplay_level = nil
 }
 
 // PlayLevel returns the value of the "play_level" field in the mutation.
-func (m *MusicdifficultieMutation) PlayLevel() (r int, exists bool) {
+func (m *MusicdifficultieMutation) PlayLevel() (r int64, exists bool) {
 	v := m.play_level
 	if v == nil {
 		return
@@ -44448,7 +44448,7 @@ func (m *MusicdifficultieMutation) PlayLevel() (r int, exists bool) {
 // OldPlayLevel returns the old "play_level" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldPlayLevel(ctx context.Context) (v int, err error) {
+func (m *MusicdifficultieMutation) OldPlayLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPlayLevel is only allowed on UpdateOne operations")
 	}
@@ -44463,7 +44463,7 @@ func (m *MusicdifficultieMutation) OldPlayLevel(ctx context.Context) (v int, err
 }
 
 // AddPlayLevel adds i to the "play_level" field.
-func (m *MusicdifficultieMutation) AddPlayLevel(i int) {
+func (m *MusicdifficultieMutation) AddPlayLevel(i int64) {
 	if m.addplay_level != nil {
 		*m.addplay_level += i
 	} else {
@@ -44472,7 +44472,7 @@ func (m *MusicdifficultieMutation) AddPlayLevel(i int) {
 }
 
 // AddedPlayLevel returns the value that was added to the "play_level" field in this mutation.
-func (m *MusicdifficultieMutation) AddedPlayLevel() (r int, exists bool) {
+func (m *MusicdifficultieMutation) AddedPlayLevel() (r int64, exists bool) {
 	v := m.addplay_level
 	if v == nil {
 		return
@@ -44501,13 +44501,13 @@ func (m *MusicdifficultieMutation) ResetPlayLevel() {
 }
 
 // SetTotalNoteCount sets the "total_note_count" field.
-func (m *MusicdifficultieMutation) SetTotalNoteCount(i int) {
+func (m *MusicdifficultieMutation) SetTotalNoteCount(i int64) {
 	m.total_note_count = &i
 	m.addtotal_note_count = nil
 }
 
 // TotalNoteCount returns the value of the "total_note_count" field in the mutation.
-func (m *MusicdifficultieMutation) TotalNoteCount() (r int, exists bool) {
+func (m *MusicdifficultieMutation) TotalNoteCount() (r int64, exists bool) {
 	v := m.total_note_count
 	if v == nil {
 		return
@@ -44518,7 +44518,7 @@ func (m *MusicdifficultieMutation) TotalNoteCount() (r int, exists bool) {
 // OldTotalNoteCount returns the old "total_note_count" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldTotalNoteCount(ctx context.Context) (v int, err error) {
+func (m *MusicdifficultieMutation) OldTotalNoteCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTotalNoteCount is only allowed on UpdateOne operations")
 	}
@@ -44533,7 +44533,7 @@ func (m *MusicdifficultieMutation) OldTotalNoteCount(ctx context.Context) (v int
 }
 
 // AddTotalNoteCount adds i to the "total_note_count" field.
-func (m *MusicdifficultieMutation) AddTotalNoteCount(i int) {
+func (m *MusicdifficultieMutation) AddTotalNoteCount(i int64) {
 	if m.addtotal_note_count != nil {
 		*m.addtotal_note_count += i
 	} else {
@@ -44542,7 +44542,7 @@ func (m *MusicdifficultieMutation) AddTotalNoteCount(i int) {
 }
 
 // AddedTotalNoteCount returns the value that was added to the "total_note_count" field in this mutation.
-func (m *MusicdifficultieMutation) AddedTotalNoteCount() (r int, exists bool) {
+func (m *MusicdifficultieMutation) AddedTotalNoteCount() (r int64, exists bool) {
 	v := m.addtotal_note_count
 	if v == nil {
 		return
@@ -44571,13 +44571,13 @@ func (m *MusicdifficultieMutation) ResetTotalNoteCount() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *MusicdifficultieMutation) SetReleaseConditionID(i int) {
+func (m *MusicdifficultieMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *MusicdifficultieMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -44588,7 +44588,7 @@ func (m *MusicdifficultieMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *MusicdifficultieMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -44603,7 +44603,7 @@ func (m *MusicdifficultieMutation) OldReleaseConditionID(ctx context.Context) (v
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *MusicdifficultieMutation) AddReleaseConditionID(i int) {
+func (m *MusicdifficultieMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -44612,7 +44612,7 @@ func (m *MusicdifficultieMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *MusicdifficultieMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *MusicdifficultieMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -44787,14 +44787,14 @@ func (m *MusicdifficultieMutation) OldField(ctx context.Context, name string) (e
 func (m *MusicdifficultieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case musicdifficultie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case musicdifficultie.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -44808,21 +44808,21 @@ func (m *MusicdifficultieMutation) SetField(name string, value ent.Value) error 
 		m.SetMusicDifficulty(v)
 		return nil
 	case musicdifficultie.FieldPlayLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPlayLevel(v)
 		return nil
 	case musicdifficultie.FieldTotalNoteCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTotalNoteCount(v)
 		return nil
 	case musicdifficultie.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -44886,35 +44886,35 @@ func (m *MusicdifficultieMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MusicdifficultieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case musicdifficultie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case musicdifficultie.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMusicID(v)
 		return nil
 	case musicdifficultie.FieldPlayLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPlayLevel(v)
 		return nil
 	case musicdifficultie.FieldTotalNoteCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddTotalNoteCount(v)
 		return nil
 	case musicdifficultie.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -45059,14 +45059,14 @@ type MusictagMutation struct {
 	op              Op
 	typ             string
 	id              *int
-	game_id         *int
-	addgame_id      *int
-	music_id        *int
-	addmusic_id     *int
+	game_id         *int64
+	addgame_id      *int64
+	music_id        *int64
+	addmusic_id     *int64
 	music_tag       *json.RawMessage
 	appendmusic_tag json.RawMessage
-	seq             *int
-	addseq          *int
+	seq             *int64
+	addseq          *int64
 	server_region   *string
 	clearedFields   map[string]struct{}
 	done            bool
@@ -45173,13 +45173,13 @@ func (m *MusictagMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MusictagMutation) SetGameID(i int) {
+func (m *MusictagMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MusictagMutation) GameID() (r int, exists bool) {
+func (m *MusictagMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -45190,7 +45190,7 @@ func (m *MusictagMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Musictag entity.
 // If the Musictag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusictagMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MusictagMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -45205,7 +45205,7 @@ func (m *MusictagMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MusictagMutation) AddGameID(i int) {
+func (m *MusictagMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -45214,7 +45214,7 @@ func (m *MusictagMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MusictagMutation) AddedGameID() (r int, exists bool) {
+func (m *MusictagMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -45229,13 +45229,13 @@ func (m *MusictagMutation) ResetGameID() {
 }
 
 // SetMusicID sets the "music_id" field.
-func (m *MusictagMutation) SetMusicID(i int) {
+func (m *MusictagMutation) SetMusicID(i int64) {
 	m.music_id = &i
 	m.addmusic_id = nil
 }
 
 // MusicID returns the value of the "music_id" field in the mutation.
-func (m *MusictagMutation) MusicID() (r int, exists bool) {
+func (m *MusictagMutation) MusicID() (r int64, exists bool) {
 	v := m.music_id
 	if v == nil {
 		return
@@ -45246,7 +45246,7 @@ func (m *MusictagMutation) MusicID() (r int, exists bool) {
 // OldMusicID returns the old "music_id" field's value of the Musictag entity.
 // If the Musictag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusictagMutation) OldMusicID(ctx context.Context) (v int, err error) {
+func (m *MusictagMutation) OldMusicID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
 	}
@@ -45261,7 +45261,7 @@ func (m *MusictagMutation) OldMusicID(ctx context.Context) (v int, err error) {
 }
 
 // AddMusicID adds i to the "music_id" field.
-func (m *MusictagMutation) AddMusicID(i int) {
+func (m *MusictagMutation) AddMusicID(i int64) {
 	if m.addmusic_id != nil {
 		*m.addmusic_id += i
 	} else {
@@ -45270,7 +45270,7 @@ func (m *MusictagMutation) AddMusicID(i int) {
 }
 
 // AddedMusicID returns the value that was added to the "music_id" field in this mutation.
-func (m *MusictagMutation) AddedMusicID() (r int, exists bool) {
+func (m *MusictagMutation) AddedMusicID() (r int64, exists bool) {
 	v := m.addmusic_id
 	if v == nil {
 		return
@@ -45364,13 +45364,13 @@ func (m *MusictagMutation) ResetMusicTag() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MusictagMutation) SetSeq(i int) {
+func (m *MusictagMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MusictagMutation) Seq() (r int, exists bool) {
+func (m *MusictagMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -45381,7 +45381,7 @@ func (m *MusictagMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Musictag entity.
 // If the Musictag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusictagMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MusictagMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -45396,7 +45396,7 @@ func (m *MusictagMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MusictagMutation) AddSeq(i int) {
+func (m *MusictagMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -45405,7 +45405,7 @@ func (m *MusictagMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MusictagMutation) AddedSeq() (r int, exists bool) {
+func (m *MusictagMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -45566,14 +45566,14 @@ func (m *MusictagMutation) OldField(ctx context.Context, name string) (ent.Value
 func (m *MusictagMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case musictag.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case musictag.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -45587,7 +45587,7 @@ func (m *MusictagMutation) SetField(name string, value ent.Value) error {
 		m.SetMusicTag(v)
 		return nil
 	case musictag.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -45641,21 +45641,21 @@ func (m *MusictagMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MusictagMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case musictag.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case musictag.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMusicID(v)
 		return nil
 	case musictag.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -45782,24 +45782,24 @@ type MusicvocalMutation struct {
 	op                         Op
 	typ                        string
 	id                         *int
-	game_id                    *int
-	addgame_id                 *int
-	music_id                   *int
-	addmusic_id                *int
+	game_id                    *int64
+	addgame_id                 *int64
+	music_id                   *int64
+	addmusic_id                *int64
 	music_vocal_type           *json.RawMessage
 	appendmusic_vocal_type     json.RawMessage
-	seq                        *int
-	addseq                     *int
-	release_condition_id       *int
-	addrelease_condition_id    *int
+	seq                        *int64
+	addseq                     *int64
+	release_condition_id       *int64
+	addrelease_condition_id    *int64
 	caption                    *string
 	characters                 *json.RawMessage
 	appendcharacters           json.RawMessage
 	assetbundle_name           *string
-	archive_published_at       *int
-	addarchive_published_at    *int
-	special_season_id          *int
-	addspecial_season_id       *int
+	archive_published_at       *int64
+	addarchive_published_at    *int64
+	special_season_id          *int64
+	addspecial_season_id       *int64
 	archive_display_type       *json.RawMessage
 	appendarchive_display_type json.RawMessage
 	server_region              *string
@@ -45908,13 +45908,13 @@ func (m *MusicvocalMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MusicvocalMutation) SetGameID(i int) {
+func (m *MusicvocalMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MusicvocalMutation) GameID() (r int, exists bool) {
+func (m *MusicvocalMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -45925,7 +45925,7 @@ func (m *MusicvocalMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -45940,7 +45940,7 @@ func (m *MusicvocalMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MusicvocalMutation) AddGameID(i int) {
+func (m *MusicvocalMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -45949,7 +45949,7 @@ func (m *MusicvocalMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MusicvocalMutation) AddedGameID() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -45964,13 +45964,13 @@ func (m *MusicvocalMutation) ResetGameID() {
 }
 
 // SetMusicID sets the "music_id" field.
-func (m *MusicvocalMutation) SetMusicID(i int) {
+func (m *MusicvocalMutation) SetMusicID(i int64) {
 	m.music_id = &i
 	m.addmusic_id = nil
 }
 
 // MusicID returns the value of the "music_id" field in the mutation.
-func (m *MusicvocalMutation) MusicID() (r int, exists bool) {
+func (m *MusicvocalMutation) MusicID() (r int64, exists bool) {
 	v := m.music_id
 	if v == nil {
 		return
@@ -45981,7 +45981,7 @@ func (m *MusicvocalMutation) MusicID() (r int, exists bool) {
 // OldMusicID returns the old "music_id" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldMusicID(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldMusicID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
 	}
@@ -45996,7 +45996,7 @@ func (m *MusicvocalMutation) OldMusicID(ctx context.Context) (v int, err error) 
 }
 
 // AddMusicID adds i to the "music_id" field.
-func (m *MusicvocalMutation) AddMusicID(i int) {
+func (m *MusicvocalMutation) AddMusicID(i int64) {
 	if m.addmusic_id != nil {
 		*m.addmusic_id += i
 	} else {
@@ -46005,7 +46005,7 @@ func (m *MusicvocalMutation) AddMusicID(i int) {
 }
 
 // AddedMusicID returns the value that was added to the "music_id" field in this mutation.
-func (m *MusicvocalMutation) AddedMusicID() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedMusicID() (r int64, exists bool) {
 	v := m.addmusic_id
 	if v == nil {
 		return
@@ -46099,13 +46099,13 @@ func (m *MusicvocalMutation) ResetMusicVocalType() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MusicvocalMutation) SetSeq(i int) {
+func (m *MusicvocalMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MusicvocalMutation) Seq() (r int, exists bool) {
+func (m *MusicvocalMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -46116,7 +46116,7 @@ func (m *MusicvocalMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -46131,7 +46131,7 @@ func (m *MusicvocalMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MusicvocalMutation) AddSeq(i int) {
+func (m *MusicvocalMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -46140,7 +46140,7 @@ func (m *MusicvocalMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MusicvocalMutation) AddedSeq() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -46169,13 +46169,13 @@ func (m *MusicvocalMutation) ResetSeq() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *MusicvocalMutation) SetReleaseConditionID(i int) {
+func (m *MusicvocalMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *MusicvocalMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *MusicvocalMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -46186,7 +46186,7 @@ func (m *MusicvocalMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -46201,7 +46201,7 @@ func (m *MusicvocalMutation) OldReleaseConditionID(ctx context.Context) (v int, 
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *MusicvocalMutation) AddReleaseConditionID(i int) {
+func (m *MusicvocalMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -46210,7 +46210,7 @@ func (m *MusicvocalMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *MusicvocalMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -46402,13 +46402,13 @@ func (m *MusicvocalMutation) ResetAssetbundleName() {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (m *MusicvocalMutation) SetArchivePublishedAt(i int) {
+func (m *MusicvocalMutation) SetArchivePublishedAt(i int64) {
 	m.archive_published_at = &i
 	m.addarchive_published_at = nil
 }
 
 // ArchivePublishedAt returns the value of the "archive_published_at" field in the mutation.
-func (m *MusicvocalMutation) ArchivePublishedAt() (r int, exists bool) {
+func (m *MusicvocalMutation) ArchivePublishedAt() (r int64, exists bool) {
 	v := m.archive_published_at
 	if v == nil {
 		return
@@ -46419,7 +46419,7 @@ func (m *MusicvocalMutation) ArchivePublishedAt() (r int, exists bool) {
 // OldArchivePublishedAt returns the old "archive_published_at" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldArchivePublishedAt(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldArchivePublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchivePublishedAt is only allowed on UpdateOne operations")
 	}
@@ -46434,7 +46434,7 @@ func (m *MusicvocalMutation) OldArchivePublishedAt(ctx context.Context) (v int, 
 }
 
 // AddArchivePublishedAt adds i to the "archive_published_at" field.
-func (m *MusicvocalMutation) AddArchivePublishedAt(i int) {
+func (m *MusicvocalMutation) AddArchivePublishedAt(i int64) {
 	if m.addarchive_published_at != nil {
 		*m.addarchive_published_at += i
 	} else {
@@ -46443,7 +46443,7 @@ func (m *MusicvocalMutation) AddArchivePublishedAt(i int) {
 }
 
 // AddedArchivePublishedAt returns the value that was added to the "archive_published_at" field in this mutation.
-func (m *MusicvocalMutation) AddedArchivePublishedAt() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedArchivePublishedAt() (r int64, exists bool) {
 	v := m.addarchive_published_at
 	if v == nil {
 		return
@@ -46472,13 +46472,13 @@ func (m *MusicvocalMutation) ResetArchivePublishedAt() {
 }
 
 // SetSpecialSeasonID sets the "special_season_id" field.
-func (m *MusicvocalMutation) SetSpecialSeasonID(i int) {
+func (m *MusicvocalMutation) SetSpecialSeasonID(i int64) {
 	m.special_season_id = &i
 	m.addspecial_season_id = nil
 }
 
 // SpecialSeasonID returns the value of the "special_season_id" field in the mutation.
-func (m *MusicvocalMutation) SpecialSeasonID() (r int, exists bool) {
+func (m *MusicvocalMutation) SpecialSeasonID() (r int64, exists bool) {
 	v := m.special_season_id
 	if v == nil {
 		return
@@ -46489,7 +46489,7 @@ func (m *MusicvocalMutation) SpecialSeasonID() (r int, exists bool) {
 // OldSpecialSeasonID returns the old "special_season_id" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldSpecialSeasonID(ctx context.Context) (v int, err error) {
+func (m *MusicvocalMutation) OldSpecialSeasonID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpecialSeasonID is only allowed on UpdateOne operations")
 	}
@@ -46504,7 +46504,7 @@ func (m *MusicvocalMutation) OldSpecialSeasonID(ctx context.Context) (v int, err
 }
 
 // AddSpecialSeasonID adds i to the "special_season_id" field.
-func (m *MusicvocalMutation) AddSpecialSeasonID(i int) {
+func (m *MusicvocalMutation) AddSpecialSeasonID(i int64) {
 	if m.addspecial_season_id != nil {
 		*m.addspecial_season_id += i
 	} else {
@@ -46513,7 +46513,7 @@ func (m *MusicvocalMutation) AddSpecialSeasonID(i int) {
 }
 
 // AddedSpecialSeasonID returns the value that was added to the "special_season_id" field in this mutation.
-func (m *MusicvocalMutation) AddedSpecialSeasonID() (r int, exists bool) {
+func (m *MusicvocalMutation) AddedSpecialSeasonID() (r int64, exists bool) {
 	v := m.addspecial_season_id
 	if v == nil {
 		return
@@ -46788,14 +46788,14 @@ func (m *MusicvocalMutation) OldField(ctx context.Context, name string) (ent.Val
 func (m *MusicvocalMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case musicvocal.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case musicvocal.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -46809,14 +46809,14 @@ func (m *MusicvocalMutation) SetField(name string, value ent.Value) error {
 		m.SetMusicVocalType(v)
 		return nil
 	case musicvocal.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case musicvocal.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -46844,14 +46844,14 @@ func (m *MusicvocalMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case musicvocal.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetArchivePublishedAt(v)
 		return nil
 	case musicvocal.FieldSpecialSeasonID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -46927,42 +46927,42 @@ func (m *MusicvocalMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MusicvocalMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case musicvocal.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case musicvocal.FieldMusicID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMusicID(v)
 		return nil
 	case musicvocal.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case musicvocal.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseConditionID(v)
 		return nil
 	case musicvocal.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddArchivePublishedAt(v)
 		return nil
 	case musicvocal.FieldSpecialSeasonID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47152,16 +47152,16 @@ type MysekaiblueprintMutation struct {
 	op                              Op
 	typ                             string
 	id                              *int
-	game_id                         *int
-	addgame_id                      *int
+	game_id                         *int64
+	addgame_id                      *int64
 	mysekai_craft_type              *json.RawMessage
 	appendmysekai_craft_type        json.RawMessage
-	craft_target_id                 *int
-	addcraft_target_id              *int
+	craft_target_id                 *int64
+	addcraft_target_id              *int64
 	is_enable_sketch                *bool
 	is_obtained_by_convert          *bool
-	craft_count_limit               *int
-	addcraft_count_limit            *int
+	craft_count_limit               *int64
+	addcraft_count_limit            *int64
 	is_available_without_possession *bool
 	server_region                   *string
 	clearedFields                   map[string]struct{}
@@ -47269,13 +47269,13 @@ func (m *MysekaiblueprintMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaiblueprintMutation) SetGameID(i int) {
+func (m *MysekaiblueprintMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaiblueprintMutation) GameID() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -47286,7 +47286,7 @@ func (m *MysekaiblueprintMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaiblueprint entity.
 // If the Mysekaiblueprint object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -47301,7 +47301,7 @@ func (m *MysekaiblueprintMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaiblueprintMutation) AddGameID(i int) {
+func (m *MysekaiblueprintMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -47310,7 +47310,7 @@ func (m *MysekaiblueprintMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaiblueprintMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -47390,13 +47390,13 @@ func (m *MysekaiblueprintMutation) ResetMysekaiCraftType() {
 }
 
 // SetCraftTargetID sets the "craft_target_id" field.
-func (m *MysekaiblueprintMutation) SetCraftTargetID(i int) {
+func (m *MysekaiblueprintMutation) SetCraftTargetID(i int64) {
 	m.craft_target_id = &i
 	m.addcraft_target_id = nil
 }
 
 // CraftTargetID returns the value of the "craft_target_id" field in the mutation.
-func (m *MysekaiblueprintMutation) CraftTargetID() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) CraftTargetID() (r int64, exists bool) {
 	v := m.craft_target_id
 	if v == nil {
 		return
@@ -47407,7 +47407,7 @@ func (m *MysekaiblueprintMutation) CraftTargetID() (r int, exists bool) {
 // OldCraftTargetID returns the old "craft_target_id" field's value of the Mysekaiblueprint entity.
 // If the Mysekaiblueprint object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintMutation) OldCraftTargetID(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintMutation) OldCraftTargetID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCraftTargetID is only allowed on UpdateOne operations")
 	}
@@ -47422,7 +47422,7 @@ func (m *MysekaiblueprintMutation) OldCraftTargetID(ctx context.Context) (v int,
 }
 
 // AddCraftTargetID adds i to the "craft_target_id" field.
-func (m *MysekaiblueprintMutation) AddCraftTargetID(i int) {
+func (m *MysekaiblueprintMutation) AddCraftTargetID(i int64) {
 	if m.addcraft_target_id != nil {
 		*m.addcraft_target_id += i
 	} else {
@@ -47431,7 +47431,7 @@ func (m *MysekaiblueprintMutation) AddCraftTargetID(i int) {
 }
 
 // AddedCraftTargetID returns the value that was added to the "craft_target_id" field in this mutation.
-func (m *MysekaiblueprintMutation) AddedCraftTargetID() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) AddedCraftTargetID() (r int64, exists bool) {
 	v := m.addcraft_target_id
 	if v == nil {
 		return
@@ -47558,13 +47558,13 @@ func (m *MysekaiblueprintMutation) ResetIsObtainedByConvert() {
 }
 
 // SetCraftCountLimit sets the "craft_count_limit" field.
-func (m *MysekaiblueprintMutation) SetCraftCountLimit(i int) {
+func (m *MysekaiblueprintMutation) SetCraftCountLimit(i int64) {
 	m.craft_count_limit = &i
 	m.addcraft_count_limit = nil
 }
 
 // CraftCountLimit returns the value of the "craft_count_limit" field in the mutation.
-func (m *MysekaiblueprintMutation) CraftCountLimit() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) CraftCountLimit() (r int64, exists bool) {
 	v := m.craft_count_limit
 	if v == nil {
 		return
@@ -47575,7 +47575,7 @@ func (m *MysekaiblueprintMutation) CraftCountLimit() (r int, exists bool) {
 // OldCraftCountLimit returns the old "craft_count_limit" field's value of the Mysekaiblueprint entity.
 // If the Mysekaiblueprint object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintMutation) OldCraftCountLimit(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintMutation) OldCraftCountLimit(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCraftCountLimit is only allowed on UpdateOne operations")
 	}
@@ -47590,7 +47590,7 @@ func (m *MysekaiblueprintMutation) OldCraftCountLimit(ctx context.Context) (v in
 }
 
 // AddCraftCountLimit adds i to the "craft_count_limit" field.
-func (m *MysekaiblueprintMutation) AddCraftCountLimit(i int) {
+func (m *MysekaiblueprintMutation) AddCraftCountLimit(i int64) {
 	if m.addcraft_count_limit != nil {
 		*m.addcraft_count_limit += i
 	} else {
@@ -47599,7 +47599,7 @@ func (m *MysekaiblueprintMutation) AddCraftCountLimit(i int) {
 }
 
 // AddedCraftCountLimit returns the value that was added to the "craft_count_limit" field in this mutation.
-func (m *MysekaiblueprintMutation) AddedCraftCountLimit() (r int, exists bool) {
+func (m *MysekaiblueprintMutation) AddedCraftCountLimit() (r int64, exists bool) {
 	v := m.addcraft_count_limit
 	if v == nil {
 		return
@@ -47830,7 +47830,7 @@ func (m *MysekaiblueprintMutation) OldField(ctx context.Context, name string) (e
 func (m *MysekaiblueprintMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiblueprint.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47844,7 +47844,7 @@ func (m *MysekaiblueprintMutation) SetField(name string, value ent.Value) error 
 		m.SetMysekaiCraftType(v)
 		return nil
 	case mysekaiblueprint.FieldCraftTargetID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47865,7 +47865,7 @@ func (m *MysekaiblueprintMutation) SetField(name string, value ent.Value) error 
 		m.SetIsObtainedByConvert(v)
 		return nil
 	case mysekaiblueprint.FieldCraftCountLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47926,21 +47926,21 @@ func (m *MysekaiblueprintMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaiblueprintMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiblueprint.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaiblueprint.FieldCraftTargetID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCraftTargetID(v)
 		return nil
 	case mysekaiblueprint.FieldCraftCountLimit:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -48094,16 +48094,16 @@ type MysekaiblueprintmysekaimaterialcostMutation struct {
 	op                           Op
 	typ                          string
 	id                           *int
-	game_id                      *int
-	addgame_id                   *int
-	mysekai_blueprint_id         *int
-	addmysekai_blueprint_id      *int
-	mysekai_material_id          *int
-	addmysekai_material_id       *int
-	seq                          *int
-	addseq                       *int
-	quantity                     *int
-	addquantity                  *int
+	game_id                      *int64
+	addgame_id                   *int64
+	mysekai_blueprint_id         *int64
+	addmysekai_blueprint_id      *int64
+	mysekai_material_id          *int64
+	addmysekai_material_id       *int64
+	seq                          *int64
+	addseq                       *int64
+	quantity                     *int64
+	addquantity                  *int64
 	mysekai_blueprint_type       *json.RawMessage
 	appendmysekai_blueprint_type json.RawMessage
 	server_region                *string
@@ -48212,13 +48212,13 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) IDs(ctx context.Context) (
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetGameID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) GameID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -48229,7 +48229,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) GameID() (r int, exists bo
 // OldGameID returns the old "game_id" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -48244,7 +48244,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldGameID(ctx context.Cont
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddGameID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -48253,7 +48253,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -48268,13 +48268,13 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetGameID() {
 }
 
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiBlueprintID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiBlueprintID(i int64) {
 	m.mysekai_blueprint_id = &i
 	m.addmysekai_blueprint_id = nil
 }
 
 // MysekaiBlueprintID returns the value of the "mysekai_blueprint_id" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintID() (r int64, exists bool) {
 	v := m.mysekai_blueprint_id
 	if v == nil {
 		return
@@ -48285,7 +48285,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintID() (r in
 // OldMysekaiBlueprintID returns the old "mysekai_blueprint_id" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintID(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiBlueprintID is only allowed on UpdateOne operations")
 	}
@@ -48300,7 +48300,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintID(ctx 
 }
 
 // AddMysekaiBlueprintID adds i to the "mysekai_blueprint_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiBlueprintID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiBlueprintID(i int64) {
 	if m.addmysekai_blueprint_id != nil {
 		*m.addmysekai_blueprint_id += i
 	} else {
@@ -48309,7 +48309,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiBlueprintID(i in
 }
 
 // AddedMysekaiBlueprintID returns the value that was added to the "mysekai_blueprint_id" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedMysekaiBlueprintID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedMysekaiBlueprintID() (r int64, exists bool) {
 	v := m.addmysekai_blueprint_id
 	if v == nil {
 		return
@@ -48338,13 +48338,13 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetMysekaiBlueprintID() 
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiMaterialID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiMaterialID(i int64) {
 	m.mysekai_material_id = &i
 	m.addmysekai_material_id = nil
 }
 
 // MysekaiMaterialID returns the value of the "mysekai_material_id" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiMaterialID() (r int64, exists bool) {
 	v := m.mysekai_material_id
 	if v == nil {
 		return
@@ -48355,7 +48355,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiMaterialID() (r int
 // OldMysekaiMaterialID returns the old "mysekai_material_id" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiMaterialID(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiMaterialID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialID is only allowed on UpdateOne operations")
 	}
@@ -48370,7 +48370,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiMaterialID(ctx c
 }
 
 // AddMysekaiMaterialID adds i to the "mysekai_material_id" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiMaterialID(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiMaterialID(i int64) {
 	if m.addmysekai_material_id != nil {
 		*m.addmysekai_material_id += i
 	} else {
@@ -48379,7 +48379,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddMysekaiMaterialID(i int
 }
 
 // AddedMysekaiMaterialID returns the value that was added to the "mysekai_material_id" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedMysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedMysekaiMaterialID() (r int64, exists bool) {
 	v := m.addmysekai_material_id
 	if v == nil {
 		return
@@ -48408,13 +48408,13 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetMysekaiMaterialID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetSeq(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) Seq() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -48425,7 +48425,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) Seq() (r int, exists bool)
 // OldSeq returns the old "seq" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -48440,7 +48440,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldSeq(ctx context.Context
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddSeq(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -48449,7 +48449,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -48478,13 +48478,13 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetSeq() {
 }
 
 // SetQuantity sets the "quantity" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetQuantity(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetQuantity(i int64) {
 	m.quantity = &i
 	m.addquantity = nil
 }
 
 // Quantity returns the value of the "quantity" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) Quantity() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) Quantity() (r int64, exists bool) {
 	v := m.quantity
 	if v == nil {
 		return
@@ -48495,7 +48495,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) Quantity() (r int, exists 
 // OldQuantity returns the old "quantity" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldQuantity(ctx context.Context) (v int, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldQuantity(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
 	}
@@ -48510,7 +48510,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldQuantity(ctx context.Co
 }
 
 // AddQuantity adds i to the "quantity" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddQuantity(i int) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddQuantity(i int64) {
 	if m.addquantity != nil {
 		*m.addquantity += i
 	} else {
@@ -48519,7 +48519,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddQuantity(i int) {
 }
 
 // AddedQuantity returns the value that was added to the "quantity" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedQuantity() (r int, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedQuantity() (r int64, exists bool) {
 	v := m.addquantity
 	if v == nil {
 		return
@@ -48759,35 +48759,35 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldField(ctx context.Conte
 func (m *MysekaiblueprintmysekaimaterialcostMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiblueprintmysekaimaterialcost.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiBlueprintID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiMaterialID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -48858,35 +48858,35 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedField(name string) (e
 func (m *MysekaiblueprintmysekaimaterialcostMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiblueprintmysekaimaterialcost.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiBlueprintID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiMaterialID(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -49031,18 +49031,18 @@ type MysekaicharactertalkMutation struct {
 	op                                                   Op
 	typ                                                  string
 	id                                                   *int
-	game_id                                              *int
-	addgame_id                                           *int
-	mysekai_game_character_unit_group_id                 *int
-	addmysekai_game_character_unit_group_id              *int
-	mysekai_character_talk_condition_group_id            *int
-	addmysekai_character_talk_condition_group_id         *int
-	mysekai_site_group_id                                *int
-	addmysekai_site_group_id                             *int
-	mysekai_character_talk_term_id                       *int
-	addmysekai_character_talk_term_id                    *int
-	character_archive_mysekai_character_talk_group_id    *int
-	addcharacter_archive_mysekai_character_talk_group_id *int
+	game_id                                              *int64
+	addgame_id                                           *int64
+	mysekai_game_character_unit_group_id                 *int64
+	addmysekai_game_character_unit_group_id              *int64
+	mysekai_character_talk_condition_group_id            *int64
+	addmysekai_character_talk_condition_group_id         *int64
+	mysekai_site_group_id                                *int64
+	addmysekai_site_group_id                             *int64
+	mysekai_character_talk_term_id                       *int64
+	addmysekai_character_talk_term_id                    *int64
+	character_archive_mysekai_character_talk_group_id    *int64
+	addcharacter_archive_mysekai_character_talk_group_id *int64
 	assetbundle_name                                     *json.RawMessage
 	appendassetbundle_name                               json.RawMessage
 	lua                                                  *string
@@ -49153,13 +49153,13 @@ func (m *MysekaicharactertalkMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaicharactertalkMutation) SetGameID(i int) {
+func (m *MysekaicharactertalkMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) GameID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -49170,7 +49170,7 @@ func (m *MysekaicharactertalkMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -49185,7 +49185,7 @@ func (m *MysekaicharactertalkMutation) OldGameID(ctx context.Context) (v int, er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaicharactertalkMutation) AddGameID(i int) {
+func (m *MysekaicharactertalkMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -49194,7 +49194,7 @@ func (m *MysekaicharactertalkMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -49209,13 +49209,13 @@ func (m *MysekaicharactertalkMutation) ResetGameID() {
 }
 
 // SetMysekaiGameCharacterUnitGroupID sets the "mysekai_game_character_unit_group_id" field.
-func (m *MysekaicharactertalkMutation) SetMysekaiGameCharacterUnitGroupID(i int) {
+func (m *MysekaicharactertalkMutation) SetMysekaiGameCharacterUnitGroupID(i int64) {
 	m.mysekai_game_character_unit_group_id = &i
 	m.addmysekai_game_character_unit_group_id = nil
 }
 
 // MysekaiGameCharacterUnitGroupID returns the value of the "mysekai_game_character_unit_group_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) MysekaiGameCharacterUnitGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) MysekaiGameCharacterUnitGroupID() (r int64, exists bool) {
 	v := m.mysekai_game_character_unit_group_id
 	if v == nil {
 		return
@@ -49226,7 +49226,7 @@ func (m *MysekaicharactertalkMutation) MysekaiGameCharacterUnitGroupID() (r int,
 // OldMysekaiGameCharacterUnitGroupID returns the old "mysekai_game_character_unit_group_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldMysekaiGameCharacterUnitGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldMysekaiGameCharacterUnitGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiGameCharacterUnitGroupID is only allowed on UpdateOne operations")
 	}
@@ -49241,7 +49241,7 @@ func (m *MysekaicharactertalkMutation) OldMysekaiGameCharacterUnitGroupID(ctx co
 }
 
 // AddMysekaiGameCharacterUnitGroupID adds i to the "mysekai_game_character_unit_group_id" field.
-func (m *MysekaicharactertalkMutation) AddMysekaiGameCharacterUnitGroupID(i int) {
+func (m *MysekaicharactertalkMutation) AddMysekaiGameCharacterUnitGroupID(i int64) {
 	if m.addmysekai_game_character_unit_group_id != nil {
 		*m.addmysekai_game_character_unit_group_id += i
 	} else {
@@ -49250,7 +49250,7 @@ func (m *MysekaicharactertalkMutation) AddMysekaiGameCharacterUnitGroupID(i int)
 }
 
 // AddedMysekaiGameCharacterUnitGroupID returns the value that was added to the "mysekai_game_character_unit_group_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedMysekaiGameCharacterUnitGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedMysekaiGameCharacterUnitGroupID() (r int64, exists bool) {
 	v := m.addmysekai_game_character_unit_group_id
 	if v == nil {
 		return
@@ -49279,13 +49279,13 @@ func (m *MysekaicharactertalkMutation) ResetMysekaiGameCharacterUnitGroupID() {
 }
 
 // SetMysekaiCharacterTalkConditionGroupID sets the "mysekai_character_talk_condition_group_id" field.
-func (m *MysekaicharactertalkMutation) SetMysekaiCharacterTalkConditionGroupID(i int) {
+func (m *MysekaicharactertalkMutation) SetMysekaiCharacterTalkConditionGroupID(i int64) {
 	m.mysekai_character_talk_condition_group_id = &i
 	m.addmysekai_character_talk_condition_group_id = nil
 }
 
 // MysekaiCharacterTalkConditionGroupID returns the value of the "mysekai_character_talk_condition_group_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkConditionGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkConditionGroupID() (r int64, exists bool) {
 	v := m.mysekai_character_talk_condition_group_id
 	if v == nil {
 		return
@@ -49296,7 +49296,7 @@ func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkConditionGroupID() (r
 // OldMysekaiCharacterTalkConditionGroupID returns the old "mysekai_character_talk_condition_group_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkConditionGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkConditionGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkConditionGroupID is only allowed on UpdateOne operations")
 	}
@@ -49311,7 +49311,7 @@ func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkConditionGroupID(c
 }
 
 // AddMysekaiCharacterTalkConditionGroupID adds i to the "mysekai_character_talk_condition_group_id" field.
-func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkConditionGroupID(i int) {
+func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkConditionGroupID(i int64) {
 	if m.addmysekai_character_talk_condition_group_id != nil {
 		*m.addmysekai_character_talk_condition_group_id += i
 	} else {
@@ -49320,7 +49320,7 @@ func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkConditionGroupID(i
 }
 
 // AddedMysekaiCharacterTalkConditionGroupID returns the value that was added to the "mysekai_character_talk_condition_group_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedMysekaiCharacterTalkConditionGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedMysekaiCharacterTalkConditionGroupID() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_condition_group_id
 	if v == nil {
 		return
@@ -49349,13 +49349,13 @@ func (m *MysekaicharactertalkMutation) ResetMysekaiCharacterTalkConditionGroupID
 }
 
 // SetMysekaiSiteGroupID sets the "mysekai_site_group_id" field.
-func (m *MysekaicharactertalkMutation) SetMysekaiSiteGroupID(i int) {
+func (m *MysekaicharactertalkMutation) SetMysekaiSiteGroupID(i int64) {
 	m.mysekai_site_group_id = &i
 	m.addmysekai_site_group_id = nil
 }
 
 // MysekaiSiteGroupID returns the value of the "mysekai_site_group_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) MysekaiSiteGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) MysekaiSiteGroupID() (r int64, exists bool) {
 	v := m.mysekai_site_group_id
 	if v == nil {
 		return
@@ -49366,7 +49366,7 @@ func (m *MysekaicharactertalkMutation) MysekaiSiteGroupID() (r int, exists bool)
 // OldMysekaiSiteGroupID returns the old "mysekai_site_group_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldMysekaiSiteGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldMysekaiSiteGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiSiteGroupID is only allowed on UpdateOne operations")
 	}
@@ -49381,7 +49381,7 @@ func (m *MysekaicharactertalkMutation) OldMysekaiSiteGroupID(ctx context.Context
 }
 
 // AddMysekaiSiteGroupID adds i to the "mysekai_site_group_id" field.
-func (m *MysekaicharactertalkMutation) AddMysekaiSiteGroupID(i int) {
+func (m *MysekaicharactertalkMutation) AddMysekaiSiteGroupID(i int64) {
 	if m.addmysekai_site_group_id != nil {
 		*m.addmysekai_site_group_id += i
 	} else {
@@ -49390,7 +49390,7 @@ func (m *MysekaicharactertalkMutation) AddMysekaiSiteGroupID(i int) {
 }
 
 // AddedMysekaiSiteGroupID returns the value that was added to the "mysekai_site_group_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedMysekaiSiteGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedMysekaiSiteGroupID() (r int64, exists bool) {
 	v := m.addmysekai_site_group_id
 	if v == nil {
 		return
@@ -49419,13 +49419,13 @@ func (m *MysekaicharactertalkMutation) ResetMysekaiSiteGroupID() {
 }
 
 // SetMysekaiCharacterTalkTermID sets the "mysekai_character_talk_term_id" field.
-func (m *MysekaicharactertalkMutation) SetMysekaiCharacterTalkTermID(i int) {
+func (m *MysekaicharactertalkMutation) SetMysekaiCharacterTalkTermID(i int64) {
 	m.mysekai_character_talk_term_id = &i
 	m.addmysekai_character_talk_term_id = nil
 }
 
 // MysekaiCharacterTalkTermID returns the value of the "mysekai_character_talk_term_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkTermID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkTermID() (r int64, exists bool) {
 	v := m.mysekai_character_talk_term_id
 	if v == nil {
 		return
@@ -49436,7 +49436,7 @@ func (m *MysekaicharactertalkMutation) MysekaiCharacterTalkTermID() (r int, exis
 // OldMysekaiCharacterTalkTermID returns the old "mysekai_character_talk_term_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkTermID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkTermID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkTermID is only allowed on UpdateOne operations")
 	}
@@ -49451,7 +49451,7 @@ func (m *MysekaicharactertalkMutation) OldMysekaiCharacterTalkTermID(ctx context
 }
 
 // AddMysekaiCharacterTalkTermID adds i to the "mysekai_character_talk_term_id" field.
-func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkTermID(i int) {
+func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkTermID(i int64) {
 	if m.addmysekai_character_talk_term_id != nil {
 		*m.addmysekai_character_talk_term_id += i
 	} else {
@@ -49460,7 +49460,7 @@ func (m *MysekaicharactertalkMutation) AddMysekaiCharacterTalkTermID(i int) {
 }
 
 // AddedMysekaiCharacterTalkTermID returns the value that was added to the "mysekai_character_talk_term_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedMysekaiCharacterTalkTermID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedMysekaiCharacterTalkTermID() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_term_id
 	if v == nil {
 		return
@@ -49489,13 +49489,13 @@ func (m *MysekaicharactertalkMutation) ResetMysekaiCharacterTalkTermID() {
 }
 
 // SetCharacterArchiveMysekaiCharacterTalkGroupID sets the "character_archive_mysekai_character_talk_group_id" field.
-func (m *MysekaicharactertalkMutation) SetCharacterArchiveMysekaiCharacterTalkGroupID(i int) {
+func (m *MysekaicharactertalkMutation) SetCharacterArchiveMysekaiCharacterTalkGroupID(i int64) {
 	m.character_archive_mysekai_character_talk_group_id = &i
 	m.addcharacter_archive_mysekai_character_talk_group_id = nil
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupID returns the value of the "character_archive_mysekai_character_talk_group_id" field in the mutation.
-func (m *MysekaicharactertalkMutation) CharacterArchiveMysekaiCharacterTalkGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) CharacterArchiveMysekaiCharacterTalkGroupID() (r int64, exists bool) {
 	v := m.character_archive_mysekai_character_talk_group_id
 	if v == nil {
 		return
@@ -49506,7 +49506,7 @@ func (m *MysekaicharactertalkMutation) CharacterArchiveMysekaiCharacterTalkGroup
 // OldCharacterArchiveMysekaiCharacterTalkGroupID returns the old "character_archive_mysekai_character_talk_group_id" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldCharacterArchiveMysekaiCharacterTalkGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkMutation) OldCharacterArchiveMysekaiCharacterTalkGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterArchiveMysekaiCharacterTalkGroupID is only allowed on UpdateOne operations")
 	}
@@ -49521,7 +49521,7 @@ func (m *MysekaicharactertalkMutation) OldCharacterArchiveMysekaiCharacterTalkGr
 }
 
 // AddCharacterArchiveMysekaiCharacterTalkGroupID adds i to the "character_archive_mysekai_character_talk_group_id" field.
-func (m *MysekaicharactertalkMutation) AddCharacterArchiveMysekaiCharacterTalkGroupID(i int) {
+func (m *MysekaicharactertalkMutation) AddCharacterArchiveMysekaiCharacterTalkGroupID(i int64) {
 	if m.addcharacter_archive_mysekai_character_talk_group_id != nil {
 		*m.addcharacter_archive_mysekai_character_talk_group_id += i
 	} else {
@@ -49530,7 +49530,7 @@ func (m *MysekaicharactertalkMutation) AddCharacterArchiveMysekaiCharacterTalkGr
 }
 
 // AddedCharacterArchiveMysekaiCharacterTalkGroupID returns the value that was added to the "character_archive_mysekai_character_talk_group_id" field in this mutation.
-func (m *MysekaicharactertalkMutation) AddedCharacterArchiveMysekaiCharacterTalkGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkMutation) AddedCharacterArchiveMysekaiCharacterTalkGroupID() (r int64, exists bool) {
 	v := m.addcharacter_archive_mysekai_character_talk_group_id
 	if v == nil {
 		return
@@ -49889,42 +49889,42 @@ func (m *MysekaicharactertalkMutation) OldField(ctx context.Context, name string
 func (m *MysekaicharactertalkMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalk.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiGameCharacterUnitGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiCharacterTalkConditionGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiSiteGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiSiteGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiCharacterTalkTermID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiCharacterTalkTermID(v)
 		return nil
 	case mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -50014,42 +50014,42 @@ func (m *MysekaicharactertalkMutation) AddedField(name string) (ent.Value, bool)
 func (m *MysekaicharactertalkMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalk.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiGameCharacterUnitGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiCharacterTalkConditionGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiSiteGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiSiteGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldMysekaiCharacterTalkTermID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiCharacterTalkTermID(v)
 		return nil
 	case mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -50221,12 +50221,12 @@ type MysekaicharactertalkconditionMutation struct {
 	op                                             Op
 	typ                                            string
 	id                                             *int
-	game_id                                        *int
-	addgame_id                                     *int
+	game_id                                        *int64
+	addgame_id                                     *int64
 	mysekai_character_talk_condition_type          *json.RawMessage
 	appendmysekai_character_talk_condition_type    json.RawMessage
-	mysekai_character_talk_condition_type_value    *int
-	addmysekai_character_talk_condition_type_value *int
+	mysekai_character_talk_condition_type_value    *int64
+	addmysekai_character_talk_condition_type_value *int64
 	server_region                                  *string
 	clearedFields                                  map[string]struct{}
 	done                                           bool
@@ -50333,13 +50333,13 @@ func (m *MysekaicharactertalkconditionMutation) IDs(ctx context.Context) ([]int,
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaicharactertalkconditionMutation) SetGameID(i int) {
+func (m *MysekaicharactertalkconditionMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaicharactertalkconditionMutation) GameID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditionMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -50350,7 +50350,7 @@ func (m *MysekaicharactertalkconditionMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaicharactertalkcondition entity.
 // If the Mysekaicharactertalkcondition object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditionMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkconditionMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -50365,7 +50365,7 @@ func (m *MysekaicharactertalkconditionMutation) OldGameID(ctx context.Context) (
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaicharactertalkconditionMutation) AddGameID(i int) {
+func (m *MysekaicharactertalkconditionMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -50374,7 +50374,7 @@ func (m *MysekaicharactertalkconditionMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaicharactertalkconditionMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditionMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -50454,13 +50454,13 @@ func (m *MysekaicharactertalkconditionMutation) ResetMysekaiCharacterTalkConditi
 }
 
 // SetMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field.
-func (m *MysekaicharactertalkconditionMutation) SetMysekaiCharacterTalkConditionTypeValue(i int) {
+func (m *MysekaicharactertalkconditionMutation) SetMysekaiCharacterTalkConditionTypeValue(i int64) {
 	m.mysekai_character_talk_condition_type_value = &i
 	m.addmysekai_character_talk_condition_type_value = nil
 }
 
 // MysekaiCharacterTalkConditionTypeValue returns the value of the "mysekai_character_talk_condition_type_value" field in the mutation.
-func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionTypeValue() (r int, exists bool) {
+func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionTypeValue() (r int64, exists bool) {
 	v := m.mysekai_character_talk_condition_type_value
 	if v == nil {
 		return
@@ -50471,7 +50471,7 @@ func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionTyp
 // OldMysekaiCharacterTalkConditionTypeValue returns the old "mysekai_character_talk_condition_type_value" field's value of the Mysekaicharactertalkcondition entity.
 // If the Mysekaicharactertalkcondition object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkConditionTypeValue(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkConditionTypeValue(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkConditionTypeValue is only allowed on UpdateOne operations")
 	}
@@ -50486,7 +50486,7 @@ func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkCondition
 }
 
 // AddMysekaiCharacterTalkConditionTypeValue adds i to the "mysekai_character_talk_condition_type_value" field.
-func (m *MysekaicharactertalkconditionMutation) AddMysekaiCharacterTalkConditionTypeValue(i int) {
+func (m *MysekaicharactertalkconditionMutation) AddMysekaiCharacterTalkConditionTypeValue(i int64) {
 	if m.addmysekai_character_talk_condition_type_value != nil {
 		*m.addmysekai_character_talk_condition_type_value += i
 	} else {
@@ -50495,7 +50495,7 @@ func (m *MysekaicharactertalkconditionMutation) AddMysekaiCharacterTalkCondition
 }
 
 // AddedMysekaiCharacterTalkConditionTypeValue returns the value that was added to the "mysekai_character_talk_condition_type_value" field in this mutation.
-func (m *MysekaicharactertalkconditionMutation) AddedMysekaiCharacterTalkConditionTypeValue() (r int, exists bool) {
+func (m *MysekaicharactertalkconditionMutation) AddedMysekaiCharacterTalkConditionTypeValue() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_condition_type_value
 	if v == nil {
 		return
@@ -50649,7 +50649,7 @@ func (m *MysekaicharactertalkconditionMutation) OldField(ctx context.Context, na
 func (m *MysekaicharactertalkconditionMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkcondition.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -50663,7 +50663,7 @@ func (m *MysekaicharactertalkconditionMutation) SetField(name string, value ent.
 		m.SetMysekaiCharacterTalkConditionType(v)
 		return nil
 	case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -50712,14 +50712,14 @@ func (m *MysekaicharactertalkconditionMutation) AddedField(name string) (ent.Val
 func (m *MysekaicharactertalkconditionMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkcondition.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -50837,12 +50837,12 @@ type MysekaicharactertalkconditiongroupMutation struct {
 	op                                     Op
 	typ                                    string
 	id                                     *int
-	game_id                                *int
-	addgame_id                             *int
-	group_id                               *int
-	addgroup_id                            *int
-	mysekai_character_talk_condition_id    *int
-	addmysekai_character_talk_condition_id *int
+	game_id                                *int64
+	addgame_id                             *int64
+	group_id                               *int64
+	addgroup_id                            *int64
+	mysekai_character_talk_condition_id    *int64
+	addmysekai_character_talk_condition_id *int64
 	server_region                          *string
 	clearedFields                          map[string]struct{}
 	done                                   bool
@@ -50949,13 +50949,13 @@ func (m *MysekaicharactertalkconditiongroupMutation) IDs(ctx context.Context) ([
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) SetGameID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) GameID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -50966,7 +50966,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) GameID() (r int, exists boo
 // OldGameID returns the old "game_id" field's value of the Mysekaicharactertalkconditiongroup entity.
 // If the Mysekaicharactertalkconditiongroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditiongroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkconditiongroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -50981,7 +50981,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) OldGameID(ctx context.Conte
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) AddGameID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -50990,7 +50990,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -51005,13 +51005,13 @@ func (m *MysekaicharactertalkconditiongroupMutation) ResetGameID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) SetGroupID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) GroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -51022,7 +51022,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) GroupID() (r int, exists bo
 // OldGroupID returns the old "group_id" field's value of the Mysekaicharactertalkconditiongroup entity.
 // If the Mysekaicharactertalkconditiongroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditiongroupMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkconditiongroupMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -51037,7 +51037,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) OldGroupID(ctx context.Cont
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) AddGroupID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -51046,7 +51046,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) AddedGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -51075,13 +51075,13 @@ func (m *MysekaicharactertalkconditiongroupMutation) ResetGroupID() {
 }
 
 // SetMysekaiCharacterTalkConditionID sets the "mysekai_character_talk_condition_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) SetMysekaiCharacterTalkConditionID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) SetMysekaiCharacterTalkConditionID(i int64) {
 	m.mysekai_character_talk_condition_id = &i
 	m.addmysekai_character_talk_condition_id = nil
 }
 
 // MysekaiCharacterTalkConditionID returns the value of the "mysekai_character_talk_condition_id" field in the mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) MysekaiCharacterTalkConditionID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) MysekaiCharacterTalkConditionID() (r int64, exists bool) {
 	v := m.mysekai_character_talk_condition_id
 	if v == nil {
 		return
@@ -51092,7 +51092,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) MysekaiCharacterTalkConditi
 // OldMysekaiCharacterTalkConditionID returns the old "mysekai_character_talk_condition_id" field's value of the Mysekaicharactertalkconditiongroup entity.
 // If the Mysekaicharactertalkconditiongroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditiongroupMutation) OldMysekaiCharacterTalkConditionID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkconditiongroupMutation) OldMysekaiCharacterTalkConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkConditionID is only allowed on UpdateOne operations")
 	}
@@ -51107,7 +51107,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) OldMysekaiCharacterTalkCond
 }
 
 // AddMysekaiCharacterTalkConditionID adds i to the "mysekai_character_talk_condition_id" field.
-func (m *MysekaicharactertalkconditiongroupMutation) AddMysekaiCharacterTalkConditionID(i int) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddMysekaiCharacterTalkConditionID(i int64) {
 	if m.addmysekai_character_talk_condition_id != nil {
 		*m.addmysekai_character_talk_condition_id += i
 	} else {
@@ -51116,7 +51116,7 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddMysekaiCharacterTalkCond
 }
 
 // AddedMysekaiCharacterTalkConditionID returns the value that was added to the "mysekai_character_talk_condition_id" field in this mutation.
-func (m *MysekaicharactertalkconditiongroupMutation) AddedMysekaiCharacterTalkConditionID() (r int, exists bool) {
+func (m *MysekaicharactertalkconditiongroupMutation) AddedMysekaiCharacterTalkConditionID() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_condition_id
 	if v == nil {
 		return
@@ -51270,21 +51270,21 @@ func (m *MysekaicharactertalkconditiongroupMutation) OldField(ctx context.Contex
 func (m *MysekaicharactertalkconditiongroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkconditiongroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaicharactertalkconditiongroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
 		return nil
 	case mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -51338,21 +51338,21 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddedField(name string) (en
 func (m *MysekaicharactertalkconditiongroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkconditiongroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaicharactertalkconditiongroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -51470,16 +51470,16 @@ type MysekaicharactertalkfixturecommonMutation struct {
 	op                                                                Op
 	typ                                                               string
 	id                                                                *int
-	game_id                                                           *int
-	addgame_id                                                        *int
-	game_character_unit_id                                            *int
-	addgame_character_unit_id                                         *int
+	game_id                                                           *int64
+	addgame_id                                                        *int64
+	game_character_unit_id                                            *int64
+	addgame_character_unit_id                                         *int64
 	mysekai_character_talk_fixture_common_type                        *json.RawMessage
 	appendmysekai_character_talk_fixture_common_type                  json.RawMessage
-	mysekai_character_talk_fixture_common_mysekai_fixture_group_id    *int
-	addmysekai_character_talk_fixture_common_mysekai_fixture_group_id *int
-	mysekai_character_talk_fixture_common_tweet_group_id              *int
-	addmysekai_character_talk_fixture_common_tweet_group_id           *int
+	mysekai_character_talk_fixture_common_mysekai_fixture_group_id    *int64
+	addmysekai_character_talk_fixture_common_mysekai_fixture_group_id *int64
+	mysekai_character_talk_fixture_common_tweet_group_id              *int64
+	addmysekai_character_talk_fixture_common_tweet_group_id           *int64
 	server_region                                                     *string
 	clearedFields                                                     map[string]struct{}
 	done                                                              bool
@@ -51586,13 +51586,13 @@ func (m *MysekaicharactertalkfixturecommonMutation) IDs(ctx context.Context) ([]
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) SetGameID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) GameID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -51603,7 +51603,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) GameID() (r int, exists bool
 // OldGameID returns the old "game_id" field's value of the Mysekaicharactertalkfixturecommon entity.
 // If the Mysekaicharactertalkfixturecommon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkfixturecommonMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkfixturecommonMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -51618,7 +51618,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldGameID(ctx context.Contex
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) AddGameID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -51627,7 +51627,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -51642,13 +51642,13 @@ func (m *MysekaicharactertalkfixturecommonMutation) ResetGameID() {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) SetGameCharacterUnitID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) SetGameCharacterUnitID(i int64) {
 	m.game_character_unit_id = &i
 	m.addgame_character_unit_id = nil
 }
 
 // GameCharacterUnitID returns the value of the "game_character_unit_id" field in the mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) GameCharacterUnitID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) GameCharacterUnitID() (r int64, exists bool) {
 	v := m.game_character_unit_id
 	if v == nil {
 		return
@@ -51659,7 +51659,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) GameCharacterUnitID() (r int
 // OldGameCharacterUnitID returns the old "game_character_unit_id" field's value of the Mysekaicharactertalkfixturecommon entity.
 // If the Mysekaicharactertalkfixturecommon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkfixturecommonMutation) OldGameCharacterUnitID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkfixturecommonMutation) OldGameCharacterUnitID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitID is only allowed on UpdateOne operations")
 	}
@@ -51674,7 +51674,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldGameCharacterUnitID(ctx c
 }
 
 // AddGameCharacterUnitID adds i to the "game_character_unit_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) AddGameCharacterUnitID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddGameCharacterUnitID(i int64) {
 	if m.addgame_character_unit_id != nil {
 		*m.addgame_character_unit_id += i
 	} else {
@@ -51683,7 +51683,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddGameCharacterUnitID(i int
 }
 
 // AddedGameCharacterUnitID returns the value that was added to the "game_character_unit_id" field in this mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) AddedGameCharacterUnitID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddedGameCharacterUnitID() (r int64, exists bool) {
 	v := m.addgame_character_unit_id
 	if v == nil {
 		return
@@ -51777,13 +51777,13 @@ func (m *MysekaicharactertalkfixturecommonMutation) ResetMysekaiCharacterTalkFix
 }
 
 // SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID sets the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(i int64) {
 	m.mysekai_character_talk_fixture_common_mysekai_fixture_group_id = &i
 	m.addmysekai_character_talk_fixture_common_mysekai_fixture_group_id = nil
 }
 
 // MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID returns the value of the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field in the mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID() (r int64, exists bool) {
 	v := m.mysekai_character_talk_fixture_common_mysekai_fixture_group_id
 	if v == nil {
 		return
@@ -51794,7 +51794,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureC
 // OldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID returns the old "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field's value of the Mysekaicharactertalkfixturecommon entity.
 // If the Mysekaicharactertalkfixturecommon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID is only allowed on UpdateOne operations")
 	}
@@ -51809,7 +51809,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtu
 }
 
 // AddMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID adds i to the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(i int64) {
 	if m.addmysekai_character_talk_fixture_common_mysekai_fixture_group_id != nil {
 		*m.addmysekai_character_talk_fixture_common_mysekai_fixture_group_id += i
 	} else {
@@ -51818,7 +51818,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtu
 }
 
 // AddedMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID returns the value that was added to the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field in this mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) AddedMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddedMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_fixture_common_mysekai_fixture_group_id
 	if v == nil {
 		return
@@ -51847,13 +51847,13 @@ func (m *MysekaicharactertalkfixturecommonMutation) ResetMysekaiCharacterTalkFix
 }
 
 // SetMysekaiCharacterTalkFixtureCommonTweetGroupID sets the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonTweetGroupID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonTweetGroupID(i int64) {
 	m.mysekai_character_talk_fixture_common_tweet_group_id = &i
 	m.addmysekai_character_talk_fixture_common_tweet_group_id = nil
 }
 
 // MysekaiCharacterTalkFixtureCommonTweetGroupID returns the value of the "mysekai_character_talk_fixture_common_tweet_group_id" field in the mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonTweetGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonTweetGroupID() (r int64, exists bool) {
 	v := m.mysekai_character_talk_fixture_common_tweet_group_id
 	if v == nil {
 		return
@@ -51864,7 +51864,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureC
 // OldMysekaiCharacterTalkFixtureCommonTweetGroupID returns the old "mysekai_character_talk_fixture_common_tweet_group_id" field's value of the Mysekaicharactertalkfixturecommon entity.
 // If the Mysekaicharactertalkfixturecommon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonTweetGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonTweetGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkFixtureCommonTweetGroupID is only allowed on UpdateOne operations")
 	}
@@ -51879,7 +51879,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtu
 }
 
 // AddMysekaiCharacterTalkFixtureCommonTweetGroupID adds i to the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtureCommonTweetGroupID(i int) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtureCommonTweetGroupID(i int64) {
 	if m.addmysekai_character_talk_fixture_common_tweet_group_id != nil {
 		*m.addmysekai_character_talk_fixture_common_tweet_group_id += i
 	} else {
@@ -51888,7 +51888,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddMysekaiCharacterTalkFixtu
 }
 
 // AddedMysekaiCharacterTalkFixtureCommonTweetGroupID returns the value that was added to the "mysekai_character_talk_fixture_common_tweet_group_id" field in this mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) AddedMysekaiCharacterTalkFixtureCommonTweetGroupID() (r int, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) AddedMysekaiCharacterTalkFixtureCommonTweetGroupID() (r int64, exists bool) {
 	v := m.addmysekai_character_talk_fixture_common_tweet_group_id
 	if v == nil {
 		return
@@ -52056,14 +52056,14 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldField(ctx context.Context
 func (m *MysekaicharactertalkfixturecommonMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkfixturecommon.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -52077,14 +52077,14 @@ func (m *MysekaicharactertalkfixturecommonMutation) SetField(name string, value 
 		m.SetMysekaiCharacterTalkFixtureCommonType(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -52143,28 +52143,28 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddedField(name string) (ent
 func (m *MysekaicharactertalkfixturecommonMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaicharactertalkfixturecommon.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -52300,21 +52300,21 @@ type MysekaifixtureMutation struct {
 	op                                                           Op
 	typ                                                          string
 	id                                                           *int
-	game_id                                                      *int
-	addgame_id                                                   *int
+	game_id                                                      *int64
+	addgame_id                                                   *int64
 	mysekai_fixture_type                                         *json.RawMessage
 	appendmysekai_fixture_type                                   json.RawMessage
 	name                                                         *string
 	pronunciation                                                *string
 	flavor_text                                                  *string
-	seq                                                          *int
-	addseq                                                       *int
+	seq                                                          *int64
+	addseq                                                       *int64
 	grid_size                                                    *json.RawMessage
 	appendgrid_size                                              json.RawMessage
-	mysekai_fixture_main_genre_id                                *int
-	addmysekai_fixture_main_genre_id                             *int
-	mysekai_fixture_sub_genre_id                                 *int
-	addmysekai_fixture_sub_genre_id                              *int
+	mysekai_fixture_main_genre_id                                *int64
+	addmysekai_fixture_main_genre_id                             *int64
+	mysekai_fixture_sub_genre_id                                 *int64
+	addmysekai_fixture_sub_genre_id                              *int64
 	mysekai_fixture_handle_type                                  *json.RawMessage
 	appendmysekai_fixture_handle_type                            json.RawMessage
 	mysekai_settable_site_type                                   *json.RawMessage
@@ -52325,10 +52325,10 @@ type MysekaifixtureMutation struct {
 	appendmysekai_fixture_put_type                               json.RawMessage
 	mysekai_fixture_another_colors                               *json.RawMessage
 	appendmysekai_fixture_another_colors                         json.RawMessage
-	mysekai_fixture_put_sound_id                                 *int
-	addmysekai_fixture_put_sound_id                              *int
-	mysekai_fixture_footstep_id                                  *int
-	addmysekai_fixture_footstep_id                               *int
+	mysekai_fixture_put_sound_id                                 *int64
+	addmysekai_fixture_put_sound_id                              *int64
+	mysekai_fixture_footstep_id                                  *int64
+	addmysekai_fixture_footstep_id                               *int64
 	mysekai_fixture_tag_group                                    *json.RawMessage
 	appendmysekai_fixture_tag_group                              json.RawMessage
 	is_assembled                                                 *bool
@@ -52337,13 +52337,13 @@ type MysekaifixtureMutation struct {
 	appendmysekai_fixture_player_action_type                     json.RawMessage
 	is_game_character_action                                     *bool
 	assetbundle_name                                             *string
-	first_put_cost                                               *int
-	addfirst_put_cost                                            *int
-	second_put_cost                                              *int
-	addsecond_put_cost                                           *int
+	first_put_cost                                               *int64
+	addfirst_put_cost                                            *int64
+	second_put_cost                                              *int64
+	addsecond_put_cost                                           *int64
 	color_code                                                   *string
-	mysekai_fixture_game_character_group_performance_bonus_id    *int
-	addmysekai_fixture_game_character_group_performance_bonus_id *int
+	mysekai_fixture_game_character_group_performance_bonus_id    *int64
+	addmysekai_fixture_game_character_group_performance_bonus_id *int64
 	server_region                                                *string
 	clearedFields                                                map[string]struct{}
 	done                                                         bool
@@ -52450,13 +52450,13 @@ func (m *MysekaifixtureMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixtureMutation) SetGameID(i int) {
+func (m *MysekaifixtureMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixtureMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -52467,7 +52467,7 @@ func (m *MysekaifixtureMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -52482,7 +52482,7 @@ func (m *MysekaifixtureMutation) OldGameID(ctx context.Context) (v int, err erro
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixtureMutation) AddGameID(i int) {
+func (m *MysekaifixtureMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -52491,7 +52491,7 @@ func (m *MysekaifixtureMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -52718,13 +52718,13 @@ func (m *MysekaifixtureMutation) ResetFlavorText() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaifixtureMutation) SetSeq(i int) {
+func (m *MysekaifixtureMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaifixtureMutation) Seq() (r int, exists bool) {
+func (m *MysekaifixtureMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -52735,7 +52735,7 @@ func (m *MysekaifixtureMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -52750,7 +52750,7 @@ func (m *MysekaifixtureMutation) OldSeq(ctx context.Context) (v int, err error) 
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaifixtureMutation) AddSeq(i int) {
+func (m *MysekaifixtureMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -52759,7 +52759,7 @@ func (m *MysekaifixtureMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaifixtureMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -52853,13 +52853,13 @@ func (m *MysekaifixtureMutation) ResetGridSize() {
 }
 
 // SetMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureMainGenreID(i int) {
+func (m *MysekaifixtureMutation) SetMysekaiFixtureMainGenreID(i int64) {
 	m.mysekai_fixture_main_genre_id = &i
 	m.addmysekai_fixture_main_genre_id = nil
 }
 
 // MysekaiFixtureMainGenreID returns the value of the "mysekai_fixture_main_genre_id" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureMainGenreID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureMainGenreID() (r int64, exists bool) {
 	v := m.mysekai_fixture_main_genre_id
 	if v == nil {
 		return
@@ -52870,7 +52870,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureMainGenreID() (r int, exists bool
 // OldMysekaiFixtureMainGenreID returns the old "mysekai_fixture_main_genre_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureMainGenreID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureMainGenreID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureMainGenreID is only allowed on UpdateOne operations")
 	}
@@ -52885,7 +52885,7 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureMainGenreID(ctx context.Contex
 }
 
 // AddMysekaiFixtureMainGenreID adds i to the "mysekai_fixture_main_genre_id" field.
-func (m *MysekaifixtureMutation) AddMysekaiFixtureMainGenreID(i int) {
+func (m *MysekaifixtureMutation) AddMysekaiFixtureMainGenreID(i int64) {
 	if m.addmysekai_fixture_main_genre_id != nil {
 		*m.addmysekai_fixture_main_genre_id += i
 	} else {
@@ -52894,7 +52894,7 @@ func (m *MysekaifixtureMutation) AddMysekaiFixtureMainGenreID(i int) {
 }
 
 // AddedMysekaiFixtureMainGenreID returns the value that was added to the "mysekai_fixture_main_genre_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedMysekaiFixtureMainGenreID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedMysekaiFixtureMainGenreID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_main_genre_id
 	if v == nil {
 		return
@@ -52923,13 +52923,13 @@ func (m *MysekaifixtureMutation) ResetMysekaiFixtureMainGenreID() {
 }
 
 // SetMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureSubGenreID(i int) {
+func (m *MysekaifixtureMutation) SetMysekaiFixtureSubGenreID(i int64) {
 	m.mysekai_fixture_sub_genre_id = &i
 	m.addmysekai_fixture_sub_genre_id = nil
 }
 
 // MysekaiFixtureSubGenreID returns the value of the "mysekai_fixture_sub_genre_id" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureSubGenreID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureSubGenreID() (r int64, exists bool) {
 	v := m.mysekai_fixture_sub_genre_id
 	if v == nil {
 		return
@@ -52940,7 +52940,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureSubGenreID() (r int, exists bool)
 // OldMysekaiFixtureSubGenreID returns the old "mysekai_fixture_sub_genre_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureSubGenreID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureSubGenreID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureSubGenreID is only allowed on UpdateOne operations")
 	}
@@ -52955,7 +52955,7 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureSubGenreID(ctx context.Context
 }
 
 // AddMysekaiFixtureSubGenreID adds i to the "mysekai_fixture_sub_genre_id" field.
-func (m *MysekaifixtureMutation) AddMysekaiFixtureSubGenreID(i int) {
+func (m *MysekaifixtureMutation) AddMysekaiFixtureSubGenreID(i int64) {
 	if m.addmysekai_fixture_sub_genre_id != nil {
 		*m.addmysekai_fixture_sub_genre_id += i
 	} else {
@@ -52964,7 +52964,7 @@ func (m *MysekaifixtureMutation) AddMysekaiFixtureSubGenreID(i int) {
 }
 
 // AddedMysekaiFixtureSubGenreID returns the value that was added to the "mysekai_fixture_sub_genre_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedMysekaiFixtureSubGenreID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedMysekaiFixtureSubGenreID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_sub_genre_id
 	if v == nil {
 		return
@@ -53318,13 +53318,13 @@ func (m *MysekaifixtureMutation) ResetMysekaiFixtureAnotherColors() {
 }
 
 // SetMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixturePutSoundID(i int) {
+func (m *MysekaifixtureMutation) SetMysekaiFixturePutSoundID(i int64) {
 	m.mysekai_fixture_put_sound_id = &i
 	m.addmysekai_fixture_put_sound_id = nil
 }
 
 // MysekaiFixturePutSoundID returns the value of the "mysekai_fixture_put_sound_id" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixturePutSoundID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixturePutSoundID() (r int64, exists bool) {
 	v := m.mysekai_fixture_put_sound_id
 	if v == nil {
 		return
@@ -53335,7 +53335,7 @@ func (m *MysekaifixtureMutation) MysekaiFixturePutSoundID() (r int, exists bool)
 // OldMysekaiFixturePutSoundID returns the old "mysekai_fixture_put_sound_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixturePutSoundID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixturePutSoundID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixturePutSoundID is only allowed on UpdateOne operations")
 	}
@@ -53350,7 +53350,7 @@ func (m *MysekaifixtureMutation) OldMysekaiFixturePutSoundID(ctx context.Context
 }
 
 // AddMysekaiFixturePutSoundID adds i to the "mysekai_fixture_put_sound_id" field.
-func (m *MysekaifixtureMutation) AddMysekaiFixturePutSoundID(i int) {
+func (m *MysekaifixtureMutation) AddMysekaiFixturePutSoundID(i int64) {
 	if m.addmysekai_fixture_put_sound_id != nil {
 		*m.addmysekai_fixture_put_sound_id += i
 	} else {
@@ -53359,7 +53359,7 @@ func (m *MysekaifixtureMutation) AddMysekaiFixturePutSoundID(i int) {
 }
 
 // AddedMysekaiFixturePutSoundID returns the value that was added to the "mysekai_fixture_put_sound_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedMysekaiFixturePutSoundID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedMysekaiFixturePutSoundID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_put_sound_id
 	if v == nil {
 		return
@@ -53388,13 +53388,13 @@ func (m *MysekaifixtureMutation) ResetMysekaiFixturePutSoundID() {
 }
 
 // SetMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureFootstepID(i int) {
+func (m *MysekaifixtureMutation) SetMysekaiFixtureFootstepID(i int64) {
 	m.mysekai_fixture_footstep_id = &i
 	m.addmysekai_fixture_footstep_id = nil
 }
 
 // MysekaiFixtureFootstepID returns the value of the "mysekai_fixture_footstep_id" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureFootstepID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureFootstepID() (r int64, exists bool) {
 	v := m.mysekai_fixture_footstep_id
 	if v == nil {
 		return
@@ -53405,7 +53405,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureFootstepID() (r int, exists bool)
 // OldMysekaiFixtureFootstepID returns the old "mysekai_fixture_footstep_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureFootstepID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureFootstepID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureFootstepID is only allowed on UpdateOne operations")
 	}
@@ -53420,7 +53420,7 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureFootstepID(ctx context.Context
 }
 
 // AddMysekaiFixtureFootstepID adds i to the "mysekai_fixture_footstep_id" field.
-func (m *MysekaifixtureMutation) AddMysekaiFixtureFootstepID(i int) {
+func (m *MysekaifixtureMutation) AddMysekaiFixtureFootstepID(i int64) {
 	if m.addmysekai_fixture_footstep_id != nil {
 		*m.addmysekai_fixture_footstep_id += i
 	} else {
@@ -53429,7 +53429,7 @@ func (m *MysekaifixtureMutation) AddMysekaiFixtureFootstepID(i int) {
 }
 
 // AddedMysekaiFixtureFootstepID returns the value that was added to the "mysekai_fixture_footstep_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedMysekaiFixtureFootstepID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedMysekaiFixtureFootstepID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_footstep_id
 	if v == nil {
 		return
@@ -53784,13 +53784,13 @@ func (m *MysekaifixtureMutation) ResetAssetbundleName() {
 }
 
 // SetFirstPutCost sets the "first_put_cost" field.
-func (m *MysekaifixtureMutation) SetFirstPutCost(i int) {
+func (m *MysekaifixtureMutation) SetFirstPutCost(i int64) {
 	m.first_put_cost = &i
 	m.addfirst_put_cost = nil
 }
 
 // FirstPutCost returns the value of the "first_put_cost" field in the mutation.
-func (m *MysekaifixtureMutation) FirstPutCost() (r int, exists bool) {
+func (m *MysekaifixtureMutation) FirstPutCost() (r int64, exists bool) {
 	v := m.first_put_cost
 	if v == nil {
 		return
@@ -53801,7 +53801,7 @@ func (m *MysekaifixtureMutation) FirstPutCost() (r int, exists bool) {
 // OldFirstPutCost returns the old "first_put_cost" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldFirstPutCost(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldFirstPutCost(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFirstPutCost is only allowed on UpdateOne operations")
 	}
@@ -53816,7 +53816,7 @@ func (m *MysekaifixtureMutation) OldFirstPutCost(ctx context.Context) (v int, er
 }
 
 // AddFirstPutCost adds i to the "first_put_cost" field.
-func (m *MysekaifixtureMutation) AddFirstPutCost(i int) {
+func (m *MysekaifixtureMutation) AddFirstPutCost(i int64) {
 	if m.addfirst_put_cost != nil {
 		*m.addfirst_put_cost += i
 	} else {
@@ -53825,7 +53825,7 @@ func (m *MysekaifixtureMutation) AddFirstPutCost(i int) {
 }
 
 // AddedFirstPutCost returns the value that was added to the "first_put_cost" field in this mutation.
-func (m *MysekaifixtureMutation) AddedFirstPutCost() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedFirstPutCost() (r int64, exists bool) {
 	v := m.addfirst_put_cost
 	if v == nil {
 		return
@@ -53854,13 +53854,13 @@ func (m *MysekaifixtureMutation) ResetFirstPutCost() {
 }
 
 // SetSecondPutCost sets the "second_put_cost" field.
-func (m *MysekaifixtureMutation) SetSecondPutCost(i int) {
+func (m *MysekaifixtureMutation) SetSecondPutCost(i int64) {
 	m.second_put_cost = &i
 	m.addsecond_put_cost = nil
 }
 
 // SecondPutCost returns the value of the "second_put_cost" field in the mutation.
-func (m *MysekaifixtureMutation) SecondPutCost() (r int, exists bool) {
+func (m *MysekaifixtureMutation) SecondPutCost() (r int64, exists bool) {
 	v := m.second_put_cost
 	if v == nil {
 		return
@@ -53871,7 +53871,7 @@ func (m *MysekaifixtureMutation) SecondPutCost() (r int, exists bool) {
 // OldSecondPutCost returns the old "second_put_cost" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldSecondPutCost(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldSecondPutCost(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSecondPutCost is only allowed on UpdateOne operations")
 	}
@@ -53886,7 +53886,7 @@ func (m *MysekaifixtureMutation) OldSecondPutCost(ctx context.Context) (v int, e
 }
 
 // AddSecondPutCost adds i to the "second_put_cost" field.
-func (m *MysekaifixtureMutation) AddSecondPutCost(i int) {
+func (m *MysekaifixtureMutation) AddSecondPutCost(i int64) {
 	if m.addsecond_put_cost != nil {
 		*m.addsecond_put_cost += i
 	} else {
@@ -53895,7 +53895,7 @@ func (m *MysekaifixtureMutation) AddSecondPutCost(i int) {
 }
 
 // AddedSecondPutCost returns the value that was added to the "second_put_cost" field in this mutation.
-func (m *MysekaifixtureMutation) AddedSecondPutCost() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedSecondPutCost() (r int64, exists bool) {
 	v := m.addsecond_put_cost
 	if v == nil {
 		return
@@ -53973,13 +53973,13 @@ func (m *MysekaifixtureMutation) ResetColorCode() {
 }
 
 // SetMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(i int) {
+func (m *MysekaifixtureMutation) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(i int64) {
 	m.mysekai_fixture_game_character_group_performance_bonus_id = &i
 	m.addmysekai_fixture_game_character_group_performance_bonus_id = nil
 }
 
 // MysekaiFixtureGameCharacterGroupPerformanceBonusID returns the value of the "mysekai_fixture_game_character_group_performance_bonus_id" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureGameCharacterGroupPerformanceBonusID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureGameCharacterGroupPerformanceBonusID() (r int64, exists bool) {
 	v := m.mysekai_fixture_game_character_group_performance_bonus_id
 	if v == nil {
 		return
@@ -53990,7 +53990,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureGameCharacterGroupPerformanceBonu
 // OldMysekaiFixtureGameCharacterGroupPerformanceBonusID returns the old "mysekai_fixture_game_character_group_performance_bonus_id" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureGameCharacterGroupPerformanceBonusID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureGameCharacterGroupPerformanceBonusID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureGameCharacterGroupPerformanceBonusID is only allowed on UpdateOne operations")
 	}
@@ -54005,7 +54005,7 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureGameCharacterGroupPerformanceB
 }
 
 // AddMysekaiFixtureGameCharacterGroupPerformanceBonusID adds i to the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (m *MysekaifixtureMutation) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(i int) {
+func (m *MysekaifixtureMutation) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(i int64) {
 	if m.addmysekai_fixture_game_character_group_performance_bonus_id != nil {
 		*m.addmysekai_fixture_game_character_group_performance_bonus_id += i
 	} else {
@@ -54014,7 +54014,7 @@ func (m *MysekaifixtureMutation) AddMysekaiFixtureGameCharacterGroupPerformanceB
 }
 
 // AddedMysekaiFixtureGameCharacterGroupPerformanceBonusID returns the value that was added to the "mysekai_fixture_game_character_group_performance_bonus_id" field in this mutation.
-func (m *MysekaifixtureMutation) AddedMysekaiFixtureGameCharacterGroupPerformanceBonusID() (r int, exists bool) {
+func (m *MysekaifixtureMutation) AddedMysekaiFixtureGameCharacterGroupPerformanceBonusID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_game_character_group_performance_bonus_id
 	if v == nil {
 		return
@@ -54329,7 +54329,7 @@ func (m *MysekaifixtureMutation) OldField(ctx context.Context, name string) (ent
 func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixture.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54364,7 +54364,7 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetFlavorText(v)
 		return nil
 	case mysekaifixture.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54378,14 +54378,14 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetGridSize(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureMainGenreID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiFixtureMainGenreID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureSubGenreID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54427,14 +54427,14 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetMysekaiFixtureAnotherColors(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixturePutSoundID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiFixturePutSoundID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureFootstepID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54483,14 +54483,14 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case mysekaifixture.FieldFirstPutCost:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFirstPutCost(v)
 		return nil
 	case mysekaifixture.FieldSecondPutCost:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54504,7 +54504,7 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetColorCode(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54588,63 +54588,63 @@ func (m *MysekaifixtureMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaifixtureMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixture.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaifixture.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureMainGenreID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiFixtureMainGenreID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureSubGenreID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiFixtureSubGenreID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixturePutSoundID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiFixturePutSoundID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureFootstepID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiFixtureFootstepID(v)
 		return nil
 	case mysekaifixture.FieldFirstPutCost:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddFirstPutCost(v)
 		return nil
 	case mysekaifixture.FieldSecondPutCost:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSecondPutCost(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -54969,12 +54969,12 @@ type MysekaifixturegamecharactergroupMutation struct {
 	op                   Op
 	typ                  string
 	id                   *int
-	game_id              *int
-	addgame_id           *int
-	group_id             *int
-	addgroup_id          *int
-	game_character_id    *int
-	addgame_character_id *int
+	game_id              *int64
+	addgame_id           *int64
+	group_id             *int64
+	addgroup_id          *int64
+	game_character_id    *int64
+	addgame_character_id *int64
 	server_region        *string
 	clearedFields        map[string]struct{}
 	done                 bool
@@ -55081,13 +55081,13 @@ func (m *MysekaifixturegamecharactergroupMutation) IDs(ctx context.Context) ([]i
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) SetGameID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixturegamecharactergroupMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -55098,7 +55098,7 @@ func (m *MysekaifixturegamecharactergroupMutation) GameID() (r int, exists bool)
 // OldGameID returns the old "game_id" field's value of the Mysekaifixturegamecharactergroup entity.
 // If the Mysekaifixturegamecharactergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturegamecharactergroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturegamecharactergroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -55113,7 +55113,7 @@ func (m *MysekaifixturegamecharactergroupMutation) OldGameID(ctx context.Context
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) AddGameID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -55122,7 +55122,7 @@ func (m *MysekaifixturegamecharactergroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixturegamecharactergroupMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -55137,13 +55137,13 @@ func (m *MysekaifixturegamecharactergroupMutation) ResetGameID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) SetGroupID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *MysekaifixturegamecharactergroupMutation) GroupID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -55154,7 +55154,7 @@ func (m *MysekaifixturegamecharactergroupMutation) GroupID() (r int, exists bool
 // OldGroupID returns the old "group_id" field's value of the Mysekaifixturegamecharactergroup entity.
 // If the Mysekaifixturegamecharactergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturegamecharactergroupMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturegamecharactergroupMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -55169,7 +55169,7 @@ func (m *MysekaifixturegamecharactergroupMutation) OldGroupID(ctx context.Contex
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) AddGroupID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -55178,7 +55178,7 @@ func (m *MysekaifixturegamecharactergroupMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *MysekaifixturegamecharactergroupMutation) AddedGroupID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -55207,13 +55207,13 @@ func (m *MysekaifixturegamecharactergroupMutation) ResetGroupID() {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) SetGameCharacterID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *MysekaifixturegamecharactergroupMutation) GameCharacterID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -55224,7 +55224,7 @@ func (m *MysekaifixturegamecharactergroupMutation) GameCharacterID() (r int, exi
 // OldGameCharacterID returns the old "game_character_id" field's value of the Mysekaifixturegamecharactergroup entity.
 // If the Mysekaifixturegamecharactergroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturegamecharactergroupMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturegamecharactergroupMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -55239,7 +55239,7 @@ func (m *MysekaifixturegamecharactergroupMutation) OldGameCharacterID(ctx contex
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *MysekaifixturegamecharactergroupMutation) AddGameCharacterID(i int) {
+func (m *MysekaifixturegamecharactergroupMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -55248,7 +55248,7 @@ func (m *MysekaifixturegamecharactergroupMutation) AddGameCharacterID(i int) {
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *MysekaifixturegamecharactergroupMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *MysekaifixturegamecharactergroupMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -55402,21 +55402,21 @@ func (m *MysekaifixturegamecharactergroupMutation) OldField(ctx context.Context,
 func (m *MysekaifixturegamecharactergroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturegamecharactergroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaifixturegamecharactergroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
 		return nil
 	case mysekaifixturegamecharactergroup.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -55470,21 +55470,21 @@ func (m *MysekaifixturegamecharactergroupMutation) AddedField(name string) (ent.
 func (m *MysekaifixturegamecharactergroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturegamecharactergroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaifixturegamecharactergroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case mysekaifixturegamecharactergroup.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -55602,14 +55602,14 @@ type MysekaifixturemaingenreMutation struct {
 	op                                    Op
 	typ                                   string
 	id                                    *int
-	game_id                               *int
-	addgame_id                            *int
+	game_id                               *int64
+	addgame_id                            *int64
 	name                                  *string
 	mysekai_fixture_main_genre_type       *json.RawMessage
 	appendmysekai_fixture_main_genre_type json.RawMessage
 	assetbundle_name                      *string
-	group_id                              *int
-	addgroup_id                           *int
+	group_id                              *int64
+	addgroup_id                           *int64
 	server_region                         *string
 	clearedFields                         map[string]struct{}
 	done                                  bool
@@ -55716,13 +55716,13 @@ func (m *MysekaifixturemaingenreMutation) IDs(ctx context.Context) ([]int, error
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixturemaingenreMutation) SetGameID(i int) {
+func (m *MysekaifixturemaingenreMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixturemaingenreMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixturemaingenreMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -55733,7 +55733,7 @@ func (m *MysekaifixturemaingenreMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaifixturemaingenre entity.
 // If the Mysekaifixturemaingenre object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturemaingenreMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturemaingenreMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -55748,7 +55748,7 @@ func (m *MysekaifixturemaingenreMutation) OldGameID(ctx context.Context) (v int,
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixturemaingenreMutation) AddGameID(i int) {
+func (m *MysekaifixturemaingenreMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -55757,7 +55757,7 @@ func (m *MysekaifixturemaingenreMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixturemaingenreMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixturemaingenreMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -55935,13 +55935,13 @@ func (m *MysekaifixturemaingenreMutation) ResetAssetbundleName() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *MysekaifixturemaingenreMutation) SetGroupID(i int) {
+func (m *MysekaifixturemaingenreMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *MysekaifixturemaingenreMutation) GroupID() (r int, exists bool) {
+func (m *MysekaifixturemaingenreMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -55952,7 +55952,7 @@ func (m *MysekaifixturemaingenreMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Mysekaifixturemaingenre entity.
 // If the Mysekaifixturemaingenre object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturemaingenreMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturemaingenreMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -55967,7 +55967,7 @@ func (m *MysekaifixturemaingenreMutation) OldGroupID(ctx context.Context) (v int
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *MysekaifixturemaingenreMutation) AddGroupID(i int) {
+func (m *MysekaifixturemaingenreMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -55976,7 +55976,7 @@ func (m *MysekaifixturemaingenreMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *MysekaifixturemaingenreMutation) AddedGroupID() (r int, exists bool) {
+func (m *MysekaifixturemaingenreMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -56144,7 +56144,7 @@ func (m *MysekaifixturemaingenreMutation) OldField(ctx context.Context, name str
 func (m *MysekaifixturemaingenreMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturemaingenre.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -56172,7 +56172,7 @@ func (m *MysekaifixturemaingenreMutation) SetField(name string, value ent.Value)
 		m.SetAssetbundleName(v)
 		return nil
 	case mysekaifixturemaingenre.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -56221,14 +56221,14 @@ func (m *MysekaifixturemaingenreMutation) AddedField(name string) (ent.Value, bo
 func (m *MysekaifixturemaingenreMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturemaingenre.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaifixturemaingenre.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -56364,16 +56364,16 @@ type MysekaifixtureonlydisassemblematerialMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	game_id                *int
-	addgame_id             *int
-	mysekai_fixture_id     *int
-	addmysekai_fixture_id  *int
-	mysekai_material_id    *int
-	addmysekai_material_id *int
-	seq                    *int
-	addseq                 *int
-	quantity               *int
-	addquantity            *int
+	game_id                *int64
+	addgame_id             *int64
+	mysekai_fixture_id     *int64
+	addmysekai_fixture_id  *int64
+	mysekai_material_id    *int64
+	addmysekai_material_id *int64
+	seq                    *int64
+	addseq                 *int64
+	quantity               *int64
+	addquantity            *int64
 	server_region          *string
 	clearedFields          map[string]struct{}
 	done                   bool
@@ -56480,13 +56480,13 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) IDs(ctx context.Context)
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) SetGameID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -56497,7 +56497,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) GameID() (r int, exists 
 // OldGameID returns the old "game_id" field's value of the Mysekaifixtureonlydisassemblematerial entity.
 // If the Mysekaifixtureonlydisassemblematerial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureonlydisassemblematerialMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -56512,7 +56512,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldGameID(ctx context.Co
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddGameID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -56521,7 +56521,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -56536,13 +56536,13 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) ResetGameID() {
 }
 
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) SetMysekaiFixtureID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) SetMysekaiFixtureID(i int64) {
 	m.mysekai_fixture_id = &i
 	m.addmysekai_fixture_id = nil
 }
 
 // MysekaiFixtureID returns the value of the "mysekai_fixture_id" field in the mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiFixtureID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiFixtureID() (r int64, exists bool) {
 	v := m.mysekai_fixture_id
 	if v == nil {
 		return
@@ -56553,7 +56553,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiFixtureID() (r in
 // OldMysekaiFixtureID returns the old "mysekai_fixture_id" field's value of the Mysekaifixtureonlydisassemblematerial entity.
 // If the Mysekaifixtureonlydisassemblematerial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiFixtureID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiFixtureID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureID is only allowed on UpdateOne operations")
 	}
@@ -56568,7 +56568,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiFixtureID(ctx 
 }
 
 // AddMysekaiFixtureID adds i to the "mysekai_fixture_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiFixtureID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiFixtureID(i int64) {
 	if m.addmysekai_fixture_id != nil {
 		*m.addmysekai_fixture_id += i
 	} else {
@@ -56577,7 +56577,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiFixtureID(i in
 }
 
 // AddedMysekaiFixtureID returns the value that was added to the "mysekai_fixture_id" field in this mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddedMysekaiFixtureID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddedMysekaiFixtureID() (r int64, exists bool) {
 	v := m.addmysekai_fixture_id
 	if v == nil {
 		return
@@ -56606,13 +56606,13 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) ResetMysekaiFixtureID() 
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) SetMysekaiMaterialID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) SetMysekaiMaterialID(i int64) {
 	m.mysekai_material_id = &i
 	m.addmysekai_material_id = nil
 }
 
 // MysekaiMaterialID returns the value of the "mysekai_material_id" field in the mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiMaterialID() (r int64, exists bool) {
 	v := m.mysekai_material_id
 	if v == nil {
 		return
@@ -56623,7 +56623,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) MysekaiMaterialID() (r i
 // OldMysekaiMaterialID returns the old "mysekai_material_id" field's value of the Mysekaifixtureonlydisassemblematerial entity.
 // If the Mysekaifixtureonlydisassemblematerial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiMaterialID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiMaterialID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialID is only allowed on UpdateOne operations")
 	}
@@ -56638,7 +56638,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldMysekaiMaterialID(ctx
 }
 
 // AddMysekaiMaterialID adds i to the "mysekai_material_id" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiMaterialID(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiMaterialID(i int64) {
 	if m.addmysekai_material_id != nil {
 		*m.addmysekai_material_id += i
 	} else {
@@ -56647,7 +56647,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddMysekaiMaterialID(i i
 }
 
 // AddedMysekaiMaterialID returns the value that was added to the "mysekai_material_id" field in this mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddedMysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddedMysekaiMaterialID() (r int64, exists bool) {
 	v := m.addmysekai_material_id
 	if v == nil {
 		return
@@ -56676,13 +56676,13 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) ResetMysekaiMaterialID()
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) SetSeq(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) Seq() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -56693,7 +56693,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) Seq() (r int, exists boo
 // OldSeq returns the old "seq" field's value of the Mysekaifixtureonlydisassemblematerial entity.
 // If the Mysekaifixtureonlydisassemblematerial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureonlydisassemblematerialMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -56708,7 +56708,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldSeq(ctx context.Conte
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddSeq(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -56717,7 +56717,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -56746,13 +56746,13 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) ResetSeq() {
 }
 
 // SetQuantity sets the "quantity" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) SetQuantity(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) SetQuantity(i int64) {
 	m.quantity = &i
 	m.addquantity = nil
 }
 
 // Quantity returns the value of the "quantity" field in the mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) Quantity() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) Quantity() (r int64, exists bool) {
 	v := m.quantity
 	if v == nil {
 		return
@@ -56763,7 +56763,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) Quantity() (r int, exist
 // OldQuantity returns the old "quantity" field's value of the Mysekaifixtureonlydisassemblematerial entity.
 // If the Mysekaifixtureonlydisassemblematerial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureonlydisassemblematerialMutation) OldQuantity(ctx context.Context) (v int, err error) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) OldQuantity(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
 	}
@@ -56778,7 +56778,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldQuantity(ctx context.
 }
 
 // AddQuantity adds i to the "quantity" field.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddQuantity(i int) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddQuantity(i int64) {
 	if m.addquantity != nil {
 		*m.addquantity += i
 	} else {
@@ -56787,7 +56787,7 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddQuantity(i int) {
 }
 
 // AddedQuantity returns the value that was added to the "quantity" field in this mutation.
-func (m *MysekaifixtureonlydisassemblematerialMutation) AddedQuantity() (r int, exists bool) {
+func (m *MysekaifixtureonlydisassemblematerialMutation) AddedQuantity() (r int64, exists bool) {
 	v := m.addquantity
 	if v == nil {
 		return
@@ -56955,35 +56955,35 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) OldField(ctx context.Con
 func (m *MysekaifixtureonlydisassemblematerialMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixtureonlydisassemblematerial.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiFixtureID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiMaterialID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -57047,35 +57047,35 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddedField(name string) 
 func (m *MysekaifixtureonlydisassemblematerialMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixtureonlydisassemblematerial.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiFixtureID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiMaterialID(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -57211,8 +57211,8 @@ type MysekaifixturesubgenreMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
+	game_id                        *int64
+	addgame_id                     *int64
 	name                           *string
 	mysekai_fixture_sub_genre_type *string
 	assetbundle_name               *string
@@ -57322,13 +57322,13 @@ func (m *MysekaifixturesubgenreMutation) IDs(ctx context.Context) ([]int, error)
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixturesubgenreMutation) SetGameID(i int) {
+func (m *MysekaifixturesubgenreMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixturesubgenreMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixturesubgenreMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -57339,7 +57339,7 @@ func (m *MysekaifixturesubgenreMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaifixturesubgenre entity.
 // If the Mysekaifixturesubgenre object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturesubgenreMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturesubgenreMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -57354,7 +57354,7 @@ func (m *MysekaifixturesubgenreMutation) OldGameID(ctx context.Context) (v int, 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixturesubgenreMutation) AddGameID(i int) {
+func (m *MysekaifixturesubgenreMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -57363,7 +57363,7 @@ func (m *MysekaifixturesubgenreMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixturesubgenreMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixturesubgenreMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -57657,7 +57657,7 @@ func (m *MysekaifixturesubgenreMutation) OldField(ctx context.Context, name stri
 func (m *MysekaifixturesubgenreMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturesubgenre.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -57722,7 +57722,7 @@ func (m *MysekaifixturesubgenreMutation) AddedField(name string) (ent.Value, boo
 func (m *MysekaifixturesubgenreMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturesubgenre.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -57849,14 +57849,14 @@ type MysekaifixturetagMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
+	game_id                        *int64
+	addgame_id                     *int64
 	name                           *string
 	pronunciation                  *string
 	mysekai_fixture_tag_type       *json.RawMessage
 	appendmysekai_fixture_tag_type json.RawMessage
-	external_id                    *int
-	addexternal_id                 *int
+	external_id                    *int64
+	addexternal_id                 *int64
 	server_region                  *string
 	clearedFields                  map[string]struct{}
 	done                           bool
@@ -57963,13 +57963,13 @@ func (m *MysekaifixturetagMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaifixturetagMutation) SetGameID(i int) {
+func (m *MysekaifixturetagMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaifixturetagMutation) GameID() (r int, exists bool) {
+func (m *MysekaifixturetagMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -57980,7 +57980,7 @@ func (m *MysekaifixturetagMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaifixturetag entity.
 // If the Mysekaifixturetag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturetagMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturetagMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -57995,7 +57995,7 @@ func (m *MysekaifixturetagMutation) OldGameID(ctx context.Context) (v int, err e
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaifixturetagMutation) AddGameID(i int) {
+func (m *MysekaifixturetagMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -58004,7 +58004,7 @@ func (m *MysekaifixturetagMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaifixturetagMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaifixturetagMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -58182,13 +58182,13 @@ func (m *MysekaifixturetagMutation) ResetMysekaiFixtureTagType() {
 }
 
 // SetExternalID sets the "external_id" field.
-func (m *MysekaifixturetagMutation) SetExternalID(i int) {
+func (m *MysekaifixturetagMutation) SetExternalID(i int64) {
 	m.external_id = &i
 	m.addexternal_id = nil
 }
 
 // ExternalID returns the value of the "external_id" field in the mutation.
-func (m *MysekaifixturetagMutation) ExternalID() (r int, exists bool) {
+func (m *MysekaifixturetagMutation) ExternalID() (r int64, exists bool) {
 	v := m.external_id
 	if v == nil {
 		return
@@ -58199,7 +58199,7 @@ func (m *MysekaifixturetagMutation) ExternalID() (r int, exists bool) {
 // OldExternalID returns the old "external_id" field's value of the Mysekaifixturetag entity.
 // If the Mysekaifixturetag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturetagMutation) OldExternalID(ctx context.Context) (v int, err error) {
+func (m *MysekaifixturetagMutation) OldExternalID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
 	}
@@ -58214,7 +58214,7 @@ func (m *MysekaifixturetagMutation) OldExternalID(ctx context.Context) (v int, e
 }
 
 // AddExternalID adds i to the "external_id" field.
-func (m *MysekaifixturetagMutation) AddExternalID(i int) {
+func (m *MysekaifixturetagMutation) AddExternalID(i int64) {
 	if m.addexternal_id != nil {
 		*m.addexternal_id += i
 	} else {
@@ -58223,7 +58223,7 @@ func (m *MysekaifixturetagMutation) AddExternalID(i int) {
 }
 
 // AddedExternalID returns the value that was added to the "external_id" field in this mutation.
-func (m *MysekaifixturetagMutation) AddedExternalID() (r int, exists bool) {
+func (m *MysekaifixturetagMutation) AddedExternalID() (r int64, exists bool) {
 	v := m.addexternal_id
 	if v == nil {
 		return
@@ -58391,7 +58391,7 @@ func (m *MysekaifixturetagMutation) OldField(ctx context.Context, name string) (
 func (m *MysekaifixturetagMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturetag.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -58419,7 +58419,7 @@ func (m *MysekaifixturetagMutation) SetField(name string, value ent.Value) error
 		m.SetMysekaiFixtureTagType(v)
 		return nil
 	case mysekaifixturetag.FieldExternalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -58468,14 +58468,14 @@ func (m *MysekaifixturetagMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaifixturetagMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaifixturetag.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaifixturetag.FieldExternalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -58611,18 +58611,18 @@ type MysekaigamecharacterunitgroupMutation struct {
 	op                         Op
 	typ                        string
 	id                         *int
-	game_id                    *int
-	addgame_id                 *int
-	game_character_unit_id1    *int
-	addgame_character_unit_id1 *int
-	game_character_unit_id2    *int
-	addgame_character_unit_id2 *int
-	game_character_unit_id3    *int
-	addgame_character_unit_id3 *int
-	game_character_unit_id4    *int
-	addgame_character_unit_id4 *int
-	game_character_unit_id5    *int
-	addgame_character_unit_id5 *int
+	game_id                    *int64
+	addgame_id                 *int64
+	game_character_unit_id1    *int64
+	addgame_character_unit_id1 *int64
+	game_character_unit_id2    *int64
+	addgame_character_unit_id2 *int64
+	game_character_unit_id3    *int64
+	addgame_character_unit_id3 *int64
+	game_character_unit_id4    *int64
+	addgame_character_unit_id4 *int64
+	game_character_unit_id5    *int64
+	addgame_character_unit_id5 *int64
 	server_region              *string
 	clearedFields              map[string]struct{}
 	done                       bool
@@ -58729,13 +58729,13 @@ func (m *MysekaigamecharacterunitgroupMutation) IDs(ctx context.Context) ([]int,
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameID(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameID() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -58746,7 +58746,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -58761,7 +58761,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameID(ctx context.Context) (
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameID(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -58770,7 +58770,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -58785,13 +58785,13 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetGameID() {
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId1(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId1(i int64) {
 	m.game_character_unit_id1 = &i
 	m.addgame_character_unit_id1 = nil
 }
 
 // GameCharacterUnitId1 returns the value of the "game_character_unit_id1" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId1() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId1() (r int64, exists bool) {
 	v := m.game_character_unit_id1
 	if v == nil {
 		return
@@ -58802,7 +58802,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId1() (r int, e
 // OldGameCharacterUnitId1 returns the old "game_character_unit_id1" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId1(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId1(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId1 is only allowed on UpdateOne operations")
 	}
@@ -58817,7 +58817,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId1(ctx cont
 }
 
 // AddGameCharacterUnitId1 adds i to the "game_character_unit_id1" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId1(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId1(i int64) {
 	if m.addgame_character_unit_id1 != nil {
 		*m.addgame_character_unit_id1 += i
 	} else {
@@ -58826,7 +58826,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId1(i int) {
 }
 
 // AddedGameCharacterUnitId1 returns the value that was added to the "game_character_unit_id1" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId1() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId1() (r int64, exists bool) {
 	v := m.addgame_character_unit_id1
 	if v == nil {
 		return
@@ -58855,13 +58855,13 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetGameCharacterUnitId1() {
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId2(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId2(i int64) {
 	m.game_character_unit_id2 = &i
 	m.addgame_character_unit_id2 = nil
 }
 
 // GameCharacterUnitId2 returns the value of the "game_character_unit_id2" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId2() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId2() (r int64, exists bool) {
 	v := m.game_character_unit_id2
 	if v == nil {
 		return
@@ -58872,7 +58872,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId2() (r int, e
 // OldGameCharacterUnitId2 returns the old "game_character_unit_id2" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId2(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId2(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId2 is only allowed on UpdateOne operations")
 	}
@@ -58887,7 +58887,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId2(ctx cont
 }
 
 // AddGameCharacterUnitId2 adds i to the "game_character_unit_id2" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId2(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId2(i int64) {
 	if m.addgame_character_unit_id2 != nil {
 		*m.addgame_character_unit_id2 += i
 	} else {
@@ -58896,7 +58896,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId2(i int) {
 }
 
 // AddedGameCharacterUnitId2 returns the value that was added to the "game_character_unit_id2" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId2() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId2() (r int64, exists bool) {
 	v := m.addgame_character_unit_id2
 	if v == nil {
 		return
@@ -58925,13 +58925,13 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetGameCharacterUnitId2() {
 }
 
 // SetGameCharacterUnitId3 sets the "game_character_unit_id3" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId3(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId3(i int64) {
 	m.game_character_unit_id3 = &i
 	m.addgame_character_unit_id3 = nil
 }
 
 // GameCharacterUnitId3 returns the value of the "game_character_unit_id3" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId3() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId3() (r int64, exists bool) {
 	v := m.game_character_unit_id3
 	if v == nil {
 		return
@@ -58942,7 +58942,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId3() (r int, e
 // OldGameCharacterUnitId3 returns the old "game_character_unit_id3" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId3(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId3(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId3 is only allowed on UpdateOne operations")
 	}
@@ -58957,7 +58957,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId3(ctx cont
 }
 
 // AddGameCharacterUnitId3 adds i to the "game_character_unit_id3" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId3(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId3(i int64) {
 	if m.addgame_character_unit_id3 != nil {
 		*m.addgame_character_unit_id3 += i
 	} else {
@@ -58966,7 +58966,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId3(i int) {
 }
 
 // AddedGameCharacterUnitId3 returns the value that was added to the "game_character_unit_id3" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId3() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId3() (r int64, exists bool) {
 	v := m.addgame_character_unit_id3
 	if v == nil {
 		return
@@ -58995,13 +58995,13 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetGameCharacterUnitId3() {
 }
 
 // SetGameCharacterUnitId4 sets the "game_character_unit_id4" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId4(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId4(i int64) {
 	m.game_character_unit_id4 = &i
 	m.addgame_character_unit_id4 = nil
 }
 
 // GameCharacterUnitId4 returns the value of the "game_character_unit_id4" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId4() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId4() (r int64, exists bool) {
 	v := m.game_character_unit_id4
 	if v == nil {
 		return
@@ -59012,7 +59012,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId4() (r int, e
 // OldGameCharacterUnitId4 returns the old "game_character_unit_id4" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId4(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId4(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId4 is only allowed on UpdateOne operations")
 	}
@@ -59027,7 +59027,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId4(ctx cont
 }
 
 // AddGameCharacterUnitId4 adds i to the "game_character_unit_id4" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId4(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId4(i int64) {
 	if m.addgame_character_unit_id4 != nil {
 		*m.addgame_character_unit_id4 += i
 	} else {
@@ -59036,7 +59036,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId4(i int) {
 }
 
 // AddedGameCharacterUnitId4 returns the value that was added to the "game_character_unit_id4" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId4() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId4() (r int64, exists bool) {
 	v := m.addgame_character_unit_id4
 	if v == nil {
 		return
@@ -59065,13 +59065,13 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetGameCharacterUnitId4() {
 }
 
 // SetGameCharacterUnitId5 sets the "game_character_unit_id5" field.
-func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId5(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) SetGameCharacterUnitId5(i int64) {
 	m.game_character_unit_id5 = &i
 	m.addgame_character_unit_id5 = nil
 }
 
 // GameCharacterUnitId5 returns the value of the "game_character_unit_id5" field in the mutation.
-func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId5() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId5() (r int64, exists bool) {
 	v := m.game_character_unit_id5
 	if v == nil {
 		return
@@ -59082,7 +59082,7 @@ func (m *MysekaigamecharacterunitgroupMutation) GameCharacterUnitId5() (r int, e
 // OldGameCharacterUnitId5 returns the old "game_character_unit_id5" field's value of the Mysekaigamecharacterunitgroup entity.
 // If the Mysekaigamecharacterunitgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId5(ctx context.Context) (v int, err error) {
+func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId5(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitId5 is only allowed on UpdateOne operations")
 	}
@@ -59097,7 +59097,7 @@ func (m *MysekaigamecharacterunitgroupMutation) OldGameCharacterUnitId5(ctx cont
 }
 
 // AddGameCharacterUnitId5 adds i to the "game_character_unit_id5" field.
-func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId5(i int) {
+func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId5(i int64) {
 	if m.addgame_character_unit_id5 != nil {
 		*m.addgame_character_unit_id5 += i
 	} else {
@@ -59106,7 +59106,7 @@ func (m *MysekaigamecharacterunitgroupMutation) AddGameCharacterUnitId5(i int) {
 }
 
 // AddedGameCharacterUnitId5 returns the value that was added to the "game_character_unit_id5" field in this mutation.
-func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId5() (r int, exists bool) {
+func (m *MysekaigamecharacterunitgroupMutation) AddedGameCharacterUnitId5() (r int64, exists bool) {
 	v := m.addgame_character_unit_id5
 	if v == nil {
 		return
@@ -59281,42 +59281,42 @@ func (m *MysekaigamecharacterunitgroupMutation) OldField(ctx context.Context, na
 func (m *MysekaigamecharacterunitgroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigamecharacterunitgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitId1(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitId2(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitId3(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitId4(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -59385,42 +59385,42 @@ func (m *MysekaigamecharacterunitgroupMutation) AddedField(name string) (ent.Val
 func (m *MysekaigamecharacterunitgroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigamecharacterunitgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitId1(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitId2(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitId3(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitId4(v)
 		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -59565,8 +59565,8 @@ type MysekaigateMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
+	game_id          *int64
+	addgame_id       *int64
 	unit             *string
 	name             *string
 	assetbundle_name *string
@@ -59676,13 +59676,13 @@ func (m *MysekaigateMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaigateMutation) SetGameID(i int) {
+func (m *MysekaigateMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaigateMutation) GameID() (r int, exists bool) {
+func (m *MysekaigateMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -59693,7 +59693,7 @@ func (m *MysekaigateMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaigate entity.
 // If the Mysekaigate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigateMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaigateMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -59708,7 +59708,7 @@ func (m *MysekaigateMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaigateMutation) AddGameID(i int) {
+func (m *MysekaigateMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -59717,7 +59717,7 @@ func (m *MysekaigateMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaigateMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaigateMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -60011,7 +60011,7 @@ func (m *MysekaigateMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *MysekaigateMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigate.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -60076,7 +60076,7 @@ func (m *MysekaigateMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaigateMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigate.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -60203,14 +60203,14 @@ type MysekaigatecharacterlotterieMutation struct {
 	op                              Op
 	typ                             string
 	id                              *int
-	game_id                         *int
-	addgame_id                      *int
-	mysekai_gate_id                 *int
-	addmysekai_gate_id              *int
-	game_character_unit_id          *int
-	addgame_character_unit_id       *int
-	visitable_mysekai_gate_level    *int
-	addvisitable_mysekai_gate_level *int
+	game_id                         *int64
+	addgame_id                      *int64
+	mysekai_gate_id                 *int64
+	addmysekai_gate_id              *int64
+	game_character_unit_id          *int64
+	addgame_character_unit_id       *int64
+	visitable_mysekai_gate_level    *int64
+	addvisitable_mysekai_gate_level *int64
 	server_region                   *string
 	clearedFields                   map[string]struct{}
 	done                            bool
@@ -60317,13 +60317,13 @@ func (m *MysekaigatecharacterlotterieMutation) IDs(ctx context.Context) ([]int, 
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaigatecharacterlotterieMutation) SetGameID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaigatecharacterlotterieMutation) GameID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -60334,7 +60334,7 @@ func (m *MysekaigatecharacterlotterieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaigatecharacterlotterie entity.
 // If the Mysekaigatecharacterlotterie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatecharacterlotterieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatecharacterlotterieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -60349,7 +60349,7 @@ func (m *MysekaigatecharacterlotterieMutation) OldGameID(ctx context.Context) (v
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaigatecharacterlotterieMutation) AddGameID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -60358,7 +60358,7 @@ func (m *MysekaigatecharacterlotterieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaigatecharacterlotterieMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -60373,13 +60373,13 @@ func (m *MysekaigatecharacterlotterieMutation) ResetGameID() {
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (m *MysekaigatecharacterlotterieMutation) SetMysekaiGateID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) SetMysekaiGateID(i int64) {
 	m.mysekai_gate_id = &i
 	m.addmysekai_gate_id = nil
 }
 
 // MysekaiGateID returns the value of the "mysekai_gate_id" field in the mutation.
-func (m *MysekaigatecharacterlotterieMutation) MysekaiGateID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) MysekaiGateID() (r int64, exists bool) {
 	v := m.mysekai_gate_id
 	if v == nil {
 		return
@@ -60390,7 +60390,7 @@ func (m *MysekaigatecharacterlotterieMutation) MysekaiGateID() (r int, exists bo
 // OldMysekaiGateID returns the old "mysekai_gate_id" field's value of the Mysekaigatecharacterlotterie entity.
 // If the Mysekaigatecharacterlotterie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatecharacterlotterieMutation) OldMysekaiGateID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatecharacterlotterieMutation) OldMysekaiGateID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiGateID is only allowed on UpdateOne operations")
 	}
@@ -60405,7 +60405,7 @@ func (m *MysekaigatecharacterlotterieMutation) OldMysekaiGateID(ctx context.Cont
 }
 
 // AddMysekaiGateID adds i to the "mysekai_gate_id" field.
-func (m *MysekaigatecharacterlotterieMutation) AddMysekaiGateID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) AddMysekaiGateID(i int64) {
 	if m.addmysekai_gate_id != nil {
 		*m.addmysekai_gate_id += i
 	} else {
@@ -60414,7 +60414,7 @@ func (m *MysekaigatecharacterlotterieMutation) AddMysekaiGateID(i int) {
 }
 
 // AddedMysekaiGateID returns the value that was added to the "mysekai_gate_id" field in this mutation.
-func (m *MysekaigatecharacterlotterieMutation) AddedMysekaiGateID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) AddedMysekaiGateID() (r int64, exists bool) {
 	v := m.addmysekai_gate_id
 	if v == nil {
 		return
@@ -60443,13 +60443,13 @@ func (m *MysekaigatecharacterlotterieMutation) ResetMysekaiGateID() {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (m *MysekaigatecharacterlotterieMutation) SetGameCharacterUnitID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) SetGameCharacterUnitID(i int64) {
 	m.game_character_unit_id = &i
 	m.addgame_character_unit_id = nil
 }
 
 // GameCharacterUnitID returns the value of the "game_character_unit_id" field in the mutation.
-func (m *MysekaigatecharacterlotterieMutation) GameCharacterUnitID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) GameCharacterUnitID() (r int64, exists bool) {
 	v := m.game_character_unit_id
 	if v == nil {
 		return
@@ -60460,7 +60460,7 @@ func (m *MysekaigatecharacterlotterieMutation) GameCharacterUnitID() (r int, exi
 // OldGameCharacterUnitID returns the old "game_character_unit_id" field's value of the Mysekaigatecharacterlotterie entity.
 // If the Mysekaigatecharacterlotterie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatecharacterlotterieMutation) OldGameCharacterUnitID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatecharacterlotterieMutation) OldGameCharacterUnitID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitID is only allowed on UpdateOne operations")
 	}
@@ -60475,7 +60475,7 @@ func (m *MysekaigatecharacterlotterieMutation) OldGameCharacterUnitID(ctx contex
 }
 
 // AddGameCharacterUnitID adds i to the "game_character_unit_id" field.
-func (m *MysekaigatecharacterlotterieMutation) AddGameCharacterUnitID(i int) {
+func (m *MysekaigatecharacterlotterieMutation) AddGameCharacterUnitID(i int64) {
 	if m.addgame_character_unit_id != nil {
 		*m.addgame_character_unit_id += i
 	} else {
@@ -60484,7 +60484,7 @@ func (m *MysekaigatecharacterlotterieMutation) AddGameCharacterUnitID(i int) {
 }
 
 // AddedGameCharacterUnitID returns the value that was added to the "game_character_unit_id" field in this mutation.
-func (m *MysekaigatecharacterlotterieMutation) AddedGameCharacterUnitID() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) AddedGameCharacterUnitID() (r int64, exists bool) {
 	v := m.addgame_character_unit_id
 	if v == nil {
 		return
@@ -60513,13 +60513,13 @@ func (m *MysekaigatecharacterlotterieMutation) ResetGameCharacterUnitID() {
 }
 
 // SetVisitableMysekaiGateLevel sets the "visitable_mysekai_gate_level" field.
-func (m *MysekaigatecharacterlotterieMutation) SetVisitableMysekaiGateLevel(i int) {
+func (m *MysekaigatecharacterlotterieMutation) SetVisitableMysekaiGateLevel(i int64) {
 	m.visitable_mysekai_gate_level = &i
 	m.addvisitable_mysekai_gate_level = nil
 }
 
 // VisitableMysekaiGateLevel returns the value of the "visitable_mysekai_gate_level" field in the mutation.
-func (m *MysekaigatecharacterlotterieMutation) VisitableMysekaiGateLevel() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) VisitableMysekaiGateLevel() (r int64, exists bool) {
 	v := m.visitable_mysekai_gate_level
 	if v == nil {
 		return
@@ -60530,7 +60530,7 @@ func (m *MysekaigatecharacterlotterieMutation) VisitableMysekaiGateLevel() (r in
 // OldVisitableMysekaiGateLevel returns the old "visitable_mysekai_gate_level" field's value of the Mysekaigatecharacterlotterie entity.
 // If the Mysekaigatecharacterlotterie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatecharacterlotterieMutation) OldVisitableMysekaiGateLevel(ctx context.Context) (v int, err error) {
+func (m *MysekaigatecharacterlotterieMutation) OldVisitableMysekaiGateLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldVisitableMysekaiGateLevel is only allowed on UpdateOne operations")
 	}
@@ -60545,7 +60545,7 @@ func (m *MysekaigatecharacterlotterieMutation) OldVisitableMysekaiGateLevel(ctx 
 }
 
 // AddVisitableMysekaiGateLevel adds i to the "visitable_mysekai_gate_level" field.
-func (m *MysekaigatecharacterlotterieMutation) AddVisitableMysekaiGateLevel(i int) {
+func (m *MysekaigatecharacterlotterieMutation) AddVisitableMysekaiGateLevel(i int64) {
 	if m.addvisitable_mysekai_gate_level != nil {
 		*m.addvisitable_mysekai_gate_level += i
 	} else {
@@ -60554,7 +60554,7 @@ func (m *MysekaigatecharacterlotterieMutation) AddVisitableMysekaiGateLevel(i in
 }
 
 // AddedVisitableMysekaiGateLevel returns the value that was added to the "visitable_mysekai_gate_level" field in this mutation.
-func (m *MysekaigatecharacterlotterieMutation) AddedVisitableMysekaiGateLevel() (r int, exists bool) {
+func (m *MysekaigatecharacterlotterieMutation) AddedVisitableMysekaiGateLevel() (r int64, exists bool) {
 	v := m.addvisitable_mysekai_gate_level
 	if v == nil {
 		return
@@ -60715,28 +60715,28 @@ func (m *MysekaigatecharacterlotterieMutation) OldField(ctx context.Context, nam
 func (m *MysekaigatecharacterlotterieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatecharacterlotterie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldMysekaiGateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiGateID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldVisitableMysekaiGateLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -60795,28 +60795,28 @@ func (m *MysekaigatecharacterlotterieMutation) AddedField(name string) (ent.Valu
 func (m *MysekaigatecharacterlotterieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatecharacterlotterie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldMysekaiGateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiGateID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitID(v)
 		return nil
 	case mysekaigatecharacterlotterie.FieldVisitableMysekaiGateLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -60943,16 +60943,16 @@ type MysekaigatelevelMutation struct {
 	op                                            Op
 	typ                                           string
 	id                                            *int
-	game_id                                       *int
-	addgame_id                                    *int
-	mysekai_gate_id                               *int
-	addmysekai_gate_id                            *int
-	level                                         *int
-	addlevel                                      *int
-	mysekai_gate_material_group_id                *int
-	addmysekai_gate_material_group_id             *int
-	mysekai_gate_character_visit_count_rate_id    *int
-	addmysekai_gate_character_visit_count_rate_id *int
+	game_id                                       *int64
+	addgame_id                                    *int64
+	mysekai_gate_id                               *int64
+	addmysekai_gate_id                            *int64
+	level                                         *int64
+	addlevel                                      *int64
+	mysekai_gate_material_group_id                *int64
+	addmysekai_gate_material_group_id             *int64
+	mysekai_gate_character_visit_count_rate_id    *int64
+	addmysekai_gate_character_visit_count_rate_id *int64
 	power_bonus_rate                              *float64
 	addpower_bonus_rate                           *float64
 	server_region                                 *string
@@ -61061,13 +61061,13 @@ func (m *MysekaigatelevelMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaigatelevelMutation) SetGameID(i int) {
+func (m *MysekaigatelevelMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaigatelevelMutation) GameID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -61078,7 +61078,7 @@ func (m *MysekaigatelevelMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaigatelevel entity.
 // If the Mysekaigatelevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatelevelMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatelevelMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -61093,7 +61093,7 @@ func (m *MysekaigatelevelMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaigatelevelMutation) AddGameID(i int) {
+func (m *MysekaigatelevelMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -61102,7 +61102,7 @@ func (m *MysekaigatelevelMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaigatelevelMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -61117,13 +61117,13 @@ func (m *MysekaigatelevelMutation) ResetGameID() {
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (m *MysekaigatelevelMutation) SetMysekaiGateID(i int) {
+func (m *MysekaigatelevelMutation) SetMysekaiGateID(i int64) {
 	m.mysekai_gate_id = &i
 	m.addmysekai_gate_id = nil
 }
 
 // MysekaiGateID returns the value of the "mysekai_gate_id" field in the mutation.
-func (m *MysekaigatelevelMutation) MysekaiGateID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) MysekaiGateID() (r int64, exists bool) {
 	v := m.mysekai_gate_id
 	if v == nil {
 		return
@@ -61134,7 +61134,7 @@ func (m *MysekaigatelevelMutation) MysekaiGateID() (r int, exists bool) {
 // OldMysekaiGateID returns the old "mysekai_gate_id" field's value of the Mysekaigatelevel entity.
 // If the Mysekaigatelevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatelevelMutation) OldMysekaiGateID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatelevelMutation) OldMysekaiGateID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiGateID is only allowed on UpdateOne operations")
 	}
@@ -61149,7 +61149,7 @@ func (m *MysekaigatelevelMutation) OldMysekaiGateID(ctx context.Context) (v int,
 }
 
 // AddMysekaiGateID adds i to the "mysekai_gate_id" field.
-func (m *MysekaigatelevelMutation) AddMysekaiGateID(i int) {
+func (m *MysekaigatelevelMutation) AddMysekaiGateID(i int64) {
 	if m.addmysekai_gate_id != nil {
 		*m.addmysekai_gate_id += i
 	} else {
@@ -61158,7 +61158,7 @@ func (m *MysekaigatelevelMutation) AddMysekaiGateID(i int) {
 }
 
 // AddedMysekaiGateID returns the value that was added to the "mysekai_gate_id" field in this mutation.
-func (m *MysekaigatelevelMutation) AddedMysekaiGateID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) AddedMysekaiGateID() (r int64, exists bool) {
 	v := m.addmysekai_gate_id
 	if v == nil {
 		return
@@ -61187,13 +61187,13 @@ func (m *MysekaigatelevelMutation) ResetMysekaiGateID() {
 }
 
 // SetLevel sets the "level" field.
-func (m *MysekaigatelevelMutation) SetLevel(i int) {
+func (m *MysekaigatelevelMutation) SetLevel(i int64) {
 	m.level = &i
 	m.addlevel = nil
 }
 
 // Level returns the value of the "level" field in the mutation.
-func (m *MysekaigatelevelMutation) Level() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) Level() (r int64, exists bool) {
 	v := m.level
 	if v == nil {
 		return
@@ -61204,7 +61204,7 @@ func (m *MysekaigatelevelMutation) Level() (r int, exists bool) {
 // OldLevel returns the old "level" field's value of the Mysekaigatelevel entity.
 // If the Mysekaigatelevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatelevelMutation) OldLevel(ctx context.Context) (v int, err error) {
+func (m *MysekaigatelevelMutation) OldLevel(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLevel is only allowed on UpdateOne operations")
 	}
@@ -61219,7 +61219,7 @@ func (m *MysekaigatelevelMutation) OldLevel(ctx context.Context) (v int, err err
 }
 
 // AddLevel adds i to the "level" field.
-func (m *MysekaigatelevelMutation) AddLevel(i int) {
+func (m *MysekaigatelevelMutation) AddLevel(i int64) {
 	if m.addlevel != nil {
 		*m.addlevel += i
 	} else {
@@ -61228,7 +61228,7 @@ func (m *MysekaigatelevelMutation) AddLevel(i int) {
 }
 
 // AddedLevel returns the value that was added to the "level" field in this mutation.
-func (m *MysekaigatelevelMutation) AddedLevel() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) AddedLevel() (r int64, exists bool) {
 	v := m.addlevel
 	if v == nil {
 		return
@@ -61257,13 +61257,13 @@ func (m *MysekaigatelevelMutation) ResetLevel() {
 }
 
 // SetMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field.
-func (m *MysekaigatelevelMutation) SetMysekaiGateMaterialGroupID(i int) {
+func (m *MysekaigatelevelMutation) SetMysekaiGateMaterialGroupID(i int64) {
 	m.mysekai_gate_material_group_id = &i
 	m.addmysekai_gate_material_group_id = nil
 }
 
 // MysekaiGateMaterialGroupID returns the value of the "mysekai_gate_material_group_id" field in the mutation.
-func (m *MysekaigatelevelMutation) MysekaiGateMaterialGroupID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) MysekaiGateMaterialGroupID() (r int64, exists bool) {
 	v := m.mysekai_gate_material_group_id
 	if v == nil {
 		return
@@ -61274,7 +61274,7 @@ func (m *MysekaigatelevelMutation) MysekaiGateMaterialGroupID() (r int, exists b
 // OldMysekaiGateMaterialGroupID returns the old "mysekai_gate_material_group_id" field's value of the Mysekaigatelevel entity.
 // If the Mysekaigatelevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatelevelMutation) OldMysekaiGateMaterialGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatelevelMutation) OldMysekaiGateMaterialGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiGateMaterialGroupID is only allowed on UpdateOne operations")
 	}
@@ -61289,7 +61289,7 @@ func (m *MysekaigatelevelMutation) OldMysekaiGateMaterialGroupID(ctx context.Con
 }
 
 // AddMysekaiGateMaterialGroupID adds i to the "mysekai_gate_material_group_id" field.
-func (m *MysekaigatelevelMutation) AddMysekaiGateMaterialGroupID(i int) {
+func (m *MysekaigatelevelMutation) AddMysekaiGateMaterialGroupID(i int64) {
 	if m.addmysekai_gate_material_group_id != nil {
 		*m.addmysekai_gate_material_group_id += i
 	} else {
@@ -61298,7 +61298,7 @@ func (m *MysekaigatelevelMutation) AddMysekaiGateMaterialGroupID(i int) {
 }
 
 // AddedMysekaiGateMaterialGroupID returns the value that was added to the "mysekai_gate_material_group_id" field in this mutation.
-func (m *MysekaigatelevelMutation) AddedMysekaiGateMaterialGroupID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) AddedMysekaiGateMaterialGroupID() (r int64, exists bool) {
 	v := m.addmysekai_gate_material_group_id
 	if v == nil {
 		return
@@ -61327,13 +61327,13 @@ func (m *MysekaigatelevelMutation) ResetMysekaiGateMaterialGroupID() {
 }
 
 // SetMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field.
-func (m *MysekaigatelevelMutation) SetMysekaiGateCharacterVisitCountRateID(i int) {
+func (m *MysekaigatelevelMutation) SetMysekaiGateCharacterVisitCountRateID(i int64) {
 	m.mysekai_gate_character_visit_count_rate_id = &i
 	m.addmysekai_gate_character_visit_count_rate_id = nil
 }
 
 // MysekaiGateCharacterVisitCountRateID returns the value of the "mysekai_gate_character_visit_count_rate_id" field in the mutation.
-func (m *MysekaigatelevelMutation) MysekaiGateCharacterVisitCountRateID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) MysekaiGateCharacterVisitCountRateID() (r int64, exists bool) {
 	v := m.mysekai_gate_character_visit_count_rate_id
 	if v == nil {
 		return
@@ -61344,7 +61344,7 @@ func (m *MysekaigatelevelMutation) MysekaiGateCharacterVisitCountRateID() (r int
 // OldMysekaiGateCharacterVisitCountRateID returns the old "mysekai_gate_character_visit_count_rate_id" field's value of the Mysekaigatelevel entity.
 // If the Mysekaigatelevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatelevelMutation) OldMysekaiGateCharacterVisitCountRateID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatelevelMutation) OldMysekaiGateCharacterVisitCountRateID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiGateCharacterVisitCountRateID is only allowed on UpdateOne operations")
 	}
@@ -61359,7 +61359,7 @@ func (m *MysekaigatelevelMutation) OldMysekaiGateCharacterVisitCountRateID(ctx c
 }
 
 // AddMysekaiGateCharacterVisitCountRateID adds i to the "mysekai_gate_character_visit_count_rate_id" field.
-func (m *MysekaigatelevelMutation) AddMysekaiGateCharacterVisitCountRateID(i int) {
+func (m *MysekaigatelevelMutation) AddMysekaiGateCharacterVisitCountRateID(i int64) {
 	if m.addmysekai_gate_character_visit_count_rate_id != nil {
 		*m.addmysekai_gate_character_visit_count_rate_id += i
 	} else {
@@ -61368,7 +61368,7 @@ func (m *MysekaigatelevelMutation) AddMysekaiGateCharacterVisitCountRateID(i int
 }
 
 // AddedMysekaiGateCharacterVisitCountRateID returns the value that was added to the "mysekai_gate_character_visit_count_rate_id" field in this mutation.
-func (m *MysekaigatelevelMutation) AddedMysekaiGateCharacterVisitCountRateID() (r int, exists bool) {
+func (m *MysekaigatelevelMutation) AddedMysekaiGateCharacterVisitCountRateID() (r int64, exists bool) {
 	v := m.addmysekai_gate_character_visit_count_rate_id
 	if v == nil {
 		return
@@ -61613,35 +61613,35 @@ func (m *MysekaigatelevelMutation) OldField(ctx context.Context, name string) (e
 func (m *MysekaigatelevelMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatelevel.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiGateID(v)
 		return nil
 	case mysekaigatelevel.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLevel(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateMaterialGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiGateMaterialGroupID(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -61717,35 +61717,35 @@ func (m *MysekaigatelevelMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaigatelevelMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatelevel.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiGateID(v)
 		return nil
 	case mysekaigatelevel.FieldLevel:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLevel(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateMaterialGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiGateMaterialGroupID(v)
 		return nil
 	case mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -61897,14 +61897,14 @@ type MysekaigatematerialgroupMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	game_id                *int
-	addgame_id             *int
-	group_id               *int
-	addgroup_id            *int
-	mysekai_material_id    *int
-	addmysekai_material_id *int
-	quantity               *int
-	addquantity            *int
+	game_id                *int64
+	addgame_id             *int64
+	group_id               *int64
+	addgroup_id            *int64
+	mysekai_material_id    *int64
+	addmysekai_material_id *int64
+	quantity               *int64
+	addquantity            *int64
 	server_region          *string
 	clearedFields          map[string]struct{}
 	done                   bool
@@ -62011,13 +62011,13 @@ func (m *MysekaigatematerialgroupMutation) IDs(ctx context.Context) ([]int, erro
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaigatematerialgroupMutation) SetGameID(i int) {
+func (m *MysekaigatematerialgroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaigatematerialgroupMutation) GameID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -62028,7 +62028,7 @@ func (m *MysekaigatematerialgroupMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaigatematerialgroup entity.
 // If the Mysekaigatematerialgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatematerialgroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatematerialgroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -62043,7 +62043,7 @@ func (m *MysekaigatematerialgroupMutation) OldGameID(ctx context.Context) (v int
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaigatematerialgroupMutation) AddGameID(i int) {
+func (m *MysekaigatematerialgroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -62052,7 +62052,7 @@ func (m *MysekaigatematerialgroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaigatematerialgroupMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -62067,13 +62067,13 @@ func (m *MysekaigatematerialgroupMutation) ResetGameID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *MysekaigatematerialgroupMutation) SetGroupID(i int) {
+func (m *MysekaigatematerialgroupMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *MysekaigatematerialgroupMutation) GroupID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -62084,7 +62084,7 @@ func (m *MysekaigatematerialgroupMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Mysekaigatematerialgroup entity.
 // If the Mysekaigatematerialgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatematerialgroupMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatematerialgroupMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -62099,7 +62099,7 @@ func (m *MysekaigatematerialgroupMutation) OldGroupID(ctx context.Context) (v in
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *MysekaigatematerialgroupMutation) AddGroupID(i int) {
+func (m *MysekaigatematerialgroupMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -62108,7 +62108,7 @@ func (m *MysekaigatematerialgroupMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *MysekaigatematerialgroupMutation) AddedGroupID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -62137,13 +62137,13 @@ func (m *MysekaigatematerialgroupMutation) ResetGroupID() {
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (m *MysekaigatematerialgroupMutation) SetMysekaiMaterialID(i int) {
+func (m *MysekaigatematerialgroupMutation) SetMysekaiMaterialID(i int64) {
 	m.mysekai_material_id = &i
 	m.addmysekai_material_id = nil
 }
 
 // MysekaiMaterialID returns the value of the "mysekai_material_id" field in the mutation.
-func (m *MysekaigatematerialgroupMutation) MysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) MysekaiMaterialID() (r int64, exists bool) {
 	v := m.mysekai_material_id
 	if v == nil {
 		return
@@ -62154,7 +62154,7 @@ func (m *MysekaigatematerialgroupMutation) MysekaiMaterialID() (r int, exists bo
 // OldMysekaiMaterialID returns the old "mysekai_material_id" field's value of the Mysekaigatematerialgroup entity.
 // If the Mysekaigatematerialgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatematerialgroupMutation) OldMysekaiMaterialID(ctx context.Context) (v int, err error) {
+func (m *MysekaigatematerialgroupMutation) OldMysekaiMaterialID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialID is only allowed on UpdateOne operations")
 	}
@@ -62169,7 +62169,7 @@ func (m *MysekaigatematerialgroupMutation) OldMysekaiMaterialID(ctx context.Cont
 }
 
 // AddMysekaiMaterialID adds i to the "mysekai_material_id" field.
-func (m *MysekaigatematerialgroupMutation) AddMysekaiMaterialID(i int) {
+func (m *MysekaigatematerialgroupMutation) AddMysekaiMaterialID(i int64) {
 	if m.addmysekai_material_id != nil {
 		*m.addmysekai_material_id += i
 	} else {
@@ -62178,7 +62178,7 @@ func (m *MysekaigatematerialgroupMutation) AddMysekaiMaterialID(i int) {
 }
 
 // AddedMysekaiMaterialID returns the value that was added to the "mysekai_material_id" field in this mutation.
-func (m *MysekaigatematerialgroupMutation) AddedMysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) AddedMysekaiMaterialID() (r int64, exists bool) {
 	v := m.addmysekai_material_id
 	if v == nil {
 		return
@@ -62207,13 +62207,13 @@ func (m *MysekaigatematerialgroupMutation) ResetMysekaiMaterialID() {
 }
 
 // SetQuantity sets the "quantity" field.
-func (m *MysekaigatematerialgroupMutation) SetQuantity(i int) {
+func (m *MysekaigatematerialgroupMutation) SetQuantity(i int64) {
 	m.quantity = &i
 	m.addquantity = nil
 }
 
 // Quantity returns the value of the "quantity" field in the mutation.
-func (m *MysekaigatematerialgroupMutation) Quantity() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) Quantity() (r int64, exists bool) {
 	v := m.quantity
 	if v == nil {
 		return
@@ -62224,7 +62224,7 @@ func (m *MysekaigatematerialgroupMutation) Quantity() (r int, exists bool) {
 // OldQuantity returns the old "quantity" field's value of the Mysekaigatematerialgroup entity.
 // If the Mysekaigatematerialgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaigatematerialgroupMutation) OldQuantity(ctx context.Context) (v int, err error) {
+func (m *MysekaigatematerialgroupMutation) OldQuantity(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldQuantity is only allowed on UpdateOne operations")
 	}
@@ -62239,7 +62239,7 @@ func (m *MysekaigatematerialgroupMutation) OldQuantity(ctx context.Context) (v i
 }
 
 // AddQuantity adds i to the "quantity" field.
-func (m *MysekaigatematerialgroupMutation) AddQuantity(i int) {
+func (m *MysekaigatematerialgroupMutation) AddQuantity(i int64) {
 	if m.addquantity != nil {
 		*m.addquantity += i
 	} else {
@@ -62248,7 +62248,7 @@ func (m *MysekaigatematerialgroupMutation) AddQuantity(i int) {
 }
 
 // AddedQuantity returns the value that was added to the "quantity" field in this mutation.
-func (m *MysekaigatematerialgroupMutation) AddedQuantity() (r int, exists bool) {
+func (m *MysekaigatematerialgroupMutation) AddedQuantity() (r int64, exists bool) {
 	v := m.addquantity
 	if v == nil {
 		return
@@ -62409,28 +62409,28 @@ func (m *MysekaigatematerialgroupMutation) OldField(ctx context.Context, name st
 func (m *MysekaigatematerialgroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatematerialgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiMaterialID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -62489,28 +62489,28 @@ func (m *MysekaigatematerialgroupMutation) AddedField(name string) (ent.Value, b
 func (m *MysekaigatematerialgroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaigatematerialgroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiMaterialID(v)
 		return nil
 	case mysekaigatematerialgroup.FieldQuantity:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -62637,10 +62637,10 @@ type MysekaiitemMutation struct {
 	op                    Op
 	typ                   string
 	id                    *int
-	game_id               *int
-	addgame_id            *int
-	seq                   *int
-	addseq                *int
+	game_id               *int64
+	addgame_id            *int64
+	seq                   *int64
+	addseq                *int64
 	mysekai_item_type     *string
 	name                  *string
 	pronunciation         *string
@@ -62752,13 +62752,13 @@ func (m *MysekaiitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaiitemMutation) SetGameID(i int) {
+func (m *MysekaiitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaiitemMutation) GameID() (r int, exists bool) {
+func (m *MysekaiitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -62769,7 +62769,7 @@ func (m *MysekaiitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaiitem entity.
 // If the Mysekaiitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaiitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -62784,7 +62784,7 @@ func (m *MysekaiitemMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaiitemMutation) AddGameID(i int) {
+func (m *MysekaiitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -62793,7 +62793,7 @@ func (m *MysekaiitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaiitemMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaiitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -62808,13 +62808,13 @@ func (m *MysekaiitemMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaiitemMutation) SetSeq(i int) {
+func (m *MysekaiitemMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaiitemMutation) Seq() (r int, exists bool) {
+func (m *MysekaiitemMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -62825,7 +62825,7 @@ func (m *MysekaiitemMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Mysekaiitem entity.
 // If the Mysekaiitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiitemMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaiitemMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -62840,7 +62840,7 @@ func (m *MysekaiitemMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaiitemMutation) AddSeq(i int) {
+func (m *MysekaiitemMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -62849,7 +62849,7 @@ func (m *MysekaiitemMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaiitemMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaiitemMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -63276,14 +63276,14 @@ func (m *MysekaiitemMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *MysekaiitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaiitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -63367,14 +63367,14 @@ func (m *MysekaiitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaiitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaiitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -63528,10 +63528,10 @@ type MysekaimaterialMutation struct {
 	op                                 Op
 	typ                                string
 	id                                 *int
-	game_id                            *int
-	addgame_id                         *int
-	seq                                *int
-	addseq                             *int
+	game_id                            *int64
+	addgame_id                         *int64
+	seq                                *int64
+	addseq                             *int64
 	mysekai_material_type              *json.RawMessage
 	appendmysekai_material_type        json.RawMessage
 	name                               *string
@@ -63543,8 +63543,8 @@ type MysekaimaterialMutation struct {
 	model_assetbundle_name             *string
 	mysekai_site_ids                   *json.RawMessage
 	appendmysekai_site_ids             json.RawMessage
-	mysekai_phenomena_group_id         *int
-	addmysekai_phenomena_group_id      *int
+	mysekai_phenomena_group_id         *int64
+	addmysekai_phenomena_group_id      *int64
 	server_region                      *string
 	clearedFields                      map[string]struct{}
 	done                               bool
@@ -63651,13 +63651,13 @@ func (m *MysekaimaterialMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaimaterialMutation) SetGameID(i int) {
+func (m *MysekaimaterialMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaimaterialMutation) GameID() (r int, exists bool) {
+func (m *MysekaimaterialMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -63668,7 +63668,7 @@ func (m *MysekaimaterialMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaimaterial entity.
 // If the Mysekaimaterial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -63683,7 +63683,7 @@ func (m *MysekaimaterialMutation) OldGameID(ctx context.Context) (v int, err err
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaimaterialMutation) AddGameID(i int) {
+func (m *MysekaimaterialMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -63692,7 +63692,7 @@ func (m *MysekaimaterialMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaimaterialMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaimaterialMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -63707,13 +63707,13 @@ func (m *MysekaimaterialMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaimaterialMutation) SetSeq(i int) {
+func (m *MysekaimaterialMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaimaterialMutation) Seq() (r int, exists bool) {
+func (m *MysekaimaterialMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -63724,7 +63724,7 @@ func (m *MysekaimaterialMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Mysekaimaterial entity.
 // If the Mysekaimaterial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -63739,7 +63739,7 @@ func (m *MysekaimaterialMutation) OldSeq(ctx context.Context) (v int, err error)
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaimaterialMutation) AddSeq(i int) {
+func (m *MysekaimaterialMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -63748,7 +63748,7 @@ func (m *MysekaimaterialMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaimaterialMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaimaterialMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -64217,13 +64217,13 @@ func (m *MysekaimaterialMutation) ResetMysekaiSiteIds() {
 }
 
 // SetMysekaiPhenomenaGroupID sets the "mysekai_phenomena_group_id" field.
-func (m *MysekaimaterialMutation) SetMysekaiPhenomenaGroupID(i int) {
+func (m *MysekaimaterialMutation) SetMysekaiPhenomenaGroupID(i int64) {
 	m.mysekai_phenomena_group_id = &i
 	m.addmysekai_phenomena_group_id = nil
 }
 
 // MysekaiPhenomenaGroupID returns the value of the "mysekai_phenomena_group_id" field in the mutation.
-func (m *MysekaimaterialMutation) MysekaiPhenomenaGroupID() (r int, exists bool) {
+func (m *MysekaimaterialMutation) MysekaiPhenomenaGroupID() (r int64, exists bool) {
 	v := m.mysekai_phenomena_group_id
 	if v == nil {
 		return
@@ -64234,7 +64234,7 @@ func (m *MysekaimaterialMutation) MysekaiPhenomenaGroupID() (r int, exists bool)
 // OldMysekaiPhenomenaGroupID returns the old "mysekai_phenomena_group_id" field's value of the Mysekaimaterial entity.
 // If the Mysekaimaterial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialMutation) OldMysekaiPhenomenaGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialMutation) OldMysekaiPhenomenaGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiPhenomenaGroupID is only allowed on UpdateOne operations")
 	}
@@ -64249,7 +64249,7 @@ func (m *MysekaimaterialMutation) OldMysekaiPhenomenaGroupID(ctx context.Context
 }
 
 // AddMysekaiPhenomenaGroupID adds i to the "mysekai_phenomena_group_id" field.
-func (m *MysekaimaterialMutation) AddMysekaiPhenomenaGroupID(i int) {
+func (m *MysekaimaterialMutation) AddMysekaiPhenomenaGroupID(i int64) {
 	if m.addmysekai_phenomena_group_id != nil {
 		*m.addmysekai_phenomena_group_id += i
 	} else {
@@ -64258,7 +64258,7 @@ func (m *MysekaimaterialMutation) AddMysekaiPhenomenaGroupID(i int) {
 }
 
 // AddedMysekaiPhenomenaGroupID returns the value that was added to the "mysekai_phenomena_group_id" field in this mutation.
-func (m *MysekaimaterialMutation) AddedMysekaiPhenomenaGroupID() (r int, exists bool) {
+func (m *MysekaimaterialMutation) AddedMysekaiPhenomenaGroupID() (r int64, exists bool) {
 	v := m.addmysekai_phenomena_group_id
 	if v == nil {
 		return
@@ -64468,14 +64468,14 @@ func (m *MysekaimaterialMutation) OldField(ctx context.Context, name string) (en
 func (m *MysekaimaterialMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimaterial.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaimaterial.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -64538,7 +64538,7 @@ func (m *MysekaimaterialMutation) SetField(name string, value ent.Value) error {
 		m.SetMysekaiSiteIds(v)
 		return nil
 	case mysekaimaterial.FieldMysekaiPhenomenaGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -64592,21 +64592,21 @@ func (m *MysekaimaterialMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaimaterialMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimaterial.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaimaterial.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case mysekaimaterial.FieldMysekaiPhenomenaGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -64796,14 +64796,14 @@ type MysekaimaterialgamecharacterrelationMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	game_id                *int
-	addgame_id             *int
-	group_id               *int
-	addgroup_id            *int
-	mysekai_material_id    *int
-	addmysekai_material_id *int
-	game_character_id      *int
-	addgame_character_id   *int
+	game_id                *int64
+	addgame_id             *int64
+	group_id               *int64
+	addgroup_id            *int64
+	mysekai_material_id    *int64
+	addmysekai_material_id *int64
+	game_character_id      *int64
+	addgame_character_id   *int64
 	server_region          *string
 	clearedFields          map[string]struct{}
 	done                   bool
@@ -64910,13 +64910,13 @@ func (m *MysekaimaterialgamecharacterrelationMutation) IDs(ctx context.Context) 
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) SetGameID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) GameID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -64927,7 +64927,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) GameID() (r int, exists b
 // OldGameID returns the old "game_id" field's value of the Mysekaimaterialgamecharacterrelation entity.
 // If the Mysekaimaterialgamecharacterrelation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialgamecharacterrelationMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialgamecharacterrelationMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -64942,7 +64942,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) OldGameID(ctx context.Con
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddGameID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -64951,7 +64951,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -64966,13 +64966,13 @@ func (m *MysekaimaterialgamecharacterrelationMutation) ResetGameID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) SetGroupID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) SetGroupID(i int64) {
 	m.group_id = &i
 	m.addgroup_id = nil
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) GroupID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) GroupID() (r int64, exists bool) {
 	v := m.group_id
 	if v == nil {
 		return
@@ -64983,7 +64983,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) GroupID() (r int, exists 
 // OldGroupID returns the old "group_id" field's value of the Mysekaimaterialgamecharacterrelation entity.
 // If the Mysekaimaterialgamecharacterrelation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialgamecharacterrelationMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialgamecharacterrelationMutation) OldGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -64998,7 +64998,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) OldGroupID(ctx context.Co
 }
 
 // AddGroupID adds i to the "group_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddGroupID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddGroupID(i int64) {
 	if m.addgroup_id != nil {
 		*m.addgroup_id += i
 	} else {
@@ -65007,7 +65007,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddGroupID(i int) {
 }
 
 // AddedGroupID returns the value that was added to the "group_id" field in this mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddedGroupID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddedGroupID() (r int64, exists bool) {
 	v := m.addgroup_id
 	if v == nil {
 		return
@@ -65036,13 +65036,13 @@ func (m *MysekaimaterialgamecharacterrelationMutation) ResetGroupID() {
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) SetMysekaiMaterialID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) SetMysekaiMaterialID(i int64) {
 	m.mysekai_material_id = &i
 	m.addmysekai_material_id = nil
 }
 
 // MysekaiMaterialID returns the value of the "mysekai_material_id" field in the mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) MysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) MysekaiMaterialID() (r int64, exists bool) {
 	v := m.mysekai_material_id
 	if v == nil {
 		return
@@ -65053,7 +65053,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) MysekaiMaterialID() (r in
 // OldMysekaiMaterialID returns the old "mysekai_material_id" field's value of the Mysekaimaterialgamecharacterrelation entity.
 // If the Mysekaimaterialgamecharacterrelation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialgamecharacterrelationMutation) OldMysekaiMaterialID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialgamecharacterrelationMutation) OldMysekaiMaterialID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialID is only allowed on UpdateOne operations")
 	}
@@ -65068,7 +65068,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) OldMysekaiMaterialID(ctx 
 }
 
 // AddMysekaiMaterialID adds i to the "mysekai_material_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddMysekaiMaterialID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddMysekaiMaterialID(i int64) {
 	if m.addmysekai_material_id != nil {
 		*m.addmysekai_material_id += i
 	} else {
@@ -65077,7 +65077,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddMysekaiMaterialID(i in
 }
 
 // AddedMysekaiMaterialID returns the value that was added to the "mysekai_material_id" field in this mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddedMysekaiMaterialID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddedMysekaiMaterialID() (r int64, exists bool) {
 	v := m.addmysekai_material_id
 	if v == nil {
 		return
@@ -65106,13 +65106,13 @@ func (m *MysekaimaterialgamecharacterrelationMutation) ResetMysekaiMaterialID() 
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) SetGameCharacterID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) GameCharacterID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -65123,7 +65123,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) GameCharacterID() (r int,
 // OldGameCharacterID returns the old "game_character_id" field's value of the Mysekaimaterialgamecharacterrelation entity.
 // If the Mysekaimaterialgamecharacterrelation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialgamecharacterrelationMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *MysekaimaterialgamecharacterrelationMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -65138,7 +65138,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) OldGameCharacterID(ctx co
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddGameCharacterID(i int) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -65147,7 +65147,7 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddGameCharacterID(i int)
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *MysekaimaterialgamecharacterrelationMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *MysekaimaterialgamecharacterrelationMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -65308,28 +65308,28 @@ func (m *MysekaimaterialgamecharacterrelationMutation) OldField(ctx context.Cont
 func (m *MysekaimaterialgamecharacterrelationMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimaterialgamecharacterrelation.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiMaterialID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -65388,28 +65388,28 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddedField(name string) (
 func (m *MysekaimaterialgamecharacterrelationMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimaterialgamecharacterrelation.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGroupID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMysekaiMaterialID(v)
 		return nil
 	case mysekaimaterialgamecharacterrelation.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -65536,12 +65536,12 @@ type MysekaimusicrecordMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
+	game_id                        *int64
+	addgame_id                     *int64
 	mysekai_music_track_type       *json.RawMessage
 	appendmysekai_music_track_type json.RawMessage
-	external_id                    *int
-	addexternal_id                 *int
+	external_id                    *int64
+	addexternal_id                 *int64
 	server_region                  *string
 	clearedFields                  map[string]struct{}
 	done                           bool
@@ -65648,13 +65648,13 @@ func (m *MysekaimusicrecordMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaimusicrecordMutation) SetGameID(i int) {
+func (m *MysekaimusicrecordMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaimusicrecordMutation) GameID() (r int, exists bool) {
+func (m *MysekaimusicrecordMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -65665,7 +65665,7 @@ func (m *MysekaimusicrecordMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaimusicrecord entity.
 // If the Mysekaimusicrecord object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaimusicrecordMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -65680,7 +65680,7 @@ func (m *MysekaimusicrecordMutation) OldGameID(ctx context.Context) (v int, err 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaimusicrecordMutation) AddGameID(i int) {
+func (m *MysekaimusicrecordMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -65689,7 +65689,7 @@ func (m *MysekaimusicrecordMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaimusicrecordMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaimusicrecordMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -65769,13 +65769,13 @@ func (m *MysekaimusicrecordMutation) ResetMysekaiMusicTrackType() {
 }
 
 // SetExternalID sets the "external_id" field.
-func (m *MysekaimusicrecordMutation) SetExternalID(i int) {
+func (m *MysekaimusicrecordMutation) SetExternalID(i int64) {
 	m.external_id = &i
 	m.addexternal_id = nil
 }
 
 // ExternalID returns the value of the "external_id" field in the mutation.
-func (m *MysekaimusicrecordMutation) ExternalID() (r int, exists bool) {
+func (m *MysekaimusicrecordMutation) ExternalID() (r int64, exists bool) {
 	v := m.external_id
 	if v == nil {
 		return
@@ -65786,7 +65786,7 @@ func (m *MysekaimusicrecordMutation) ExternalID() (r int, exists bool) {
 // OldExternalID returns the old "external_id" field's value of the Mysekaimusicrecord entity.
 // If the Mysekaimusicrecord object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordMutation) OldExternalID(ctx context.Context) (v int, err error) {
+func (m *MysekaimusicrecordMutation) OldExternalID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
 	}
@@ -65801,7 +65801,7 @@ func (m *MysekaimusicrecordMutation) OldExternalID(ctx context.Context) (v int, 
 }
 
 // AddExternalID adds i to the "external_id" field.
-func (m *MysekaimusicrecordMutation) AddExternalID(i int) {
+func (m *MysekaimusicrecordMutation) AddExternalID(i int64) {
 	if m.addexternal_id != nil {
 		*m.addexternal_id += i
 	} else {
@@ -65810,7 +65810,7 @@ func (m *MysekaimusicrecordMutation) AddExternalID(i int) {
 }
 
 // AddedExternalID returns the value that was added to the "external_id" field in this mutation.
-func (m *MysekaimusicrecordMutation) AddedExternalID() (r int, exists bool) {
+func (m *MysekaimusicrecordMutation) AddedExternalID() (r int64, exists bool) {
 	v := m.addexternal_id
 	if v == nil {
 		return
@@ -65964,7 +65964,7 @@ func (m *MysekaimusicrecordMutation) OldField(ctx context.Context, name string) 
 func (m *MysekaimusicrecordMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimusicrecord.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -65978,7 +65978,7 @@ func (m *MysekaimusicrecordMutation) SetField(name string, value ent.Value) erro
 		m.SetMysekaiMusicTrackType(v)
 		return nil
 	case mysekaimusicrecord.FieldExternalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66027,14 +66027,14 @@ func (m *MysekaimusicrecordMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaimusicrecordMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimusicrecord.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaimusicrecord.FieldExternalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66152,11 +66152,11 @@ type MysekaimusicrecordcategorieMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
+	game_id                        *int64
+	addgame_id                     *int64
 	name                           *string
-	seq                            *int
-	addseq                         *int
+	seq                            *int64
+	addseq                         *int64
 	mysekai_music_track_type       *json.RawMessage
 	appendmysekai_music_track_type json.RawMessage
 	unit                           *string
@@ -66266,13 +66266,13 @@ func (m *MysekaimusicrecordcategorieMutation) IDs(ctx context.Context) ([]int, e
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaimusicrecordcategorieMutation) SetGameID(i int) {
+func (m *MysekaimusicrecordcategorieMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaimusicrecordcategorieMutation) GameID() (r int, exists bool) {
+func (m *MysekaimusicrecordcategorieMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -66283,7 +66283,7 @@ func (m *MysekaimusicrecordcategorieMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaimusicrecordcategorie entity.
 // If the Mysekaimusicrecordcategorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordcategorieMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaimusicrecordcategorieMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -66298,7 +66298,7 @@ func (m *MysekaimusicrecordcategorieMutation) OldGameID(ctx context.Context) (v 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaimusicrecordcategorieMutation) AddGameID(i int) {
+func (m *MysekaimusicrecordcategorieMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -66307,7 +66307,7 @@ func (m *MysekaimusicrecordcategorieMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaimusicrecordcategorieMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaimusicrecordcategorieMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -66371,13 +66371,13 @@ func (m *MysekaimusicrecordcategorieMutation) ResetName() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *MysekaimusicrecordcategorieMutation) SetSeq(i int) {
+func (m *MysekaimusicrecordcategorieMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *MysekaimusicrecordcategorieMutation) Seq() (r int, exists bool) {
+func (m *MysekaimusicrecordcategorieMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -66388,7 +66388,7 @@ func (m *MysekaimusicrecordcategorieMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Mysekaimusicrecordcategorie entity.
 // If the Mysekaimusicrecordcategorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordcategorieMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *MysekaimusicrecordcategorieMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -66403,7 +66403,7 @@ func (m *MysekaimusicrecordcategorieMutation) OldSeq(ctx context.Context) (v int
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *MysekaimusicrecordcategorieMutation) AddSeq(i int) {
+func (m *MysekaimusicrecordcategorieMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -66412,7 +66412,7 @@ func (m *MysekaimusicrecordcategorieMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *MysekaimusicrecordcategorieMutation) AddedSeq() (r int, exists bool) {
+func (m *MysekaimusicrecordcategorieMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -66694,7 +66694,7 @@ func (m *MysekaimusicrecordcategorieMutation) OldField(ctx context.Context, name
 func (m *MysekaimusicrecordcategorieMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimusicrecordcategorie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66708,7 +66708,7 @@ func (m *MysekaimusicrecordcategorieMutation) SetField(name string, value ent.Va
 		m.SetName(v)
 		return nil
 	case mysekaimusicrecordcategorie.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66771,14 +66771,14 @@ func (m *MysekaimusicrecordcategorieMutation) AddedField(name string) (ent.Value
 func (m *MysekaimusicrecordcategorieMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaimusicrecordcategorie.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaimusicrecordcategorie.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66914,8 +66914,8 @@ type MysekaiphenomenabackgroundcolorMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int
-	game_id                *int
-	addgame_id             *int
+	game_id                *int64
+	addgame_id             *int64
 	base_color             *string
 	ground_color           *string
 	gradation_color        *string
@@ -67027,13 +67027,13 @@ func (m *MysekaiphenomenabackgroundcolorMutation) IDs(ctx context.Context) ([]in
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaiphenomenabackgroundcolorMutation) SetGameID(i int) {
+func (m *MysekaiphenomenabackgroundcolorMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaiphenomenabackgroundcolorMutation) GameID() (r int, exists bool) {
+func (m *MysekaiphenomenabackgroundcolorMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -67044,7 +67044,7 @@ func (m *MysekaiphenomenabackgroundcolorMutation) GameID() (r int, exists bool) 
 // OldGameID returns the old "game_id" field's value of the Mysekaiphenomenabackgroundcolor entity.
 // If the Mysekaiphenomenabackgroundcolor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiphenomenabackgroundcolorMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaiphenomenabackgroundcolorMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -67059,7 +67059,7 @@ func (m *MysekaiphenomenabackgroundcolorMutation) OldGameID(ctx context.Context)
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaiphenomenabackgroundcolorMutation) AddGameID(i int) {
+func (m *MysekaiphenomenabackgroundcolorMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -67068,7 +67068,7 @@ func (m *MysekaiphenomenabackgroundcolorMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaiphenomenabackgroundcolorMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaiphenomenabackgroundcolorMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -67474,7 +67474,7 @@ func (m *MysekaiphenomenabackgroundcolorMutation) OldField(ctx context.Context, 
 func (m *MysekaiphenomenabackgroundcolorMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiphenomenabackgroundcolor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -67553,7 +67553,7 @@ func (m *MysekaiphenomenabackgroundcolorMutation) AddedField(name string) (ent.V
 func (m *MysekaiphenomenabackgroundcolorMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiphenomenabackgroundcolor.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -67698,8 +67698,8 @@ type MysekaiphenomenonMutation struct {
 	op                                       Op
 	typ                                      string
 	id                                       *int
-	game_id                                  *int
-	addgame_id                               *int
+	game_id                                  *int64
+	addgame_id                               *int64
 	mysekai_phenomena_brightness_type        *json.RawMessage
 	appendmysekai_phenomena_brightness_type  json.RawMessage
 	name                                     *string
@@ -67707,8 +67707,8 @@ type MysekaiphenomenonMutation struct {
 	description                              *string
 	mysekai_phenomena_time_period_type       *json.RawMessage
 	appendmysekai_phenomena_time_period_type json.RawMessage
-	mysekai_phenomena_background_color_id    *int
-	addmysekai_phenomena_background_color_id *int
+	mysekai_phenomena_background_color_id    *int64
+	addmysekai_phenomena_background_color_id *int64
 	assetbundle_name                         *string
 	ramp_texture_assetbundle_name            *string
 	icon_assetbundle_name                    *string
@@ -67818,13 +67818,13 @@ func (m *MysekaiphenomenonMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaiphenomenonMutation) SetGameID(i int) {
+func (m *MysekaiphenomenonMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaiphenomenonMutation) GameID() (r int, exists bool) {
+func (m *MysekaiphenomenonMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -67835,7 +67835,7 @@ func (m *MysekaiphenomenonMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaiphenomenon entity.
 // If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiphenomenonMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaiphenomenonMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -67850,7 +67850,7 @@ func (m *MysekaiphenomenonMutation) OldGameID(ctx context.Context) (v int, err e
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaiphenomenonMutation) AddGameID(i int) {
+func (m *MysekaiphenomenonMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -67859,7 +67859,7 @@ func (m *MysekaiphenomenonMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaiphenomenonMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaiphenomenonMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -68151,13 +68151,13 @@ func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaTimePeriodType() {
 }
 
 // SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
-func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBackgroundColorID(i int) {
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBackgroundColorID(i int64) {
 	m.mysekai_phenomena_background_color_id = &i
 	m.addmysekai_phenomena_background_color_id = nil
 }
 
 // MysekaiPhenomenaBackgroundColorID returns the value of the "mysekai_phenomena_background_color_id" field in the mutation.
-func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBackgroundColorID() (r int, exists bool) {
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBackgroundColorID() (r int64, exists bool) {
 	v := m.mysekai_phenomena_background_color_id
 	if v == nil {
 		return
@@ -68168,7 +68168,7 @@ func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBackgroundColorID() (r int, 
 // OldMysekaiPhenomenaBackgroundColorID returns the old "mysekai_phenomena_background_color_id" field's value of the Mysekaiphenomenon entity.
 // If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBackgroundColorID(ctx context.Context) (v int, err error) {
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBackgroundColorID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiPhenomenaBackgroundColorID is only allowed on UpdateOne operations")
 	}
@@ -68183,7 +68183,7 @@ func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBackgroundColorID(ctx con
 }
 
 // AddMysekaiPhenomenaBackgroundColorID adds i to the "mysekai_phenomena_background_color_id" field.
-func (m *MysekaiphenomenonMutation) AddMysekaiPhenomenaBackgroundColorID(i int) {
+func (m *MysekaiphenomenonMutation) AddMysekaiPhenomenaBackgroundColorID(i int64) {
 	if m.addmysekai_phenomena_background_color_id != nil {
 		*m.addmysekai_phenomena_background_color_id += i
 	} else {
@@ -68192,7 +68192,7 @@ func (m *MysekaiphenomenonMutation) AddMysekaiPhenomenaBackgroundColorID(i int) 
 }
 
 // AddedMysekaiPhenomenaBackgroundColorID returns the value that was added to the "mysekai_phenomena_background_color_id" field in this mutation.
-func (m *MysekaiphenomenonMutation) AddedMysekaiPhenomenaBackgroundColorID() (r int, exists bool) {
+func (m *MysekaiphenomenonMutation) AddedMysekaiPhenomenaBackgroundColorID() (r int64, exists bool) {
 	v := m.addmysekai_phenomena_background_color_id
 	if v == nil {
 		return
@@ -68542,7 +68542,7 @@ func (m *MysekaiphenomenonMutation) OldField(ctx context.Context, name string) (
 func (m *MysekaiphenomenonMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiphenomenon.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -68584,7 +68584,7 @@ func (m *MysekaiphenomenonMutation) SetField(name string, value ent.Value) error
 		m.SetMysekaiPhenomenaTimePeriodType(v)
 		return nil
 	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -68654,14 +68654,14 @@ func (m *MysekaiphenomenonMutation) AddedField(name string) (ent.Value, bool) {
 func (m *MysekaiphenomenonMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaiphenomenon.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -68842,13 +68842,13 @@ type MysekaisiteharvestfixtureMutation struct {
 	op                                             Op
 	typ                                            string
 	id                                             *int
-	game_id                                        *int
-	addgame_id                                     *int
+	game_id                                        *int64
+	addgame_id                                     *int64
 	mysekai_site_harvest_fixture_type              *string
-	hp                                             *int
-	addhp                                          *int
-	last_attack_stamina                            *int
-	addlast_attack_stamina                         *int
+	hp                                             *int64
+	addhp                                          *int64
+	last_attack_stamina                            *int64
+	addlast_attack_stamina                         *int64
 	mysekai_site_harvest_fixture_rarity_type       *json.RawMessage
 	appendmysekai_site_harvest_fixture_rarity_type json.RawMessage
 	assetbundle_name                               *string
@@ -68958,13 +68958,13 @@ func (m *MysekaisiteharvestfixtureMutation) IDs(ctx context.Context) ([]int, err
 }
 
 // SetGameID sets the "game_id" field.
-func (m *MysekaisiteharvestfixtureMutation) SetGameID(i int) {
+func (m *MysekaisiteharvestfixtureMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *MysekaisiteharvestfixtureMutation) GameID() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -68975,7 +68975,7 @@ func (m *MysekaisiteharvestfixtureMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Mysekaisiteharvestfixture entity.
 // If the Mysekaisiteharvestfixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaisiteharvestfixtureMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *MysekaisiteharvestfixtureMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -68990,7 +68990,7 @@ func (m *MysekaisiteharvestfixtureMutation) OldGameID(ctx context.Context) (v in
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *MysekaisiteharvestfixtureMutation) AddGameID(i int) {
+func (m *MysekaisiteharvestfixtureMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -68999,7 +68999,7 @@ func (m *MysekaisiteharvestfixtureMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *MysekaisiteharvestfixtureMutation) AddedGameID() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -69063,13 +69063,13 @@ func (m *MysekaisiteharvestfixtureMutation) ResetMysekaiSiteHarvestFixtureType()
 }
 
 // SetHp sets the "hp" field.
-func (m *MysekaisiteharvestfixtureMutation) SetHp(i int) {
+func (m *MysekaisiteharvestfixtureMutation) SetHp(i int64) {
 	m.hp = &i
 	m.addhp = nil
 }
 
 // Hp returns the value of the "hp" field in the mutation.
-func (m *MysekaisiteharvestfixtureMutation) Hp() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) Hp() (r int64, exists bool) {
 	v := m.hp
 	if v == nil {
 		return
@@ -69080,7 +69080,7 @@ func (m *MysekaisiteharvestfixtureMutation) Hp() (r int, exists bool) {
 // OldHp returns the old "hp" field's value of the Mysekaisiteharvestfixture entity.
 // If the Mysekaisiteharvestfixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaisiteharvestfixtureMutation) OldHp(ctx context.Context) (v int, err error) {
+func (m *MysekaisiteharvestfixtureMutation) OldHp(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHp is only allowed on UpdateOne operations")
 	}
@@ -69095,7 +69095,7 @@ func (m *MysekaisiteharvestfixtureMutation) OldHp(ctx context.Context) (v int, e
 }
 
 // AddHp adds i to the "hp" field.
-func (m *MysekaisiteharvestfixtureMutation) AddHp(i int) {
+func (m *MysekaisiteharvestfixtureMutation) AddHp(i int64) {
 	if m.addhp != nil {
 		*m.addhp += i
 	} else {
@@ -69104,7 +69104,7 @@ func (m *MysekaisiteharvestfixtureMutation) AddHp(i int) {
 }
 
 // AddedHp returns the value that was added to the "hp" field in this mutation.
-func (m *MysekaisiteharvestfixtureMutation) AddedHp() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) AddedHp() (r int64, exists bool) {
 	v := m.addhp
 	if v == nil {
 		return
@@ -69133,13 +69133,13 @@ func (m *MysekaisiteharvestfixtureMutation) ResetHp() {
 }
 
 // SetLastAttackStamina sets the "last_attack_stamina" field.
-func (m *MysekaisiteharvestfixtureMutation) SetLastAttackStamina(i int) {
+func (m *MysekaisiteharvestfixtureMutation) SetLastAttackStamina(i int64) {
 	m.last_attack_stamina = &i
 	m.addlast_attack_stamina = nil
 }
 
 // LastAttackStamina returns the value of the "last_attack_stamina" field in the mutation.
-func (m *MysekaisiteharvestfixtureMutation) LastAttackStamina() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) LastAttackStamina() (r int64, exists bool) {
 	v := m.last_attack_stamina
 	if v == nil {
 		return
@@ -69150,7 +69150,7 @@ func (m *MysekaisiteharvestfixtureMutation) LastAttackStamina() (r int, exists b
 // OldLastAttackStamina returns the old "last_attack_stamina" field's value of the Mysekaisiteharvestfixture entity.
 // If the Mysekaisiteharvestfixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaisiteharvestfixtureMutation) OldLastAttackStamina(ctx context.Context) (v int, err error) {
+func (m *MysekaisiteharvestfixtureMutation) OldLastAttackStamina(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLastAttackStamina is only allowed on UpdateOne operations")
 	}
@@ -69165,7 +69165,7 @@ func (m *MysekaisiteharvestfixtureMutation) OldLastAttackStamina(ctx context.Con
 }
 
 // AddLastAttackStamina adds i to the "last_attack_stamina" field.
-func (m *MysekaisiteharvestfixtureMutation) AddLastAttackStamina(i int) {
+func (m *MysekaisiteharvestfixtureMutation) AddLastAttackStamina(i int64) {
 	if m.addlast_attack_stamina != nil {
 		*m.addlast_attack_stamina += i
 	} else {
@@ -69174,7 +69174,7 @@ func (m *MysekaisiteharvestfixtureMutation) AddLastAttackStamina(i int) {
 }
 
 // AddedLastAttackStamina returns the value that was added to the "last_attack_stamina" field in this mutation.
-func (m *MysekaisiteharvestfixtureMutation) AddedLastAttackStamina() (r int, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) AddedLastAttackStamina() (r int64, exists bool) {
 	v := m.addlast_attack_stamina
 	if v == nil {
 		return
@@ -69463,7 +69463,7 @@ func (m *MysekaisiteharvestfixtureMutation) OldField(ctx context.Context, name s
 func (m *MysekaisiteharvestfixtureMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case mysekaisiteharvestfixture.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -69477,14 +69477,14 @@ func (m *MysekaisiteharvestfixtureMutation) SetField(name string, value ent.Valu
 		m.SetMysekaiSiteHarvestFixtureType(v)
 		return nil
 	case mysekaisiteharvestfixture.FieldHp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHp(v)
 		return nil
 	case mysekaisiteharvestfixture.FieldLastAttackStamina:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -69552,21 +69552,21 @@ func (m *MysekaisiteharvestfixtureMutation) AddedField(name string) (ent.Value, 
 func (m *MysekaisiteharvestfixtureMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case mysekaisiteharvestfixture.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case mysekaisiteharvestfixture.FieldHp:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddHp(v)
 		return nil
 	case mysekaisiteharvestfixture.FieldLastAttackStamina:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -69711,8 +69711,8 @@ type NgwordMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	game_id       *int
-	addgame_id    *int
+	game_id       *int64
+	addgame_id    *int64
 	word          *string
 	server_region *string
 	clearedFields map[string]struct{}
@@ -69820,13 +69820,13 @@ func (m *NgwordMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *NgwordMutation) SetGameID(i int) {
+func (m *NgwordMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *NgwordMutation) GameID() (r int, exists bool) {
+func (m *NgwordMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -69837,7 +69837,7 @@ func (m *NgwordMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Ngword entity.
 // If the Ngword object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *NgwordMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *NgwordMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -69852,7 +69852,7 @@ func (m *NgwordMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *NgwordMutation) AddGameID(i int) {
+func (m *NgwordMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -69861,7 +69861,7 @@ func (m *NgwordMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *NgwordMutation) AddedGameID() (r int, exists bool) {
+func (m *NgwordMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -70043,7 +70043,7 @@ func (m *NgwordMutation) OldField(ctx context.Context, name string) (ent.Value, 
 func (m *NgwordMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case ngword.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -70094,7 +70094,7 @@ func (m *NgwordMutation) AddedField(name string) (ent.Value, bool) {
 func (m *NgwordMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case ngword.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -70203,10 +70203,10 @@ type OutsidecharacterMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	game_id       *int
-	addgame_id    *int
-	seq           *int
-	addseq        *int
+	game_id       *int64
+	addgame_id    *int64
+	seq           *int64
+	addseq        *int64
 	name          *string
 	server_region *string
 	clearedFields map[string]struct{}
@@ -70314,13 +70314,13 @@ func (m *OutsidecharacterMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *OutsidecharacterMutation) SetGameID(i int) {
+func (m *OutsidecharacterMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *OutsidecharacterMutation) GameID() (r int, exists bool) {
+func (m *OutsidecharacterMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -70331,7 +70331,7 @@ func (m *OutsidecharacterMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Outsidecharacter entity.
 // If the Outsidecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OutsidecharacterMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *OutsidecharacterMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -70346,7 +70346,7 @@ func (m *OutsidecharacterMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *OutsidecharacterMutation) AddGameID(i int) {
+func (m *OutsidecharacterMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -70355,7 +70355,7 @@ func (m *OutsidecharacterMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *OutsidecharacterMutation) AddedGameID() (r int, exists bool) {
+func (m *OutsidecharacterMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -70370,13 +70370,13 @@ func (m *OutsidecharacterMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *OutsidecharacterMutation) SetSeq(i int) {
+func (m *OutsidecharacterMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *OutsidecharacterMutation) Seq() (r int, exists bool) {
+func (m *OutsidecharacterMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -70387,7 +70387,7 @@ func (m *OutsidecharacterMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Outsidecharacter entity.
 // If the Outsidecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OutsidecharacterMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *OutsidecharacterMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -70402,7 +70402,7 @@ func (m *OutsidecharacterMutation) OldSeq(ctx context.Context) (v int, err error
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *OutsidecharacterMutation) AddSeq(i int) {
+func (m *OutsidecharacterMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -70411,7 +70411,7 @@ func (m *OutsidecharacterMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *OutsidecharacterMutation) AddedSeq() (r int, exists bool) {
+func (m *OutsidecharacterMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -70614,14 +70614,14 @@ func (m *OutsidecharacterMutation) OldField(ctx context.Context, name string) (e
 func (m *OutsidecharacterMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case outsidecharacter.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case outsidecharacter.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -70677,14 +70677,14 @@ func (m *OutsidecharacterMutation) AddedField(name string) (ent.Value, bool) {
 func (m *OutsidecharacterMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case outsidecharacter.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case outsidecharacter.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -70802,15 +70802,15 @@ type PlayerframeMutation struct {
 	op                       Op
 	typ                      string
 	id                       *int
-	game_id                  *int
-	addgame_id               *int
-	seq                      *int
-	addseq                   *int
-	player_frame_group_id    *int
-	addplayer_frame_group_id *int
+	game_id                  *int64
+	addgame_id               *int64
+	seq                      *int64
+	addseq                   *int64
+	player_frame_group_id    *int64
+	addplayer_frame_group_id *int64
 	description              *string
-	game_character_id        *int
-	addgame_character_id     *int
+	game_character_id        *int64
+	addgame_character_id     *int64
 	server_region            *string
 	clearedFields            map[string]struct{}
 	done                     bool
@@ -70917,13 +70917,13 @@ func (m *PlayerframeMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *PlayerframeMutation) SetGameID(i int) {
+func (m *PlayerframeMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *PlayerframeMutation) GameID() (r int, exists bool) {
+func (m *PlayerframeMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -70934,7 +70934,7 @@ func (m *PlayerframeMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Playerframe entity.
 // If the Playerframe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframeMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *PlayerframeMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -70949,7 +70949,7 @@ func (m *PlayerframeMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *PlayerframeMutation) AddGameID(i int) {
+func (m *PlayerframeMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -70958,7 +70958,7 @@ func (m *PlayerframeMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *PlayerframeMutation) AddedGameID() (r int, exists bool) {
+func (m *PlayerframeMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -70973,13 +70973,13 @@ func (m *PlayerframeMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *PlayerframeMutation) SetSeq(i int) {
+func (m *PlayerframeMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *PlayerframeMutation) Seq() (r int, exists bool) {
+func (m *PlayerframeMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -70990,7 +70990,7 @@ func (m *PlayerframeMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Playerframe entity.
 // If the Playerframe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframeMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *PlayerframeMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -71005,7 +71005,7 @@ func (m *PlayerframeMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *PlayerframeMutation) AddSeq(i int) {
+func (m *PlayerframeMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -71014,7 +71014,7 @@ func (m *PlayerframeMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *PlayerframeMutation) AddedSeq() (r int, exists bool) {
+func (m *PlayerframeMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -71043,13 +71043,13 @@ func (m *PlayerframeMutation) ResetSeq() {
 }
 
 // SetPlayerFrameGroupID sets the "player_frame_group_id" field.
-func (m *PlayerframeMutation) SetPlayerFrameGroupID(i int) {
+func (m *PlayerframeMutation) SetPlayerFrameGroupID(i int64) {
 	m.player_frame_group_id = &i
 	m.addplayer_frame_group_id = nil
 }
 
 // PlayerFrameGroupID returns the value of the "player_frame_group_id" field in the mutation.
-func (m *PlayerframeMutation) PlayerFrameGroupID() (r int, exists bool) {
+func (m *PlayerframeMutation) PlayerFrameGroupID() (r int64, exists bool) {
 	v := m.player_frame_group_id
 	if v == nil {
 		return
@@ -71060,7 +71060,7 @@ func (m *PlayerframeMutation) PlayerFrameGroupID() (r int, exists bool) {
 // OldPlayerFrameGroupID returns the old "player_frame_group_id" field's value of the Playerframe entity.
 // If the Playerframe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframeMutation) OldPlayerFrameGroupID(ctx context.Context) (v int, err error) {
+func (m *PlayerframeMutation) OldPlayerFrameGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPlayerFrameGroupID is only allowed on UpdateOne operations")
 	}
@@ -71075,7 +71075,7 @@ func (m *PlayerframeMutation) OldPlayerFrameGroupID(ctx context.Context) (v int,
 }
 
 // AddPlayerFrameGroupID adds i to the "player_frame_group_id" field.
-func (m *PlayerframeMutation) AddPlayerFrameGroupID(i int) {
+func (m *PlayerframeMutation) AddPlayerFrameGroupID(i int64) {
 	if m.addplayer_frame_group_id != nil {
 		*m.addplayer_frame_group_id += i
 	} else {
@@ -71084,7 +71084,7 @@ func (m *PlayerframeMutation) AddPlayerFrameGroupID(i int) {
 }
 
 // AddedPlayerFrameGroupID returns the value that was added to the "player_frame_group_id" field in this mutation.
-func (m *PlayerframeMutation) AddedPlayerFrameGroupID() (r int, exists bool) {
+func (m *PlayerframeMutation) AddedPlayerFrameGroupID() (r int64, exists bool) {
 	v := m.addplayer_frame_group_id
 	if v == nil {
 		return
@@ -71162,13 +71162,13 @@ func (m *PlayerframeMutation) ResetDescription() {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *PlayerframeMutation) SetGameCharacterID(i int) {
+func (m *PlayerframeMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *PlayerframeMutation) GameCharacterID() (r int, exists bool) {
+func (m *PlayerframeMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -71179,7 +71179,7 @@ func (m *PlayerframeMutation) GameCharacterID() (r int, exists bool) {
 // OldGameCharacterID returns the old "game_character_id" field's value of the Playerframe entity.
 // If the Playerframe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframeMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *PlayerframeMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -71194,7 +71194,7 @@ func (m *PlayerframeMutation) OldGameCharacterID(ctx context.Context) (v int, er
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *PlayerframeMutation) AddGameCharacterID(i int) {
+func (m *PlayerframeMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -71203,7 +71203,7 @@ func (m *PlayerframeMutation) AddGameCharacterID(i int) {
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *PlayerframeMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *PlayerframeMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -71371,21 +71371,21 @@ func (m *PlayerframeMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *PlayerframeMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case playerframe.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case playerframe.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case playerframe.FieldPlayerFrameGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -71399,7 +71399,7 @@ func (m *PlayerframeMutation) SetField(name string, value ent.Value) error {
 		m.SetDescription(v)
 		return nil
 	case playerframe.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -71458,28 +71458,28 @@ func (m *PlayerframeMutation) AddedField(name string) (ent.Value, bool) {
 func (m *PlayerframeMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case playerframe.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case playerframe.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case playerframe.FieldPlayerFrameGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPlayerFrameGroupID(v)
 		return nil
 	case playerframe.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -71615,10 +71615,10 @@ type PlayerframegroupMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	game_id          *int
-	addgame_id       *int
-	seq              *int
-	addseq           *int
+	game_id          *int64
+	addgame_id       *int64
+	seq              *int64
+	addseq           *int64
 	name             *string
 	assetbundle_name *string
 	server_region    *string
@@ -71727,13 +71727,13 @@ func (m *PlayerframegroupMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *PlayerframegroupMutation) SetGameID(i int) {
+func (m *PlayerframegroupMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *PlayerframegroupMutation) GameID() (r int, exists bool) {
+func (m *PlayerframegroupMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -71744,7 +71744,7 @@ func (m *PlayerframegroupMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Playerframegroup entity.
 // If the Playerframegroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframegroupMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *PlayerframegroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -71759,7 +71759,7 @@ func (m *PlayerframegroupMutation) OldGameID(ctx context.Context) (v int, err er
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *PlayerframegroupMutation) AddGameID(i int) {
+func (m *PlayerframegroupMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -71768,7 +71768,7 @@ func (m *PlayerframegroupMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *PlayerframegroupMutation) AddedGameID() (r int, exists bool) {
+func (m *PlayerframegroupMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -71783,13 +71783,13 @@ func (m *PlayerframegroupMutation) ResetGameID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *PlayerframegroupMutation) SetSeq(i int) {
+func (m *PlayerframegroupMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *PlayerframegroupMutation) Seq() (r int, exists bool) {
+func (m *PlayerframegroupMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -71800,7 +71800,7 @@ func (m *PlayerframegroupMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Playerframegroup entity.
 // If the Playerframegroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerframegroupMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *PlayerframegroupMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -71815,7 +71815,7 @@ func (m *PlayerframegroupMutation) OldSeq(ctx context.Context) (v int, err error
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *PlayerframegroupMutation) AddSeq(i int) {
+func (m *PlayerframegroupMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -71824,7 +71824,7 @@ func (m *PlayerframegroupMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *PlayerframegroupMutation) AddedSeq() (r int, exists bool) {
+func (m *PlayerframegroupMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -72083,14 +72083,14 @@ func (m *PlayerframegroupMutation) OldField(ctx context.Context, name string) (e
 func (m *PlayerframegroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case playerframegroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case playerframegroup.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -72153,14 +72153,14 @@ func (m *PlayerframegroupMutation) AddedField(name string) (ent.Value, bool) {
 func (m *PlayerframegroupMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case playerframegroup.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case playerframegroup.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -72289,8 +72289,8 @@ type ResourceboxeMutation struct {
 	id                         *int
 	resource_box_purpose       *json.RawMessage
 	appendresource_box_purpose json.RawMessage
-	game_id                    *int
-	addgame_id                 *int
+	game_id                    *int64
+	addgame_id                 *int64
 	resource_box_type          *json.RawMessage
 	appendresource_box_type    json.RawMessage
 	description                *string
@@ -72469,13 +72469,13 @@ func (m *ResourceboxeMutation) ResetResourceBoxPurpose() {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *ResourceboxeMutation) SetGameID(i int) {
+func (m *ResourceboxeMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *ResourceboxeMutation) GameID() (r int, exists bool) {
+func (m *ResourceboxeMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -72486,7 +72486,7 @@ func (m *ResourceboxeMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Resourceboxe entity.
 // If the Resourceboxe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ResourceboxeMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *ResourceboxeMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -72501,7 +72501,7 @@ func (m *ResourceboxeMutation) OldGameID(ctx context.Context) (v int, err error)
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *ResourceboxeMutation) AddGameID(i int) {
+func (m *ResourceboxeMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -72510,7 +72510,7 @@ func (m *ResourceboxeMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *ResourceboxeMutation) AddedGameID() (r int, exists bool) {
+func (m *ResourceboxeMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -72962,7 +72962,7 @@ func (m *ResourceboxeMutation) SetField(name string, value ent.Value) error {
 		m.SetResourceBoxPurpose(v)
 		return nil
 	case resourceboxe.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -73041,7 +73041,7 @@ func (m *ResourceboxeMutation) AddedField(name string) (ent.Value, bool) {
 func (m *ResourceboxeMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case resourceboxe.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -73195,20 +73195,20 @@ type ShopitemMutation struct {
 	op                      Op
 	typ                     string
 	id                      *int
-	game_id                 *int
-	addgame_id              *int
-	shop_id                 *int
-	addshop_id              *int
-	seq                     *int
-	addseq                  *int
-	release_condition_id    *int
-	addrelease_condition_id *int
-	resource_box_id         *int
-	addresource_box_id      *int
+	game_id                 *int64
+	addgame_id              *int64
+	shop_id                 *int64
+	addshop_id              *int64
+	seq                     *int64
+	addseq                  *int64
+	release_condition_id    *int64
+	addrelease_condition_id *int64
+	resource_box_id         *int64
+	addresource_box_id      *int64
 	costs                   *json.RawMessage
 	appendcosts             json.RawMessage
-	start_at                *int
-	addstart_at             *int
+	start_at                *int64
+	addstart_at             *int64
 	server_region           *string
 	clearedFields           map[string]struct{}
 	done                    bool
@@ -73315,13 +73315,13 @@ func (m *ShopitemMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *ShopitemMutation) SetGameID(i int) {
+func (m *ShopitemMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *ShopitemMutation) GameID() (r int, exists bool) {
+func (m *ShopitemMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -73332,7 +73332,7 @@ func (m *ShopitemMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -73347,7 +73347,7 @@ func (m *ShopitemMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *ShopitemMutation) AddGameID(i int) {
+func (m *ShopitemMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -73356,7 +73356,7 @@ func (m *ShopitemMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *ShopitemMutation) AddedGameID() (r int, exists bool) {
+func (m *ShopitemMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -73371,13 +73371,13 @@ func (m *ShopitemMutation) ResetGameID() {
 }
 
 // SetShopID sets the "shop_id" field.
-func (m *ShopitemMutation) SetShopID(i int) {
+func (m *ShopitemMutation) SetShopID(i int64) {
 	m.shop_id = &i
 	m.addshop_id = nil
 }
 
 // ShopID returns the value of the "shop_id" field in the mutation.
-func (m *ShopitemMutation) ShopID() (r int, exists bool) {
+func (m *ShopitemMutation) ShopID() (r int64, exists bool) {
 	v := m.shop_id
 	if v == nil {
 		return
@@ -73388,7 +73388,7 @@ func (m *ShopitemMutation) ShopID() (r int, exists bool) {
 // OldShopID returns the old "shop_id" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldShopID(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldShopID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldShopID is only allowed on UpdateOne operations")
 	}
@@ -73403,7 +73403,7 @@ func (m *ShopitemMutation) OldShopID(ctx context.Context) (v int, err error) {
 }
 
 // AddShopID adds i to the "shop_id" field.
-func (m *ShopitemMutation) AddShopID(i int) {
+func (m *ShopitemMutation) AddShopID(i int64) {
 	if m.addshop_id != nil {
 		*m.addshop_id += i
 	} else {
@@ -73412,7 +73412,7 @@ func (m *ShopitemMutation) AddShopID(i int) {
 }
 
 // AddedShopID returns the value that was added to the "shop_id" field in this mutation.
-func (m *ShopitemMutation) AddedShopID() (r int, exists bool) {
+func (m *ShopitemMutation) AddedShopID() (r int64, exists bool) {
 	v := m.addshop_id
 	if v == nil {
 		return
@@ -73441,13 +73441,13 @@ func (m *ShopitemMutation) ResetShopID() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *ShopitemMutation) SetSeq(i int) {
+func (m *ShopitemMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *ShopitemMutation) Seq() (r int, exists bool) {
+func (m *ShopitemMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -73458,7 +73458,7 @@ func (m *ShopitemMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -73473,7 +73473,7 @@ func (m *ShopitemMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *ShopitemMutation) AddSeq(i int) {
+func (m *ShopitemMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -73482,7 +73482,7 @@ func (m *ShopitemMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *ShopitemMutation) AddedSeq() (r int, exists bool) {
+func (m *ShopitemMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -73511,13 +73511,13 @@ func (m *ShopitemMutation) ResetSeq() {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (m *ShopitemMutation) SetReleaseConditionID(i int) {
+func (m *ShopitemMutation) SetReleaseConditionID(i int64) {
 	m.release_condition_id = &i
 	m.addrelease_condition_id = nil
 }
 
 // ReleaseConditionID returns the value of the "release_condition_id" field in the mutation.
-func (m *ShopitemMutation) ReleaseConditionID() (r int, exists bool) {
+func (m *ShopitemMutation) ReleaseConditionID() (r int64, exists bool) {
 	v := m.release_condition_id
 	if v == nil {
 		return
@@ -73528,7 +73528,7 @@ func (m *ShopitemMutation) ReleaseConditionID() (r int, exists bool) {
 // OldReleaseConditionID returns the old "release_condition_id" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -73543,7 +73543,7 @@ func (m *ShopitemMutation) OldReleaseConditionID(ctx context.Context) (v int, er
 }
 
 // AddReleaseConditionID adds i to the "release_condition_id" field.
-func (m *ShopitemMutation) AddReleaseConditionID(i int) {
+func (m *ShopitemMutation) AddReleaseConditionID(i int64) {
 	if m.addrelease_condition_id != nil {
 		*m.addrelease_condition_id += i
 	} else {
@@ -73552,7 +73552,7 @@ func (m *ShopitemMutation) AddReleaseConditionID(i int) {
 }
 
 // AddedReleaseConditionID returns the value that was added to the "release_condition_id" field in this mutation.
-func (m *ShopitemMutation) AddedReleaseConditionID() (r int, exists bool) {
+func (m *ShopitemMutation) AddedReleaseConditionID() (r int64, exists bool) {
 	v := m.addrelease_condition_id
 	if v == nil {
 		return
@@ -73581,13 +73581,13 @@ func (m *ShopitemMutation) ResetReleaseConditionID() {
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (m *ShopitemMutation) SetResourceBoxID(i int) {
+func (m *ShopitemMutation) SetResourceBoxID(i int64) {
 	m.resource_box_id = &i
 	m.addresource_box_id = nil
 }
 
 // ResourceBoxID returns the value of the "resource_box_id" field in the mutation.
-func (m *ShopitemMutation) ResourceBoxID() (r int, exists bool) {
+func (m *ShopitemMutation) ResourceBoxID() (r int64, exists bool) {
 	v := m.resource_box_id
 	if v == nil {
 		return
@@ -73598,7 +73598,7 @@ func (m *ShopitemMutation) ResourceBoxID() (r int, exists bool) {
 // OldResourceBoxID returns the old "resource_box_id" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldResourceBoxID(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldResourceBoxID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceBoxID is only allowed on UpdateOne operations")
 	}
@@ -73613,7 +73613,7 @@ func (m *ShopitemMutation) OldResourceBoxID(ctx context.Context) (v int, err err
 }
 
 // AddResourceBoxID adds i to the "resource_box_id" field.
-func (m *ShopitemMutation) AddResourceBoxID(i int) {
+func (m *ShopitemMutation) AddResourceBoxID(i int64) {
 	if m.addresource_box_id != nil {
 		*m.addresource_box_id += i
 	} else {
@@ -73622,7 +73622,7 @@ func (m *ShopitemMutation) AddResourceBoxID(i int) {
 }
 
 // AddedResourceBoxID returns the value that was added to the "resource_box_id" field in this mutation.
-func (m *ShopitemMutation) AddedResourceBoxID() (r int, exists bool) {
+func (m *ShopitemMutation) AddedResourceBoxID() (r int64, exists bool) {
 	v := m.addresource_box_id
 	if v == nil {
 		return
@@ -73716,13 +73716,13 @@ func (m *ShopitemMutation) ResetCosts() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *ShopitemMutation) SetStartAt(i int) {
+func (m *ShopitemMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *ShopitemMutation) StartAt() (r int, exists bool) {
+func (m *ShopitemMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -73733,7 +73733,7 @@ func (m *ShopitemMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Shopitem entity.
 // If the Shopitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ShopitemMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *ShopitemMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -73748,7 +73748,7 @@ func (m *ShopitemMutation) OldStartAt(ctx context.Context) (v int, err error) {
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *ShopitemMutation) AddStartAt(i int) {
+func (m *ShopitemMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -73757,7 +73757,7 @@ func (m *ShopitemMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *ShopitemMutation) AddedStartAt() (r int, exists bool) {
+func (m *ShopitemMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -73939,35 +73939,35 @@ func (m *ShopitemMutation) OldField(ctx context.Context, name string) (ent.Value
 func (m *ShopitemMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case shopitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case shopitem.FieldShopID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetShopID(v)
 		return nil
 	case shopitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeq(v)
 		return nil
 	case shopitem.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReleaseConditionID(v)
 		return nil
 	case shopitem.FieldResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -73981,7 +73981,7 @@ func (m *ShopitemMutation) SetField(name string, value ent.Value) error {
 		m.SetCosts(v)
 		return nil
 	case shopitem.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -74050,42 +74050,42 @@ func (m *ShopitemMutation) AddedField(name string) (ent.Value, bool) {
 func (m *ShopitemMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case shopitem.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case shopitem.FieldShopID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddShopID(v)
 		return nil
 	case shopitem.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case shopitem.FieldReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReleaseConditionID(v)
 		return nil
 	case shopitem.FieldResourceBoxID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddResourceBoxID(v)
 		return nil
 	case shopitem.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -74239,14 +74239,14 @@ type SkillMutation struct {
 	op                            Op
 	typ                           string
 	id                            *int
-	game_id                       *int
-	addgame_id                    *int
+	game_id                       *int64
+	addgame_id                    *int64
 	short_description             *string
 	description                   *string
 	description_sprite_name       *json.RawMessage
 	appenddescription_sprite_name json.RawMessage
-	skill_filter_id               *int
-	addskill_filter_id            *int
+	skill_filter_id               *int64
+	addskill_filter_id            *int64
 	skill_effects                 *json.RawMessage
 	appendskill_effects           json.RawMessage
 	server_region                 *string
@@ -74355,13 +74355,13 @@ func (m *SkillMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *SkillMutation) SetGameID(i int) {
+func (m *SkillMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *SkillMutation) GameID() (r int, exists bool) {
+func (m *SkillMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -74372,7 +74372,7 @@ func (m *SkillMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Skill entity.
 // If the Skill object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkillMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *SkillMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -74387,7 +74387,7 @@ func (m *SkillMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *SkillMutation) AddGameID(i int) {
+func (m *SkillMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -74396,7 +74396,7 @@ func (m *SkillMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *SkillMutation) AddedGameID() (r int, exists bool) {
+func (m *SkillMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -74574,13 +74574,13 @@ func (m *SkillMutation) ResetDescriptionSpriteName() {
 }
 
 // SetSkillFilterID sets the "skill_filter_id" field.
-func (m *SkillMutation) SetSkillFilterID(i int) {
+func (m *SkillMutation) SetSkillFilterID(i int64) {
 	m.skill_filter_id = &i
 	m.addskill_filter_id = nil
 }
 
 // SkillFilterID returns the value of the "skill_filter_id" field in the mutation.
-func (m *SkillMutation) SkillFilterID() (r int, exists bool) {
+func (m *SkillMutation) SkillFilterID() (r int64, exists bool) {
 	v := m.skill_filter_id
 	if v == nil {
 		return
@@ -74591,7 +74591,7 @@ func (m *SkillMutation) SkillFilterID() (r int, exists bool) {
 // OldSkillFilterID returns the old "skill_filter_id" field's value of the Skill entity.
 // If the Skill object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkillMutation) OldSkillFilterID(ctx context.Context) (v int, err error) {
+func (m *SkillMutation) OldSkillFilterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSkillFilterID is only allowed on UpdateOne operations")
 	}
@@ -74606,7 +74606,7 @@ func (m *SkillMutation) OldSkillFilterID(ctx context.Context) (v int, err error)
 }
 
 // AddSkillFilterID adds i to the "skill_filter_id" field.
-func (m *SkillMutation) AddSkillFilterID(i int) {
+func (m *SkillMutation) AddSkillFilterID(i int64) {
 	if m.addskill_filter_id != nil {
 		*m.addskill_filter_id += i
 	} else {
@@ -74615,7 +74615,7 @@ func (m *SkillMutation) AddSkillFilterID(i int) {
 }
 
 // AddedSkillFilterID returns the value that was added to the "skill_filter_id" field in this mutation.
-func (m *SkillMutation) AddedSkillFilterID() (r int, exists bool) {
+func (m *SkillMutation) AddedSkillFilterID() (r int64, exists bool) {
 	v := m.addskill_filter_id
 	if v == nil {
 		return
@@ -74855,7 +74855,7 @@ func (m *SkillMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *SkillMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case skill.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -74883,7 +74883,7 @@ func (m *SkillMutation) SetField(name string, value ent.Value) error {
 		m.SetDescriptionSpriteName(v)
 		return nil
 	case skill.FieldSkillFilterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -74939,14 +74939,14 @@ func (m *SkillMutation) AddedField(name string) (ent.Value, bool) {
 func (m *SkillMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case skill.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case skill.FieldSkillFilterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -75091,27 +75091,27 @@ type StampMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
+	game_id                        *int64
+	addgame_id                     *int64
 	stamp_type                     *json.RawMessage
 	appendstamp_type               json.RawMessage
-	seq                            *int
-	addseq                         *int
+	seq                            *int64
+	addseq                         *int64
 	name                           *string
 	assetbundle_name               *string
 	balloon_assetbundle_name       *json.RawMessage
 	appendballoon_assetbundle_name json.RawMessage
-	character_id1                  *int
-	addcharacter_id1               *int
-	game_character_unit_id         *int
-	addgame_character_unit_id      *int
-	archive_published_at           *int
-	addarchive_published_at        *int
+	character_id1                  *int64
+	addcharacter_id1               *int64
+	game_character_unit_id         *int64
+	addgame_character_unit_id      *int64
+	archive_published_at           *int64
+	addarchive_published_at        *int64
 	description                    *string
 	archive_display_type           *json.RawMessage
 	appendarchive_display_type     json.RawMessage
-	character_id2                  *int
-	addcharacter_id2               *int
+	character_id2                  *int64
+	addcharacter_id2               *int64
 	server_region                  *string
 	clearedFields                  map[string]struct{}
 	done                           bool
@@ -75218,13 +75218,13 @@ func (m *StampMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *StampMutation) SetGameID(i int) {
+func (m *StampMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *StampMutation) GameID() (r int, exists bool) {
+func (m *StampMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -75235,7 +75235,7 @@ func (m *StampMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -75250,7 +75250,7 @@ func (m *StampMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *StampMutation) AddGameID(i int) {
+func (m *StampMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -75259,7 +75259,7 @@ func (m *StampMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *StampMutation) AddedGameID() (r int, exists bool) {
+func (m *StampMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -75339,13 +75339,13 @@ func (m *StampMutation) ResetStampType() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *StampMutation) SetSeq(i int) {
+func (m *StampMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *StampMutation) Seq() (r int, exists bool) {
+func (m *StampMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -75356,7 +75356,7 @@ func (m *StampMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -75371,7 +75371,7 @@ func (m *StampMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *StampMutation) AddSeq(i int) {
+func (m *StampMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -75380,7 +75380,7 @@ func (m *StampMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *StampMutation) AddedSeq() (r int, exists bool) {
+func (m *StampMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -75572,13 +75572,13 @@ func (m *StampMutation) ResetBalloonAssetbundleName() {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (m *StampMutation) SetCharacterId1(i int) {
+func (m *StampMutation) SetCharacterId1(i int64) {
 	m.character_id1 = &i
 	m.addcharacter_id1 = nil
 }
 
 // CharacterId1 returns the value of the "character_id1" field in the mutation.
-func (m *StampMutation) CharacterId1() (r int, exists bool) {
+func (m *StampMutation) CharacterId1() (r int64, exists bool) {
 	v := m.character_id1
 	if v == nil {
 		return
@@ -75589,7 +75589,7 @@ func (m *StampMutation) CharacterId1() (r int, exists bool) {
 // OldCharacterId1 returns the old "character_id1" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldCharacterId1(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldCharacterId1(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterId1 is only allowed on UpdateOne operations")
 	}
@@ -75604,7 +75604,7 @@ func (m *StampMutation) OldCharacterId1(ctx context.Context) (v int, err error) 
 }
 
 // AddCharacterId1 adds i to the "character_id1" field.
-func (m *StampMutation) AddCharacterId1(i int) {
+func (m *StampMutation) AddCharacterId1(i int64) {
 	if m.addcharacter_id1 != nil {
 		*m.addcharacter_id1 += i
 	} else {
@@ -75613,7 +75613,7 @@ func (m *StampMutation) AddCharacterId1(i int) {
 }
 
 // AddedCharacterId1 returns the value that was added to the "character_id1" field in this mutation.
-func (m *StampMutation) AddedCharacterId1() (r int, exists bool) {
+func (m *StampMutation) AddedCharacterId1() (r int64, exists bool) {
 	v := m.addcharacter_id1
 	if v == nil {
 		return
@@ -75642,13 +75642,13 @@ func (m *StampMutation) ResetCharacterId1() {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (m *StampMutation) SetGameCharacterUnitID(i int) {
+func (m *StampMutation) SetGameCharacterUnitID(i int64) {
 	m.game_character_unit_id = &i
 	m.addgame_character_unit_id = nil
 }
 
 // GameCharacterUnitID returns the value of the "game_character_unit_id" field in the mutation.
-func (m *StampMutation) GameCharacterUnitID() (r int, exists bool) {
+func (m *StampMutation) GameCharacterUnitID() (r int64, exists bool) {
 	v := m.game_character_unit_id
 	if v == nil {
 		return
@@ -75659,7 +75659,7 @@ func (m *StampMutation) GameCharacterUnitID() (r int, exists bool) {
 // OldGameCharacterUnitID returns the old "game_character_unit_id" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldGameCharacterUnitID(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldGameCharacterUnitID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterUnitID is only allowed on UpdateOne operations")
 	}
@@ -75674,7 +75674,7 @@ func (m *StampMutation) OldGameCharacterUnitID(ctx context.Context) (v int, err 
 }
 
 // AddGameCharacterUnitID adds i to the "game_character_unit_id" field.
-func (m *StampMutation) AddGameCharacterUnitID(i int) {
+func (m *StampMutation) AddGameCharacterUnitID(i int64) {
 	if m.addgame_character_unit_id != nil {
 		*m.addgame_character_unit_id += i
 	} else {
@@ -75683,7 +75683,7 @@ func (m *StampMutation) AddGameCharacterUnitID(i int) {
 }
 
 // AddedGameCharacterUnitID returns the value that was added to the "game_character_unit_id" field in this mutation.
-func (m *StampMutation) AddedGameCharacterUnitID() (r int, exists bool) {
+func (m *StampMutation) AddedGameCharacterUnitID() (r int64, exists bool) {
 	v := m.addgame_character_unit_id
 	if v == nil {
 		return
@@ -75712,13 +75712,13 @@ func (m *StampMutation) ResetGameCharacterUnitID() {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (m *StampMutation) SetArchivePublishedAt(i int) {
+func (m *StampMutation) SetArchivePublishedAt(i int64) {
 	m.archive_published_at = &i
 	m.addarchive_published_at = nil
 }
 
 // ArchivePublishedAt returns the value of the "archive_published_at" field in the mutation.
-func (m *StampMutation) ArchivePublishedAt() (r int, exists bool) {
+func (m *StampMutation) ArchivePublishedAt() (r int64, exists bool) {
 	v := m.archive_published_at
 	if v == nil {
 		return
@@ -75729,7 +75729,7 @@ func (m *StampMutation) ArchivePublishedAt() (r int, exists bool) {
 // OldArchivePublishedAt returns the old "archive_published_at" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldArchivePublishedAt(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldArchivePublishedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchivePublishedAt is only allowed on UpdateOne operations")
 	}
@@ -75744,7 +75744,7 @@ func (m *StampMutation) OldArchivePublishedAt(ctx context.Context) (v int, err e
 }
 
 // AddArchivePublishedAt adds i to the "archive_published_at" field.
-func (m *StampMutation) AddArchivePublishedAt(i int) {
+func (m *StampMutation) AddArchivePublishedAt(i int64) {
 	if m.addarchive_published_at != nil {
 		*m.addarchive_published_at += i
 	} else {
@@ -75753,7 +75753,7 @@ func (m *StampMutation) AddArchivePublishedAt(i int) {
 }
 
 // AddedArchivePublishedAt returns the value that was added to the "archive_published_at" field in this mutation.
-func (m *StampMutation) AddedArchivePublishedAt() (r int, exists bool) {
+func (m *StampMutation) AddedArchivePublishedAt() (r int64, exists bool) {
 	v := m.addarchive_published_at
 	if v == nil {
 		return
@@ -75896,13 +75896,13 @@ func (m *StampMutation) ResetArchiveDisplayType() {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (m *StampMutation) SetCharacterId2(i int) {
+func (m *StampMutation) SetCharacterId2(i int64) {
 	m.character_id2 = &i
 	m.addcharacter_id2 = nil
 }
 
 // CharacterId2 returns the value of the "character_id2" field in the mutation.
-func (m *StampMutation) CharacterId2() (r int, exists bool) {
+func (m *StampMutation) CharacterId2() (r int64, exists bool) {
 	v := m.character_id2
 	if v == nil {
 		return
@@ -75913,7 +75913,7 @@ func (m *StampMutation) CharacterId2() (r int, exists bool) {
 // OldCharacterId2 returns the old "character_id2" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldCharacterId2(ctx context.Context) (v int, err error) {
+func (m *StampMutation) OldCharacterId2(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterId2 is only allowed on UpdateOne operations")
 	}
@@ -75928,7 +75928,7 @@ func (m *StampMutation) OldCharacterId2(ctx context.Context) (v int, err error) 
 }
 
 // AddCharacterId2 adds i to the "character_id2" field.
-func (m *StampMutation) AddCharacterId2(i int) {
+func (m *StampMutation) AddCharacterId2(i int64) {
 	if m.addcharacter_id2 != nil {
 		*m.addcharacter_id2 += i
 	} else {
@@ -75937,7 +75937,7 @@ func (m *StampMutation) AddCharacterId2(i int) {
 }
 
 // AddedCharacterId2 returns the value that was added to the "character_id2" field in this mutation.
-func (m *StampMutation) AddedCharacterId2() (r int, exists bool) {
+func (m *StampMutation) AddedCharacterId2() (r int64, exists bool) {
 	v := m.addcharacter_id2
 	if v == nil {
 		return
@@ -76154,7 +76154,7 @@ func (m *StampMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *StampMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case stamp.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76168,7 +76168,7 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetStampType(v)
 		return nil
 	case stamp.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76196,21 +76196,21 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetBalloonAssetbundleName(v)
 		return nil
 	case stamp.FieldCharacterId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCharacterId1(v)
 		return nil
 	case stamp.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameCharacterUnitID(v)
 		return nil
 	case stamp.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76231,7 +76231,7 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetArchiveDisplayType(v)
 		return nil
 	case stamp.FieldCharacterId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76300,42 +76300,42 @@ func (m *StampMutation) AddedField(name string) (ent.Value, bool) {
 func (m *StampMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case stamp.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case stamp.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case stamp.FieldCharacterId1:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCharacterId1(v)
 		return nil
 	case stamp.FieldGameCharacterUnitID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterUnitID(v)
 		return nil
 	case stamp.FieldArchivePublishedAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddArchivePublishedAt(v)
 		return nil
 	case stamp.FieldCharacterId2:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76534,24 +76534,24 @@ type VirtualliveMutation struct {
 	op                                            Op
 	typ                                           string
 	id                                            *int
-	game_id                                       *int
-	addgame_id                                    *int
+	game_id                                       *int64
+	addgame_id                                    *int64
 	virtual_live_type                             *json.RawMessage
 	appendvirtual_live_type                       json.RawMessage
 	virtual_live_platform                         *json.RawMessage
 	appendvirtual_live_platform                   json.RawMessage
-	seq                                           *int
-	addseq                                        *int
+	seq                                           *int64
+	addseq                                        *int64
 	name                                          *string
 	assetbundle_name                              *string
-	screen_mv_music_vocal_id                      *int
-	addscreen_mv_music_vocal_id                   *int
-	start_at                                      *int
-	addstart_at                                   *int
-	end_at                                        *int
-	addend_at                                     *int
-	ranking_announce_at                           *int
-	addranking_announce_at                        *int
+	screen_mv_music_vocal_id                      *int64
+	addscreen_mv_music_vocal_id                   *int64
+	start_at                                      *int64
+	addstart_at                                   *int64
+	end_at                                        *int64
+	addend_at                                     *int64
+	ranking_announce_at                           *int64
+	addranking_announce_at                        *int64
 	virtual_live_setlists                         *json.RawMessage
 	appendvirtual_live_setlists                   json.RawMessage
 	virtual_live_beginner_schedules               *json.RawMessage
@@ -76574,12 +76574,12 @@ type VirtualliveMutation struct {
 	appendvirtual_live_background_musics          json.RawMessage
 	virtual_live_information                      *json.RawMessage
 	appendvirtual_live_information                json.RawMessage
-	archive_release_condition_id                  *int
-	addarchive_release_condition_id               *int
-	sub_game_character_penlight_color_group_id    *int
-	addsub_game_character_penlight_color_group_id *int
-	virtual_live_group_id                         *int
-	addvirtual_live_group_id                      *int
+	archive_release_condition_id                  *int64
+	addarchive_release_condition_id               *int64
+	sub_game_character_penlight_color_group_id    *int64
+	addsub_game_character_penlight_color_group_id *int64
+	virtual_live_group_id                         *int64
+	addvirtual_live_group_id                      *int64
 	server_region                                 *string
 	clearedFields                                 map[string]struct{}
 	done                                          bool
@@ -76686,13 +76686,13 @@ func (m *VirtualliveMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *VirtualliveMutation) SetGameID(i int) {
+func (m *VirtualliveMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *VirtualliveMutation) GameID() (r int, exists bool) {
+func (m *VirtualliveMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -76703,7 +76703,7 @@ func (m *VirtualliveMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -76718,7 +76718,7 @@ func (m *VirtualliveMutation) OldGameID(ctx context.Context) (v int, err error) 
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *VirtualliveMutation) AddGameID(i int) {
+func (m *VirtualliveMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -76727,7 +76727,7 @@ func (m *VirtualliveMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *VirtualliveMutation) AddedGameID() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -76872,13 +76872,13 @@ func (m *VirtualliveMutation) ResetVirtualLivePlatform() {
 }
 
 // SetSeq sets the "seq" field.
-func (m *VirtualliveMutation) SetSeq(i int) {
+func (m *VirtualliveMutation) SetSeq(i int64) {
 	m.seq = &i
 	m.addseq = nil
 }
 
 // Seq returns the value of the "seq" field in the mutation.
-func (m *VirtualliveMutation) Seq() (r int, exists bool) {
+func (m *VirtualliveMutation) Seq() (r int64, exists bool) {
 	v := m.seq
 	if v == nil {
 		return
@@ -76889,7 +76889,7 @@ func (m *VirtualliveMutation) Seq() (r int, exists bool) {
 // OldSeq returns the old "seq" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldSeq(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldSeq(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
 	}
@@ -76904,7 +76904,7 @@ func (m *VirtualliveMutation) OldSeq(ctx context.Context) (v int, err error) {
 }
 
 // AddSeq adds i to the "seq" field.
-func (m *VirtualliveMutation) AddSeq(i int) {
+func (m *VirtualliveMutation) AddSeq(i int64) {
 	if m.addseq != nil {
 		*m.addseq += i
 	} else {
@@ -76913,7 +76913,7 @@ func (m *VirtualliveMutation) AddSeq(i int) {
 }
 
 // AddedSeq returns the value that was added to the "seq" field in this mutation.
-func (m *VirtualliveMutation) AddedSeq() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedSeq() (r int64, exists bool) {
 	v := m.addseq
 	if v == nil {
 		return
@@ -77040,13 +77040,13 @@ func (m *VirtualliveMutation) ResetAssetbundleName() {
 }
 
 // SetScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field.
-func (m *VirtualliveMutation) SetScreenMvMusicVocalID(i int) {
+func (m *VirtualliveMutation) SetScreenMvMusicVocalID(i int64) {
 	m.screen_mv_music_vocal_id = &i
 	m.addscreen_mv_music_vocal_id = nil
 }
 
 // ScreenMvMusicVocalID returns the value of the "screen_mv_music_vocal_id" field in the mutation.
-func (m *VirtualliveMutation) ScreenMvMusicVocalID() (r int, exists bool) {
+func (m *VirtualliveMutation) ScreenMvMusicVocalID() (r int64, exists bool) {
 	v := m.screen_mv_music_vocal_id
 	if v == nil {
 		return
@@ -77057,7 +77057,7 @@ func (m *VirtualliveMutation) ScreenMvMusicVocalID() (r int, exists bool) {
 // OldScreenMvMusicVocalID returns the old "screen_mv_music_vocal_id" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldScreenMvMusicVocalID(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldScreenMvMusicVocalID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldScreenMvMusicVocalID is only allowed on UpdateOne operations")
 	}
@@ -77072,7 +77072,7 @@ func (m *VirtualliveMutation) OldScreenMvMusicVocalID(ctx context.Context) (v in
 }
 
 // AddScreenMvMusicVocalID adds i to the "screen_mv_music_vocal_id" field.
-func (m *VirtualliveMutation) AddScreenMvMusicVocalID(i int) {
+func (m *VirtualliveMutation) AddScreenMvMusicVocalID(i int64) {
 	if m.addscreen_mv_music_vocal_id != nil {
 		*m.addscreen_mv_music_vocal_id += i
 	} else {
@@ -77081,7 +77081,7 @@ func (m *VirtualliveMutation) AddScreenMvMusicVocalID(i int) {
 }
 
 // AddedScreenMvMusicVocalID returns the value that was added to the "screen_mv_music_vocal_id" field in this mutation.
-func (m *VirtualliveMutation) AddedScreenMvMusicVocalID() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedScreenMvMusicVocalID() (r int64, exists bool) {
 	v := m.addscreen_mv_music_vocal_id
 	if v == nil {
 		return
@@ -77110,13 +77110,13 @@ func (m *VirtualliveMutation) ResetScreenMvMusicVocalID() {
 }
 
 // SetStartAt sets the "start_at" field.
-func (m *VirtualliveMutation) SetStartAt(i int) {
+func (m *VirtualliveMutation) SetStartAt(i int64) {
 	m.start_at = &i
 	m.addstart_at = nil
 }
 
 // StartAt returns the value of the "start_at" field in the mutation.
-func (m *VirtualliveMutation) StartAt() (r int, exists bool) {
+func (m *VirtualliveMutation) StartAt() (r int64, exists bool) {
 	v := m.start_at
 	if v == nil {
 		return
@@ -77127,7 +77127,7 @@ func (m *VirtualliveMutation) StartAt() (r int, exists bool) {
 // OldStartAt returns the old "start_at" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldStartAt(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStartAt is only allowed on UpdateOne operations")
 	}
@@ -77142,7 +77142,7 @@ func (m *VirtualliveMutation) OldStartAt(ctx context.Context) (v int, err error)
 }
 
 // AddStartAt adds i to the "start_at" field.
-func (m *VirtualliveMutation) AddStartAt(i int) {
+func (m *VirtualliveMutation) AddStartAt(i int64) {
 	if m.addstart_at != nil {
 		*m.addstart_at += i
 	} else {
@@ -77151,7 +77151,7 @@ func (m *VirtualliveMutation) AddStartAt(i int) {
 }
 
 // AddedStartAt returns the value that was added to the "start_at" field in this mutation.
-func (m *VirtualliveMutation) AddedStartAt() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedStartAt() (r int64, exists bool) {
 	v := m.addstart_at
 	if v == nil {
 		return
@@ -77180,13 +77180,13 @@ func (m *VirtualliveMutation) ResetStartAt() {
 }
 
 // SetEndAt sets the "end_at" field.
-func (m *VirtualliveMutation) SetEndAt(i int) {
+func (m *VirtualliveMutation) SetEndAt(i int64) {
 	m.end_at = &i
 	m.addend_at = nil
 }
 
 // EndAt returns the value of the "end_at" field in the mutation.
-func (m *VirtualliveMutation) EndAt() (r int, exists bool) {
+func (m *VirtualliveMutation) EndAt() (r int64, exists bool) {
 	v := m.end_at
 	if v == nil {
 		return
@@ -77197,7 +77197,7 @@ func (m *VirtualliveMutation) EndAt() (r int, exists bool) {
 // OldEndAt returns the old "end_at" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldEndAt(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEndAt is only allowed on UpdateOne operations")
 	}
@@ -77212,7 +77212,7 @@ func (m *VirtualliveMutation) OldEndAt(ctx context.Context) (v int, err error) {
 }
 
 // AddEndAt adds i to the "end_at" field.
-func (m *VirtualliveMutation) AddEndAt(i int) {
+func (m *VirtualliveMutation) AddEndAt(i int64) {
 	if m.addend_at != nil {
 		*m.addend_at += i
 	} else {
@@ -77221,7 +77221,7 @@ func (m *VirtualliveMutation) AddEndAt(i int) {
 }
 
 // AddedEndAt returns the value that was added to the "end_at" field in this mutation.
-func (m *VirtualliveMutation) AddedEndAt() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedEndAt() (r int64, exists bool) {
 	v := m.addend_at
 	if v == nil {
 		return
@@ -77250,13 +77250,13 @@ func (m *VirtualliveMutation) ResetEndAt() {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (m *VirtualliveMutation) SetRankingAnnounceAt(i int) {
+func (m *VirtualliveMutation) SetRankingAnnounceAt(i int64) {
 	m.ranking_announce_at = &i
 	m.addranking_announce_at = nil
 }
 
 // RankingAnnounceAt returns the value of the "ranking_announce_at" field in the mutation.
-func (m *VirtualliveMutation) RankingAnnounceAt() (r int, exists bool) {
+func (m *VirtualliveMutation) RankingAnnounceAt() (r int64, exists bool) {
 	v := m.ranking_announce_at
 	if v == nil {
 		return
@@ -77267,7 +77267,7 @@ func (m *VirtualliveMutation) RankingAnnounceAt() (r int, exists bool) {
 // OldRankingAnnounceAt returns the old "ranking_announce_at" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldRankingAnnounceAt(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldRankingAnnounceAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRankingAnnounceAt is only allowed on UpdateOne operations")
 	}
@@ -77282,7 +77282,7 @@ func (m *VirtualliveMutation) OldRankingAnnounceAt(ctx context.Context) (v int, 
 }
 
 // AddRankingAnnounceAt adds i to the "ranking_announce_at" field.
-func (m *VirtualliveMutation) AddRankingAnnounceAt(i int) {
+func (m *VirtualliveMutation) AddRankingAnnounceAt(i int64) {
 	if m.addranking_announce_at != nil {
 		*m.addranking_announce_at += i
 	} else {
@@ -77291,7 +77291,7 @@ func (m *VirtualliveMutation) AddRankingAnnounceAt(i int) {
 }
 
 // AddedRankingAnnounceAt returns the value that was added to the "ranking_announce_at" field in this mutation.
-func (m *VirtualliveMutation) AddedRankingAnnounceAt() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedRankingAnnounceAt() (r int64, exists bool) {
 	v := m.addranking_announce_at
 	if v == nil {
 		return
@@ -78035,13 +78035,13 @@ func (m *VirtualliveMutation) ResetVirtualLiveInformation() {
 }
 
 // SetArchiveReleaseConditionID sets the "archive_release_condition_id" field.
-func (m *VirtualliveMutation) SetArchiveReleaseConditionID(i int) {
+func (m *VirtualliveMutation) SetArchiveReleaseConditionID(i int64) {
 	m.archive_release_condition_id = &i
 	m.addarchive_release_condition_id = nil
 }
 
 // ArchiveReleaseConditionID returns the value of the "archive_release_condition_id" field in the mutation.
-func (m *VirtualliveMutation) ArchiveReleaseConditionID() (r int, exists bool) {
+func (m *VirtualliveMutation) ArchiveReleaseConditionID() (r int64, exists bool) {
 	v := m.archive_release_condition_id
 	if v == nil {
 		return
@@ -78052,7 +78052,7 @@ func (m *VirtualliveMutation) ArchiveReleaseConditionID() (r int, exists bool) {
 // OldArchiveReleaseConditionID returns the old "archive_release_condition_id" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldArchiveReleaseConditionID(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldArchiveReleaseConditionID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchiveReleaseConditionID is only allowed on UpdateOne operations")
 	}
@@ -78067,7 +78067,7 @@ func (m *VirtualliveMutation) OldArchiveReleaseConditionID(ctx context.Context) 
 }
 
 // AddArchiveReleaseConditionID adds i to the "archive_release_condition_id" field.
-func (m *VirtualliveMutation) AddArchiveReleaseConditionID(i int) {
+func (m *VirtualliveMutation) AddArchiveReleaseConditionID(i int64) {
 	if m.addarchive_release_condition_id != nil {
 		*m.addarchive_release_condition_id += i
 	} else {
@@ -78076,7 +78076,7 @@ func (m *VirtualliveMutation) AddArchiveReleaseConditionID(i int) {
 }
 
 // AddedArchiveReleaseConditionID returns the value that was added to the "archive_release_condition_id" field in this mutation.
-func (m *VirtualliveMutation) AddedArchiveReleaseConditionID() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedArchiveReleaseConditionID() (r int64, exists bool) {
 	v := m.addarchive_release_condition_id
 	if v == nil {
 		return
@@ -78105,13 +78105,13 @@ func (m *VirtualliveMutation) ResetArchiveReleaseConditionID() {
 }
 
 // SetSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field.
-func (m *VirtualliveMutation) SetSubGameCharacterPenlightColorGroupID(i int) {
+func (m *VirtualliveMutation) SetSubGameCharacterPenlightColorGroupID(i int64) {
 	m.sub_game_character_penlight_color_group_id = &i
 	m.addsub_game_character_penlight_color_group_id = nil
 }
 
 // SubGameCharacterPenlightColorGroupID returns the value of the "sub_game_character_penlight_color_group_id" field in the mutation.
-func (m *VirtualliveMutation) SubGameCharacterPenlightColorGroupID() (r int, exists bool) {
+func (m *VirtualliveMutation) SubGameCharacterPenlightColorGroupID() (r int64, exists bool) {
 	v := m.sub_game_character_penlight_color_group_id
 	if v == nil {
 		return
@@ -78122,7 +78122,7 @@ func (m *VirtualliveMutation) SubGameCharacterPenlightColorGroupID() (r int, exi
 // OldSubGameCharacterPenlightColorGroupID returns the old "sub_game_character_penlight_color_group_id" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldSubGameCharacterPenlightColorGroupID(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldSubGameCharacterPenlightColorGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSubGameCharacterPenlightColorGroupID is only allowed on UpdateOne operations")
 	}
@@ -78137,7 +78137,7 @@ func (m *VirtualliveMutation) OldSubGameCharacterPenlightColorGroupID(ctx contex
 }
 
 // AddSubGameCharacterPenlightColorGroupID adds i to the "sub_game_character_penlight_color_group_id" field.
-func (m *VirtualliveMutation) AddSubGameCharacterPenlightColorGroupID(i int) {
+func (m *VirtualliveMutation) AddSubGameCharacterPenlightColorGroupID(i int64) {
 	if m.addsub_game_character_penlight_color_group_id != nil {
 		*m.addsub_game_character_penlight_color_group_id += i
 	} else {
@@ -78146,7 +78146,7 @@ func (m *VirtualliveMutation) AddSubGameCharacterPenlightColorGroupID(i int) {
 }
 
 // AddedSubGameCharacterPenlightColorGroupID returns the value that was added to the "sub_game_character_penlight_color_group_id" field in this mutation.
-func (m *VirtualliveMutation) AddedSubGameCharacterPenlightColorGroupID() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedSubGameCharacterPenlightColorGroupID() (r int64, exists bool) {
 	v := m.addsub_game_character_penlight_color_group_id
 	if v == nil {
 		return
@@ -78175,13 +78175,13 @@ func (m *VirtualliveMutation) ResetSubGameCharacterPenlightColorGroupID() {
 }
 
 // SetVirtualLiveGroupID sets the "virtual_live_group_id" field.
-func (m *VirtualliveMutation) SetVirtualLiveGroupID(i int) {
+func (m *VirtualliveMutation) SetVirtualLiveGroupID(i int64) {
 	m.virtual_live_group_id = &i
 	m.addvirtual_live_group_id = nil
 }
 
 // VirtualLiveGroupID returns the value of the "virtual_live_group_id" field in the mutation.
-func (m *VirtualliveMutation) VirtualLiveGroupID() (r int, exists bool) {
+func (m *VirtualliveMutation) VirtualLiveGroupID() (r int64, exists bool) {
 	v := m.virtual_live_group_id
 	if v == nil {
 		return
@@ -78192,7 +78192,7 @@ func (m *VirtualliveMutation) VirtualLiveGroupID() (r int, exists bool) {
 // OldVirtualLiveGroupID returns the old "virtual_live_group_id" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldVirtualLiveGroupID(ctx context.Context) (v int, err error) {
+func (m *VirtualliveMutation) OldVirtualLiveGroupID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldVirtualLiveGroupID is only allowed on UpdateOne operations")
 	}
@@ -78207,7 +78207,7 @@ func (m *VirtualliveMutation) OldVirtualLiveGroupID(ctx context.Context) (v int,
 }
 
 // AddVirtualLiveGroupID adds i to the "virtual_live_group_id" field.
-func (m *VirtualliveMutation) AddVirtualLiveGroupID(i int) {
+func (m *VirtualliveMutation) AddVirtualLiveGroupID(i int64) {
 	if m.addvirtual_live_group_id != nil {
 		*m.addvirtual_live_group_id += i
 	} else {
@@ -78216,7 +78216,7 @@ func (m *VirtualliveMutation) AddVirtualLiveGroupID(i int) {
 }
 
 // AddedVirtualLiveGroupID returns the value that was added to the "virtual_live_group_id" field in this mutation.
-func (m *VirtualliveMutation) AddedVirtualLiveGroupID() (r int, exists bool) {
+func (m *VirtualliveMutation) AddedVirtualLiveGroupID() (r int64, exists bool) {
 	v := m.addvirtual_live_group_id
 	if v == nil {
 		return
@@ -78517,7 +78517,7 @@ func (m *VirtualliveMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case virtuallive.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -78538,7 +78538,7 @@ func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 		m.SetVirtualLivePlatform(v)
 		return nil
 	case virtuallive.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -78559,28 +78559,28 @@ func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case virtuallive.FieldScreenMvMusicVocalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetScreenMvMusicVocalID(v)
 		return nil
 	case virtuallive.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStartAt(v)
 		return nil
 	case virtuallive.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEndAt(v)
 		return nil
 	case virtuallive.FieldRankingAnnounceAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -78664,21 +78664,21 @@ func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 		m.SetVirtualLiveInformation(v)
 		return nil
 	case virtuallive.FieldArchiveReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetArchiveReleaseConditionID(v)
 		return nil
 	case virtuallive.FieldSubGameCharacterPenlightColorGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSubGameCharacterPenlightColorGroupID(v)
 		return nil
 	case virtuallive.FieldVirtualLiveGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -78762,63 +78762,63 @@ func (m *VirtualliveMutation) AddedField(name string) (ent.Value, bool) {
 func (m *VirtualliveMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case virtuallive.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case virtuallive.FieldSeq:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSeq(v)
 		return nil
 	case virtuallive.FieldScreenMvMusicVocalID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddScreenMvMusicVocalID(v)
 		return nil
 	case virtuallive.FieldStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStartAt(v)
 		return nil
 	case virtuallive.FieldEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEndAt(v)
 		return nil
 	case virtuallive.FieldRankingAnnounceAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRankingAnnounceAt(v)
 		return nil
 	case virtuallive.FieldArchiveReleaseConditionID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddArchiveReleaseConditionID(v)
 		return nil
 	case virtuallive.FieldSubGameCharacterPenlightColorGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSubGameCharacterPenlightColorGroupID(v)
 		return nil
 	case virtuallive.FieldVirtualLiveGroupID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -79125,25 +79125,25 @@ type WorldbloomMutation struct {
 	op                             Op
 	typ                            string
 	id                             *int
-	game_id                        *int
-	addgame_id                     *int
-	event_id                       *int
-	addevent_id                    *int
-	game_character_id              *int
-	addgame_character_id           *int
+	game_id                        *int64
+	addgame_id                     *int64
+	event_id                       *int64
+	addevent_id                    *int64
+	game_character_id              *int64
+	addgame_character_id           *int64
 	world_bloom_chapter_type       *json.RawMessage
 	appendworld_bloom_chapter_type json.RawMessage
-	chapter_no                     *int
-	addchapter_no                  *int
-	chapter_start_at               *int
-	addchapter_start_at            *int
-	aggregate_at                   *int
-	addaggregate_at                *int
-	chapter_end_at                 *int
-	addchapter_end_at              *int
+	chapter_no                     *int64
+	addchapter_no                  *int64
+	chapter_start_at               *int64
+	addchapter_start_at            *int64
+	aggregate_at                   *int64
+	addaggregate_at                *int64
+	chapter_end_at                 *int64
+	addchapter_end_at              *int64
 	is_supplemental                *bool
-	costume2_d_id                  *int
-	addcostume2_d_id               *int
+	costume2_d_id                  *int64
+	addcostume2_d_id               *int64
 	server_region                  *string
 	clearedFields                  map[string]struct{}
 	done                           bool
@@ -79250,13 +79250,13 @@ func (m *WorldbloomMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetGameID sets the "game_id" field.
-func (m *WorldbloomMutation) SetGameID(i int) {
+func (m *WorldbloomMutation) SetGameID(i int64) {
 	m.game_id = &i
 	m.addgame_id = nil
 }
 
 // GameID returns the value of the "game_id" field in the mutation.
-func (m *WorldbloomMutation) GameID() (r int, exists bool) {
+func (m *WorldbloomMutation) GameID() (r int64, exists bool) {
 	v := m.game_id
 	if v == nil {
 		return
@@ -79267,7 +79267,7 @@ func (m *WorldbloomMutation) GameID() (r int, exists bool) {
 // OldGameID returns the old "game_id" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldGameID(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldGameID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
 	}
@@ -79282,7 +79282,7 @@ func (m *WorldbloomMutation) OldGameID(ctx context.Context) (v int, err error) {
 }
 
 // AddGameID adds i to the "game_id" field.
-func (m *WorldbloomMutation) AddGameID(i int) {
+func (m *WorldbloomMutation) AddGameID(i int64) {
 	if m.addgame_id != nil {
 		*m.addgame_id += i
 	} else {
@@ -79291,7 +79291,7 @@ func (m *WorldbloomMutation) AddGameID(i int) {
 }
 
 // AddedGameID returns the value that was added to the "game_id" field in this mutation.
-func (m *WorldbloomMutation) AddedGameID() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedGameID() (r int64, exists bool) {
 	v := m.addgame_id
 	if v == nil {
 		return
@@ -79306,13 +79306,13 @@ func (m *WorldbloomMutation) ResetGameID() {
 }
 
 // SetEventID sets the "event_id" field.
-func (m *WorldbloomMutation) SetEventID(i int) {
+func (m *WorldbloomMutation) SetEventID(i int64) {
 	m.event_id = &i
 	m.addevent_id = nil
 }
 
 // EventID returns the value of the "event_id" field in the mutation.
-func (m *WorldbloomMutation) EventID() (r int, exists bool) {
+func (m *WorldbloomMutation) EventID() (r int64, exists bool) {
 	v := m.event_id
 	if v == nil {
 		return
@@ -79323,7 +79323,7 @@ func (m *WorldbloomMutation) EventID() (r int, exists bool) {
 // OldEventID returns the old "event_id" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldEventID(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldEventID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
 	}
@@ -79338,7 +79338,7 @@ func (m *WorldbloomMutation) OldEventID(ctx context.Context) (v int, err error) 
 }
 
 // AddEventID adds i to the "event_id" field.
-func (m *WorldbloomMutation) AddEventID(i int) {
+func (m *WorldbloomMutation) AddEventID(i int64) {
 	if m.addevent_id != nil {
 		*m.addevent_id += i
 	} else {
@@ -79347,7 +79347,7 @@ func (m *WorldbloomMutation) AddEventID(i int) {
 }
 
 // AddedEventID returns the value that was added to the "event_id" field in this mutation.
-func (m *WorldbloomMutation) AddedEventID() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedEventID() (r int64, exists bool) {
 	v := m.addevent_id
 	if v == nil {
 		return
@@ -79376,13 +79376,13 @@ func (m *WorldbloomMutation) ResetEventID() {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (m *WorldbloomMutation) SetGameCharacterID(i int) {
+func (m *WorldbloomMutation) SetGameCharacterID(i int64) {
 	m.game_character_id = &i
 	m.addgame_character_id = nil
 }
 
 // GameCharacterID returns the value of the "game_character_id" field in the mutation.
-func (m *WorldbloomMutation) GameCharacterID() (r int, exists bool) {
+func (m *WorldbloomMutation) GameCharacterID() (r int64, exists bool) {
 	v := m.game_character_id
 	if v == nil {
 		return
@@ -79393,7 +79393,7 @@ func (m *WorldbloomMutation) GameCharacterID() (r int, exists bool) {
 // OldGameCharacterID returns the old "game_character_id" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldGameCharacterID(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldGameCharacterID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGameCharacterID is only allowed on UpdateOne operations")
 	}
@@ -79408,7 +79408,7 @@ func (m *WorldbloomMutation) OldGameCharacterID(ctx context.Context) (v int, err
 }
 
 // AddGameCharacterID adds i to the "game_character_id" field.
-func (m *WorldbloomMutation) AddGameCharacterID(i int) {
+func (m *WorldbloomMutation) AddGameCharacterID(i int64) {
 	if m.addgame_character_id != nil {
 		*m.addgame_character_id += i
 	} else {
@@ -79417,7 +79417,7 @@ func (m *WorldbloomMutation) AddGameCharacterID(i int) {
 }
 
 // AddedGameCharacterID returns the value that was added to the "game_character_id" field in this mutation.
-func (m *WorldbloomMutation) AddedGameCharacterID() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedGameCharacterID() (r int64, exists bool) {
 	v := m.addgame_character_id
 	if v == nil {
 		return
@@ -79511,13 +79511,13 @@ func (m *WorldbloomMutation) ResetWorldBloomChapterType() {
 }
 
 // SetChapterNo sets the "chapter_no" field.
-func (m *WorldbloomMutation) SetChapterNo(i int) {
+func (m *WorldbloomMutation) SetChapterNo(i int64) {
 	m.chapter_no = &i
 	m.addchapter_no = nil
 }
 
 // ChapterNo returns the value of the "chapter_no" field in the mutation.
-func (m *WorldbloomMutation) ChapterNo() (r int, exists bool) {
+func (m *WorldbloomMutation) ChapterNo() (r int64, exists bool) {
 	v := m.chapter_no
 	if v == nil {
 		return
@@ -79528,7 +79528,7 @@ func (m *WorldbloomMutation) ChapterNo() (r int, exists bool) {
 // OldChapterNo returns the old "chapter_no" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldChapterNo(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldChapterNo(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldChapterNo is only allowed on UpdateOne operations")
 	}
@@ -79543,7 +79543,7 @@ func (m *WorldbloomMutation) OldChapterNo(ctx context.Context) (v int, err error
 }
 
 // AddChapterNo adds i to the "chapter_no" field.
-func (m *WorldbloomMutation) AddChapterNo(i int) {
+func (m *WorldbloomMutation) AddChapterNo(i int64) {
 	if m.addchapter_no != nil {
 		*m.addchapter_no += i
 	} else {
@@ -79552,7 +79552,7 @@ func (m *WorldbloomMutation) AddChapterNo(i int) {
 }
 
 // AddedChapterNo returns the value that was added to the "chapter_no" field in this mutation.
-func (m *WorldbloomMutation) AddedChapterNo() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedChapterNo() (r int64, exists bool) {
 	v := m.addchapter_no
 	if v == nil {
 		return
@@ -79581,13 +79581,13 @@ func (m *WorldbloomMutation) ResetChapterNo() {
 }
 
 // SetChapterStartAt sets the "chapter_start_at" field.
-func (m *WorldbloomMutation) SetChapterStartAt(i int) {
+func (m *WorldbloomMutation) SetChapterStartAt(i int64) {
 	m.chapter_start_at = &i
 	m.addchapter_start_at = nil
 }
 
 // ChapterStartAt returns the value of the "chapter_start_at" field in the mutation.
-func (m *WorldbloomMutation) ChapterStartAt() (r int, exists bool) {
+func (m *WorldbloomMutation) ChapterStartAt() (r int64, exists bool) {
 	v := m.chapter_start_at
 	if v == nil {
 		return
@@ -79598,7 +79598,7 @@ func (m *WorldbloomMutation) ChapterStartAt() (r int, exists bool) {
 // OldChapterStartAt returns the old "chapter_start_at" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldChapterStartAt(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldChapterStartAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldChapterStartAt is only allowed on UpdateOne operations")
 	}
@@ -79613,7 +79613,7 @@ func (m *WorldbloomMutation) OldChapterStartAt(ctx context.Context) (v int, err 
 }
 
 // AddChapterStartAt adds i to the "chapter_start_at" field.
-func (m *WorldbloomMutation) AddChapterStartAt(i int) {
+func (m *WorldbloomMutation) AddChapterStartAt(i int64) {
 	if m.addchapter_start_at != nil {
 		*m.addchapter_start_at += i
 	} else {
@@ -79622,7 +79622,7 @@ func (m *WorldbloomMutation) AddChapterStartAt(i int) {
 }
 
 // AddedChapterStartAt returns the value that was added to the "chapter_start_at" field in this mutation.
-func (m *WorldbloomMutation) AddedChapterStartAt() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedChapterStartAt() (r int64, exists bool) {
 	v := m.addchapter_start_at
 	if v == nil {
 		return
@@ -79651,13 +79651,13 @@ func (m *WorldbloomMutation) ResetChapterStartAt() {
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (m *WorldbloomMutation) SetAggregateAt(i int) {
+func (m *WorldbloomMutation) SetAggregateAt(i int64) {
 	m.aggregate_at = &i
 	m.addaggregate_at = nil
 }
 
 // AggregateAt returns the value of the "aggregate_at" field in the mutation.
-func (m *WorldbloomMutation) AggregateAt() (r int, exists bool) {
+func (m *WorldbloomMutation) AggregateAt() (r int64, exists bool) {
 	v := m.aggregate_at
 	if v == nil {
 		return
@@ -79668,7 +79668,7 @@ func (m *WorldbloomMutation) AggregateAt() (r int, exists bool) {
 // OldAggregateAt returns the old "aggregate_at" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldAggregateAt(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldAggregateAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAggregateAt is only allowed on UpdateOne operations")
 	}
@@ -79683,7 +79683,7 @@ func (m *WorldbloomMutation) OldAggregateAt(ctx context.Context) (v int, err err
 }
 
 // AddAggregateAt adds i to the "aggregate_at" field.
-func (m *WorldbloomMutation) AddAggregateAt(i int) {
+func (m *WorldbloomMutation) AddAggregateAt(i int64) {
 	if m.addaggregate_at != nil {
 		*m.addaggregate_at += i
 	} else {
@@ -79692,7 +79692,7 @@ func (m *WorldbloomMutation) AddAggregateAt(i int) {
 }
 
 // AddedAggregateAt returns the value that was added to the "aggregate_at" field in this mutation.
-func (m *WorldbloomMutation) AddedAggregateAt() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedAggregateAt() (r int64, exists bool) {
 	v := m.addaggregate_at
 	if v == nil {
 		return
@@ -79721,13 +79721,13 @@ func (m *WorldbloomMutation) ResetAggregateAt() {
 }
 
 // SetChapterEndAt sets the "chapter_end_at" field.
-func (m *WorldbloomMutation) SetChapterEndAt(i int) {
+func (m *WorldbloomMutation) SetChapterEndAt(i int64) {
 	m.chapter_end_at = &i
 	m.addchapter_end_at = nil
 }
 
 // ChapterEndAt returns the value of the "chapter_end_at" field in the mutation.
-func (m *WorldbloomMutation) ChapterEndAt() (r int, exists bool) {
+func (m *WorldbloomMutation) ChapterEndAt() (r int64, exists bool) {
 	v := m.chapter_end_at
 	if v == nil {
 		return
@@ -79738,7 +79738,7 @@ func (m *WorldbloomMutation) ChapterEndAt() (r int, exists bool) {
 // OldChapterEndAt returns the old "chapter_end_at" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldChapterEndAt(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldChapterEndAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldChapterEndAt is only allowed on UpdateOne operations")
 	}
@@ -79753,7 +79753,7 @@ func (m *WorldbloomMutation) OldChapterEndAt(ctx context.Context) (v int, err er
 }
 
 // AddChapterEndAt adds i to the "chapter_end_at" field.
-func (m *WorldbloomMutation) AddChapterEndAt(i int) {
+func (m *WorldbloomMutation) AddChapterEndAt(i int64) {
 	if m.addchapter_end_at != nil {
 		*m.addchapter_end_at += i
 	} else {
@@ -79762,7 +79762,7 @@ func (m *WorldbloomMutation) AddChapterEndAt(i int) {
 }
 
 // AddedChapterEndAt returns the value that was added to the "chapter_end_at" field in this mutation.
-func (m *WorldbloomMutation) AddedChapterEndAt() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedChapterEndAt() (r int64, exists bool) {
 	v := m.addchapter_end_at
 	if v == nil {
 		return
@@ -79840,13 +79840,13 @@ func (m *WorldbloomMutation) ResetIsSupplemental() {
 }
 
 // SetCostume2DID sets the "costume2_d_id" field.
-func (m *WorldbloomMutation) SetCostume2DID(i int) {
+func (m *WorldbloomMutation) SetCostume2DID(i int64) {
 	m.costume2_d_id = &i
 	m.addcostume2_d_id = nil
 }
 
 // Costume2DID returns the value of the "costume2_d_id" field in the mutation.
-func (m *WorldbloomMutation) Costume2DID() (r int, exists bool) {
+func (m *WorldbloomMutation) Costume2DID() (r int64, exists bool) {
 	v := m.costume2_d_id
 	if v == nil {
 		return
@@ -79857,7 +79857,7 @@ func (m *WorldbloomMutation) Costume2DID() (r int, exists bool) {
 // OldCostume2DID returns the old "costume2_d_id" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldCostume2DID(ctx context.Context) (v int, err error) {
+func (m *WorldbloomMutation) OldCostume2DID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCostume2DID is only allowed on UpdateOne operations")
 	}
@@ -79872,7 +79872,7 @@ func (m *WorldbloomMutation) OldCostume2DID(ctx context.Context) (v int, err err
 }
 
 // AddCostume2DID adds i to the "costume2_d_id" field.
-func (m *WorldbloomMutation) AddCostume2DID(i int) {
+func (m *WorldbloomMutation) AddCostume2DID(i int64) {
 	if m.addcostume2_d_id != nil {
 		*m.addcostume2_d_id += i
 	} else {
@@ -79881,7 +79881,7 @@ func (m *WorldbloomMutation) AddCostume2DID(i int) {
 }
 
 // AddedCostume2DID returns the value that was added to the "costume2_d_id" field in this mutation.
-func (m *WorldbloomMutation) AddedCostume2DID() (r int, exists bool) {
+func (m *WorldbloomMutation) AddedCostume2DID() (r int64, exists bool) {
 	v := m.addcostume2_d_id
 	if v == nil {
 		return
@@ -80084,21 +80084,21 @@ func (m *WorldbloomMutation) OldField(ctx context.Context, name string) (ent.Val
 func (m *WorldbloomMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case worldbloom.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGameID(v)
 		return nil
 	case worldbloom.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEventID(v)
 		return nil
 	case worldbloom.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80112,28 +80112,28 @@ func (m *WorldbloomMutation) SetField(name string, value ent.Value) error {
 		m.SetWorldBloomChapterType(v)
 		return nil
 	case worldbloom.FieldChapterNo:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetChapterNo(v)
 		return nil
 	case worldbloom.FieldChapterStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetChapterStartAt(v)
 		return nil
 	case worldbloom.FieldAggregateAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAggregateAt(v)
 		return nil
 	case worldbloom.FieldChapterEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80147,7 +80147,7 @@ func (m *WorldbloomMutation) SetField(name string, value ent.Value) error {
 		m.SetIsSupplemental(v)
 		return nil
 	case worldbloom.FieldCostume2DID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80226,56 +80226,56 @@ func (m *WorldbloomMutation) AddedField(name string) (ent.Value, bool) {
 func (m *WorldbloomMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case worldbloom.FieldGameID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameID(v)
 		return nil
 	case worldbloom.FieldEventID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEventID(v)
 		return nil
 	case worldbloom.FieldGameCharacterID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGameCharacterID(v)
 		return nil
 	case worldbloom.FieldChapterNo:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddChapterNo(v)
 		return nil
 	case worldbloom.FieldChapterStartAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddChapterStartAt(v)
 		return nil
 	case worldbloom.FieldAggregateAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddAggregateAt(v)
 		return nil
 	case worldbloom.FieldChapterEndAt:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddChapterEndAt(v)
 		return nil
 	case worldbloom.FieldCostume2DID:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80456,8 +80456,8 @@ type WorldbloomdifferentattributebonuseMutation struct {
 	op                 Op
 	typ                string
 	id                 *int
-	attribute_count    *int
-	addattribute_count *int
+	attribute_count    *int64
+	addattribute_count *int64
 	bonus_rate         *float64
 	addbonus_rate      *float64
 	server_region      *string
@@ -80566,13 +80566,13 @@ func (m *WorldbloomdifferentattributebonuseMutation) IDs(ctx context.Context) ([
 }
 
 // SetAttributeCount sets the "attribute_count" field.
-func (m *WorldbloomdifferentattributebonuseMutation) SetAttributeCount(i int) {
+func (m *WorldbloomdifferentattributebonuseMutation) SetAttributeCount(i int64) {
 	m.attribute_count = &i
 	m.addattribute_count = nil
 }
 
 // AttributeCount returns the value of the "attribute_count" field in the mutation.
-func (m *WorldbloomdifferentattributebonuseMutation) AttributeCount() (r int, exists bool) {
+func (m *WorldbloomdifferentattributebonuseMutation) AttributeCount() (r int64, exists bool) {
 	v := m.attribute_count
 	if v == nil {
 		return
@@ -80583,7 +80583,7 @@ func (m *WorldbloomdifferentattributebonuseMutation) AttributeCount() (r int, ex
 // OldAttributeCount returns the old "attribute_count" field's value of the Worldbloomdifferentattributebonuse entity.
 // If the Worldbloomdifferentattributebonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomdifferentattributebonuseMutation) OldAttributeCount(ctx context.Context) (v int, err error) {
+func (m *WorldbloomdifferentattributebonuseMutation) OldAttributeCount(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAttributeCount is only allowed on UpdateOne operations")
 	}
@@ -80598,7 +80598,7 @@ func (m *WorldbloomdifferentattributebonuseMutation) OldAttributeCount(ctx conte
 }
 
 // AddAttributeCount adds i to the "attribute_count" field.
-func (m *WorldbloomdifferentattributebonuseMutation) AddAttributeCount(i int) {
+func (m *WorldbloomdifferentattributebonuseMutation) AddAttributeCount(i int64) {
 	if m.addattribute_count != nil {
 		*m.addattribute_count += i
 	} else {
@@ -80607,7 +80607,7 @@ func (m *WorldbloomdifferentattributebonuseMutation) AddAttributeCount(i int) {
 }
 
 // AddedAttributeCount returns the value that was added to the "attribute_count" field in this mutation.
-func (m *WorldbloomdifferentattributebonuseMutation) AddedAttributeCount() (r int, exists bool) {
+func (m *WorldbloomdifferentattributebonuseMutation) AddedAttributeCount() (r int64, exists bool) {
 	v := m.addattribute_count
 	if v == nil {
 		return
@@ -80824,7 +80824,7 @@ func (m *WorldbloomdifferentattributebonuseMutation) OldField(ctx context.Contex
 func (m *WorldbloomdifferentattributebonuseMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case worldbloomdifferentattributebonuse.FieldAttributeCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80880,7 +80880,7 @@ func (m *WorldbloomdifferentattributebonuseMutation) AddedField(name string) (en
 func (m *WorldbloomdifferentattributebonuseMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case worldbloomdifferentattributebonuse.FieldAttributeCount:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

@@ -54,32 +54,32 @@ func IDLTE(id int) predicate.Mysekaicharactertalk {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaicharactertalk {
+func GameID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldGameID, v))
 }
 
 // MysekaiGameCharacterUnitGroupID applies equality check predicate on the "mysekai_game_character_unit_group_id" field. It's identical to MysekaiGameCharacterUnitGroupIDEQ.
-func MysekaiGameCharacterUnitGroupID(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupID applies equality check predicate on the "mysekai_character_talk_condition_group_id" field. It's identical to MysekaiCharacterTalkConditionGroupIDEQ.
-func MysekaiCharacterTalkConditionGroupID(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiSiteGroupID applies equality check predicate on the "mysekai_site_group_id" field. It's identical to MysekaiSiteGroupIDEQ.
-func MysekaiSiteGroupID(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiCharacterTalkTermID applies equality check predicate on the "mysekai_character_talk_term_id" field. It's identical to MysekaiCharacterTalkTermIDEQ.
-func MysekaiCharacterTalkTermID(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupID applies equality check predicate on the "character_archive_mysekai_character_talk_group_id" field. It's identical to CharacterArchiveMysekaiCharacterTalkGroupIDEQ.
-func CharacterArchiveMysekaiCharacterTalkGroupID(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupID(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
@@ -99,82 +99,82 @@ func ServerRegion(v string) predicate.Mysekaicharactertalk {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaicharactertalk {
+func GameIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaicharactertalk {
+func GameIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func GameIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func GameIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaicharactertalk {
+func GameIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaicharactertalk {
+func GameIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaicharactertalk {
+func GameIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaicharactertalk {
+func GameIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldGameID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDEQ applies the EQ predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDNEQ applies the NEQ predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDNEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDIn applies the In predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldMysekaiGameCharacterUnitGroupID, vs...))
 }
 
 // MysekaiGameCharacterUnitGroupIDNotIn applies the NotIn predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldMysekaiGameCharacterUnitGroupID, vs...))
 }
 
 // MysekaiGameCharacterUnitGroupIDGT applies the GT predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDGT(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDGTE applies the GTE predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDGTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDLT applies the LT predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDLT(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
 // MysekaiGameCharacterUnitGroupIDLTE applies the LTE predicate on the "mysekai_game_character_unit_group_id" field.
-func MysekaiGameCharacterUnitGroupIDLTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiGameCharacterUnitGroupIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldMysekaiGameCharacterUnitGroupID, v))
 }
 
@@ -189,42 +189,42 @@ func MysekaiGameCharacterUnitGroupIDNotNil() predicate.Mysekaicharactertalk {
 }
 
 // MysekaiCharacterTalkConditionGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupIDNEQ applies the NEQ predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDNEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupIDIn applies the In predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldMysekaiCharacterTalkConditionGroupID, vs...))
 }
 
 // MysekaiCharacterTalkConditionGroupIDNotIn applies the NotIn predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldMysekaiCharacterTalkConditionGroupID, vs...))
 }
 
 // MysekaiCharacterTalkConditionGroupIDGT applies the GT predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDGT(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupIDGTE applies the GTE predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDGTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupIDLT applies the LT predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDLT(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
 // MysekaiCharacterTalkConditionGroupIDLTE applies the LTE predicate on the "mysekai_character_talk_condition_group_id" field.
-func MysekaiCharacterTalkConditionGroupIDLTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkConditionGroupIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldMysekaiCharacterTalkConditionGroupID, v))
 }
 
@@ -239,42 +239,42 @@ func MysekaiCharacterTalkConditionGroupIDNotNil() predicate.Mysekaicharactertalk
 }
 
 // MysekaiSiteGroupIDEQ applies the EQ predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiSiteGroupIDNEQ applies the NEQ predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDNEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiSiteGroupIDIn applies the In predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldMysekaiSiteGroupID, vs...))
 }
 
 // MysekaiSiteGroupIDNotIn applies the NotIn predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldMysekaiSiteGroupID, vs...))
 }
 
 // MysekaiSiteGroupIDGT applies the GT predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDGT(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiSiteGroupIDGTE applies the GTE predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDGTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiSiteGroupIDLT applies the LT predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDLT(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldMysekaiSiteGroupID, v))
 }
 
 // MysekaiSiteGroupIDLTE applies the LTE predicate on the "mysekai_site_group_id" field.
-func MysekaiSiteGroupIDLTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiSiteGroupIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldMysekaiSiteGroupID, v))
 }
 
@@ -289,42 +289,42 @@ func MysekaiSiteGroupIDNotNil() predicate.Mysekaicharactertalk {
 }
 
 // MysekaiCharacterTalkTermIDEQ applies the EQ predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // MysekaiCharacterTalkTermIDNEQ applies the NEQ predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDNEQ(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // MysekaiCharacterTalkTermIDIn applies the In predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldMysekaiCharacterTalkTermID, vs...))
 }
 
 // MysekaiCharacterTalkTermIDNotIn applies the NotIn predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldMysekaiCharacterTalkTermID, vs...))
 }
 
 // MysekaiCharacterTalkTermIDGT applies the GT predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDGT(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // MysekaiCharacterTalkTermIDGTE applies the GTE predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDGTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // MysekaiCharacterTalkTermIDLT applies the LT predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDLT(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldMysekaiCharacterTalkTermID, v))
 }
 
 // MysekaiCharacterTalkTermIDLTE applies the LTE predicate on the "mysekai_character_talk_term_id" field.
-func MysekaiCharacterTalkTermIDLTE(v int) predicate.Mysekaicharactertalk {
+func MysekaiCharacterTalkTermIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldMysekaiCharacterTalkTermID, v))
 }
 
@@ -339,42 +339,42 @@ func MysekaiCharacterTalkTermIDNotNil() predicate.Mysekaicharactertalk {
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDEQ applies the EQ predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDEQ(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDNEQ applies the NEQ predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDNEQ(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDNEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDIn applies the In predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDIn(vs ...int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldCharacterArchiveMysekaiCharacterTalkGroupID, vs...))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDNotIn applies the NotIn predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldCharacterArchiveMysekaiCharacterTalkGroupID, vs...))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDGT applies the GT predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDGT(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDGT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDGTE applies the GTE predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDGTE(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDGTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDLT applies the LT predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDLT(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDLT(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
 // CharacterArchiveMysekaiCharacterTalkGroupIDLTE applies the LTE predicate on the "character_archive_mysekai_character_talk_group_id" field.
-func CharacterArchiveMysekaiCharacterTalkGroupIDLTE(v int) predicate.Mysekaicharactertalk {
+func CharacterArchiveMysekaiCharacterTalkGroupIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 

@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaifixturesubgenre {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaifixturesubgenre {
+func GameID(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -79,42 +79,42 @@ func ServerRegion(v string) predicate.Mysekaifixturesubgenre {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaifixturesubgenre {
+func GameIDEQ(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaifixturesubgenre {
+func GameIDNEQ(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaifixturesubgenre {
+func GameIDIn(vs ...int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaifixturesubgenre {
+func GameIDNotIn(vs ...int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaifixturesubgenre {
+func GameIDGT(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaifixturesubgenre {
+func GameIDGTE(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaifixturesubgenre {
+func GameIDLT(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaifixturesubgenre {
+func GameIDLTE(v int64) predicate.Mysekaifixturesubgenre {
 	return predicate.Mysekaifixturesubgenre(sql.FieldLTE(FieldGameID, v))
 }
 

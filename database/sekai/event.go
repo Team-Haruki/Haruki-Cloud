@@ -18,7 +18,7 @@ type Event struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventType holds the value of the "event_type" field.
 	EventType json.RawMessage `json:"event_type,omitempty"`
 	// Name holds the value of the "name" field.
@@ -28,23 +28,23 @@ type Event struct {
 	// BgmAssetbundleName holds the value of the "bgm_assetbundle_name" field.
 	BgmAssetbundleName string `json:"bgm_assetbundle_name,omitempty"`
 	// EventOnlyComponentDisplayStartAt holds the value of the "event_only_component_display_start_at" field.
-	EventOnlyComponentDisplayStartAt int `json:"event_only_component_display_start_at,omitempty"`
+	EventOnlyComponentDisplayStartAt int64 `json:"event_only_component_display_start_at,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int `json:"start_at,omitempty"`
+	StartAt int64 `json:"start_at,omitempty"`
 	// AggregateAt holds the value of the "aggregate_at" field.
-	AggregateAt int `json:"aggregate_at,omitempty"`
+	AggregateAt int64 `json:"aggregate_at,omitempty"`
 	// RankingAnnounceAt holds the value of the "ranking_announce_at" field.
-	RankingAnnounceAt int `json:"ranking_announce_at,omitempty"`
+	RankingAnnounceAt int64 `json:"ranking_announce_at,omitempty"`
 	// DistributionStartAt holds the value of the "distribution_start_at" field.
-	DistributionStartAt int `json:"distribution_start_at,omitempty"`
+	DistributionStartAt int64 `json:"distribution_start_at,omitempty"`
 	// EventOnlyComponentDisplayEndAt holds the value of the "event_only_component_display_end_at" field.
-	EventOnlyComponentDisplayEndAt int `json:"event_only_component_display_end_at,omitempty"`
+	EventOnlyComponentDisplayEndAt int64 `json:"event_only_component_display_end_at,omitempty"`
 	// ClosedAt holds the value of the "closed_at" field.
-	ClosedAt int `json:"closed_at,omitempty"`
+	ClosedAt int64 `json:"closed_at,omitempty"`
 	// DistributionEndAt holds the value of the "distribution_end_at" field.
-	DistributionEndAt int `json:"distribution_end_at,omitempty"`
+	DistributionEndAt int64 `json:"distribution_end_at,omitempty"`
 	// VirtualLiveID holds the value of the "virtual_live_id" field.
-	VirtualLiveID int `json:"virtual_live_id,omitempty"`
+	VirtualLiveID int64 `json:"virtual_live_id,omitempty"`
 	// Unit holds the value of the "unit" field.
 	Unit json.RawMessage `json:"unit,omitempty"`
 	// IsCountLeaderCharacterPlay holds the value of the "is_count_leader_character_play" field.
@@ -54,7 +54,7 @@ type Event struct {
 	// EventPointAssetbundleName holds the value of the "event_point_assetbundle_name" field.
 	EventPointAssetbundleName json.RawMessage `json:"event_point_assetbundle_name,omitempty"`
 	// StandbyScreenDisplayStartAt holds the value of the "standby_screen_display_start_at" field.
-	StandbyScreenDisplayStartAt int `json:"standby_screen_display_start_at,omitempty"`
+	StandbyScreenDisplayStartAt int64 `json:"standby_screen_display_start_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -98,7 +98,7 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case event.FieldEventType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -130,55 +130,55 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_only_component_display_start_at", values[i])
 			} else if value.Valid {
-				_m.EventOnlyComponentDisplayStartAt = int(value.Int64)
+				_m.EventOnlyComponentDisplayStartAt = value.Int64
 			}
 		case event.FieldStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = int(value.Int64)
+				_m.StartAt = value.Int64
 			}
 		case event.FieldAggregateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field aggregate_at", values[i])
 			} else if value.Valid {
-				_m.AggregateAt = int(value.Int64)
+				_m.AggregateAt = value.Int64
 			}
 		case event.FieldRankingAnnounceAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field ranking_announce_at", values[i])
 			} else if value.Valid {
-				_m.RankingAnnounceAt = int(value.Int64)
+				_m.RankingAnnounceAt = value.Int64
 			}
 		case event.FieldDistributionStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field distribution_start_at", values[i])
 			} else if value.Valid {
-				_m.DistributionStartAt = int(value.Int64)
+				_m.DistributionStartAt = value.Int64
 			}
 		case event.FieldEventOnlyComponentDisplayEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_only_component_display_end_at", values[i])
 			} else if value.Valid {
-				_m.EventOnlyComponentDisplayEndAt = int(value.Int64)
+				_m.EventOnlyComponentDisplayEndAt = value.Int64
 			}
 		case event.FieldClosedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field closed_at", values[i])
 			} else if value.Valid {
-				_m.ClosedAt = int(value.Int64)
+				_m.ClosedAt = value.Int64
 			}
 		case event.FieldDistributionEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field distribution_end_at", values[i])
 			} else if value.Valid {
-				_m.DistributionEndAt = int(value.Int64)
+				_m.DistributionEndAt = value.Int64
 			}
 		case event.FieldVirtualLiveID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_id", values[i])
 			} else if value.Valid {
-				_m.VirtualLiveID = int(value.Int64)
+				_m.VirtualLiveID = value.Int64
 			}
 		case event.FieldUnit:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -214,7 +214,7 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field standby_screen_display_start_at", values[i])
 			} else if value.Valid {
-				_m.StandbyScreenDisplayStartAt = int(value.Int64)
+				_m.StandbyScreenDisplayStartAt = value.Int64
 			}
 		case event.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

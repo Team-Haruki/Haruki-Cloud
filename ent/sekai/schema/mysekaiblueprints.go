@@ -17,12 +17,12 @@ type Mysekaiblueprint struct {
 
 func (Mysekaiblueprint) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
+		field.Int64("game_id"),
 		field.JSON("mysekai_craft_type", json.RawMessage{}).Optional(),
-		field.Int("craft_target_id").Optional(),
+		field.Int64("craft_target_id").Optional(),
 		field.Bool("is_enable_sketch").Optional(),
 		field.Bool("is_obtained_by_convert").Optional(),
-		field.Int("craft_count_limit").Optional(),
+		field.Int64("craft_count_limit").Optional(),
 		field.Bool("is_available_without_possession").Optional(),
 		field.String("server_region"),
 	}

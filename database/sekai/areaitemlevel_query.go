@@ -262,7 +262,7 @@ func (_q *AreaitemlevelQuery) Clone() *AreaitemlevelQuery {
 // Example:
 //
 //	var v []struct {
-//		AreaItemID int `json:"area_item_id,omitempty"`
+//		AreaItemID int64 `json:"area_item_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *AreaitemlevelQuery) GroupBy(field string, fields ...string) *Areaiteml
 // Example:
 //
 //	var v []struct {
-//		AreaItemID int `json:"area_item_id,omitempty"`
+//		AreaItemID int64 `json:"area_item_id,omitempty"`
 //	}
 //
 //	client.Areaitemlevel.Query().

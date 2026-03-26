@@ -19,13 +19,13 @@ type Cardraritie struct {
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType string `json:"card_rarity_type,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// MaxLevel holds the value of the "max_level" field.
-	MaxLevel int `json:"max_level,omitempty"`
+	MaxLevel int64 `json:"max_level,omitempty"`
 	// MaxSkillLevel holds the value of the "max_skill_level" field.
-	MaxSkillLevel int `json:"max_skill_level,omitempty"`
+	MaxSkillLevel int64 `json:"max_skill_level,omitempty"`
 	// TrainingMaxLevel holds the value of the "training_max_level" field.
-	TrainingMaxLevel int `json:"training_max_level,omitempty"`
+	TrainingMaxLevel int64 `json:"training_max_level,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -71,25 +71,25 @@ func (_m *Cardraritie) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case cardraritie.FieldMaxLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_level", values[i])
 			} else if value.Valid {
-				_m.MaxLevel = int(value.Int64)
+				_m.MaxLevel = value.Int64
 			}
 		case cardraritie.FieldMaxSkillLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_skill_level", values[i])
 			} else if value.Valid {
-				_m.MaxSkillLevel = int(value.Int64)
+				_m.MaxSkillLevel = value.Int64
 			}
 		case cardraritie.FieldTrainingMaxLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field training_max_level", values[i])
 			} else if value.Valid {
-				_m.TrainingMaxLevel = int(value.Int64)
+				_m.TrainingMaxLevel = value.Int64
 			}
 		case cardraritie.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

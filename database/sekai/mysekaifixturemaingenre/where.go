@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaifixturemaingenre {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaifixturemaingenre {
+func GameID(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,7 +69,7 @@ func AssetbundleName(v string) predicate.Mysekaifixturemaingenre {
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int) predicate.Mysekaifixturemaingenre {
+func GroupID(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGroupID, v))
 }
 
@@ -79,42 +79,42 @@ func ServerRegion(v string) predicate.Mysekaifixturemaingenre {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaifixturemaingenre {
+func GameIDEQ(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaifixturemaingenre {
+func GameIDNEQ(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaifixturemaingenre {
+func GameIDIn(vs ...int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaifixturemaingenre {
+func GameIDNotIn(vs ...int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaifixturemaingenre {
+func GameIDGT(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaifixturemaingenre {
+func GameIDGTE(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaifixturemaingenre {
+func GameIDLT(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaifixturemaingenre {
+func GameIDLTE(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -279,42 +279,42 @@ func AssetbundleNameContainsFold(v string) predicate.Mysekaifixturemaingenre {
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDEQ(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDNEQ(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int) predicate.Mysekaifixturemaingenre {
+func GroupIDIn(vs ...int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int) predicate.Mysekaifixturemaingenre {
+func GroupIDNotIn(vs ...int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDGT(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDGTE(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDLT(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int) predicate.Mysekaifixturemaingenre {
+func GroupIDLTE(v int64) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldGroupID, v))
 }
 

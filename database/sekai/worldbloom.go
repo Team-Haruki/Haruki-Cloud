@@ -18,25 +18,25 @@ type Worldbloom struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int `json:"event_id,omitempty"`
+	EventID int64 `json:"event_id,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int `json:"game_character_id,omitempty"`
+	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// WorldBloomChapterType holds the value of the "world_bloom_chapter_type" field.
 	WorldBloomChapterType json.RawMessage `json:"world_bloom_chapter_type,omitempty"`
 	// ChapterNo holds the value of the "chapter_no" field.
-	ChapterNo int `json:"chapter_no,omitempty"`
+	ChapterNo int64 `json:"chapter_no,omitempty"`
 	// ChapterStartAt holds the value of the "chapter_start_at" field.
-	ChapterStartAt int `json:"chapter_start_at,omitempty"`
+	ChapterStartAt int64 `json:"chapter_start_at,omitempty"`
 	// AggregateAt holds the value of the "aggregate_at" field.
-	AggregateAt int `json:"aggregate_at,omitempty"`
+	AggregateAt int64 `json:"aggregate_at,omitempty"`
 	// ChapterEndAt holds the value of the "chapter_end_at" field.
-	ChapterEndAt int `json:"chapter_end_at,omitempty"`
+	ChapterEndAt int64 `json:"chapter_end_at,omitempty"`
 	// IsSupplemental holds the value of the "is_supplemental" field.
 	IsSupplemental bool `json:"is_supplemental,omitempty"`
 	// Costume2DID holds the value of the "costume2_d_id" field.
-	Costume2DID int `json:"costume2_d_id,omitempty"`
+	Costume2DID int64 `json:"costume2_d_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -80,19 +80,19 @@ func (_m *Worldbloom) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case worldbloom.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = int(value.Int64)
+				_m.EventID = value.Int64
 			}
 		case worldbloom.FieldGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = int(value.Int64)
+				_m.GameCharacterID = value.Int64
 			}
 		case worldbloom.FieldWorldBloomChapterType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -106,25 +106,25 @@ func (_m *Worldbloom) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field chapter_no", values[i])
 			} else if value.Valid {
-				_m.ChapterNo = int(value.Int64)
+				_m.ChapterNo = value.Int64
 			}
 		case worldbloom.FieldChapterStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field chapter_start_at", values[i])
 			} else if value.Valid {
-				_m.ChapterStartAt = int(value.Int64)
+				_m.ChapterStartAt = value.Int64
 			}
 		case worldbloom.FieldAggregateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field aggregate_at", values[i])
 			} else if value.Valid {
-				_m.AggregateAt = int(value.Int64)
+				_m.AggregateAt = value.Int64
 			}
 		case worldbloom.FieldChapterEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field chapter_end_at", values[i])
 			} else if value.Valid {
-				_m.ChapterEndAt = int(value.Int64)
+				_m.ChapterEndAt = value.Int64
 			}
 		case worldbloom.FieldIsSupplemental:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -136,7 +136,7 @@ func (_m *Worldbloom) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field costume2_d_id", values[i])
 			} else if value.Valid {
-				_m.Costume2DID = int(value.Int64)
+				_m.Costume2DID = value.Int64
 			}
 		case worldbloom.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

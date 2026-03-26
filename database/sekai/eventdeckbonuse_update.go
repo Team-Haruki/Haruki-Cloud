@@ -30,14 +30,14 @@ func (_u *EventdeckbonuseUpdate) Where(ps ...predicate.Eventdeckbonuse) *Eventde
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventdeckbonuseUpdate) SetGameID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetGameID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int64) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int) *EventdeckbonuseUpdat
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventdeckbonuseUpdate) AddGameID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddGameID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventdeckbonuseUpdate) SetEventID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetEventID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int64) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int) *EventdeckbonuseUpda
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventdeckbonuseUpdate) AddEventID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddEventID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *EventdeckbonuseUpdate) ClearEventID() *EventdeckbonuseUpdate {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdate) SetGameCharacterUnitID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetGameCharacterUnitID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int) *Eventde
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdate) AddGameCharacterUnitID(v int) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddGameCharacterUnitID(v int64) *EventdeckbonuseUpdate {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -205,28 +205,28 @@ func (_u *EventdeckbonuseUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt)
+		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
 		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
@@ -272,14 +272,14 @@ type EventdeckbonuseUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetGameID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetGameID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int64) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -287,20 +287,20 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int) *EventdeckbonuseUp
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddGameID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddGameID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetEventID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetEventID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int64) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -308,7 +308,7 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int) *EventdeckbonuseU
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddEventID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddEventID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -320,14 +320,14 @@ func (_u *EventdeckbonuseUpdateOne) ClearEventID() *EventdeckbonuseUpdateOne {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetGameCharacterUnitID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetGameCharacterUnitID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -335,7 +335,7 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int) *Even
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddGameCharacterUnitID(v int) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddGameCharacterUnitID(v int64) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -477,28 +477,28 @@ func (_u *EventdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_node *Eventde
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt)
+		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
 		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)

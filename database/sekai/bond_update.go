@@ -28,14 +28,14 @@ func (_u *BondUpdate) Where(ps ...predicate.Bond) *BondUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BondUpdate) SetGameID(v int) *BondUpdate {
+func (_u *BondUpdate) SetGameID(v int64) *BondUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BondUpdate) SetNillableGameID(v *int) *BondUpdate {
+func (_u *BondUpdate) SetNillableGameID(v *int64) *BondUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *BondUpdate) SetNillableGameID(v *int) *BondUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BondUpdate) AddGameID(v int) *BondUpdate {
+func (_u *BondUpdate) AddGameID(v int64) *BondUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *BondUpdate) SetGroupID(v int) *BondUpdate {
+func (_u *BondUpdate) SetGroupID(v int64) *BondUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *BondUpdate) SetNillableGroupID(v *int) *BondUpdate {
+func (_u *BondUpdate) SetNillableGroupID(v *int64) *BondUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *BondUpdate) SetNillableGroupID(v *int) *BondUpdate {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *BondUpdate) AddGroupID(v int) *BondUpdate {
+func (_u *BondUpdate) AddGroupID(v int64) *BondUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -76,14 +76,14 @@ func (_u *BondUpdate) ClearGroupID() *BondUpdate {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (_u *BondUpdate) SetCharacterId1(v int) *BondUpdate {
+func (_u *BondUpdate) SetCharacterId1(v int64) *BondUpdate {
 	_u.mutation.ResetCharacterId1()
 	_u.mutation.SetCharacterId1(v)
 	return _u
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_u *BondUpdate) SetNillableCharacterId1(v *int) *BondUpdate {
+func (_u *BondUpdate) SetNillableCharacterId1(v *int64) *BondUpdate {
 	if v != nil {
 		_u.SetCharacterId1(*v)
 	}
@@ -91,7 +91,7 @@ func (_u *BondUpdate) SetNillableCharacterId1(v *int) *BondUpdate {
 }
 
 // AddCharacterId1 adds value to the "character_id1" field.
-func (_u *BondUpdate) AddCharacterId1(v int) *BondUpdate {
+func (_u *BondUpdate) AddCharacterId1(v int64) *BondUpdate {
 	_u.mutation.AddCharacterId1(v)
 	return _u
 }
@@ -103,14 +103,14 @@ func (_u *BondUpdate) ClearCharacterId1() *BondUpdate {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (_u *BondUpdate) SetCharacterId2(v int) *BondUpdate {
+func (_u *BondUpdate) SetCharacterId2(v int64) *BondUpdate {
 	_u.mutation.ResetCharacterId2()
 	_u.mutation.SetCharacterId2(v)
 	return _u
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_u *BondUpdate) SetNillableCharacterId2(v *int) *BondUpdate {
+func (_u *BondUpdate) SetNillableCharacterId2(v *int64) *BondUpdate {
 	if v != nil {
 		_u.SetCharacterId2(*v)
 	}
@@ -118,7 +118,7 @@ func (_u *BondUpdate) SetNillableCharacterId2(v *int) *BondUpdate {
 }
 
 // AddCharacterId2 adds value to the "character_id2" field.
-func (_u *BondUpdate) AddCharacterId2(v int) *BondUpdate {
+func (_u *BondUpdate) AddCharacterId2(v int64) *BondUpdate {
 	_u.mutation.AddCharacterId2(v)
 	return _u
 }
@@ -185,37 +185,37 @@ func (_u *BondUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(bond.FieldGameID, field.TypeInt, value)
+		_spec.SetField(bond.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(bond.FieldGameID, field.TypeInt, value)
+		_spec.AddField(bond.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(bond.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(bond.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(bond.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(bond.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(bond.FieldGroupID, field.TypeInt)
+		_spec.ClearField(bond.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
-		_spec.SetField(bond.FieldCharacterId1, field.TypeInt, value)
+		_spec.SetField(bond.FieldCharacterId1, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId1(); ok {
-		_spec.AddField(bond.FieldCharacterId1, field.TypeInt, value)
+		_spec.AddField(bond.FieldCharacterId1, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterId1Cleared() {
-		_spec.ClearField(bond.FieldCharacterId1, field.TypeInt)
+		_spec.ClearField(bond.FieldCharacterId1, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
-		_spec.SetField(bond.FieldCharacterId2, field.TypeInt, value)
+		_spec.SetField(bond.FieldCharacterId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId2(); ok {
-		_spec.AddField(bond.FieldCharacterId2, field.TypeInt, value)
+		_spec.AddField(bond.FieldCharacterId2, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterId2Cleared() {
-		_spec.ClearField(bond.FieldCharacterId2, field.TypeInt)
+		_spec.ClearField(bond.FieldCharacterId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(bond.FieldServerRegion, field.TypeString, value)
@@ -241,14 +241,14 @@ type BondUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *BondUpdateOne) SetGameID(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetGameID(v int64) *BondUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BondUpdateOne) SetNillableGameID(v *int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetNillableGameID(v *int64) *BondUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -256,20 +256,20 @@ func (_u *BondUpdateOne) SetNillableGameID(v *int) *BondUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BondUpdateOne) AddGameID(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) AddGameID(v int64) *BondUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *BondUpdateOne) SetGroupID(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetGroupID(v int64) *BondUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *BondUpdateOne) SetNillableGroupID(v *int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetNillableGroupID(v *int64) *BondUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -277,7 +277,7 @@ func (_u *BondUpdateOne) SetNillableGroupID(v *int) *BondUpdateOne {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *BondUpdateOne) AddGroupID(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) AddGroupID(v int64) *BondUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -289,14 +289,14 @@ func (_u *BondUpdateOne) ClearGroupID() *BondUpdateOne {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (_u *BondUpdateOne) SetCharacterId1(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetCharacterId1(v int64) *BondUpdateOne {
 	_u.mutation.ResetCharacterId1()
 	_u.mutation.SetCharacterId1(v)
 	return _u
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_u *BondUpdateOne) SetNillableCharacterId1(v *int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetNillableCharacterId1(v *int64) *BondUpdateOne {
 	if v != nil {
 		_u.SetCharacterId1(*v)
 	}
@@ -304,7 +304,7 @@ func (_u *BondUpdateOne) SetNillableCharacterId1(v *int) *BondUpdateOne {
 }
 
 // AddCharacterId1 adds value to the "character_id1" field.
-func (_u *BondUpdateOne) AddCharacterId1(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) AddCharacterId1(v int64) *BondUpdateOne {
 	_u.mutation.AddCharacterId1(v)
 	return _u
 }
@@ -316,14 +316,14 @@ func (_u *BondUpdateOne) ClearCharacterId1() *BondUpdateOne {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (_u *BondUpdateOne) SetCharacterId2(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetCharacterId2(v int64) *BondUpdateOne {
 	_u.mutation.ResetCharacterId2()
 	_u.mutation.SetCharacterId2(v)
 	return _u
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_u *BondUpdateOne) SetNillableCharacterId2(v *int) *BondUpdateOne {
+func (_u *BondUpdateOne) SetNillableCharacterId2(v *int64) *BondUpdateOne {
 	if v != nil {
 		_u.SetCharacterId2(*v)
 	}
@@ -331,7 +331,7 @@ func (_u *BondUpdateOne) SetNillableCharacterId2(v *int) *BondUpdateOne {
 }
 
 // AddCharacterId2 adds value to the "character_id2" field.
-func (_u *BondUpdateOne) AddCharacterId2(v int) *BondUpdateOne {
+func (_u *BondUpdateOne) AddCharacterId2(v int64) *BondUpdateOne {
 	_u.mutation.AddCharacterId2(v)
 	return _u
 }
@@ -428,37 +428,37 @@ func (_u *BondUpdateOne) sqlSave(ctx context.Context) (_node *Bond, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(bond.FieldGameID, field.TypeInt, value)
+		_spec.SetField(bond.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(bond.FieldGameID, field.TypeInt, value)
+		_spec.AddField(bond.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(bond.FieldGroupID, field.TypeInt, value)
+		_spec.SetField(bond.FieldGroupID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(bond.FieldGroupID, field.TypeInt, value)
+		_spec.AddField(bond.FieldGroupID, field.TypeInt64, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(bond.FieldGroupID, field.TypeInt)
+		_spec.ClearField(bond.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
-		_spec.SetField(bond.FieldCharacterId1, field.TypeInt, value)
+		_spec.SetField(bond.FieldCharacterId1, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId1(); ok {
-		_spec.AddField(bond.FieldCharacterId1, field.TypeInt, value)
+		_spec.AddField(bond.FieldCharacterId1, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterId1Cleared() {
-		_spec.ClearField(bond.FieldCharacterId1, field.TypeInt)
+		_spec.ClearField(bond.FieldCharacterId1, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
-		_spec.SetField(bond.FieldCharacterId2, field.TypeInt, value)
+		_spec.SetField(bond.FieldCharacterId2, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId2(); ok {
-		_spec.AddField(bond.FieldCharacterId2, field.TypeInt, value)
+		_spec.AddField(bond.FieldCharacterId2, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterId2Cleared() {
-		_spec.ClearField(bond.FieldCharacterId2, field.TypeInt)
+		_spec.ClearField(bond.FieldCharacterId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(bond.FieldServerRegion, field.TypeString, value)

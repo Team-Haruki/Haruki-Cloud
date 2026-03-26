@@ -30,14 +30,14 @@ func (_u *CardepisodeUpdate) Where(ps ...predicate.Cardepisode) *CardepisodeUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CardepisodeUpdate) SetGameID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetGameID(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillableGameID(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillableGameID(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *CardepisodeUpdate) SetNillableGameID(v *int) *CardepisodeUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardepisodeUpdate) AddGameID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddGameID(v int64) *CardepisodeUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CardepisodeUpdate) SetSeq(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetSeq(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillableSeq(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillableSeq(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *CardepisodeUpdate) SetNillableSeq(v *int) *CardepisodeUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CardepisodeUpdate) AddSeq(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddSeq(v int64) *CardepisodeUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *CardepisodeUpdate) ClearSeq() *CardepisodeUpdate {
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *CardepisodeUpdate) SetCardID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetCardID(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillableCardID(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillableCardID(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *CardepisodeUpdate) SetNillableCardID(v *int) *CardepisodeUpdate {
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *CardepisodeUpdate) AddCardID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddCardID(v int64) *CardepisodeUpdate {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -165,14 +165,14 @@ func (_u *CardepisodeUpdate) ClearAssetbundleName() *CardepisodeUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *CardepisodeUpdate) SetReleaseConditionID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetReleaseConditionID(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillableReleaseConditionID(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillableReleaseConditionID(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -180,7 +180,7 @@ func (_u *CardepisodeUpdate) SetNillableReleaseConditionID(v *int) *CardepisodeU
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *CardepisodeUpdate) AddReleaseConditionID(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddReleaseConditionID(v int64) *CardepisodeUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -192,14 +192,14 @@ func (_u *CardepisodeUpdate) ClearReleaseConditionID() *CardepisodeUpdate {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *CardepisodeUpdate) SetPower1BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetPower1BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillablePower1BonusFixed(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillablePower1BonusFixed(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -207,7 +207,7 @@ func (_u *CardepisodeUpdate) SetNillablePower1BonusFixed(v *int) *CardepisodeUpd
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *CardepisodeUpdate) AddPower1BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddPower1BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -219,14 +219,14 @@ func (_u *CardepisodeUpdate) ClearPower1BonusFixed() *CardepisodeUpdate {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *CardepisodeUpdate) SetPower2BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetPower2BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillablePower2BonusFixed(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillablePower2BonusFixed(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -234,7 +234,7 @@ func (_u *CardepisodeUpdate) SetNillablePower2BonusFixed(v *int) *CardepisodeUpd
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *CardepisodeUpdate) AddPower2BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddPower2BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -246,14 +246,14 @@ func (_u *CardepisodeUpdate) ClearPower2BonusFixed() *CardepisodeUpdate {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *CardepisodeUpdate) SetPower3BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetPower3BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdate) SetNillablePower3BonusFixed(v *int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetNillablePower3BonusFixed(v *int64) *CardepisodeUpdate {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -261,7 +261,7 @@ func (_u *CardepisodeUpdate) SetNillablePower3BonusFixed(v *int) *CardepisodeUpd
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *CardepisodeUpdate) AddPower3BonusFixed(v int) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) AddPower3BonusFixed(v int64) *CardepisodeUpdate {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -382,28 +382,28 @@ func (_u *CardepisodeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardepisode.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardepisode.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cardepisode.FieldSeq, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cardepisode.FieldSeq, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cardepisode.FieldSeq, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(cardepisode.FieldCardID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(cardepisode.FieldCardID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(cardepisode.FieldCardID, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(cardepisode.FieldTitle, field.TypeString, value)
@@ -424,40 +424,40 @@ func (_u *CardepisodeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(cardepisode.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(cardepisode.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(cardepisode.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.RewardResourceBoxIds(); ok {
 		_spec.SetField(cardepisode.FieldRewardResourceBoxIds, field.TypeJSON, value)
@@ -516,14 +516,14 @@ type CardepisodeUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CardepisodeUpdateOne) SetGameID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetGameID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillableGameID(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillableGameID(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -531,20 +531,20 @@ func (_u *CardepisodeUpdateOne) SetNillableGameID(v *int) *CardepisodeUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardepisodeUpdateOne) AddGameID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddGameID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CardepisodeUpdateOne) SetSeq(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetSeq(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillableSeq(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillableSeq(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -552,7 +552,7 @@ func (_u *CardepisodeUpdateOne) SetNillableSeq(v *int) *CardepisodeUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CardepisodeUpdateOne) AddSeq(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddSeq(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -564,14 +564,14 @@ func (_u *CardepisodeUpdateOne) ClearSeq() *CardepisodeUpdateOne {
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *CardepisodeUpdateOne) SetCardID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetCardID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillableCardID(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillableCardID(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -579,7 +579,7 @@ func (_u *CardepisodeUpdateOne) SetNillableCardID(v *int) *CardepisodeUpdateOne 
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *CardepisodeUpdateOne) AddCardID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddCardID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -651,14 +651,14 @@ func (_u *CardepisodeUpdateOne) ClearAssetbundleName() *CardepisodeUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *CardepisodeUpdateOne) SetReleaseConditionID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetReleaseConditionID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillableReleaseConditionID(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillableReleaseConditionID(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -666,7 +666,7 @@ func (_u *CardepisodeUpdateOne) SetNillableReleaseConditionID(v *int) *Cardepiso
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *CardepisodeUpdateOne) AddReleaseConditionID(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddReleaseConditionID(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -678,14 +678,14 @@ func (_u *CardepisodeUpdateOne) ClearReleaseConditionID() *CardepisodeUpdateOne 
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) SetPower1BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetPower1BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillablePower1BonusFixed(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillablePower1BonusFixed(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -693,7 +693,7 @@ func (_u *CardepisodeUpdateOne) SetNillablePower1BonusFixed(v *int) *Cardepisode
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) AddPower1BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddPower1BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -705,14 +705,14 @@ func (_u *CardepisodeUpdateOne) ClearPower1BonusFixed() *CardepisodeUpdateOne {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) SetPower2BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetPower2BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillablePower2BonusFixed(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillablePower2BonusFixed(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -720,7 +720,7 @@ func (_u *CardepisodeUpdateOne) SetNillablePower2BonusFixed(v *int) *Cardepisode
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) AddPower2BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddPower2BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -732,14 +732,14 @@ func (_u *CardepisodeUpdateOne) ClearPower2BonusFixed() *CardepisodeUpdateOne {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) SetPower3BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetPower3BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *CardepisodeUpdateOne) SetNillablePower3BonusFixed(v *int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetNillablePower3BonusFixed(v *int64) *CardepisodeUpdateOne {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -747,7 +747,7 @@ func (_u *CardepisodeUpdateOne) SetNillablePower3BonusFixed(v *int) *Cardepisode
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *CardepisodeUpdateOne) AddPower3BonusFixed(v int) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) AddPower3BonusFixed(v int64) *CardepisodeUpdateOne {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -898,28 +898,28 @@ func (_u *CardepisodeUpdateOne) sqlSave(ctx context.Context) (_node *Cardepisode
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardepisode.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardepisode.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cardepisode.FieldSeq, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cardepisode.FieldSeq, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cardepisode.FieldSeq, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(cardepisode.FieldCardID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(cardepisode.FieldCardID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(cardepisode.FieldCardID, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(cardepisode.FieldTitle, field.TypeString, value)
@@ -940,40 +940,40 @@ func (_u *CardepisodeUpdateOne) sqlSave(ctx context.Context) (_node *Cardepisode
 		_spec.ClearField(cardepisode.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(cardepisode.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldReleaseConditionID, field.TypeInt64, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(cardepisode.FieldReleaseConditionID, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldReleaseConditionID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(cardepisode.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(cardepisode.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(cardepisode.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(cardepisode.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.RewardResourceBoxIds(); ok {
 		_spec.SetField(cardepisode.FieldRewardResourceBoxIds, field.TypeJSON, value)

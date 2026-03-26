@@ -28,14 +28,14 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) Where(ps ...predicate.Worldb
 }
 
 // SetAttributeCount sets the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdate {
 	_u.mutation.ResetAttributeCount()
 	_u.mutation.SetAttributeCount(v)
 	return _u
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseUpdate {
 	if v != nil {
 		_u.SetAttributeCount(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v 
 }
 
 // AddAttributeCount adds value to the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdate) AddAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) AddAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdate {
 	_u.mutation.AddAttributeCount(v)
 	return _u
 }
@@ -137,13 +137,13 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) sqlSave(ctx context.Context)
 		}
 	}
 	if value, ok := _u.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedAttributeCount(); ok {
-		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
+		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
 	}
 	if _u.mutation.AttributeCountCleared() {
-		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt)
+		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -178,14 +178,14 @@ type WorldbloomdifferentattributebonuseUpdateOne struct {
 }
 
 // SetAttributeCount sets the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdateOne {
 	_u.mutation.ResetAttributeCount()
 	_u.mutation.SetAttributeCount(v)
 	return _u
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseUpdateOne {
 	if v != nil {
 		_u.SetAttributeCount(*v)
 	}
@@ -193,7 +193,7 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount
 }
 
 // AddAttributeCount adds value to the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) AddAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) AddAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdateOne {
 	_u.mutation.AddAttributeCount(v)
 	return _u
 }
@@ -317,13 +317,13 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) sqlSave(ctx context.Conte
 		}
 	}
 	if value, ok := _u.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedAttributeCount(); ok {
-		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
+		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
 	}
 	if _u.mutation.AttributeCountCleared() {
-		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt)
+		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64, value)

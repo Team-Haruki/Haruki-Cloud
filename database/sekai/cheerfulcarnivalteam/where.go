@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Cheerfulcarnivalteam {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Cheerfulcarnivalteam {
+func GameID(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldGameID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int) predicate.Cheerfulcarnivalteam {
+func EventID(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldEventID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Cheerfulcarnivalteam {
+func Seq(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -84,82 +84,82 @@ func ServerRegion(v string) predicate.Cheerfulcarnivalteam {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Cheerfulcarnivalteam {
+func GameIDEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Cheerfulcarnivalteam {
+func GameIDNEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func GameIDIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func GameIDNotIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Cheerfulcarnivalteam {
+func GameIDGT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Cheerfulcarnivalteam {
+func GameIDGTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Cheerfulcarnivalteam {
+func GameIDLT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Cheerfulcarnivalteam {
+func GameIDLTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLTE(FieldGameID, v))
 }
 
 // EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int) predicate.Cheerfulcarnivalteam {
+func EventIDEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldEventID, v))
 }
 
 // EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int) predicate.Cheerfulcarnivalteam {
+func EventIDNEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNEQ(FieldEventID, v))
 }
 
 // EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func EventIDIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldIn(FieldEventID, vs...))
 }
 
 // EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func EventIDNotIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNotIn(FieldEventID, vs...))
 }
 
 // EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int) predicate.Cheerfulcarnivalteam {
+func EventIDGT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGT(FieldEventID, v))
 }
 
 // EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int) predicate.Cheerfulcarnivalteam {
+func EventIDGTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGTE(FieldEventID, v))
 }
 
 // EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int) predicate.Cheerfulcarnivalteam {
+func EventIDLT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLT(FieldEventID, v))
 }
 
 // EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int) predicate.Cheerfulcarnivalteam {
+func EventIDLTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLTE(FieldEventID, v))
 }
 
@@ -174,42 +174,42 @@ func EventIDNotNil() predicate.Cheerfulcarnivalteam {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Cheerfulcarnivalteam {
+func SeqEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Cheerfulcarnivalteam {
+func SeqNEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func SeqIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Cheerfulcarnivalteam {
+func SeqNotIn(vs ...int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Cheerfulcarnivalteam {
+func SeqGT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Cheerfulcarnivalteam {
+func SeqGTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Cheerfulcarnivalteam {
+func SeqLT(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Cheerfulcarnivalteam {
+func SeqLTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLTE(FieldSeq, v))
 }
 

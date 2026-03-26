@@ -18,15 +18,15 @@ type Areaitemlevel struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// AreaItemID holds the value of the "area_item_id" field.
-	AreaItemID int `json:"area_item_id,omitempty"`
+	AreaItemID int64 `json:"area_item_id,omitempty"`
 	// Level holds the value of the "level" field.
-	Level int `json:"level,omitempty"`
+	Level int64 `json:"level,omitempty"`
 	// TargetUnit holds the value of the "target_unit" field.
 	TargetUnit json.RawMessage `json:"target_unit,omitempty"`
 	// TargetCardAttr holds the value of the "target_card_attr" field.
 	TargetCardAttr json.RawMessage `json:"target_card_attr,omitempty"`
 	// TargetGameCharacterID holds the value of the "target_game_character_id" field.
-	TargetGameCharacterID int `json:"target_game_character_id,omitempty"`
+	TargetGameCharacterID int64 `json:"target_game_character_id,omitempty"`
 	// Power1BonusRate holds the value of the "power1_bonus_rate" field.
 	Power1BonusRate float64 `json:"power1_bonus_rate,omitempty"`
 	// Power1AllMatchBonusRate holds the value of the "power1_all_match_bonus_rate" field.
@@ -84,13 +84,13 @@ func (_m *Areaitemlevel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field area_item_id", values[i])
 			} else if value.Valid {
-				_m.AreaItemID = int(value.Int64)
+				_m.AreaItemID = value.Int64
 			}
 		case areaitemlevel.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = int(value.Int64)
+				_m.Level = value.Int64
 			}
 		case areaitemlevel.FieldTargetUnit:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -112,7 +112,7 @@ func (_m *Areaitemlevel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field target_game_character_id", values[i])
 			} else if value.Valid {
-				_m.TargetGameCharacterID = int(value.Int64)
+				_m.TargetGameCharacterID = value.Int64
 			}
 		case areaitemlevel.FieldPower1BonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

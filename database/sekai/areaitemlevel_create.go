@@ -21,13 +21,13 @@ type AreaitemlevelCreate struct {
 }
 
 // SetAreaItemID sets the "area_item_id" field.
-func (_c *AreaitemlevelCreate) SetAreaItemID(v int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetAreaItemID(v int64) *AreaitemlevelCreate {
 	_c.mutation.SetAreaItemID(v)
 	return _c
 }
 
 // SetNillableAreaItemID sets the "area_item_id" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int64) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetAreaItemID(*v)
 	}
@@ -35,13 +35,13 @@ func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int) *AreaitemlevelCreat
 }
 
 // SetLevel sets the "level" field.
-func (_c *AreaitemlevelCreate) SetLevel(v int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetLevel(v int64) *AreaitemlevelCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableLevel(v *int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableLevel(v *int64) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetLevel(*v)
 	}
@@ -61,13 +61,13 @@ func (_c *AreaitemlevelCreate) SetTargetCardAttr(v json.RawMessage) *Areaitemlev
 }
 
 // SetTargetGameCharacterID sets the "target_game_character_id" field.
-func (_c *AreaitemlevelCreate) SetTargetGameCharacterID(v int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetGameCharacterID(v int64) *AreaitemlevelCreate {
 	_c.mutation.SetTargetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableTargetGameCharacterID sets the "target_game_character_id" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableTargetGameCharacterID(v *int) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableTargetGameCharacterID(v *int64) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetTargetGameCharacterID(*v)
 	}
@@ -242,11 +242,11 @@ func (_c *AreaitemlevelCreate) createSpec() (*Areaitemlevel, *sqlgraph.CreateSpe
 		_spec = sqlgraph.NewCreateSpec(areaitemlevel.Table, sqlgraph.NewFieldSpec(areaitemlevel.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.AreaItemID(); ok {
-		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
 		_node.AreaItemID = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt64, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.TargetUnit(); ok {
@@ -258,7 +258,7 @@ func (_c *AreaitemlevelCreate) createSpec() (*Areaitemlevel, *sqlgraph.CreateSpe
 		_node.TargetCardAttr = value
 	}
 	if value, ok := _c.mutation.TargetGameCharacterID(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
 		_node.TargetGameCharacterID = value
 	}
 	if value, ok := _c.mutation.Power1BonusRate(); ok {

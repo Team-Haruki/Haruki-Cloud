@@ -28,14 +28,14 @@ func (_u *MysekaigateUpdate) Where(ps ...predicate.Mysekaigate) *MysekaigateUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigateUpdate) SetGameID(v int) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) SetGameID(v int64) *MysekaigateUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigateUpdate) SetNillableGameID(v *int) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) SetNillableGameID(v *int64) *MysekaigateUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *MysekaigateUpdate) SetNillableGameID(v *int) *MysekaigateUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigateUpdate) AddGameID(v int) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) AddGameID(v int64) *MysekaigateUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -164,10 +164,10 @@ func (_u *MysekaigateUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaigate.FieldUnit, field.TypeString, value)
@@ -211,14 +211,14 @@ type MysekaigateUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigateUpdateOne) SetGameID(v int) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) SetGameID(v int64) *MysekaigateUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int64) *MysekaigateUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -226,7 +226,7 @@ func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int) *MysekaigateUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigateUpdateOne) AddGameID(v int) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) AddGameID(v int64) *MysekaigateUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -377,10 +377,10 @@ func (_u *MysekaigateUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaigate
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaigate.FieldUnit, field.TypeString, value)

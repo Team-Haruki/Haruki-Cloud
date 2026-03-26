@@ -28,14 +28,14 @@ func (_u *CheerfulcarnivalteamUpdate) Where(ps ...predicate.Cheerfulcarnivalteam
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CheerfulcarnivalteamUpdate) SetGameID(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetGameID(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdate) SetNillableGameID(v *int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetNillableGameID(v *int64) *CheerfulcarnivalteamUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *CheerfulcarnivalteamUpdate) SetNillableGameID(v *int) *Cheerfulcarniva
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CheerfulcarnivalteamUpdate) AddGameID(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) AddGameID(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *CheerfulcarnivalteamUpdate) SetEventID(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetEventID(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdate) SetNillableEventID(v *int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetNillableEventID(v *int64) *CheerfulcarnivalteamUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *CheerfulcarnivalteamUpdate) SetNillableEventID(v *int) *Cheerfulcarniv
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *CheerfulcarnivalteamUpdate) AddEventID(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) AddEventID(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -76,14 +76,14 @@ func (_u *CheerfulcarnivalteamUpdate) ClearEventID() *CheerfulcarnivalteamUpdate
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CheerfulcarnivalteamUpdate) SetSeq(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetSeq(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdate) SetNillableSeq(v *int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) SetNillableSeq(v *int64) *CheerfulcarnivalteamUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -91,7 +91,7 @@ func (_u *CheerfulcarnivalteamUpdate) SetNillableSeq(v *int) *Cheerfulcarnivalte
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CheerfulcarnivalteamUpdate) AddSeq(v int) *CheerfulcarnivalteamUpdate {
+func (_u *CheerfulcarnivalteamUpdate) AddSeq(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -198,28 +198,28 @@ func (_u *CheerfulcarnivalteamUpdate) sqlSave(ctx context.Context) (_node int, e
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(cheerfulcarnivalteam.FieldEventID, field.TypeInt)
+		_spec.ClearField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cheerfulcarnivalteam.FieldSeq, field.TypeInt)
+		_spec.ClearField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TeamName(); ok {
 		_spec.SetField(cheerfulcarnivalteam.FieldTeamName, field.TypeString, value)
@@ -257,14 +257,14 @@ type CheerfulcarnivalteamUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *CheerfulcarnivalteamUpdateOne) SetGameID(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetGameID(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdateOne) SetNillableGameID(v *int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetNillableGameID(v *int64) *CheerfulcarnivalteamUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -272,20 +272,20 @@ func (_u *CheerfulcarnivalteamUpdateOne) SetNillableGameID(v *int) *Cheerfulcarn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CheerfulcarnivalteamUpdateOne) AddGameID(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) AddGameID(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *CheerfulcarnivalteamUpdateOne) SetEventID(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetEventID(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdateOne) SetNillableEventID(v *int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetNillableEventID(v *int64) *CheerfulcarnivalteamUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -293,7 +293,7 @@ func (_u *CheerfulcarnivalteamUpdateOne) SetNillableEventID(v *int) *Cheerfulcar
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *CheerfulcarnivalteamUpdateOne) AddEventID(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) AddEventID(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -305,14 +305,14 @@ func (_u *CheerfulcarnivalteamUpdateOne) ClearEventID() *CheerfulcarnivalteamUpd
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CheerfulcarnivalteamUpdateOne) SetSeq(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetSeq(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CheerfulcarnivalteamUpdateOne) SetNillableSeq(v *int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) SetNillableSeq(v *int64) *CheerfulcarnivalteamUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -320,7 +320,7 @@ func (_u *CheerfulcarnivalteamUpdateOne) SetNillableSeq(v *int) *Cheerfulcarniva
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CheerfulcarnivalteamUpdateOne) AddSeq(v int) *CheerfulcarnivalteamUpdateOne {
+func (_u *CheerfulcarnivalteamUpdateOne) AddSeq(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -457,28 +457,28 @@ func (_u *CheerfulcarnivalteamUpdateOne) sqlSave(ctx context.Context) (_node *Ch
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(cheerfulcarnivalteam.FieldEventID, field.TypeInt)
+		_spec.ClearField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
+		_spec.AddField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cheerfulcarnivalteam.FieldSeq, field.TypeInt)
+		_spec.ClearField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TeamName(); ok {
 		_spec.SetField(cheerfulcarnivalteam.FieldTeamName, field.TypeString, value)

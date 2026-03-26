@@ -18,11 +18,11 @@ type Honor struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
+	GroupID int64 `json:"group_id,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
 	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
@@ -32,11 +32,11 @@ type Honor struct {
 	// Levels holds the value of the "levels" field.
 	Levels json.RawMessage `json:"levels,omitempty"`
 	// HonorTypeID holds the value of the "honor_type_id" field.
-	HonorTypeID int `json:"honor_type_id,omitempty"`
+	HonorTypeID int64 `json:"honor_type_id,omitempty"`
 	// HonorMissionType holds the value of the "honor_mission_type" field.
 	HonorMissionType string `json:"honor_mission_type,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int `json:"start_at,omitempty"`
+	StartAt int64 `json:"start_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -78,19 +78,19 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case honor.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case honor.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = int(value.Int64)
+				_m.GroupID = value.Int64
 			}
 		case honor.FieldHonorRarity:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -124,7 +124,7 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_type_id", values[i])
 			} else if value.Valid {
-				_m.HonorTypeID = int(value.Int64)
+				_m.HonorTypeID = value.Int64
 			}
 		case honor.FieldHonorMissionType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,7 +136,7 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = int(value.Int64)
+				_m.StartAt = value.Int64
 			}
 		case honor.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

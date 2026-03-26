@@ -18,13 +18,13 @@ type Boostitem struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// RecoveryValue holds the value of the "recovery_value" field.
-	RecoveryValue int `json:"recovery_value,omitempty"`
+	RecoveryValue int64 `json:"recovery_value,omitempty"`
 	// AssetBundleName holds the value of the "asset_bundle_name" field.
 	AssetBundleName string `json:"asset_bundle_name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
@@ -70,13 +70,13 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case boostitem.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case boostitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,7 +88,7 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field recovery_value", values[i])
 			} else if value.Valid {
-				_m.RecoveryValue = int(value.Int64)
+				_m.RecoveryValue = value.Int64
 			}
 		case boostitem.FieldAssetBundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {

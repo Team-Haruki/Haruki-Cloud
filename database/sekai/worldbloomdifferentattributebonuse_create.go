@@ -20,13 +20,13 @@ type WorldbloomdifferentattributebonuseCreate struct {
 }
 
 // SetAttributeCount sets the "attribute_count" field.
-func (_c *WorldbloomdifferentattributebonuseCreate) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseCreate {
+func (_c *WorldbloomdifferentattributebonuseCreate) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseCreate {
 	_c.mutation.SetAttributeCount(v)
 	return _c
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_c *WorldbloomdifferentattributebonuseCreate) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseCreate {
+func (_c *WorldbloomdifferentattributebonuseCreate) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseCreate {
 	if v != nil {
 		_c.SetAttributeCount(*v)
 	}
@@ -117,7 +117,7 @@ func (_c *WorldbloomdifferentattributebonuseCreate) createSpec() (*Worldbloomdif
 		_spec = sqlgraph.NewCreateSpec(worldbloomdifferentattributebonuse.Table, sqlgraph.NewFieldSpec(worldbloomdifferentattributebonuse.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
 		_node.AttributeCount = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {

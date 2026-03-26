@@ -20,7 +20,7 @@ type MysekaiphenomenabackgroundcolorCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiphenomenabackgroundcolorCreate) SetGameID(v int) *MysekaiphenomenabackgroundcolorCreate {
+func (_c *MysekaiphenomenabackgroundcolorCreate) SetGameID(v int64) *MysekaiphenomenabackgroundcolorCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -168,7 +168,7 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) createSpec() (*Mysekaiphenomena
 		_spec = sqlgraph.NewCreateSpec(mysekaiphenomenabackgroundcolor.Table, sqlgraph.NewFieldSpec(mysekaiphenomenabackgroundcolor.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.BaseColor(); ok {

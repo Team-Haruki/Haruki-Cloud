@@ -17,9 +17,9 @@ type Characterrank struct {
 
 func (Characterrank) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("character_id").Optional(),
-		field.Int("character_rank").Optional(),
+		field.Int64("game_id"),
+		field.Int64("character_id").Optional(),
+		field.Int64("character_rank").Optional(),
 		field.Float("power1_bonus_rate").Optional(),
 		field.Float("power2_bonus_rate").Optional(),
 		field.Float("power3_bonus_rate").Optional(),

@@ -48,14 +48,14 @@ func (_u *MasterlessonUpdate) ClearCardRarityType() *MasterlessonUpdate {
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_u *MasterlessonUpdate) SetMasterRank(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetMasterRank(v int64) *MasterlessonUpdate {
 	_u.mutation.ResetMasterRank()
 	_u.mutation.SetMasterRank(v)
 	return _u
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_u *MasterlessonUpdate) SetNillableMasterRank(v *int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetNillableMasterRank(v *int64) *MasterlessonUpdate {
 	if v != nil {
 		_u.SetMasterRank(*v)
 	}
@@ -63,7 +63,7 @@ func (_u *MasterlessonUpdate) SetNillableMasterRank(v *int) *MasterlessonUpdate 
 }
 
 // AddMasterRank adds value to the "master_rank" field.
-func (_u *MasterlessonUpdate) AddMasterRank(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) AddMasterRank(v int64) *MasterlessonUpdate {
 	_u.mutation.AddMasterRank(v)
 	return _u
 }
@@ -75,14 +75,14 @@ func (_u *MasterlessonUpdate) ClearMasterRank() *MasterlessonUpdate {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *MasterlessonUpdate) SetPower1BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetPower1BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdate) SetNillablePower1BonusFixed(v *int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetNillablePower1BonusFixed(v *int64) *MasterlessonUpdate {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -90,7 +90,7 @@ func (_u *MasterlessonUpdate) SetNillablePower1BonusFixed(v *int) *MasterlessonU
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *MasterlessonUpdate) AddPower1BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) AddPower1BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -102,14 +102,14 @@ func (_u *MasterlessonUpdate) ClearPower1BonusFixed() *MasterlessonUpdate {
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *MasterlessonUpdate) SetPower2BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetPower2BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdate) SetNillablePower2BonusFixed(v *int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetNillablePower2BonusFixed(v *int64) *MasterlessonUpdate {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -117,7 +117,7 @@ func (_u *MasterlessonUpdate) SetNillablePower2BonusFixed(v *int) *MasterlessonU
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *MasterlessonUpdate) AddPower2BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) AddPower2BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -129,14 +129,14 @@ func (_u *MasterlessonUpdate) ClearPower2BonusFixed() *MasterlessonUpdate {
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *MasterlessonUpdate) SetPower3BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetPower3BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdate) SetNillablePower3BonusFixed(v *int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetNillablePower3BonusFixed(v *int64) *MasterlessonUpdate {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -144,7 +144,7 @@ func (_u *MasterlessonUpdate) SetNillablePower3BonusFixed(v *int) *MasterlessonU
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *MasterlessonUpdate) AddPower3BonusFixed(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) AddPower3BonusFixed(v int64) *MasterlessonUpdate {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -156,14 +156,14 @@ func (_u *MasterlessonUpdate) ClearPower3BonusFixed() *MasterlessonUpdate {
 }
 
 // SetCharacterRankExp sets the "character_rank_exp" field.
-func (_u *MasterlessonUpdate) SetCharacterRankExp(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetCharacterRankExp(v int64) *MasterlessonUpdate {
 	_u.mutation.ResetCharacterRankExp()
 	_u.mutation.SetCharacterRankExp(v)
 	return _u
 }
 
 // SetNillableCharacterRankExp sets the "character_rank_exp" field if the given value is not nil.
-func (_u *MasterlessonUpdate) SetNillableCharacterRankExp(v *int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetNillableCharacterRankExp(v *int64) *MasterlessonUpdate {
 	if v != nil {
 		_u.SetCharacterRankExp(*v)
 	}
@@ -171,7 +171,7 @@ func (_u *MasterlessonUpdate) SetNillableCharacterRankExp(v *int) *MasterlessonU
 }
 
 // AddCharacterRankExp adds value to the "character_rank_exp" field.
-func (_u *MasterlessonUpdate) AddCharacterRankExp(v int) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) AddCharacterRankExp(v int64) *MasterlessonUpdate {
 	_u.mutation.AddCharacterRankExp(v)
 	return _u
 }
@@ -285,49 +285,49 @@ func (_u *MasterlessonUpdate) sqlSave(ctx context.Context) (_node int, err error
 		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
-		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMasterRank(); ok {
-		_spec.AddField(masterlesson.FieldMasterRank, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldMasterRank, field.TypeInt64, value)
 	}
 	if _u.mutation.MasterRankCleared() {
-		_spec.ClearField(masterlesson.FieldMasterRank, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldMasterRank, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterRankExp(); ok {
-		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRankExp(); ok {
-		_spec.AddField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterRankExpCleared() {
-		_spec.ClearField(masterlesson.FieldCharacterRankExp, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldCharacterRankExp, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costs(); ok {
 		_spec.SetField(masterlesson.FieldCosts, field.TypeJSON, value)
@@ -393,14 +393,14 @@ func (_u *MasterlessonUpdateOne) ClearCardRarityType() *MasterlessonUpdateOne {
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_u *MasterlessonUpdateOne) SetMasterRank(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetMasterRank(v int64) *MasterlessonUpdateOne {
 	_u.mutation.ResetMasterRank()
 	_u.mutation.SetMasterRank(v)
 	return _u
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_u *MasterlessonUpdateOne) SetNillableMasterRank(v *int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetNillableMasterRank(v *int64) *MasterlessonUpdateOne {
 	if v != nil {
 		_u.SetMasterRank(*v)
 	}
@@ -408,7 +408,7 @@ func (_u *MasterlessonUpdateOne) SetNillableMasterRank(v *int) *MasterlessonUpda
 }
 
 // AddMasterRank adds value to the "master_rank" field.
-func (_u *MasterlessonUpdateOne) AddMasterRank(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) AddMasterRank(v int64) *MasterlessonUpdateOne {
 	_u.mutation.AddMasterRank(v)
 	return _u
 }
@@ -420,14 +420,14 @@ func (_u *MasterlessonUpdateOne) ClearMasterRank() *MasterlessonUpdateOne {
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) SetPower1BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetPower1BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.ResetPower1BonusFixed()
 	_u.mutation.SetPower1BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdateOne) SetNillablePower1BonusFixed(v *int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetNillablePower1BonusFixed(v *int64) *MasterlessonUpdateOne {
 	if v != nil {
 		_u.SetPower1BonusFixed(*v)
 	}
@@ -435,7 +435,7 @@ func (_u *MasterlessonUpdateOne) SetNillablePower1BonusFixed(v *int) *Masterless
 }
 
 // AddPower1BonusFixed adds value to the "power1_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) AddPower1BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) AddPower1BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.AddPower1BonusFixed(v)
 	return _u
 }
@@ -447,14 +447,14 @@ func (_u *MasterlessonUpdateOne) ClearPower1BonusFixed() *MasterlessonUpdateOne 
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) SetPower2BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetPower2BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.ResetPower2BonusFixed()
 	_u.mutation.SetPower2BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdateOne) SetNillablePower2BonusFixed(v *int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetNillablePower2BonusFixed(v *int64) *MasterlessonUpdateOne {
 	if v != nil {
 		_u.SetPower2BonusFixed(*v)
 	}
@@ -462,7 +462,7 @@ func (_u *MasterlessonUpdateOne) SetNillablePower2BonusFixed(v *int) *Masterless
 }
 
 // AddPower2BonusFixed adds value to the "power2_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) AddPower2BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) AddPower2BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.AddPower2BonusFixed(v)
 	return _u
 }
@@ -474,14 +474,14 @@ func (_u *MasterlessonUpdateOne) ClearPower2BonusFixed() *MasterlessonUpdateOne 
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) SetPower3BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetPower3BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.ResetPower3BonusFixed()
 	_u.mutation.SetPower3BonusFixed(v)
 	return _u
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_u *MasterlessonUpdateOne) SetNillablePower3BonusFixed(v *int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetNillablePower3BonusFixed(v *int64) *MasterlessonUpdateOne {
 	if v != nil {
 		_u.SetPower3BonusFixed(*v)
 	}
@@ -489,7 +489,7 @@ func (_u *MasterlessonUpdateOne) SetNillablePower3BonusFixed(v *int) *Masterless
 }
 
 // AddPower3BonusFixed adds value to the "power3_bonus_fixed" field.
-func (_u *MasterlessonUpdateOne) AddPower3BonusFixed(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) AddPower3BonusFixed(v int64) *MasterlessonUpdateOne {
 	_u.mutation.AddPower3BonusFixed(v)
 	return _u
 }
@@ -501,14 +501,14 @@ func (_u *MasterlessonUpdateOne) ClearPower3BonusFixed() *MasterlessonUpdateOne 
 }
 
 // SetCharacterRankExp sets the "character_rank_exp" field.
-func (_u *MasterlessonUpdateOne) SetCharacterRankExp(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetCharacterRankExp(v int64) *MasterlessonUpdateOne {
 	_u.mutation.ResetCharacterRankExp()
 	_u.mutation.SetCharacterRankExp(v)
 	return _u
 }
 
 // SetNillableCharacterRankExp sets the "character_rank_exp" field if the given value is not nil.
-func (_u *MasterlessonUpdateOne) SetNillableCharacterRankExp(v *int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetNillableCharacterRankExp(v *int64) *MasterlessonUpdateOne {
 	if v != nil {
 		_u.SetCharacterRankExp(*v)
 	}
@@ -516,7 +516,7 @@ func (_u *MasterlessonUpdateOne) SetNillableCharacterRankExp(v *int) *Masterless
 }
 
 // AddCharacterRankExp adds value to the "character_rank_exp" field.
-func (_u *MasterlessonUpdateOne) AddCharacterRankExp(v int) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) AddCharacterRankExp(v int64) *MasterlessonUpdateOne {
 	_u.mutation.AddCharacterRankExp(v)
 	return _u
 }
@@ -660,49 +660,49 @@ func (_u *MasterlessonUpdateOne) sqlSave(ctx context.Context) (_node *Masterless
 		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
-		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMasterRank(); ok {
-		_spec.AddField(masterlesson.FieldMasterRank, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldMasterRank, field.TypeInt64, value)
 	}
 	if _u.mutation.MasterRankCleared() {
-		_spec.ClearField(masterlesson.FieldMasterRank, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldMasterRank, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower1BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power1BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower1BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower1BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower2BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power2BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower2BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower2BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedPower3BonusFixed(); ok {
-		_spec.AddField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
 	}
 	if _u.mutation.Power3BonusFixedCleared() {
-		_spec.ClearField(masterlesson.FieldPower3BonusFixed, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterRankExp(); ok {
-		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRankExp(); ok {
-		_spec.AddField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
+		_spec.AddField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
 	}
 	if _u.mutation.CharacterRankExpCleared() {
-		_spec.ClearField(masterlesson.FieldCharacterRankExp, field.TypeInt)
+		_spec.ClearField(masterlesson.FieldCharacterRankExp, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costs(); ok {
 		_spec.SetField(masterlesson.FieldCosts, field.TypeJSON, value)

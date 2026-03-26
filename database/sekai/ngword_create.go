@@ -20,7 +20,7 @@ type NgwordCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *NgwordCreate) SetGameID(v int) *NgwordCreate {
+func (_c *NgwordCreate) SetGameID(v int64) *NgwordCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -112,7 +112,7 @@ func (_c *NgwordCreate) createSpec() (*Ngword, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(ngword.Table, sqlgraph.NewFieldSpec(ngword.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Word(); ok {

@@ -17,9 +17,9 @@ type Eventstoryunit struct {
 
 func (Eventstoryunit) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
-		field.Int("event_story_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
+		field.Int64("event_story_id").Optional(),
 		field.JSON("unit", json.RawMessage{}).Optional(),
 		field.JSON("event_story_unit_relation", json.RawMessage{}).Optional(),
 		field.String("server_region"),

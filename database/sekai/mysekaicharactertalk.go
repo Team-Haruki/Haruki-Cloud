@@ -18,17 +18,17 @@ type Mysekaicharactertalk struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiGameCharacterUnitGroupID holds the value of the "mysekai_game_character_unit_group_id" field.
-	MysekaiGameCharacterUnitGroupID int `json:"mysekai_game_character_unit_group_id,omitempty"`
+	MysekaiGameCharacterUnitGroupID int64 `json:"mysekai_game_character_unit_group_id,omitempty"`
 	// MysekaiCharacterTalkConditionGroupID holds the value of the "mysekai_character_talk_condition_group_id" field.
-	MysekaiCharacterTalkConditionGroupID int `json:"mysekai_character_talk_condition_group_id,omitempty"`
+	MysekaiCharacterTalkConditionGroupID int64 `json:"mysekai_character_talk_condition_group_id,omitempty"`
 	// MysekaiSiteGroupID holds the value of the "mysekai_site_group_id" field.
-	MysekaiSiteGroupID int `json:"mysekai_site_group_id,omitempty"`
+	MysekaiSiteGroupID int64 `json:"mysekai_site_group_id,omitempty"`
 	// MysekaiCharacterTalkTermID holds the value of the "mysekai_character_talk_term_id" field.
-	MysekaiCharacterTalkTermID int `json:"mysekai_character_talk_term_id,omitempty"`
+	MysekaiCharacterTalkTermID int64 `json:"mysekai_character_talk_term_id,omitempty"`
 	// CharacterArchiveMysekaiCharacterTalkGroupID holds the value of the "character_archive_mysekai_character_talk_group_id" field.
-	CharacterArchiveMysekaiCharacterTalkGroupID int `json:"character_archive_mysekai_character_talk_group_id,omitempty"`
+	CharacterArchiveMysekaiCharacterTalkGroupID int64 `json:"character_archive_mysekai_character_talk_group_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
 	// Lua holds the value of the "lua" field.
@@ -78,37 +78,37 @@ func (_m *Mysekaicharactertalk) assignValues(columns []string, values []any) err
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_game_character_unit_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGameCharacterUnitGroupID = int(value.Int64)
+				_m.MysekaiGameCharacterUnitGroupID = value.Int64
 			}
 		case mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkConditionGroupID = int(value.Int64)
+				_m.MysekaiCharacterTalkConditionGroupID = value.Int64
 			}
 		case mysekaicharactertalk.FieldMysekaiSiteGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_site_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiSiteGroupID = int(value.Int64)
+				_m.MysekaiSiteGroupID = value.Int64
 			}
 		case mysekaicharactertalk.FieldMysekaiCharacterTalkTermID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_term_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkTermID = int(value.Int64)
+				_m.MysekaiCharacterTalkTermID = value.Int64
 			}
 		case mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_archive_mysekai_character_talk_group_id", values[i])
 			} else if value.Valid {
-				_m.CharacterArchiveMysekaiCharacterTalkGroupID = int(value.Int64)
+				_m.CharacterArchiveMysekaiCharacterTalkGroupID = value.Int64
 			}
 		case mysekaicharactertalk.FieldAssetbundleName:
 			if value, ok := values[i].(*[]byte); !ok {

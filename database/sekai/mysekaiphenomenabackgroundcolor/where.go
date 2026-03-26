@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Mysekaiphenomenabackgroundcolor {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameID(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -89,42 +89,42 @@ func ServerRegion(v string) predicate.Mysekaiphenomenabackgroundcolor {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDEQ(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDNEQ(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDIn(vs ...int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDNotIn(vs ...int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDGT(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDGTE(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDLT(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Mysekaiphenomenabackgroundcolor {
+func GameIDLTE(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldLTE(FieldGameID, v))
 }
 

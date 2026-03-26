@@ -262,7 +262,7 @@ func (_q *MysekaigamecharacterunitgroupQuery) Clone() *Mysekaigamecharacterunitg
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *MysekaigamecharacterunitgroupQuery) GroupBy(field string, fields ...st
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaigamecharacterunitgroup.Query().

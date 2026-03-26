@@ -18,11 +18,11 @@ type Characterrank struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int `json:"character_id,omitempty"`
+	CharacterID int64 `json:"character_id,omitempty"`
 	// CharacterRank holds the value of the "character_rank" field.
-	CharacterRank int `json:"character_rank,omitempty"`
+	CharacterRank int64 `json:"character_rank,omitempty"`
 	// Power1BonusRate holds the value of the "power1_bonus_rate" field.
 	Power1BonusRate float64 `json:"power1_bonus_rate,omitempty"`
 	// Power2BonusRate holds the value of the "power2_bonus_rate" field.
@@ -76,19 +76,19 @@ func (_m *Characterrank) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case characterrank.FieldCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = int(value.Int64)
+				_m.CharacterID = value.Int64
 			}
 		case characterrank.FieldCharacterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_rank", values[i])
 			} else if value.Valid {
-				_m.CharacterRank = int(value.Int64)
+				_m.CharacterRank = value.Int64
 			}
 		case characterrank.FieldPower1BonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {

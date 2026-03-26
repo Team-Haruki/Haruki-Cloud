@@ -15,11 +15,11 @@ type Charactermissionv2Parametergroup struct {
 
 func (Charactermissionv2Parametergroup) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("seq").Optional(),
-		field.Int("requirement").Optional(),
-		field.Int("exp").Optional(),
-		field.Int("quantity").Optional(),
+		field.Int64("game_id"),
+		field.Int64("seq").Optional(),
+		field.Int64("requirement").Optional(),
+		field.Int64("exp").Optional(),
+		field.Int64("quantity").Optional(),
 		field.String("server_region"),
 	}
 }

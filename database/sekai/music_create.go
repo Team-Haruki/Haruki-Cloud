@@ -21,19 +21,19 @@ type MusicCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MusicCreate) SetGameID(v int) *MusicCreate {
+func (_c *MusicCreate) SetGameID(v int64) *MusicCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MusicCreate) SetSeq(v int) *MusicCreate {
+func (_c *MusicCreate) SetSeq(v int64) *MusicCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableSeq(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableSeq(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *MusicCreate) SetNillableSeq(v *int) *MusicCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *MusicCreate) SetReleaseConditionID(v int) *MusicCreate {
+func (_c *MusicCreate) SetReleaseConditionID(v int64) *MusicCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableReleaseConditionID(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableReleaseConditionID(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -89,13 +89,13 @@ func (_c *MusicCreate) SetNillablePronunciation(v *string) *MusicCreate {
 }
 
 // SetCreatorArtistID sets the "creator_artist_id" field.
-func (_c *MusicCreate) SetCreatorArtistID(v int) *MusicCreate {
+func (_c *MusicCreate) SetCreatorArtistID(v int64) *MusicCreate {
 	_c.mutation.SetCreatorArtistID(v)
 	return _c
 }
 
 // SetNillableCreatorArtistID sets the "creator_artist_id" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableCreatorArtistID(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableCreatorArtistID(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetCreatorArtistID(*v)
 	}
@@ -145,13 +145,13 @@ func (_c *MusicCreate) SetNillableArranger(v *string) *MusicCreate {
 }
 
 // SetDancerCount sets the "dancer_count" field.
-func (_c *MusicCreate) SetDancerCount(v int) *MusicCreate {
+func (_c *MusicCreate) SetDancerCount(v int64) *MusicCreate {
 	_c.mutation.SetDancerCount(v)
 	return _c
 }
 
 // SetNillableDancerCount sets the "dancer_count" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableDancerCount(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableDancerCount(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetDancerCount(*v)
 	}
@@ -159,13 +159,13 @@ func (_c *MusicCreate) SetNillableDancerCount(v *int) *MusicCreate {
 }
 
 // SetSelfDancerPosition sets the "self_dancer_position" field.
-func (_c *MusicCreate) SetSelfDancerPosition(v int) *MusicCreate {
+func (_c *MusicCreate) SetSelfDancerPosition(v int64) *MusicCreate {
 	_c.mutation.SetSelfDancerPosition(v)
 	return _c
 }
 
 // SetNillableSelfDancerPosition sets the "self_dancer_position" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableSelfDancerPosition(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableSelfDancerPosition(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetSelfDancerPosition(*v)
 	}
@@ -193,13 +193,13 @@ func (_c *MusicCreate) SetLiveTalkBackgroundAssetbundleName(v json.RawMessage) *
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (_c *MusicCreate) SetPublishedAt(v int) *MusicCreate {
+func (_c *MusicCreate) SetPublishedAt(v int64) *MusicCreate {
 	_c.mutation.SetPublishedAt(v)
 	return _c
 }
 
 // SetNillablePublishedAt sets the "published_at" field if the given value is not nil.
-func (_c *MusicCreate) SetNillablePublishedAt(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillablePublishedAt(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetPublishedAt(*v)
 	}
@@ -207,13 +207,13 @@ func (_c *MusicCreate) SetNillablePublishedAt(v *int) *MusicCreate {
 }
 
 // SetReleasedAt sets the "released_at" field.
-func (_c *MusicCreate) SetReleasedAt(v int) *MusicCreate {
+func (_c *MusicCreate) SetReleasedAt(v int64) *MusicCreate {
 	_c.mutation.SetReleasedAt(v)
 	return _c
 }
 
 // SetNillableReleasedAt sets the "released_at" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableReleasedAt(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableReleasedAt(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetReleasedAt(*v)
 	}
@@ -221,13 +221,13 @@ func (_c *MusicCreate) SetNillableReleasedAt(v *int) *MusicCreate {
 }
 
 // SetLiveStageID sets the "live_stage_id" field.
-func (_c *MusicCreate) SetLiveStageID(v int) *MusicCreate {
+func (_c *MusicCreate) SetLiveStageID(v int64) *MusicCreate {
 	_c.mutation.SetLiveStageID(v)
 	return _c
 }
 
 // SetNillableLiveStageID sets the "live_stage_id" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableLiveStageID(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableLiveStageID(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetLiveStageID(*v)
 	}
@@ -277,13 +277,13 @@ func (_c *MusicCreate) SetNillableIsFullLength(v *bool) *MusicCreate {
 }
 
 // SetMusicCollaborationID sets the "music_collaboration_id" field.
-func (_c *MusicCreate) SetMusicCollaborationID(v int) *MusicCreate {
+func (_c *MusicCreate) SetMusicCollaborationID(v int64) *MusicCreate {
 	_c.mutation.SetMusicCollaborationID(v)
 	return _c
 }
 
 // SetNillableMusicCollaborationID sets the "music_collaboration_id" field if the given value is not nil.
-func (_c *MusicCreate) SetNillableMusicCollaborationID(v *int) *MusicCreate {
+func (_c *MusicCreate) SetNillableMusicCollaborationID(v *int64) *MusicCreate {
 	if v != nil {
 		_c.SetMusicCollaborationID(*v)
 	}
@@ -369,15 +369,15 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(music.Table, sqlgraph.NewFieldSpec(music.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(music.FieldGameID, field.TypeInt, value)
+		_spec.SetField(music.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(music.FieldSeq, field.TypeInt, value)
+		_spec.SetField(music.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(music.FieldReleaseConditionID, field.TypeInt, value)
+		_spec.SetField(music.FieldReleaseConditionID, field.TypeInt64, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.Categories(); ok {
@@ -393,7 +393,7 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_node.Pronunciation = value
 	}
 	if value, ok := _c.mutation.CreatorArtistID(); ok {
-		_spec.SetField(music.FieldCreatorArtistID, field.TypeInt, value)
+		_spec.SetField(music.FieldCreatorArtistID, field.TypeInt64, value)
 		_node.CreatorArtistID = value
 	}
 	if value, ok := _c.mutation.Lyricist(); ok {
@@ -409,11 +409,11 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_node.Arranger = value
 	}
 	if value, ok := _c.mutation.DancerCount(); ok {
-		_spec.SetField(music.FieldDancerCount, field.TypeInt, value)
+		_spec.SetField(music.FieldDancerCount, field.TypeInt64, value)
 		_node.DancerCount = value
 	}
 	if value, ok := _c.mutation.SelfDancerPosition(); ok {
-		_spec.SetField(music.FieldSelfDancerPosition, field.TypeInt, value)
+		_spec.SetField(music.FieldSelfDancerPosition, field.TypeInt64, value)
 		_node.SelfDancerPosition = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -425,15 +425,15 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_node.LiveTalkBackgroundAssetbundleName = value
 	}
 	if value, ok := _c.mutation.PublishedAt(); ok {
-		_spec.SetField(music.FieldPublishedAt, field.TypeInt, value)
+		_spec.SetField(music.FieldPublishedAt, field.TypeInt64, value)
 		_node.PublishedAt = value
 	}
 	if value, ok := _c.mutation.ReleasedAt(); ok {
-		_spec.SetField(music.FieldReleasedAt, field.TypeInt, value)
+		_spec.SetField(music.FieldReleasedAt, field.TypeInt64, value)
 		_node.ReleasedAt = value
 	}
 	if value, ok := _c.mutation.LiveStageID(); ok {
-		_spec.SetField(music.FieldLiveStageID, field.TypeInt, value)
+		_spec.SetField(music.FieldLiveStageID, field.TypeInt64, value)
 		_node.LiveStageID = value
 	}
 	if value, ok := _c.mutation.FillerSec(); ok {
@@ -449,7 +449,7 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_node.IsFullLength = value
 	}
 	if value, ok := _c.mutation.MusicCollaborationID(); ok {
-		_spec.SetField(music.FieldMusicCollaborationID, field.TypeInt, value)
+		_spec.SetField(music.FieldMusicCollaborationID, field.TypeInt64, value)
 		_node.MusicCollaborationID = value
 	}
 	if value, ok := _c.mutation.Infos(); ok {

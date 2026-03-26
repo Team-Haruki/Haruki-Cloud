@@ -28,14 +28,14 @@ func (_u *Cardcostume3DUpdate) Where(ps ...predicate.Cardcostume3D) *Cardcostume
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *Cardcostume3DUpdate) SetCardID(v int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) SetCardID(v int64) *Cardcostume3DUpdate {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *Cardcostume3DUpdate) SetNillableCardID(v *int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) SetNillableCardID(v *int64) *Cardcostume3DUpdate {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *Cardcostume3DUpdate) SetNillableCardID(v *int) *Cardcostume3DUpdate {
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *Cardcostume3DUpdate) AddCardID(v int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) AddCardID(v int64) *Cardcostume3DUpdate {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -55,14 +55,14 @@ func (_u *Cardcostume3DUpdate) ClearCardID() *Cardcostume3DUpdate {
 }
 
 // SetCostume3DID sets the "costume3_d_id" field.
-func (_u *Cardcostume3DUpdate) SetCostume3DID(v int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) SetCostume3DID(v int64) *Cardcostume3DUpdate {
 	_u.mutation.ResetCostume3DID()
 	_u.mutation.SetCostume3DID(v)
 	return _u
 }
 
 // SetNillableCostume3DID sets the "costume3_d_id" field if the given value is not nil.
-func (_u *Cardcostume3DUpdate) SetNillableCostume3DID(v *int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) SetNillableCostume3DID(v *int64) *Cardcostume3DUpdate {
 	if v != nil {
 		_u.SetCostume3DID(*v)
 	}
@@ -70,7 +70,7 @@ func (_u *Cardcostume3DUpdate) SetNillableCostume3DID(v *int) *Cardcostume3DUpda
 }
 
 // AddCostume3DID adds value to the "costume3_d_id" field.
-func (_u *Cardcostume3DUpdate) AddCostume3DID(v int) *Cardcostume3DUpdate {
+func (_u *Cardcostume3DUpdate) AddCostume3DID(v int64) *Cardcostume3DUpdate {
 	_u.mutation.AddCostume3DID(v)
 	return _u
 }
@@ -157,22 +157,22 @@ func (_u *Cardcostume3DUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(cardcostume3d.FieldCardID, field.TypeInt, value)
+		_spec.AddField(cardcostume3d.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(cardcostume3d.FieldCardID, field.TypeInt)
+		_spec.ClearField(cardcostume3d.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costume3DID(); ok {
-		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCostume3DID(); ok {
-		_spec.AddField(cardcostume3d.FieldCostume3DID, field.TypeInt, value)
+		_spec.AddField(cardcostume3d.FieldCostume3DID, field.TypeInt64, value)
 	}
 	if _u.mutation.Costume3DIDCleared() {
-		_spec.ClearField(cardcostume3d.FieldCostume3DID, field.TypeInt)
+		_spec.ClearField(cardcostume3d.FieldCostume3DID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsInitialObtainHair(); ok {
 		_spec.SetField(cardcostume3d.FieldIsInitialObtainHair, field.TypeBool, value)
@@ -204,14 +204,14 @@ type Cardcostume3DUpdateOne struct {
 }
 
 // SetCardID sets the "card_id" field.
-func (_u *Cardcostume3DUpdateOne) SetCardID(v int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) SetCardID(v int64) *Cardcostume3DUpdateOne {
 	_u.mutation.ResetCardID()
 	_u.mutation.SetCardID(v)
 	return _u
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_u *Cardcostume3DUpdateOne) SetNillableCardID(v *int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) SetNillableCardID(v *int64) *Cardcostume3DUpdateOne {
 	if v != nil {
 		_u.SetCardID(*v)
 	}
@@ -219,7 +219,7 @@ func (_u *Cardcostume3DUpdateOne) SetNillableCardID(v *int) *Cardcostume3DUpdate
 }
 
 // AddCardID adds value to the "card_id" field.
-func (_u *Cardcostume3DUpdateOne) AddCardID(v int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) AddCardID(v int64) *Cardcostume3DUpdateOne {
 	_u.mutation.AddCardID(v)
 	return _u
 }
@@ -231,14 +231,14 @@ func (_u *Cardcostume3DUpdateOne) ClearCardID() *Cardcostume3DUpdateOne {
 }
 
 // SetCostume3DID sets the "costume3_d_id" field.
-func (_u *Cardcostume3DUpdateOne) SetCostume3DID(v int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) SetCostume3DID(v int64) *Cardcostume3DUpdateOne {
 	_u.mutation.ResetCostume3DID()
 	_u.mutation.SetCostume3DID(v)
 	return _u
 }
 
 // SetNillableCostume3DID sets the "costume3_d_id" field if the given value is not nil.
-func (_u *Cardcostume3DUpdateOne) SetNillableCostume3DID(v *int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) SetNillableCostume3DID(v *int64) *Cardcostume3DUpdateOne {
 	if v != nil {
 		_u.SetCostume3DID(*v)
 	}
@@ -246,7 +246,7 @@ func (_u *Cardcostume3DUpdateOne) SetNillableCostume3DID(v *int) *Cardcostume3DU
 }
 
 // AddCostume3DID adds value to the "costume3_d_id" field.
-func (_u *Cardcostume3DUpdateOne) AddCostume3DID(v int) *Cardcostume3DUpdateOne {
+func (_u *Cardcostume3DUpdateOne) AddCostume3DID(v int64) *Cardcostume3DUpdateOne {
 	_u.mutation.AddCostume3DID(v)
 	return _u
 }
@@ -363,22 +363,22 @@ func (_u *Cardcostume3DUpdateOne) sqlSave(ctx context.Context) (_node *Cardcostu
 		}
 	}
 	if value, ok := _u.mutation.CardID(); ok {
-		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCardID(); ok {
-		_spec.AddField(cardcostume3d.FieldCardID, field.TypeInt, value)
+		_spec.AddField(cardcostume3d.FieldCardID, field.TypeInt64, value)
 	}
 	if _u.mutation.CardIDCleared() {
-		_spec.ClearField(cardcostume3d.FieldCardID, field.TypeInt)
+		_spec.ClearField(cardcostume3d.FieldCardID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Costume3DID(); ok {
-		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCostume3DID(); ok {
-		_spec.AddField(cardcostume3d.FieldCostume3DID, field.TypeInt, value)
+		_spec.AddField(cardcostume3d.FieldCostume3DID, field.TypeInt64, value)
 	}
 	if _u.mutation.Costume3DIDCleared() {
-		_spec.ClearField(cardcostume3d.FieldCostume3DID, field.TypeInt)
+		_spec.ClearField(cardcostume3d.FieldCostume3DID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsInitialObtainHair(); ok {
 		_spec.SetField(cardcostume3d.FieldIsInitialObtainHair, field.TypeBool, value)

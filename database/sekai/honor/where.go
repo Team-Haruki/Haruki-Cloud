@@ -54,17 +54,17 @@ func IDLTE(id int) predicate.Honor {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Honor {
+func GameID(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Honor {
+func Seq(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldSeq, v))
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int) predicate.Honor {
+func GroupID(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldGroupID, v))
 }
 
@@ -79,7 +79,7 @@ func AssetbundleName(v string) predicate.Honor {
 }
 
 // HonorTypeID applies equality check predicate on the "honor_type_id" field. It's identical to HonorTypeIDEQ.
-func HonorTypeID(v int) predicate.Honor {
+func HonorTypeID(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldHonorTypeID, v))
 }
 
@@ -89,7 +89,7 @@ func HonorMissionType(v string) predicate.Honor {
 }
 
 // StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int) predicate.Honor {
+func StartAt(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldStartAt, v))
 }
 
@@ -99,82 +99,82 @@ func ServerRegion(v string) predicate.Honor {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Honor {
+func GameIDEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Honor {
+func GameIDNEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Honor {
+func GameIDIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Honor {
+func GameIDNotIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Honor {
+func GameIDGT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Honor {
+func GameIDGTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Honor {
+func GameIDLT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Honor {
+func GameIDLTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLTE(FieldGameID, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Honor {
+func SeqEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Honor {
+func SeqNEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Honor {
+func SeqIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Honor {
+func SeqNotIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Honor {
+func SeqGT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Honor {
+func SeqGTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Honor {
+func SeqLT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Honor {
+func SeqLTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -189,42 +189,42 @@ func SeqNotNil() predicate.Honor {
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int) predicate.Honor {
+func GroupIDEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int) predicate.Honor {
+func GroupIDNEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int) predicate.Honor {
+func GroupIDIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int) predicate.Honor {
+func GroupIDNotIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int) predicate.Honor {
+func GroupIDGT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int) predicate.Honor {
+func GroupIDGTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int) predicate.Honor {
+func GroupIDLT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int) predicate.Honor {
+func GroupIDLTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLTE(FieldGroupID, v))
 }
 
@@ -409,42 +409,42 @@ func LevelsNotNil() predicate.Honor {
 }
 
 // HonorTypeIDEQ applies the EQ predicate on the "honor_type_id" field.
-func HonorTypeIDEQ(v int) predicate.Honor {
+func HonorTypeIDEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldHonorTypeID, v))
 }
 
 // HonorTypeIDNEQ applies the NEQ predicate on the "honor_type_id" field.
-func HonorTypeIDNEQ(v int) predicate.Honor {
+func HonorTypeIDNEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNEQ(FieldHonorTypeID, v))
 }
 
 // HonorTypeIDIn applies the In predicate on the "honor_type_id" field.
-func HonorTypeIDIn(vs ...int) predicate.Honor {
+func HonorTypeIDIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldIn(FieldHonorTypeID, vs...))
 }
 
 // HonorTypeIDNotIn applies the NotIn predicate on the "honor_type_id" field.
-func HonorTypeIDNotIn(vs ...int) predicate.Honor {
+func HonorTypeIDNotIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNotIn(FieldHonorTypeID, vs...))
 }
 
 // HonorTypeIDGT applies the GT predicate on the "honor_type_id" field.
-func HonorTypeIDGT(v int) predicate.Honor {
+func HonorTypeIDGT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGT(FieldHonorTypeID, v))
 }
 
 // HonorTypeIDGTE applies the GTE predicate on the "honor_type_id" field.
-func HonorTypeIDGTE(v int) predicate.Honor {
+func HonorTypeIDGTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGTE(FieldHonorTypeID, v))
 }
 
 // HonorTypeIDLT applies the LT predicate on the "honor_type_id" field.
-func HonorTypeIDLT(v int) predicate.Honor {
+func HonorTypeIDLT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLT(FieldHonorTypeID, v))
 }
 
 // HonorTypeIDLTE applies the LTE predicate on the "honor_type_id" field.
-func HonorTypeIDLTE(v int) predicate.Honor {
+func HonorTypeIDLTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLTE(FieldHonorTypeID, v))
 }
 
@@ -534,42 +534,42 @@ func HonorMissionTypeContainsFold(v string) predicate.Honor {
 }
 
 // StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int) predicate.Honor {
+func StartAtEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldStartAt, v))
 }
 
 // StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int) predicate.Honor {
+func StartAtNEQ(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNEQ(FieldStartAt, v))
 }
 
 // StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int) predicate.Honor {
+func StartAtIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldIn(FieldStartAt, vs...))
 }
 
 // StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int) predicate.Honor {
+func StartAtNotIn(vs ...int64) predicate.Honor {
 	return predicate.Honor(sql.FieldNotIn(FieldStartAt, vs...))
 }
 
 // StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int) predicate.Honor {
+func StartAtGT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGT(FieldStartAt, v))
 }
 
 // StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int) predicate.Honor {
+func StartAtGTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldGTE(FieldStartAt, v))
 }
 
 // StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int) predicate.Honor {
+func StartAtLT(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLT(FieldStartAt, v))
 }
 
 // StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int) predicate.Honor {
+func StartAtLTE(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldLTE(FieldStartAt, v))
 }
 

@@ -30,14 +30,14 @@ func (_u *AreaitemlevelUpdate) Where(ps ...predicate.Areaitemlevel) *Areaitemlev
 }
 
 // SetAreaItemID sets the "area_item_id" field.
-func (_u *AreaitemlevelUpdate) SetAreaItemID(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetAreaItemID(v int64) *AreaitemlevelUpdate {
 	_u.mutation.ResetAreaItemID()
 	_u.mutation.SetAreaItemID(v)
 	return _u
 }
 
 // SetNillableAreaItemID sets the "area_item_id" field if the given value is not nil.
-func (_u *AreaitemlevelUpdate) SetNillableAreaItemID(v *int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetNillableAreaItemID(v *int64) *AreaitemlevelUpdate {
 	if v != nil {
 		_u.SetAreaItemID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *AreaitemlevelUpdate) SetNillableAreaItemID(v *int) *AreaitemlevelUpdat
 }
 
 // AddAreaItemID adds value to the "area_item_id" field.
-func (_u *AreaitemlevelUpdate) AddAreaItemID(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) AddAreaItemID(v int64) *AreaitemlevelUpdate {
 	_u.mutation.AddAreaItemID(v)
 	return _u
 }
@@ -57,14 +57,14 @@ func (_u *AreaitemlevelUpdate) ClearAreaItemID() *AreaitemlevelUpdate {
 }
 
 // SetLevel sets the "level" field.
-func (_u *AreaitemlevelUpdate) SetLevel(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetLevel(v int64) *AreaitemlevelUpdate {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *AreaitemlevelUpdate) SetNillableLevel(v *int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetNillableLevel(v *int64) *AreaitemlevelUpdate {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -72,7 +72,7 @@ func (_u *AreaitemlevelUpdate) SetNillableLevel(v *int) *AreaitemlevelUpdate {
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *AreaitemlevelUpdate) AddLevel(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) AddLevel(v int64) *AreaitemlevelUpdate {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -120,14 +120,14 @@ func (_u *AreaitemlevelUpdate) ClearTargetCardAttr() *AreaitemlevelUpdate {
 }
 
 // SetTargetGameCharacterID sets the "target_game_character_id" field.
-func (_u *AreaitemlevelUpdate) SetTargetGameCharacterID(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetTargetGameCharacterID(v int64) *AreaitemlevelUpdate {
 	_u.mutation.ResetTargetGameCharacterID()
 	_u.mutation.SetTargetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableTargetGameCharacterID sets the "target_game_character_id" field if the given value is not nil.
-func (_u *AreaitemlevelUpdate) SetNillableTargetGameCharacterID(v *int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetNillableTargetGameCharacterID(v *int64) *AreaitemlevelUpdate {
 	if v != nil {
 		_u.SetTargetGameCharacterID(*v)
 	}
@@ -135,7 +135,7 @@ func (_u *AreaitemlevelUpdate) SetNillableTargetGameCharacterID(v *int) *Areaite
 }
 
 // AddTargetGameCharacterID adds value to the "target_game_character_id" field.
-func (_u *AreaitemlevelUpdate) AddTargetGameCharacterID(v int) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) AddTargetGameCharacterID(v int64) *AreaitemlevelUpdate {
 	_u.mutation.AddTargetGameCharacterID(v)
 	return _u
 }
@@ -384,22 +384,22 @@ func (_u *AreaitemlevelUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 	}
 	if value, ok := _u.mutation.AreaItemID(); ok {
-		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedAreaItemID(); ok {
-		_spec.AddField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
 	}
 	if _u.mutation.AreaItemIDCleared() {
-		_spec.ClearField(areaitemlevel.FieldAreaItemID, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldAreaItemID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(areaitemlevel.FieldLevel, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldLevel, field.TypeInt64, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TargetUnit(); ok {
 		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
@@ -424,13 +424,13 @@ func (_u *AreaitemlevelUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.TargetGameCharacterID(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedTargetGameCharacterID(); ok {
-		_spec.AddField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.TargetGameCharacterIDCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(areaitemlevel.FieldPower1BonusRate, field.TypeFloat64, value)
@@ -516,14 +516,14 @@ type AreaitemlevelUpdateOne struct {
 }
 
 // SetAreaItemID sets the "area_item_id" field.
-func (_u *AreaitemlevelUpdateOne) SetAreaItemID(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetAreaItemID(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.ResetAreaItemID()
 	_u.mutation.SetAreaItemID(v)
 	return _u
 }
 
 // SetNillableAreaItemID sets the "area_item_id" field if the given value is not nil.
-func (_u *AreaitemlevelUpdateOne) SetNillableAreaItemID(v *int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetNillableAreaItemID(v *int64) *AreaitemlevelUpdateOne {
 	if v != nil {
 		_u.SetAreaItemID(*v)
 	}
@@ -531,7 +531,7 @@ func (_u *AreaitemlevelUpdateOne) SetNillableAreaItemID(v *int) *AreaitemlevelUp
 }
 
 // AddAreaItemID adds value to the "area_item_id" field.
-func (_u *AreaitemlevelUpdateOne) AddAreaItemID(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) AddAreaItemID(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.AddAreaItemID(v)
 	return _u
 }
@@ -543,14 +543,14 @@ func (_u *AreaitemlevelUpdateOne) ClearAreaItemID() *AreaitemlevelUpdateOne {
 }
 
 // SetLevel sets the "level" field.
-func (_u *AreaitemlevelUpdateOne) SetLevel(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetLevel(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *AreaitemlevelUpdateOne) SetNillableLevel(v *int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetNillableLevel(v *int64) *AreaitemlevelUpdateOne {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -558,7 +558,7 @@ func (_u *AreaitemlevelUpdateOne) SetNillableLevel(v *int) *AreaitemlevelUpdateO
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *AreaitemlevelUpdateOne) AddLevel(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) AddLevel(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -606,14 +606,14 @@ func (_u *AreaitemlevelUpdateOne) ClearTargetCardAttr() *AreaitemlevelUpdateOne 
 }
 
 // SetTargetGameCharacterID sets the "target_game_character_id" field.
-func (_u *AreaitemlevelUpdateOne) SetTargetGameCharacterID(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetTargetGameCharacterID(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.ResetTargetGameCharacterID()
 	_u.mutation.SetTargetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableTargetGameCharacterID sets the "target_game_character_id" field if the given value is not nil.
-func (_u *AreaitemlevelUpdateOne) SetNillableTargetGameCharacterID(v *int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetNillableTargetGameCharacterID(v *int64) *AreaitemlevelUpdateOne {
 	if v != nil {
 		_u.SetTargetGameCharacterID(*v)
 	}
@@ -621,7 +621,7 @@ func (_u *AreaitemlevelUpdateOne) SetNillableTargetGameCharacterID(v *int) *Area
 }
 
 // AddTargetGameCharacterID adds value to the "target_game_character_id" field.
-func (_u *AreaitemlevelUpdateOne) AddTargetGameCharacterID(v int) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) AddTargetGameCharacterID(v int64) *AreaitemlevelUpdateOne {
 	_u.mutation.AddTargetGameCharacterID(v)
 	return _u
 }
@@ -900,22 +900,22 @@ func (_u *AreaitemlevelUpdateOne) sqlSave(ctx context.Context) (_node *Areaiteml
 		}
 	}
 	if value, ok := _u.mutation.AreaItemID(); ok {
-		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedAreaItemID(); ok {
-		_spec.AddField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
 	}
 	if _u.mutation.AreaItemIDCleared() {
-		_spec.ClearField(areaitemlevel.FieldAreaItemID, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldAreaItemID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(areaitemlevel.FieldLevel, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldLevel, field.TypeInt64, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TargetUnit(); ok {
 		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
@@ -940,13 +940,13 @@ func (_u *AreaitemlevelUpdateOne) sqlSave(ctx context.Context) (_node *Areaiteml
 		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.TargetGameCharacterID(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
+		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedTargetGameCharacterID(); ok {
-		_spec.AddField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
+		_spec.AddField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.TargetGameCharacterIDCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt)
+		_spec.ClearField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(areaitemlevel.FieldPower1BonusRate, field.TypeFloat64, value)

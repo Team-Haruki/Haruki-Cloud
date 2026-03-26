@@ -18,11 +18,11 @@ type Mysekaicharactertalkcondition struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiCharacterTalkConditionType holds the value of the "mysekai_character_talk_condition_type" field.
 	MysekaiCharacterTalkConditionType json.RawMessage `json:"mysekai_character_talk_condition_type,omitempty"`
 	// MysekaiCharacterTalkConditionTypeValue holds the value of the "mysekai_character_talk_condition_type_value" field.
-	MysekaiCharacterTalkConditionTypeValue int `json:"mysekai_character_talk_condition_type_value,omitempty"`
+	MysekaiCharacterTalkConditionTypeValue int64 `json:"mysekai_character_talk_condition_type_value,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -64,7 +64,7 @@ func (_m *Mysekaicharactertalkcondition) assignValues(columns []string, values [
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -78,7 +78,7 @@ func (_m *Mysekaicharactertalkcondition) assignValues(columns []string, values [
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_type_value", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkConditionTypeValue = int(value.Int64)
+				_m.MysekaiCharacterTalkConditionTypeValue = value.Int64
 			}
 		case mysekaicharactertalkcondition.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

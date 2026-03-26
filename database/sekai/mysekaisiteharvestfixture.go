@@ -18,13 +18,13 @@ type Mysekaisiteharvestfixture struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiSiteHarvestFixtureType holds the value of the "mysekai_site_harvest_fixture_type" field.
 	MysekaiSiteHarvestFixtureType string `json:"mysekai_site_harvest_fixture_type,omitempty"`
 	// Hp holds the value of the "hp" field.
-	Hp int `json:"hp,omitempty"`
+	Hp int64 `json:"hp,omitempty"`
 	// LastAttackStamina holds the value of the "last_attack_stamina" field.
-	LastAttackStamina int `json:"last_attack_stamina,omitempty"`
+	LastAttackStamina int64 `json:"last_attack_stamina,omitempty"`
 	// MysekaiSiteHarvestFixtureRarityType holds the value of the "mysekai_site_harvest_fixture_rarity_type" field.
 	MysekaiSiteHarvestFixtureRarityType json.RawMessage `json:"mysekai_site_harvest_fixture_rarity_type,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -70,7 +70,7 @@ func (_m *Mysekaisiteharvestfixture) assignValues(columns []string, values []any
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -82,13 +82,13 @@ func (_m *Mysekaisiteharvestfixture) assignValues(columns []string, values []any
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field hp", values[i])
 			} else if value.Valid {
-				_m.Hp = int(value.Int64)
+				_m.Hp = value.Int64
 			}
 		case mysekaisiteharvestfixture.FieldLastAttackStamina:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field last_attack_stamina", values[i])
 			} else if value.Valid {
-				_m.LastAttackStamina = int(value.Int64)
+				_m.LastAttackStamina = value.Int64
 			}
 		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType:
 			if value, ok := values[i].(*[]byte); !ok {

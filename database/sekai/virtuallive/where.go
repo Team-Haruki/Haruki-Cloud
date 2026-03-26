@@ -54,12 +54,12 @@ func IDLTE(id int) predicate.Virtuallive {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Virtuallive {
+func GameID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Virtuallive {
+func Seq(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -74,37 +74,37 @@ func AssetbundleName(v string) predicate.Virtuallive {
 }
 
 // ScreenMvMusicVocalID applies equality check predicate on the "screen_mv_music_vocal_id" field. It's identical to ScreenMvMusicVocalIDEQ.
-func ScreenMvMusicVocalID(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldScreenMvMusicVocalID, v))
 }
 
 // StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int) predicate.Virtuallive {
+func StartAt(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldStartAt, v))
 }
 
 // EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
-func EndAt(v int) predicate.Virtuallive {
+func EndAt(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldEndAt, v))
 }
 
 // RankingAnnounceAt applies equality check predicate on the "ranking_announce_at" field. It's identical to RankingAnnounceAtEQ.
-func RankingAnnounceAt(v int) predicate.Virtuallive {
+func RankingAnnounceAt(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldRankingAnnounceAt, v))
 }
 
 // ArchiveReleaseConditionID applies equality check predicate on the "archive_release_condition_id" field. It's identical to ArchiveReleaseConditionIDEQ.
-func ArchiveReleaseConditionID(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldArchiveReleaseConditionID, v))
 }
 
 // SubGameCharacterPenlightColorGroupID applies equality check predicate on the "sub_game_character_penlight_color_group_id" field. It's identical to SubGameCharacterPenlightColorGroupIDEQ.
-func SubGameCharacterPenlightColorGroupID(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // VirtualLiveGroupID applies equality check predicate on the "virtual_live_group_id" field. It's identical to VirtualLiveGroupIDEQ.
-func VirtualLiveGroupID(v int) predicate.Virtuallive {
+func VirtualLiveGroupID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLiveGroupID, v))
 }
 
@@ -114,42 +114,42 @@ func ServerRegion(v string) predicate.Virtuallive {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Virtuallive {
+func GameIDEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Virtuallive {
+func GameIDNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Virtuallive {
+func GameIDIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Virtuallive {
+func GameIDNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Virtuallive {
+func GameIDGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Virtuallive {
+func GameIDGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Virtuallive {
+func GameIDLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Virtuallive {
+func GameIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldGameID, v))
 }
 
@@ -174,42 +174,42 @@ func VirtualLivePlatformNotNil() predicate.Virtuallive {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Virtuallive {
+func SeqEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Virtuallive {
+func SeqNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Virtuallive {
+func SeqIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Virtuallive {
+func SeqNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Virtuallive {
+func SeqGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Virtuallive {
+func SeqGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Virtuallive {
+func SeqLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Virtuallive {
+func SeqLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -374,42 +374,42 @@ func AssetbundleNameContainsFold(v string) predicate.Virtuallive {
 }
 
 // ScreenMvMusicVocalIDEQ applies the EQ predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDEQ(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldScreenMvMusicVocalID, v))
 }
 
 // ScreenMvMusicVocalIDNEQ applies the NEQ predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDNEQ(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldScreenMvMusicVocalID, v))
 }
 
 // ScreenMvMusicVocalIDIn applies the In predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDIn(vs ...int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldScreenMvMusicVocalID, vs...))
 }
 
 // ScreenMvMusicVocalIDNotIn applies the NotIn predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDNotIn(vs ...int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldScreenMvMusicVocalID, vs...))
 }
 
 // ScreenMvMusicVocalIDGT applies the GT predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDGT(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldScreenMvMusicVocalID, v))
 }
 
 // ScreenMvMusicVocalIDGTE applies the GTE predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDGTE(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldScreenMvMusicVocalID, v))
 }
 
 // ScreenMvMusicVocalIDLT applies the LT predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDLT(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldScreenMvMusicVocalID, v))
 }
 
 // ScreenMvMusicVocalIDLTE applies the LTE predicate on the "screen_mv_music_vocal_id" field.
-func ScreenMvMusicVocalIDLTE(v int) predicate.Virtuallive {
+func ScreenMvMusicVocalIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldScreenMvMusicVocalID, v))
 }
 
@@ -424,42 +424,42 @@ func ScreenMvMusicVocalIDNotNil() predicate.Virtuallive {
 }
 
 // StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int) predicate.Virtuallive {
+func StartAtEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldStartAt, v))
 }
 
 // StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int) predicate.Virtuallive {
+func StartAtNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldStartAt, v))
 }
 
 // StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int) predicate.Virtuallive {
+func StartAtIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldStartAt, vs...))
 }
 
 // StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int) predicate.Virtuallive {
+func StartAtNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldStartAt, vs...))
 }
 
 // StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int) predicate.Virtuallive {
+func StartAtGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldStartAt, v))
 }
 
 // StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int) predicate.Virtuallive {
+func StartAtGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldStartAt, v))
 }
 
 // StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int) predicate.Virtuallive {
+func StartAtLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldStartAt, v))
 }
 
 // StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int) predicate.Virtuallive {
+func StartAtLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldStartAt, v))
 }
 
@@ -474,42 +474,42 @@ func StartAtNotNil() predicate.Virtuallive {
 }
 
 // EndAtEQ applies the EQ predicate on the "end_at" field.
-func EndAtEQ(v int) predicate.Virtuallive {
+func EndAtEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldEndAt, v))
 }
 
 // EndAtNEQ applies the NEQ predicate on the "end_at" field.
-func EndAtNEQ(v int) predicate.Virtuallive {
+func EndAtNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldEndAt, v))
 }
 
 // EndAtIn applies the In predicate on the "end_at" field.
-func EndAtIn(vs ...int) predicate.Virtuallive {
+func EndAtIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldEndAt, vs...))
 }
 
 // EndAtNotIn applies the NotIn predicate on the "end_at" field.
-func EndAtNotIn(vs ...int) predicate.Virtuallive {
+func EndAtNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldEndAt, vs...))
 }
 
 // EndAtGT applies the GT predicate on the "end_at" field.
-func EndAtGT(v int) predicate.Virtuallive {
+func EndAtGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldEndAt, v))
 }
 
 // EndAtGTE applies the GTE predicate on the "end_at" field.
-func EndAtGTE(v int) predicate.Virtuallive {
+func EndAtGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldEndAt, v))
 }
 
 // EndAtLT applies the LT predicate on the "end_at" field.
-func EndAtLT(v int) predicate.Virtuallive {
+func EndAtLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldEndAt, v))
 }
 
 // EndAtLTE applies the LTE predicate on the "end_at" field.
-func EndAtLTE(v int) predicate.Virtuallive {
+func EndAtLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldEndAt, v))
 }
 
@@ -524,42 +524,42 @@ func EndAtNotNil() predicate.Virtuallive {
 }
 
 // RankingAnnounceAtEQ applies the EQ predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtEQ(v int) predicate.Virtuallive {
+func RankingAnnounceAtEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldRankingAnnounceAt, v))
 }
 
 // RankingAnnounceAtNEQ applies the NEQ predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtNEQ(v int) predicate.Virtuallive {
+func RankingAnnounceAtNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldRankingAnnounceAt, v))
 }
 
 // RankingAnnounceAtIn applies the In predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtIn(vs ...int) predicate.Virtuallive {
+func RankingAnnounceAtIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldRankingAnnounceAt, vs...))
 }
 
 // RankingAnnounceAtNotIn applies the NotIn predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtNotIn(vs ...int) predicate.Virtuallive {
+func RankingAnnounceAtNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldRankingAnnounceAt, vs...))
 }
 
 // RankingAnnounceAtGT applies the GT predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtGT(v int) predicate.Virtuallive {
+func RankingAnnounceAtGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldRankingAnnounceAt, v))
 }
 
 // RankingAnnounceAtGTE applies the GTE predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtGTE(v int) predicate.Virtuallive {
+func RankingAnnounceAtGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldRankingAnnounceAt, v))
 }
 
 // RankingAnnounceAtLT applies the LT predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtLT(v int) predicate.Virtuallive {
+func RankingAnnounceAtLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldRankingAnnounceAt, v))
 }
 
 // RankingAnnounceAtLTE applies the LTE predicate on the "ranking_announce_at" field.
-func RankingAnnounceAtLTE(v int) predicate.Virtuallive {
+func RankingAnnounceAtLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldRankingAnnounceAt, v))
 }
 
@@ -684,42 +684,42 @@ func VirtualLiveInformationNotNil() predicate.Virtuallive {
 }
 
 // ArchiveReleaseConditionIDEQ applies the EQ predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDEQ(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldArchiveReleaseConditionID, v))
 }
 
 // ArchiveReleaseConditionIDNEQ applies the NEQ predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDNEQ(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldArchiveReleaseConditionID, v))
 }
 
 // ArchiveReleaseConditionIDIn applies the In predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDIn(vs ...int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldArchiveReleaseConditionID, vs...))
 }
 
 // ArchiveReleaseConditionIDNotIn applies the NotIn predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDNotIn(vs ...int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldArchiveReleaseConditionID, vs...))
 }
 
 // ArchiveReleaseConditionIDGT applies the GT predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDGT(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldArchiveReleaseConditionID, v))
 }
 
 // ArchiveReleaseConditionIDGTE applies the GTE predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDGTE(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldArchiveReleaseConditionID, v))
 }
 
 // ArchiveReleaseConditionIDLT applies the LT predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDLT(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldArchiveReleaseConditionID, v))
 }
 
 // ArchiveReleaseConditionIDLTE applies the LTE predicate on the "archive_release_condition_id" field.
-func ArchiveReleaseConditionIDLTE(v int) predicate.Virtuallive {
+func ArchiveReleaseConditionIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldArchiveReleaseConditionID, v))
 }
 
@@ -734,42 +734,42 @@ func ArchiveReleaseConditionIDNotNil() predicate.Virtuallive {
 }
 
 // SubGameCharacterPenlightColorGroupIDEQ applies the EQ predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDEQ(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // SubGameCharacterPenlightColorGroupIDNEQ applies the NEQ predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDNEQ(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // SubGameCharacterPenlightColorGroupIDIn applies the In predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDIn(vs ...int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldSubGameCharacterPenlightColorGroupID, vs...))
 }
 
 // SubGameCharacterPenlightColorGroupIDNotIn applies the NotIn predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDNotIn(vs ...int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldSubGameCharacterPenlightColorGroupID, vs...))
 }
 
 // SubGameCharacterPenlightColorGroupIDGT applies the GT predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDGT(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // SubGameCharacterPenlightColorGroupIDGTE applies the GTE predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDGTE(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // SubGameCharacterPenlightColorGroupIDLT applies the LT predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDLT(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
 // SubGameCharacterPenlightColorGroupIDLTE applies the LTE predicate on the "sub_game_character_penlight_color_group_id" field.
-func SubGameCharacterPenlightColorGroupIDLTE(v int) predicate.Virtuallive {
+func SubGameCharacterPenlightColorGroupIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldSubGameCharacterPenlightColorGroupID, v))
 }
 
@@ -784,42 +784,42 @@ func SubGameCharacterPenlightColorGroupIDNotNil() predicate.Virtuallive {
 }
 
 // VirtualLiveGroupIDEQ applies the EQ predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDEQ(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLiveGroupID, v))
 }
 
 // VirtualLiveGroupIDNEQ applies the NEQ predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDNEQ(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDNEQ(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNEQ(FieldVirtualLiveGroupID, v))
 }
 
 // VirtualLiveGroupIDIn applies the In predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDIn(vs ...int) predicate.Virtuallive {
+func VirtualLiveGroupIDIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIn(FieldVirtualLiveGroupID, vs...))
 }
 
 // VirtualLiveGroupIDNotIn applies the NotIn predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDNotIn(vs ...int) predicate.Virtuallive {
+func VirtualLiveGroupIDNotIn(vs ...int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotIn(FieldVirtualLiveGroupID, vs...))
 }
 
 // VirtualLiveGroupIDGT applies the GT predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDGT(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDGT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGT(FieldVirtualLiveGroupID, v))
 }
 
 // VirtualLiveGroupIDGTE applies the GTE predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDGTE(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDGTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldGTE(FieldVirtualLiveGroupID, v))
 }
 
 // VirtualLiveGroupIDLT applies the LT predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDLT(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDLT(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLT(FieldVirtualLiveGroupID, v))
 }
 
 // VirtualLiveGroupIDLTE applies the LTE predicate on the "virtual_live_group_id" field.
-func VirtualLiveGroupIDLTE(v int) predicate.Virtuallive {
+func VirtualLiveGroupIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldVirtualLiveGroupID, v))
 }
 

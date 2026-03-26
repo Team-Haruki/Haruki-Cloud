@@ -21,19 +21,19 @@ type EventdeckbonuseCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventdeckbonuseCreate) SetGameID(v int) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetGameID(v int64) *EventdeckbonuseCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventdeckbonuseCreate) SetEventID(v int) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetEventID(v int64) *EventdeckbonuseCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int64) *EventdeckbonuseCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int) *EventdeckbonuseCrea
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_c *EventdeckbonuseCreate) SetGameCharacterUnitID(v int) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetGameCharacterUnitID(v int64) *EventdeckbonuseCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitID(*v)
 	}
@@ -147,15 +147,15 @@ func (_c *EventdeckbonuseCreate) createSpec() (*Eventdeckbonuse, *sqlgraph.Creat
 		_spec = sqlgraph.NewCreateSpec(eventdeckbonuse.Table, sqlgraph.NewFieldSpec(eventdeckbonuse.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.CardAttr(); ok {

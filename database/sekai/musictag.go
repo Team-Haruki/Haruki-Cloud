@@ -18,13 +18,13 @@ type Musictag struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// MusicID holds the value of the "music_id" field.
-	MusicID int `json:"music_id,omitempty"`
+	MusicID int64 `json:"music_id,omitempty"`
 	// MusicTag holds the value of the "music_tag" field.
 	MusicTag json.RawMessage `json:"music_tag,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -66,13 +66,13 @@ func (_m *Musictag) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case musictag.FieldMusicID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_id", values[i])
 			} else if value.Valid {
-				_m.MusicID = int(value.Int64)
+				_m.MusicID = value.Int64
 			}
 		case musictag.FieldMusicTag:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -86,7 +86,7 @@ func (_m *Musictag) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case musictag.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

@@ -21,19 +21,19 @@ type EventitemCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventitemCreate) SetGameID(v int) *EventitemCreate {
+func (_c *EventitemCreate) SetGameID(v int64) *EventitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventitemCreate) SetEventID(v int) *EventitemCreate {
+func (_c *EventitemCreate) SetEventID(v int64) *EventitemCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableEventID(v *int) *EventitemCreate {
+func (_c *EventitemCreate) SetNillableEventID(v *int64) *EventitemCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -67,13 +67,13 @@ func (_c *EventitemCreate) SetNillableAssetbundleName(v *string) *EventitemCreat
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *EventitemCreate) SetGameCharacterID(v int) *EventitemCreate {
+func (_c *EventitemCreate) SetGameCharacterID(v int64) *EventitemCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableGameCharacterID(v *int) *EventitemCreate {
+func (_c *EventitemCreate) SetNillableGameCharacterID(v *int64) *EventitemCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
@@ -153,11 +153,11 @@ func (_c *EventitemCreate) createSpec() (*Eventitem, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(eventitem.Table, sqlgraph.NewFieldSpec(eventitem.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventitem.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -173,7 +173,7 @@ func (_c *EventitemCreate) createSpec() (*Eventitem, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

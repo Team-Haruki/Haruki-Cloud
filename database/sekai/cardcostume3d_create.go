@@ -20,13 +20,13 @@ type Cardcostume3DCreate struct {
 }
 
 // SetCardID sets the "card_id" field.
-func (_c *Cardcostume3DCreate) SetCardID(v int) *Cardcostume3DCreate {
+func (_c *Cardcostume3DCreate) SetCardID(v int64) *Cardcostume3DCreate {
 	_c.mutation.SetCardID(v)
 	return _c
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_c *Cardcostume3DCreate) SetNillableCardID(v *int) *Cardcostume3DCreate {
+func (_c *Cardcostume3DCreate) SetNillableCardID(v *int64) *Cardcostume3DCreate {
 	if v != nil {
 		_c.SetCardID(*v)
 	}
@@ -34,13 +34,13 @@ func (_c *Cardcostume3DCreate) SetNillableCardID(v *int) *Cardcostume3DCreate {
 }
 
 // SetCostume3DID sets the "costume3_d_id" field.
-func (_c *Cardcostume3DCreate) SetCostume3DID(v int) *Cardcostume3DCreate {
+func (_c *Cardcostume3DCreate) SetCostume3DID(v int64) *Cardcostume3DCreate {
 	_c.mutation.SetCostume3DID(v)
 	return _c
 }
 
 // SetNillableCostume3DID sets the "costume3_d_id" field if the given value is not nil.
-func (_c *Cardcostume3DCreate) SetNillableCostume3DID(v *int) *Cardcostume3DCreate {
+func (_c *Cardcostume3DCreate) SetNillableCostume3DID(v *int64) *Cardcostume3DCreate {
 	if v != nil {
 		_c.SetCostume3DID(*v)
 	}
@@ -131,11 +131,11 @@ func (_c *Cardcostume3DCreate) createSpec() (*Cardcostume3D, *sqlgraph.CreateSpe
 		_spec = sqlgraph.NewCreateSpec(cardcostume3d.Table, sqlgraph.NewFieldSpec(cardcostume3d.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.CardID(); ok {
-		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCardID, field.TypeInt64, value)
 		_node.CardID = value
 	}
 	if value, ok := _c.mutation.Costume3DID(); ok {
-		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt, value)
+		_spec.SetField(cardcostume3d.FieldCostume3DID, field.TypeInt64, value)
 		_node.Costume3DID = value
 	}
 	if value, ok := _c.mutation.IsInitialObtainHair(); ok {

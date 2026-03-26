@@ -15,11 +15,11 @@ type Mysekaigatelevel struct {
 
 func (Mysekaigatelevel) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("mysekai_gate_id").Optional(),
-		field.Int("level").Optional(),
-		field.Int("mysekai_gate_material_group_id").Optional(),
-		field.Int("mysekai_gate_character_visit_count_rate_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("mysekai_gate_id").Optional(),
+		field.Int64("level").Optional(),
+		field.Int64("mysekai_gate_material_group_id").Optional(),
+		field.Int64("mysekai_gate_character_visit_count_rate_id").Optional(),
 		field.Float("power_bonus_rate").Optional(),
 		field.String("server_region"),
 	}

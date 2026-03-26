@@ -28,14 +28,14 @@ func (_u *MysekaifixturesubgenreUpdate) Where(ps ...predicate.Mysekaifixturesubg
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturesubgenreUpdate) SetGameID(v int) *MysekaifixturesubgenreUpdate {
+func (_u *MysekaifixturesubgenreUpdate) SetGameID(v int64) *MysekaifixturesubgenreUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturesubgenreUpdate) SetNillableGameID(v *int) *MysekaifixturesubgenreUpdate {
+func (_u *MysekaifixturesubgenreUpdate) SetNillableGameID(v *int64) *MysekaifixturesubgenreUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,7 +43,7 @@ func (_u *MysekaifixturesubgenreUpdate) SetNillableGameID(v *int) *Mysekaifixtur
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturesubgenreUpdate) AddGameID(v int) *MysekaifixturesubgenreUpdate {
+func (_u *MysekaifixturesubgenreUpdate) AddGameID(v int64) *MysekaifixturesubgenreUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -164,10 +164,10 @@ func (_u *MysekaifixturesubgenreUpdate) sqlSave(ctx context.Context) (_node int,
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturesubgenre.FieldName, field.TypeString, value)
@@ -211,14 +211,14 @@ type MysekaifixturesubgenreUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturesubgenreUpdateOne) SetGameID(v int) *MysekaifixturesubgenreUpdateOne {
+func (_u *MysekaifixturesubgenreUpdateOne) SetGameID(v int64) *MysekaifixturesubgenreUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturesubgenreUpdateOne) SetNillableGameID(v *int) *MysekaifixturesubgenreUpdateOne {
+func (_u *MysekaifixturesubgenreUpdateOne) SetNillableGameID(v *int64) *MysekaifixturesubgenreUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -226,7 +226,7 @@ func (_u *MysekaifixturesubgenreUpdateOne) SetNillableGameID(v *int) *Mysekaifix
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturesubgenreUpdateOne) AddGameID(v int) *MysekaifixturesubgenreUpdateOne {
+func (_u *MysekaifixturesubgenreUpdateOne) AddGameID(v int64) *MysekaifixturesubgenreUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -377,10 +377,10 @@ func (_u *MysekaifixturesubgenreUpdateOne) sqlSave(ctx context.Context) (_node *
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturesubgenre.FieldName, field.TypeString, value)

@@ -16,10 +16,10 @@ type Cardraritie struct {
 func (Cardraritie) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("card_rarity_type").Optional(),
-		field.Int("seq").Optional(),
-		field.Int("max_level").Optional(),
-		field.Int("max_skill_level").Optional(),
-		field.Int("training_max_level").Optional(),
+		field.Int64("seq").Optional(),
+		field.Int64("max_level").Optional(),
+		field.Int64("max_skill_level").Optional(),
+		field.Int64("training_max_level").Optional(),
 		field.String("server_region"),
 	}
 }

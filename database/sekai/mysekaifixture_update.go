@@ -30,14 +30,14 @@ func (_u *MysekaifixtureUpdate) Where(ps ...predicate.Mysekaifixture) *Mysekaifi
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixtureUpdate) SetGameID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetGameID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableGameID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableGameID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaifixtureUpdate) SetNillableGameID(v *int) *MysekaifixtureUpdate 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixtureUpdate) AddGameID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddGameID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -129,14 +129,14 @@ func (_u *MysekaifixtureUpdate) ClearFlavorText() *MysekaifixtureUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaifixtureUpdate) SetSeq(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetSeq(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableSeq(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableSeq(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -144,7 +144,7 @@ func (_u *MysekaifixtureUpdate) SetNillableSeq(v *int) *MysekaifixtureUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaifixtureUpdate) AddSeq(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddSeq(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -174,14 +174,14 @@ func (_u *MysekaifixtureUpdate) ClearGridSize() *MysekaifixtureUpdate {
 }
 
 // SetMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureMainGenreID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureMainGenreID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetMysekaiFixtureMainGenreID()
 	_u.mutation.SetMysekaiFixtureMainGenreID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureMainGenreID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureMainGenreID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetMysekaiFixtureMainGenreID(*v)
 	}
@@ -189,7 +189,7 @@ func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureMainGenreID(v *int) *My
 }
 
 // AddMysekaiFixtureMainGenreID adds value to the "mysekai_fixture_main_genre_id" field.
-func (_u *MysekaifixtureUpdate) AddMysekaiFixtureMainGenreID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddMysekaiFixtureMainGenreID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddMysekaiFixtureMainGenreID(v)
 	return _u
 }
@@ -201,14 +201,14 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiFixtureMainGenreID() *Mysekaifixture
 }
 
 // SetMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureSubGenreID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureSubGenreID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetMysekaiFixtureSubGenreID()
 	_u.mutation.SetMysekaiFixtureSubGenreID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureSubGenreID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureSubGenreID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetMysekaiFixtureSubGenreID(*v)
 	}
@@ -216,7 +216,7 @@ func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureSubGenreID(v *int) *Mys
 }
 
 // AddMysekaiFixtureSubGenreID adds value to the "mysekai_fixture_sub_genre_id" field.
-func (_u *MysekaifixtureUpdate) AddMysekaiFixtureSubGenreID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddMysekaiFixtureSubGenreID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddMysekaiFixtureSubGenreID(v)
 	return _u
 }
@@ -318,14 +318,14 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiFixtureAnotherColors() *Mysekaifixtu
 }
 
 // SetMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixturePutSoundID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixturePutSoundID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetMysekaiFixturePutSoundID()
 	_u.mutation.SetMysekaiFixturePutSoundID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixturePutSoundID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixturePutSoundID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetMysekaiFixturePutSoundID(*v)
 	}
@@ -333,7 +333,7 @@ func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixturePutSoundID(v *int) *Mys
 }
 
 // AddMysekaiFixturePutSoundID adds value to the "mysekai_fixture_put_sound_id" field.
-func (_u *MysekaifixtureUpdate) AddMysekaiFixturePutSoundID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddMysekaiFixturePutSoundID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddMysekaiFixturePutSoundID(v)
 	return _u
 }
@@ -345,14 +345,14 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiFixturePutSoundID() *MysekaifixtureU
 }
 
 // SetMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureFootstepID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureFootstepID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetMysekaiFixtureFootstepID()
 	_u.mutation.SetMysekaiFixtureFootstepID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureFootstepID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureFootstepID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetMysekaiFixtureFootstepID(*v)
 	}
@@ -360,7 +360,7 @@ func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureFootstepID(v *int) *Mys
 }
 
 // AddMysekaiFixtureFootstepID adds value to the "mysekai_fixture_footstep_id" field.
-func (_u *MysekaifixtureUpdate) AddMysekaiFixtureFootstepID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddMysekaiFixtureFootstepID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddMysekaiFixtureFootstepID(v)
 	return _u
 }
@@ -488,14 +488,14 @@ func (_u *MysekaifixtureUpdate) ClearAssetbundleName() *MysekaifixtureUpdate {
 }
 
 // SetFirstPutCost sets the "first_put_cost" field.
-func (_u *MysekaifixtureUpdate) SetFirstPutCost(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetFirstPutCost(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetFirstPutCost()
 	_u.mutation.SetFirstPutCost(v)
 	return _u
 }
 
 // SetNillableFirstPutCost sets the "first_put_cost" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableFirstPutCost(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableFirstPutCost(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetFirstPutCost(*v)
 	}
@@ -503,7 +503,7 @@ func (_u *MysekaifixtureUpdate) SetNillableFirstPutCost(v *int) *MysekaifixtureU
 }
 
 // AddFirstPutCost adds value to the "first_put_cost" field.
-func (_u *MysekaifixtureUpdate) AddFirstPutCost(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddFirstPutCost(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddFirstPutCost(v)
 	return _u
 }
@@ -515,14 +515,14 @@ func (_u *MysekaifixtureUpdate) ClearFirstPutCost() *MysekaifixtureUpdate {
 }
 
 // SetSecondPutCost sets the "second_put_cost" field.
-func (_u *MysekaifixtureUpdate) SetSecondPutCost(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetSecondPutCost(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetSecondPutCost()
 	_u.mutation.SetSecondPutCost(v)
 	return _u
 }
 
 // SetNillableSecondPutCost sets the "second_put_cost" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableSecondPutCost(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableSecondPutCost(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetSecondPutCost(*v)
 	}
@@ -530,7 +530,7 @@ func (_u *MysekaifixtureUpdate) SetNillableSecondPutCost(v *int) *Mysekaifixture
 }
 
 // AddSecondPutCost adds value to the "second_put_cost" field.
-func (_u *MysekaifixtureUpdate) AddSecondPutCost(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddSecondPutCost(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddSecondPutCost(v)
 	return _u
 }
@@ -562,14 +562,14 @@ func (_u *MysekaifixtureUpdate) ClearColorCode() *MysekaifixtureUpdate {
 }
 
 // SetMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.ResetMysekaiFixtureGameCharacterGroupPerformanceBonusID()
 	_u.mutation.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int64) *MysekaifixtureUpdate {
 	if v != nil {
 		_u.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(*v)
 	}
@@ -577,7 +577,7 @@ func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureGameCharacterGroupPerfo
 }
 
 // AddMysekaiFixtureGameCharacterGroupPerformanceBonusID adds value to the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (_u *MysekaifixtureUpdate) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) *MysekaifixtureUpdate {
 	_u.mutation.AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v)
 	return _u
 }
@@ -644,10 +644,10 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixture.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureType(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON, value)
@@ -679,13 +679,13 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaifixture.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaifixture.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GridSize(); ok {
 		_spec.SetField(mysekaifixture.FieldGridSize, field.TypeJSON, value)
@@ -699,22 +699,22 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldGridSize, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureMainGenreID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureMainGenreIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureSubGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureSubGenreID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureSubGenreIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureHandleType(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON, value)
@@ -772,22 +772,22 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureAnotherColors, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePutSoundID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixturePutSoundID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixturePutSoundIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureFootstepID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureFootstepID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureFootstepIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureTagGroup(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureTagGroup, field.TypeJSON, value)
@@ -836,22 +836,22 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FirstPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedFirstPutCost(); ok {
-		_spec.AddField(mysekaifixture.FieldFirstPutCost, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldFirstPutCost, field.TypeInt64, value)
 	}
 	if _u.mutation.FirstPutCostCleared() {
-		_spec.ClearField(mysekaifixture.FieldFirstPutCost, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldFirstPutCost, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SecondPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSecondPutCost(); ok {
-		_spec.AddField(mysekaifixture.FieldSecondPutCost, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldSecondPutCost, field.TypeInt64, value)
 	}
 	if _u.mutation.SecondPutCostCleared() {
-		_spec.ClearField(mysekaifixture.FieldSecondPutCost, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldSecondPutCost, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ColorCode(); ok {
 		_spec.SetField(mysekaifixture.FieldColorCode, field.TypeString, value)
@@ -860,13 +860,13 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureGameCharacterGroupPerformanceBonusID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureGameCharacterGroupPerformanceBonusID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureGameCharacterGroupPerformanceBonusIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixture.FieldServerRegion, field.TypeString, value)
@@ -892,14 +892,14 @@ type MysekaifixtureUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixtureUpdateOne) SetGameID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetGameID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableGameID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableGameID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -907,7 +907,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableGameID(v *int) *MysekaifixtureUpda
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixtureUpdateOne) AddGameID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddGameID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -991,14 +991,14 @@ func (_u *MysekaifixtureUpdateOne) ClearFlavorText() *MysekaifixtureUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaifixtureUpdateOne) SetSeq(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetSeq(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableSeq(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableSeq(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -1006,7 +1006,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableSeq(v *int) *MysekaifixtureUpdateO
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaifixtureUpdateOne) AddSeq(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddSeq(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -1036,14 +1036,14 @@ func (_u *MysekaifixtureUpdateOne) ClearGridSize() *MysekaifixtureUpdateOne {
 }
 
 // SetMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureMainGenreID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureMainGenreID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetMysekaiFixtureMainGenreID()
 	_u.mutation.SetMysekaiFixtureMainGenreID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureMainGenreID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureMainGenreID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixtureMainGenreID(*v)
 	}
@@ -1051,7 +1051,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureMainGenreID(v *int) 
 }
 
 // AddMysekaiFixtureMainGenreID adds value to the "mysekai_fixture_main_genre_id" field.
-func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureMainGenreID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureMainGenreID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddMysekaiFixtureMainGenreID(v)
 	return _u
 }
@@ -1063,14 +1063,14 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiFixtureMainGenreID() *Mysekaifixt
 }
 
 // SetMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureSubGenreID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureSubGenreID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetMysekaiFixtureSubGenreID()
 	_u.mutation.SetMysekaiFixtureSubGenreID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureSubGenreID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureSubGenreID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixtureSubGenreID(*v)
 	}
@@ -1078,7 +1078,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureSubGenreID(v *int) *
 }
 
 // AddMysekaiFixtureSubGenreID adds value to the "mysekai_fixture_sub_genre_id" field.
-func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureSubGenreID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureSubGenreID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddMysekaiFixtureSubGenreID(v)
 	return _u
 }
@@ -1180,14 +1180,14 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiFixtureAnotherColors() *Mysekaifi
 }
 
 // SetMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePutSoundID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePutSoundID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetMysekaiFixturePutSoundID()
 	_u.mutation.SetMysekaiFixturePutSoundID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixturePutSoundID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixturePutSoundID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixturePutSoundID(*v)
 	}
@@ -1195,7 +1195,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixturePutSoundID(v *int) *
 }
 
 // AddMysekaiFixturePutSoundID adds value to the "mysekai_fixture_put_sound_id" field.
-func (_u *MysekaifixtureUpdateOne) AddMysekaiFixturePutSoundID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddMysekaiFixturePutSoundID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddMysekaiFixturePutSoundID(v)
 	return _u
 }
@@ -1207,14 +1207,14 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiFixturePutSoundID() *Mysekaifixtu
 }
 
 // SetMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureFootstepID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureFootstepID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetMysekaiFixtureFootstepID()
 	_u.mutation.SetMysekaiFixtureFootstepID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureFootstepID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureFootstepID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixtureFootstepID(*v)
 	}
@@ -1222,7 +1222,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureFootstepID(v *int) *
 }
 
 // AddMysekaiFixtureFootstepID adds value to the "mysekai_fixture_footstep_id" field.
-func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureFootstepID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureFootstepID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddMysekaiFixtureFootstepID(v)
 	return _u
 }
@@ -1350,14 +1350,14 @@ func (_u *MysekaifixtureUpdateOne) ClearAssetbundleName() *MysekaifixtureUpdateO
 }
 
 // SetFirstPutCost sets the "first_put_cost" field.
-func (_u *MysekaifixtureUpdateOne) SetFirstPutCost(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetFirstPutCost(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetFirstPutCost()
 	_u.mutation.SetFirstPutCost(v)
 	return _u
 }
 
 // SetNillableFirstPutCost sets the "first_put_cost" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableFirstPutCost(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableFirstPutCost(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetFirstPutCost(*v)
 	}
@@ -1365,7 +1365,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableFirstPutCost(v *int) *Mysekaifixtu
 }
 
 // AddFirstPutCost adds value to the "first_put_cost" field.
-func (_u *MysekaifixtureUpdateOne) AddFirstPutCost(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddFirstPutCost(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddFirstPutCost(v)
 	return _u
 }
@@ -1377,14 +1377,14 @@ func (_u *MysekaifixtureUpdateOne) ClearFirstPutCost() *MysekaifixtureUpdateOne 
 }
 
 // SetSecondPutCost sets the "second_put_cost" field.
-func (_u *MysekaifixtureUpdateOne) SetSecondPutCost(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetSecondPutCost(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetSecondPutCost()
 	_u.mutation.SetSecondPutCost(v)
 	return _u
 }
 
 // SetNillableSecondPutCost sets the "second_put_cost" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableSecondPutCost(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableSecondPutCost(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetSecondPutCost(*v)
 	}
@@ -1392,7 +1392,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableSecondPutCost(v *int) *Mysekaifixt
 }
 
 // AddSecondPutCost adds value to the "second_put_cost" field.
-func (_u *MysekaifixtureUpdateOne) AddSecondPutCost(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddSecondPutCost(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddSecondPutCost(v)
 	return _u
 }
@@ -1424,14 +1424,14 @@ func (_u *MysekaifixtureUpdateOne) ClearColorCode() *MysekaifixtureUpdateOne {
 }
 
 // SetMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.ResetMysekaiFixtureGameCharacterGroupPerformanceBonusID()
 	_u.mutation.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field if the given value is not nil.
-func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int64) *MysekaifixtureUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(*v)
 	}
@@ -1439,7 +1439,7 @@ func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureGameCharacterGroupPe
 }
 
 // AddMysekaiFixtureGameCharacterGroupPerformanceBonusID adds value to the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) *MysekaifixtureUpdateOne {
 	_u.mutation.AddMysekaiFixtureGameCharacterGroupPerformanceBonusID(v)
 	return _u
 }
@@ -1536,10 +1536,10 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixture.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureType(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON, value)
@@ -1571,13 +1571,13 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaifixture.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaifixture.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GridSize(); ok {
 		_spec.SetField(mysekaifixture.FieldGridSize, field.TypeJSON, value)
@@ -1591,22 +1591,22 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldGridSize, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureMainGenreID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureMainGenreIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureSubGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureSubGenreID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureSubGenreIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureHandleType(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON, value)
@@ -1664,22 +1664,22 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureAnotherColors, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePutSoundID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixturePutSoundID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixturePutSoundIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureFootstepID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureFootstepID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureFootstepIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureTagGroup(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureTagGroup, field.TypeJSON, value)
@@ -1728,22 +1728,22 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FirstPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedFirstPutCost(); ok {
-		_spec.AddField(mysekaifixture.FieldFirstPutCost, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldFirstPutCost, field.TypeInt64, value)
 	}
 	if _u.mutation.FirstPutCostCleared() {
-		_spec.ClearField(mysekaifixture.FieldFirstPutCost, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldFirstPutCost, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.SecondPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSecondPutCost(); ok {
-		_spec.AddField(mysekaifixture.FieldSecondPutCost, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldSecondPutCost, field.TypeInt64, value)
 	}
 	if _u.mutation.SecondPutCostCleared() {
-		_spec.ClearField(mysekaifixture.FieldSecondPutCost, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldSecondPutCost, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ColorCode(); ok {
 		_spec.SetField(mysekaifixture.FieldColorCode, field.TypeString, value)
@@ -1752,13 +1752,13 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureGameCharacterGroupPerformanceBonusID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureGameCharacterGroupPerformanceBonusID(); ok {
-		_spec.AddField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt, value)
+		_spec.AddField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureGameCharacterGroupPerformanceBonusIDCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixture.FieldServerRegion, field.TypeString, value)

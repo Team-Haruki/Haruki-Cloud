@@ -18,11 +18,11 @@ type Area struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
+	GroupID int64 `json:"group_id,omitempty"`
 	// IsBaseArea holds the value of the "is_base_area" field.
 	IsBaseArea bool `json:"is_base_area,omitempty"`
 	// AreaType holds the value of the "area_type" field.
@@ -36,17 +36,17 @@ type Area struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int `json:"release_condition_id,omitempty"`
+	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
 	// SubName holds the value of the "sub_name" field.
 	SubName string `json:"sub_name,omitempty"`
 	// Label holds the value of the "label" field.
 	Label string `json:"label,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int `json:"start_at,omitempty"`
+	StartAt int64 `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
-	EndAt int `json:"end_at,omitempty"`
+	EndAt int64 `json:"end_at,omitempty"`
 	// ReleaseConditionId2 holds the value of the "release_condition_id2" field.
-	ReleaseConditionId2 int `json:"release_condition_id2,omitempty"`
+	ReleaseConditionId2 int64 `json:"release_condition_id2,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -90,7 +90,7 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case area.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -102,7 +102,7 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = int(value.Int64)
+				_m.GroupID = value.Int64
 			}
 		case area.FieldIsBaseArea:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -152,7 +152,7 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = int(value.Int64)
+				_m.ReleaseConditionID = value.Int64
 			}
 		case area.FieldSubName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -170,19 +170,19 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = int(value.Int64)
+				_m.StartAt = value.Int64
 			}
 		case area.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = int(value.Int64)
+				_m.EndAt = value.Int64
 			}
 		case area.FieldReleaseConditionId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id2", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionId2 = int(value.Int64)
+				_m.ReleaseConditionId2 = value.Int64
 			}
 		case area.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {

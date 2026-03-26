@@ -21,19 +21,19 @@ type EventexchangesummarieCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *EventexchangesummarieCreate) SetGameID(v int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetGameID(v int64) *EventexchangesummarieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventexchangesummarieCreate) SetEventID(v int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetEventID(v int64) *EventexchangesummarieCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableEventID(v *int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableEventID(v *int64) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *EventexchangesummarieCreate) SetNillableAssetbundleName(v *string) *Ev
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *EventexchangesummarieCreate) SetStartAt(v int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetStartAt(v int64) *EventexchangesummarieCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int64) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -69,13 +69,13 @@ func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int) *Eventexchange
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *EventexchangesummarieCreate) SetEndAt(v int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetEndAt(v int64) *EventexchangesummarieCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableEndAt(v *int) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableEndAt(v *int64) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -161,11 +161,11 @@ func (_c *EventexchangesummarieCreate) createSpec() (*Eventexchangesummarie, *sq
 		_spec = sqlgraph.NewCreateSpec(eventexchangesummarie.Table, sqlgraph.NewFieldSpec(eventexchangesummarie.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventexchangesummarie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventexchangesummarie.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt64, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -173,11 +173,11 @@ func (_c *EventexchangesummarieCreate) createSpec() (*Eventexchangesummarie, *sq
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(eventexchangesummarie.FieldStartAt, field.TypeInt, value)
+		_spec.SetField(eventexchangesummarie.FieldStartAt, field.TypeInt64, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(eventexchangesummarie.FieldEndAt, field.TypeInt, value)
+		_spec.SetField(eventexchangesummarie.FieldEndAt, field.TypeInt64, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.EventExchanges(); ok {

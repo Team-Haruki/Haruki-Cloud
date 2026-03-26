@@ -21,7 +21,7 @@ type LevelCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *LevelCreate) SetGameID(v int) *LevelCreate {
+func (_c *LevelCreate) SetGameID(v int64) *LevelCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -33,13 +33,13 @@ func (_c *LevelCreate) SetLevelType(v json.RawMessage) *LevelCreate {
 }
 
 // SetLevel sets the "level" field.
-func (_c *LevelCreate) SetLevel(v int) *LevelCreate {
+func (_c *LevelCreate) SetLevel(v int64) *LevelCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableLevel(v *int) *LevelCreate {
+func (_c *LevelCreate) SetNillableLevel(v *int64) *LevelCreate {
 	if v != nil {
 		_c.SetLevel(*v)
 	}
@@ -47,13 +47,13 @@ func (_c *LevelCreate) SetNillableLevel(v *int) *LevelCreate {
 }
 
 // SetTotalExp sets the "total_exp" field.
-func (_c *LevelCreate) SetTotalExp(v int) *LevelCreate {
+func (_c *LevelCreate) SetTotalExp(v int64) *LevelCreate {
 	_c.mutation.SetTotalExp(v)
 	return _c
 }
 
 // SetNillableTotalExp sets the "total_exp" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableTotalExp(v *int) *LevelCreate {
+func (_c *LevelCreate) SetNillableTotalExp(v *int64) *LevelCreate {
 	if v != nil {
 		_c.SetTotalExp(*v)
 	}
@@ -133,7 +133,7 @@ func (_c *LevelCreate) createSpec() (*Level, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(level.Table, sqlgraph.NewFieldSpec(level.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(level.FieldGameID, field.TypeInt, value)
+		_spec.SetField(level.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.LevelType(); ok {
@@ -141,11 +141,11 @@ func (_c *LevelCreate) createSpec() (*Level, *sqlgraph.CreateSpec) {
 		_node.LevelType = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(level.FieldLevel, field.TypeInt, value)
+		_spec.SetField(level.FieldLevel, field.TypeInt64, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.TotalExp(); ok {
-		_spec.SetField(level.FieldTotalExp, field.TypeInt, value)
+		_spec.SetField(level.FieldTotalExp, field.TypeInt64, value)
 		_node.TotalExp = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

@@ -30,14 +30,14 @@ func (_u *MysekaiblueprintUpdate) Where(ps ...predicate.Mysekaiblueprint) *Mysek
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintUpdate) SetGameID(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetGameID(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int64) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,7 +45,7 @@ func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int) *MysekaiblueprintUpd
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintUpdate) AddGameID(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddGameID(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -69,14 +69,14 @@ func (_u *MysekaiblueprintUpdate) ClearMysekaiCraftType() *MysekaiblueprintUpdat
 }
 
 // SetCraftTargetID sets the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdate) SetCraftTargetID(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetCraftTargetID(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.ResetCraftTargetID()
 	_u.mutation.SetCraftTargetID(v)
 	return _u
 }
 
 // SetNillableCraftTargetID sets the "craft_target_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int64) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetCraftTargetID(*v)
 	}
@@ -84,7 +84,7 @@ func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int) *Mysekaibluep
 }
 
 // AddCraftTargetID adds value to the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdate) AddCraftTargetID(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddCraftTargetID(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.AddCraftTargetID(v)
 	return _u
 }
@@ -136,14 +136,14 @@ func (_u *MysekaiblueprintUpdate) ClearIsObtainedByConvert() *MysekaiblueprintUp
 }
 
 // SetCraftCountLimit sets the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdate) SetCraftCountLimit(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetCraftCountLimit(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.ResetCraftCountLimit()
 	_u.mutation.SetCraftCountLimit(v)
 	return _u
 }
 
 // SetNillableCraftCountLimit sets the "craft_count_limit" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int64) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetCraftCountLimit(*v)
 	}
@@ -151,7 +151,7 @@ func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int) *Mysekaiblu
 }
 
 // AddCraftCountLimit adds value to the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdate) AddCraftCountLimit(v int) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddCraftCountLimit(v int64) *MysekaiblueprintUpdate {
 	_u.mutation.AddCraftCountLimit(v)
 	return _u
 }
@@ -238,10 +238,10 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
@@ -255,13 +255,13 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCraftTargetID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
 	}
 	if _u.mutation.CraftTargetIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt)
+		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsEnableSketch(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsEnableSketch, field.TypeBool, value)
@@ -276,13 +276,13 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(mysekaiblueprint.FieldIsObtainedByConvert, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CraftCountLimit(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCraftCountLimit(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
 	}
 	if _u.mutation.CraftCountLimitCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt)
+		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsAvailableWithoutPossession(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool, value)
@@ -314,14 +314,14 @@ type MysekaiblueprintUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintUpdateOne) SetGameID(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetGameID(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int64) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -329,7 +329,7 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int) *Mysekaiblueprint
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintUpdateOne) AddGameID(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddGameID(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
@@ -353,14 +353,14 @@ func (_u *MysekaiblueprintUpdateOne) ClearMysekaiCraftType() *MysekaiblueprintUp
 }
 
 // SetCraftTargetID sets the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdateOne) SetCraftTargetID(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetCraftTargetID(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetCraftTargetID()
 	_u.mutation.SetCraftTargetID(v)
 	return _u
 }
 
 // SetNillableCraftTargetID sets the "craft_target_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int64) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetCraftTargetID(*v)
 	}
@@ -368,7 +368,7 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int) *Mysekaibl
 }
 
 // AddCraftTargetID adds value to the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdateOne) AddCraftTargetID(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddCraftTargetID(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddCraftTargetID(v)
 	return _u
 }
@@ -420,14 +420,14 @@ func (_u *MysekaiblueprintUpdateOne) ClearIsObtainedByConvert() *Mysekaiblueprin
 }
 
 // SetCraftCountLimit sets the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdateOne) SetCraftCountLimit(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetCraftCountLimit(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetCraftCountLimit()
 	_u.mutation.SetCraftCountLimit(v)
 	return _u
 }
 
 // SetNillableCraftCountLimit sets the "craft_count_limit" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int64) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetCraftCountLimit(*v)
 	}
@@ -435,7 +435,7 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int) *Mysekai
 }
 
 // AddCraftCountLimit adds value to the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdateOne) AddCraftCountLimit(v int) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddCraftCountLimit(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddCraftCountLimit(v)
 	return _u
 }
@@ -552,10 +552,10 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
@@ -569,13 +569,13 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCraftTargetID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
 	}
 	if _u.mutation.CraftTargetIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt)
+		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsEnableSketch(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsEnableSketch, field.TypeBool, value)
@@ -590,13 +590,13 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 		_spec.ClearField(mysekaiblueprint.FieldIsObtainedByConvert, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CraftCountLimit(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedCraftCountLimit(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
 	}
 	if _u.mutation.CraftCountLimitCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt)
+		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.IsAvailableWithoutPossession(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool, value)

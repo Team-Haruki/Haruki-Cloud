@@ -262,7 +262,7 @@ func (_q *CardsupplieQuery) Clone() *CardsupplieQuery {
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *CardsupplieQuery) GroupBy(field string, fields ...string) *Cardsupplie
 // Example:
 //
 //	var v []struct {
-//		GameID int `json:"game_id,omitempty"`
+//		GameID int64 `json:"game_id,omitempty"`
 //	}
 //
 //	client.Cardsupplie.Query().

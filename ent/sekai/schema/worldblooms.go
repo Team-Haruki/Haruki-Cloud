@@ -17,16 +17,16 @@ type Worldbloom struct {
 
 func (Worldbloom) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("event_id").Optional(),
-		field.Int("game_character_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("event_id").Optional(),
+		field.Int64("game_character_id").Optional(),
 		field.JSON("world_bloom_chapter_type", json.RawMessage{}).Optional(),
-		field.Int("chapter_no").Optional(),
-		field.Int("chapter_start_at").Optional(),
-		field.Int("aggregate_at").Optional(),
-		field.Int("chapter_end_at").Optional(),
+		field.Int64("chapter_no").Optional(),
+		field.Int64("chapter_start_at").Optional(),
+		field.Int64("aggregate_at").Optional(),
+		field.Int64("chapter_end_at").Optional(),
 		field.Bool("is_supplemental").Optional(),
-		field.Int("costume2_d_id").Optional(),
+		field.Int64("costume2_d_id").Optional(),
 		field.String("server_region"),
 	}
 }

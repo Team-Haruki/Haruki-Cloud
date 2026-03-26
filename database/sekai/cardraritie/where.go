@@ -59,22 +59,22 @@ func CardRarityType(v string) predicate.Cardraritie {
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Cardraritie {
+func Seq(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldSeq, v))
 }
 
 // MaxLevel applies equality check predicate on the "max_level" field. It's identical to MaxLevelEQ.
-func MaxLevel(v int) predicate.Cardraritie {
+func MaxLevel(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldMaxLevel, v))
 }
 
 // MaxSkillLevel applies equality check predicate on the "max_skill_level" field. It's identical to MaxSkillLevelEQ.
-func MaxSkillLevel(v int) predicate.Cardraritie {
+func MaxSkillLevel(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldMaxSkillLevel, v))
 }
 
 // TrainingMaxLevel applies equality check predicate on the "training_max_level" field. It's identical to TrainingMaxLevelEQ.
-func TrainingMaxLevel(v int) predicate.Cardraritie {
+func TrainingMaxLevel(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldTrainingMaxLevel, v))
 }
 
@@ -159,42 +159,42 @@ func CardRarityTypeContainsFold(v string) predicate.Cardraritie {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Cardraritie {
+func SeqEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Cardraritie {
+func SeqNEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Cardraritie {
+func SeqIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Cardraritie {
+func SeqNotIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Cardraritie {
+func SeqGT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Cardraritie {
+func SeqGTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Cardraritie {
+func SeqLT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Cardraritie {
+func SeqLTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -209,42 +209,42 @@ func SeqNotNil() predicate.Cardraritie {
 }
 
 // MaxLevelEQ applies the EQ predicate on the "max_level" field.
-func MaxLevelEQ(v int) predicate.Cardraritie {
+func MaxLevelEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldMaxLevel, v))
 }
 
 // MaxLevelNEQ applies the NEQ predicate on the "max_level" field.
-func MaxLevelNEQ(v int) predicate.Cardraritie {
+func MaxLevelNEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNEQ(FieldMaxLevel, v))
 }
 
 // MaxLevelIn applies the In predicate on the "max_level" field.
-func MaxLevelIn(vs ...int) predicate.Cardraritie {
+func MaxLevelIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldIn(FieldMaxLevel, vs...))
 }
 
 // MaxLevelNotIn applies the NotIn predicate on the "max_level" field.
-func MaxLevelNotIn(vs ...int) predicate.Cardraritie {
+func MaxLevelNotIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNotIn(FieldMaxLevel, vs...))
 }
 
 // MaxLevelGT applies the GT predicate on the "max_level" field.
-func MaxLevelGT(v int) predicate.Cardraritie {
+func MaxLevelGT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGT(FieldMaxLevel, v))
 }
 
 // MaxLevelGTE applies the GTE predicate on the "max_level" field.
-func MaxLevelGTE(v int) predicate.Cardraritie {
+func MaxLevelGTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGTE(FieldMaxLevel, v))
 }
 
 // MaxLevelLT applies the LT predicate on the "max_level" field.
-func MaxLevelLT(v int) predicate.Cardraritie {
+func MaxLevelLT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLT(FieldMaxLevel, v))
 }
 
 // MaxLevelLTE applies the LTE predicate on the "max_level" field.
-func MaxLevelLTE(v int) predicate.Cardraritie {
+func MaxLevelLTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLTE(FieldMaxLevel, v))
 }
 
@@ -259,42 +259,42 @@ func MaxLevelNotNil() predicate.Cardraritie {
 }
 
 // MaxSkillLevelEQ applies the EQ predicate on the "max_skill_level" field.
-func MaxSkillLevelEQ(v int) predicate.Cardraritie {
+func MaxSkillLevelEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldMaxSkillLevel, v))
 }
 
 // MaxSkillLevelNEQ applies the NEQ predicate on the "max_skill_level" field.
-func MaxSkillLevelNEQ(v int) predicate.Cardraritie {
+func MaxSkillLevelNEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNEQ(FieldMaxSkillLevel, v))
 }
 
 // MaxSkillLevelIn applies the In predicate on the "max_skill_level" field.
-func MaxSkillLevelIn(vs ...int) predicate.Cardraritie {
+func MaxSkillLevelIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldIn(FieldMaxSkillLevel, vs...))
 }
 
 // MaxSkillLevelNotIn applies the NotIn predicate on the "max_skill_level" field.
-func MaxSkillLevelNotIn(vs ...int) predicate.Cardraritie {
+func MaxSkillLevelNotIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNotIn(FieldMaxSkillLevel, vs...))
 }
 
 // MaxSkillLevelGT applies the GT predicate on the "max_skill_level" field.
-func MaxSkillLevelGT(v int) predicate.Cardraritie {
+func MaxSkillLevelGT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGT(FieldMaxSkillLevel, v))
 }
 
 // MaxSkillLevelGTE applies the GTE predicate on the "max_skill_level" field.
-func MaxSkillLevelGTE(v int) predicate.Cardraritie {
+func MaxSkillLevelGTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGTE(FieldMaxSkillLevel, v))
 }
 
 // MaxSkillLevelLT applies the LT predicate on the "max_skill_level" field.
-func MaxSkillLevelLT(v int) predicate.Cardraritie {
+func MaxSkillLevelLT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLT(FieldMaxSkillLevel, v))
 }
 
 // MaxSkillLevelLTE applies the LTE predicate on the "max_skill_level" field.
-func MaxSkillLevelLTE(v int) predicate.Cardraritie {
+func MaxSkillLevelLTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLTE(FieldMaxSkillLevel, v))
 }
 
@@ -309,42 +309,42 @@ func MaxSkillLevelNotNil() predicate.Cardraritie {
 }
 
 // TrainingMaxLevelEQ applies the EQ predicate on the "training_max_level" field.
-func TrainingMaxLevelEQ(v int) predicate.Cardraritie {
+func TrainingMaxLevelEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldEQ(FieldTrainingMaxLevel, v))
 }
 
 // TrainingMaxLevelNEQ applies the NEQ predicate on the "training_max_level" field.
-func TrainingMaxLevelNEQ(v int) predicate.Cardraritie {
+func TrainingMaxLevelNEQ(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNEQ(FieldTrainingMaxLevel, v))
 }
 
 // TrainingMaxLevelIn applies the In predicate on the "training_max_level" field.
-func TrainingMaxLevelIn(vs ...int) predicate.Cardraritie {
+func TrainingMaxLevelIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldIn(FieldTrainingMaxLevel, vs...))
 }
 
 // TrainingMaxLevelNotIn applies the NotIn predicate on the "training_max_level" field.
-func TrainingMaxLevelNotIn(vs ...int) predicate.Cardraritie {
+func TrainingMaxLevelNotIn(vs ...int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldNotIn(FieldTrainingMaxLevel, vs...))
 }
 
 // TrainingMaxLevelGT applies the GT predicate on the "training_max_level" field.
-func TrainingMaxLevelGT(v int) predicate.Cardraritie {
+func TrainingMaxLevelGT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGT(FieldTrainingMaxLevel, v))
 }
 
 // TrainingMaxLevelGTE applies the GTE predicate on the "training_max_level" field.
-func TrainingMaxLevelGTE(v int) predicate.Cardraritie {
+func TrainingMaxLevelGTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldGTE(FieldTrainingMaxLevel, v))
 }
 
 // TrainingMaxLevelLT applies the LT predicate on the "training_max_level" field.
-func TrainingMaxLevelLT(v int) predicate.Cardraritie {
+func TrainingMaxLevelLT(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLT(FieldTrainingMaxLevel, v))
 }
 
 // TrainingMaxLevelLTE applies the LTE predicate on the "training_max_level" field.
-func TrainingMaxLevelLTE(v int) predicate.Cardraritie {
+func TrainingMaxLevelLTE(v int64) predicate.Cardraritie {
 	return predicate.Cardraritie(sql.FieldLTE(FieldTrainingMaxLevel, v))
 }
 

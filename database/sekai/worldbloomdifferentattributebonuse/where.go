@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Worldbloomdifferentattributebonuse {
 }
 
 // AttributeCount applies equality check predicate on the "attribute_count" field. It's identical to AttributeCountEQ.
-func AttributeCount(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCount(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldEQ(FieldAttributeCount, v))
 }
 
@@ -69,42 +69,42 @@ func ServerRegion(v string) predicate.Worldbloomdifferentattributebonuse {
 }
 
 // AttributeCountEQ applies the EQ predicate on the "attribute_count" field.
-func AttributeCountEQ(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountEQ(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldEQ(FieldAttributeCount, v))
 }
 
 // AttributeCountNEQ applies the NEQ predicate on the "attribute_count" field.
-func AttributeCountNEQ(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountNEQ(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldNEQ(FieldAttributeCount, v))
 }
 
 // AttributeCountIn applies the In predicate on the "attribute_count" field.
-func AttributeCountIn(vs ...int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountIn(vs ...int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldIn(FieldAttributeCount, vs...))
 }
 
 // AttributeCountNotIn applies the NotIn predicate on the "attribute_count" field.
-func AttributeCountNotIn(vs ...int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountNotIn(vs ...int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldNotIn(FieldAttributeCount, vs...))
 }
 
 // AttributeCountGT applies the GT predicate on the "attribute_count" field.
-func AttributeCountGT(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountGT(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldGT(FieldAttributeCount, v))
 }
 
 // AttributeCountGTE applies the GTE predicate on the "attribute_count" field.
-func AttributeCountGTE(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountGTE(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldGTE(FieldAttributeCount, v))
 }
 
 // AttributeCountLT applies the LT predicate on the "attribute_count" field.
-func AttributeCountLT(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountLT(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldLT(FieldAttributeCount, v))
 }
 
 // AttributeCountLTE applies the LTE predicate on the "attribute_count" field.
-func AttributeCountLTE(v int) predicate.Worldbloomdifferentattributebonuse {
+func AttributeCountLTE(v int64) predicate.Worldbloomdifferentattributebonuse {
 	return predicate.Worldbloomdifferentattributebonuse(sql.FieldLTE(FieldAttributeCount, v))
 }
 

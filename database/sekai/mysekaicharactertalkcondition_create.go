@@ -21,7 +21,7 @@ type MysekaicharactertalkconditionCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkconditionCreate) SetGameID(v int) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetGameID(v int64) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -33,13 +33,13 @@ func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionT
 }
 
 // SetMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field.
-func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionTypeValue(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditionCreate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int64) *MysekaicharactertalkconditionCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkConditionTypeValue(*v)
 	}
@@ -119,7 +119,7 @@ func (_c *MysekaicharactertalkconditionCreate) createSpec() (*Mysekaicharacterta
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalkcondition.Table, sqlgraph.NewFieldSpec(mysekaicharactertalkcondition.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionType(); ok {
@@ -127,7 +127,7 @@ func (_c *MysekaicharactertalkconditionCreate) createSpec() (*Mysekaicharacterta
 		_node.MysekaiCharacterTalkConditionType = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
 		_node.MysekaiCharacterTalkConditionTypeValue = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

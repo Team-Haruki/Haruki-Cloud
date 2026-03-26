@@ -30,14 +30,14 @@ func (_u *MusictagUpdate) Where(ps ...predicate.Musictag) *MusictagUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusictagUpdate) SetGameID(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetGameID(v int64) *MusictagUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableGameID(v *int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableGameID(v *int64) *MusictagUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *MusictagUpdate) SetNillableGameID(v *int) *MusictagUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusictagUpdate) AddGameID(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) AddGameID(v int64) *MusictagUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusictagUpdate) SetMusicID(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetMusicID(v int64) *MusictagUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableMusicID(v *int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableMusicID(v *int64) *MusictagUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *MusictagUpdate) SetNillableMusicID(v *int) *MusictagUpdate {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusictagUpdate) AddMusicID(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) AddMusicID(v int64) *MusictagUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -96,14 +96,14 @@ func (_u *MusictagUpdate) ClearMusicTag() *MusictagUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusictagUpdate) SetSeq(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetSeq(v int64) *MusictagUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableSeq(v *int) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableSeq(v *int64) *MusictagUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -111,7 +111,7 @@ func (_u *MusictagUpdate) SetNillableSeq(v *int) *MusictagUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusictagUpdate) AddSeq(v int) *MusictagUpdate {
+func (_u *MusictagUpdate) AddSeq(v int64) *MusictagUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -178,19 +178,19 @@ func (_u *MusictagUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musictag.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musictag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musictag.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musictag.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musictag.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
 		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
@@ -204,13 +204,13 @@ func (_u *MusictagUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musictag.FieldSeq, field.TypeInt, value)
+		_spec.AddField(musictag.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musictag.FieldSeq, field.TypeInt)
+		_spec.ClearField(musictag.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
@@ -236,14 +236,14 @@ type MusictagUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MusictagUpdateOne) SetGameID(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetGameID(v int64) *MusictagUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableGameID(v *int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableGameID(v *int64) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -251,20 +251,20 @@ func (_u *MusictagUpdateOne) SetNillableGameID(v *int) *MusictagUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusictagUpdateOne) AddGameID(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddGameID(v int64) *MusictagUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *MusictagUpdateOne) SetMusicID(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetMusicID(v int64) *MusictagUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableMusicID(v *int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableMusicID(v *int64) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -272,7 +272,7 @@ func (_u *MusictagUpdateOne) SetNillableMusicID(v *int) *MusictagUpdateOne {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusictagUpdateOne) AddMusicID(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddMusicID(v int64) *MusictagUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -302,14 +302,14 @@ func (_u *MusictagUpdateOne) ClearMusicTag() *MusictagUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusictagUpdateOne) SetSeq(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetSeq(v int64) *MusictagUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableSeq(v *int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableSeq(v *int64) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -317,7 +317,7 @@ func (_u *MusictagUpdateOne) SetNillableSeq(v *int) *MusictagUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusictagUpdateOne) AddSeq(v int) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddSeq(v int64) *MusictagUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -414,19 +414,19 @@ func (_u *MusictagUpdateOne) sqlSave(ctx context.Context) (_node *Musictag, err 
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musictag.FieldGameID, field.TypeInt, value)
+		_spec.AddField(musictag.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musictag.FieldMusicID, field.TypeInt, value)
+		_spec.AddField(musictag.FieldMusicID, field.TypeInt64, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musictag.FieldMusicID, field.TypeInt)
+		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
 		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
@@ -440,13 +440,13 @@ func (_u *MusictagUpdateOne) sqlSave(ctx context.Context) (_node *Musictag, err 
 		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musictag.FieldSeq, field.TypeInt, value)
+		_spec.AddField(musictag.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musictag.FieldSeq, field.TypeInt)
+		_spec.ClearField(musictag.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)

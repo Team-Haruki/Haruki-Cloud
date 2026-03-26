@@ -21,7 +21,7 @@ type MysekaifixtureCreate struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixtureCreate) SetGameID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetGameID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
@@ -75,13 +75,13 @@ func (_c *MysekaifixtureCreate) SetNillableFlavorText(v *string) *Mysekaifixture
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaifixtureCreate) SetSeq(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetSeq(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableSeq(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableSeq(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -95,13 +95,13 @@ func (_c *MysekaifixtureCreate) SetGridSize(v json.RawMessage) *MysekaifixtureCr
 }
 
 // SetMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureMainGenreID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureMainGenreID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureMainGenreID(v)
 	return _c
 }
 
 // SetNillableMysekaiFixtureMainGenreID sets the "mysekai_fixture_main_genre_id" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureMainGenreID(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureMainGenreID(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetMysekaiFixtureMainGenreID(*v)
 	}
@@ -109,13 +109,13 @@ func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureMainGenreID(v *int) *My
 }
 
 // SetMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureSubGenreID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureSubGenreID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureSubGenreID(v)
 	return _c
 }
 
 // SetNillableMysekaiFixtureSubGenreID sets the "mysekai_fixture_sub_genre_id" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureSubGenreID(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureSubGenreID(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetMysekaiFixtureSubGenreID(*v)
 	}
@@ -153,13 +153,13 @@ func (_c *MysekaifixtureCreate) SetMysekaiFixtureAnotherColors(v json.RawMessage
 }
 
 // SetMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixturePutSoundID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixturePutSoundID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixturePutSoundID(v)
 	return _c
 }
 
 // SetNillableMysekaiFixturePutSoundID sets the "mysekai_fixture_put_sound_id" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableMysekaiFixturePutSoundID(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixturePutSoundID(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetMysekaiFixturePutSoundID(*v)
 	}
@@ -167,13 +167,13 @@ func (_c *MysekaifixtureCreate) SetNillableMysekaiFixturePutSoundID(v *int) *Mys
 }
 
 // SetMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureFootstepID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureFootstepID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureFootstepID(v)
 	return _c
 }
 
 // SetNillableMysekaiFixtureFootstepID sets the "mysekai_fixture_footstep_id" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureFootstepID(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureFootstepID(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetMysekaiFixtureFootstepID(*v)
 	}
@@ -249,13 +249,13 @@ func (_c *MysekaifixtureCreate) SetNillableAssetbundleName(v *string) *Mysekaifi
 }
 
 // SetFirstPutCost sets the "first_put_cost" field.
-func (_c *MysekaifixtureCreate) SetFirstPutCost(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetFirstPutCost(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetFirstPutCost(v)
 	return _c
 }
 
 // SetNillableFirstPutCost sets the "first_put_cost" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableFirstPutCost(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableFirstPutCost(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetFirstPutCost(*v)
 	}
@@ -263,13 +263,13 @@ func (_c *MysekaifixtureCreate) SetNillableFirstPutCost(v *int) *MysekaifixtureC
 }
 
 // SetSecondPutCost sets the "second_put_cost" field.
-func (_c *MysekaifixtureCreate) SetSecondPutCost(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetSecondPutCost(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetSecondPutCost(v)
 	return _c
 }
 
 // SetNillableSecondPutCost sets the "second_put_cost" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableSecondPutCost(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableSecondPutCost(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetSecondPutCost(*v)
 	}
@@ -291,13 +291,13 @@ func (_c *MysekaifixtureCreate) SetNillableColorCode(v *string) *MysekaifixtureC
 }
 
 // SetMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v int64) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(v)
 	return _c
 }
 
 // SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID sets the "mysekai_fixture_game_character_group_performance_bonus_id" field if the given value is not nil.
-func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureGameCharacterGroupPerformanceBonusID(v *int64) *MysekaifixtureCreate {
 	if v != nil {
 		_c.SetMysekaiFixtureGameCharacterGroupPerformanceBonusID(*v)
 	}
@@ -377,7 +377,7 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_spec = sqlgraph.NewCreateSpec(mysekaifixture.Table, sqlgraph.NewFieldSpec(mysekaifixture.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldGameID, field.TypeInt64, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureType(); ok {
@@ -397,7 +397,7 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSeq, field.TypeInt64, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.GridSize(); ok {
@@ -405,11 +405,11 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.GridSize = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureMainGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureMainGenreID, field.TypeInt64, value)
 		_node.MysekaiFixtureMainGenreID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureSubGenreID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64, value)
 		_node.MysekaiFixtureSubGenreID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureHandleType(); ok {
@@ -433,11 +433,11 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.MysekaiFixtureAnotherColors = value
 	}
 	if value, ok := _c.mutation.MysekaiFixturePutSoundID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutSoundID, field.TypeInt64, value)
 		_node.MysekaiFixturePutSoundID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureFootstepID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureFootstepID, field.TypeInt64, value)
 		_node.MysekaiFixtureFootstepID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureTagGroup(); ok {
@@ -465,11 +465,11 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.FirstPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldFirstPutCost, field.TypeInt64, value)
 		_node.FirstPutCost = value
 	}
 	if value, ok := _c.mutation.SecondPutCost(); ok {
-		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldSecondPutCost, field.TypeInt64, value)
 		_node.SecondPutCost = value
 	}
 	if value, ok := _c.mutation.ColorCode(); ok {
@@ -477,7 +477,7 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.ColorCode = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureGameCharacterGroupPerformanceBonusID(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, field.TypeInt64, value)
 		_node.MysekaiFixtureGameCharacterGroupPerformanceBonusID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

@@ -30,14 +30,14 @@ func (_u *EventstorieUpdate) Where(ps ...predicate.Eventstorie) *EventstorieUpda
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventstorieUpdate) SetGameID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetGameID(v int64) *EventstorieUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableGameID(v *int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableGameID(v *int64) *EventstorieUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *EventstorieUpdate) SetNillableGameID(v *int) *EventstorieUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstorieUpdate) AddGameID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddGameID(v int64) *EventstorieUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventstorieUpdate) SetEventID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetEventID(v int64) *EventstorieUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableEventID(v *int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableEventID(v *int64) *EventstorieUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *EventstorieUpdate) SetNillableEventID(v *int) *EventstorieUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventstorieUpdate) AddEventID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddEventID(v int64) *EventstorieUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -98,14 +98,14 @@ func (_u *EventstorieUpdate) ClearOutline() *EventstorieUpdate {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdate) SetBannerGameCharacterUnitID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetBannerGameCharacterUnitID(v int64) *EventstorieUpdate {
 	_u.mutation.ResetBannerGameCharacterUnitID()
 	_u.mutation.SetBannerGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieUpdate {
 	if v != nil {
 		_u.SetBannerGameCharacterUnitID(*v)
 	}
@@ -113,7 +113,7 @@ func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int) *Event
 }
 
 // AddBannerGameCharacterUnitID adds value to the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdate) AddBannerGameCharacterUnitID(v int) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddBannerGameCharacterUnitID(v int64) *EventstorieUpdate {
 	_u.mutation.AddBannerGameCharacterUnitID(v)
 	return _u
 }
@@ -218,19 +218,19 @@ func (_u *EventstorieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstorie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventstorie.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Outline(); ok {
 		_spec.SetField(eventstorie.FieldOutline, field.TypeString, value)
@@ -239,13 +239,13 @@ func (_u *EventstorieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(eventstorie.FieldOutline, field.TypeString)
 	}
 	if value, ok := _u.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedBannerGameCharacterUnitID(); ok {
-		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if _u.mutation.BannerGameCharacterUnitIDCleared() {
-		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt)
+		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventstorie.FieldAssetbundleName, field.TypeString, value)
@@ -288,14 +288,14 @@ type EventstorieUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventstorieUpdateOne) SetGameID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetGameID(v int64) *EventstorieUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableGameID(v *int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableGameID(v *int64) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -303,20 +303,20 @@ func (_u *EventstorieUpdateOne) SetNillableGameID(v *int) *EventstorieUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstorieUpdateOne) AddGameID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddGameID(v int64) *EventstorieUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventstorieUpdateOne) SetEventID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetEventID(v int64) *EventstorieUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableEventID(v *int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableEventID(v *int64) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -324,7 +324,7 @@ func (_u *EventstorieUpdateOne) SetNillableEventID(v *int) *EventstorieUpdateOne
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventstorieUpdateOne) AddEventID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddEventID(v int64) *EventstorieUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -356,14 +356,14 @@ func (_u *EventstorieUpdateOne) ClearOutline() *EventstorieUpdateOne {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdateOne) SetBannerGameCharacterUnitID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetBannerGameCharacterUnitID(v int64) *EventstorieUpdateOne {
 	_u.mutation.ResetBannerGameCharacterUnitID()
 	_u.mutation.SetBannerGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetBannerGameCharacterUnitID(*v)
 	}
@@ -371,7 +371,7 @@ func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int) *Ev
 }
 
 // AddBannerGameCharacterUnitID adds value to the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdateOne) AddBannerGameCharacterUnitID(v int) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddBannerGameCharacterUnitID(v int64) *EventstorieUpdateOne {
 	_u.mutation.AddBannerGameCharacterUnitID(v)
 	return _u
 }
@@ -506,19 +506,19 @@ func (_u *EventstorieUpdateOne) sqlSave(ctx context.Context) (_node *Eventstorie
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstorie.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventstorie.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Outline(); ok {
 		_spec.SetField(eventstorie.FieldOutline, field.TypeString, value)
@@ -527,13 +527,13 @@ func (_u *EventstorieUpdateOne) sqlSave(ctx context.Context) (_node *Eventstorie
 		_spec.ClearField(eventstorie.FieldOutline, field.TypeString)
 	}
 	if value, ok := _u.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedBannerGameCharacterUnitID(); ok {
-		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
+		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
 	}
 	if _u.mutation.BannerGameCharacterUnitIDCleared() {
-		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt)
+		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventstorie.FieldAssetbundleName, field.TypeString, value)

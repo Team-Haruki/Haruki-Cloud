@@ -54,22 +54,22 @@ func IDLTE(id int) predicate.Musicvocal {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Musicvocal {
+func GameID(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldGameID, v))
 }
 
 // MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
-func MusicID(v int) predicate.Musicvocal {
+func MusicID(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldMusicID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int) predicate.Musicvocal {
+func Seq(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldSeq, v))
 }
 
 // ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
-func ReleaseConditionID(v int) predicate.Musicvocal {
+func ReleaseConditionID(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldReleaseConditionID, v))
 }
 
@@ -84,12 +84,12 @@ func AssetbundleName(v string) predicate.Musicvocal {
 }
 
 // ArchivePublishedAt applies equality check predicate on the "archive_published_at" field. It's identical to ArchivePublishedAtEQ.
-func ArchivePublishedAt(v int) predicate.Musicvocal {
+func ArchivePublishedAt(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // SpecialSeasonID applies equality check predicate on the "special_season_id" field. It's identical to SpecialSeasonIDEQ.
-func SpecialSeasonID(v int) predicate.Musicvocal {
+func SpecialSeasonID(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldSpecialSeasonID, v))
 }
 
@@ -99,82 +99,82 @@ func ServerRegion(v string) predicate.Musicvocal {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Musicvocal {
+func GameIDEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Musicvocal {
+func GameIDNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Musicvocal {
+func GameIDIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Musicvocal {
+func GameIDNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Musicvocal {
+func GameIDGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Musicvocal {
+func GameIDGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Musicvocal {
+func GameIDLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Musicvocal {
+func GameIDLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldGameID, v))
 }
 
 // MusicIDEQ applies the EQ predicate on the "music_id" field.
-func MusicIDEQ(v int) predicate.Musicvocal {
+func MusicIDEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldMusicID, v))
 }
 
 // MusicIDNEQ applies the NEQ predicate on the "music_id" field.
-func MusicIDNEQ(v int) predicate.Musicvocal {
+func MusicIDNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldMusicID, v))
 }
 
 // MusicIDIn applies the In predicate on the "music_id" field.
-func MusicIDIn(vs ...int) predicate.Musicvocal {
+func MusicIDIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldMusicID, vs...))
 }
 
 // MusicIDNotIn applies the NotIn predicate on the "music_id" field.
-func MusicIDNotIn(vs ...int) predicate.Musicvocal {
+func MusicIDNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldMusicID, vs...))
 }
 
 // MusicIDGT applies the GT predicate on the "music_id" field.
-func MusicIDGT(v int) predicate.Musicvocal {
+func MusicIDGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldMusicID, v))
 }
 
 // MusicIDGTE applies the GTE predicate on the "music_id" field.
-func MusicIDGTE(v int) predicate.Musicvocal {
+func MusicIDGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldMusicID, v))
 }
 
 // MusicIDLT applies the LT predicate on the "music_id" field.
-func MusicIDLT(v int) predicate.Musicvocal {
+func MusicIDLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldMusicID, v))
 }
 
 // MusicIDLTE applies the LTE predicate on the "music_id" field.
-func MusicIDLTE(v int) predicate.Musicvocal {
+func MusicIDLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldMusicID, v))
 }
 
@@ -199,42 +199,42 @@ func MusicVocalTypeNotNil() predicate.Musicvocal {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int) predicate.Musicvocal {
+func SeqEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int) predicate.Musicvocal {
+func SeqNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int) predicate.Musicvocal {
+func SeqIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int) predicate.Musicvocal {
+func SeqNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int) predicate.Musicvocal {
+func SeqGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int) predicate.Musicvocal {
+func SeqGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int) predicate.Musicvocal {
+func SeqLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int) predicate.Musicvocal {
+func SeqLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -249,42 +249,42 @@ func SeqNotNil() predicate.Musicvocal {
 }
 
 // ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDEQ(v int) predicate.Musicvocal {
+func ReleaseConditionIDEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDNEQ(v int) predicate.Musicvocal {
+func ReleaseConditionIDNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
-func ReleaseConditionIDIn(vs ...int) predicate.Musicvocal {
+func ReleaseConditionIDIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldReleaseConditionID, vs...))
 }
 
 // ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotIn(vs ...int) predicate.Musicvocal {
+func ReleaseConditionIDNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldReleaseConditionID, vs...))
 }
 
 // ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
-func ReleaseConditionIDGT(v int) predicate.Musicvocal {
+func ReleaseConditionIDGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDGTE(v int) predicate.Musicvocal {
+func ReleaseConditionIDGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
-func ReleaseConditionIDLT(v int) predicate.Musicvocal {
+func ReleaseConditionIDLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldReleaseConditionID, v))
 }
 
 // ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDLTE(v int) predicate.Musicvocal {
+func ReleaseConditionIDLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldReleaseConditionID, v))
 }
 
@@ -459,42 +459,42 @@ func AssetbundleNameContainsFold(v string) predicate.Musicvocal {
 }
 
 // ArchivePublishedAtEQ applies the EQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtEQ(v int) predicate.Musicvocal {
+func ArchivePublishedAtEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtNEQ applies the NEQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtNEQ(v int) predicate.Musicvocal {
+func ArchivePublishedAtNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtIn applies the In predicate on the "archive_published_at" field.
-func ArchivePublishedAtIn(vs ...int) predicate.Musicvocal {
+func ArchivePublishedAtIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtNotIn applies the NotIn predicate on the "archive_published_at" field.
-func ArchivePublishedAtNotIn(vs ...int) predicate.Musicvocal {
+func ArchivePublishedAtNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtGT applies the GT predicate on the "archive_published_at" field.
-func ArchivePublishedAtGT(v int) predicate.Musicvocal {
+func ArchivePublishedAtGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtGTE applies the GTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtGTE(v int) predicate.Musicvocal {
+func ArchivePublishedAtGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLT applies the LT predicate on the "archive_published_at" field.
-func ArchivePublishedAtLT(v int) predicate.Musicvocal {
+func ArchivePublishedAtLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLTE applies the LTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtLTE(v int) predicate.Musicvocal {
+func ArchivePublishedAtLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldArchivePublishedAt, v))
 }
 
@@ -509,42 +509,42 @@ func ArchivePublishedAtNotNil() predicate.Musicvocal {
 }
 
 // SpecialSeasonIDEQ applies the EQ predicate on the "special_season_id" field.
-func SpecialSeasonIDEQ(v int) predicate.Musicvocal {
+func SpecialSeasonIDEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldSpecialSeasonID, v))
 }
 
 // SpecialSeasonIDNEQ applies the NEQ predicate on the "special_season_id" field.
-func SpecialSeasonIDNEQ(v int) predicate.Musicvocal {
+func SpecialSeasonIDNEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNEQ(FieldSpecialSeasonID, v))
 }
 
 // SpecialSeasonIDIn applies the In predicate on the "special_season_id" field.
-func SpecialSeasonIDIn(vs ...int) predicate.Musicvocal {
+func SpecialSeasonIDIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldIn(FieldSpecialSeasonID, vs...))
 }
 
 // SpecialSeasonIDNotIn applies the NotIn predicate on the "special_season_id" field.
-func SpecialSeasonIDNotIn(vs ...int) predicate.Musicvocal {
+func SpecialSeasonIDNotIn(vs ...int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldNotIn(FieldSpecialSeasonID, vs...))
 }
 
 // SpecialSeasonIDGT applies the GT predicate on the "special_season_id" field.
-func SpecialSeasonIDGT(v int) predicate.Musicvocal {
+func SpecialSeasonIDGT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGT(FieldSpecialSeasonID, v))
 }
 
 // SpecialSeasonIDGTE applies the GTE predicate on the "special_season_id" field.
-func SpecialSeasonIDGTE(v int) predicate.Musicvocal {
+func SpecialSeasonIDGTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldGTE(FieldSpecialSeasonID, v))
 }
 
 // SpecialSeasonIDLT applies the LT predicate on the "special_season_id" field.
-func SpecialSeasonIDLT(v int) predicate.Musicvocal {
+func SpecialSeasonIDLT(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLT(FieldSpecialSeasonID, v))
 }
 
 // SpecialSeasonIDLTE applies the LTE predicate on the "special_season_id" field.
-func SpecialSeasonIDLTE(v int) predicate.Musicvocal {
+func SpecialSeasonIDLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldSpecialSeasonID, v))
 }
 

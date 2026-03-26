@@ -28,14 +28,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) Where(ps ...predicate.Mys
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetGameID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetGameID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableGameID(v *int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableGameID(v *int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -43,20 +43,20 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableGameID(v *int)
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddGameID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddGameID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetMysekaiFixtureID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetMysekaiFixtureID()
 	_u.mutation.SetMysekaiFixtureID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureID sets the "mysekai_fixture_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiFixtureID(v *int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiFixtureID(v *int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	if v != nil {
 		_u.SetMysekaiFixtureID(*v)
 	}
@@ -64,7 +64,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiFixture
 }
 
 // AddMysekaiFixtureID adds value to the "mysekai_fixture_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddMysekaiFixtureID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.AddMysekaiFixtureID(v)
 	return _u
 }
@@ -76,14 +76,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) ClearMysekaiFixtureID() *
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetMysekaiMaterialID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetMysekaiMaterialID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiMaterialID(v *int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiMaterialID(v *int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -91,7 +91,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableMysekaiMateria
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddMysekaiMaterialID(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddMysekaiMaterialID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -103,14 +103,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) ClearMysekaiMaterialID() 
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetSeq(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetSeq(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableSeq(v *int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableSeq(v *int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -118,7 +118,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableSeq(v *int) *M
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddSeq(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddSeq(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -130,14 +130,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) ClearSeq() *Mysekaifixtur
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetQuantity(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetQuantity(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableQuantity(v *int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableQuantity(v *int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -145,7 +145,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetNillableQuantity(v *in
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddQuantity(v int) *MysekaifixtureonlydisassemblematerialUpdate {
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddQuantity(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -212,46 +212,46 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) sqlSave(ctx context.Conte
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureIDCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldServerRegion, field.TypeString, value)
@@ -277,14 +277,14 @@ type MysekaifixtureonlydisassemblematerialUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetGameID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetGameID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableGameID(v *int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableGameID(v *int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -292,20 +292,20 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableGameID(v *i
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddGameID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddGameID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetMysekaiFixtureID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.ResetMysekaiFixtureID()
 	_u.mutation.SetMysekaiFixtureID(v)
 	return _u
 }
 
 // SetNillableMysekaiFixtureID sets the "mysekai_fixture_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiFixtureID(v *int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiFixtureID(v *int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	if v != nil {
 		_u.SetMysekaiFixtureID(*v)
 	}
@@ -313,7 +313,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiFixt
 }
 
 // AddMysekaiFixtureID adds value to the "mysekai_fixture_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddMysekaiFixtureID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddMysekaiFixtureID(v)
 	return _u
 }
@@ -325,14 +325,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) ClearMysekaiFixtureID(
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetMysekaiMaterialID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetMysekaiMaterialID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiMaterialID(v *int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiMaterialID(v *int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -340,7 +340,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableMysekaiMate
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddMysekaiMaterialID(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddMysekaiMaterialID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -352,14 +352,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) ClearMysekaiMaterialID
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetSeq(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetSeq(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableSeq(v *int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableSeq(v *int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -367,7 +367,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableSeq(v *int)
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddSeq(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddSeq(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -379,14 +379,14 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) ClearSeq() *Mysekaifix
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetQuantity(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetQuantity(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableQuantity(v *int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableQuantity(v *int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -394,7 +394,7 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableQuantity(v 
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddQuantity(v int) *MysekaifixtureonlydisassemblematerialUpdateOne {
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddQuantity(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -491,46 +491,46 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) sqlSave(ctx context.Co
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiFixtureID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiFixtureIDCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt, value)
+		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt, value)
+		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt)
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldQuantity, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldServerRegion, field.TypeString, value)

@@ -27,13 +27,13 @@ func (_c *MasterlessonCreate) SetCardRarityType(v json.RawMessage) *Masterlesson
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_c *MasterlessonCreate) SetMasterRank(v int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetMasterRank(v int64) *MasterlessonCreate {
 	_c.mutation.SetMasterRank(v)
 	return _c
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillableMasterRank(v *int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillableMasterRank(v *int64) *MasterlessonCreate {
 	if v != nil {
 		_c.SetMasterRank(*v)
 	}
@@ -41,13 +41,13 @@ func (_c *MasterlessonCreate) SetNillableMasterRank(v *int) *MasterlessonCreate 
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower1BonusFixed(v int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower1BonusFixed(v int64) *MasterlessonCreate {
 	_c.mutation.SetPower1BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int64) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower1BonusFixed(*v)
 	}
@@ -55,13 +55,13 @@ func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int) *MasterlessonC
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower2BonusFixed(v int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower2BonusFixed(v int64) *MasterlessonCreate {
 	_c.mutation.SetPower2BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int64) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower2BonusFixed(*v)
 	}
@@ -69,13 +69,13 @@ func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int) *MasterlessonC
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower3BonusFixed(v int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower3BonusFixed(v int64) *MasterlessonCreate {
 	_c.mutation.SetPower3BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int64) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower3BonusFixed(*v)
 	}
@@ -83,13 +83,13 @@ func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int) *MasterlessonC
 }
 
 // SetCharacterRankExp sets the "character_rank_exp" field.
-func (_c *MasterlessonCreate) SetCharacterRankExp(v int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetCharacterRankExp(v int64) *MasterlessonCreate {
 	_c.mutation.SetCharacterRankExp(v)
 	return _c
 }
 
 // SetNillableCharacterRankExp sets the "character_rank_exp" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillableCharacterRankExp(v *int) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillableCharacterRankExp(v *int64) *MasterlessonCreate {
 	if v != nil {
 		_c.SetCharacterRankExp(*v)
 	}
@@ -182,23 +182,23 @@ func (_c *MasterlessonCreate) createSpec() (*Masterlesson, *sqlgraph.CreateSpec)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {
-		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)
 		_node.MasterRank = value
 	}
 	if value, ok := _c.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
 		_node.Power1BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
 		_node.Power2BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
 		_node.Power3BonusFixed = value
 	}
 	if value, ok := _c.mutation.CharacterRankExp(); ok {
-		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
+		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
 		_node.CharacterRankExp = value
 	}
 	if value, ok := _c.mutation.Costs(); ok {

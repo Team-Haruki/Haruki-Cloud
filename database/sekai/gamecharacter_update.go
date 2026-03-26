@@ -30,14 +30,14 @@ func (_u *GamecharacterUpdate) Where(ps ...predicate.Gamecharacter) *Gamecharact
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterUpdate) SetGameID(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetGameID(v int64) *GamecharacterUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableGameID(v *int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableGameID(v *int64) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *GamecharacterUpdate) SetNillableGameID(v *int) *GamecharacterUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterUpdate) AddGameID(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddGameID(v int64) *GamecharacterUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *GamecharacterUpdate) SetSeq(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetSeq(v int64) *GamecharacterUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableSeq(v *int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableSeq(v *int64) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *GamecharacterUpdate) SetNillableSeq(v *int) *GamecharacterUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GamecharacterUpdate) AddSeq(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddSeq(v int64) *GamecharacterUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -78,14 +78,14 @@ func (_u *GamecharacterUpdate) ClearSeq() *GamecharacterUpdate {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *GamecharacterUpdate) SetResourceID(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetResourceID(v int64) *GamecharacterUpdate {
 	_u.mutation.ResetResourceID()
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableResourceID(v *int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableResourceID(v *int64) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -93,7 +93,7 @@ func (_u *GamecharacterUpdate) SetNillableResourceID(v *int) *GamecharacterUpdat
 }
 
 // AddResourceID adds value to the "resource_id" field.
-func (_u *GamecharacterUpdate) AddResourceID(v int) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddResourceID(v int64) *GamecharacterUpdate {
 	_u.mutation.AddResourceID(v)
 	return _u
 }
@@ -444,28 +444,28 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt)
+		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedResourceID(); ok {
-		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt64, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt)
+		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(gamecharacter.FieldFirstName, field.TypeString, value)
@@ -606,14 +606,14 @@ type GamecharacterUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterUpdateOne) SetGameID(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetGameID(v int64) *GamecharacterUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int64) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -621,20 +621,20 @@ func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int) *GamecharacterUpdate
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterUpdateOne) AddGameID(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddGameID(v int64) *GamecharacterUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetSeq sets the "seq" field.
-func (_u *GamecharacterUpdateOne) SetSeq(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetSeq(v int64) *GamecharacterUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int64) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -642,7 +642,7 @@ func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int) *GamecharacterUpdateOne
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GamecharacterUpdateOne) AddSeq(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddSeq(v int64) *GamecharacterUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -654,14 +654,14 @@ func (_u *GamecharacterUpdateOne) ClearSeq() *GamecharacterUpdateOne {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *GamecharacterUpdateOne) SetResourceID(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetResourceID(v int64) *GamecharacterUpdateOne {
 	_u.mutation.ResetResourceID()
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int64) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -669,7 +669,7 @@ func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int) *GamecharacterUp
 }
 
 // AddResourceID adds value to the "resource_id" field.
-func (_u *GamecharacterUpdateOne) AddResourceID(v int) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddResourceID(v int64) *GamecharacterUpdateOne {
 	_u.mutation.AddResourceID(v)
 	return _u
 }
@@ -1050,28 +1050,28 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt64, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt)
+		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedResourceID(); ok {
-		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt, value)
+		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt64, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt)
+		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(gamecharacter.FieldFirstName, field.TypeString, value)

@@ -17,10 +17,10 @@ type Eventstorie struct {
 
 func (Eventstorie) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("game_id"),
-		field.Int("event_id").Optional(),
+		field.Int64("game_id"),
+		field.Int64("event_id").Optional(),
 		field.String("outline").Optional(),
-		field.Int("banner_game_character_unit_id").Optional(),
+		field.Int64("banner_game_character_unit_id").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.JSON("event_story_episodes", json.RawMessage{}).Optional(),
 		field.String("server_region"),

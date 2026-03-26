@@ -17,11 +17,11 @@ type Areaitemlevel struct {
 
 func (Areaitemlevel) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("area_item_id").Optional(),
-		field.Int("level").Optional(),
+		field.Int64("area_item_id").Optional(),
+		field.Int64("level").Optional(),
 		field.JSON("target_unit", json.RawMessage{}).Optional(),
 		field.JSON("target_card_attr", json.RawMessage{}).Optional(),
-		field.Int("target_game_character_id").Optional(),
+		field.Int64("target_game_character_id").Optional(),
 		field.Float("power1_bonus_rate").Optional(),
 		field.Float("power1_all_match_bonus_rate").Optional(),
 		field.Float("power2_bonus_rate").Optional(),

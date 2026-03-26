@@ -30,14 +30,14 @@ func (_u *EventitemUpdate) Where(ps ...predicate.Eventitem) *EventitemUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventitemUpdate) SetGameID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetGameID(v int64) *EventitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventitemUpdate) SetNillableGameID(v *int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetNillableGameID(v *int64) *EventitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -45,20 +45,20 @@ func (_u *EventitemUpdate) SetNillableGameID(v *int) *EventitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventitemUpdate) AddGameID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) AddGameID(v int64) *EventitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventitemUpdate) SetEventID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetEventID(v int64) *EventitemUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventitemUpdate) SetNillableEventID(v *int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetNillableEventID(v *int64) *EventitemUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -66,7 +66,7 @@ func (_u *EventitemUpdate) SetNillableEventID(v *int) *EventitemUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventitemUpdate) AddEventID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) AddEventID(v int64) *EventitemUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -134,14 +134,14 @@ func (_u *EventitemUpdate) ClearAssetbundleName() *EventitemUpdate {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *EventitemUpdate) SetGameCharacterID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetGameCharacterID(v int64) *EventitemUpdate {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *EventitemUpdate) SetNillableGameCharacterID(v *int) *EventitemUpdate {
+func (_u *EventitemUpdate) SetNillableGameCharacterID(v *int64) *EventitemUpdate {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -149,7 +149,7 @@ func (_u *EventitemUpdate) SetNillableGameCharacterID(v *int) *EventitemUpdate {
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *EventitemUpdate) AddGameCharacterID(v int) *EventitemUpdate {
+func (_u *EventitemUpdate) AddGameCharacterID(v int64) *EventitemUpdate {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -216,19 +216,19 @@ func (_u *EventitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventitem.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventitem.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventitem.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventitem.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
@@ -259,13 +259,13 @@ func (_u *EventitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(eventitem.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(eventitem.FieldGameCharacterID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(eventitem.FieldGameCharacterID, field.TypeInt)
+		_spec.ClearField(eventitem.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(eventitem.FieldServerRegion, field.TypeString, value)
@@ -291,14 +291,14 @@ type EventitemUpdateOne struct {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *EventitemUpdateOne) SetGameID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetGameID(v int64) *EventitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventitemUpdateOne) SetNillableGameID(v *int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetNillableGameID(v *int64) *EventitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -306,20 +306,20 @@ func (_u *EventitemUpdateOne) SetNillableGameID(v *int) *EventitemUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventitemUpdateOne) AddGameID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) AddGameID(v int64) *EventitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
 // SetEventID sets the "event_id" field.
-func (_u *EventitemUpdateOne) SetEventID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetEventID(v int64) *EventitemUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventitemUpdateOne) SetNillableEventID(v *int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetNillableEventID(v *int64) *EventitemUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -327,7 +327,7 @@ func (_u *EventitemUpdateOne) SetNillableEventID(v *int) *EventitemUpdateOne {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventitemUpdateOne) AddEventID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) AddEventID(v int64) *EventitemUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -395,14 +395,14 @@ func (_u *EventitemUpdateOne) ClearAssetbundleName() *EventitemUpdateOne {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *EventitemUpdateOne) SetGameCharacterID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetGameCharacterID(v int64) *EventitemUpdateOne {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *EventitemUpdateOne) SetNillableGameCharacterID(v *int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetNillableGameCharacterID(v *int64) *EventitemUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -410,7 +410,7 @@ func (_u *EventitemUpdateOne) SetNillableGameCharacterID(v *int) *EventitemUpdat
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *EventitemUpdateOne) AddGameCharacterID(v int) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) AddGameCharacterID(v int64) *EventitemUpdateOne {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -507,19 +507,19 @@ func (_u *EventitemUpdateOne) sqlSave(ctx context.Context) (_node *Eventitem, er
 		}
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventitem.FieldGameID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventitem.FieldGameID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldGameID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventitem.FieldEventID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldEventID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventitem.FieldEventID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldEventID, field.TypeInt64, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventitem.FieldEventID, field.TypeInt)
+		_spec.ClearField(eventitem.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
@@ -550,13 +550,13 @@ func (_u *EventitemUpdateOne) sqlSave(ctx context.Context) (_node *Eventitem, er
 		_spec.ClearField(eventitem.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt, value)
+		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(eventitem.FieldGameCharacterID, field.TypeInt, value)
+		_spec.AddField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(eventitem.FieldGameCharacterID, field.TypeInt)
+		_spec.ClearField(eventitem.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(eventitem.FieldServerRegion, field.TypeString, value)

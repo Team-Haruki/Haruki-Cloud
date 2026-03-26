@@ -18,15 +18,15 @@ type Bondshonor struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int `json:"game_id,omitempty"`
+	GameID int64 `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int `json:"seq,omitempty"`
+	Seq int64 `json:"seq,omitempty"`
 	// BondsGroupID holds the value of the "bonds_group_id" field.
-	BondsGroupID int `json:"bonds_group_id,omitempty"`
+	BondsGroupID int64 `json:"bonds_group_id,omitempty"`
 	// GameCharacterUnitId1 holds the value of the "game_character_unit_id1" field.
-	GameCharacterUnitId1 int `json:"game_character_unit_id1,omitempty"`
+	GameCharacterUnitId1 int64 `json:"game_character_unit_id1,omitempty"`
 	// GameCharacterUnitId2 holds the value of the "game_character_unit_id2" field.
-	GameCharacterUnitId2 int `json:"game_character_unit_id2,omitempty"`
+	GameCharacterUnitId2 int64 `json:"game_character_unit_id2,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
 	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
@@ -82,31 +82,31 @@ func (_m *Bondshonor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = int(value.Int64)
+				_m.GameID = value.Int64
 			}
 		case bondshonor.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = int(value.Int64)
+				_m.Seq = value.Int64
 			}
 		case bondshonor.FieldBondsGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field bonds_group_id", values[i])
 			} else if value.Valid {
-				_m.BondsGroupID = int(value.Int64)
+				_m.BondsGroupID = value.Int64
 			}
 		case bondshonor.FieldGameCharacterUnitId1:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id1", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId1 = int(value.Int64)
+				_m.GameCharacterUnitId1 = value.Int64
 			}
 		case bondshonor.FieldGameCharacterUnitId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id2", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId2 = int(value.Int64)
+				_m.GameCharacterUnitId2 = value.Int64
 			}
 		case bondshonor.FieldHonorRarity:
 			if value, ok := values[i].(*[]byte); !ok {

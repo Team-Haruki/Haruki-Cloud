@@ -54,7 +54,7 @@ func IDLTE(id int) predicate.Resourceboxe {
 }
 
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int) predicate.Resourceboxe {
+func GameID(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -89,42 +89,42 @@ func ResourceBoxPurposeNotNil() predicate.Resourceboxe {
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int) predicate.Resourceboxe {
+func GameIDEQ(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int) predicate.Resourceboxe {
+func GameIDNEQ(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int) predicate.Resourceboxe {
+func GameIDIn(vs ...int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int) predicate.Resourceboxe {
+func GameIDNotIn(vs ...int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int) predicate.Resourceboxe {
+func GameIDGT(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int) predicate.Resourceboxe {
+func GameIDGTE(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int) predicate.Resourceboxe {
+func GameIDLT(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int) predicate.Resourceboxe {
+func GameIDLTE(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldLTE(FieldGameID, v))
 }
 

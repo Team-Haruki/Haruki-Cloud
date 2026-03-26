@@ -17,9 +17,9 @@ type Cardcostume3D struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// CardID holds the value of the "card_id" field.
-	CardID int `json:"card_id,omitempty"`
+	CardID int64 `json:"card_id,omitempty"`
 	// Costume3DID holds the value of the "costume3_d_id" field.
-	Costume3DID int `json:"costume3_d_id,omitempty"`
+	Costume3DID int64 `json:"costume3_d_id,omitempty"`
 	// IsInitialObtainHair holds the value of the "is_initial_obtain_hair" field.
 	IsInitialObtainHair bool `json:"is_initial_obtain_hair,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -63,13 +63,13 @@ func (_m *Cardcostume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_id", values[i])
 			} else if value.Valid {
-				_m.CardID = int(value.Int64)
+				_m.CardID = value.Int64
 			}
 		case cardcostume3d.FieldCostume3DID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_id", values[i])
 			} else if value.Valid {
-				_m.Costume3DID = int(value.Int64)
+				_m.Costume3DID = value.Int64
 			}
 		case cardcostume3d.FieldIsInitialObtainHair:
 			if value, ok := values[i].(*sql.NullBool); !ok {

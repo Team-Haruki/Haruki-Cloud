@@ -274,6 +274,38 @@ func (c *CloudSource) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDiff
 	return result, nil
 }
 
+func (c *CloudSource) FindMusicDifficultiesByNoteCount(noteCount int) ([]*masterdata.MusicDifficulty, error) {
+	if noteCount <= 0 {
+		return nil, fmt.Errorf("invalid note count: %d", noteCount)
+	}
+
+	items, err := c.client.Musicdifficultie.Query().
+		Where(
+			musicdifficultie.ServerRegionEQ(c.queryRegion),
+			musicdifficultie.TotalNoteCountEQ(int64(noteCount)),
+		).
+		Order(musicdifficultie.ByMusicID(), musicdifficultie.ByPlayLevel(), musicdifficultie.ByID()).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no difficulties found for note count %d", noteCount)
+	}
+
+	result := make([]*masterdata.MusicDifficulty, 0, len(items))
+	for _, item := range items {
+		result = append(result, &masterdata.MusicDifficulty{
+			ID:              int(item.GameID),
+			MusicID:         int(item.MusicID),
+			MusicDifficulty: item.MusicDifficulty,
+			PlayLevel:       int(item.PlayLevel),
+			TotalNoteCount:  int(item.TotalNoteCount),
+		})
+	}
+	return result, nil
+}
+
 func (c *CloudSource) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error) {
 	items, err := c.client.Musicvocal.Query().
 		Where(

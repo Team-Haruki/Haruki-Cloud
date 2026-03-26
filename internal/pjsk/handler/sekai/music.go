@@ -177,11 +177,11 @@ func (sekaiHandlers) SongHandle() SekaiCommandHandler {
 func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/note-count",
 			Commands: []string{
 				"/pjsk note num", "/pjsk note count",
 				"/物量", "/查物量",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -189,7 +189,9 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, fmt.Errorf("请输入物量数值")
 			}
-			return nil, fmt.Errorf("TODO: 物量查询未实现，note_count=%d", noteCount)
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", map[string]any{
+				"note_count": noteCount,
+			}), nil
 		},
 	}
 }
@@ -219,14 +221,23 @@ func (sekaiHandlers) PlayProgressHandle() SekaiCommandHandler {
 func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/bpm",
 			Commands: []string{
 				"/pjsk bpm", "/查bpm", "/查BPM",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
-			return nil, fmt.Errorf("TODO: BPM查询未实现，query=%q", query)
+			if query == "" {
+				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")
+			}
+			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
+				ctx.SetArgs(cleaned)
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-bpm", map[string]any{
+					"difficulty": diff,
+				}), nil
+			}
+			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-bpm"), nil
 		},
 	}
 }
@@ -234,15 +245,18 @@ func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "music/cover",
 			Commands: []string{
 				"/pjsk music cover",
 				"/查曲绘", "/曲绘",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
-			return nil, fmt.Errorf("TODO: 曲绘查询未实现，query=%q", query)
+			if query == "" {
+				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")
+			}
+			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-cover"), nil
 		},
 	}
 }

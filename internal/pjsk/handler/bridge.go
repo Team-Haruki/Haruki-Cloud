@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -202,6 +203,49 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		data, err = app.Music.RenderMusicProgress(q)
 	case "music-rewards":
 		data, err = renderMusicRewards(r, app, publicProfileCard)
+	case "music-note-count":
+		q := music.NoteCountQuery{Region: r.Region}
+		mergeParams(r.Params, &q)
+		matches, resolveErr := app.Music.FindMusicChartsByNoteCount(q)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		lines := make([]string, 0, len(matches))
+		for _, item := range matches {
+			lines = append(lines, fmt.Sprintf("【%d】%s - %s %d", item.Music.ID, item.Music.Title, strings.ToUpper(item.Difficulty), item.PlayLevel))
+		}
+		return onebot11.Message{onebot11.Text(strings.Join(lines, "\n"))}, nil
+	case "music-cover":
+		q := music.Query{Query: r.Query, Region: r.Region}
+		mergeParams(r.Params, &q)
+		result, resolveErr := app.Music.ResolveMusicCover(q)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		image, imageErr := musicAssetMessage(result.JacketPath, app)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		text := fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title)
+		return append(image, onebot11.Text(text)), nil
+	case "music-bpm":
+		q := music.Query{Query: r.Query, Region: r.Region}
+		mergeParams(r.Params, &q)
+		result, resolveErr := app.Music.ResolveMusicBPM(q)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		image, imageErr := musicAssetMessage(result.JacketPath, app)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		textLines := []string{
+			fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title),
+			fmt.Sprintf("主 BPM: %s", formatMusicBPM(result.MainBPM)),
+			fmt.Sprintf("BPM 变化: %s", formatBPMEvents(result.Events)),
+			fmt.Sprintf("谱面来源: %s", strings.ToUpper(result.Difficulty)),
+		}
+		return append(image, onebot11.Text(strings.Join(textLines, "\n"))), nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported music mode %q", r.Mode)
 	}
@@ -220,6 +264,39 @@ func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp
 		return nil, err
 	}
 	return onebot11.Message{onebot11.Text(string(data))}, nil
+}
+
+func musicAssetMessage(path string, app *renderapp.App) (onebot11.Message, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return nil, fmt.Errorf("music asset path is empty")
+	}
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		return onebot11.Message{onebot11.Image(path)}, nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(data, app, BotModulePJSK)
+}
+
+func formatBPMEvents(events []music.BPMEvent) string {
+	if len(events) == 0 {
+		return "无数据"
+	}
+	parts := make([]string, 0, len(events))
+	for _, item := range events {
+		parts = append(parts, formatMusicBPM(item.BPM))
+	}
+	return strings.Join(parts, " -> ")
+}
+
+func formatMusicBPM(value float64) string {
+	if math.Abs(value-math.Round(value)) < 1e-9 {
+		return strconv.FormatInt(int64(math.Round(value)), 10)
+	}
+	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
 func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {

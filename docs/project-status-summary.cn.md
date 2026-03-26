@@ -241,7 +241,7 @@ UID xxxxxx 的注册时间
 
 ### 待完成 / 遗留
 
-- **Music 遗留功能**：BPM 查询、曲绘查询、物量统计
+- **Music 遗留功能**：目前无新增遗留，歌曲别名系统按既有实现继续维护
 
 ## 5.5 Schema 扩展 & Toolbox 路由更新（v15.0 新增）
 
@@ -439,7 +439,7 @@ ban_state              → 全平台禁用
 | **RegTime** | 注册时间查询（JP/EN + TW/KR/CN 双算法） | profile/reg-time |
 | **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
 | **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） | card/detail · list · box |
-| **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 | music · list · progress · rewards · chart |
+| **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 / 物量统计 / BPM 查询 / 曲绘查询 | music · list · progress · rewards · chart · note-count · bpm · cover |
 | **Alias** | 歌曲别名查询 / 提交审核 / 删除已审核别名 / 待审核列表 / 通过审核 / 拒绝审核 | music/alias · music/alias/add · music/alias/del · music/alias/pending · music/alias/approve · music/alias/reject |
 | **Gacha** | 卡池列表 | gacha |
 | **Deck** | 活动/挑战/长草/加成/烤森 组卡推荐 | deck/event · challenge · no-event · bonus · mysekai |
@@ -451,15 +451,13 @@ ban_state              → 全平台禁用
 | **Stamp** | 贴纸列表 | stamp |
 | **Misc** | 角色生日 | misc/birthday |
 
-> **统计**：约 70 个 handler · 15 个 module · 全部有 bridge case · 所有 enabled handler 均有 Path
+> **统计**：约 73 个 handler · 15 个 module · 全部有 bridge case · 所有 enabled handler 均有 Path
 
 ---
 
 ### 6.2 已定义但未实现（Disabled / TODO）❌
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
-
-**Music 系统（3 个）**：BPM 查询、曲绘查询、物量统计
 
 **Stamp 系统（7 个）**：贴纸制作、随机贴纸、批量刷新、底图管理
 
@@ -475,7 +473,9 @@ ban_state              → 全平台禁用
 
 **Virtual Live（1 个）**：vlive 查询
 
-> **统计**：约 22 个 handler 仍未实现
+> **统计**：约 19 个 handler 仍未实现
+
+> 备注：`BPM 查询` 依赖本地可读的谱面文件（当前实现会优先读取 `music/music_score/...` 本地资源）；如果部署环境只有远程资源而没有本地谱面缓存，会返回明确错误而不是伪造 BPM 数据。
 
 ---
 

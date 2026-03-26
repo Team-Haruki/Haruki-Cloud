@@ -9,6 +9,11 @@ type Query struct {
 	UserID     string `json:"user_id,omitempty"`
 }
 
+type NoteCountQuery struct {
+	NoteCount int    `json:"note_count"`
+	Region    string `json:"region"`
+}
+
 type ChartQuery struct {
 	Query      string `json:"query"`
 	Region     string `json:"region"`

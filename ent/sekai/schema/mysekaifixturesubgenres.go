@@ -15,7 +15,7 @@ type Mysekaifixturesubgenre struct {
 
 func (Mysekaifixturesubgenre) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.String("mysekai_fixture_sub_genre_type").Optional(),
 		field.String("assetbundle_name").Optional(),

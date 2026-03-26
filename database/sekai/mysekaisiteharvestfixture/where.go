@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiSiteHarvestFixtureTypeEQ applies the EQ predicate on the "mysekai_site_harvest_fixture_type" field.
 func MysekaiSiteHarvestFixtureTypeEQ(v string) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldMysekaiSiteHarvestFixtureType, v))

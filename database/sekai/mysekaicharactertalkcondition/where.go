@@ -108,6 +108,16 @@ func GameIDLTE(v int64) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiCharacterTalkConditionTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type" field.
 func MysekaiCharacterTalkConditionTypeIsNil() predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionType))

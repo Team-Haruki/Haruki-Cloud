@@ -26,6 +26,14 @@ func (_c *GamecharacterunitCreate) SetGameID(v int64) *GamecharacterunitCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *GamecharacterunitCreate) SetNillableGameID(v *int64) *GamecharacterunitCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetGameCharacterID sets the "game_character_id" field.
 func (_c *GamecharacterunitCreate) SetGameCharacterID(v int64) *GamecharacterunitCreate {
 	_c.mutation.SetGameCharacterID(v)
@@ -118,9 +126,6 @@ func (_c *GamecharacterunitCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *GamecharacterunitCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Gamecharacterunit.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Gamecharacterunit.server_region"`)}
 	}

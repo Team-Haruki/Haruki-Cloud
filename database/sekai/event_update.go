@@ -50,6 +50,12 @@ func (_u *EventUpdate) AddGameID(v int64) *EventUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventUpdate) ClearGameID() *EventUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetEventType sets the "event_type" field.
 func (_u *EventUpdate) SetEventType(v json.RawMessage) *EventUpdate {
 	_u.mutation.SetEventType(v)
@@ -533,6 +539,9 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(event.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(event.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.EventType(); ok {
 		_spec.SetField(event.FieldEventType, field.TypeJSON, value)
 	}
@@ -732,6 +741,12 @@ func (_u *EventUpdateOne) SetNillableGameID(v *int64) *EventUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *EventUpdateOne) AddGameID(v int64) *EventUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventUpdateOne) ClearGameID() *EventUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -1247,6 +1262,9 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(event.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(event.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventType(); ok {
 		_spec.SetField(event.FieldEventType, field.TypeJSON, value)

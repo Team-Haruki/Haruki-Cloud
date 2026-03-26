@@ -50,6 +50,12 @@ func (_u *MysekaimusicrecordUpdate) AddGameID(v int64) *MysekaimusicrecordUpdate
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimusicrecordUpdate) ClearGameID() *MysekaimusicrecordUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
 func (_u *MysekaimusicrecordUpdate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordUpdate {
 	_u.mutation.SetMysekaiMusicTrackType(v)
@@ -156,6 +162,9 @@ func (_u *MysekaimusicrecordUpdate) sqlSave(ctx context.Context) (_node int, err
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimusicrecord.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
 	}
@@ -217,6 +226,12 @@ func (_u *MysekaimusicrecordUpdateOne) SetNillableGameID(v *int64) *Mysekaimusic
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaimusicrecordUpdateOne) AddGameID(v int64) *MysekaimusicrecordUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimusicrecordUpdateOne) ClearGameID() *MysekaimusicrecordUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -355,6 +370,9 @@ func (_u *MysekaimusicrecordUpdateOne) sqlSave(ctx context.Context) (_node *Myse
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimusicrecord.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)

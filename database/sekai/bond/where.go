@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Bond {
+	return predicate.Bond(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Bond {
+	return predicate.Bond(sql.FieldNotNull(FieldGameID))
+}
+
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
 func GroupIDEQ(v int64) predicate.Bond {
 	return predicate.Bond(sql.FieldEQ(FieldGroupID, v))

@@ -50,6 +50,12 @@ func (_u *VirtualliveUpdate) AddGameID(v int64) *VirtualliveUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *VirtualliveUpdate) ClearGameID() *VirtualliveUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetVirtualLiveType sets the "virtual_live_type" field.
 func (_u *VirtualliveUpdate) SetVirtualLiveType(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveType(v)
@@ -601,6 +607,9 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(virtuallive.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
 	}
@@ -869,6 +878,12 @@ func (_u *VirtualliveUpdateOne) SetNillableGameID(v *int64) *VirtualliveUpdateOn
 // AddGameID adds value to the "game_id" field.
 func (_u *VirtualliveUpdateOne) AddGameID(v int64) *VirtualliveUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *VirtualliveUpdateOne) ClearGameID() *VirtualliveUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -1452,6 +1467,9 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(virtuallive.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)

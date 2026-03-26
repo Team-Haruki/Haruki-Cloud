@@ -50,6 +50,12 @@ func (_u *BondshonorUpdate) AddGameID(v int64) *BondshonorUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BondshonorUpdate) ClearGameID() *BondshonorUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *BondshonorUpdate) SetSeq(v int64) *BondshonorUpdate {
 	_u.mutation.ResetSeq()
@@ -335,6 +341,9 @@ func (_u *BondshonorUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(bondshonor.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(bondshonor.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(bondshonor.FieldSeq, field.TypeInt64, value)
 	}
@@ -458,6 +467,12 @@ func (_u *BondshonorUpdateOne) SetNillableGameID(v *int64) *BondshonorUpdateOne 
 // AddGameID adds value to the "game_id" field.
 func (_u *BondshonorUpdateOne) AddGameID(v int64) *BondshonorUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BondshonorUpdateOne) ClearGameID() *BondshonorUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -775,6 +790,9 @@ func (_u *BondshonorUpdateOne) sqlSave(ctx context.Context) (_node *Bondshonor, 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(bondshonor.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(bondshonor.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(bondshonor.FieldSeq, field.TypeInt64, value)

@@ -48,6 +48,12 @@ func (_u *OutsidecharacterUpdate) AddGameID(v int64) *OutsidecharacterUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *OutsidecharacterUpdate) ClearGameID() *OutsidecharacterUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *OutsidecharacterUpdate) SetSeq(v int64) *OutsidecharacterUpdate {
 	_u.mutation.ResetSeq()
@@ -156,6 +162,9 @@ func (_u *OutsidecharacterUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(outsidecharacter.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)
 	}
@@ -212,6 +221,12 @@ func (_u *OutsidecharacterUpdateOne) SetNillableGameID(v *int64) *Outsidecharact
 // AddGameID adds value to the "game_id" field.
 func (_u *OutsidecharacterUpdateOne) AddGameID(v int64) *OutsidecharacterUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *OutsidecharacterUpdateOne) ClearGameID() *OutsidecharacterUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -352,6 +367,9 @@ func (_u *OutsidecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Outsid
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(outsidecharacter.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)

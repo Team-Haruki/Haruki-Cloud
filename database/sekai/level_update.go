@@ -50,6 +50,12 @@ func (_u *LevelUpdate) AddGameID(v int64) *LevelUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *LevelUpdate) ClearGameID() *LevelUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetLevelType sets the "level_type" field.
 func (_u *LevelUpdate) SetLevelType(v json.RawMessage) *LevelUpdate {
 	_u.mutation.SetLevelType(v)
@@ -183,6 +189,9 @@ func (_u *LevelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(level.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(level.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.LevelType(); ok {
 		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
 	}
@@ -253,6 +262,12 @@ func (_u *LevelUpdateOne) SetNillableGameID(v *int64) *LevelUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *LevelUpdateOne) AddGameID(v int64) *LevelUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *LevelUpdateOne) ClearGameID() *LevelUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -418,6 +433,9 @@ func (_u *LevelUpdateOne) sqlSave(ctx context.Context) (_node *Level, err error)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(level.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(level.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.LevelType(); ok {
 		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)

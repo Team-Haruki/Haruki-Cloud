@@ -26,6 +26,14 @@ func (_c *EventexchangesummarieCreate) SetGameID(v int64) *Eventexchangesummarie
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *EventexchangesummarieCreate) SetNillableGameID(v *int64) *EventexchangesummarieCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetEventID sets the "event_id" field.
 func (_c *EventexchangesummarieCreate) SetEventID(v int64) *EventexchangesummarieCreate {
 	_c.mutation.SetEventID(v)
@@ -128,9 +136,6 @@ func (_c *EventexchangesummarieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventexchangesummarieCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventexchangesummarie.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventexchangesummarie.server_region"`)}
 	}

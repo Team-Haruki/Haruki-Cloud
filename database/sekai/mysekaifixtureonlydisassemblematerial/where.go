@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiFixtureIDEQ applies the EQ predicate on the "mysekai_fixture_id" field.
 func MysekaiFixtureIDEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiFixtureID, v))

@@ -113,6 +113,16 @@ func GameIDLTE(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldGameID))
+}
+
 // CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
 func CardRarityTypeIsNil() predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldCardRarityType))

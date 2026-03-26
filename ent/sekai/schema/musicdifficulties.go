@@ -17,7 +17,7 @@ type Musicdifficultie struct {
 
 func (Musicdifficultie) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("music_id").Optional(),
 		field.JSON("music_difficulty", json.RawMessage{}).Optional(),
 		field.Int64("play_level").Optional(),

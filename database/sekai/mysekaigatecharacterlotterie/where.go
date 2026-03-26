@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
 func MysekaiGateIDEQ(v int64) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldMysekaiGateID, v))

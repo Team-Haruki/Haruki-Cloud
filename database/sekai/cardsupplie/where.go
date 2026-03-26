@@ -113,6 +113,16 @@ func GameIDLTE(v int64) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldNotNull(FieldGameID))
+}
+
 // CardSupplyTypeEQ applies the EQ predicate on the "card_supply_type" field.
 func CardSupplyTypeEQ(v string) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldCardSupplyType, v))

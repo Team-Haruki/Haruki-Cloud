@@ -128,6 +128,16 @@ func GameIDLTE(v int64) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
 func MysekaiGateIDEQ(v int64) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateID, v))

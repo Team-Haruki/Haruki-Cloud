@@ -17,7 +17,7 @@ type Skill struct {
 
 func (Skill) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("short_description").Optional(),
 		field.String("description").Optional(),
 		field.JSON("description_sprite_name", json.RawMessage{}).Optional(),

@@ -148,6 +148,16 @@ func GameIDLTE(v int64) predicate.Area {
 	return predicate.Area(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Area {
+	return predicate.Area(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Area {
+	return predicate.Area(sql.FieldNotNull(FieldGameID))
+}
+
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.
 func AssetbundleNameEQ(v string) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldAssetbundleName, v))

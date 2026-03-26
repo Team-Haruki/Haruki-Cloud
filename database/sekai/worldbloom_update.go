@@ -50,6 +50,12 @@ func (_u *WorldbloomUpdate) AddGameID(v int64) *WorldbloomUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *WorldbloomUpdate) ClearGameID() *WorldbloomUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetEventID sets the "event_id" field.
 func (_u *WorldbloomUpdate) SetEventID(v int64) *WorldbloomUpdate {
 	_u.mutation.ResetEventID()
@@ -338,6 +344,9 @@ func (_u *WorldbloomUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(worldbloom.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(worldbloom.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(worldbloom.FieldEventID, field.TypeInt64, value)
 	}
@@ -459,6 +468,12 @@ func (_u *WorldbloomUpdateOne) SetNillableGameID(v *int64) *WorldbloomUpdateOne 
 // AddGameID adds value to the "game_id" field.
 func (_u *WorldbloomUpdateOne) AddGameID(v int64) *WorldbloomUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *WorldbloomUpdateOne) ClearGameID() *WorldbloomUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -779,6 +794,9 @@ func (_u *WorldbloomUpdateOne) sqlSave(ctx context.Context) (_node *Worldbloom, 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(worldbloom.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(worldbloom.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(worldbloom.FieldEventID, field.TypeInt64, value)

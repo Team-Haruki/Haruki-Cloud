@@ -17,7 +17,7 @@ type Stamp struct {
 
 func (Stamp) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("stamp_type", json.RawMessage{}).Optional(),
 		field.Int64("seq").Optional(),
 		field.String("name").Optional(),

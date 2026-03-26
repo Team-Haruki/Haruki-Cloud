@@ -48,6 +48,12 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) AddGameID(v int64) *Mysek
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaifixtureonlydisassemblematerialUpdate) ClearGameID() *MysekaifixtureonlydisassemblematerialUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
 func (_u *MysekaifixtureonlydisassemblematerialUpdate) SetMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialUpdate {
 	_u.mutation.ResetMysekaiFixtureID()
@@ -217,6 +223,9 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdate) sqlSave(ctx context.Conte
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiFixtureID(); ok {
 		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)
 	}
@@ -294,6 +303,12 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) SetNillableGameID(v *i
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) AddGameID(v int64) *MysekaifixtureonlydisassemblematerialUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) ClearGameID() *MysekaifixtureonlydisassemblematerialUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -495,6 +510,9 @@ func (_u *MysekaifixtureonlydisassemblematerialUpdateOne) sqlSave(ctx context.Co
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaifixtureonlydisassemblematerial.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureID(); ok {
 		_spec.SetField(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID, field.TypeInt64, value)

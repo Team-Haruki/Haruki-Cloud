@@ -128,6 +128,16 @@ func GameIDLTE(v int64) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldGameID))
+}
+
 // ShopIDEQ applies the EQ predicate on the "shop_id" field.
 func ShopIDEQ(v int64) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldShopID, v))

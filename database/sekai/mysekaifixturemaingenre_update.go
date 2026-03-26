@@ -50,6 +50,12 @@ func (_u *MysekaifixturemaingenreUpdate) AddGameID(v int64) *Mysekaifixturemaing
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaifixturemaingenreUpdate) ClearGameID() *MysekaifixturemaingenreUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *MysekaifixturemaingenreUpdate) SetName(v string) *MysekaifixturemaingenreUpdate {
 	_u.mutation.SetName(v)
@@ -196,6 +202,9 @@ func (_u *MysekaifixturemaingenreUpdate) sqlSave(ctx context.Context) (_node int
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldName, field.TypeString, value)
 	}
@@ -269,6 +278,12 @@ func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGameID(v *int64) *Mysekai
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaifixturemaingenreUpdateOne) AddGameID(v int64) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaifixturemaingenreUpdateOne) ClearGameID() *MysekaifixturemaingenreUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -447,6 +462,9 @@ func (_u *MysekaifixturemaingenreUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldName, field.TypeString, value)

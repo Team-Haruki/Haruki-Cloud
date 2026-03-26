@@ -48,6 +48,12 @@ func (_u *NgwordUpdate) AddGameID(v int64) *NgwordUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *NgwordUpdate) ClearGameID() *NgwordUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetWord sets the "word" field.
 func (_u *NgwordUpdate) SetWord(v string) *NgwordUpdate {
 	_u.mutation.SetWord(v)
@@ -129,6 +135,9 @@ func (_u *NgwordUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(ngword.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)
 	}
@@ -176,6 +185,12 @@ func (_u *NgwordUpdateOne) SetNillableGameID(v *int64) *NgwordUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *NgwordUpdateOne) AddGameID(v int64) *NgwordUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *NgwordUpdateOne) ClearGameID() *NgwordUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -289,6 +304,9 @@ func (_u *NgwordUpdateOne) sqlSave(ctx context.Context) (_node *Ngword, err erro
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(ngword.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)

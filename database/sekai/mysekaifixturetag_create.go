@@ -26,6 +26,14 @@ func (_c *MysekaifixturetagCreate) SetGameID(v int64) *MysekaifixturetagCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaifixturetagCreate) SetNillableGameID(v *int64) *MysekaifixturetagCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *MysekaifixturetagCreate) SetName(v string) *MysekaifixturetagCreate {
 	_c.mutation.SetName(v)
@@ -114,9 +122,6 @@ func (_c *MysekaifixturetagCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturetagCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturetag.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturetag.server_region"`)}
 	}

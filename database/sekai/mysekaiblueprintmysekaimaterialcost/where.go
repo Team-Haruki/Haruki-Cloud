@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiBlueprintIDEQ applies the EQ predicate on the "mysekai_blueprint_id" field.
 func MysekaiBlueprintIDEQ(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiBlueprintID, v))

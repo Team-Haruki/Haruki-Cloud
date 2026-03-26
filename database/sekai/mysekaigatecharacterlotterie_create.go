@@ -25,6 +25,14 @@ func (_c *MysekaigatecharacterlotterieCreate) SetGameID(v int64) *Mysekaigatecha
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaigatecharacterlotterieCreate) SetNillableGameID(v *int64) *MysekaigatecharacterlotterieCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
 func (_c *MysekaigatecharacterlotterieCreate) SetMysekaiGateID(v int64) *MysekaigatecharacterlotterieCreate {
 	_c.mutation.SetMysekaiGateID(v)
@@ -107,9 +115,6 @@ func (_c *MysekaigatecharacterlotterieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaigatecharacterlotterieCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaigatecharacterlotterie.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaigatecharacterlotterie.server_region"`)}
 	}

@@ -50,6 +50,12 @@ func (_u *BoostitemUpdate) AddGameID(v int64) *BoostitemUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BoostitemUpdate) ClearGameID() *BoostitemUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *BoostitemUpdate) SetSeq(v int64) *BoostitemUpdate {
 	_u.mutation.ResetSeq()
@@ -223,6 +229,9 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(boostitem.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
 	}
@@ -305,6 +314,12 @@ func (_u *BoostitemUpdateOne) SetNillableGameID(v *int64) *BoostitemUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *BoostitemUpdateOne) AddGameID(v int64) *BoostitemUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BoostitemUpdateOne) ClearGameID() *BoostitemUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -510,6 +525,9 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(boostitem.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)

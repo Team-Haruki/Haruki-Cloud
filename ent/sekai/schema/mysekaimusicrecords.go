@@ -17,7 +17,7 @@ type Mysekaimusicrecord struct {
 
 func (Mysekaimusicrecord) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("mysekai_music_track_type", json.RawMessage{}).Optional(),
 		field.Int64("external_id").Optional(),
 		field.String("server_region"),

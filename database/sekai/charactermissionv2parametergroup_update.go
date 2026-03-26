@@ -48,6 +48,12 @@ func (_u *Charactermissionv2ParametergroupUpdate) AddGameID(v int64) *Characterm
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Charactermissionv2ParametergroupUpdate) ClearGameID() *Charactermissionv2ParametergroupUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *Charactermissionv2ParametergroupUpdate) SetSeq(v int64) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetSeq()
@@ -217,6 +223,9 @@ func (_u *Charactermissionv2ParametergroupUpdate) sqlSave(ctx context.Context) (
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
 	}
@@ -294,6 +303,12 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableGameID(v *int64)
 // AddGameID adds value to the "game_id" field.
 func (_u *Charactermissionv2ParametergroupUpdateOne) AddGameID(v int64) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Charactermissionv2ParametergroupUpdateOne) ClearGameID() *Charactermissionv2ParametergroupUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -495,6 +510,9 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) sqlSave(ctx context.Context
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)

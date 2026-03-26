@@ -26,6 +26,14 @@ func (_c *StampCreate) SetGameID(v int64) *StampCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *StampCreate) SetNillableGameID(v *int64) *StampCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetStampType sets the "stamp_type" field.
 func (_c *StampCreate) SetStampType(v json.RawMessage) *StampCreate {
 	_c.mutation.SetStampType(v)
@@ -196,9 +204,6 @@ func (_c *StampCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *StampCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Stamp.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Stamp.server_region"`)}
 	}

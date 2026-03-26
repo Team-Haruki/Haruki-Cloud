@@ -17,7 +17,7 @@ type Eventitem struct {
 
 func (Eventitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.JSON("name", json.RawMessage{}).Optional(),
 		field.JSON("flavor_text", json.RawMessage{}).Optional(),

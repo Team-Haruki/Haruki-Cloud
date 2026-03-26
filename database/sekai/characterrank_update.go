@@ -50,6 +50,12 @@ func (_u *CharacterrankUpdate) AddGameID(v int64) *CharacterrankUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CharacterrankUpdate) ClearGameID() *CharacterrankUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetCharacterID sets the "character_id" field.
 func (_u *CharacterrankUpdate) SetCharacterID(v int64) *CharacterrankUpdate {
 	_u.mutation.ResetCharacterID()
@@ -282,6 +288,9 @@ func (_u *CharacterrankUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(characterrank.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.CharacterID(); ok {
 		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
 	}
@@ -390,6 +399,12 @@ func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int64) *CharacterrankUpda
 // AddGameID adds value to the "game_id" field.
 func (_u *CharacterrankUpdateOne) AddGameID(v int64) *CharacterrankUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CharacterrankUpdateOne) ClearGameID() *CharacterrankUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -654,6 +669,9 @@ func (_u *CharacterrankUpdateOne) sqlSave(ctx context.Context) (_node *Character
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(characterrank.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
 		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)

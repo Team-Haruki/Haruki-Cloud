@@ -25,6 +25,14 @@ func (_c *MysekaifixturegamecharactergroupCreate) SetGameID(v int64) *Mysekaifix
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameID(v *int64) *MysekaifixturegamecharactergroupCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetGroupID sets the "group_id" field.
 func (_c *MysekaifixturegamecharactergroupCreate) SetGroupID(v int64) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGroupID(v)
@@ -93,9 +101,6 @@ func (_c *MysekaifixturegamecharactergroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturegamecharactergroupCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturegamecharactergroup.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturegamecharactergroup.server_region"`)}
 	}

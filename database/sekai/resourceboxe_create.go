@@ -32,6 +32,14 @@ func (_c *ResourceboxeCreate) SetGameID(v int64) *ResourceboxeCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *ResourceboxeCreate) SetNillableGameID(v *int64) *ResourceboxeCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetResourceBoxType sets the "resource_box_type" field.
 func (_c *ResourceboxeCreate) SetResourceBoxType(v json.RawMessage) *ResourceboxeCreate {
 	_c.mutation.SetResourceBoxType(v)
@@ -126,9 +134,6 @@ func (_c *ResourceboxeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ResourceboxeCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Resourceboxe.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Resourceboxe.server_region"`)}
 	}

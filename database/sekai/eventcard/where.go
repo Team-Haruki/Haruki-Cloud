@@ -128,6 +128,16 @@ func GameIDLTE(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Eventcard {
+	return predicate.Eventcard(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Eventcard {
+	return predicate.Eventcard(sql.FieldNotNull(FieldGameID))
+}
+
 // CardIDEQ applies the EQ predicate on the "card_id" field.
 func CardIDEQ(v int64) predicate.Eventcard {
 	return predicate.Eventcard(sql.FieldEQ(FieldCardID, v))

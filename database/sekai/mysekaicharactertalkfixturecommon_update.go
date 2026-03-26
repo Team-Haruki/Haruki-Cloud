@@ -50,6 +50,12 @@ func (_u *MysekaicharactertalkfixturecommonUpdate) AddGameID(v int64) *Mysekaich
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkfixturecommonUpdate) ClearGameID() *MysekaicharactertalkfixturecommonUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
 func (_u *MysekaicharactertalkfixturecommonUpdate) SetGameCharacterUnitID(v int64) *MysekaicharactertalkfixturecommonUpdate {
 	_u.mutation.ResetGameCharacterUnitID()
@@ -210,6 +216,9 @@ func (_u *MysekaicharactertalkfixturecommonUpdate) sqlSave(ctx context.Context) 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
 		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt64, value)
 	}
@@ -289,6 +298,12 @@ func (_u *MysekaicharactertalkfixturecommonUpdateOne) SetNillableGameID(v *int64
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaicharactertalkfixturecommonUpdateOne) AddGameID(v int64) *MysekaicharactertalkfixturecommonUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkfixturecommonUpdateOne) ClearGameID() *MysekaicharactertalkfixturecommonUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -481,6 +496,9 @@ func (_u *MysekaicharactertalkfixturecommonUpdateOne) sqlSave(ctx context.Contex
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
 		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt64, value)

@@ -48,6 +48,12 @@ func (_u *CheerfulcarnivalteamUpdate) AddGameID(v int64) *CheerfulcarnivalteamUp
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CheerfulcarnivalteamUpdate) ClearGameID() *CheerfulcarnivalteamUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetEventID sets the "event_id" field.
 func (_u *CheerfulcarnivalteamUpdate) SetEventID(v int64) *CheerfulcarnivalteamUpdate {
 	_u.mutation.ResetEventID()
@@ -203,6 +209,9 @@ func (_u *CheerfulcarnivalteamUpdate) sqlSave(ctx context.Context) (_node int, e
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
 	}
@@ -274,6 +283,12 @@ func (_u *CheerfulcarnivalteamUpdateOne) SetNillableGameID(v *int64) *Cheerfulca
 // AddGameID adds value to the "game_id" field.
 func (_u *CheerfulcarnivalteamUpdateOne) AddGameID(v int64) *CheerfulcarnivalteamUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CheerfulcarnivalteamUpdateOne) ClearGameID() *CheerfulcarnivalteamUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -461,6 +476,9 @@ func (_u *CheerfulcarnivalteamUpdateOne) sqlSave(ctx context.Context) (_node *Ch
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)

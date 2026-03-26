@@ -48,6 +48,12 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) AddGameID(v int64) *Mysekaiphen
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiphenomenabackgroundcolorUpdate) ClearGameID() *MysekaiphenomenabackgroundcolorUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetBaseColor sets the "base_color" field.
 func (_u *MysekaiphenomenabackgroundcolorUpdate) SetBaseColor(v string) *MysekaiphenomenabackgroundcolorUpdate {
 	_u.mutation.SetBaseColor(v)
@@ -209,6 +215,9 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) sqlSave(ctx context.Context) (_
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)
 	}
@@ -280,6 +289,12 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int64) 
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaiphenomenabackgroundcolorUpdateOne) AddGameID(v int64) *MysekaiphenomenabackgroundcolorUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) ClearGameID() *MysekaiphenomenabackgroundcolorUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -473,6 +488,9 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) sqlSave(ctx context.Context)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)

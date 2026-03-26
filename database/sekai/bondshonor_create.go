@@ -26,6 +26,14 @@ func (_c *BondshonorCreate) SetGameID(v int64) *BondshonorCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *BondshonorCreate) SetNillableGameID(v *int64) *BondshonorCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetSeq sets the "seq" field.
 func (_c *BondshonorCreate) SetSeq(v int64) *BondshonorCreate {
 	_c.mutation.SetSeq(v)
@@ -190,9 +198,6 @@ func (_c *BondshonorCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BondshonorCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Bondshonor.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Bondshonor.server_region"`)}
 	}

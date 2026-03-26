@@ -369,10 +369,24 @@ func (m *AreaMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *AreaMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[area.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *AreaMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[area.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *AreaMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, area.FieldGameID)
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
@@ -1656,6 +1670,9 @@ func (m *AreaMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *AreaMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(area.FieldGameID) {
+		fields = append(fields, area.FieldGameID)
+	}
 	if m.FieldCleared(area.FieldAssetbundleName) {
 		fields = append(fields, area.FieldAssetbundleName)
 	}
@@ -1712,6 +1729,9 @@ func (m *AreaMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *AreaMutation) ClearField(name string) error {
 	switch name {
+	case area.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case area.FieldAssetbundleName:
 		m.ClearAssetbundleName()
 		return nil
@@ -2032,10 +2052,24 @@ func (m *AreaitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *AreaitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[areaitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *AreaitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[areaitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *AreaitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, areaitem.FieldGameID)
 }
 
 // SetAreaID sets the "area_id" field.
@@ -2572,6 +2606,9 @@ func (m *AreaitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *AreaitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(areaitem.FieldGameID) {
+		fields = append(fields, areaitem.FieldGameID)
+	}
 	if m.FieldCleared(areaitem.FieldAreaID) {
 		fields = append(fields, areaitem.FieldAreaID)
 	}
@@ -2601,6 +2638,9 @@ func (m *AreaitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *AreaitemMutation) ClearField(name string) error {
 	switch name {
+	case areaitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case areaitem.FieldAreaID:
 		m.ClearAreaID()
 		return nil
@@ -4414,10 +4454,24 @@ func (m *BondMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *BondMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[bond.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *BondMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[bond.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *BondMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, bond.FieldGameID)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -4878,6 +4932,9 @@ func (m *BondMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BondMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(bond.FieldGameID) {
+		fields = append(fields, bond.FieldGameID)
+	}
 	if m.FieldCleared(bond.FieldGroupID) {
 		fields = append(fields, bond.FieldGroupID)
 	}
@@ -4901,6 +4958,9 @@ func (m *BondMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BondMutation) ClearField(name string) error {
 	switch name {
+	case bond.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case bond.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -5164,10 +5224,24 @@ func (m *BondshonorMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *BondshonorMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[bondshonor.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *BondshonorMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[bondshonor.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *BondshonorMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, bondshonor.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -6134,6 +6208,9 @@ func (m *BondshonorMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BondshonorMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(bondshonor.FieldGameID) {
+		fields = append(fields, bondshonor.FieldGameID)
+	}
 	if m.FieldCleared(bondshonor.FieldSeq) {
 		fields = append(fields, bondshonor.FieldSeq)
 	}
@@ -6178,6 +6255,9 @@ func (m *BondshonorMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BondshonorMutation) ClearField(name string) error {
 	switch name {
+	case bondshonor.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case bondshonor.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -6475,10 +6555,24 @@ func (m *BoostitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *BoostitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[boostitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *BoostitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[boostitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *BoostitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, boostitem.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -7048,6 +7142,9 @@ func (m *BoostitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BoostitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(boostitem.FieldGameID) {
+		fields = append(fields, boostitem.FieldGameID)
+	}
 	if m.FieldCleared(boostitem.FieldSeq) {
 		fields = append(fields, boostitem.FieldSeq)
 	}
@@ -7077,6 +7174,9 @@ func (m *BoostitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BoostitemMutation) ClearField(name string) error {
 	switch name {
+	case boostitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case boostitem.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -7381,10 +7481,24 @@ func (m *CardMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CardMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[card.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CardMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[card.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CardMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, card.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -9639,6 +9753,9 @@ func (m *CardMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *CardMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(card.FieldGameID) {
+		fields = append(fields, card.FieldGameID)
+	}
 	if m.FieldCleared(card.FieldSeq) {
 		fields = append(fields, card.FieldSeq)
 	}
@@ -9728,6 +9845,9 @@ func (m *CardMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CardMutation) ClearField(name string) error {
 	switch name {
+	case card.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case card.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -10747,10 +10867,24 @@ func (m *CardepisodeMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CardepisodeMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[cardepisode.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CardepisodeMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[cardepisode.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CardepisodeMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, cardepisode.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -11925,6 +12059,9 @@ func (m *CardepisodeMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *CardepisodeMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(cardepisode.FieldGameID) {
+		fields = append(fields, cardepisode.FieldGameID)
+	}
 	if m.FieldCleared(cardepisode.FieldSeq) {
 		fields = append(fields, cardepisode.FieldSeq)
 	}
@@ -11975,6 +12112,9 @@ func (m *CardepisodeMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CardepisodeMutation) ClearField(name string) error {
 	switch name {
+	case cardepisode.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case cardepisode.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -12283,10 +12423,24 @@ func (m *CardmysekaicanvasbonuseMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CardmysekaicanvasbonuseMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[cardmysekaicanvasbonuse.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CardmysekaicanvasbonuseMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[cardmysekaicanvasbonuse.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CardmysekaicanvasbonuseMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, cardmysekaicanvasbonuse.FieldGameID)
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
@@ -12810,6 +12964,9 @@ func (m *CardmysekaicanvasbonuseMutation) AddField(name string, value ent.Value)
 // mutation.
 func (m *CardmysekaicanvasbonuseMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(cardmysekaicanvasbonuse.FieldGameID) {
+		fields = append(fields, cardmysekaicanvasbonuse.FieldGameID)
+	}
 	if m.FieldCleared(cardmysekaicanvasbonuse.FieldCardRarityType) {
 		fields = append(fields, cardmysekaicanvasbonuse.FieldCardRarityType)
 	}
@@ -12836,6 +12993,9 @@ func (m *CardmysekaicanvasbonuseMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CardmysekaicanvasbonuseMutation) ClearField(name string) error {
 	switch name {
+	case cardmysekaicanvasbonuse.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case cardmysekaicanvasbonuse.FieldCardRarityType:
 		m.ClearCardRarityType()
 		return nil
@@ -13924,10 +14084,24 @@ func (m *CardsupplieMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CardsupplieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[cardsupplie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CardsupplieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[cardsupplie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CardsupplieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, cardsupplie.FieldGameID)
 }
 
 // SetCardSupplyType sets the "card_supply_type" field.
@@ -14226,6 +14400,9 @@ func (m *CardsupplieMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *CardsupplieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(cardsupplie.FieldGameID) {
+		fields = append(fields, cardsupplie.FieldGameID)
+	}
 	if m.FieldCleared(cardsupplie.FieldCardSupplyType) {
 		fields = append(fields, cardsupplie.FieldCardSupplyType)
 	}
@@ -14246,6 +14423,9 @@ func (m *CardsupplieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CardsupplieMutation) ClearField(name string) error {
 	switch name {
+	case cardsupplie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case cardsupplie.FieldCardSupplyType:
 		m.ClearCardSupplyType()
 		return nil
@@ -14493,10 +14673,24 @@ func (m *ChallengelivehighscorerewardMutation) AddedGameID() (r int64, exists bo
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *ChallengelivehighscorerewardMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[challengelivehighscorereward.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *ChallengelivehighscorerewardMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[challengelivehighscorereward.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *ChallengelivehighscorerewardMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, challengelivehighscorereward.FieldGameID)
 }
 
 // SetCharacterID sets the "character_id" field.
@@ -14957,6 +15151,9 @@ func (m *ChallengelivehighscorerewardMutation) AddField(name string, value ent.V
 // mutation.
 func (m *ChallengelivehighscorerewardMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(challengelivehighscorereward.FieldGameID) {
+		fields = append(fields, challengelivehighscorereward.FieldGameID)
+	}
 	if m.FieldCleared(challengelivehighscorereward.FieldCharacterID) {
 		fields = append(fields, challengelivehighscorereward.FieldCharacterID)
 	}
@@ -14980,6 +15177,9 @@ func (m *ChallengelivehighscorerewardMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ChallengelivehighscorerewardMutation) ClearField(name string) error {
 	switch name {
+	case challengelivehighscorereward.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case challengelivehighscorereward.FieldCharacterID:
 		m.ClearCharacterID()
 		return nil
@@ -15238,10 +15438,24 @@ func (m *Character2DMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *Character2DMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[character2d.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *Character2DMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[character2d.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *Character2DMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, character2d.FieldGameID)
 }
 
 // SetCharacterType sets the "character_type" field.
@@ -15936,6 +16150,9 @@ func (m *Character2DMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *Character2DMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(character2d.FieldGameID) {
+		fields = append(fields, character2d.FieldGameID)
+	}
 	if m.FieldCleared(character2d.FieldCharacterType) {
 		fields = append(fields, character2d.FieldCharacterType)
 	}
@@ -15971,6 +16188,9 @@ func (m *Character2DMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *Character2DMutation) ClearField(name string) error {
 	switch name {
+	case character2d.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case character2d.FieldCharacterType:
 		m.ClearCharacterType()
 		return nil
@@ -16250,10 +16470,24 @@ func (m *Charactermissionv2ParametergroupMutation) AddedGameID() (r int64, exist
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *Charactermissionv2ParametergroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[charactermissionv2parametergroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *Charactermissionv2ParametergroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[charactermissionv2parametergroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *Charactermissionv2ParametergroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, charactermissionv2parametergroup.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -16810,6 +17044,9 @@ func (m *Charactermissionv2ParametergroupMutation) AddField(name string, value e
 // mutation.
 func (m *Charactermissionv2ParametergroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(charactermissionv2parametergroup.FieldGameID) {
+		fields = append(fields, charactermissionv2parametergroup.FieldGameID)
+	}
 	if m.FieldCleared(charactermissionv2parametergroup.FieldSeq) {
 		fields = append(fields, charactermissionv2parametergroup.FieldSeq)
 	}
@@ -16836,6 +17073,9 @@ func (m *Charactermissionv2ParametergroupMutation) FieldCleared(name string) boo
 // error if the field is not defined in the schema.
 func (m *Charactermissionv2ParametergroupMutation) ClearField(name string) error {
 	switch name {
+	case charactermissionv2parametergroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case charactermissionv2parametergroup.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -17103,10 +17343,24 @@ func (m *CharacterrankMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CharacterrankMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[characterrank.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CharacterrankMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[characterrank.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CharacterrankMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, characterrank.FieldGameID)
 }
 
 // SetCharacterID sets the "character_id" field.
@@ -17917,6 +18171,9 @@ func (m *CharacterrankMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *CharacterrankMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(characterrank.FieldGameID) {
+		fields = append(fields, characterrank.FieldGameID)
+	}
 	if m.FieldCleared(characterrank.FieldCharacterID) {
 		fields = append(fields, characterrank.FieldCharacterID)
 	}
@@ -17952,6 +18209,9 @@ func (m *CharacterrankMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CharacterrankMutation) ClearField(name string) error {
 	switch name {
+	case characterrank.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case characterrank.FieldCharacterID:
 		m.ClearCharacterID()
 		return nil
@@ -18229,10 +18489,24 @@ func (m *CheerfulcarnivalteamMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *CheerfulcarnivalteamMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[cheerfulcarnivalteam.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CheerfulcarnivalteamMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[cheerfulcarnivalteam.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *CheerfulcarnivalteamMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, cheerfulcarnivalteam.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -18723,6 +18997,9 @@ func (m *CheerfulcarnivalteamMutation) AddField(name string, value ent.Value) er
 // mutation.
 func (m *CheerfulcarnivalteamMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(cheerfulcarnivalteam.FieldGameID) {
+		fields = append(fields, cheerfulcarnivalteam.FieldGameID)
+	}
 	if m.FieldCleared(cheerfulcarnivalteam.FieldEventID) {
 		fields = append(fields, cheerfulcarnivalteam.FieldEventID)
 	}
@@ -18749,6 +19026,9 @@ func (m *CheerfulcarnivalteamMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *CheerfulcarnivalteamMutation) ClearField(name string) error {
 	switch name {
+	case cheerfulcarnivalteam.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case cheerfulcarnivalteam.FieldEventID:
 		m.ClearEventID()
 		return nil
@@ -19027,10 +19307,24 @@ func (m *Costume3DMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *Costume3DMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[costume3d.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *Costume3DMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[costume3d.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *Costume3DMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, costume3d.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -20410,6 +20704,9 @@ func (m *Costume3DMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *Costume3DMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(costume3d.FieldGameID) {
+		fields = append(fields, costume3d.FieldGameID)
+	}
 	if m.FieldCleared(costume3d.FieldSeq) {
 		fields = append(fields, costume3d.FieldSeq)
 	}
@@ -20469,6 +20766,9 @@ func (m *Costume3DMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *Costume3DMutation) ClearField(name string) error {
 	switch name {
+	case costume3d.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case costume3d.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -20820,10 +21120,24 @@ func (m *EventMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[event.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, event.FieldGameID)
 }
 
 // SetEventType sets the "event_type" field.
@@ -22524,6 +22838,9 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(event.FieldGameID) {
+		fields = append(fields, event.FieldGameID)
+	}
 	if m.FieldCleared(event.FieldEventType) {
 		fields = append(fields, event.FieldEventType)
 	}
@@ -22592,6 +22909,9 @@ func (m *EventMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventMutation) ClearField(name string) error {
 	switch name {
+	case event.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case event.FieldEventType:
 		m.ClearEventType()
 		return nil
@@ -22938,10 +23258,24 @@ func (m *EventcardMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventcardMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventcard.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventcardMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventcard.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventcardMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventcard.FieldGameID)
 }
 
 // SetCardID sets the "card_id" field.
@@ -23561,6 +23895,9 @@ func (m *EventcardMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventcardMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventcard.FieldGameID) {
+		fields = append(fields, eventcard.FieldGameID)
+	}
 	if m.FieldCleared(eventcard.FieldCardID) {
 		fields = append(fields, eventcard.FieldCardID)
 	}
@@ -23590,6 +23927,9 @@ func (m *EventcardMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventcardMutation) ClearField(name string) error {
 	switch name {
+	case eventcard.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventcard.FieldCardID:
 		m.ClearCardID()
 		return nil
@@ -23857,10 +24197,24 @@ func (m *EventdeckbonuseMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventdeckbonuseMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventdeckbonuse.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventdeckbonuseMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventdeckbonuse.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventdeckbonuseMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventdeckbonuse.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -24400,6 +24754,9 @@ func (m *EventdeckbonuseMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventdeckbonuseMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventdeckbonuse.FieldGameID) {
+		fields = append(fields, eventdeckbonuse.FieldGameID)
+	}
 	if m.FieldCleared(eventdeckbonuse.FieldEventID) {
 		fields = append(fields, eventdeckbonuse.FieldEventID)
 	}
@@ -24426,6 +24783,9 @@ func (m *EventdeckbonuseMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventdeckbonuseMutation) ClearField(name string) error {
 	switch name {
+	case eventdeckbonuse.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventdeckbonuse.FieldEventID:
 		m.ClearEventID()
 		return nil
@@ -24688,10 +25048,24 @@ func (m *EventexchangesummarieMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventexchangesummarieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventexchangesummarie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventexchangesummarieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventexchangesummarie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventexchangesummarieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventexchangesummarie.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -25294,6 +25668,9 @@ func (m *EventexchangesummarieMutation) AddField(name string, value ent.Value) e
 // mutation.
 func (m *EventexchangesummarieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventexchangesummarie.FieldGameID) {
+		fields = append(fields, eventexchangesummarie.FieldGameID)
+	}
 	if m.FieldCleared(eventexchangesummarie.FieldEventID) {
 		fields = append(fields, eventexchangesummarie.FieldEventID)
 	}
@@ -25323,6 +25700,9 @@ func (m *EventexchangesummarieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventexchangesummarieMutation) ClearField(name string) error {
 	switch name {
+	case eventexchangesummarie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventexchangesummarie.FieldEventID:
 		m.ClearEventID()
 		return nil
@@ -25591,10 +25971,24 @@ func (m *EventitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventitem.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -26180,6 +26574,9 @@ func (m *EventitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventitem.FieldGameID) {
+		fields = append(fields, eventitem.FieldGameID)
+	}
 	if m.FieldCleared(eventitem.FieldEventID) {
 		fields = append(fields, eventitem.FieldEventID)
 	}
@@ -26209,6 +26606,9 @@ func (m *EventitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventitemMutation) ClearField(name string) error {
 	switch name {
+	case eventitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventitem.FieldEventID:
 		m.ClearEventID()
 		return nil
@@ -27234,10 +27634,24 @@ func (m *EventraritybonusrateMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventraritybonusrateMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventraritybonusrate.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventraritybonusrateMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventraritybonusrate.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventraritybonusrateMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventraritybonusrate.FieldGameID)
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
@@ -27681,6 +28095,9 @@ func (m *EventraritybonusrateMutation) AddField(name string, value ent.Value) er
 // mutation.
 func (m *EventraritybonusrateMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventraritybonusrate.FieldGameID) {
+		fields = append(fields, eventraritybonusrate.FieldGameID)
+	}
 	if m.FieldCleared(eventraritybonusrate.FieldCardRarityType) {
 		fields = append(fields, eventraritybonusrate.FieldCardRarityType)
 	}
@@ -27704,6 +28121,9 @@ func (m *EventraritybonusrateMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventraritybonusrateMutation) ClearField(name string) error {
 	switch name {
+	case eventraritybonusrate.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventraritybonusrate.FieldCardRarityType:
 		m.ClearCardRarityType()
 		return nil
@@ -27959,10 +28379,24 @@ func (m *EventstorieMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventstorieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventstorie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventstorieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventstorie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventstorieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventstorie.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -28532,6 +28966,9 @@ func (m *EventstorieMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventstorieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventstorie.FieldGameID) {
+		fields = append(fields, eventstorie.FieldGameID)
+	}
 	if m.FieldCleared(eventstorie.FieldEventID) {
 		fields = append(fields, eventstorie.FieldEventID)
 	}
@@ -28561,6 +28998,9 @@ func (m *EventstorieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventstorieMutation) ClearField(name string) error {
 	switch name {
+	case eventstorie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventstorie.FieldEventID:
 		m.ClearEventID()
 		return nil
@@ -28828,10 +29268,24 @@ func (m *EventstoryunitMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *EventstoryunitMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[eventstoryunit.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *EventstoryunitMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[eventstoryunit.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *EventstoryunitMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, eventstoryunit.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -29354,6 +29808,9 @@ func (m *EventstoryunitMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventstoryunitMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(eventstoryunit.FieldGameID) {
+		fields = append(fields, eventstoryunit.FieldGameID)
+	}
 	if m.FieldCleared(eventstoryunit.FieldSeq) {
 		fields = append(fields, eventstoryunit.FieldSeq)
 	}
@@ -29380,6 +29837,9 @@ func (m *EventstoryunitMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventstoryunitMutation) ClearField(name string) error {
 	switch name {
+	case eventstoryunit.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case eventstoryunit.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -29678,10 +30138,24 @@ func (m *GachaMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *GachaMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[gacha.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *GachaMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[gacha.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *GachaMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, gacha.FieldGameID)
 }
 
 // SetGachaType sets the "gacha_type" field.
@@ -31940,6 +32414,9 @@ func (m *GachaMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *GachaMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(gacha.FieldGameID) {
+		fields = append(fields, gacha.FieldGameID)
+	}
 	if m.FieldCleared(gacha.FieldGachaType) {
 		fields = append(fields, gacha.FieldGachaType)
 	}
@@ -32026,6 +32503,9 @@ func (m *GachaMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GachaMutation) ClearField(name string) error {
 	switch name {
+	case gacha.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case gacha.FieldGachaType:
 		m.ClearGachaType()
 		return nil
@@ -32408,10 +32888,24 @@ func (m *GachaceilitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *GachaceilitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[gachaceilitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *GachaceilitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[gachaceilitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *GachaceilitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, gachaceilitem.FieldGameID)
 }
 
 // SetGachaID sets the "gacha_id" field.
@@ -33014,6 +33508,9 @@ func (m *GachaceilitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *GachaceilitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(gachaceilitem.FieldGameID) {
+		fields = append(fields, gachaceilitem.FieldGameID)
+	}
 	if m.FieldCleared(gachaceilitem.FieldGachaID) {
 		fields = append(fields, gachaceilitem.FieldGachaID)
 	}
@@ -33043,6 +33540,9 @@ func (m *GachaceilitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GachaceilitemMutation) ClearField(name string) error {
 	switch name {
+	case gachaceilitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case gachaceilitem.FieldGachaID:
 		m.ClearGachaID()
 		return nil
@@ -33306,10 +33806,24 @@ func (m *GachaticketMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *GachaticketMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[gachaticket.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *GachaticketMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[gachaticket.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *GachaticketMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, gachaticket.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -33687,6 +34201,9 @@ func (m *GachaticketMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *GachaticketMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(gachaticket.FieldGameID) {
+		fields = append(fields, gachaticket.FieldGameID)
+	}
 	if m.FieldCleared(gachaticket.FieldName) {
 		fields = append(fields, gachaticket.FieldName)
 	}
@@ -33710,6 +34227,9 @@ func (m *GachaticketMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GachaticketMutation) ClearField(name string) error {
 	switch name {
+	case gachaticket.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case gachaticket.FieldName:
 		m.ClearName()
 		return nil
@@ -33982,10 +34502,24 @@ func (m *GamecharacterMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *GamecharacterMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[gamecharacter.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *GamecharacterMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[gamecharacter.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *GamecharacterMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, gamecharacter.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -35378,6 +35912,9 @@ func (m *GamecharacterMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *GamecharacterMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(gamecharacter.FieldGameID) {
+		fields = append(fields, gamecharacter.FieldGameID)
+	}
 	if m.FieldCleared(gamecharacter.FieldSeq) {
 		fields = append(fields, gamecharacter.FieldSeq)
 	}
@@ -35440,6 +35977,9 @@ func (m *GamecharacterMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GamecharacterMutation) ClearField(name string) error {
 	switch name {
+	case gamecharacter.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case gamecharacter.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -35776,10 +36316,24 @@ func (m *GamecharacterunitMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *GamecharacterunitMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[gamecharacterunit.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *GamecharacterunitMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[gamecharacterunit.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *GamecharacterunitMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, gamecharacterunit.FieldGameID)
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
@@ -36427,6 +36981,9 @@ func (m *GamecharacterunitMutation) AddField(name string, value ent.Value) error
 // mutation.
 func (m *GamecharacterunitMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(gamecharacterunit.FieldGameID) {
+		fields = append(fields, gamecharacterunit.FieldGameID)
+	}
 	if m.FieldCleared(gamecharacterunit.FieldGameCharacterID) {
 		fields = append(fields, gamecharacterunit.FieldGameCharacterID)
 	}
@@ -36459,6 +37016,9 @@ func (m *GamecharacterunitMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GamecharacterunitMutation) ClearField(name string) error {
 	switch name {
+	case gamecharacterunit.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case gamecharacterunit.FieldGameCharacterID:
 		m.ClearGameCharacterID()
 		return nil
@@ -36739,10 +37299,24 @@ func (m *HonorMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *HonorMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[honor.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *HonorMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[honor.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *HonorMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, honor.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -37646,6 +38220,9 @@ func (m *HonorMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *HonorMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(honor.FieldGameID) {
+		fields = append(fields, honor.FieldGameID)
+	}
 	if m.FieldCleared(honor.FieldSeq) {
 		fields = append(fields, honor.FieldSeq)
 	}
@@ -37687,6 +38264,9 @@ func (m *HonorMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *HonorMutation) ClearField(name string) error {
 	switch name {
+	case honor.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case honor.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -37976,10 +38556,24 @@ func (m *HonorgroupMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *HonorgroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[honorgroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *HonorgroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[honorgroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *HonorgroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, honorgroup.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -38483,6 +39077,9 @@ func (m *HonorgroupMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *HonorgroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(honorgroup.FieldGameID) {
+		fields = append(fields, honorgroup.FieldGameID)
+	}
 	if m.FieldCleared(honorgroup.FieldName) {
 		fields = append(fields, honorgroup.FieldName)
 	}
@@ -38512,6 +39109,9 @@ func (m *HonorgroupMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *HonorgroupMutation) ClearField(name string) error {
 	switch name {
+	case honorgroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case honorgroup.FieldName:
 		m.ClearName()
 		return nil
@@ -38777,10 +39377,24 @@ func (m *LevelMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *LevelMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[level.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *LevelMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[level.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *LevelMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, level.FieldGameID)
 }
 
 // SetLevelType sets the "level_type" field.
@@ -39224,6 +39838,9 @@ func (m *LevelMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *LevelMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(level.FieldGameID) {
+		fields = append(fields, level.FieldGameID)
+	}
 	if m.FieldCleared(level.FieldLevelType) {
 		fields = append(fields, level.FieldLevelType)
 	}
@@ -39247,6 +39864,9 @@ func (m *LevelMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *LevelMutation) ClearField(name string) error {
 	switch name {
+	case level.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case level.FieldLevelType:
 		m.ClearLevelType()
 		return nil
@@ -39500,10 +40120,24 @@ func (m *LimitedtimemusicMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *LimitedtimemusicMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[limitedtimemusic.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *LimitedtimemusicMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[limitedtimemusic.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *LimitedtimemusicMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, limitedtimemusic.FieldGameID)
 }
 
 // SetMusicID sets the "music_id" field.
@@ -39964,6 +40598,9 @@ func (m *LimitedtimemusicMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *LimitedtimemusicMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(limitedtimemusic.FieldGameID) {
+		fields = append(fields, limitedtimemusic.FieldGameID)
+	}
 	if m.FieldCleared(limitedtimemusic.FieldMusicID) {
 		fields = append(fields, limitedtimemusic.FieldMusicID)
 	}
@@ -39987,6 +40624,9 @@ func (m *LimitedtimemusicMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *LimitedtimemusicMutation) ClearField(name string) error {
 	switch name {
+	case limitedtimemusic.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case limitedtimemusic.FieldMusicID:
 		m.ClearMusicID()
 		return nil
@@ -41405,10 +42045,24 @@ func (m *MusicMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusicMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[music.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusicMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[music.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MusicMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, music.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -43282,6 +43936,9 @@ func (m *MusicMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MusicMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(music.FieldGameID) {
+		fields = append(fields, music.FieldGameID)
+	}
 	if m.FieldCleared(music.FieldSeq) {
 		fields = append(fields, music.FieldSeq)
 	}
@@ -43359,6 +44016,9 @@ func (m *MusicMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MusicMutation) ClearField(name string) error {
 	switch name {
+	case music.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case music.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -43716,10 +44376,24 @@ func (m *MusicArtistMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusicArtistMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[musicartist.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusicArtistMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[musicartist.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MusicArtistMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, musicartist.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -44018,6 +44692,9 @@ func (m *MusicArtistMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MusicArtistMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(musicartist.FieldGameID) {
+		fields = append(fields, musicartist.FieldGameID)
+	}
 	if m.FieldCleared(musicartist.FieldName) {
 		fields = append(fields, musicartist.FieldName)
 	}
@@ -44038,6 +44715,9 @@ func (m *MusicArtistMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MusicArtistMutation) ClearField(name string) error {
 	switch name {
+	case musicartist.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case musicartist.FieldName:
 		m.ClearName()
 		return nil
@@ -44289,10 +44969,24 @@ func (m *MusicdifficultieMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusicdifficultieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[musicdifficultie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusicdifficultieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[musicdifficultie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MusicdifficultieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, musicdifficultie.FieldGameID)
 }
 
 // SetMusicID sets the "music_id" field.
@@ -44928,6 +45622,9 @@ func (m *MusicdifficultieMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *MusicdifficultieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(musicdifficultie.FieldGameID) {
+		fields = append(fields, musicdifficultie.FieldGameID)
+	}
 	if m.FieldCleared(musicdifficultie.FieldMusicID) {
 		fields = append(fields, musicdifficultie.FieldMusicID)
 	}
@@ -44957,6 +45654,9 @@ func (m *MusicdifficultieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MusicdifficultieMutation) ClearField(name string) error {
 	switch name {
+	case musicdifficultie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case musicdifficultie.FieldMusicID:
 		m.ClearMusicID()
 		return nil
@@ -45222,10 +45922,24 @@ func (m *MusictagMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusictagMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[musictag.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusictagMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[musictag.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MusictagMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, musictag.FieldGameID)
 }
 
 // SetMusicID sets the "music_id" field.
@@ -45669,6 +46383,9 @@ func (m *MusictagMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MusictagMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(musictag.FieldGameID) {
+		fields = append(fields, musictag.FieldGameID)
+	}
 	if m.FieldCleared(musictag.FieldMusicID) {
 		fields = append(fields, musictag.FieldMusicID)
 	}
@@ -45692,6 +46409,9 @@ func (m *MusictagMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MusictagMutation) ClearField(name string) error {
 	switch name {
+	case musictag.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case musictag.FieldMusicID:
 		m.ClearMusicID()
 		return nil
@@ -45957,10 +46677,24 @@ func (m *MusicvocalMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusicvocalMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[musicvocal.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusicvocalMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[musicvocal.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MusicvocalMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, musicvocal.FieldGameID)
 }
 
 // SetMusicID sets the "music_id" field.
@@ -46976,6 +47710,9 @@ func (m *MusicvocalMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MusicvocalMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(musicvocal.FieldGameID) {
+		fields = append(fields, musicvocal.FieldGameID)
+	}
 	if m.FieldCleared(musicvocal.FieldMusicID) {
 		fields = append(fields, musicvocal.FieldMusicID)
 	}
@@ -47020,6 +47757,9 @@ func (m *MusicvocalMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MusicvocalMutation) ClearField(name string) error {
 	switch name {
+	case musicvocal.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case musicvocal.FieldMusicID:
 		m.ClearMusicID()
 		return nil
@@ -47318,10 +48058,24 @@ func (m *MysekaiblueprintMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiblueprintMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiblueprint.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiblueprintMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiblueprint.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaiblueprintMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiblueprint.FieldGameID)
 }
 
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
@@ -47954,6 +48708,9 @@ func (m *MysekaiblueprintMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *MysekaiblueprintMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaiblueprint.FieldGameID) {
+		fields = append(fields, mysekaiblueprint.FieldGameID)
+	}
 	if m.FieldCleared(mysekaiblueprint.FieldMysekaiCraftType) {
 		fields = append(fields, mysekaiblueprint.FieldMysekaiCraftType)
 	}
@@ -47986,6 +48743,9 @@ func (m *MysekaiblueprintMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaiblueprintMutation) ClearField(name string) error {
 	switch name {
+	case mysekaiblueprint.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaiblueprint.FieldMysekaiCraftType:
 		m.ClearMysekaiCraftType()
 		return nil
@@ -48261,10 +49021,24 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddedGameID() (r int64, ex
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiblueprintmysekaimaterialcostMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiblueprintmysekaimaterialcost.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiblueprintmysekaimaterialcostMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiblueprintmysekaimaterialcost.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiblueprintmysekaimaterialcost.FieldGameID)
 }
 
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
@@ -48900,6 +49674,9 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) AddField(name string, valu
 // mutation.
 func (m *MysekaiblueprintmysekaimaterialcostMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaiblueprintmysekaimaterialcost.FieldGameID) {
+		fields = append(fields, mysekaiblueprintmysekaimaterialcost.FieldGameID)
+	}
 	if m.FieldCleared(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID) {
 		fields = append(fields, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID)
 	}
@@ -48929,6 +49706,9 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) FieldCleared(name string) 
 // error if the field is not defined in the schema.
 func (m *MysekaiblueprintmysekaimaterialcostMutation) ClearField(name string) error {
 	switch name {
+	case mysekaiblueprintmysekaimaterialcost.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID:
 		m.ClearMysekaiBlueprintID()
 		return nil
@@ -49202,10 +49982,24 @@ func (m *MysekaicharactertalkMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaicharactertalkMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaicharactertalk.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaicharactertalkMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaicharactertalk.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaicharactertalkMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaicharactertalk.FieldGameID)
 }
 
 // SetMysekaiGameCharacterUnitGroupID sets the "mysekai_game_character_unit_group_id" field.
@@ -50063,6 +50857,9 @@ func (m *MysekaicharactertalkMutation) AddField(name string, value ent.Value) er
 // mutation.
 func (m *MysekaicharactertalkMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaicharactertalk.FieldGameID) {
+		fields = append(fields, mysekaicharactertalk.FieldGameID)
+	}
 	if m.FieldCleared(mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID) {
 		fields = append(fields, mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID)
 	}
@@ -50101,6 +50898,9 @@ func (m *MysekaicharactertalkMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaicharactertalkMutation) ClearField(name string) error {
 	switch name {
+	case mysekaicharactertalk.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID:
 		m.ClearMysekaiGameCharacterUnitGroupID()
 		return nil
@@ -50382,10 +51182,24 @@ func (m *MysekaicharactertalkconditionMutation) AddedGameID() (r int64, exists b
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaicharactertalkconditionMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaicharactertalkcondition.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaicharactertalkconditionMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaicharactertalkcondition.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaicharactertalkconditionMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaicharactertalkcondition.FieldGameID)
 }
 
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
@@ -50733,6 +51547,9 @@ func (m *MysekaicharactertalkconditionMutation) AddField(name string, value ent.
 // mutation.
 func (m *MysekaicharactertalkconditionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaicharactertalkcondition.FieldGameID) {
+		fields = append(fields, mysekaicharactertalkcondition.FieldGameID)
+	}
 	if m.FieldCleared(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType) {
 		fields = append(fields, mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType)
 	}
@@ -50753,6 +51570,9 @@ func (m *MysekaicharactertalkconditionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaicharactertalkconditionMutation) ClearField(name string) error {
 	switch name {
+	case mysekaicharactertalkcondition.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
 		m.ClearMysekaiCharacterTalkConditionType()
 		return nil
@@ -50998,10 +51818,24 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddedGameID() (r int64, exi
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaicharactertalkconditiongroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaicharactertalkconditiongroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaicharactertalkconditiongroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaicharactertalkconditiongroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaicharactertalkconditiongroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaicharactertalkconditiongroup.FieldGameID)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -51366,6 +52200,9 @@ func (m *MysekaicharactertalkconditiongroupMutation) AddField(name string, value
 // mutation.
 func (m *MysekaicharactertalkconditiongroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaicharactertalkconditiongroup.FieldGameID) {
+		fields = append(fields, mysekaicharactertalkconditiongroup.FieldGameID)
+	}
 	if m.FieldCleared(mysekaicharactertalkconditiongroup.FieldGroupID) {
 		fields = append(fields, mysekaicharactertalkconditiongroup.FieldGroupID)
 	}
@@ -51386,6 +52223,9 @@ func (m *MysekaicharactertalkconditiongroupMutation) FieldCleared(name string) b
 // error if the field is not defined in the schema.
 func (m *MysekaicharactertalkconditiongroupMutation) ClearField(name string) error {
 	switch name {
+	case mysekaicharactertalkconditiongroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaicharactertalkconditiongroup.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -51635,10 +52475,24 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddedGameID() (r int64, exis
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaicharactertalkfixturecommonMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaicharactertalkfixturecommon.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaicharactertalkfixturecommonMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaicharactertalkfixturecommon.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaicharactertalkfixturecommonMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaicharactertalkfixturecommon.FieldGameID)
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
@@ -52178,6 +53032,9 @@ func (m *MysekaicharactertalkfixturecommonMutation) AddField(name string, value 
 // mutation.
 func (m *MysekaicharactertalkfixturecommonMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaicharactertalkfixturecommon.FieldGameID) {
+		fields = append(fields, mysekaicharactertalkfixturecommon.FieldGameID)
+	}
 	if m.FieldCleared(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID) {
 		fields = append(fields, mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID)
 	}
@@ -52204,6 +53061,9 @@ func (m *MysekaicharactertalkfixturecommonMutation) FieldCleared(name string) bo
 // error if the field is not defined in the schema.
 func (m *MysekaicharactertalkfixturecommonMutation) ClearField(name string) error {
 	switch name {
+	case mysekaicharactertalkfixturecommon.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID:
 		m.ClearGameCharacterUnitID()
 		return nil
@@ -52499,10 +53359,24 @@ func (m *MysekaifixtureMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixtureMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixture.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixtureMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixture.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixtureMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixture.FieldGameID)
 }
 
 // SetMysekaiFixtureType sets the "mysekai_fixture_type" field.
@@ -54658,6 +55532,9 @@ func (m *MysekaifixtureMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MysekaifixtureMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixture.FieldGameID) {
+		fields = append(fields, mysekaifixture.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixture.FieldMysekaiFixtureType) {
 		fields = append(fields, mysekaifixture.FieldMysekaiFixtureType)
 	}
@@ -54747,6 +55624,9 @@ func (m *MysekaifixtureMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaifixtureMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixture.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixture.FieldMysekaiFixtureType:
 		m.ClearMysekaiFixtureType()
 		return nil
@@ -55130,10 +56010,24 @@ func (m *MysekaifixturegamecharactergroupMutation) AddedGameID() (r int64, exist
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixturegamecharactergroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixturegamecharactergroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixturegamecharactergroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixturegamecharactergroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixturegamecharactergroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixturegamecharactergroup.FieldGameID)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -55498,6 +56392,9 @@ func (m *MysekaifixturegamecharactergroupMutation) AddField(name string, value e
 // mutation.
 func (m *MysekaifixturegamecharactergroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixturegamecharactergroup.FieldGameID) {
+		fields = append(fields, mysekaifixturegamecharactergroup.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixturegamecharactergroup.FieldGroupID) {
 		fields = append(fields, mysekaifixturegamecharactergroup.FieldGroupID)
 	}
@@ -55518,6 +56415,9 @@ func (m *MysekaifixturegamecharactergroupMutation) FieldCleared(name string) boo
 // error if the field is not defined in the schema.
 func (m *MysekaifixturegamecharactergroupMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixturegamecharactergroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixturegamecharactergroup.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -55765,10 +56665,24 @@ func (m *MysekaifixturemaingenreMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixturemaingenreMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixturemaingenre.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixturemaingenreMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixturemaingenre.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixturemaingenreMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixturemaingenre.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -56242,6 +57156,9 @@ func (m *MysekaifixturemaingenreMutation) AddField(name string, value ent.Value)
 // mutation.
 func (m *MysekaifixturemaingenreMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixturemaingenre.FieldGameID) {
+		fields = append(fields, mysekaifixturemaingenre.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixturemaingenre.FieldName) {
 		fields = append(fields, mysekaifixturemaingenre.FieldName)
 	}
@@ -56268,6 +57185,9 @@ func (m *MysekaifixturemaingenreMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaifixturemaingenreMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixturemaingenre.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixturemaingenre.FieldName:
 		m.ClearName()
 		return nil
@@ -56529,10 +57449,24 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddedGameID() (r int64, 
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixtureonlydisassemblematerialMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixtureonlydisassemblematerial.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixtureonlydisassemblematerialMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixtureonlydisassemblematerial.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixtureonlydisassemblematerialMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixtureonlydisassemblematerial.FieldGameID)
 }
 
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
@@ -57089,6 +58023,9 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) AddField(name string, va
 // mutation.
 func (m *MysekaifixtureonlydisassemblematerialMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixtureonlydisassemblematerial.FieldGameID) {
+		fields = append(fields, mysekaifixtureonlydisassemblematerial.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID) {
 		fields = append(fields, mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID)
 	}
@@ -57115,6 +58052,9 @@ func (m *MysekaifixtureonlydisassemblematerialMutation) FieldCleared(name string
 // error if the field is not defined in the schema.
 func (m *MysekaifixtureonlydisassemblematerialMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixtureonlydisassemblematerial.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID:
 		m.ClearMysekaiFixtureID()
 		return nil
@@ -57371,10 +58311,24 @@ func (m *MysekaifixturesubgenreMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixturesubgenreMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixturesubgenre.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixturesubgenreMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixturesubgenre.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixturesubgenreMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixturesubgenre.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -57736,6 +58690,9 @@ func (m *MysekaifixturesubgenreMutation) AddField(name string, value ent.Value) 
 // mutation.
 func (m *MysekaifixturesubgenreMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixturesubgenre.FieldGameID) {
+		fields = append(fields, mysekaifixturesubgenre.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixturesubgenre.FieldName) {
 		fields = append(fields, mysekaifixturesubgenre.FieldName)
 	}
@@ -57759,6 +58716,9 @@ func (m *MysekaifixturesubgenreMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaifixturesubgenreMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixturesubgenre.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixturesubgenre.FieldName:
 		m.ClearName()
 		return nil
@@ -58012,10 +58972,24 @@ func (m *MysekaifixturetagMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaifixturetagMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaifixturetag.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaifixturetagMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaifixturetag.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaifixturetagMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaifixturetag.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -58489,6 +59463,9 @@ func (m *MysekaifixturetagMutation) AddField(name string, value ent.Value) error
 // mutation.
 func (m *MysekaifixturetagMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaifixturetag.FieldGameID) {
+		fields = append(fields, mysekaifixturetag.FieldGameID)
+	}
 	if m.FieldCleared(mysekaifixturetag.FieldName) {
 		fields = append(fields, mysekaifixturetag.FieldName)
 	}
@@ -58515,6 +59492,9 @@ func (m *MysekaifixturetagMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaifixturetagMutation) ClearField(name string) error {
 	switch name {
+	case mysekaifixturetag.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaifixturetag.FieldName:
 		m.ClearName()
 		return nil
@@ -58778,10 +59758,24 @@ func (m *MysekaigamecharacterunitgroupMutation) AddedGameID() (r int64, exists b
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaigamecharacterunitgroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaigamecharacterunitgroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaigamecharacterunitgroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaigamecharacterunitgroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaigamecharacterunitgroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaigamecharacterunitgroup.FieldGameID)
 }
 
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
@@ -59434,6 +60428,9 @@ func (m *MysekaigamecharacterunitgroupMutation) AddField(name string, value ent.
 // mutation.
 func (m *MysekaigamecharacterunitgroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaigamecharacterunitgroup.FieldGameID) {
+		fields = append(fields, mysekaigamecharacterunitgroup.FieldGameID)
+	}
 	if m.FieldCleared(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1) {
 		fields = append(fields, mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1)
 	}
@@ -59463,6 +60460,9 @@ func (m *MysekaigamecharacterunitgroupMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaigamecharacterunitgroupMutation) ClearField(name string) error {
 	switch name {
+	case mysekaigamecharacterunitgroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1:
 		m.ClearGameCharacterUnitId1()
 		return nil
@@ -59725,10 +60725,24 @@ func (m *MysekaigateMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaigateMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaigate.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaigateMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaigate.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaigateMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaigate.FieldGameID)
 }
 
 // SetUnit sets the "unit" field.
@@ -60090,6 +61104,9 @@ func (m *MysekaigateMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MysekaigateMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaigate.FieldGameID) {
+		fields = append(fields, mysekaigate.FieldGameID)
+	}
 	if m.FieldCleared(mysekaigate.FieldUnit) {
 		fields = append(fields, mysekaigate.FieldUnit)
 	}
@@ -60113,6 +61130,9 @@ func (m *MysekaigateMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaigateMutation) ClearField(name string) error {
 	switch name {
+	case mysekaigate.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaigate.FieldUnit:
 		m.ClearUnit()
 		return nil
@@ -60366,10 +61386,24 @@ func (m *MysekaigatecharacterlotterieMutation) AddedGameID() (r int64, exists bo
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaigatecharacterlotterieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaigatecharacterlotterie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaigatecharacterlotterieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaigatecharacterlotterie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaigatecharacterlotterieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaigatecharacterlotterie.FieldGameID)
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
@@ -60830,6 +61864,9 @@ func (m *MysekaigatecharacterlotterieMutation) AddField(name string, value ent.V
 // mutation.
 func (m *MysekaigatecharacterlotterieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaigatecharacterlotterie.FieldGameID) {
+		fields = append(fields, mysekaigatecharacterlotterie.FieldGameID)
+	}
 	if m.FieldCleared(mysekaigatecharacterlotterie.FieldMysekaiGateID) {
 		fields = append(fields, mysekaigatecharacterlotterie.FieldMysekaiGateID)
 	}
@@ -60853,6 +61890,9 @@ func (m *MysekaigatecharacterlotterieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaigatecharacterlotterieMutation) ClearField(name string) error {
 	switch name {
+	case mysekaigatecharacterlotterie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaigatecharacterlotterie.FieldMysekaiGateID:
 		m.ClearMysekaiGateID()
 		return nil
@@ -61110,10 +62150,24 @@ func (m *MysekaigatelevelMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaigatelevelMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaigatelevel.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaigatelevelMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaigatelevel.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaigatelevelMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaigatelevel.FieldGameID)
 }
 
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
@@ -61766,6 +62820,9 @@ func (m *MysekaigatelevelMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *MysekaigatelevelMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaigatelevel.FieldGameID) {
+		fields = append(fields, mysekaigatelevel.FieldGameID)
+	}
 	if m.FieldCleared(mysekaigatelevel.FieldMysekaiGateID) {
 		fields = append(fields, mysekaigatelevel.FieldMysekaiGateID)
 	}
@@ -61795,6 +62852,9 @@ func (m *MysekaigatelevelMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaigatelevelMutation) ClearField(name string) error {
 	switch name {
+	case mysekaigatelevel.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaigatelevel.FieldMysekaiGateID:
 		m.ClearMysekaiGateID()
 		return nil
@@ -62060,10 +63120,24 @@ func (m *MysekaigatematerialgroupMutation) AddedGameID() (r int64, exists bool) 
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaigatematerialgroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaigatematerialgroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaigatematerialgroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaigatematerialgroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaigatematerialgroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaigatematerialgroup.FieldGameID)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -62524,6 +63598,9 @@ func (m *MysekaigatematerialgroupMutation) AddField(name string, value ent.Value
 // mutation.
 func (m *MysekaigatematerialgroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaigatematerialgroup.FieldGameID) {
+		fields = append(fields, mysekaigatematerialgroup.FieldGameID)
+	}
 	if m.FieldCleared(mysekaigatematerialgroup.FieldGroupID) {
 		fields = append(fields, mysekaigatematerialgroup.FieldGroupID)
 	}
@@ -62547,6 +63624,9 @@ func (m *MysekaigatematerialgroupMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaigatematerialgroupMutation) ClearField(name string) error {
 	switch name {
+	case mysekaigatematerialgroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaigatematerialgroup.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -62801,10 +63881,24 @@ func (m *MysekaiitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaiitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiitem.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -63388,6 +64482,9 @@ func (m *MysekaiitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MysekaiitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaiitem.FieldGameID) {
+		fields = append(fields, mysekaiitem.FieldGameID)
+	}
 	if m.FieldCleared(mysekaiitem.FieldSeq) {
 		fields = append(fields, mysekaiitem.FieldSeq)
 	}
@@ -63420,6 +64517,9 @@ func (m *MysekaiitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaiitemMutation) ClearField(name string) error {
 	switch name {
+	case mysekaiitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaiitem.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -63700,10 +64800,24 @@ func (m *MysekaimaterialMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaimaterialMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaimaterial.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaimaterialMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaimaterial.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaimaterialMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaimaterial.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -64620,6 +65734,9 @@ func (m *MysekaimaterialMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MysekaimaterialMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaimaterial.FieldGameID) {
+		fields = append(fields, mysekaimaterial.FieldGameID)
+	}
 	if m.FieldCleared(mysekaimaterial.FieldSeq) {
 		fields = append(fields, mysekaimaterial.FieldSeq)
 	}
@@ -64664,6 +65781,9 @@ func (m *MysekaimaterialMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaimaterialMutation) ClearField(name string) error {
 	switch name {
+	case mysekaimaterial.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaimaterial.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -64959,10 +66079,24 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddedGameID() (r int64, e
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaimaterialgamecharacterrelationMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaimaterialgamecharacterrelation.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaimaterialgamecharacterrelationMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaimaterialgamecharacterrelation.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaimaterialgamecharacterrelationMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaimaterialgamecharacterrelation.FieldGameID)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -65423,6 +66557,9 @@ func (m *MysekaimaterialgamecharacterrelationMutation) AddField(name string, val
 // mutation.
 func (m *MysekaimaterialgamecharacterrelationMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaimaterialgamecharacterrelation.FieldGameID) {
+		fields = append(fields, mysekaimaterialgamecharacterrelation.FieldGameID)
+	}
 	if m.FieldCleared(mysekaimaterialgamecharacterrelation.FieldGroupID) {
 		fields = append(fields, mysekaimaterialgamecharacterrelation.FieldGroupID)
 	}
@@ -65446,6 +66583,9 @@ func (m *MysekaimaterialgamecharacterrelationMutation) FieldCleared(name string)
 // error if the field is not defined in the schema.
 func (m *MysekaimaterialgamecharacterrelationMutation) ClearField(name string) error {
 	switch name {
+	case mysekaimaterialgamecharacterrelation.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaimaterialgamecharacterrelation.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -65697,10 +66837,24 @@ func (m *MysekaimusicrecordMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaimusicrecordMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaimusicrecord.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaimusicrecordMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaimusicrecord.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaimusicrecordMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaimusicrecord.FieldGameID)
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
@@ -66048,6 +67202,9 @@ func (m *MysekaimusicrecordMutation) AddField(name string, value ent.Value) erro
 // mutation.
 func (m *MysekaimusicrecordMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaimusicrecord.FieldGameID) {
+		fields = append(fields, mysekaimusicrecord.FieldGameID)
+	}
 	if m.FieldCleared(mysekaimusicrecord.FieldMysekaiMusicTrackType) {
 		fields = append(fields, mysekaimusicrecord.FieldMysekaiMusicTrackType)
 	}
@@ -66068,6 +67225,9 @@ func (m *MysekaimusicrecordMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaimusicrecordMutation) ClearField(name string) error {
 	switch name {
+	case mysekaimusicrecord.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaimusicrecord.FieldMysekaiMusicTrackType:
 		m.ClearMysekaiMusicTrackType()
 		return nil
@@ -66315,10 +67475,24 @@ func (m *MysekaimusicrecordcategorieMutation) AddedGameID() (r int64, exists boo
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaimusicrecordcategorieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaimusicrecordcategorie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaimusicrecordcategorieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaimusicrecordcategorie.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaimusicrecordcategorieMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaimusicrecordcategorie.FieldGameID)
 }
 
 // SetName sets the "name" field.
@@ -66792,6 +67966,9 @@ func (m *MysekaimusicrecordcategorieMutation) AddField(name string, value ent.Va
 // mutation.
 func (m *MysekaimusicrecordcategorieMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaimusicrecordcategorie.FieldGameID) {
+		fields = append(fields, mysekaimusicrecordcategorie.FieldGameID)
+	}
 	if m.FieldCleared(mysekaimusicrecordcategorie.FieldName) {
 		fields = append(fields, mysekaimusicrecordcategorie.FieldName)
 	}
@@ -66818,6 +67995,9 @@ func (m *MysekaimusicrecordcategorieMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaimusicrecordcategorieMutation) ClearField(name string) error {
 	switch name {
+	case mysekaimusicrecordcategorie.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaimusicrecordcategorie.FieldName:
 		m.ClearName()
 		return nil
@@ -67076,10 +68256,24 @@ func (m *MysekaiphenomenabackgroundcolorMutation) AddedGameID() (r int64, exists
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiphenomenabackgroundcolorMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiphenomenabackgroundcolor.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiphenomenabackgroundcolorMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenabackgroundcolor.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaiphenomenabackgroundcolorMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiphenomenabackgroundcolor.FieldGameID)
 }
 
 // SetBaseColor sets the "base_color" field.
@@ -67567,6 +68761,9 @@ func (m *MysekaiphenomenabackgroundcolorMutation) AddField(name string, value en
 // mutation.
 func (m *MysekaiphenomenabackgroundcolorMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaiphenomenabackgroundcolor.FieldGameID) {
+		fields = append(fields, mysekaiphenomenabackgroundcolor.FieldGameID)
+	}
 	if m.FieldCleared(mysekaiphenomenabackgroundcolor.FieldBaseColor) {
 		fields = append(fields, mysekaiphenomenabackgroundcolor.FieldBaseColor)
 	}
@@ -67596,6 +68793,9 @@ func (m *MysekaiphenomenabackgroundcolorMutation) FieldCleared(name string) bool
 // error if the field is not defined in the schema.
 func (m *MysekaiphenomenabackgroundcolorMutation) ClearField(name string) error {
 	switch name {
+	case mysekaiphenomenabackgroundcolor.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaiphenomenabackgroundcolor.FieldBaseColor:
 		m.ClearBaseColor()
 		return nil
@@ -67867,10 +69067,24 @@ func (m *MysekaiphenomenonMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaiphenomenonMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaiphenomenon.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaiphenomenonMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaiphenomenon.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaiphenomenonMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaiphenomenon.FieldGameID)
 }
 
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
@@ -68675,6 +69889,9 @@ func (m *MysekaiphenomenonMutation) AddField(name string, value ent.Value) error
 // mutation.
 func (m *MysekaiphenomenonMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaiphenomenon.FieldGameID) {
+		fields = append(fields, mysekaiphenomenon.FieldGameID)
+	}
 	if m.FieldCleared(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType) {
 		fields = append(fields, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType)
 	}
@@ -68716,6 +69933,9 @@ func (m *MysekaiphenomenonMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaiphenomenonMutation) ClearField(name string) error {
 	switch name {
+	case mysekaiphenomenon.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
 		m.ClearMysekaiPhenomenaBrightnessType()
 		return nil
@@ -69007,10 +70227,24 @@ func (m *MysekaisiteharvestfixtureMutation) AddedGameID() (r int64, exists bool)
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaisiteharvestfixtureMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaisiteharvestfixture.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaisiteharvestfixtureMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaisiteharvestfixture.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *MysekaisiteharvestfixtureMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, mysekaisiteharvestfixture.FieldGameID)
 }
 
 // SetMysekaiSiteHarvestFixtureType sets the "mysekai_site_harvest_fixture_type" field.
@@ -69580,6 +70814,9 @@ func (m *MysekaisiteharvestfixtureMutation) AddField(name string, value ent.Valu
 // mutation.
 func (m *MysekaisiteharvestfixtureMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(mysekaisiteharvestfixture.FieldGameID) {
+		fields = append(fields, mysekaisiteharvestfixture.FieldGameID)
+	}
 	if m.FieldCleared(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType) {
 		fields = append(fields, mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType)
 	}
@@ -69609,6 +70846,9 @@ func (m *MysekaisiteharvestfixtureMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MysekaisiteharvestfixtureMutation) ClearField(name string) error {
 	switch name {
+	case mysekaisiteharvestfixture.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType:
 		m.ClearMysekaiSiteHarvestFixtureType()
 		return nil
@@ -69869,10 +71109,24 @@ func (m *NgwordMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *NgwordMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[ngword.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *NgwordMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[ngword.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *NgwordMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, ngword.FieldGameID)
 }
 
 // SetWord sets the "word" field.
@@ -70108,6 +71362,9 @@ func (m *NgwordMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *NgwordMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(ngword.FieldGameID) {
+		fields = append(fields, ngword.FieldGameID)
+	}
 	if m.FieldCleared(ngword.FieldWord) {
 		fields = append(fields, ngword.FieldWord)
 	}
@@ -70125,6 +71382,9 @@ func (m *NgwordMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *NgwordMutation) ClearField(name string) error {
 	switch name {
+	case ngword.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case ngword.FieldWord:
 		m.ClearWord()
 		return nil
@@ -70363,10 +71623,24 @@ func (m *OutsidecharacterMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *OutsidecharacterMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[outsidecharacter.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *OutsidecharacterMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[outsidecharacter.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *OutsidecharacterMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, outsidecharacter.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -70698,6 +71972,9 @@ func (m *OutsidecharacterMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *OutsidecharacterMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(outsidecharacter.FieldGameID) {
+		fields = append(fields, outsidecharacter.FieldGameID)
+	}
 	if m.FieldCleared(outsidecharacter.FieldSeq) {
 		fields = append(fields, outsidecharacter.FieldSeq)
 	}
@@ -70718,6 +71995,9 @@ func (m *OutsidecharacterMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *OutsidecharacterMutation) ClearField(name string) error {
 	switch name {
+	case outsidecharacter.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case outsidecharacter.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -70966,10 +72246,24 @@ func (m *PlayerframeMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *PlayerframeMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[playerframe.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *PlayerframeMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[playerframe.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *PlayerframeMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, playerframe.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -71493,6 +72787,9 @@ func (m *PlayerframeMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PlayerframeMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(playerframe.FieldGameID) {
+		fields = append(fields, playerframe.FieldGameID)
+	}
 	if m.FieldCleared(playerframe.FieldSeq) {
 		fields = append(fields, playerframe.FieldSeq)
 	}
@@ -71519,6 +72816,9 @@ func (m *PlayerframeMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PlayerframeMutation) ClearField(name string) error {
 	switch name {
+	case playerframe.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case playerframe.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -71776,10 +73076,24 @@ func (m *PlayerframegroupMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *PlayerframegroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[playerframegroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *PlayerframegroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[playerframegroup.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *PlayerframegroupMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, playerframegroup.FieldGameID)
 }
 
 // SetSeq sets the "seq" field.
@@ -72174,6 +73488,9 @@ func (m *PlayerframegroupMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *PlayerframegroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(playerframegroup.FieldGameID) {
+		fields = append(fields, playerframegroup.FieldGameID)
+	}
 	if m.FieldCleared(playerframegroup.FieldSeq) {
 		fields = append(fields, playerframegroup.FieldSeq)
 	}
@@ -72197,6 +73514,9 @@ func (m *PlayerframegroupMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PlayerframegroupMutation) ClearField(name string) error {
 	switch name {
+	case playerframegroup.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case playerframegroup.FieldSeq:
 		m.ClearSeq()
 		return nil
@@ -72518,10 +73838,24 @@ func (m *ResourceboxeMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *ResourceboxeMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[resourceboxe.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *ResourceboxeMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[resourceboxe.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *ResourceboxeMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, resourceboxe.FieldGameID)
 }
 
 // SetResourceBoxType sets the "resource_box_type" field.
@@ -73058,6 +74392,9 @@ func (m *ResourceboxeMutation) ClearedFields() []string {
 	if m.FieldCleared(resourceboxe.FieldResourceBoxPurpose) {
 		fields = append(fields, resourceboxe.FieldResourceBoxPurpose)
 	}
+	if m.FieldCleared(resourceboxe.FieldGameID) {
+		fields = append(fields, resourceboxe.FieldGameID)
+	}
 	if m.FieldCleared(resourceboxe.FieldResourceBoxType) {
 		fields = append(fields, resourceboxe.FieldResourceBoxType)
 	}
@@ -73089,6 +74426,9 @@ func (m *ResourceboxeMutation) ClearField(name string) error {
 	switch name {
 	case resourceboxe.FieldResourceBoxPurpose:
 		m.ClearResourceBoxPurpose()
+		return nil
+	case resourceboxe.FieldGameID:
+		m.ClearGameID()
 		return nil
 	case resourceboxe.FieldResourceBoxType:
 		m.ClearResourceBoxType()
@@ -73364,10 +74704,24 @@ func (m *ShopitemMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *ShopitemMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[shopitem.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *ShopitemMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[shopitem.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *ShopitemMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, shopitem.FieldGameID)
 }
 
 // SetShopID sets the "shop_id" field.
@@ -74099,6 +75453,9 @@ func (m *ShopitemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ShopitemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(shopitem.FieldGameID) {
+		fields = append(fields, shopitem.FieldGameID)
+	}
 	if m.FieldCleared(shopitem.FieldShopID) {
 		fields = append(fields, shopitem.FieldShopID)
 	}
@@ -74131,6 +75488,9 @@ func (m *ShopitemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ShopitemMutation) ClearField(name string) error {
 	switch name {
+	case shopitem.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case shopitem.FieldShopID:
 		m.ClearShopID()
 		return nil
@@ -74404,10 +75764,24 @@ func (m *SkillMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *SkillMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[skill.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *SkillMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[skill.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *SkillMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, skill.FieldGameID)
 }
 
 // SetShortDescription sets the "short_description" field.
@@ -74960,6 +76334,9 @@ func (m *SkillMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SkillMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(skill.FieldGameID) {
+		fields = append(fields, skill.FieldGameID)
+	}
 	if m.FieldCleared(skill.FieldShortDescription) {
 		fields = append(fields, skill.FieldShortDescription)
 	}
@@ -74989,6 +76366,9 @@ func (m *SkillMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SkillMutation) ClearField(name string) error {
 	switch name {
+	case skill.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case skill.FieldShortDescription:
 		m.ClearShortDescription()
 		return nil
@@ -75267,10 +76647,24 @@ func (m *StampMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *StampMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[stamp.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *StampMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[stamp.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *StampMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, stamp.FieldGameID)
 }
 
 // SetStampType sets the "stamp_type" field.
@@ -76349,6 +77743,9 @@ func (m *StampMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *StampMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(stamp.FieldGameID) {
+		fields = append(fields, stamp.FieldGameID)
+	}
 	if m.FieldCleared(stamp.FieldStampType) {
 		fields = append(fields, stamp.FieldStampType)
 	}
@@ -76396,6 +77793,9 @@ func (m *StampMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *StampMutation) ClearField(name string) error {
 	switch name {
+	case stamp.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case stamp.FieldStampType:
 		m.ClearStampType()
 		return nil
@@ -76735,10 +78135,24 @@ func (m *VirtualliveMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *VirtualliveMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[virtuallive.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *VirtualliveMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[virtuallive.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *VirtualliveMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, virtuallive.FieldGameID)
 }
 
 // SetVirtualLiveType sets the "virtual_live_type" field.
@@ -78832,6 +80246,9 @@ func (m *VirtualliveMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *VirtualliveMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(virtuallive.FieldGameID) {
+		fields = append(fields, virtuallive.FieldGameID)
+	}
 	if m.FieldCleared(virtuallive.FieldVirtualLiveType) {
 		fields = append(fields, virtuallive.FieldVirtualLiveType)
 	}
@@ -78915,6 +80332,9 @@ func (m *VirtualliveMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *VirtualliveMutation) ClearField(name string) error {
 	switch name {
+	case virtuallive.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case virtuallive.FieldVirtualLiveType:
 		m.ClearVirtualLiveType()
 		return nil
@@ -79299,10 +80719,24 @@ func (m *WorldbloomMutation) AddedGameID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (m *WorldbloomMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[worldbloom.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *WorldbloomMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[worldbloom.FieldGameID]
+	return ok
+}
+
 // ResetGameID resets all changes to the "game_id" field.
 func (m *WorldbloomMutation) ResetGameID() {
 	m.game_id = nil
 	m.addgame_id = nil
+	delete(m.clearedFields, worldbloom.FieldGameID)
 }
 
 // SetEventID sets the "event_id" field.
@@ -80289,6 +81723,9 @@ func (m *WorldbloomMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *WorldbloomMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(worldbloom.FieldGameID) {
+		fields = append(fields, worldbloom.FieldGameID)
+	}
 	if m.FieldCleared(worldbloom.FieldEventID) {
 		fields = append(fields, worldbloom.FieldEventID)
 	}
@@ -80330,6 +81767,9 @@ func (m *WorldbloomMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *WorldbloomMutation) ClearField(name string) error {
 	switch name {
+	case worldbloom.FieldGameID:
+		m.ClearGameID()
+		return nil
 	case worldbloom.FieldEventID:
 		m.ClearEventID()
 		return nil

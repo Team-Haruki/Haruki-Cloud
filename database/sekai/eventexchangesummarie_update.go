@@ -50,6 +50,12 @@ func (_u *EventexchangesummarieUpdate) AddGameID(v int64) *Eventexchangesummarie
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventexchangesummarieUpdate) ClearGameID() *EventexchangesummarieUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetEventID sets the "event_id" field.
 func (_u *EventexchangesummarieUpdate) SetEventID(v int64) *EventexchangesummarieUpdate {
 	_u.mutation.ResetEventID()
@@ -230,6 +236,9 @@ func (_u *EventexchangesummarieUpdate) sqlSave(ctx context.Context) (_node int, 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventexchangesummarie.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventexchangesummarie.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt64, value)
 	}
@@ -315,6 +324,12 @@ func (_u *EventexchangesummarieUpdateOne) SetNillableGameID(v *int64) *Eventexch
 // AddGameID adds value to the "game_id" field.
 func (_u *EventexchangesummarieUpdateOne) AddGameID(v int64) *EventexchangesummarieUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventexchangesummarieUpdateOne) ClearGameID() *EventexchangesummarieUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -527,6 +542,9 @@ func (_u *EventexchangesummarieUpdateOne) sqlSave(ctx context.Context) (_node *E
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventexchangesummarie.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventexchangesummarie.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
 		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt64, value)

@@ -15,7 +15,7 @@ type Cheerfulcarnivalteam struct {
 
 func (Cheerfulcarnivalteam) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.String("team_name").Optional(),

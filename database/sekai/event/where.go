@@ -173,6 +173,16 @@ func GameIDLTE(v int64) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldGameID))
+}
+
 // EventTypeIsNil applies the IsNil predicate on the "event_type" field.
 func EventTypeIsNil() predicate.Event {
 	return predicate.Event(sql.FieldIsNull(FieldEventType))

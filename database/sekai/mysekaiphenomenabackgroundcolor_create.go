@@ -25,6 +25,14 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) SetGameID(v int64) *Mysekaiphen
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaiphenomenabackgroundcolorCreate) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetBaseColor sets the "base_color" field.
 func (_c *MysekaiphenomenabackgroundcolorCreate) SetBaseColor(v string) *MysekaiphenomenabackgroundcolorCreate {
 	_c.mutation.SetBaseColor(v)
@@ -135,9 +143,6 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiphenomenabackgroundcolorCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiphenomenabackgroundcolor.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiphenomenabackgroundcolor.server_region"`)}
 	}

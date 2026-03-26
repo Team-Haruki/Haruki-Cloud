@@ -108,6 +108,16 @@ func GameIDLTE(v int64) predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaimusicrecord {
+	return predicate.Mysekaimusicrecord(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaimusicrecord {
+	return predicate.Mysekaimusicrecord(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiMusicTrackTypeIsNil applies the IsNil predicate on the "mysekai_music_track_type" field.
 func MysekaiMusicTrackTypeIsNil() predicate.Mysekaimusicrecord {
 	return predicate.Mysekaimusicrecord(sql.FieldIsNull(FieldMysekaiMusicTrackType))

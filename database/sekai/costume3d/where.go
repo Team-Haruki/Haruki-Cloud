@@ -158,6 +158,16 @@ func GameIDLTE(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNotNull(FieldGameID))
+}
+
 // SeqEQ applies the EQ predicate on the "seq" field.
 func SeqEQ(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldSeq, v))

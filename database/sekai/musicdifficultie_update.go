@@ -50,6 +50,12 @@ func (_u *MusicdifficultieUpdate) AddGameID(v int64) *MusicdifficultieUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MusicdifficultieUpdate) ClearGameID() *MusicdifficultieUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMusicID sets the "music_id" field.
 func (_u *MusicdifficultieUpdate) SetMusicID(v int64) *MusicdifficultieUpdate {
 	_u.mutation.ResetMusicID()
@@ -237,6 +243,9 @@ func (_u *MusicdifficultieUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(musicdifficultie.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MusicID(); ok {
 		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
 	}
@@ -325,6 +334,12 @@ func (_u *MusicdifficultieUpdateOne) SetNillableGameID(v *int64) *Musicdifficult
 // AddGameID adds value to the "game_id" field.
 func (_u *MusicdifficultieUpdateOne) AddGameID(v int64) *MusicdifficultieUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MusicdifficultieUpdateOne) ClearGameID() *MusicdifficultieUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -544,6 +559,9 @@ func (_u *MusicdifficultieUpdateOne) sqlSave(ctx context.Context) (_node *Musicd
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(musicdifficultie.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(musicdifficultie.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
 		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt64, value)

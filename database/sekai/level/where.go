@@ -113,6 +113,16 @@ func GameIDLTE(v int64) predicate.Level {
 	return predicate.Level(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Level {
+	return predicate.Level(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Level {
+	return predicate.Level(sql.FieldNotNull(FieldGameID))
+}
+
 // LevelTypeIsNil applies the IsNil predicate on the "level_type" field.
 func LevelTypeIsNil() predicate.Level {
 	return predicate.Level(sql.FieldIsNull(FieldLevelType))

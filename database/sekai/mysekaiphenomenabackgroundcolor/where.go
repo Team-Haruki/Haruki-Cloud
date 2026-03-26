@@ -128,6 +128,16 @@ func GameIDLTE(v int64) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaiphenomenabackgroundcolor {
+	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaiphenomenabackgroundcolor {
+	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldNotNull(FieldGameID))
+}
+
 // BaseColorEQ applies the EQ predicate on the "base_color" field.
 func BaseColorEQ(v string) predicate.Mysekaiphenomenabackgroundcolor {
 	return predicate.Mysekaiphenomenabackgroundcolor(sql.FieldEQ(FieldBaseColor, v))

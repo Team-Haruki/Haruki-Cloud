@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldNotNull(FieldGameID))
+}
+
 // GachaIDEQ applies the EQ predicate on the "gacha_id" field.
 func GachaIDEQ(v int64) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldGachaID, v))

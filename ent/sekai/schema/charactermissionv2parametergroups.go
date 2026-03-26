@@ -15,7 +15,7 @@ type Charactermissionv2Parametergroup struct {
 
 func (Charactermissionv2Parametergroup) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("requirement").Optional(),
 		field.Int64("exp").Optional(),
@@ -32,6 +32,6 @@ func (Charactermissionv2Parametergroup) Annotations() []schema.Annotation {
 
 func (Charactermissionv2Parametergroup) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
+		index.Fields("game_id", "seq", "server_region").Unique(),
 	}
 }

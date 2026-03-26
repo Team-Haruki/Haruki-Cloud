@@ -17,7 +17,7 @@ type Mysekaicharactertalk struct {
 
 func (Mysekaicharactertalk) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("mysekai_game_character_unit_group_id").Optional(),
 		field.Int64("mysekai_character_talk_condition_group_id").Optional(),
 		field.Int64("mysekai_site_group_id").Optional(),

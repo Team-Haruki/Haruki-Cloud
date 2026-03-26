@@ -143,6 +143,16 @@ func GameIDLTE(v int64) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Stamp {
+	return predicate.Stamp(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Stamp {
+	return predicate.Stamp(sql.FieldNotNull(FieldGameID))
+}
+
 // StampTypeIsNil applies the IsNil predicate on the "stamp_type" field.
 func StampTypeIsNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldIsNull(FieldStampType))

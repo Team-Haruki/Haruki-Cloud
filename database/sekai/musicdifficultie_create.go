@@ -26,6 +26,14 @@ func (_c *MusicdifficultieCreate) SetGameID(v int64) *MusicdifficultieCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MusicdifficultieCreate) SetNillableGameID(v *int64) *MusicdifficultieCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMusicID sets the "music_id" field.
 func (_c *MusicdifficultieCreate) SetMusicID(v int64) *MusicdifficultieCreate {
 	_c.mutation.SetMusicID(v)
@@ -128,9 +136,6 @@ func (_c *MusicdifficultieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MusicdifficultieCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Musicdifficultie.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Musicdifficultie.server_region"`)}
 	}

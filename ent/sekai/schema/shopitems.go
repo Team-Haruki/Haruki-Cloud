@@ -17,7 +17,7 @@ type Shopitem struct {
 
 func (Shopitem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("shop_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("release_condition_id").Optional(),

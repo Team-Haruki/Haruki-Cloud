@@ -26,6 +26,14 @@ func (_c *EventCreate) SetGameID(v int64) *EventCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableGameID(v *int64) *EventCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetEventType sets the "event_type" field.
 func (_c *EventCreate) SetEventType(v json.RawMessage) *EventCreate {
 	_c.mutation.SetEventType(v)
@@ -286,9 +294,6 @@ func (_c *EventCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Event.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Event.server_region"`)}
 	}

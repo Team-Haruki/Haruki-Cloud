@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Cheerfulcarnivalteam {
+	return predicate.Cheerfulcarnivalteam(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Cheerfulcarnivalteam {
+	return predicate.Cheerfulcarnivalteam(sql.FieldNotNull(FieldGameID))
+}
+
 // EventIDEQ applies the EQ predicate on the "event_id" field.
 func EventIDEQ(v int64) predicate.Cheerfulcarnivalteam {
 	return predicate.Cheerfulcarnivalteam(sql.FieldEQ(FieldEventID, v))

@@ -26,6 +26,14 @@ func (_c *MysekaiblueprintCreate) SetGameID(v int64) *MysekaiblueprintCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaiblueprintCreate) SetNillableGameID(v *int64) *MysekaiblueprintCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
 func (_c *MysekaiblueprintCreate) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintCreate {
 	_c.mutation.SetMysekaiCraftType(v)
@@ -142,9 +150,6 @@ func (_c *MysekaiblueprintCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiblueprintCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiblueprint.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiblueprint.server_region"`)}
 	}

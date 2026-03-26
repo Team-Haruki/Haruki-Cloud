@@ -26,6 +26,14 @@ func (_c *LevelCreate) SetGameID(v int64) *LevelCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *LevelCreate) SetNillableGameID(v *int64) *LevelCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetLevelType sets the "level_type" field.
 func (_c *LevelCreate) SetLevelType(v json.RawMessage) *LevelCreate {
 	_c.mutation.SetLevelType(v)
@@ -100,9 +108,6 @@ func (_c *LevelCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *LevelCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Level.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Level.server_region"`)}
 	}

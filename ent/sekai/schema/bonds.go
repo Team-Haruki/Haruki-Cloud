@@ -15,7 +15,7 @@ type Bond struct {
 
 func (Bond) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("group_id").Optional(),
 		field.Int64("character_id1").Optional(),
 		field.Int64("character_id2").Optional(),

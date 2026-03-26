@@ -26,6 +26,14 @@ func (_c *Character2DCreate) SetGameID(v int64) *Character2DCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *Character2DCreate) SetNillableGameID(v *int64) *Character2DCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetCharacterType sets the "character_type" field.
 func (_c *Character2DCreate) SetCharacterType(v json.RawMessage) *Character2DCreate {
 	_c.mutation.SetCharacterType(v)
@@ -140,9 +148,6 @@ func (_c *Character2DCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *Character2DCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Character2D.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Character2D.server_region"`)}
 	}

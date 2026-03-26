@@ -50,6 +50,12 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddGameID(v int64) *Mysekai
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearGameID() *MysekaiblueprintmysekaimaterialcostUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
 func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetMysekaiBlueprintID()
@@ -237,6 +243,9 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) sqlSave(ctx context.Context
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiBlueprintID(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
 	}
@@ -325,6 +334,12 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableGameID(v *int
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddGameID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearGameID() *MysekaiblueprintmysekaimaterialcostUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -544,6 +559,9 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) sqlSave(ctx context.Cont
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintID(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)

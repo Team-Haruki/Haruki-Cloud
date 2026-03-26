@@ -48,6 +48,12 @@ func (_u *ChallengelivehighscorerewardUpdate) AddGameID(v int64) *Challengeliveh
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ChallengelivehighscorerewardUpdate) ClearGameID() *ChallengelivehighscorerewardUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetCharacterID sets the "character_id" field.
 func (_u *ChallengelivehighscorerewardUpdate) SetCharacterID(v int64) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ResetCharacterID()
@@ -190,6 +196,9 @@ func (_u *ChallengelivehighscorerewardUpdate) sqlSave(ctx context.Context) (_nod
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(challengelivehighscorereward.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.CharacterID(); ok {
 		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)
 	}
@@ -258,6 +267,12 @@ func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableGameID(v *int64) *Ch
 // AddGameID adds value to the "game_id" field.
 func (_u *ChallengelivehighscorerewardUpdateOne) AddGameID(v int64) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ChallengelivehighscorerewardUpdateOne) ClearGameID() *ChallengelivehighscorerewardUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -432,6 +447,9 @@ func (_u *ChallengelivehighscorerewardUpdateOne) sqlSave(ctx context.Context) (_
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(challengelivehighscorereward.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
 		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)

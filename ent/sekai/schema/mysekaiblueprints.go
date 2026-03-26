@@ -17,7 +17,7 @@ type Mysekaiblueprint struct {
 
 func (Mysekaiblueprint) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("mysekai_craft_type", json.RawMessage{}).Optional(),
 		field.Int64("craft_target_id").Optional(),
 		field.Bool("is_enable_sketch").Optional(),

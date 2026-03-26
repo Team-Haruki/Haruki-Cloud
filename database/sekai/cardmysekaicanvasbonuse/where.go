@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Cardmysekaicanvasbonuse {
+	return predicate.Cardmysekaicanvasbonuse(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Cardmysekaicanvasbonuse {
+	return predicate.Cardmysekaicanvasbonuse(sql.FieldNotNull(FieldGameID))
+}
+
 // CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
 func CardRarityTypeEQ(v string) predicate.Cardmysekaicanvasbonuse {
 	return predicate.Cardmysekaicanvasbonuse(sql.FieldEQ(FieldCardRarityType, v))

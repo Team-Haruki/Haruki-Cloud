@@ -158,6 +158,16 @@ func GameIDLTE(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotNull(FieldGameID))
+}
+
 // SeqEQ applies the EQ predicate on the "seq" field.
 func SeqEQ(v int64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldSeq, v))

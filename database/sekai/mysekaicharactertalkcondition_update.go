@@ -50,6 +50,12 @@ func (_u *MysekaicharactertalkconditionUpdate) AddGameID(v int64) *Mysekaicharac
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkconditionUpdate) ClearGameID() *MysekaicharactertalkconditionUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
 func (_u *MysekaicharactertalkconditionUpdate) SetMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.SetMysekaiCharacterTalkConditionType(v)
@@ -156,6 +162,9 @@ func (_u *MysekaicharactertalkconditionUpdate) sqlSave(ctx context.Context) (_no
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
 	}
@@ -217,6 +226,12 @@ func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableGameID(v *int64) *M
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaicharactertalkconditionUpdateOne) AddGameID(v int64) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkconditionUpdateOne) ClearGameID() *MysekaicharactertalkconditionUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -355,6 +370,9 @@ func (_u *MysekaicharactertalkconditionUpdateOne) sqlSave(ctx context.Context) (
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)

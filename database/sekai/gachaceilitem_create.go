@@ -26,6 +26,14 @@ func (_c *GachaceilitemCreate) SetGameID(v int64) *GachaceilitemCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *GachaceilitemCreate) SetNillableGameID(v *int64) *GachaceilitemCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetGachaID sets the "gacha_id" field.
 func (_c *GachaceilitemCreate) SetGachaID(v int64) *GachaceilitemCreate {
 	_c.mutation.SetGachaID(v)
@@ -128,9 +136,6 @@ func (_c *GachaceilitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *GachaceilitemCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Gachaceilitem.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Gachaceilitem.server_region"`)}
 	}

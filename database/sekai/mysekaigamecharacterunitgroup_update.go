@@ -48,6 +48,12 @@ func (_u *MysekaigamecharacterunitgroupUpdate) AddGameID(v int64) *Mysekaigamech
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameID() *MysekaigamecharacterunitgroupUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
 func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId1(v int64) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId1()
@@ -244,6 +250,9 @@ func (_u *MysekaigamecharacterunitgroupUpdate) sqlSave(ctx context.Context) (_no
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
 		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)
 	}
@@ -330,6 +339,12 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameID(v *int64) *M
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameID(v int64) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameID() *MysekaigamecharacterunitgroupUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -558,6 +573,9 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) sqlSave(ctx context.Context) (
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
 		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)

@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 type Ngword struct {
@@ -15,7 +14,7 @@ type Ngword struct {
 
 func (Ngword) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("word").Optional(),
 		field.String("server_region"),
 	}
@@ -24,11 +23,5 @@ func (Ngword) Fields() []ent.Field {
 func (Ngword) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "ngwords"},
-	}
-}
-
-func (Ngword) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
 	}
 }

@@ -183,6 +183,16 @@ func GameIDLTE(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiFixtureTypeIsNil applies the IsNil predicate on the "mysekai_fixture_type" field.
 func MysekaiFixtureTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiFixtureType))

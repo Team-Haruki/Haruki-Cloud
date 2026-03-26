@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldNotNull(FieldGameID))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldName, v))

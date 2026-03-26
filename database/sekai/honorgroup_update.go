@@ -50,6 +50,12 @@ func (_u *HonorgroupUpdate) AddGameID(v int64) *HonorgroupUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *HonorgroupUpdate) ClearGameID() *HonorgroupUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *HonorgroupUpdate) SetName(v string) *HonorgroupUpdate {
 	_u.mutation.SetName(v)
@@ -209,6 +215,9 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(honorgroup.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)
 	}
@@ -285,6 +294,12 @@ func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int64) *HonorgroupUpdateOne 
 // AddGameID adds value to the "game_id" field.
 func (_u *HonorgroupUpdateOne) AddGameID(v int64) *HonorgroupUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *HonorgroupUpdateOne) ClearGameID() *HonorgroupUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -476,6 +491,9 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(honorgroup.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)

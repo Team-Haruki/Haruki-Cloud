@@ -128,6 +128,16 @@ func GameIDLTE(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldNotNull(FieldGameID))
+}
+
 // ResourceBoxTypeIsNil applies the IsNil predicate on the "resource_box_type" field.
 func ResourceBoxTypeIsNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldIsNull(FieldResourceBoxType))

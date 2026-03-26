@@ -50,6 +50,12 @@ func (_u *Character2DUpdate) AddGameID(v int64) *Character2DUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Character2DUpdate) ClearGameID() *Character2DUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetCharacterType sets the "character_type" field.
 func (_u *Character2DUpdate) SetCharacterType(v json.RawMessage) *Character2DUpdate {
 	_u.mutation.SetCharacterType(v)
@@ -252,6 +258,9 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(character2d.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.CharacterType(); ok {
 		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
 	}
@@ -353,6 +362,12 @@ func (_u *Character2DUpdateOne) SetNillableGameID(v *int64) *Character2DUpdateOn
 // AddGameID adds value to the "game_id" field.
 func (_u *Character2DUpdateOne) AddGameID(v int64) *Character2DUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Character2DUpdateOne) ClearGameID() *Character2DUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -587,6 +602,9 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(character2d.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CharacterType(); ok {
 		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)

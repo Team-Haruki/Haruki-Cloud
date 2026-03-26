@@ -17,7 +17,7 @@ type Mysekaifixturetag struct {
 
 func (Mysekaifixturetag) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.String("pronunciation").Optional(),
 		field.JSON("mysekai_fixture_tag_type", json.RawMessage{}).Optional(),

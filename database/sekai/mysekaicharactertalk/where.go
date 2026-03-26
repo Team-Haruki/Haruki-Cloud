@@ -138,6 +138,16 @@ func GameIDLTE(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiGameCharacterUnitGroupIDEQ applies the EQ predicate on the "mysekai_game_character_unit_group_id" field.
 func MysekaiGameCharacterUnitGroupIDEQ(v int64) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldMysekaiGameCharacterUnitGroupID, v))

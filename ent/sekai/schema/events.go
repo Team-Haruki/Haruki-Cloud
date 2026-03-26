@@ -17,7 +17,7 @@ type Event struct {
 
 func (Event) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("event_type", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),

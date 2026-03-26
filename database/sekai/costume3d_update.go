@@ -50,6 +50,12 @@ func (_u *Costume3DUpdate) AddGameID(v int64) *Costume3DUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Costume3DUpdate) ClearGameID() *Costume3DUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *Costume3DUpdate) SetSeq(v int64) *Costume3DUpdate {
 	_u.mutation.ResetSeq()
@@ -445,6 +451,9 @@ func (_u *Costume3DUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(costume3d.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(costume3d.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(costume3d.FieldSeq, field.TypeInt64, value)
 	}
@@ -614,6 +623,12 @@ func (_u *Costume3DUpdateOne) SetNillableGameID(v *int64) *Costume3DUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *Costume3DUpdateOne) AddGameID(v int64) *Costume3DUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *Costume3DUpdateOne) ClearGameID() *Costume3DUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -1041,6 +1056,9 @@ func (_u *Costume3DUpdateOne) sqlSave(ctx context.Context) (_node *Costume3D, er
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(costume3d.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(costume3d.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(costume3d.FieldSeq, field.TypeInt64, value)

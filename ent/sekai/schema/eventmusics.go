@@ -31,6 +31,6 @@ func (Eventmusic) Annotations() []schema.Annotation {
 
 func (Eventmusic) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region").Unique(),
+		index.Fields("event_id", "music_id", "server_region").Unique(),
 	}
 }

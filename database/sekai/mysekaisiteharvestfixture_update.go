@@ -50,6 +50,12 @@ func (_u *MysekaisiteharvestfixtureUpdate) AddGameID(v int64) *Mysekaisiteharves
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaisiteharvestfixtureUpdate) ClearGameID() *MysekaisiteharvestfixtureUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiSiteHarvestFixtureType sets the "mysekai_site_harvest_fixture_type" field.
 func (_u *MysekaisiteharvestfixtureUpdate) SetMysekaiSiteHarvestFixtureType(v string) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.SetMysekaiSiteHarvestFixtureType(v)
@@ -223,6 +229,9 @@ func (_u *MysekaisiteharvestfixtureUpdate) sqlSave(ctx context.Context) (_node i
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString, value)
 	}
@@ -305,6 +314,12 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableGameID(v *int64) *Mysek
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaisiteharvestfixtureUpdateOne) AddGameID(v int64) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaisiteharvestfixtureUpdateOne) ClearGameID() *MysekaisiteharvestfixtureUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -510,6 +525,9 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) sqlSave(ctx context.Context) (_nod
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureType(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, field.TypeString, value)

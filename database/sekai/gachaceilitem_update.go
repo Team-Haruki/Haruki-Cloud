@@ -50,6 +50,12 @@ func (_u *GachaceilitemUpdate) AddGameID(v int64) *GachaceilitemUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *GachaceilitemUpdate) ClearGameID() *GachaceilitemUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGachaID sets the "gacha_id" field.
 func (_u *GachaceilitemUpdate) SetGachaID(v int64) *GachaceilitemUpdate {
 	_u.mutation.ResetGachaID()
@@ -230,6 +236,9 @@ func (_u *GachaceilitemUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(gachaceilitem.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GachaID(); ok {
 		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt64, value)
 	}
@@ -315,6 +324,12 @@ func (_u *GachaceilitemUpdateOne) SetNillableGameID(v *int64) *GachaceilitemUpda
 // AddGameID adds value to the "game_id" field.
 func (_u *GachaceilitemUpdateOne) AddGameID(v int64) *GachaceilitemUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *GachaceilitemUpdateOne) ClearGameID() *GachaceilitemUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -527,6 +542,9 @@ func (_u *GachaceilitemUpdateOne) sqlSave(ctx context.Context) (_node *Gachaceil
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(gachaceilitem.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(gachaceilitem.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GachaID(); ok {
 		_spec.SetField(gachaceilitem.FieldGachaID, field.TypeInt64, value)

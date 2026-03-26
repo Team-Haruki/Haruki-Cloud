@@ -50,6 +50,12 @@ func (_u *EventraritybonusrateUpdate) AddGameID(v int64) *EventraritybonusrateUp
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventraritybonusrateUpdate) ClearGameID() *EventraritybonusrateUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetCardRarityType sets the "card_rarity_type" field.
 func (_u *EventraritybonusrateUpdate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateUpdate {
 	_u.mutation.SetCardRarityType(v)
@@ -183,6 +189,9 @@ func (_u *EventraritybonusrateUpdate) sqlSave(ctx context.Context) (_node int, e
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
 	}
@@ -253,6 +262,12 @@ func (_u *EventraritybonusrateUpdateOne) SetNillableGameID(v *int64) *Eventrarit
 // AddGameID adds value to the "game_id" field.
 func (_u *EventraritybonusrateUpdateOne) AddGameID(v int64) *EventraritybonusrateUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventraritybonusrateUpdateOne) ClearGameID() *EventraritybonusrateUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -418,6 +433,9 @@ func (_u *EventraritybonusrateUpdateOne) sqlSave(ctx context.Context) (_node *Ev
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)

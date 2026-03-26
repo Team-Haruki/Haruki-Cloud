@@ -26,6 +26,14 @@ func (_c *SkillCreate) SetGameID(v int64) *SkillCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *SkillCreate) SetNillableGameID(v *int64) *SkillCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetShortDescription sets the "short_description" field.
 func (_c *SkillCreate) SetShortDescription(v string) *SkillCreate {
 	_c.mutation.SetShortDescription(v)
@@ -120,9 +128,6 @@ func (_c *SkillCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SkillCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Skill.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Skill.server_region"`)}
 	}

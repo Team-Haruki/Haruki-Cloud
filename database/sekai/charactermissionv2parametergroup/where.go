@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Charactermissionv2Parametergroup {
+	return predicate.Charactermissionv2Parametergroup(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Charactermissionv2Parametergroup {
+	return predicate.Charactermissionv2Parametergroup(sql.FieldNotNull(FieldGameID))
+}
+
 // SeqEQ applies the EQ predicate on the "seq" field.
 func SeqEQ(v int64) predicate.Charactermissionv2Parametergroup {
 	return predicate.Charactermissionv2Parametergroup(sql.FieldEQ(FieldSeq, v))

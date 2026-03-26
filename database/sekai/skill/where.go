@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Skill {
+	return predicate.Skill(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Skill {
+	return predicate.Skill(sql.FieldNotNull(FieldGameID))
+}
+
 // ShortDescriptionEQ applies the EQ predicate on the "short_description" field.
 func ShortDescriptionEQ(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldShortDescription, v))

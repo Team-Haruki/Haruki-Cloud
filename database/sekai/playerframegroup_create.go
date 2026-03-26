@@ -25,6 +25,14 @@ func (_c *PlayerframegroupCreate) SetGameID(v int64) *PlayerframegroupCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *PlayerframegroupCreate) SetNillableGameID(v *int64) *PlayerframegroupCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetSeq sets the "seq" field.
 func (_c *PlayerframegroupCreate) SetSeq(v int64) *PlayerframegroupCreate {
 	_c.mutation.SetSeq(v)
@@ -107,9 +115,6 @@ func (_c *PlayerframegroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PlayerframegroupCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Playerframegroup.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Playerframegroup.server_region"`)}
 	}

@@ -26,6 +26,14 @@ func (_c *AreaitemCreate) SetGameID(v int64) *AreaitemCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *AreaitemCreate) SetNillableGameID(v *int64) *AreaitemCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetAreaID sets the "area_id" field.
 func (_c *AreaitemCreate) SetAreaID(v int64) *AreaitemCreate {
 	_c.mutation.SetAreaID(v)
@@ -128,9 +136,6 @@ func (_c *AreaitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AreaitemCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Areaitem.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Areaitem.server_region"`)}
 	}

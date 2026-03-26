@@ -138,6 +138,16 @@ func GameIDLTE(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNotNull(FieldGameID))
+}
+
 // MysekaiPhenomenaBrightnessTypeIsNil applies the IsNil predicate on the "mysekai_phenomena_brightness_type" field.
 func MysekaiPhenomenaBrightnessTypeIsNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIsNull(FieldMysekaiPhenomenaBrightnessType))

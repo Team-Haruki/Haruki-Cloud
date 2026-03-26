@@ -50,6 +50,12 @@ func (_u *MysekaiblueprintUpdate) AddGameID(v int64) *MysekaiblueprintUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiblueprintUpdate) ClearGameID() *MysekaiblueprintUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
 func (_u *MysekaiblueprintUpdate) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdate {
 	_u.mutation.SetMysekaiCraftType(v)
@@ -243,6 +249,9 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
 	}
@@ -331,6 +340,12 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int64) *Mysekaibluepri
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaiblueprintUpdateOne) AddGameID(v int64) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiblueprintUpdateOne) ClearGameID() *MysekaiblueprintUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -556,6 +571,9 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)

@@ -17,7 +17,7 @@ type Gamecharacter struct {
 
 func (Gamecharacter) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("resource_id").Optional(),
 		field.String("first_name").Optional(),

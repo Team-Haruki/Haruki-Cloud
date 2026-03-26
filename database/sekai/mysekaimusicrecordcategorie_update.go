@@ -50,6 +50,12 @@ func (_u *MysekaimusicrecordcategorieUpdate) AddGameID(v int64) *Mysekaimusicrec
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimusicrecordcategorieUpdate) ClearGameID() *MysekaimusicrecordcategorieUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *MysekaimusicrecordcategorieUpdate) SetName(v string) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.SetName(v)
@@ -196,6 +202,9 @@ func (_u *MysekaimusicrecordcategorieUpdate) sqlSave(ctx context.Context) (_node
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldName, field.TypeString, value)
 	}
@@ -269,6 +278,12 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableGameID(v *int64) *Mys
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaimusicrecordcategorieUpdateOne) AddGameID(v int64) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimusicrecordcategorieUpdateOne) ClearGameID() *MysekaimusicrecordcategorieUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -447,6 +462,9 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) sqlSave(ctx context.Context) (_n
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldName, field.TypeString, value)

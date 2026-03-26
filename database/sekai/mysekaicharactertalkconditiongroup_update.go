@@ -48,6 +48,12 @@ func (_u *MysekaicharactertalkconditiongroupUpdate) AddGameID(v int64) *Mysekaic
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkconditiongroupUpdate) ClearGameID() *MysekaicharactertalkconditiongroupUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGroupID sets the "group_id" field.
 func (_u *MysekaicharactertalkconditiongroupUpdate) SetGroupID(v int64) *MysekaicharactertalkconditiongroupUpdate {
 	_u.mutation.ResetGroupID()
@@ -163,6 +169,9 @@ func (_u *MysekaicharactertalkconditiongroupUpdate) sqlSave(ctx context.Context)
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt64, value)
 	}
@@ -222,6 +231,12 @@ func (_u *MysekaicharactertalkconditiongroupUpdateOne) SetNillableGameID(v *int6
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaicharactertalkconditiongroupUpdateOne) AddGameID(v int64) *MysekaicharactertalkconditiongroupUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaicharactertalkconditiongroupUpdateOne) ClearGameID() *MysekaicharactertalkconditiongroupUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -369,6 +384,9 @@ func (_u *MysekaicharactertalkconditiongroupUpdateOne) sqlSave(ctx context.Conte
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt64, value)

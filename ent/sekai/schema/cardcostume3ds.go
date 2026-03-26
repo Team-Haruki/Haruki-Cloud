@@ -30,6 +30,6 @@ func (Cardcostume3D) Annotations() []schema.Annotation {
 
 func (Cardcostume3D) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region").Unique(),
+		index.Fields("costume3_d_id", "server_region").Unique(),
 	}
 }

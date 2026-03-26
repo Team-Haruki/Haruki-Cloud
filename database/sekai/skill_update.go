@@ -50,6 +50,12 @@ func (_u *SkillUpdate) AddGameID(v int64) *SkillUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *SkillUpdate) ClearGameID() *SkillUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetShortDescription sets the "short_description" field.
 func (_u *SkillUpdate) SetShortDescription(v string) *SkillUpdate {
 	_u.mutation.SetShortDescription(v)
@@ -214,6 +220,9 @@ func (_u *SkillUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(skill.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(skill.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.ShortDescription(); ok {
 		_spec.SetField(skill.FieldShortDescription, field.TypeString, value)
 	}
@@ -298,6 +307,12 @@ func (_u *SkillUpdateOne) SetNillableGameID(v *int64) *SkillUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *SkillUpdateOne) AddGameID(v int64) *SkillUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *SkillUpdateOne) ClearGameID() *SkillUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -494,6 +509,9 @@ func (_u *SkillUpdateOne) sqlSave(ctx context.Context) (_node *Skill, err error)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(skill.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(skill.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ShortDescription(); ok {
 		_spec.SetField(skill.FieldShortDescription, field.TypeString, value)

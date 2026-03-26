@@ -26,6 +26,14 @@ func (_c *VirtualliveCreate) SetGameID(v int64) *VirtualliveCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *VirtualliveCreate) SetNillableGameID(v *int64) *VirtualliveCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetVirtualLiveType sets the "virtual_live_type" field.
 func (_c *VirtualliveCreate) SetVirtualLiveType(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveType(v)
@@ -284,9 +292,6 @@ func (_c *VirtualliveCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *VirtualliveCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Virtuallive.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Virtuallive.server_region"`)}
 	}

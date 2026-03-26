@@ -26,6 +26,14 @@ func (_c *Costume3DCreate) SetGameID(v int64) *Costume3DCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *Costume3DCreate) SetNillableGameID(v *int64) *Costume3DCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetSeq sets the "seq" field.
 func (_c *Costume3DCreate) SetSeq(v int64) *Costume3DCreate {
 	_c.mutation.SetSeq(v)
@@ -244,9 +252,6 @@ func (_c *Costume3DCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *Costume3DCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Costume3D.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Costume3D.server_region"`)}
 	}

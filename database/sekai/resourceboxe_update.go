@@ -68,6 +68,12 @@ func (_u *ResourceboxeUpdate) AddGameID(v int64) *ResourceboxeUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ResourceboxeUpdate) ClearGameID() *ResourceboxeUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetResourceBoxType sets the "resource_box_type" field.
 func (_u *ResourceboxeUpdate) SetResourceBoxType(v json.RawMessage) *ResourceboxeUpdate {
 	_u.mutation.SetResourceBoxType(v)
@@ -236,6 +242,9 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
 		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
 	}
@@ -335,6 +344,12 @@ func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int64) *ResourceboxeUpdate
 // AddGameID adds value to the "game_id" field.
 func (_u *ResourceboxeUpdateOne) AddGameID(v int64) *ResourceboxeUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ResourceboxeUpdateOne) ClearGameID() *ResourceboxeUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -535,6 +550,9 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
 		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)

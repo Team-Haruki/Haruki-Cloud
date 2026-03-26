@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldGameID))
+}
+
 // GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
 func GameCharacterUnitIDEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameCharacterUnitID, v))

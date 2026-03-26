@@ -25,6 +25,14 @@ func (_c *MysekaigateCreate) SetGameID(v int64) *MysekaigateCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaigateCreate) SetNillableGameID(v *int64) *MysekaigateCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetUnit sets the "unit" field.
 func (_c *MysekaigateCreate) SetUnit(v string) *MysekaigateCreate {
 	_c.mutation.SetUnit(v)
@@ -107,9 +115,6 @@ func (_c *MysekaigateCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaigateCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaigate.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaigate.server_region"`)}
 	}

@@ -48,6 +48,12 @@ func (_u *BondUpdate) AddGameID(v int64) *BondUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BondUpdate) ClearGameID() *BondUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGroupID sets the "group_id" field.
 func (_u *BondUpdate) SetGroupID(v int64) *BondUpdate {
 	_u.mutation.ResetGroupID()
@@ -190,6 +196,9 @@ func (_u *BondUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(bond.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(bond.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(bond.FieldGroupID, field.TypeInt64, value)
 	}
@@ -258,6 +267,12 @@ func (_u *BondUpdateOne) SetNillableGameID(v *int64) *BondUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *BondUpdateOne) AddGameID(v int64) *BondUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *BondUpdateOne) ClearGameID() *BondUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -432,6 +447,9 @@ func (_u *BondUpdateOne) sqlSave(ctx context.Context) (_node *Bond, err error) {
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(bond.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(bond.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(bond.FieldGroupID, field.TypeInt64, value)

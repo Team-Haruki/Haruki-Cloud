@@ -48,6 +48,12 @@ func (_u *MysekaigatecharacterlotterieUpdate) AddGameID(v int64) *Mysekaigatecha
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaigatecharacterlotterieUpdate) ClearGameID() *MysekaigatecharacterlotterieUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
 func (_u *MysekaigatecharacterlotterieUpdate) SetMysekaiGateID(v int64) *MysekaigatecharacterlotterieUpdate {
 	_u.mutation.ResetMysekaiGateID()
@@ -190,6 +196,9 @@ func (_u *MysekaigatecharacterlotterieUpdate) sqlSave(ctx context.Context) (_nod
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiGateID(); ok {
 		_spec.SetField(mysekaigatecharacterlotterie.FieldMysekaiGateID, field.TypeInt64, value)
 	}
@@ -258,6 +267,12 @@ func (_u *MysekaigatecharacterlotterieUpdateOne) SetNillableGameID(v *int64) *My
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaigatecharacterlotterieUpdateOne) AddGameID(v int64) *MysekaigatecharacterlotterieUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaigatecharacterlotterieUpdateOne) ClearGameID() *MysekaigatecharacterlotterieUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -432,6 +447,9 @@ func (_u *MysekaigatecharacterlotterieUpdateOne) sqlSave(ctx context.Context) (_
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaigatecharacterlotterie.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiGateID(); ok {
 		_spec.SetField(mysekaigatecharacterlotterie.FieldMysekaiGateID, field.TypeInt64, value)

@@ -37,6 +37,6 @@ func (Masterlesson) Annotations() []schema.Annotation {
 
 func (Masterlesson) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region").Unique(),
+		index.Fields("card_rarity_type", "master_rank", "server_region").Unique(),
 	}
 }

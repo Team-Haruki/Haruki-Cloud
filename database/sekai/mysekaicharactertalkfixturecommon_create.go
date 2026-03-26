@@ -26,6 +26,14 @@ func (_c *MysekaicharactertalkfixturecommonCreate) SetGameID(v int64) *Mysekaich
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameID(v *int64) *MysekaicharactertalkfixturecommonCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
 func (_c *MysekaicharactertalkfixturecommonCreate) SetGameCharacterUnitID(v int64) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
@@ -114,9 +122,6 @@ func (_c *MysekaicharactertalkfixturecommonCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaicharactertalkfixturecommonCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaicharactertalkfixturecommon.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaicharactertalkfixturecommon.server_region"`)}
 	}

@@ -50,6 +50,12 @@ func (_u *MysekaiphenomenonUpdate) AddGameID(v int64) *MysekaiphenomenonUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiphenomenonUpdate) ClearGameID() *MysekaiphenomenonUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
 func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonUpdate {
 	_u.mutation.SetMysekaiPhenomenaBrightnessType(v)
@@ -294,6 +300,9 @@ func (_u *MysekaiphenomenonUpdate) sqlSave(ctx context.Context) (_node int, err 
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiphenomenon.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
 	}
@@ -402,6 +411,12 @@ func (_u *MysekaiphenomenonUpdateOne) SetNillableGameID(v *int64) *Mysekaiphenom
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaiphenomenonUpdateOne) AddGameID(v int64) *MysekaiphenomenonUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiphenomenonUpdateOne) ClearGameID() *MysekaiphenomenonUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -678,6 +693,9 @@ func (_u *MysekaiphenomenonUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiphenomenon.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)

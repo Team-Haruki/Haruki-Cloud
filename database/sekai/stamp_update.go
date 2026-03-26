@@ -50,6 +50,12 @@ func (_u *StampUpdate) AddGameID(v int64) *StampUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *StampUpdate) ClearGameID() *StampUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetStampType sets the "stamp_type" field.
 func (_u *StampUpdate) SetStampType(v json.RawMessage) *StampUpdate {
 	_u.mutation.SetStampType(v)
@@ -360,6 +366,9 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(stamp.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.StampType(); ok {
 		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
 	}
@@ -497,6 +506,12 @@ func (_u *StampUpdateOne) SetNillableGameID(v *int64) *StampUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *StampUpdateOne) AddGameID(v int64) *StampUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *StampUpdateOne) ClearGameID() *StampUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -839,6 +854,9 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(stamp.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.StampType(); ok {
 		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)

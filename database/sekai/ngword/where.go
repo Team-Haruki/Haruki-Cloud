@@ -108,6 +108,16 @@ func GameIDLTE(v int64) predicate.Ngword {
 	return predicate.Ngword(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Ngword {
+	return predicate.Ngword(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Ngword {
+	return predicate.Ngword(sql.FieldNotNull(FieldGameID))
+}
+
 // WordEQ applies the EQ predicate on the "word" field.
 func WordEQ(v string) predicate.Ngword {
 	return predicate.Ngword(sql.FieldEQ(FieldWord, v))

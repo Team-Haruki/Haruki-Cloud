@@ -25,6 +25,14 @@ func (_c *MysekaiitemCreate) SetGameID(v int64) *MysekaiitemCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaiitemCreate) SetNillableGameID(v *int64) *MysekaiitemCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetSeq sets the "seq" field.
 func (_c *MysekaiitemCreate) SetSeq(v int64) *MysekaiitemCreate {
 	_c.mutation.SetSeq(v)
@@ -149,9 +157,6 @@ func (_c *MysekaiitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiitemCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiitem.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiitem.server_region"`)}
 	}

@@ -113,6 +113,16 @@ func GameIDLTE(v int64) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldNotNull(FieldGameID))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldEQ(FieldName, v))

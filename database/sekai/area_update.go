@@ -50,6 +50,12 @@ func (_u *AreaUpdate) AddGameID(v int64) *AreaUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *AreaUpdate) ClearGameID() *AreaUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetAssetbundleName sets the "assetbundle_name" field.
 func (_u *AreaUpdate) SetAssetbundleName(v string) *AreaUpdate {
 	_u.mutation.SetAssetbundleName(v)
@@ -418,6 +424,9 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(area.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)
 	}
@@ -578,6 +587,12 @@ func (_u *AreaUpdateOne) SetNillableGameID(v *int64) *AreaUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *AreaUpdateOne) AddGameID(v int64) *AreaUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *AreaUpdateOne) ClearGameID() *AreaUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -978,6 +993,9 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(area.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)

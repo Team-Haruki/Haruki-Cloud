@@ -26,6 +26,14 @@ func (_c *HonorgroupCreate) SetGameID(v int64) *HonorgroupCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *HonorgroupCreate) SetNillableGameID(v *int64) *HonorgroupCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *HonorgroupCreate) SetName(v string) *HonorgroupCreate {
 	_c.mutation.SetName(v)
@@ -128,9 +136,6 @@ func (_c *HonorgroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *HonorgroupCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Honorgroup.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Honorgroup.server_region"`)}
 	}

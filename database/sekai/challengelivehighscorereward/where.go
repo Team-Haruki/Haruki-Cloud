@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldGameID))
+}
+
 // CharacterIDEQ applies the EQ predicate on the "character_id" field.
 func CharacterIDEQ(v int64) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldCharacterID, v))

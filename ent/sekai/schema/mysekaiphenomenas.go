@@ -17,7 +17,7 @@ type Mysekaiphenomenon struct {
 
 func (Mysekaiphenomenon) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("mysekai_phenomena_brightness_type", json.RawMessage{}).Optional(),
 		field.String("name").Optional(),
 		field.String("english_name").Optional(),

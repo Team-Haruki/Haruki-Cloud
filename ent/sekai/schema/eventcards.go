@@ -15,7 +15,7 @@ type Eventcard struct {
 
 func (Eventcard) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("card_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.Float("bonus_rate").Optional(),
@@ -33,6 +33,6 @@ func (Eventcard) Annotations() []schema.Annotation {
 
 func (Eventcard) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
+		index.Fields("card_id", "event_id", "server_region").Unique(),
 	}
 }

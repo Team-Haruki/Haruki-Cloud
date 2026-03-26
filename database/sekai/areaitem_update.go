@@ -50,6 +50,12 @@ func (_u *AreaitemUpdate) AddGameID(v int64) *AreaitemUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *AreaitemUpdate) ClearGameID() *AreaitemUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetAreaID sets the "area_id" field.
 func (_u *AreaitemUpdate) SetAreaID(v int64) *AreaitemUpdate {
 	_u.mutation.ResetAreaID()
@@ -216,6 +222,9 @@ func (_u *AreaitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(areaitem.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(areaitem.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.AreaID(); ok {
 		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)
 	}
@@ -295,6 +304,12 @@ func (_u *AreaitemUpdateOne) SetNillableGameID(v *int64) *AreaitemUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *AreaitemUpdateOne) AddGameID(v int64) *AreaitemUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *AreaitemUpdateOne) ClearGameID() *AreaitemUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -493,6 +508,9 @@ func (_u *AreaitemUpdateOne) sqlSave(ctx context.Context) (_node *Areaitem, err 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(areaitem.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(areaitem.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AreaID(); ok {
 		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)

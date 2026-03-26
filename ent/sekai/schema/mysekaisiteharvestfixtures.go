@@ -17,7 +17,7 @@ type Mysekaisiteharvestfixture struct {
 
 func (Mysekaisiteharvestfixture) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("mysekai_site_harvest_fixture_type").Optional(),
 		field.Int64("hp").Optional(),
 		field.Int64("last_attack_stamina").Optional(),

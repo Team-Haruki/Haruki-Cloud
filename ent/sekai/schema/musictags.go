@@ -17,7 +17,7 @@ type Musictag struct {
 
 func (Musictag) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("music_id").Optional(),
 		field.JSON("music_tag", json.RawMessage{}).Optional(),
 		field.Int64("seq").Optional(),
@@ -33,6 +33,6 @@ func (Musictag) Annotations() []schema.Annotation {
 
 func (Musictag) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
+		index.Fields("music_id", "music_tag", "server_region").Unique(),
 	}
 }

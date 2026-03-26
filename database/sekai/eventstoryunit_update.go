@@ -50,6 +50,12 @@ func (_u *EventstoryunitUpdate) AddGameID(v int64) *EventstoryunitUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventstoryunitUpdate) ClearGameID() *EventstoryunitUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *EventstoryunitUpdate) SetSeq(v int64) *EventstoryunitUpdate {
 	_u.mutation.ResetSeq()
@@ -201,6 +207,9 @@ func (_u *EventstoryunitUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventstoryunit.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)
 	}
@@ -282,6 +291,12 @@ func (_u *EventstoryunitUpdateOne) SetNillableGameID(v *int64) *EventstoryunitUp
 // AddGameID adds value to the "game_id" field.
 func (_u *EventstoryunitUpdateOne) AddGameID(v int64) *EventstoryunitUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *EventstoryunitUpdateOne) ClearGameID() *EventstoryunitUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -465,6 +480,9 @@ func (_u *EventstoryunitUpdateOne) sqlSave(ctx context.Context) (_node *Eventsto
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(eventstoryunit.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)

@@ -25,6 +25,14 @@ func (_c *MysekaifixtureonlydisassemblematerialCreate) SetGameID(v int64) *Mysek
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaifixtureonlydisassemblematerialCreate) SetNillableGameID(v *int64) *MysekaifixtureonlydisassemblematerialCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMysekaiFixtureID sets the "mysekai_fixture_id" field.
 func (_c *MysekaifixtureonlydisassemblematerialCreate) SetMysekaiFixtureID(v int64) *MysekaifixtureonlydisassemblematerialCreate {
 	_c.mutation.SetMysekaiFixtureID(v)
@@ -121,9 +129,6 @@ func (_c *MysekaifixtureonlydisassemblematerialCreate) ExecX(ctx context.Context
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixtureonlydisassemblematerialCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixtureonlydisassemblematerial.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixtureonlydisassemblematerial.server_region"`)}
 	}

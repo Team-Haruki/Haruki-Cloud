@@ -17,7 +17,7 @@ type Eventraritybonusrate struct {
 
 func (Eventraritybonusrate) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("card_rarity_type", json.RawMessage{}).Optional(),
 		field.Int64("master_rank").Optional(),
 		field.Float("bonus_rate").Optional(),

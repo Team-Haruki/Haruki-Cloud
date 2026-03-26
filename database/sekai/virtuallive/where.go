@@ -153,6 +153,16 @@ func GameIDLTE(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotNull(FieldGameID))
+}
+
 // VirtualLiveTypeIsNil applies the IsNil predicate on the "virtual_live_type" field.
 func VirtualLiveTypeIsNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLiveType))

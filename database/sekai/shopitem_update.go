@@ -50,6 +50,12 @@ func (_u *ShopitemUpdate) AddGameID(v int64) *ShopitemUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ShopitemUpdate) ClearGameID() *ShopitemUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetShopID sets the "shop_id" field.
 func (_u *ShopitemUpdate) SetShopID(v int64) *ShopitemUpdate {
 	_u.mutation.ResetShopID()
@@ -264,6 +270,9 @@ func (_u *ShopitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(shopitem.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(shopitem.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.ShopID(); ok {
 		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)
 	}
@@ -361,6 +370,12 @@ func (_u *ShopitemUpdateOne) SetNillableGameID(v *int64) *ShopitemUpdateOne {
 // AddGameID adds value to the "game_id" field.
 func (_u *ShopitemUpdateOne) AddGameID(v int64) *ShopitemUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *ShopitemUpdateOne) ClearGameID() *ShopitemUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -607,6 +622,9 @@ func (_u *ShopitemUpdateOne) sqlSave(ctx context.Context) (_node *Shopitem, err 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(shopitem.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(shopitem.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ShopID(); ok {
 		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)

@@ -17,7 +17,7 @@ type Level struct {
 
 func (Level) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("level_type", json.RawMessage{}).Optional(),
 		field.Int64("level").Optional(),
 		field.Int64("total_exp").Optional(),
@@ -33,6 +33,6 @@ func (Level) Annotations() []schema.Annotation {
 
 func (Level) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
+		index.Fields("level_type", "level", "server_region").Unique(),
 	}
 }

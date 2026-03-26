@@ -138,6 +138,16 @@ func GameIDLTE(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Musicvocal {
+	return predicate.Musicvocal(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Musicvocal {
+	return predicate.Musicvocal(sql.FieldNotNull(FieldGameID))
+}
+
 // MusicIDEQ applies the EQ predicate on the "music_id" field.
 func MusicIDEQ(v int64) predicate.Musicvocal {
 	return predicate.Musicvocal(sql.FieldEQ(FieldMusicID, v))

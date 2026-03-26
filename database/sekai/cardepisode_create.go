@@ -26,6 +26,14 @@ func (_c *CardepisodeCreate) SetGameID(v int64) *CardepisodeCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *CardepisodeCreate) SetNillableGameID(v *int64) *CardepisodeCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetSeq sets the "seq" field.
 func (_c *CardepisodeCreate) SetSeq(v int64) *CardepisodeCreate {
 	_c.mutation.SetSeq(v)
@@ -210,9 +218,6 @@ func (_c *CardepisodeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CardepisodeCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Cardepisode.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Cardepisode.server_region"`)}
 	}

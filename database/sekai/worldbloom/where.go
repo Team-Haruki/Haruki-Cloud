@@ -143,6 +143,16 @@ func GameIDLTE(v int64) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldGameID))
+}
+
 // EventIDEQ applies the EQ predicate on the "event_id" field.
 func EventIDEQ(v int64) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldEventID, v))

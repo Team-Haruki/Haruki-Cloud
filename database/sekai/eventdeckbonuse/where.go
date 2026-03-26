@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldGameID))
+}
+
 // EventIDEQ applies the EQ predicate on the "event_id" field.
 func EventIDEQ(v int64) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldEventID, v))

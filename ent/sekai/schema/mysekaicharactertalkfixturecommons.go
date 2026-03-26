@@ -17,7 +17,7 @@ type Mysekaicharactertalkfixturecommon struct {
 
 func (Mysekaicharactertalkfixturecommon) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("game_character_unit_id").Optional(),
 		field.JSON("mysekai_character_talk_fixture_common_type", json.RawMessage{}).Optional(),
 		field.Int64("mysekai_character_talk_fixture_common_mysekai_fixture_group_id").Optional(),

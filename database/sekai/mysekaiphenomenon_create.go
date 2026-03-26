@@ -26,6 +26,14 @@ func (_c *MysekaiphenomenonCreate) SetGameID(v int64) *MysekaiphenomenonCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaiphenomenonCreate) SetNillableGameID(v *int64) *MysekaiphenomenonCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
 func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaBrightnessType(v)
@@ -176,9 +184,6 @@ func (_c *MysekaiphenomenonCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiphenomenonCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiphenomenon.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiphenomenon.server_region"`)}
 	}

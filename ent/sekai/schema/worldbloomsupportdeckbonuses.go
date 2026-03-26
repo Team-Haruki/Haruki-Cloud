@@ -28,6 +28,6 @@ func (Worldbloomsupportdeckbonuse) Annotations() []schema.Annotation {
 
 func (Worldbloomsupportdeckbonuse) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region").Unique(),
+		index.Fields("card_rarity_type", "server_region").Unique(),
 	}
 }

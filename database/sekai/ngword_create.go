@@ -25,6 +25,14 @@ func (_c *NgwordCreate) SetGameID(v int64) *NgwordCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *NgwordCreate) SetNillableGameID(v *int64) *NgwordCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetWord sets the "word" field.
 func (_c *NgwordCreate) SetWord(v string) *NgwordCreate {
 	_c.mutation.SetWord(v)
@@ -79,9 +87,6 @@ func (_c *NgwordCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *NgwordCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Ngword.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Ngword.server_region"`)}
 	}

@@ -48,6 +48,12 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameID(v int64) *Myseka
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimaterialgamecharacterrelationUpdate) ClearGameID() *MysekaimaterialgamecharacterrelationUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetGroupID sets the "group_id" field.
 func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGroupID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ResetGroupID()
@@ -190,6 +196,9 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) sqlSave(ctx context.Contex
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
 	}
@@ -258,6 +267,12 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameID(v *in
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) ClearGameID() *MysekaimaterialgamecharacterrelationUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -432,6 +447,9 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) sqlSave(ctx context.Con
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
 		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)

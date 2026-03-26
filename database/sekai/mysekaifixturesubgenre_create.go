@@ -25,6 +25,14 @@ func (_c *MysekaifixturesubgenreCreate) SetGameID(v int64) *Mysekaifixturesubgen
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaifixturesubgenreCreate) SetNillableGameID(v *int64) *MysekaifixturesubgenreCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *MysekaifixturesubgenreCreate) SetName(v string) *MysekaifixturesubgenreCreate {
 	_c.mutation.SetName(v)
@@ -107,9 +115,6 @@ func (_c *MysekaifixturesubgenreCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturesubgenreCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturesubgenre.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturesubgenre.server_region"`)}
 	}

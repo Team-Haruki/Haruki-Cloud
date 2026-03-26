@@ -18,7 +18,7 @@ type Resourceboxe struct {
 func (Resourceboxe) Fields() []ent.Field {
 	return []ent.Field{
 		field.JSON("resource_box_purpose", json.RawMessage{}).Optional(),
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.JSON("resource_box_type", json.RawMessage{}).Optional(),
 		field.String("description").Optional(),
 		field.JSON("details", json.RawMessage{}).Optional(),
@@ -36,6 +36,6 @@ func (Resourceboxe) Annotations() []schema.Annotation {
 
 func (Resourceboxe) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "server_region").Unique(),
+		index.Fields("resource_box_purpose", "game_id", "server_region").Unique(),
 	}
 }

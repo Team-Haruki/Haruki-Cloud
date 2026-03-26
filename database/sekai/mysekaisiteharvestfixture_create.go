@@ -26,6 +26,14 @@ func (_c *MysekaisiteharvestfixtureCreate) SetGameID(v int64) *Mysekaisiteharves
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *MysekaisiteharvestfixtureCreate) SetNillableGameID(v *int64) *MysekaisiteharvestfixtureCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetMysekaiSiteHarvestFixtureType sets the "mysekai_site_harvest_fixture_type" field.
 func (_c *MysekaisiteharvestfixtureCreate) SetMysekaiSiteHarvestFixtureType(v string) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetMysekaiSiteHarvestFixtureType(v)
@@ -128,9 +136,6 @@ func (_c *MysekaisiteharvestfixtureCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaisiteharvestfixtureCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaisiteharvestfixture.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaisiteharvestfixture.server_region"`)}
 	}

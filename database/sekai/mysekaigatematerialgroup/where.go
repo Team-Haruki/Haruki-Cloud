@@ -118,6 +118,16 @@ func GameIDLTE(v int64) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldGameID))
+}
+
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
 func GroupIDEQ(v int64) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGroupID, v))

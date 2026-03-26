@@ -15,7 +15,7 @@ type Mysekaifixturegamecharactergroup struct {
 
 func (Mysekaifixturegamecharactergroup) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("group_id").Optional(),
 		field.Int64("game_character_id").Optional(),
 		field.String("server_region"),

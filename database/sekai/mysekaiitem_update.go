@@ -48,6 +48,12 @@ func (_u *MysekaiitemUpdate) AddGameID(v int64) *MysekaiitemUpdate {
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiitemUpdate) ClearGameID() *MysekaiitemUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetSeq sets the "seq" field.
 func (_u *MysekaiitemUpdate) SetSeq(v int64) *MysekaiitemUpdate {
 	_u.mutation.ResetSeq()
@@ -236,6 +242,9 @@ func (_u *MysekaiitemUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiitem.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
 	}
@@ -316,6 +325,12 @@ func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int64) *MysekaiitemUpdateOn
 // AddGameID adds value to the "game_id" field.
 func (_u *MysekaiitemUpdateOne) AddGameID(v int64) *MysekaiitemUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *MysekaiitemUpdateOne) ClearGameID() *MysekaiitemUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -536,6 +551,9 @@ func (_u *MysekaiitemUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaiitem
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(mysekaiitem.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)

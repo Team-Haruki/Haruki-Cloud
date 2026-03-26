@@ -29,6 +29,6 @@ func (Worldbloomdifferentattributebonuse) Annotations() []schema.Annotation {
 
 func (Worldbloomdifferentattributebonuse) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region").Unique(),
+		index.Fields("attribute_count", "server_region").Unique(),
 	}
 }

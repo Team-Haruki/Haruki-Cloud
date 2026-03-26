@@ -26,6 +26,14 @@ func (_c *EventraritybonusrateCreate) SetGameID(v int64) *EventraritybonusrateCr
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *EventraritybonusrateCreate) SetNillableGameID(v *int64) *EventraritybonusrateCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetCardRarityType sets the "card_rarity_type" field.
 func (_c *EventraritybonusrateCreate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateCreate {
 	_c.mutation.SetCardRarityType(v)
@@ -100,9 +108,6 @@ func (_c *EventraritybonusrateCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventraritybonusrateCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventraritybonusrate.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventraritybonusrate.server_region"`)}
 	}

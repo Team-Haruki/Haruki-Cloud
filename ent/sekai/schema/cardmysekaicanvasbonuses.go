@@ -15,7 +15,7 @@ type Cardmysekaicanvasbonuse struct {
 
 func (Cardmysekaicanvasbonuse) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.String("card_rarity_type").Optional(),
 		field.Int64("power1_bonus_fixed").Optional(),
 		field.Int64("power2_bonus_fixed").Optional(),

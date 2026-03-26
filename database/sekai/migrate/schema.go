@@ -12,7 +12,7 @@ var (
 	// AreasColumns holds the columns for the "areas" table.
 	AreasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "is_base_area", Type: field.TypeBool, Nullable: true},
@@ -45,7 +45,7 @@ var (
 	// AreaitemsColumns holds the columns for the "areaitems" table.
 	AreaitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "area_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "flavor_text", Type: field.TypeString, Nullable: true},
@@ -90,16 +90,16 @@ var (
 		PrimaryKey: []*schema.Column{AreaitemlevelsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "areaitemlevel_server_region",
+				Name:    "areaitemlevel_area_item_id_level_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{AreaitemlevelsColumns[13]},
+				Columns: []*schema.Column{AreaitemlevelsColumns[1], AreaitemlevelsColumns[2], AreaitemlevelsColumns[13]},
 			},
 		},
 	}
 	// BondsColumns holds the columns for the "bonds" table.
 	BondsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_id1", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_id2", Type: field.TypeInt64, Nullable: true},
@@ -121,7 +121,7 @@ var (
 	// BondshonorsColumns holds the columns for the "bondshonors" table.
 	BondshonorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "bonds_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id1", Type: field.TypeInt64, Nullable: true},
@@ -150,7 +150,7 @@ var (
 	// BoostitemsColumns holds the columns for the "boostitems" table.
 	BoostitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "recovery_value", Type: field.TypeInt64, Nullable: true},
@@ -174,7 +174,7 @@ var (
 	// CardsColumns holds the columns for the "cards" table.
 	CardsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_rarity_type", Type: field.TypeJSON, Nullable: true},
@@ -230,16 +230,16 @@ var (
 		PrimaryKey: []*schema.Column{Cardcostume3dsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "cardcostume3d_server_region",
+				Name:    "cardcostume3d_costume3_d_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{Cardcostume3dsColumns[4]},
+				Columns: []*schema.Column{Cardcostume3dsColumns[2], Cardcostume3dsColumns[4]},
 			},
 		},
 	}
 	// CardepisodesColumns holds the columns for the "cardepisodes" table.
 	CardepisodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "title", Type: field.TypeString, Nullable: true},
@@ -270,7 +270,7 @@ var (
 	// CardmysekaicanvasbonusesColumns holds the columns for the "cardmysekaicanvasbonuses" table.
 	CardmysekaicanvasbonusesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_rarity_type", Type: field.TypeString, Nullable: true},
 		{Name: "power1_bonus_fixed", Type: field.TypeInt64, Nullable: true},
 		{Name: "power2_bonus_fixed", Type: field.TypeInt64, Nullable: true},
@@ -307,16 +307,16 @@ var (
 		PrimaryKey: []*schema.Column{CardraritiesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "cardraritie_server_region",
+				Name:    "cardraritie_card_rarity_type_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{CardraritiesColumns[6]},
+				Columns: []*schema.Column{CardraritiesColumns[1], CardraritiesColumns[6]},
 			},
 		},
 	}
 	// CardsuppliesColumns holds the columns for the "cardsupplies" table.
 	CardsuppliesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_supply_type", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -337,7 +337,7 @@ var (
 	// ChallengelivehighscorerewardsColumns holds the columns for the "challengelivehighscorerewards" table.
 	ChallengelivehighscorerewardsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "high_score", Type: field.TypeInt64, Nullable: true},
 		{Name: "resource_box_id", Type: field.TypeInt64, Nullable: true},
@@ -359,7 +359,7 @@ var (
 	// Character2dsColumns holds the columns for the "character2ds" table.
 	Character2dsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "is_next_grade", Type: field.TypeBool, Nullable: true},
 		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
@@ -385,7 +385,7 @@ var (
 	// Charactermissionv2parametergroupsColumns holds the columns for the "charactermissionv2parametergroups" table.
 	Charactermissionv2parametergroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "requirement", Type: field.TypeInt64, Nullable: true},
 		{Name: "exp", Type: field.TypeInt64, Nullable: true},
@@ -399,16 +399,16 @@ var (
 		PrimaryKey: []*schema.Column{Charactermissionv2parametergroupsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "charactermissionv2parametergroup_game_id_server_region",
+				Name:    "charactermissionv2parametergroup_game_id_seq_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{Charactermissionv2parametergroupsColumns[1], Charactermissionv2parametergroupsColumns[6]},
+				Columns: []*schema.Column{Charactermissionv2parametergroupsColumns[1], Charactermissionv2parametergroupsColumns[2], Charactermissionv2parametergroupsColumns[6]},
 			},
 		},
 	}
 	// CharacterranksColumns holds the columns for the "characterranks" table.
 	CharacterranksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "character_rank", Type: field.TypeInt64, Nullable: true},
 		{Name: "power1_bonus_rate", Type: field.TypeFloat64, Nullable: true},
@@ -434,7 +434,7 @@ var (
 	// CheerfulcarnivalteamsColumns holds the columns for the "cheerfulcarnivalteams" table.
 	CheerfulcarnivalteamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "team_name", Type: field.TypeString, Nullable: true},
@@ -457,7 +457,7 @@ var (
 	// Costume3dsColumns holds the columns for the "costume3ds" table.
 	Costume3dsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "costume3_d_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "costume3_d_type", Type: field.TypeJSON, Nullable: true},
@@ -491,7 +491,7 @@ var (
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
@@ -528,7 +528,7 @@ var (
 	// EventcardsColumns holds the columns for the "eventcards" table.
 	EventcardsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "bonus_rate", Type: field.TypeFloat64, Nullable: true},
@@ -543,16 +543,16 @@ var (
 		PrimaryKey: []*schema.Column{EventcardsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "eventcard_game_id_server_region",
+				Name:    "eventcard_card_id_event_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{EventcardsColumns[1], EventcardsColumns[7]},
+				Columns: []*schema.Column{EventcardsColumns[2], EventcardsColumns[3], EventcardsColumns[7]},
 			},
 		},
 	}
 	// EventdeckbonusesColumns holds the columns for the "eventdeckbonuses" table.
 	EventdeckbonusesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_attr", Type: field.TypeJSON, Nullable: true},
@@ -575,7 +575,7 @@ var (
 	// EventexchangesummariesColumns holds the columns for the "eventexchangesummaries" table.
 	EventexchangesummariesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "start_at", Type: field.TypeInt64, Nullable: true},
@@ -599,7 +599,7 @@ var (
 	// EventitemsColumns holds the columns for the "eventitems" table.
 	EventitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeJSON, Nullable: true},
 		{Name: "flavor_text", Type: field.TypeJSON, Nullable: true},
@@ -636,16 +636,16 @@ var (
 		PrimaryKey: []*schema.Column{EventmusicsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "eventmusic_server_region",
+				Name:    "eventmusic_event_id_music_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{EventmusicsColumns[5]},
+				Columns: []*schema.Column{EventmusicsColumns[1], EventmusicsColumns[2], EventmusicsColumns[5]},
 			},
 		},
 	}
 	// EventraritybonusratesColumns holds the columns for the "eventraritybonusrates" table.
 	EventraritybonusratesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "card_rarity_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "master_rank", Type: field.TypeInt64, Nullable: true},
 		{Name: "bonus_rate", Type: field.TypeFloat64, Nullable: true},
@@ -667,7 +667,7 @@ var (
 	// EventstoriesColumns holds the columns for the "eventstories" table.
 	EventstoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "outline", Type: field.TypeString, Nullable: true},
 		{Name: "banner_game_character_unit_id", Type: field.TypeInt64, Nullable: true},
@@ -691,7 +691,7 @@ var (
 	// EventstoryunitsColumns holds the columns for the "eventstoryunits" table.
 	EventstoryunitsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_story_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "unit", Type: field.TypeJSON, Nullable: true},
@@ -714,7 +714,7 @@ var (
 	// GachasColumns holds the columns for the "gachas" table.
 	GachasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "gacha_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -757,7 +757,7 @@ var (
 	// GachaceilitemsColumns holds the columns for the "gachaceilitems" table.
 	GachaceilitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "gacha_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeJSON, Nullable: true},
@@ -781,7 +781,7 @@ var (
 	// GachaticketsColumns holds the columns for the "gachatickets" table.
 	GachaticketsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "gacha_display_type", Type: field.TypeJSON, Nullable: true},
@@ -803,7 +803,7 @@ var (
 	// GamecharactersColumns holds the columns for the "gamecharacters" table.
 	GamecharactersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "resource_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "first_name", Type: field.TypeString, Nullable: true},
@@ -838,7 +838,7 @@ var (
 	// GamecharacterunitsColumns holds the columns for the "gamecharacterunits" table.
 	GamecharacterunitsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "unit", Type: field.TypeJSON, Nullable: true},
 		{Name: "color_code", Type: field.TypeString, Nullable: true},
@@ -863,7 +863,7 @@ var (
 	// HonorsColumns holds the columns for the "honors" table.
 	HonorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "honor_rarity", Type: field.TypeJSON, Nullable: true},
@@ -891,7 +891,7 @@ var (
 	// HonorgroupsColumns holds the columns for the "honorgroups" table.
 	HonorgroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
 		{Name: "honor_type", Type: field.TypeJSON, Nullable: true},
@@ -915,7 +915,7 @@ var (
 	// LevelsColumns holds the columns for the "levels" table.
 	LevelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "level_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "level", Type: field.TypeInt64, Nullable: true},
 		{Name: "total_exp", Type: field.TypeInt64, Nullable: true},
@@ -928,16 +928,16 @@ var (
 		PrimaryKey: []*schema.Column{LevelsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "level_game_id_server_region",
+				Name:    "level_level_type_level_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{LevelsColumns[1], LevelsColumns[5]},
+				Columns: []*schema.Column{LevelsColumns[2], LevelsColumns[3], LevelsColumns[5]},
 			},
 		},
 	}
 	// LimitedtimemusicsColumns holds the columns for the "limitedtimemusics" table.
 	LimitedtimemusicsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "start_at", Type: field.TypeInt64, Nullable: true},
 		{Name: "end_at", Type: field.TypeInt64, Nullable: true},
@@ -976,16 +976,16 @@ var (
 		PrimaryKey: []*schema.Column{MasterlessonsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "masterlesson_server_region",
+				Name:    "masterlesson_card_rarity_type_master_rank_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MasterlessonsColumns[9]},
+				Columns: []*schema.Column{MasterlessonsColumns[1], MasterlessonsColumns[2], MasterlessonsColumns[9]},
 			},
 		},
 	}
 	// MusicsColumns holds the columns for the "musics" table.
 	MusicsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "release_condition_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "categories", Type: field.TypeJSON, Nullable: true},
@@ -1025,7 +1025,7 @@ var (
 	// MusicartistsColumns holds the columns for the "musicartists" table.
 	MusicartistsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1046,7 +1046,7 @@ var (
 	// MusicdifficultiesColumns holds the columns for the "musicdifficulties" table.
 	MusicdifficultiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_difficulty", Type: field.TypeJSON, Nullable: true},
 		{Name: "play_level", Type: field.TypeInt64, Nullable: true},
@@ -1070,7 +1070,7 @@ var (
 	// MusictagsColumns holds the columns for the "musictags" table.
 	MusictagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_tag", Type: field.TypeJSON, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -1083,16 +1083,16 @@ var (
 		PrimaryKey: []*schema.Column{MusictagsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "musictag_game_id_server_region",
+				Name:    "musictag_music_id_music_tag_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MusictagsColumns[1], MusictagsColumns[5]},
+				Columns: []*schema.Column{MusictagsColumns[2], MusictagsColumns[3], MusictagsColumns[5]},
 			},
 		},
 	}
 	// MusicvocalsColumns holds the columns for the "musicvocals" table.
 	MusicvocalsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "music_vocal_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -1121,7 +1121,7 @@ var (
 	// MysekaiblueprintsColumns holds the columns for the "mysekaiblueprints" table.
 	MysekaiblueprintsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_craft_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "craft_target_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "is_enable_sketch", Type: field.TypeBool, Nullable: true},
@@ -1146,7 +1146,7 @@ var (
 	// MysekaiblueprintmysekaimaterialcostsColumns holds the columns for the "mysekaiblueprintmysekaimaterialcosts" table.
 	MysekaiblueprintmysekaimaterialcostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_blueprint_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_material_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -1170,7 +1170,7 @@ var (
 	// MysekaicharactertalksColumns holds the columns for the "mysekaicharactertalks" table.
 	MysekaicharactertalksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_game_character_unit_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_character_talk_condition_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_site_group_id", Type: field.TypeInt64, Nullable: true},
@@ -1197,7 +1197,7 @@ var (
 	// MysekaicharactertalkconditionsColumns holds the columns for the "mysekaicharactertalkconditions" table.
 	MysekaicharactertalkconditionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_character_talk_condition_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "mysekai_character_talk_condition_type_value", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1218,7 +1218,7 @@ var (
 	// MysekaicharactertalkconditiongroupsColumns holds the columns for the "mysekaicharactertalkconditiongroups" table.
 	MysekaicharactertalkconditiongroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_character_talk_condition_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1239,7 +1239,7 @@ var (
 	// MysekaicharactertalkfixturecommonsColumns holds the columns for the "mysekaicharactertalkfixturecommons" table.
 	MysekaicharactertalkfixturecommonsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_character_talk_fixture_common_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "mysekai_character_talk_fixture_common_mysekai_fixture_group_id", Type: field.TypeInt64, Nullable: true},
@@ -1262,7 +1262,7 @@ var (
 	// MysekaifixturesColumns holds the columns for the "mysekaifixtures" table.
 	MysekaifixturesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_fixture_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
@@ -1306,7 +1306,7 @@ var (
 	// MysekaifixturegamecharactergroupsColumns holds the columns for the "mysekaifixturegamecharactergroups" table.
 	MysekaifixturegamecharactergroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1327,7 +1327,7 @@ var (
 	// MysekaifixturemaingenresColumns holds the columns for the "mysekaifixturemaingenres" table.
 	MysekaifixturemaingenresColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "mysekai_fixture_main_genre_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
@@ -1350,7 +1350,7 @@ var (
 	// MysekaifixtureonlydisassemblematerialsColumns holds the columns for the "mysekaifixtureonlydisassemblematerials" table.
 	MysekaifixtureonlydisassemblematerialsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_fixture_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_material_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -1373,7 +1373,7 @@ var (
 	// MysekaifixturesubgenresColumns holds the columns for the "mysekaifixturesubgenres" table.
 	MysekaifixturesubgenresColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "mysekai_fixture_sub_genre_type", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
@@ -1395,7 +1395,7 @@ var (
 	// MysekaifixturetagsColumns holds the columns for the "mysekaifixturetags" table.
 	MysekaifixturetagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
 		{Name: "mysekai_fixture_tag_type", Type: field.TypeJSON, Nullable: true},
@@ -1418,7 +1418,7 @@ var (
 	// MysekaigamecharacterunitgroupsColumns holds the columns for the "mysekaigamecharacterunitgroups" table.
 	MysekaigamecharacterunitgroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id1", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id2", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id3", Type: field.TypeInt64, Nullable: true},
@@ -1442,7 +1442,7 @@ var (
 	// MysekaigatesColumns holds the columns for the "mysekaigates" table.
 	MysekaigatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "unit", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
@@ -1464,7 +1464,7 @@ var (
 	// MysekaigatecharacterlotteriesColumns holds the columns for the "mysekaigatecharacterlotteries" table.
 	MysekaigatecharacterlotteriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_gate_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_unit_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "visitable_mysekai_gate_level", Type: field.TypeInt64, Nullable: true},
@@ -1486,7 +1486,7 @@ var (
 	// MysekaigatelevelsColumns holds the columns for the "mysekaigatelevels" table.
 	MysekaigatelevelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_gate_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "level", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_gate_material_group_id", Type: field.TypeInt64, Nullable: true},
@@ -1510,7 +1510,7 @@ var (
 	// MysekaigatematerialgroupsColumns holds the columns for the "mysekaigatematerialgroups" table.
 	MysekaigatematerialgroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_material_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "quantity", Type: field.TypeInt64, Nullable: true},
@@ -1532,7 +1532,7 @@ var (
 	// MysekaiitemsColumns holds the columns for the "mysekaiitems" table.
 	MysekaiitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_item_type", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
@@ -1557,7 +1557,7 @@ var (
 	// MysekaimaterialsColumns holds the columns for the "mysekaimaterials" table.
 	MysekaimaterialsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_material_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
@@ -1586,7 +1586,7 @@ var (
 	// MysekaimaterialgamecharacterrelationsColumns holds the columns for the "mysekaimaterialgamecharacterrelations" table.
 	MysekaimaterialgamecharacterrelationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_material_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
@@ -1608,7 +1608,7 @@ var (
 	// MysekaimusicrecordsColumns holds the columns for the "mysekaimusicrecords" table.
 	MysekaimusicrecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_music_track_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "external_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1629,7 +1629,7 @@ var (
 	// MysekaimusicrecordcategoriesColumns holds the columns for the "mysekaimusicrecordcategories" table.
 	MysekaimusicrecordcategoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_music_track_type", Type: field.TypeJSON, Nullable: true},
@@ -1652,7 +1652,7 @@ var (
 	// MysekaiphenomenabackgroundcolorsColumns holds the columns for the "mysekaiphenomenabackgroundcolors" table.
 	MysekaiphenomenabackgroundcolorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "base_color", Type: field.TypeString, Nullable: true},
 		{Name: "ground_color", Type: field.TypeString, Nullable: true},
 		{Name: "gradation_color", Type: field.TypeString, Nullable: true},
@@ -1676,7 +1676,7 @@ var (
 	// MysekaiphenomenasColumns holds the columns for the "mysekaiphenomenas" table.
 	MysekaiphenomenasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_phenomena_brightness_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "english_name", Type: field.TypeString, Nullable: true},
@@ -1704,7 +1704,7 @@ var (
 	// MysekaisiteharvestfixturesColumns holds the columns for the "mysekaisiteharvestfixtures" table.
 	MysekaisiteharvestfixturesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "mysekai_site_harvest_fixture_type", Type: field.TypeString, Nullable: true},
 		{Name: "hp", Type: field.TypeInt64, Nullable: true},
 		{Name: "last_attack_stamina", Type: field.TypeInt64, Nullable: true},
@@ -1728,7 +1728,7 @@ var (
 	// NgwordsColumns holds the columns for the "ngwords" table.
 	NgwordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "word", Type: field.TypeString, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
@@ -1737,18 +1737,11 @@ var (
 		Name:       "ngwords",
 		Columns:    NgwordsColumns,
 		PrimaryKey: []*schema.Column{NgwordsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "ngword_game_id_server_region",
-				Unique:  true,
-				Columns: []*schema.Column{NgwordsColumns[1], NgwordsColumns[3]},
-			},
-		},
 	}
 	// OutsidecharactersColumns holds the columns for the "outsidecharacters" table.
 	OutsidecharactersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
@@ -1769,7 +1762,7 @@ var (
 	// PlayerframesColumns holds the columns for the "playerframes" table.
 	PlayerframesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "player_frame_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
@@ -1792,7 +1785,7 @@ var (
 	// PlayerframegroupsColumns holds the columns for the "playerframegroups" table.
 	PlayerframegroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
@@ -1815,7 +1808,7 @@ var (
 	ResourceboxesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "resource_box_purpose", Type: field.TypeJSON, Nullable: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "resource_box_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "details", Type: field.TypeJSON, Nullable: true},
@@ -1830,16 +1823,16 @@ var (
 		PrimaryKey: []*schema.Column{ResourceboxesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "resourceboxe_game_id_server_region",
+				Name:    "resourceboxe_resource_box_purpose_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{ResourceboxesColumns[2], ResourceboxesColumns[8]},
+				Columns: []*schema.Column{ResourceboxesColumns[1], ResourceboxesColumns[2], ResourceboxesColumns[8]},
 			},
 		},
 	}
 	// ShopitemsColumns holds the columns for the "shopitems" table.
 	ShopitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "shop_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "release_condition_id", Type: field.TypeInt64, Nullable: true},
@@ -1864,7 +1857,7 @@ var (
 	// SkillsColumns holds the columns for the "skills" table.
 	SkillsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "short_description", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "description_sprite_name", Type: field.TypeJSON, Nullable: true},
@@ -1888,7 +1881,7 @@ var (
 	// StampsColumns holds the columns for the "stamps" table.
 	StampsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "stamp_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
@@ -1918,7 +1911,7 @@ var (
 	// VirtuallivesColumns holds the columns for the "virtuallives" table.
 	VirtuallivesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "virtual_live_type", Type: field.TypeJSON, Nullable: true},
 		{Name: "virtual_live_platform", Type: field.TypeJSON, Nullable: true},
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
@@ -1960,7 +1953,7 @@ var (
 	// WorldbloomsColumns holds the columns for the "worldblooms" table.
 	WorldbloomsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "game_id", Type: field.TypeInt64},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "world_bloom_chapter_type", Type: field.TypeJSON, Nullable: true},
@@ -1999,9 +1992,9 @@ var (
 		PrimaryKey: []*schema.Column{WorldbloomdifferentattributebonusesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "worldbloomdifferentattributebonuse_server_region",
+				Name:    "worldbloomdifferentattributebonuse_attribute_count_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{WorldbloomdifferentattributebonusesColumns[3]},
+				Columns: []*schema.Column{WorldbloomdifferentattributebonusesColumns[1], WorldbloomdifferentattributebonusesColumns[3]},
 			},
 		},
 	}
@@ -2018,9 +2011,9 @@ var (
 		PrimaryKey: []*schema.Column{WorldbloomsupportdeckbonusesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "worldbloomsupportdeckbonuse_server_region",
+				Name:    "worldbloomsupportdeckbonuse_card_rarity_type_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{WorldbloomsupportdeckbonusesColumns[2]},
+				Columns: []*schema.Column{WorldbloomsupportdeckbonusesColumns[1], WorldbloomsupportdeckbonusesColumns[2]},
 			},
 		},
 	}

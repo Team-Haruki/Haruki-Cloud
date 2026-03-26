@@ -17,7 +17,7 @@ type Cardepisode struct {
 
 func (Cardepisode) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("card_id").Optional(),
 		field.String("title").Optional(),

@@ -48,6 +48,12 @@ func (_u *CardmysekaicanvasbonuseUpdate) AddGameID(v int64) *Cardmysekaicanvasbo
 	return _u
 }
 
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CardmysekaicanvasbonuseUpdate) ClearGameID() *CardmysekaicanvasbonuseUpdate {
+	_u.mutation.ClearGameID()
+	return _u
+}
+
 // SetCardRarityType sets the "card_rarity_type" field.
 func (_u *CardmysekaicanvasbonuseUpdate) SetCardRarityType(v string) *CardmysekaicanvasbonuseUpdate {
 	_u.mutation.SetCardRarityType(v)
@@ -210,6 +216,9 @@ func (_u *CardmysekaicanvasbonuseUpdate) sqlSave(ctx context.Context) (_node int
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
 	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString, value)
 	}
@@ -284,6 +293,12 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) SetNillableGameID(v *int64) *Cardmys
 // AddGameID adds value to the "game_id" field.
 func (_u *CardmysekaicanvasbonuseUpdateOne) AddGameID(v int64) *CardmysekaicanvasbonuseUpdateOne {
 	_u.mutation.AddGameID(v)
+	return _u
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (_u *CardmysekaicanvasbonuseUpdateOne) ClearGameID() *CardmysekaicanvasbonuseUpdateOne {
+	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -478,6 +493,9 @@ func (_u *CardmysekaicanvasbonuseUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
 		_spec.AddField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64, value)
+	}
+	if _u.mutation.GameIDCleared() {
+		_spec.ClearField(cardmysekaicanvasbonuse.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardmysekaicanvasbonuse.FieldCardRarityType, field.TypeString, value)

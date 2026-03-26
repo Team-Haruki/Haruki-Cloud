@@ -17,7 +17,7 @@ type Eventexchangesummarie struct {
 
 func (Eventexchangesummarie) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("game_id"),
+		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.Int64("start_at").Optional(),

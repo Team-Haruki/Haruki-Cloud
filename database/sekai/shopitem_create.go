@@ -26,6 +26,14 @@ func (_c *ShopitemCreate) SetGameID(v int64) *ShopitemCreate {
 	return _c
 }
 
+// SetNillableGameID sets the "game_id" field if the given value is not nil.
+func (_c *ShopitemCreate) SetNillableGameID(v *int64) *ShopitemCreate {
+	if v != nil {
+		_c.SetGameID(*v)
+	}
+	return _c
+}
+
 // SetShopID sets the "shop_id" field.
 func (_c *ShopitemCreate) SetShopID(v int64) *ShopitemCreate {
 	_c.mutation.SetShopID(v)
@@ -142,9 +150,6 @@ func (_c *ShopitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ShopitemCreate) check() error {
-	if _, ok := _c.mutation.GameID(); !ok {
-		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Shopitem.game_id"`)}
-	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Shopitem.server_region"`)}
 	}

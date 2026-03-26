@@ -123,6 +123,16 @@ func GameIDLTE(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldLTE(FieldGameID, v))
 }
 
+// GameIDIsNil applies the IsNil predicate on the "game_id" field.
+func GameIDIsNil() predicate.Character2D {
+	return predicate.Character2D(sql.FieldIsNull(FieldGameID))
+}
+
+// GameIDNotNil applies the NotNil predicate on the "game_id" field.
+func GameIDNotNil() predicate.Character2D {
+	return predicate.Character2D(sql.FieldNotNull(FieldGameID))
+}
+
 // CharacterTypeIsNil applies the IsNil predicate on the "character_type" field.
 func CharacterTypeIsNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldIsNull(FieldCharacterType))

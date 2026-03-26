@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/masterlesson"
@@ -19,34 +20,20 @@ type MasterlessonCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MasterlessonCreate) SetServerRegion(v string) *MasterlessonCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_c *MasterlessonCreate) SetCardRarityType(v string) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetCardRarityType(v json.RawMessage) *MasterlessonCreate {
 	_c.mutation.SetCardRarityType(v)
 	return _c
 }
 
-// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillableCardRarityType(v *string) *MasterlessonCreate {
-	if v != nil {
-		_c.SetCardRarityType(*v)
-	}
-	return _c
-}
-
 // SetMasterRank sets the "master_rank" field.
-func (_c *MasterlessonCreate) SetMasterRank(v int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetMasterRank(v int) *MasterlessonCreate {
 	_c.mutation.SetMasterRank(v)
 	return _c
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillableMasterRank(v *int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillableMasterRank(v *int) *MasterlessonCreate {
 	if v != nil {
 		_c.SetMasterRank(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *MasterlessonCreate) SetNillableMasterRank(v *int64) *MasterlessonCreat
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower1BonusFixed(v int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower1BonusFixed(v int) *MasterlessonCreate {
 	_c.mutation.SetPower1BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower1BonusFixed(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *MasterlessonCreate) SetNillablePower1BonusFixed(v *int64) *Masterlesso
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower2BonusFixed(v int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower2BonusFixed(v int) *MasterlessonCreate {
 	_c.mutation.SetPower2BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower2BonusFixed(*v)
 	}
@@ -82,13 +69,13 @@ func (_c *MasterlessonCreate) SetNillablePower2BonusFixed(v *int64) *Masterlesso
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_c *MasterlessonCreate) SetPower3BonusFixed(v int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetPower3BonusFixed(v int) *MasterlessonCreate {
 	_c.mutation.SetPower3BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int) *MasterlessonCreate {
 	if v != nil {
 		_c.SetPower3BonusFixed(*v)
 	}
@@ -96,13 +83,13 @@ func (_c *MasterlessonCreate) SetNillablePower3BonusFixed(v *int64) *Masterlesso
 }
 
 // SetCharacterRankExp sets the "character_rank_exp" field.
-func (_c *MasterlessonCreate) SetCharacterRankExp(v int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetCharacterRankExp(v int) *MasterlessonCreate {
 	_c.mutation.SetCharacterRankExp(v)
 	return _c
 }
 
 // SetNillableCharacterRankExp sets the "character_rank_exp" field if the given value is not nil.
-func (_c *MasterlessonCreate) SetNillableCharacterRankExp(v *int64) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetNillableCharacterRankExp(v *int) *MasterlessonCreate {
 	if v != nil {
 		_c.SetCharacterRankExp(*v)
 	}
@@ -110,14 +97,20 @@ func (_c *MasterlessonCreate) SetNillableCharacterRankExp(v *int64) *Masterlesso
 }
 
 // SetCosts sets the "costs" field.
-func (_c *MasterlessonCreate) SetCosts(v []interface{}) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetCosts(v json.RawMessage) *MasterlessonCreate {
 	_c.mutation.SetCosts(v)
 	return _c
 }
 
 // SetRewards sets the "rewards" field.
-func (_c *MasterlessonCreate) SetRewards(v []interface{}) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetRewards(v json.RawMessage) *MasterlessonCreate {
 	_c.mutation.SetRewards(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MasterlessonCreate) SetServerRegion(v string) *MasterlessonCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -184,32 +177,28 @@ func (_c *MasterlessonCreate) createSpec() (*Masterlesson, *sqlgraph.CreateSpec)
 		_node = &Masterlesson{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(masterlesson.Table, sqlgraph.NewFieldSpec(masterlesson.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(masterlesson.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.CardRarityType(); ok {
-		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeString, value)
+		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeJSON, value)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {
-		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)
+		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt, value)
 		_node.MasterRank = value
 	}
 	if value, ok := _c.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt64, value)
+		_spec.SetField(masterlesson.FieldPower1BonusFixed, field.TypeInt, value)
 		_node.Power1BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt64, value)
+		_spec.SetField(masterlesson.FieldPower2BonusFixed, field.TypeInt, value)
 		_node.Power2BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt64, value)
+		_spec.SetField(masterlesson.FieldPower3BonusFixed, field.TypeInt, value)
 		_node.Power3BonusFixed = value
 	}
 	if value, ok := _c.mutation.CharacterRankExp(); ok {
-		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt64, value)
+		_spec.SetField(masterlesson.FieldCharacterRankExp, field.TypeInt, value)
 		_node.CharacterRankExp = value
 	}
 	if value, ok := _c.mutation.Costs(); ok {
@@ -219,6 +208,10 @@ func (_c *MasterlessonCreate) createSpec() (*Masterlesson, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.Rewards(); ok {
 		_spec.SetField(masterlesson.FieldRewards, field.TypeJSON, value)
 		_node.Rewards = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(masterlesson.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/costume3d"
@@ -19,34 +20,20 @@ type Costume3DCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *Costume3DCreate) SetServerRegion(v string) *Costume3DCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *Costume3DCreate) SetGameID(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetGameID(v int) *Costume3DCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableGameID(v *int64) *Costume3DCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *Costume3DCreate) SetSeq(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetSeq(v int) *Costume3DCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableSeq(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillableSeq(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *Costume3DCreate) SetNillableSeq(v *int64) *Costume3DCreate {
 }
 
 // SetCostume3DGroupID sets the "costume3_d_group_id" field.
-func (_c *Costume3DCreate) SetCostume3DGroupID(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCostume3DGroupID(v int) *Costume3DCreate {
 	_c.mutation.SetCostume3DGroupID(v)
 	return _c
 }
 
 // SetNillableCostume3DGroupID sets the "costume3_d_group_id" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableCostume3DGroupID(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillableCostume3DGroupID(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetCostume3DGroupID(*v)
 	}
@@ -68,16 +55,8 @@ func (_c *Costume3DCreate) SetNillableCostume3DGroupID(v *int64) *Costume3DCreat
 }
 
 // SetCostume3DType sets the "costume3_d_type" field.
-func (_c *Costume3DCreate) SetCostume3DType(v string) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCostume3DType(v json.RawMessage) *Costume3DCreate {
 	_c.mutation.SetCostume3DType(v)
-	return _c
-}
-
-// SetNillableCostume3DType sets the "costume3_d_type" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableCostume3DType(v *string) *Costume3DCreate {
-	if v != nil {
-		_c.SetCostume3DType(*v)
-	}
 	return _c
 }
 
@@ -96,27 +75,19 @@ func (_c *Costume3DCreate) SetNillableName(v *string) *Costume3DCreate {
 }
 
 // SetPartType sets the "part_type" field.
-func (_c *Costume3DCreate) SetPartType(v string) *Costume3DCreate {
+func (_c *Costume3DCreate) SetPartType(v json.RawMessage) *Costume3DCreate {
 	_c.mutation.SetPartType(v)
 	return _c
 }
 
-// SetNillablePartType sets the "part_type" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillablePartType(v *string) *Costume3DCreate {
-	if v != nil {
-		_c.SetPartType(*v)
-	}
-	return _c
-}
-
 // SetColorID sets the "color_id" field.
-func (_c *Costume3DCreate) SetColorID(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetColorID(v int) *Costume3DCreate {
 	_c.mutation.SetColorID(v)
 	return _c
 }
 
 // SetNillableColorID sets the "color_id" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableColorID(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillableColorID(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetColorID(*v)
 	}
@@ -138,13 +109,13 @@ func (_c *Costume3DCreate) SetNillableColorName(v *string) *Costume3DCreate {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_c *Costume3DCreate) SetCharacterID(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCharacterID(v int) *Costume3DCreate {
 	_c.mutation.SetCharacterID(v)
 	return _c
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableCharacterID(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillableCharacterID(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetCharacterID(*v)
 	}
@@ -152,16 +123,8 @@ func (_c *Costume3DCreate) SetNillableCharacterID(v *int64) *Costume3DCreate {
 }
 
 // SetCostume3DRarity sets the "costume3_d_rarity" field.
-func (_c *Costume3DCreate) SetCostume3DRarity(v string) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCostume3DRarity(v json.RawMessage) *Costume3DCreate {
 	_c.mutation.SetCostume3DRarity(v)
-	return _c
-}
-
-// SetNillableCostume3DRarity sets the "costume3_d_rarity" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableCostume3DRarity(v *string) *Costume3DCreate {
-	if v != nil {
-		_c.SetCostume3DRarity(*v)
-	}
 	return _c
 }
 
@@ -208,27 +171,19 @@ func (_c *Costume3DCreate) SetNillableDesigner(v *string) *Costume3DCreate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *Costume3DCreate) SetArchiveDisplayType(v string) *Costume3DCreate {
+func (_c *Costume3DCreate) SetArchiveDisplayType(v json.RawMessage) *Costume3DCreate {
 	_c.mutation.SetArchiveDisplayType(v)
 	return _c
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableArchiveDisplayType(v *string) *Costume3DCreate {
-	if v != nil {
-		_c.SetArchiveDisplayType(*v)
-	}
-	return _c
-}
-
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_c *Costume3DCreate) SetArchivePublishedAt(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetArchivePublishedAt(v int) *Costume3DCreate {
 	_c.mutation.SetArchivePublishedAt(v)
 	return _c
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillableArchivePublishedAt(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillableArchivePublishedAt(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetArchivePublishedAt(*v)
 	}
@@ -236,16 +191,22 @@ func (_c *Costume3DCreate) SetNillableArchivePublishedAt(v *int64) *Costume3DCre
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (_c *Costume3DCreate) SetPublishedAt(v int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetPublishedAt(v int) *Costume3DCreate {
 	_c.mutation.SetPublishedAt(v)
 	return _c
 }
 
 // SetNillablePublishedAt sets the "published_at" field if the given value is not nil.
-func (_c *Costume3DCreate) SetNillablePublishedAt(v *int64) *Costume3DCreate {
+func (_c *Costume3DCreate) SetNillablePublishedAt(v *int) *Costume3DCreate {
 	if v != nil {
 		_c.SetPublishedAt(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *Costume3DCreate) SetServerRegion(v string) *Costume3DCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -283,6 +244,9 @@ func (_c *Costume3DCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *Costume3DCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Costume3D.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Costume3D.server_region"`)}
 	}
@@ -312,24 +276,20 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node = &Costume3D{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(costume3d.Table, sqlgraph.NewFieldSpec(costume3d.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(costume3d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(costume3d.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Costume3DGroupID(); ok {
-		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt, value)
 		_node.Costume3DGroupID = value
 	}
 	if value, ok := _c.mutation.Costume3DType(); ok {
-		_spec.SetField(costume3d.FieldCostume3DType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DType, field.TypeJSON, value)
 		_node.Costume3DType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -337,11 +297,11 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.PartType(); ok {
-		_spec.SetField(costume3d.FieldPartType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldPartType, field.TypeJSON, value)
 		_node.PartType = value
 	}
 	if value, ok := _c.mutation.ColorID(); ok {
-		_spec.SetField(costume3d.FieldColorID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldColorID, field.TypeInt, value)
 		_node.ColorID = value
 	}
 	if value, ok := _c.mutation.ColorName(); ok {
@@ -349,11 +309,11 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.ColorName = value
 	}
 	if value, ok := _c.mutation.CharacterID(); ok {
-		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt, value)
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.Costume3DRarity(); ok {
-		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeJSON, value)
 		_node.Costume3DRarity = value
 	}
 	if value, ok := _c.mutation.HowToObtain(); ok {
@@ -369,16 +329,20 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.Designer = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeJSON, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt, value)
 		_node.ArchivePublishedAt = value
 	}
 	if value, ok := _c.mutation.PublishedAt(); ok {
-		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt, value)
 		_node.PublishedAt = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

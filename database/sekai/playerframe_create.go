@@ -19,34 +19,20 @@ type PlayerframeCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *PlayerframeCreate) SetServerRegion(v string) *PlayerframeCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *PlayerframeCreate) SetGameID(v int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetGameID(v int) *PlayerframeCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillableGameID(v *int64) *PlayerframeCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *PlayerframeCreate) SetSeq(v int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetSeq(v int) *PlayerframeCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillableSeq(v *int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillableSeq(v *int) *PlayerframeCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *PlayerframeCreate) SetNillableSeq(v *int64) *PlayerframeCreate {
 }
 
 // SetPlayerFrameGroupID sets the "player_frame_group_id" field.
-func (_c *PlayerframeCreate) SetPlayerFrameGroupID(v int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetPlayerFrameGroupID(v int) *PlayerframeCreate {
 	_c.mutation.SetPlayerFrameGroupID(v)
 	return _c
 }
 
 // SetNillablePlayerFrameGroupID sets the "player_frame_group_id" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillablePlayerFrameGroupID(v *int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillablePlayerFrameGroupID(v *int) *PlayerframeCreate {
 	if v != nil {
 		_c.SetPlayerFrameGroupID(*v)
 	}
@@ -82,16 +68,22 @@ func (_c *PlayerframeCreate) SetNillableDescription(v *string) *PlayerframeCreat
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *PlayerframeCreate) SetGameCharacterID(v int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetGameCharacterID(v int) *PlayerframeCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *PlayerframeCreate) SetNillableGameCharacterID(v *int64) *PlayerframeCreate {
+func (_c *PlayerframeCreate) SetNillableGameCharacterID(v *int) *PlayerframeCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *PlayerframeCreate) SetServerRegion(v string) *PlayerframeCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -129,6 +121,9 @@ func (_c *PlayerframeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PlayerframeCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Playerframe.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Playerframe.server_region"`)}
 	}
@@ -158,20 +153,16 @@ func (_c *PlayerframeCreate) createSpec() (*Playerframe, *sqlgraph.CreateSpec) {
 		_node = &Playerframe{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(playerframe.Table, sqlgraph.NewFieldSpec(playerframe.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(playerframe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(playerframe.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.PlayerFrameGroupID(); ok {
-		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
 		_node.PlayerFrameGroupID = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
@@ -179,8 +170,12 @@ func (_c *PlayerframeCreate) createSpec() (*Playerframe, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt, value)
 		_node.GameCharacterID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

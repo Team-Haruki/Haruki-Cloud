@@ -11,8 +11,6 @@ const (
 	Label = "character2d"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldCharacterType holds the string denoting the character_type field in the database.
@@ -29,6 +27,8 @@ const (
 	FieldAssetName = "asset_name"
 	// FieldCharacterIconAssetbundleName holds the string denoting the character_icon_assetbundle_name field in the database.
 	FieldCharacterIconAssetbundleName = "character_icon_assetbundle_name"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the character2d in the database.
 	Table = "character2ds"
 )
@@ -36,7 +36,6 @@ const (
 // Columns holds all SQL columns for character2d fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldCharacterType,
 	FieldIsNextGrade,
@@ -45,6 +44,7 @@ var Columns = []string{
 	FieldIsEnabledFlipDisplay,
 	FieldAssetName,
 	FieldCharacterIconAssetbundleName,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -65,19 +65,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByCharacterType orders the results by the character_type field.
-func ByCharacterType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCharacterType, opts...).ToFunc()
 }
 
 // ByIsNextGrade orders the results by the is_next_grade field.
@@ -90,11 +80,6 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
-// ByUnit orders the results by the unit field.
-func ByUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnit, opts...).ToFunc()
-}
-
 // ByIsEnabledFlipDisplay orders the results by the is_enabled_flip_display field.
 func ByIsEnabledFlipDisplay(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsEnabledFlipDisplay, opts...).ToFunc()
@@ -105,7 +90,7 @@ func ByAssetName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetName, opts...).ToFunc()
 }
 
-// ByCharacterIconAssetbundleName orders the results by the character_icon_assetbundle_name field.
-func ByCharacterIconAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCharacterIconAssetbundleName, opts...).ToFunc()
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

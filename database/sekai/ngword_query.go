@@ -262,12 +262,12 @@ func (_q *NgwordQuery) Clone() *NgwordQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Ngword.Query().
-//		GroupBy(ngword.FieldServerRegion).
+//		GroupBy(ngword.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *NgwordQuery) GroupBy(field string, fields ...string) *NgwordGroupBy {
@@ -285,11 +285,11 @@ func (_q *NgwordQuery) GroupBy(field string, fields ...string) *NgwordGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Ngword.Query().
-//		Select(ngword.FieldServerRegion).
+//		Select(ngword.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *NgwordQuery) Select(fields ...string) *NgwordSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

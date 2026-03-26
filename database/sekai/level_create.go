@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/level"
@@ -19,48 +20,26 @@ type LevelCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *LevelCreate) SetServerRegion(v string) *LevelCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *LevelCreate) SetGameID(v int64) *LevelCreate {
+func (_c *LevelCreate) SetGameID(v int) *LevelCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableGameID(v *int64) *LevelCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetLevelType sets the "level_type" field.
-func (_c *LevelCreate) SetLevelType(v string) *LevelCreate {
+func (_c *LevelCreate) SetLevelType(v json.RawMessage) *LevelCreate {
 	_c.mutation.SetLevelType(v)
 	return _c
 }
 
-// SetNillableLevelType sets the "level_type" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableLevelType(v *string) *LevelCreate {
-	if v != nil {
-		_c.SetLevelType(*v)
-	}
-	return _c
-}
-
 // SetLevel sets the "level" field.
-func (_c *LevelCreate) SetLevel(v int64) *LevelCreate {
+func (_c *LevelCreate) SetLevel(v int) *LevelCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableLevel(v *int64) *LevelCreate {
+func (_c *LevelCreate) SetNillableLevel(v *int) *LevelCreate {
 	if v != nil {
 		_c.SetLevel(*v)
 	}
@@ -68,16 +47,22 @@ func (_c *LevelCreate) SetNillableLevel(v *int64) *LevelCreate {
 }
 
 // SetTotalExp sets the "total_exp" field.
-func (_c *LevelCreate) SetTotalExp(v int64) *LevelCreate {
+func (_c *LevelCreate) SetTotalExp(v int) *LevelCreate {
 	_c.mutation.SetTotalExp(v)
 	return _c
 }
 
 // SetNillableTotalExp sets the "total_exp" field if the given value is not nil.
-func (_c *LevelCreate) SetNillableTotalExp(v *int64) *LevelCreate {
+func (_c *LevelCreate) SetNillableTotalExp(v *int) *LevelCreate {
 	if v != nil {
 		_c.SetTotalExp(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *LevelCreate) SetServerRegion(v string) *LevelCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +100,9 @@ func (_c *LevelCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *LevelCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Level.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Level.server_region"`)}
 	}
@@ -144,25 +132,25 @@ func (_c *LevelCreate) createSpec() (*Level, *sqlgraph.CreateSpec) {
 		_node = &Level{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(level.Table, sqlgraph.NewFieldSpec(level.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(level.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(level.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeString, value)
+		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
 		_node.LevelType = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(level.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(level.FieldLevel, field.TypeInt, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.TotalExp(); ok {
-		_spec.SetField(level.FieldTotalExp, field.TypeInt64, value)
+		_spec.SetField(level.FieldTotalExp, field.TypeInt, value)
 		_node.TotalExp = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

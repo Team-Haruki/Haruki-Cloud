@@ -53,29 +53,219 @@ func IDLTE(id int) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameID, v))
+}
+
+// MysekaiGateID applies equality check predicate on the "mysekai_gate_id" field. It's identical to MysekaiGateIDEQ.
+func MysekaiGateID(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldMysekaiGateID, v))
+}
+
+// GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
+func GameCharacterUnitID(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameCharacterUnitID, v))
+}
+
+// VisitableMysekaiGateLevel applies equality check predicate on the "visitable_mysekai_gate_level" field. It's identical to VisitableMysekaiGateLevelEQ.
+func VisitableMysekaiGateLevel(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldVisitableMysekaiGateLevel, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaigatecharacterlotterie {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameID, v))
 }
 
-// MysekaiGateID applies equality check predicate on the "mysekai_gate_id" field. It's identical to MysekaiGateIDEQ.
-func MysekaiGateID(v int64) predicate.Mysekaigatecharacterlotterie {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldGameID, v))
+}
+
+// MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDEQ(v int) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldMysekaiGateID, v))
 }
 
-// GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
-func GameCharacterUnitID(v int64) predicate.Mysekaigatecharacterlotterie {
+// MysekaiGateIDNEQ applies the NEQ predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNEQ(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDIn applies the In predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldMysekaiGateID, vs...))
+}
+
+// MysekaiGateIDNotIn applies the NotIn predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNotIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldMysekaiGateID, vs...))
+}
+
+// MysekaiGateIDGT applies the GT predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDGT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDGTE applies the GTE predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDGTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDLT applies the LT predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDLT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDLTE applies the LTE predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDLTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDIsNil applies the IsNil predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDIsNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldMysekaiGateID))
+}
+
+// MysekaiGateIDNotNil applies the NotNil predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNotNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldMysekaiGateID))
+}
+
+// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDEQ(v int) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
-// VisitableMysekaiGateLevel applies equality check predicate on the "visitable_mysekai_gate_level" field. It's identical to VisitableMysekaiGateLevelEQ.
-func VisitableMysekaiGateLevel(v int64) predicate.Mysekaigatecharacterlotterie {
+// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNEQ(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIsNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldGameCharacterUnitID))
+}
+
+// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldGameCharacterUnitID))
+}
+
+// VisitableMysekaiGateLevelEQ applies the EQ predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelEQ(v int) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelNEQ applies the NEQ predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelNEQ(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelIn applies the In predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldVisitableMysekaiGateLevel, vs...))
+}
+
+// VisitableMysekaiGateLevelNotIn applies the NotIn predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelNotIn(vs ...int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldVisitableMysekaiGateLevel, vs...))
+}
+
+// VisitableMysekaiGateLevelGT applies the GT predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelGT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelGTE applies the GTE predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelGTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelLT applies the LT predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelLT(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelLTE applies the LTE predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelLTE(v int) predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldVisitableMysekaiGateLevel, v))
+}
+
+// VisitableMysekaiGateLevelIsNil applies the IsNil predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelIsNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldVisitableMysekaiGateLevel))
+}
+
+// VisitableMysekaiGateLevelNotNil applies the NotNil predicate on the "visitable_mysekai_gate_level" field.
+func VisitableMysekaiGateLevelNotNil() predicate.Mysekaigatecharacterlotterie {
+	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldVisitableMysekaiGateLevel))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,206 +331,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaigatecharacterlotterie {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaigatecharacterlotterie {
 	return predicate.Mysekaigatecharacterlotterie(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldGameID))
-}
-
-// MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDNEQ applies the NEQ predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDIn applies the In predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldMysekaiGateID, vs...))
-}
-
-// MysekaiGateIDNotIn applies the NotIn predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNotIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldMysekaiGateID, vs...))
-}
-
-// MysekaiGateIDGT applies the GT predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDGT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDGTE applies the GTE predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDGTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDLT applies the LT predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDLT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDLTE applies the LTE predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDLTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDIsNil applies the IsNil predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDIsNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldMysekaiGateID))
-}
-
-// MysekaiGateIDNotNil applies the NotNil predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNotNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldMysekaiGateID))
-}
-
-// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIsNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldGameCharacterUnitID))
-}
-
-// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldGameCharacterUnitID))
-}
-
-// VisitableMysekaiGateLevelEQ applies the EQ predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldEQ(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelNEQ applies the NEQ predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelNEQ(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNEQ(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelIn applies the In predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIn(FieldVisitableMysekaiGateLevel, vs...))
-}
-
-// VisitableMysekaiGateLevelNotIn applies the NotIn predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelNotIn(vs ...int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotIn(FieldVisitableMysekaiGateLevel, vs...))
-}
-
-// VisitableMysekaiGateLevelGT applies the GT predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelGT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGT(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelGTE applies the GTE predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelGTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldGTE(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelLT applies the LT predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelLT(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLT(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelLTE applies the LTE predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelLTE(v int64) predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldLTE(FieldVisitableMysekaiGateLevel, v))
-}
-
-// VisitableMysekaiGateLevelIsNil applies the IsNil predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelIsNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldIsNull(FieldVisitableMysekaiGateLevel))
-}
-
-// VisitableMysekaiGateLevelNotNil applies the NotNil predicate on the "visitable_mysekai_gate_level" field.
-func VisitableMysekaiGateLevelNotNil() predicate.Mysekaigatecharacterlotterie {
-	return predicate.Mysekaigatecharacterlotterie(sql.FieldNotNull(FieldVisitableMysekaiGateLevel))
 }
 
 // And groups predicates with the AND operator between them.

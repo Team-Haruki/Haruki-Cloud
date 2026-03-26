@@ -11,8 +11,6 @@ const (
 	Label = "card"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -65,6 +63,8 @@ const (
 	FieldSpecialTrainingSkillName = "special_training_skill_name"
 	// FieldSpecialTrainingRewardResourceBoxID holds the string denoting the special_training_reward_resource_box_id field in the database.
 	FieldSpecialTrainingRewardResourceBoxID = "special_training_reward_resource_box_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the card in the database.
 	Table = "cards"
 )
@@ -72,7 +72,6 @@ const (
 // Columns holds all SQL columns for card fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldCharacterID,
@@ -99,6 +98,7 @@ var Columns = []string{
 	FieldSpecialTrainingSkillID,
 	FieldSpecialTrainingSkillName,
 	FieldSpecialTrainingRewardResourceBoxID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -119,11 +119,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -139,11 +134,6 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
-// ByCardRarityType orders the results by the card_rarity_type field.
-func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
-}
-
 // BySpecialTrainingPower1BonusFixed orders the results by the special_training_power1_bonus_fixed field.
 func BySpecialTrainingPower1BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingPower1BonusFixed, opts...).ToFunc()
@@ -157,16 +147,6 @@ func BySpecialTrainingPower2BonusFixed(opts ...sql.OrderTermOption) OrderOption 
 // BySpecialTrainingPower3BonusFixed orders the results by the special_training_power3_bonus_fixed field.
 func BySpecialTrainingPower3BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingPower3BonusFixed, opts...).ToFunc()
-}
-
-// ByAttr orders the results by the attr field.
-func ByAttr(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAttr, opts...).ToFunc()
-}
-
-// BySupportUnit orders the results by the support_unit field.
-func BySupportUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSupportUnit, opts...).ToFunc()
 }
 
 // BySkillID orders the results by the skill_id field.
@@ -194,11 +174,6 @@ func ByGachaPhrase(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGachaPhrase, opts...).ToFunc()
 }
 
-// ByFlavorText orders the results by the flavor_text field.
-func ByFlavorText(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFlavorText, opts...).ToFunc()
-}
-
 // ByReleaseAt orders the results by the release_at field.
 func ByReleaseAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReleaseAt, opts...).ToFunc()
@@ -214,21 +189,6 @@ func ByCardSupplyID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCardSupplyID, opts...).ToFunc()
 }
 
-// ByCardParameters orders the results by the card_parameters field.
-func ByCardParameters(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCardParameters, opts...).ToFunc()
-}
-
-// ByInitialSpecialTrainingStatus orders the results by the initial_special_training_status field.
-func ByInitialSpecialTrainingStatus(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldInitialSpecialTrainingStatus, opts...).ToFunc()
-}
-
-// ByArchiveDisplayType orders the results by the archive_display_type field.
-func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
-}
-
 // BySpecialTrainingSkillID orders the results by the special_training_skill_id field.
 func BySpecialTrainingSkillID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingSkillID, opts...).ToFunc()
@@ -242,4 +202,9 @@ func BySpecialTrainingSkillName(opts ...sql.OrderTermOption) OrderOption {
 // BySpecialTrainingRewardResourceBoxID orders the results by the special_training_reward_resource_box_id field.
 func BySpecialTrainingRewardResourceBoxID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingRewardResourceBoxID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

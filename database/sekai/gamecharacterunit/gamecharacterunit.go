@@ -11,8 +11,6 @@ const (
 	Label = "gamecharacterunit"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldGameCharacterID holds the string denoting the game_character_id field in the database.
@@ -27,6 +25,8 @@ const (
 	FieldSkinShadowColorCode1 = "skin_shadow_color_code1"
 	// FieldSkinShadowColorCode2 holds the string denoting the skin_shadow_color_code2 field in the database.
 	FieldSkinShadowColorCode2 = "skin_shadow_color_code2"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the gamecharacterunit in the database.
 	Table = "gamecharacterunits"
 )
@@ -34,7 +34,6 @@ const (
 // Columns holds all SQL columns for gamecharacterunit fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldGameCharacterID,
 	FieldUnit,
@@ -42,6 +41,7 @@ var Columns = []string{
 	FieldSkinColorCode,
 	FieldSkinShadowColorCode1,
 	FieldSkinShadowColorCode2,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -62,11 +62,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -77,27 +72,12 @@ func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
 }
 
-// ByUnit orders the results by the unit field.
-func ByUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnit, opts...).ToFunc()
-}
-
 // ByColorCode orders the results by the color_code field.
 func ByColorCode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldColorCode, opts...).ToFunc()
 }
 
-// BySkinColorCode orders the results by the skin_color_code field.
-func BySkinColorCode(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSkinColorCode, opts...).ToFunc()
-}
-
-// BySkinShadowColorCode1 orders the results by the skin_shadow_color_code1 field.
-func BySkinShadowColorCode1(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSkinShadowColorCode1, opts...).ToFunc()
-}
-
-// BySkinShadowColorCode2 orders the results by the skin_shadow_color_code2 field.
-func BySkinShadowColorCode2(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSkinShadowColorCode2, opts...).ToFunc()
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

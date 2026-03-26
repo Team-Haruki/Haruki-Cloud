@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
@@ -19,43 +20,35 @@ type MysekaicharactertalkconditionCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaicharactertalkconditionCreate) SetServerRegion(v string) *MysekaicharactertalkconditionCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkconditionCreate) SetGameID(v int64) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetGameID(v int) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditionCreate) SetNillableGameID(v *int64) *MysekaicharactertalkconditionCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
-func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionType(v map[string]interface{}) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionType(v)
 	return _c
 }
 
 // SetMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field.
-func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionTypeValue(v int64) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionTypeValue(v int) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionTypeValue(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkConditionTypeValue sets the "mysekai_character_talk_condition_type_value" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditionCreate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int64) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetNillableMysekaiCharacterTalkConditionTypeValue(v *int) *MysekaicharactertalkconditionCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkConditionTypeValue(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaicharactertalkconditionCreate) SetServerRegion(v string) *MysekaicharactertalkconditionCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -93,6 +86,9 @@ func (_c *MysekaicharactertalkconditionCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaicharactertalkconditionCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaicharactertalkcondition.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaicharactertalkcondition.server_region"`)}
 	}
@@ -122,12 +118,8 @@ func (_c *MysekaicharactertalkconditionCreate) createSpec() (*Mysekaicharacterta
 		_node = &Mysekaicharactertalkcondition{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalkcondition.Table, sqlgraph.NewFieldSpec(mysekaicharactertalkcondition.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionType(); ok {
@@ -135,8 +127,12 @@ func (_c *MysekaicharactertalkconditionCreate) createSpec() (*Mysekaicharacterta
 		_node.MysekaiCharacterTalkConditionType = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt, value)
 		_node.MysekaiCharacterTalkConditionTypeValue = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaicharactertalkcondition.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

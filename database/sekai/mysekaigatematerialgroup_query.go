@@ -262,12 +262,12 @@ func (_q *MysekaigatematerialgroupQuery) Clone() *MysekaigatematerialgroupQuery 
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaigatematerialgroup.Query().
-//		GroupBy(mysekaigatematerialgroup.FieldServerRegion).
+//		GroupBy(mysekaigatematerialgroup.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaigatematerialgroupQuery) GroupBy(field string, fields ...string) *MysekaigatematerialgroupGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaigatematerialgroupQuery) GroupBy(field string, fields ...string)
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaigatematerialgroup.Query().
-//		Select(mysekaigatematerialgroup.FieldServerRegion).
+//		Select(mysekaigatematerialgroup.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaigatematerialgroupQuery) Select(fields ...string) *MysekaigatematerialgroupSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

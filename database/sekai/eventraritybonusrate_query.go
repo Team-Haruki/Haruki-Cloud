@@ -262,12 +262,12 @@ func (_q *EventraritybonusrateQuery) Clone() *EventraritybonusrateQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Eventraritybonusrate.Query().
-//		GroupBy(eventraritybonusrate.FieldServerRegion).
+//		GroupBy(eventraritybonusrate.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *EventraritybonusrateQuery) GroupBy(field string, fields ...string) *EventraritybonusrateGroupBy {
@@ -285,11 +285,11 @@ func (_q *EventraritybonusrateQuery) GroupBy(field string, fields ...string) *Ev
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Eventraritybonusrate.Query().
-//		Select(eventraritybonusrate.FieldServerRegion).
+//		Select(eventraritybonusrate.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *EventraritybonusrateQuery) Select(fields ...string) *EventraritybonusrateSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

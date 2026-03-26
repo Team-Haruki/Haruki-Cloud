@@ -262,12 +262,12 @@ func (_q *EventstorieQuery) Clone() *EventstorieQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Eventstorie.Query().
-//		GroupBy(eventstorie.FieldServerRegion).
+//		GroupBy(eventstorie.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *EventstorieQuery) GroupBy(field string, fields ...string) *EventstorieGroupBy {
@@ -285,11 +285,11 @@ func (_q *EventstorieQuery) GroupBy(field string, fields ...string) *Eventstorie
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Eventstorie.Query().
-//		Select(eventstorie.FieldServerRegion).
+//		Select(eventstorie.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *EventstorieQuery) Select(fields ...string) *EventstorieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

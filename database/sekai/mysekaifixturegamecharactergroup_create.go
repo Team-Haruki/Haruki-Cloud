@@ -19,34 +19,20 @@ type MysekaifixturegamecharactergroupCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetServerRegion(v string) *MysekaifixturegamecharactergroupCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGameID(v int64) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGameID(v int) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameID(v *int64) *MysekaifixturegamecharactergroupCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGroupID(v int64) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGroupID(v int) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int64) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int) *MysekaifixturegamecharactergroupCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -54,16 +40,22 @@ func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGroupID(v *int64) *
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *MysekaifixturegamecharactergroupCreate) SetGameCharacterID(v int64) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetGameCharacterID(v int) *MysekaifixturegamecharactergroupCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameCharacterID(v *int64) *MysekaifixturegamecharactergroupCreate {
+func (_c *MysekaifixturegamecharactergroupCreate) SetNillableGameCharacterID(v *int) *MysekaifixturegamecharactergroupCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaifixturegamecharactergroupCreate) SetServerRegion(v string) *MysekaifixturegamecharactergroupCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -101,6 +93,9 @@ func (_c *MysekaifixturegamecharactergroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturegamecharactergroupCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturegamecharactergroup.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturegamecharactergroup.server_region"`)}
 	}
@@ -130,21 +125,21 @@ func (_c *MysekaifixturegamecharactergroupCreate) createSpec() (*Mysekaifixtureg
 		_node = &Mysekaifixturegamecharactergroup{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturegamecharactergroup.Table, sqlgraph.NewFieldSpec(mysekaifixturegamecharactergroup.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldGameCharacterID, field.TypeInt, value)
 		_node.GameCharacterID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturegamecharactergroup.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

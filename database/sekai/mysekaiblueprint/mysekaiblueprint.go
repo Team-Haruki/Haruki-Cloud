@@ -11,8 +11,6 @@ const (
 	Label = "mysekaiblueprint"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiCraftType holds the string denoting the mysekai_craft_type field in the database.
@@ -27,6 +25,8 @@ const (
 	FieldCraftCountLimit = "craft_count_limit"
 	// FieldIsAvailableWithoutPossession holds the string denoting the is_available_without_possession field in the database.
 	FieldIsAvailableWithoutPossession = "is_available_without_possession"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaiblueprint in the database.
 	Table = "mysekaiblueprints"
 )
@@ -34,7 +34,6 @@ const (
 // Columns holds all SQL columns for mysekaiblueprint fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiCraftType,
 	FieldCraftTargetID,
@@ -42,6 +41,7 @@ var Columns = []string{
 	FieldIsObtainedByConvert,
 	FieldCraftCountLimit,
 	FieldIsAvailableWithoutPossession,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -60,11 +60,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -95,4 +90,9 @@ func ByCraftCountLimit(opts ...sql.OrderTermOption) OrderOption {
 // ByIsAvailableWithoutPossession orders the results by the is_available_without_possession field.
 func ByIsAvailableWithoutPossession(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsAvailableWithoutPossession, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

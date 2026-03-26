@@ -53,34 +53,229 @@ func IDLTE(id int) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Eventdeckbonuse {
+func GameID(v int) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int64) predicate.Eventdeckbonuse {
+func EventID(v int) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldEventID, v))
 }
 
 // GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
-func GameCharacterUnitID(v int64) predicate.Eventdeckbonuse {
+func GameCharacterUnitID(v int) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameCharacterUnitID, v))
-}
-
-// CardAttr applies equality check predicate on the "card_attr" field. It's identical to CardAttrEQ.
-func CardAttr(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldCardAttr, v))
 }
 
 // BonusRate applies equality check predicate on the "bonus_rate" field. It's identical to BonusRateEQ.
 func BonusRate(v float64) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldBonusRate, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldGameID, v))
+}
+
+// EventIDEQ applies the EQ predicate on the "event_id" field.
+func EventIDEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldEventID, v))
+}
+
+// EventIDNEQ applies the NEQ predicate on the "event_id" field.
+func EventIDNEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldEventID, v))
+}
+
+// EventIDIn applies the In predicate on the "event_id" field.
+func EventIDIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIn(FieldEventID, vs...))
+}
+
+// EventIDNotIn applies the NotIn predicate on the "event_id" field.
+func EventIDNotIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldEventID, vs...))
+}
+
+// EventIDGT applies the GT predicate on the "event_id" field.
+func EventIDGT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGT(FieldEventID, v))
+}
+
+// EventIDGTE applies the GTE predicate on the "event_id" field.
+func EventIDGTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldEventID, v))
+}
+
+// EventIDLT applies the LT predicate on the "event_id" field.
+func EventIDLT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLT(FieldEventID, v))
+}
+
+// EventIDLTE applies the LTE predicate on the "event_id" field.
+func EventIDLTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldEventID, v))
+}
+
+// EventIDIsNil applies the IsNil predicate on the "event_id" field.
+func EventIDIsNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldEventID))
+}
+
+// EventIDNotNil applies the NotNil predicate on the "event_id" field.
+func EventIDNotNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldEventID))
+}
+
+// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNEQ(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotIn(vs ...int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLT(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLTE(v int) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIsNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldGameCharacterUnitID))
+}
+
+// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldGameCharacterUnitID))
+}
+
+// CardAttrIsNil applies the IsNil predicate on the "card_attr" field.
+func CardAttrIsNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldCardAttr))
+}
+
+// CardAttrNotNil applies the NotNil predicate on the "card_attr" field.
+func CardAttrNotNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldCardAttr))
+}
+
+// BonusRateEQ applies the EQ predicate on the "bonus_rate" field.
+func BonusRateEQ(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldBonusRate, v))
+}
+
+// BonusRateNEQ applies the NEQ predicate on the "bonus_rate" field.
+func BonusRateNEQ(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldBonusRate, v))
+}
+
+// BonusRateIn applies the In predicate on the "bonus_rate" field.
+func BonusRateIn(vs ...float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIn(FieldBonusRate, vs...))
+}
+
+// BonusRateNotIn applies the NotIn predicate on the "bonus_rate" field.
+func BonusRateNotIn(vs ...float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldBonusRate, vs...))
+}
+
+// BonusRateGT applies the GT predicate on the "bonus_rate" field.
+func BonusRateGT(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGT(FieldBonusRate, v))
+}
+
+// BonusRateGTE applies the GTE predicate on the "bonus_rate" field.
+func BonusRateGTE(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldBonusRate, v))
+}
+
+// BonusRateLT applies the LT predicate on the "bonus_rate" field.
+func BonusRateLT(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLT(FieldBonusRate, v))
+}
+
+// BonusRateLTE applies the LTE predicate on the "bonus_rate" field.
+func BonusRateLTE(v float64) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldBonusRate, v))
+}
+
+// BonusRateIsNil applies the IsNil predicate on the "bonus_rate" field.
+func BonusRateIsNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldBonusRate))
+}
+
+// BonusRateNotNil applies the NotNil predicate on the "bonus_rate" field.
+func BonusRateNotNil() predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldBonusRate))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -146,281 +341,6 @@ func ServerRegionEqualFold(v string) predicate.Eventdeckbonuse {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldGameID))
-}
-
-// EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldEventID, v))
-}
-
-// EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldEventID, v))
-}
-
-// EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIn(FieldEventID, vs...))
-}
-
-// EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldEventID, vs...))
-}
-
-// EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGT(FieldEventID, v))
-}
-
-// EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldEventID, v))
-}
-
-// EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLT(FieldEventID, v))
-}
-
-// EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldEventID, v))
-}
-
-// EventIDIsNil applies the IsNil predicate on the "event_id" field.
-func EventIDIsNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldEventID))
-}
-
-// EventIDNotNil applies the NotNil predicate on the "event_id" field.
-func EventIDNotNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldEventID))
-}
-
-// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNEQ(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotIn(vs ...int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLT(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLTE(v int64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIsNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldGameCharacterUnitID))
-}
-
-// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldGameCharacterUnitID))
-}
-
-// CardAttrEQ applies the EQ predicate on the "card_attr" field.
-func CardAttrEQ(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldCardAttr, v))
-}
-
-// CardAttrNEQ applies the NEQ predicate on the "card_attr" field.
-func CardAttrNEQ(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldCardAttr, v))
-}
-
-// CardAttrIn applies the In predicate on the "card_attr" field.
-func CardAttrIn(vs ...string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIn(FieldCardAttr, vs...))
-}
-
-// CardAttrNotIn applies the NotIn predicate on the "card_attr" field.
-func CardAttrNotIn(vs ...string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldCardAttr, vs...))
-}
-
-// CardAttrGT applies the GT predicate on the "card_attr" field.
-func CardAttrGT(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGT(FieldCardAttr, v))
-}
-
-// CardAttrGTE applies the GTE predicate on the "card_attr" field.
-func CardAttrGTE(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldCardAttr, v))
-}
-
-// CardAttrLT applies the LT predicate on the "card_attr" field.
-func CardAttrLT(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLT(FieldCardAttr, v))
-}
-
-// CardAttrLTE applies the LTE predicate on the "card_attr" field.
-func CardAttrLTE(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldCardAttr, v))
-}
-
-// CardAttrContains applies the Contains predicate on the "card_attr" field.
-func CardAttrContains(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldContains(FieldCardAttr, v))
-}
-
-// CardAttrHasPrefix applies the HasPrefix predicate on the "card_attr" field.
-func CardAttrHasPrefix(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldHasPrefix(FieldCardAttr, v))
-}
-
-// CardAttrHasSuffix applies the HasSuffix predicate on the "card_attr" field.
-func CardAttrHasSuffix(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldHasSuffix(FieldCardAttr, v))
-}
-
-// CardAttrIsNil applies the IsNil predicate on the "card_attr" field.
-func CardAttrIsNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldCardAttr))
-}
-
-// CardAttrNotNil applies the NotNil predicate on the "card_attr" field.
-func CardAttrNotNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldCardAttr))
-}
-
-// CardAttrEqualFold applies the EqualFold predicate on the "card_attr" field.
-func CardAttrEqualFold(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEqualFold(FieldCardAttr, v))
-}
-
-// CardAttrContainsFold applies the ContainsFold predicate on the "card_attr" field.
-func CardAttrContainsFold(v string) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldContainsFold(FieldCardAttr, v))
-}
-
-// BonusRateEQ applies the EQ predicate on the "bonus_rate" field.
-func BonusRateEQ(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldBonusRate, v))
-}
-
-// BonusRateNEQ applies the NEQ predicate on the "bonus_rate" field.
-func BonusRateNEQ(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldBonusRate, v))
-}
-
-// BonusRateIn applies the In predicate on the "bonus_rate" field.
-func BonusRateIn(vs ...float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIn(FieldBonusRate, vs...))
-}
-
-// BonusRateNotIn applies the NotIn predicate on the "bonus_rate" field.
-func BonusRateNotIn(vs ...float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldBonusRate, vs...))
-}
-
-// BonusRateGT applies the GT predicate on the "bonus_rate" field.
-func BonusRateGT(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGT(FieldBonusRate, v))
-}
-
-// BonusRateGTE applies the GTE predicate on the "bonus_rate" field.
-func BonusRateGTE(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldBonusRate, v))
-}
-
-// BonusRateLT applies the LT predicate on the "bonus_rate" field.
-func BonusRateLT(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLT(FieldBonusRate, v))
-}
-
-// BonusRateLTE applies the LTE predicate on the "bonus_rate" field.
-func BonusRateLTE(v float64) predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldBonusRate, v))
-}
-
-// BonusRateIsNil applies the IsNil predicate on the "bonus_rate" field.
-func BonusRateIsNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldBonusRate))
-}
-
-// BonusRateNotNil applies the NotNil predicate on the "bonus_rate" field.
-func BonusRateNotNil() predicate.Eventdeckbonuse {
-	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldBonusRate))
 }
 
 // And groups predicates with the AND operator between them.

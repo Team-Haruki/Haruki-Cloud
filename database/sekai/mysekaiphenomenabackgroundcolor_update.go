@@ -27,29 +27,15 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) Where(ps ...predicate.Mysekaiph
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableServerRegion(v *string) *MysekaiphenomenabackgroundcolorUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetGameID(v int64) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetGameID(v int) *MysekaiphenomenabackgroundcolorUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int) *MysekaiphenomenabackgroundcolorUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +43,8 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableGameID(v *int64) *My
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) AddGameID(v int64) *MysekaiphenomenabackgroundcolorUpdate {
+func (_u *MysekaiphenomenabackgroundcolorUpdate) AddGameID(v int) *MysekaiphenomenabackgroundcolorUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdate) ClearGameID() *MysekaiphenomenabackgroundcolorUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -168,6 +148,20 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) ClearGroundHighlightColor() *My
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiphenomenabackgroundcolorUpdate) SetNillableServerRegion(v *string) *MysekaiphenomenabackgroundcolorUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the MysekaiphenomenabackgroundcolorMutation object of the builder.
 func (_u *MysekaiphenomenabackgroundcolorUpdate) Mutation() *MysekaiphenomenabackgroundcolorMutation {
 	return _u.mutation
@@ -209,17 +203,11 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) sqlSave(ctx context.Context) (_
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)
@@ -251,6 +239,9 @@ func (_u *MysekaiphenomenabackgroundcolorUpdate) sqlSave(ctx context.Context) (_
 	if _u.mutation.GroundHighlightColorCleared() {
 		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGroundHighlightColor, field.TypeString)
 	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{mysekaiphenomenabackgroundcolor.Label}
@@ -271,29 +262,15 @@ type MysekaiphenomenabackgroundcolorUpdateOne struct {
 	mutation *MysekaiphenomenabackgroundcolorMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableServerRegion(v *string) *MysekaiphenomenabackgroundcolorUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetGameID(v int64) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetGameID(v int) *MysekaiphenomenabackgroundcolorUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int) *MysekaiphenomenabackgroundcolorUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -301,14 +278,8 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableGameID(v *int64) 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) AddGameID(v int64) *MysekaiphenomenabackgroundcolorUpdateOne {
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) AddGameID(v int) *MysekaiphenomenabackgroundcolorUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiphenomenabackgroundcolorUpdateOne) ClearGameID() *MysekaiphenomenabackgroundcolorUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -412,6 +383,20 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) ClearGroundHighlightColor() 
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiphenomenabackgroundcolorUpdateOne) SetNillableServerRegion(v *string) *MysekaiphenomenabackgroundcolorUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the MysekaiphenomenabackgroundcolorMutation object of the builder.
 func (_u *MysekaiphenomenabackgroundcolorUpdateOne) Mutation() *MysekaiphenomenabackgroundcolorMutation {
 	return _u.mutation
@@ -483,17 +468,11 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) sqlSave(ctx context.Context)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.BaseColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldBaseColor, field.TypeString, value)
@@ -524,6 +503,9 @@ func (_u *MysekaiphenomenabackgroundcolorUpdateOne) sqlSave(ctx context.Context)
 	}
 	if _u.mutation.GroundHighlightColorCleared() {
 		_spec.ClearField(mysekaiphenomenabackgroundcolor.FieldGroundHighlightColor, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaiphenomenabackgroundcolor{config: _u.config}
 	_spec.Assign = _node.assignValues

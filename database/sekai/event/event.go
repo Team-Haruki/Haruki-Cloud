@@ -11,8 +11,6 @@ const (
 	Label = "event"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldEventType holds the string denoting the event_type field in the database.
@@ -51,6 +49,8 @@ const (
 	FieldEventPointAssetbundleName = "event_point_assetbundle_name"
 	// FieldStandbyScreenDisplayStartAt holds the string denoting the standby_screen_display_start_at field in the database.
 	FieldStandbyScreenDisplayStartAt = "standby_screen_display_start_at"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the event in the database.
 	Table = "events"
 )
@@ -58,7 +58,6 @@ const (
 // Columns holds all SQL columns for event fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldEventType,
 	FieldName,
@@ -78,6 +77,7 @@ var Columns = []string{
 	FieldEventRankingRewardRanges,
 	FieldEventPointAssetbundleName,
 	FieldStandbyScreenDisplayStartAt,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -98,19 +98,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByEventType orders the results by the event_type field.
-func ByEventType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEventType, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -173,22 +163,17 @@ func ByVirtualLiveID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVirtualLiveID, opts...).ToFunc()
 }
 
-// ByUnit orders the results by the unit field.
-func ByUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnit, opts...).ToFunc()
-}
-
 // ByIsCountLeaderCharacterPlay orders the results by the is_count_leader_character_play field.
 func ByIsCountLeaderCharacterPlay(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsCountLeaderCharacterPlay, opts...).ToFunc()
 }
 
-// ByEventPointAssetbundleName orders the results by the event_point_assetbundle_name field.
-func ByEventPointAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEventPointAssetbundleName, opts...).ToFunc()
-}
-
 // ByStandbyScreenDisplayStartAt orders the results by the standby_screen_display_start_at field.
 func ByStandbyScreenDisplayStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStandbyScreenDisplayStartAt, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

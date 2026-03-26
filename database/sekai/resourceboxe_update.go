@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -28,31 +29,15 @@ func (_u *ResourceboxeUpdate) Where(ps ...predicate.Resourceboxe) *ResourceboxeU
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *ResourceboxeUpdate) SetServerRegion(v string) *ResourceboxeUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *ResourceboxeUpdate) SetNillableServerRegion(v *string) *ResourceboxeUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdate) SetResourceBoxPurpose(v string) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdate {
 	_u.mutation.SetResourceBoxPurpose(v)
 	return _u
 }
 
-// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
-func (_u *ResourceboxeUpdate) SetNillableResourceBoxPurpose(v *string) *ResourceboxeUpdate {
-	if v != nil {
-		_u.SetResourceBoxPurpose(*v)
-	}
+// AppendResourceBoxPurpose appends value to the "resource_box_purpose" field.
+func (_u *ResourceboxeUpdate) AppendResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdate {
+	_u.mutation.AppendResourceBoxPurpose(v)
 	return _u
 }
 
@@ -63,14 +48,14 @@ func (_u *ResourceboxeUpdate) ClearResourceBoxPurpose() *ResourceboxeUpdate {
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ResourceboxeUpdate) SetGameID(v int64) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetGameID(v int) *ResourceboxeUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ResourceboxeUpdate) SetNillableGameID(v *int64) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetNillableGameID(v *int) *ResourceboxeUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -78,28 +63,20 @@ func (_u *ResourceboxeUpdate) SetNillableGameID(v *int64) *ResourceboxeUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ResourceboxeUpdate) AddGameID(v int64) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) AddGameID(v int) *ResourceboxeUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *ResourceboxeUpdate) ClearGameID() *ResourceboxeUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_u *ResourceboxeUpdate) SetResourceBoxType(v string) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetResourceBoxType(v json.RawMessage) *ResourceboxeUpdate {
 	_u.mutation.SetResourceBoxType(v)
 	return _u
 }
 
-// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
-func (_u *ResourceboxeUpdate) SetNillableResourceBoxType(v *string) *ResourceboxeUpdate {
-	if v != nil {
-		_u.SetResourceBoxType(*v)
-	}
+// AppendResourceBoxType appends value to the "resource_box_type" field.
+func (_u *ResourceboxeUpdate) AppendResourceBoxType(v json.RawMessage) *ResourceboxeUpdate {
+	_u.mutation.AppendResourceBoxType(v)
 	return _u
 }
 
@@ -130,13 +107,13 @@ func (_u *ResourceboxeUpdate) ClearDescription() *ResourceboxeUpdate {
 }
 
 // SetDetails sets the "details" field.
-func (_u *ResourceboxeUpdate) SetDetails(v []interface{}) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetDetails(v json.RawMessage) *ResourceboxeUpdate {
 	_u.mutation.SetDetails(v)
 	return _u
 }
 
 // AppendDetails appends value to the "details" field.
-func (_u *ResourceboxeUpdate) AppendDetails(v []interface{}) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) AppendDetails(v json.RawMessage) *ResourceboxeUpdate {
 	_u.mutation.AppendDetails(v)
 	return _u
 }
@@ -187,6 +164,20 @@ func (_u *ResourceboxeUpdate) ClearAssetbundleName() *ResourceboxeUpdate {
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *ResourceboxeUpdate) SetServerRegion(v string) *ResourceboxeUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *ResourceboxeUpdate) SetNillableServerRegion(v *string) *ResourceboxeUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the ResourceboxeMutation object of the builder.
 func (_u *ResourceboxeUpdate) Mutation() *ResourceboxeMutation {
 	return _u.mutation
@@ -228,29 +219,33 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedResourceBoxPurpose(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, resourceboxe.FieldResourceBoxPurpose, value)
+		})
 	}
 	if _u.mutation.ResourceBoxPurposeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeString)
+		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
+		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedResourceBoxType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, resourceboxe.FieldResourceBoxType, value)
+		})
 	}
 	if _u.mutation.ResourceBoxTypeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeString)
+		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(resourceboxe.FieldDescription, field.TypeString, value)
@@ -281,6 +276,9 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(resourceboxe.FieldAssetbundleName, field.TypeString)
 	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{resourceboxe.Label}
@@ -301,31 +299,15 @@ type ResourceboxeUpdateOne struct {
 	mutation *ResourceboxeMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *ResourceboxeUpdateOne) SetServerRegion(v string) *ResourceboxeUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *ResourceboxeUpdateOne) SetNillableServerRegion(v *string) *ResourceboxeUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdateOne) SetResourceBoxPurpose(v string) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdateOne {
 	_u.mutation.SetResourceBoxPurpose(v)
 	return _u
 }
 
-// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
-func (_u *ResourceboxeUpdateOne) SetNillableResourceBoxPurpose(v *string) *ResourceboxeUpdateOne {
-	if v != nil {
-		_u.SetResourceBoxPurpose(*v)
-	}
+// AppendResourceBoxPurpose appends value to the "resource_box_purpose" field.
+func (_u *ResourceboxeUpdateOne) AppendResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdateOne {
+	_u.mutation.AppendResourceBoxPurpose(v)
 	return _u
 }
 
@@ -336,14 +318,14 @@ func (_u *ResourceboxeUpdateOne) ClearResourceBoxPurpose() *ResourceboxeUpdateOn
 }
 
 // SetGameID sets the "game_id" field.
-func (_u *ResourceboxeUpdateOne) SetGameID(v int64) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetGameID(v int) *ResourceboxeUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int64) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int) *ResourceboxeUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -351,28 +333,20 @@ func (_u *ResourceboxeUpdateOne) SetNillableGameID(v *int64) *ResourceboxeUpdate
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ResourceboxeUpdateOne) AddGameID(v int64) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) AddGameID(v int) *ResourceboxeUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *ResourceboxeUpdateOne) ClearGameID() *ResourceboxeUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_u *ResourceboxeUpdateOne) SetResourceBoxType(v string) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetResourceBoxType(v json.RawMessage) *ResourceboxeUpdateOne {
 	_u.mutation.SetResourceBoxType(v)
 	return _u
 }
 
-// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
-func (_u *ResourceboxeUpdateOne) SetNillableResourceBoxType(v *string) *ResourceboxeUpdateOne {
-	if v != nil {
-		_u.SetResourceBoxType(*v)
-	}
+// AppendResourceBoxType appends value to the "resource_box_type" field.
+func (_u *ResourceboxeUpdateOne) AppendResourceBoxType(v json.RawMessage) *ResourceboxeUpdateOne {
+	_u.mutation.AppendResourceBoxType(v)
 	return _u
 }
 
@@ -403,13 +377,13 @@ func (_u *ResourceboxeUpdateOne) ClearDescription() *ResourceboxeUpdateOne {
 }
 
 // SetDetails sets the "details" field.
-func (_u *ResourceboxeUpdateOne) SetDetails(v []interface{}) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetDetails(v json.RawMessage) *ResourceboxeUpdateOne {
 	_u.mutation.SetDetails(v)
 	return _u
 }
 
 // AppendDetails appends value to the "details" field.
-func (_u *ResourceboxeUpdateOne) AppendDetails(v []interface{}) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) AppendDetails(v json.RawMessage) *ResourceboxeUpdateOne {
 	_u.mutation.AppendDetails(v)
 	return _u
 }
@@ -457,6 +431,20 @@ func (_u *ResourceboxeUpdateOne) SetNillableAssetbundleName(v *string) *Resource
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *ResourceboxeUpdateOne) ClearAssetbundleName() *ResourceboxeUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *ResourceboxeUpdateOne) SetServerRegion(v string) *ResourceboxeUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *ResourceboxeUpdateOne) SetNillableServerRegion(v *string) *ResourceboxeUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -531,29 +519,33 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedResourceBoxPurpose(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, resourceboxe.FieldResourceBoxPurpose, value)
+		})
 	}
 	if _u.mutation.ResourceBoxPurposeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeString)
+		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
+		_spec.AddField(resourceboxe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedResourceBoxType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, resourceboxe.FieldResourceBoxType, value)
+		})
 	}
 	if _u.mutation.ResourceBoxTypeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeString)
+		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(resourceboxe.FieldDescription, field.TypeString, value)
@@ -583,6 +575,9 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(resourceboxe.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Resourceboxe{config: _u.config}
 	_spec.Assign = _node.assignValues

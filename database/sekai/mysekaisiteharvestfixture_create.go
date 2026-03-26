@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
@@ -19,23 +20,9 @@ type MysekaisiteharvestfixtureCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetServerRegion(v string) *MysekaisiteharvestfixtureCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetGameID(v int64) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetGameID(v int) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaisiteharvestfixtureCreate) SetNillableGameID(v *int64) *MysekaisiteharvestfixtureCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -54,13 +41,13 @@ func (_c *MysekaisiteharvestfixtureCreate) SetNillableMysekaiSiteHarvestFixtureT
 }
 
 // SetHp sets the "hp" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetHp(v int64) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetHp(v int) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetHp(v)
 	return _c
 }
 
 // SetNillableHp sets the "hp" field if the given value is not nil.
-func (_c *MysekaisiteharvestfixtureCreate) SetNillableHp(v *int64) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetNillableHp(v *int) *MysekaisiteharvestfixtureCreate {
 	if v != nil {
 		_c.SetHp(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *MysekaisiteharvestfixtureCreate) SetNillableHp(v *int64) *Mysekaisiteh
 }
 
 // SetLastAttackStamina sets the "last_attack_stamina" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetLastAttackStamina(v int64) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetLastAttackStamina(v int) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetLastAttackStamina(v)
 	return _c
 }
 
 // SetNillableLastAttackStamina sets the "last_attack_stamina" field if the given value is not nil.
-func (_c *MysekaisiteharvestfixtureCreate) SetNillableLastAttackStamina(v *int64) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetNillableLastAttackStamina(v *int) *MysekaisiteharvestfixtureCreate {
 	if v != nil {
 		_c.SetLastAttackStamina(*v)
 	}
@@ -82,7 +69,7 @@ func (_c *MysekaisiteharvestfixtureCreate) SetNillableLastAttackStamina(v *int64
 }
 
 // SetMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetMysekaiSiteHarvestFixtureRarityType(v map[string]interface{}) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetMysekaiSiteHarvestFixtureRarityType(v)
 	return _c
 }
@@ -98,6 +85,12 @@ func (_c *MysekaisiteharvestfixtureCreate) SetNillableAssetbundleName(v *string)
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaisiteharvestfixtureCreate) SetServerRegion(v string) *MysekaisiteharvestfixtureCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -135,6 +128,9 @@ func (_c *MysekaisiteharvestfixtureCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaisiteharvestfixtureCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaisiteharvestfixture.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaisiteharvestfixture.server_region"`)}
 	}
@@ -164,12 +160,8 @@ func (_c *MysekaisiteharvestfixtureCreate) createSpec() (*Mysekaisiteharvestfixt
 		_node = &Mysekaisiteharvestfixture{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaisiteharvestfixture.Table, sqlgraph.NewFieldSpec(mysekaisiteharvestfixture.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiSiteHarvestFixtureType(); ok {
@@ -177,11 +169,11 @@ func (_c *MysekaisiteharvestfixtureCreate) createSpec() (*Mysekaisiteharvestfixt
 		_node.MysekaiSiteHarvestFixtureType = value
 	}
 	if value, ok := _c.mutation.Hp(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt64, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldHp, field.TypeInt, value)
 		_node.Hp = value
 	}
 	if value, ok := _c.mutation.LastAttackStamina(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt, value)
 		_node.LastAttackStamina = value
 	}
 	if value, ok := _c.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
@@ -191,6 +183,10 @@ func (_c *MysekaisiteharvestfixtureCreate) createSpec() (*Mysekaisiteharvestfixt
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaisiteharvestfixture.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

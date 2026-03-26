@@ -11,8 +11,6 @@ const (
 	Label = "costume3d"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -45,6 +43,8 @@ const (
 	FieldArchivePublishedAt = "archive_published_at"
 	// FieldPublishedAt holds the string denoting the published_at field in the database.
 	FieldPublishedAt = "published_at"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the costume3d in the database.
 	Table = "costume3ds"
 )
@@ -52,7 +52,6 @@ const (
 // Columns holds all SQL columns for costume3d fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldCostume3DGroupID,
@@ -69,6 +68,7 @@ var Columns = []string{
 	FieldArchiveDisplayType,
 	FieldArchivePublishedAt,
 	FieldPublishedAt,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -89,11 +89,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -109,19 +104,9 @@ func ByCostume3DGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCostume3DGroupID, opts...).ToFunc()
 }
 
-// ByCostume3DType orders the results by the costume3_d_type field.
-func ByCostume3DType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCostume3DType, opts...).ToFunc()
-}
-
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByPartType orders the results by the part_type field.
-func ByPartType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPartType, opts...).ToFunc()
 }
 
 // ByColorID orders the results by the color_id field.
@@ -139,11 +124,6 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
-// ByCostume3DRarity orders the results by the costume3_d_rarity field.
-func ByCostume3DRarity(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCostume3DRarity, opts...).ToFunc()
-}
-
 // ByHowToObtain orders the results by the how_to_obtain field.
 func ByHowToObtain(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHowToObtain, opts...).ToFunc()
@@ -159,11 +139,6 @@ func ByDesigner(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDesigner, opts...).ToFunc()
 }
 
-// ByArchiveDisplayType orders the results by the archive_display_type field.
-func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
-}
-
 // ByArchivePublishedAt orders the results by the archive_published_at field.
 func ByArchivePublishedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldArchivePublishedAt, opts...).ToFunc()
@@ -172,4 +147,9 @@ func ByArchivePublishedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByPublishedAt orders the results by the published_at field.
 func ByPublishedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPublishedAt, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

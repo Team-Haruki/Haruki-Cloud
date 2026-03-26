@@ -262,12 +262,12 @@ func (_q *WorldbloomQuery) Clone() *WorldbloomQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Worldbloom.Query().
-//		GroupBy(worldbloom.FieldServerRegion).
+//		GroupBy(worldbloom.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *WorldbloomQuery) GroupBy(field string, fields ...string) *WorldbloomGroupBy {
@@ -285,11 +285,11 @@ func (_q *WorldbloomQuery) GroupBy(field string, fields ...string) *WorldbloomGr
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Worldbloom.Query().
-//		Select(worldbloom.FieldServerRegion).
+//		Select(worldbloom.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *WorldbloomQuery) Select(fields ...string) *WorldbloomSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

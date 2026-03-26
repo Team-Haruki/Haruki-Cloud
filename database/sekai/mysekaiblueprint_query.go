@@ -262,12 +262,12 @@ func (_q *MysekaiblueprintQuery) Clone() *MysekaiblueprintQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaiblueprint.Query().
-//		GroupBy(mysekaiblueprint.FieldServerRegion).
+//		GroupBy(mysekaiblueprint.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaiblueprintQuery) GroupBy(field string, fields ...string) *MysekaiblueprintGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaiblueprintQuery) GroupBy(field string, fields ...string) *Myseka
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaiblueprint.Query().
-//		Select(mysekaiblueprint.FieldServerRegion).
+//		Select(mysekaiblueprint.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaiblueprintQuery) Select(fields ...string) *MysekaiblueprintSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

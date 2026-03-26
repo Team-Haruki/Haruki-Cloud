@@ -16,17 +16,17 @@ type Mysekaimaterialgamecharacterrelation struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// GroupID holds the value of the "group_id" field.
+	GroupID int `json:"group_id,omitempty"`
+	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
+	MysekaiMaterialID int `json:"mysekai_material_id,omitempty"`
+	// GameCharacterID holds the value of the "game_character_id" field.
+	GameCharacterID int `json:"game_character_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// GroupID holds the value of the "group_id" field.
-	GroupID int64 `json:"group_id,omitempty"`
-	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
-	MysekaiMaterialID int64 `json:"mysekai_material_id,omitempty"`
-	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int64 `json:"game_character_id,omitempty"`
-	selectValues    sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -59,35 +59,35 @@ func (_m *Mysekaimaterialgamecharacterrelation) assignValues(columns []string, v
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaimaterialgamecharacterrelation.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaimaterialgamecharacterrelation.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaimaterialgamecharacterrelation.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = value.Int64
+				_m.GroupID = int(value.Int64)
 			}
 		case mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiMaterialID = value.Int64
+				_m.MysekaiMaterialID = int(value.Int64)
 			}
 		case mysekaimaterialgamecharacterrelation.FieldGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = value.Int64
+				_m.GameCharacterID = int(value.Int64)
+			}
+		case mysekaimaterialgamecharacterrelation.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Mysekaimaterialgamecharacterrelation) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaimaterialgamecharacterrelation(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Mysekaimaterialgamecharacterrelation) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("game_character_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

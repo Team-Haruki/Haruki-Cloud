@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaceilitem"
 	"strings"
@@ -16,21 +17,21 @@ type Gachaceilitem struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// GachaID holds the value of the "gacha_id" field.
-	GachaID int64 `json:"gacha_id,omitempty"`
+	GachaID int `json:"gacha_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
-	AssetbundleName string `json:"assetbundle_name,omitempty"`
+	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
 	// ConvertStartAt holds the value of the "convert_start_at" field.
-	ConvertStartAt int64 `json:"convert_start_at,omitempty"`
+	ConvertStartAt int `json:"convert_start_at,omitempty"`
 	// ConvertResourceBoxID holds the value of the "convert_resource_box_id" field.
-	ConvertResourceBoxID int64 `json:"convert_resource_box_id,omitempty"`
-	selectValues         sql.SelectValues
+	ConvertResourceBoxID int `json:"convert_resource_box_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,9 +39,11 @@ func (*Gachaceilitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case gachaceilitem.FieldAssetbundleName:
+			values[i] = new([]byte)
 		case gachaceilitem.FieldID, gachaceilitem.FieldGameID, gachaceilitem.FieldGachaID, gachaceilitem.FieldConvertStartAt, gachaceilitem.FieldConvertResourceBoxID:
 			values[i] = new(sql.NullInt64)
-		case gachaceilitem.FieldServerRegion, gachaceilitem.FieldName, gachaceilitem.FieldAssetbundleName:
+		case gachaceilitem.FieldName, gachaceilitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,23 +66,17 @@ func (_m *Gachaceilitem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case gachaceilitem.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case gachaceilitem.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case gachaceilitem.FieldGachaID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_id", values[i])
 			} else if value.Valid {
-				_m.GachaID = value.Int64
+				_m.GachaID = int(value.Int64)
 			}
 		case gachaceilitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,22 +85,30 @@ func (_m *Gachaceilitem) assignValues(columns []string, values []any) error {
 				_m.Name = value.String
 			}
 		case gachaceilitem.FieldAssetbundleName:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
-			} else if value.Valid {
-				_m.AssetbundleName = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.AssetbundleName); err != nil {
+					return fmt.Errorf("unmarshal field assetbundle_name: %w", err)
+				}
 			}
 		case gachaceilitem.FieldConvertStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field convert_start_at", values[i])
 			} else if value.Valid {
-				_m.ConvertStartAt = value.Int64
+				_m.ConvertStartAt = int(value.Int64)
 			}
 		case gachaceilitem.FieldConvertResourceBoxID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field convert_resource_box_id", values[i])
 			} else if value.Valid {
-				_m.ConvertResourceBoxID = value.Int64
+				_m.ConvertResourceBoxID = int(value.Int64)
+			}
+		case gachaceilitem.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -141,9 +146,6 @@ func (_m *Gachaceilitem) String() string {
 	var builder strings.Builder
 	builder.WriteString("Gachaceilitem(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -154,13 +156,16 @@ func (_m *Gachaceilitem) String() string {
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
-	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(fmt.Sprintf("%v", _m.AssetbundleName))
 	builder.WriteString(", ")
 	builder.WriteString("convert_start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ConvertStartAt))
 	builder.WriteString(", ")
 	builder.WriteString("convert_resource_box_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ConvertResourceBoxID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

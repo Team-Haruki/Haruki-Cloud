@@ -11,25 +11,25 @@ const (
 	Label = "music_artist"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldPronunciation holds the string denoting the pronunciation field in the database.
 	FieldPronunciation = "pronunciation"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the musicartist in the database.
-	Table = "music_artists"
+	Table = "musicartists"
 )
 
 // Columns holds all SQL columns for musicartist fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldName,
 	FieldPronunciation,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -50,11 +50,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -68,4 +63,9 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByPronunciation orders the results by the pronunciation field.
 func ByPronunciation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPronunciation, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

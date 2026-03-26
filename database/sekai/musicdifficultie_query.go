@@ -262,12 +262,12 @@ func (_q *MusicdifficultieQuery) Clone() *MusicdifficultieQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Musicdifficultie.Query().
-//		GroupBy(musicdifficultie.FieldServerRegion).
+//		GroupBy(musicdifficultie.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MusicdifficultieQuery) GroupBy(field string, fields ...string) *MusicdifficultieGroupBy {
@@ -285,11 +285,11 @@ func (_q *MusicdifficultieQuery) GroupBy(field string, fields ...string) *Musicd
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Musicdifficultie.Query().
-//		Select(musicdifficultie.FieldServerRegion).
+//		Select(musicdifficultie.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MusicdifficultieQuery) Select(fields ...string) *MusicdifficultieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

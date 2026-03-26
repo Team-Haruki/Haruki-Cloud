@@ -16,18 +16,18 @@ type Mysekaifixtureonlydisassemblematerial struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MysekaiFixtureID holds the value of the "mysekai_fixture_id" field.
+	MysekaiFixtureID int `json:"mysekai_fixture_id,omitempty"`
+	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
+	MysekaiMaterialID int `json:"mysekai_material_id,omitempty"`
+	// Seq holds the value of the "seq" field.
+	Seq int `json:"seq,omitempty"`
+	// Quantity holds the value of the "quantity" field.
+	Quantity int `json:"quantity,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MysekaiFixtureID holds the value of the "mysekai_fixture_id" field.
-	MysekaiFixtureID int64 `json:"mysekai_fixture_id,omitempty"`
-	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
-	MysekaiMaterialID int64 `json:"mysekai_material_id,omitempty"`
-	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
-	// Quantity holds the value of the "quantity" field.
-	Quantity     int64 `json:"quantity,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -61,41 +61,41 @@ func (_m *Mysekaifixtureonlydisassemblematerial) assignValues(columns []string, 
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaifixtureonlydisassemblematerial.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaifixtureonlydisassemblematerial.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldMysekaiFixtureID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureID = value.Int64
+				_m.MysekaiFixtureID = int(value.Int64)
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldMysekaiMaterialID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiMaterialID = value.Int64
+				_m.MysekaiMaterialID = int(value.Int64)
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case mysekaifixtureonlydisassemblematerial.FieldQuantity:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field quantity", values[i])
 			} else if value.Valid {
-				_m.Quantity = value.Int64
+				_m.Quantity = int(value.Int64)
+			}
+		case mysekaifixtureonlydisassemblematerial.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -133,9 +133,6 @@ func (_m *Mysekaifixtureonlydisassemblematerial) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaifixtureonlydisassemblematerial(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -150,6 +147,9 @@ func (_m *Mysekaifixtureonlydisassemblematerial) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("quantity=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Quantity))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

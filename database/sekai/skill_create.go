@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/skill"
@@ -19,23 +20,9 @@ type SkillCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *SkillCreate) SetServerRegion(v string) *SkillCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *SkillCreate) SetGameID(v int64) *SkillCreate {
+func (_c *SkillCreate) SetGameID(v int) *SkillCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *SkillCreate) SetNillableGameID(v *int64) *SkillCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -68,27 +55,19 @@ func (_c *SkillCreate) SetNillableDescription(v *string) *SkillCreate {
 }
 
 // SetDescriptionSpriteName sets the "description_sprite_name" field.
-func (_c *SkillCreate) SetDescriptionSpriteName(v string) *SkillCreate {
+func (_c *SkillCreate) SetDescriptionSpriteName(v json.RawMessage) *SkillCreate {
 	_c.mutation.SetDescriptionSpriteName(v)
 	return _c
 }
 
-// SetNillableDescriptionSpriteName sets the "description_sprite_name" field if the given value is not nil.
-func (_c *SkillCreate) SetNillableDescriptionSpriteName(v *string) *SkillCreate {
-	if v != nil {
-		_c.SetDescriptionSpriteName(*v)
-	}
-	return _c
-}
-
 // SetSkillFilterID sets the "skill_filter_id" field.
-func (_c *SkillCreate) SetSkillFilterID(v int64) *SkillCreate {
+func (_c *SkillCreate) SetSkillFilterID(v int) *SkillCreate {
 	_c.mutation.SetSkillFilterID(v)
 	return _c
 }
 
 // SetNillableSkillFilterID sets the "skill_filter_id" field if the given value is not nil.
-func (_c *SkillCreate) SetNillableSkillFilterID(v *int64) *SkillCreate {
+func (_c *SkillCreate) SetNillableSkillFilterID(v *int) *SkillCreate {
 	if v != nil {
 		_c.SetSkillFilterID(*v)
 	}
@@ -96,8 +75,14 @@ func (_c *SkillCreate) SetNillableSkillFilterID(v *int64) *SkillCreate {
 }
 
 // SetSkillEffects sets the "skill_effects" field.
-func (_c *SkillCreate) SetSkillEffects(v []interface{}) *SkillCreate {
+func (_c *SkillCreate) SetSkillEffects(v json.RawMessage) *SkillCreate {
 	_c.mutation.SetSkillEffects(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *SkillCreate) SetServerRegion(v string) *SkillCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -135,6 +120,9 @@ func (_c *SkillCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SkillCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Skill.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Skill.server_region"`)}
 	}
@@ -164,12 +152,8 @@ func (_c *SkillCreate) createSpec() (*Skill, *sqlgraph.CreateSpec) {
 		_node = &Skill{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(skill.Table, sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(skill.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(skill.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(skill.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ShortDescription(); ok {
@@ -181,16 +165,20 @@ func (_c *SkillCreate) createSpec() (*Skill, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.DescriptionSpriteName(); ok {
-		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeString, value)
+		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeJSON, value)
 		_node.DescriptionSpriteName = value
 	}
 	if value, ok := _c.mutation.SkillFilterID(); ok {
-		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)
+		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt, value)
 		_node.SkillFilterID = value
 	}
 	if value, ok := _c.mutation.SkillEffects(); ok {
 		_spec.SetField(skill.FieldSkillEffects, field.TypeJSON, value)
 		_node.SkillEffects = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(skill.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

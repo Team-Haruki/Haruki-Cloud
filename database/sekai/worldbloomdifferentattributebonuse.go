@@ -16,12 +16,12 @@ type Worldbloomdifferentattributebonuse struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// AttributeCount holds the value of the "attribute_count" field.
+	AttributeCount int `json:"attribute_count,omitempty"`
+	// BonusRate holds the value of the "bonus_rate" field.
+	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// AttributeCount holds the value of the "attribute_count" field.
-	AttributeCount int64 `json:"attribute_count,omitempty"`
-	// BonusRate holds the value of the "bonus_rate" field.
-	BonusRate    float64 `json:"bonus_rate,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -57,23 +57,23 @@ func (_m *Worldbloomdifferentattributebonuse) assignValues(columns []string, val
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case worldbloomdifferentattributebonuse.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case worldbloomdifferentattributebonuse.FieldAttributeCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field attribute_count", values[i])
 			} else if value.Valid {
-				_m.AttributeCount = value.Int64
+				_m.AttributeCount = int(value.Int64)
 			}
 		case worldbloomdifferentattributebonuse.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field bonus_rate", values[i])
 			} else if value.Valid {
 				_m.BonusRate = value.Float64
+			}
+		case worldbloomdifferentattributebonuse.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -111,14 +111,14 @@ func (_m *Worldbloomdifferentattributebonuse) String() string {
 	var builder strings.Builder
 	builder.WriteString("Worldbloomdifferentattributebonuse(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("attribute_count=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AttributeCount))
 	builder.WriteString(", ")
 	builder.WriteString("bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BonusRate))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

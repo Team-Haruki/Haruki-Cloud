@@ -103,9 +103,16 @@ func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) 
 
 // RegionAssetDir returns the region-specific startapp asset subdirectory prefix
 // used by the Haruki Drawing API, e.g. "asset/jp-assets/startapp" for "jp".
+// Note: some assets use "ondemand" instead of "startapp"; that path adjustment
+// is handled separately per asset type as needed.
 func RegionAssetDir(region string) string {
 	return "asset/" + region + "-assets/startapp"
 }
+
+// StaticImagesDir is the base directory for Drawing API static UI images
+// (card frames, rarity icons, attribute icons, character icons, unit logos,
+// skill icons, play-result icons, etc.) within the Drawing API data root.
+const StaticImagesDir = "static_images"
 
 var CharacterIDToNickname = map[int]string{
 	1:  "ick",

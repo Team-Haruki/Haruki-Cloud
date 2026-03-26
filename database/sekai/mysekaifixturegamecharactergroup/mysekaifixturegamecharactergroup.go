@@ -11,14 +11,14 @@ const (
 	Label = "mysekaifixturegamecharactergroup"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldGroupID holds the string denoting the group_id field in the database.
 	FieldGroupID = "group_id"
 	// FieldGameCharacterID holds the string denoting the game_character_id field in the database.
 	FieldGameCharacterID = "game_character_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaifixturegamecharactergroup in the database.
 	Table = "mysekaifixturegamecharactergroups"
 )
@@ -26,10 +26,10 @@ const (
 // Columns holds all SQL columns for mysekaifixturegamecharactergroup fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldGroupID,
 	FieldGameCharacterID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -50,11 +50,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -68,4 +63,9 @@ func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
 // ByGameCharacterID orders the results by the game_character_id field.
 func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

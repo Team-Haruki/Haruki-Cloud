@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
 	"strings"
@@ -16,20 +17,20 @@ type Boostitem struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// RecoveryValue holds the value of the "recovery_value" field.
-	RecoveryValue int64 `json:"recovery_value,omitempty"`
+	RecoveryValue int `json:"recovery_value,omitempty"`
 	// AssetBundleName holds the value of the "asset_bundle_name" field.
 	AssetBundleName string `json:"asset_bundle_name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
-	FlavorText   string `json:"flavor_text,omitempty"`
+	FlavorText json.RawMessage `json:"flavor_text,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -38,9 +39,11 @@ func (*Boostitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case boostitem.FieldFlavorText:
+			values[i] = new([]byte)
 		case boostitem.FieldID, boostitem.FieldGameID, boostitem.FieldSeq, boostitem.FieldRecoveryValue:
 			values[i] = new(sql.NullInt64)
-		case boostitem.FieldServerRegion, boostitem.FieldName, boostitem.FieldAssetBundleName, boostitem.FieldFlavorText:
+		case boostitem.FieldName, boostitem.FieldAssetBundleName, boostitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,23 +66,17 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case boostitem.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case boostitem.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case boostitem.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case boostitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -91,7 +88,7 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field recovery_value", values[i])
 			} else if value.Valid {
-				_m.RecoveryValue = value.Int64
+				_m.RecoveryValue = int(value.Int64)
 			}
 		case boostitem.FieldAssetBundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -100,10 +97,18 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 				_m.AssetBundleName = value.String
 			}
 		case boostitem.FieldFlavorText:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field flavor_text", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.FlavorText); err != nil {
+					return fmt.Errorf("unmarshal field flavor_text: %w", err)
+				}
+			}
+		case boostitem.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
 			} else if value.Valid {
-				_m.FlavorText = value.String
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -141,9 +146,6 @@ func (_m *Boostitem) String() string {
 	var builder strings.Builder
 	builder.WriteString("Boostitem(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -160,7 +162,10 @@ func (_m *Boostitem) String() string {
 	builder.WriteString(_m.AssetBundleName)
 	builder.WriteString(", ")
 	builder.WriteString("flavor_text=")
-	builder.WriteString(_m.FlavorText)
+	builder.WriteString(fmt.Sprintf("%v", _m.FlavorText))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -53,39 +53,329 @@ func IDLTE(id int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameCharacterUnitId1 applies equality check predicate on the "game_character_unit_id1" field. It's identical to GameCharacterUnitId1EQ.
+func GameCharacterUnitId1(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId2 applies equality check predicate on the "game_character_unit_id2" field. It's identical to GameCharacterUnitId2EQ.
+func GameCharacterUnitId2(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId3 applies equality check predicate on the "game_character_unit_id3" field. It's identical to GameCharacterUnitId3EQ.
+func GameCharacterUnitId3(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId4 applies equality check predicate on the "game_character_unit_id4" field. It's identical to GameCharacterUnitId4EQ.
+func GameCharacterUnitId4(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId5 applies equality check predicate on the "game_character_unit_id5" field. It's identical to GameCharacterUnitId5EQ.
+func GameCharacterUnitId5(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId5, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameID, v))
 }
 
-// GameCharacterUnitId1 applies equality check predicate on the "game_character_unit_id1" field. It's identical to GameCharacterUnitId1EQ.
-func GameCharacterUnitId1(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameID, v))
+}
+
+// GameCharacterUnitId1EQ applies the EQ predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1EQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId1, v))
 }
 
-// GameCharacterUnitId2 applies equality check predicate on the "game_character_unit_id2" field. It's identical to GameCharacterUnitId2EQ.
-func GameCharacterUnitId2(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameCharacterUnitId1NEQ applies the NEQ predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1NEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId1In applies the In predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1In(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId1, vs...))
+}
+
+// GameCharacterUnitId1NotIn applies the NotIn predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1NotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId1, vs...))
+}
+
+// GameCharacterUnitId1GT applies the GT predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1GT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId1GTE applies the GTE predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1GTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId1LT applies the LT predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1LT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId1LTE applies the LTE predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1LTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId1, v))
+}
+
+// GameCharacterUnitId1IsNil applies the IsNil predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1IsNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId1))
+}
+
+// GameCharacterUnitId1NotNil applies the NotNil predicate on the "game_character_unit_id1" field.
+func GameCharacterUnitId1NotNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId1))
+}
+
+// GameCharacterUnitId2EQ applies the EQ predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2EQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId2, v))
 }
 
-// GameCharacterUnitId3 applies equality check predicate on the "game_character_unit_id3" field. It's identical to GameCharacterUnitId3EQ.
-func GameCharacterUnitId3(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameCharacterUnitId2NEQ applies the NEQ predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2NEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId2In applies the In predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2In(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId2, vs...))
+}
+
+// GameCharacterUnitId2NotIn applies the NotIn predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2NotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId2, vs...))
+}
+
+// GameCharacterUnitId2GT applies the GT predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2GT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId2GTE applies the GTE predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2GTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId2LT applies the LT predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2LT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId2LTE applies the LTE predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2LTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId2, v))
+}
+
+// GameCharacterUnitId2IsNil applies the IsNil predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2IsNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId2))
+}
+
+// GameCharacterUnitId2NotNil applies the NotNil predicate on the "game_character_unit_id2" field.
+func GameCharacterUnitId2NotNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId2))
+}
+
+// GameCharacterUnitId3EQ applies the EQ predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3EQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId3, v))
 }
 
-// GameCharacterUnitId4 applies equality check predicate on the "game_character_unit_id4" field. It's identical to GameCharacterUnitId4EQ.
-func GameCharacterUnitId4(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameCharacterUnitId3NEQ applies the NEQ predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3NEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId3In applies the In predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3In(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId3, vs...))
+}
+
+// GameCharacterUnitId3NotIn applies the NotIn predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3NotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId3, vs...))
+}
+
+// GameCharacterUnitId3GT applies the GT predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3GT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId3GTE applies the GTE predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3GTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId3LT applies the LT predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3LT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId3LTE applies the LTE predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3LTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId3, v))
+}
+
+// GameCharacterUnitId3IsNil applies the IsNil predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3IsNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId3))
+}
+
+// GameCharacterUnitId3NotNil applies the NotNil predicate on the "game_character_unit_id3" field.
+func GameCharacterUnitId3NotNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId3))
+}
+
+// GameCharacterUnitId4EQ applies the EQ predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4EQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId4, v))
 }
 
-// GameCharacterUnitId5 applies equality check predicate on the "game_character_unit_id5" field. It's identical to GameCharacterUnitId5EQ.
-func GameCharacterUnitId5(v int64) predicate.Mysekaigamecharacterunitgroup {
+// GameCharacterUnitId4NEQ applies the NEQ predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4NEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId4In applies the In predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4In(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId4, vs...))
+}
+
+// GameCharacterUnitId4NotIn applies the NotIn predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4NotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId4, vs...))
+}
+
+// GameCharacterUnitId4GT applies the GT predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4GT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId4GTE applies the GTE predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4GTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId4LT applies the LT predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4LT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId4LTE applies the LTE predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4LTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId4, v))
+}
+
+// GameCharacterUnitId4IsNil applies the IsNil predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4IsNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId4))
+}
+
+// GameCharacterUnitId4NotNil applies the NotNil predicate on the "game_character_unit_id4" field.
+func GameCharacterUnitId4NotNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId4))
+}
+
+// GameCharacterUnitId5EQ applies the EQ predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5EQ(v int) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5NEQ applies the NEQ predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5NEQ(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5In applies the In predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5In(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId5, vs...))
+}
+
+// GameCharacterUnitId5NotIn applies the NotIn predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5NotIn(vs ...int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId5, vs...))
+}
+
+// GameCharacterUnitId5GT applies the GT predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5GT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5GTE applies the GTE predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5GTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5LT applies the LT predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5LT(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5LTE applies the LTE predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5LTE(v int) predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId5, v))
+}
+
+// GameCharacterUnitId5IsNil applies the IsNil predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5IsNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId5))
+}
+
+// GameCharacterUnitId5NotNil applies the NotNil predicate on the "game_character_unit_id5" field.
+func GameCharacterUnitId5NotNil() predicate.Mysekaigamecharacterunitgroup {
+	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId5))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,306 +441,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaigamecharacterunitgroup {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaigamecharacterunitgroup {
 	return predicate.Mysekaigamecharacterunitgroup(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameID))
-}
-
-// GameCharacterUnitId1EQ applies the EQ predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1EQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1NEQ applies the NEQ predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1NEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1In applies the In predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1In(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId1, vs...))
-}
-
-// GameCharacterUnitId1NotIn applies the NotIn predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1NotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId1, vs...))
-}
-
-// GameCharacterUnitId1GT applies the GT predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1GT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1GTE applies the GTE predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1GTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1LT applies the LT predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1LT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1LTE applies the LTE predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1LTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId1, v))
-}
-
-// GameCharacterUnitId1IsNil applies the IsNil predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1IsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId1))
-}
-
-// GameCharacterUnitId1NotNil applies the NotNil predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1NotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId1))
-}
-
-// GameCharacterUnitId2EQ applies the EQ predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2EQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2NEQ applies the NEQ predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2NEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2In applies the In predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2In(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId2, vs...))
-}
-
-// GameCharacterUnitId2NotIn applies the NotIn predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2NotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId2, vs...))
-}
-
-// GameCharacterUnitId2GT applies the GT predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2GT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2GTE applies the GTE predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2GTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2LT applies the LT predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2LT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2LTE applies the LTE predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2LTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId2, v))
-}
-
-// GameCharacterUnitId2IsNil applies the IsNil predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2IsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId2))
-}
-
-// GameCharacterUnitId2NotNil applies the NotNil predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2NotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId2))
-}
-
-// GameCharacterUnitId3EQ applies the EQ predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3EQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3NEQ applies the NEQ predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3NEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3In applies the In predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3In(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId3, vs...))
-}
-
-// GameCharacterUnitId3NotIn applies the NotIn predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3NotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId3, vs...))
-}
-
-// GameCharacterUnitId3GT applies the GT predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3GT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3GTE applies the GTE predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3GTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3LT applies the LT predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3LT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3LTE applies the LTE predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3LTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId3, v))
-}
-
-// GameCharacterUnitId3IsNil applies the IsNil predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3IsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId3))
-}
-
-// GameCharacterUnitId3NotNil applies the NotNil predicate on the "game_character_unit_id3" field.
-func GameCharacterUnitId3NotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId3))
-}
-
-// GameCharacterUnitId4EQ applies the EQ predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4EQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4NEQ applies the NEQ predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4NEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4In applies the In predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4In(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId4, vs...))
-}
-
-// GameCharacterUnitId4NotIn applies the NotIn predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4NotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId4, vs...))
-}
-
-// GameCharacterUnitId4GT applies the GT predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4GT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4GTE applies the GTE predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4GTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4LT applies the LT predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4LT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4LTE applies the LTE predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4LTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId4, v))
-}
-
-// GameCharacterUnitId4IsNil applies the IsNil predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4IsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId4))
-}
-
-// GameCharacterUnitId4NotNil applies the NotNil predicate on the "game_character_unit_id4" field.
-func GameCharacterUnitId4NotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId4))
-}
-
-// GameCharacterUnitId5EQ applies the EQ predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5EQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldEQ(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5NEQ applies the NEQ predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5NEQ(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNEQ(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5In applies the In predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5In(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIn(FieldGameCharacterUnitId5, vs...))
-}
-
-// GameCharacterUnitId5NotIn applies the NotIn predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5NotIn(vs ...int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotIn(FieldGameCharacterUnitId5, vs...))
-}
-
-// GameCharacterUnitId5GT applies the GT predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5GT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGT(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5GTE applies the GTE predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5GTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldGTE(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5LT applies the LT predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5LT(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLT(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5LTE applies the LTE predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5LTE(v int64) predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldLTE(FieldGameCharacterUnitId5, v))
-}
-
-// GameCharacterUnitId5IsNil applies the IsNil predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5IsNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldIsNull(FieldGameCharacterUnitId5))
-}
-
-// GameCharacterUnitId5NotNil applies the NotNil predicate on the "game_character_unit_id5" field.
-func GameCharacterUnitId5NotNil() predicate.Mysekaigamecharacterunitgroup {
-	return predicate.Mysekaigamecharacterunitgroup(sql.FieldNotNull(FieldGameCharacterUnitId5))
 }
 
 // And groups predicates with the AND operator between them.

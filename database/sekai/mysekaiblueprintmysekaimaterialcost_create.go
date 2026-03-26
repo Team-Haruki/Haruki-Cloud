@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprintmysekaimaterialcost"
@@ -19,34 +20,20 @@ type MysekaiblueprintmysekaimaterialcostCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetGameID(v int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetGameID(v int) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableGameID(v *int64) *MysekaiblueprintmysekaimaterialcostCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintID(v int) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetMysekaiBlueprintID(v)
 	return _c
 }
 
 // SetNillableMysekaiBlueprintID sets the "mysekai_blueprint_id" field if the given value is not nil.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiBlueprintID(v *int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiBlueprintID(v *int) *MysekaiblueprintmysekaimaterialcostCreate {
 	if v != nil {
 		_c.SetMysekaiBlueprintID(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiBlueprint
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiMaterialID(v int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiMaterialID(v int) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetMysekaiMaterialID(v)
 	return _c
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiMaterialID(v *int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiMaterialID(v *int) *MysekaiblueprintmysekaimaterialcostCreate {
 	if v != nil {
 		_c.SetMysekaiMaterialID(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiMaterialI
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetSeq(v int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetSeq(v int) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableSeq(v *int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableSeq(v *int) *MysekaiblueprintmysekaimaterialcostCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -82,13 +69,13 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableSeq(v *int64) *M
 }
 
 // SetQuantity sets the "quantity" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetQuantity(v int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetQuantity(v int) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetQuantity(v)
 	return _c
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableQuantity(v *int64) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableQuantity(v *int) *MysekaiblueprintmysekaimaterialcostCreate {
 	if v != nil {
 		_c.SetQuantity(*v)
 	}
@@ -96,8 +83,14 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableQuantity(v *int6
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintType(v map[string]interface{}) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetMysekaiBlueprintType(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -135,6 +128,9 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) ExecX(ctx context.Context) 
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiblueprintmysekaimaterialcostCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiblueprintmysekaimaterialcost.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiblueprintmysekaimaterialcost.server_region"`)}
 	}
@@ -164,33 +160,33 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) createSpec() (*Mysekaibluep
 		_node = &Mysekaiblueprintmysekaimaterialcost{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaiblueprintmysekaimaterialcost.Table, sqlgraph.NewFieldSpec(mysekaiblueprintmysekaimaterialcost.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiBlueprintID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt, value)
 		_node.MysekaiBlueprintID = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt, value)
 		_node.MysekaiMaterialID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Quantity(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt, value)
 		_node.Quantity = value
 	}
 	if value, ok := _c.mutation.MysekaiBlueprintType(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
 		_node.MysekaiBlueprintType = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

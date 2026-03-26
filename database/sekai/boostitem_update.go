@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *BoostitemUpdate) Where(ps ...predicate.Boostitem) *BoostitemUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *BoostitemUpdate) SetServerRegion(v string) *BoostitemUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableServerRegion(v *string) *BoostitemUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *BoostitemUpdate) SetGameID(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetGameID(v int) *BoostitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableGameID(v *int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableGameID(v *int) *BoostitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *BoostitemUpdate) SetNillableGameID(v *int64) *BoostitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BoostitemUpdate) AddGameID(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddGameID(v int) *BoostitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *BoostitemUpdate) ClearGameID() *BoostitemUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *BoostitemUpdate) SetSeq(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetSeq(v int) *BoostitemUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableSeq(v *int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableSeq(v *int) *BoostitemUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *BoostitemUpdate) SetNillableSeq(v *int64) *BoostitemUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BoostitemUpdate) AddSeq(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddSeq(v int) *BoostitemUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -116,14 +98,14 @@ func (_u *BoostitemUpdate) ClearName() *BoostitemUpdate {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_u *BoostitemUpdate) SetRecoveryValue(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetRecoveryValue(v int) *BoostitemUpdate {
 	_u.mutation.ResetRecoveryValue()
 	_u.mutation.SetRecoveryValue(v)
 	return _u
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int) *BoostitemUpdate {
 	if v != nil {
 		_u.SetRecoveryValue(*v)
 	}
@@ -131,7 +113,7 @@ func (_u *BoostitemUpdate) SetNillableRecoveryValue(v *int64) *BoostitemUpdate {
 }
 
 // AddRecoveryValue adds value to the "recovery_value" field.
-func (_u *BoostitemUpdate) AddRecoveryValue(v int64) *BoostitemUpdate {
+func (_u *BoostitemUpdate) AddRecoveryValue(v int) *BoostitemUpdate {
 	_u.mutation.AddRecoveryValue(v)
 	return _u
 }
@@ -163,22 +145,34 @@ func (_u *BoostitemUpdate) ClearAssetBundleName() *BoostitemUpdate {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *BoostitemUpdate) SetFlavorText(v string) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetFlavorText(v json.RawMessage) *BoostitemUpdate {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
-func (_u *BoostitemUpdate) SetNillableFlavorText(v *string) *BoostitemUpdate {
-	if v != nil {
-		_u.SetFlavorText(*v)
-	}
+// AppendFlavorText appends value to the "flavor_text" field.
+func (_u *BoostitemUpdate) AppendFlavorText(v json.RawMessage) *BoostitemUpdate {
+	_u.mutation.AppendFlavorText(v)
 	return _u
 }
 
 // ClearFlavorText clears the value of the "flavor_text" field.
 func (_u *BoostitemUpdate) ClearFlavorText() *BoostitemUpdate {
 	_u.mutation.ClearFlavorText()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *BoostitemUpdate) SetServerRegion(v string) *BoostitemUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *BoostitemUpdate) SetNillableServerRegion(v *string) *BoostitemUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -223,26 +217,20 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(boostitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(boostitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(boostitem.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(boostitem.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(boostitem.FieldSeq, field.TypeInt64)
+		_spec.ClearField(boostitem.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(boostitem.FieldName, field.TypeString, value)
@@ -251,13 +239,13 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(boostitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRecoveryValue(); ok {
-		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
+		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt, value)
 	}
 	if _u.mutation.RecoveryValueCleared() {
-		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt64)
+		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetBundleName(); ok {
 		_spec.SetField(boostitem.FieldAssetBundleName, field.TypeString, value)
@@ -266,10 +254,18 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(boostitem.FieldAssetBundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedFlavorText(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, boostitem.FieldFlavorText, value)
+		})
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(boostitem.FieldFlavorText, field.TypeString)
+		_spec.ClearField(boostitem.FieldFlavorText, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -291,29 +287,15 @@ type BoostitemUpdateOne struct {
 	mutation *BoostitemMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *BoostitemUpdateOne) SetServerRegion(v string) *BoostitemUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableServerRegion(v *string) *BoostitemUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *BoostitemUpdateOne) SetGameID(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetGameID(v int) *BoostitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableGameID(v *int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableGameID(v *int) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -321,26 +303,20 @@ func (_u *BoostitemUpdateOne) SetNillableGameID(v *int64) *BoostitemUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *BoostitemUpdateOne) AddGameID(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddGameID(v int) *BoostitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *BoostitemUpdateOne) ClearGameID() *BoostitemUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *BoostitemUpdateOne) SetSeq(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetSeq(v int) *BoostitemUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableSeq(v *int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableSeq(v *int) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -348,7 +324,7 @@ func (_u *BoostitemUpdateOne) SetNillableSeq(v *int64) *BoostitemUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *BoostitemUpdateOne) AddSeq(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddSeq(v int) *BoostitemUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -380,14 +356,14 @@ func (_u *BoostitemUpdateOne) ClearName() *BoostitemUpdateOne {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_u *BoostitemUpdateOne) SetRecoveryValue(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetRecoveryValue(v int) *BoostitemUpdateOne {
 	_u.mutation.ResetRecoveryValue()
 	_u.mutation.SetRecoveryValue(v)
 	return _u
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int) *BoostitemUpdateOne {
 	if v != nil {
 		_u.SetRecoveryValue(*v)
 	}
@@ -395,7 +371,7 @@ func (_u *BoostitemUpdateOne) SetNillableRecoveryValue(v *int64) *BoostitemUpdat
 }
 
 // AddRecoveryValue adds value to the "recovery_value" field.
-func (_u *BoostitemUpdateOne) AddRecoveryValue(v int64) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) AddRecoveryValue(v int) *BoostitemUpdateOne {
 	_u.mutation.AddRecoveryValue(v)
 	return _u
 }
@@ -427,22 +403,34 @@ func (_u *BoostitemUpdateOne) ClearAssetBundleName() *BoostitemUpdateOne {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *BoostitemUpdateOne) SetFlavorText(v string) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetFlavorText(v json.RawMessage) *BoostitemUpdateOne {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
-func (_u *BoostitemUpdateOne) SetNillableFlavorText(v *string) *BoostitemUpdateOne {
-	if v != nil {
-		_u.SetFlavorText(*v)
-	}
+// AppendFlavorText appends value to the "flavor_text" field.
+func (_u *BoostitemUpdateOne) AppendFlavorText(v json.RawMessage) *BoostitemUpdateOne {
+	_u.mutation.AppendFlavorText(v)
 	return _u
 }
 
 // ClearFlavorText clears the value of the "flavor_text" field.
 func (_u *BoostitemUpdateOne) ClearFlavorText() *BoostitemUpdateOne {
 	_u.mutation.ClearFlavorText()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *BoostitemUpdateOne) SetServerRegion(v string) *BoostitemUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *BoostitemUpdateOne) SetNillableServerRegion(v *string) *BoostitemUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -517,26 +505,20 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(boostitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(boostitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(boostitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(boostitem.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(boostitem.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(boostitem.FieldSeq, field.TypeInt64)
+		_spec.ClearField(boostitem.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(boostitem.FieldName, field.TypeString, value)
@@ -545,13 +527,13 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 		_spec.ClearField(boostitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRecoveryValue(); ok {
-		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
+		_spec.AddField(boostitem.FieldRecoveryValue, field.TypeInt, value)
 	}
 	if _u.mutation.RecoveryValueCleared() {
-		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt64)
+		_spec.ClearField(boostitem.FieldRecoveryValue, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetBundleName(); ok {
 		_spec.SetField(boostitem.FieldAssetBundleName, field.TypeString, value)
@@ -560,10 +542,18 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 		_spec.ClearField(boostitem.FieldAssetBundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedFlavorText(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, boostitem.FieldFlavorText, value)
+		})
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(boostitem.FieldFlavorText, field.TypeString)
+		_spec.ClearField(boostitem.FieldFlavorText, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Boostitem{config: _u.config}
 	_spec.Assign = _node.assignValues

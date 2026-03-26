@@ -17,23 +17,23 @@ type Resourceboxe struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// ResourceBoxPurpose holds the value of the "resource_box_purpose" field.
-	ResourceBoxPurpose string `json:"resource_box_purpose,omitempty"`
+	ResourceBoxPurpose json.RawMessage `json:"resource_box_purpose,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// ResourceBoxType holds the value of the "resource_box_type" field.
-	ResourceBoxType string `json:"resource_box_type,omitempty"`
+	ResourceBoxType json.RawMessage `json:"resource_box_type,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Details holds the value of the "details" field.
-	Details []interface{} `json:"details,omitempty"`
+	Details json.RawMessage `json:"details,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
-	selectValues    sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -41,11 +41,11 @@ func (*Resourceboxe) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case resourceboxe.FieldDetails:
+		case resourceboxe.FieldResourceBoxPurpose, resourceboxe.FieldResourceBoxType, resourceboxe.FieldDetails:
 			values[i] = new([]byte)
 		case resourceboxe.FieldID, resourceboxe.FieldGameID:
 			values[i] = new(sql.NullInt64)
-		case resourceboxe.FieldServerRegion, resourceboxe.FieldResourceBoxPurpose, resourceboxe.FieldResourceBoxType, resourceboxe.FieldDescription, resourceboxe.FieldName, resourceboxe.FieldAssetbundleName:
+		case resourceboxe.FieldDescription, resourceboxe.FieldName, resourceboxe.FieldAssetbundleName, resourceboxe.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -68,29 +68,27 @@ func (_m *Resourceboxe) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case resourceboxe.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case resourceboxe.FieldResourceBoxPurpose:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_box_purpose", values[i])
-			} else if value.Valid {
-				_m.ResourceBoxPurpose = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ResourceBoxPurpose); err != nil {
+					return fmt.Errorf("unmarshal field resource_box_purpose: %w", err)
+				}
 			}
 		case resourceboxe.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case resourceboxe.FieldResourceBoxType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_box_type", values[i])
-			} else if value.Valid {
-				_m.ResourceBoxType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ResourceBoxType); err != nil {
+					return fmt.Errorf("unmarshal field resource_box_type: %w", err)
+				}
 			}
 		case resourceboxe.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -117,6 +115,12 @@ func (_m *Resourceboxe) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.AssetbundleName = value.String
+			}
+		case resourceboxe.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -154,17 +158,14 @@ func (_m *Resourceboxe) String() string {
 	var builder strings.Builder
 	builder.WriteString("Resourceboxe(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("resource_box_purpose=")
-	builder.WriteString(_m.ResourceBoxPurpose)
+	builder.WriteString(fmt.Sprintf("%v", _m.ResourceBoxPurpose))
 	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("resource_box_type=")
-	builder.WriteString(_m.ResourceBoxType)
+	builder.WriteString(fmt.Sprintf("%v", _m.ResourceBoxType))
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
@@ -177,6 +178,9 @@ func (_m *Resourceboxe) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

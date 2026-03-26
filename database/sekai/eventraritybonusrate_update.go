@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *EventraritybonusrateUpdate) Where(ps ...predicate.Eventraritybonusrate
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventraritybonusrateUpdate) SetServerRegion(v string) *EventraritybonusrateUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdate) SetNillableServerRegion(v *string) *EventraritybonusrateUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventraritybonusrateUpdate) SetGameID(v int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetGameID(v int) *EventraritybonusrateUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdate) SetNillableGameID(v *int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetNillableGameID(v *int) *EventraritybonusrateUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,28 +45,20 @@ func (_u *EventraritybonusrateUpdate) SetNillableGameID(v *int64) *Eventraritybo
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventraritybonusrateUpdate) AddGameID(v int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) AddGameID(v int) *EventraritybonusrateUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventraritybonusrateUpdate) ClearGameID() *EventraritybonusrateUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdate) SetCardRarityType(v string) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateUpdate {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdate) SetNillableCardRarityType(v *string) *EventraritybonusrateUpdate {
-	if v != nil {
-		_u.SetCardRarityType(*v)
-	}
+// AppendCardRarityType appends value to the "card_rarity_type" field.
+func (_u *EventraritybonusrateUpdate) AppendCardRarityType(v json.RawMessage) *EventraritybonusrateUpdate {
+	_u.mutation.AppendCardRarityType(v)
 	return _u
 }
 
@@ -89,14 +69,14 @@ func (_u *EventraritybonusrateUpdate) ClearCardRarityType() *Eventraritybonusrat
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_u *EventraritybonusrateUpdate) SetMasterRank(v int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetMasterRank(v int) *EventraritybonusrateUpdate {
 	_u.mutation.ResetMasterRank()
 	_u.mutation.SetMasterRank(v)
 	return _u
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdate) SetNillableMasterRank(v *int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetNillableMasterRank(v *int) *EventraritybonusrateUpdate {
 	if v != nil {
 		_u.SetMasterRank(*v)
 	}
@@ -104,7 +84,7 @@ func (_u *EventraritybonusrateUpdate) SetNillableMasterRank(v *int64) *Eventrari
 }
 
 // AddMasterRank adds value to the "master_rank" field.
-func (_u *EventraritybonusrateUpdate) AddMasterRank(v int64) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) AddMasterRank(v int) *EventraritybonusrateUpdate {
 	_u.mutation.AddMasterRank(v)
 	return _u
 }
@@ -139,6 +119,20 @@ func (_u *EventraritybonusrateUpdate) AddBonusRate(v float64) *Eventraritybonusr
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *EventraritybonusrateUpdate) ClearBonusRate() *EventraritybonusrateUpdate {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventraritybonusrateUpdate) SetServerRegion(v string) *EventraritybonusrateUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventraritybonusrateUpdate) SetNillableServerRegion(v *string) *EventraritybonusrateUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -183,32 +177,31 @@ func (_u *EventraritybonusrateUpdate) sqlSave(ctx context.Context) (_node int, e
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventraritybonusrate.FieldCardRarityType, value)
+		})
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeString)
+		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
-		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMasterRank(); ok {
-		_spec.AddField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
+		_spec.AddField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
 	}
 	if _u.mutation.MasterRankCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldMasterRank, field.TypeInt64)
+		_spec.ClearField(eventraritybonusrate.FieldMasterRank, field.TypeInt)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventraritybonusrate.FieldBonusRate, field.TypeFloat64, value)
@@ -218,6 +211,9 @@ func (_u *EventraritybonusrateUpdate) sqlSave(ctx context.Context) (_node int, e
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(eventraritybonusrate.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -239,29 +235,15 @@ type EventraritybonusrateUpdateOne struct {
 	mutation *EventraritybonusrateMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventraritybonusrateUpdateOne) SetServerRegion(v string) *EventraritybonusrateUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdateOne) SetNillableServerRegion(v *string) *EventraritybonusrateUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventraritybonusrateUpdateOne) SetGameID(v int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetGameID(v int) *EventraritybonusrateUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdateOne) SetNillableGameID(v *int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetNillableGameID(v *int) *EventraritybonusrateUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -269,28 +251,20 @@ func (_u *EventraritybonusrateUpdateOne) SetNillableGameID(v *int64) *Eventrarit
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventraritybonusrateUpdateOne) AddGameID(v int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) AddGameID(v int) *EventraritybonusrateUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventraritybonusrateUpdateOne) ClearGameID() *EventraritybonusrateUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdateOne) SetCardRarityType(v string) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetCardRarityType(v json.RawMessage) *EventraritybonusrateUpdateOne {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdateOne) SetNillableCardRarityType(v *string) *EventraritybonusrateUpdateOne {
-	if v != nil {
-		_u.SetCardRarityType(*v)
-	}
+// AppendCardRarityType appends value to the "card_rarity_type" field.
+func (_u *EventraritybonusrateUpdateOne) AppendCardRarityType(v json.RawMessage) *EventraritybonusrateUpdateOne {
+	_u.mutation.AppendCardRarityType(v)
 	return _u
 }
 
@@ -301,14 +275,14 @@ func (_u *EventraritybonusrateUpdateOne) ClearCardRarityType() *Eventraritybonus
 }
 
 // SetMasterRank sets the "master_rank" field.
-func (_u *EventraritybonusrateUpdateOne) SetMasterRank(v int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetMasterRank(v int) *EventraritybonusrateUpdateOne {
 	_u.mutation.ResetMasterRank()
 	_u.mutation.SetMasterRank(v)
 	return _u
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_u *EventraritybonusrateUpdateOne) SetNillableMasterRank(v *int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetNillableMasterRank(v *int) *EventraritybonusrateUpdateOne {
 	if v != nil {
 		_u.SetMasterRank(*v)
 	}
@@ -316,7 +290,7 @@ func (_u *EventraritybonusrateUpdateOne) SetNillableMasterRank(v *int64) *Eventr
 }
 
 // AddMasterRank adds value to the "master_rank" field.
-func (_u *EventraritybonusrateUpdateOne) AddMasterRank(v int64) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) AddMasterRank(v int) *EventraritybonusrateUpdateOne {
 	_u.mutation.AddMasterRank(v)
 	return _u
 }
@@ -351,6 +325,20 @@ func (_u *EventraritybonusrateUpdateOne) AddBonusRate(v float64) *Eventraritybon
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *EventraritybonusrateUpdateOne) ClearBonusRate() *EventraritybonusrateUpdateOne {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventraritybonusrateUpdateOne) SetServerRegion(v string) *EventraritybonusrateUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventraritybonusrateUpdateOne) SetNillableServerRegion(v *string) *EventraritybonusrateUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -425,32 +413,31 @@ func (_u *EventraritybonusrateUpdateOne) sqlSave(ctx context.Context) (_node *Ev
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventraritybonusrate.FieldCardRarityType, value)
+		})
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeString)
+		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
-		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMasterRank(); ok {
-		_spec.AddField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
+		_spec.AddField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
 	}
 	if _u.mutation.MasterRankCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldMasterRank, field.TypeInt64)
+		_spec.ClearField(eventraritybonusrate.FieldMasterRank, field.TypeInt)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventraritybonusrate.FieldBonusRate, field.TypeFloat64, value)
@@ -460,6 +447,9 @@ func (_u *EventraritybonusrateUpdateOne) sqlSave(ctx context.Context) (_node *Ev
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(eventraritybonusrate.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Eventraritybonusrate{config: _u.config}
 	_spec.Assign = _node.assignValues

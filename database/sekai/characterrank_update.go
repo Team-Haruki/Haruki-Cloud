@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/characterrank"
@@ -28,29 +29,15 @@ func (_u *CharacterrankUpdate) Where(ps ...predicate.Characterrank) *Characterra
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *CharacterrankUpdate) SetServerRegion(v string) *CharacterrankUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableServerRegion(v *string) *CharacterrankUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *CharacterrankUpdate) SetGameID(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetGameID(v int) *CharacterrankUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableGameID(v *int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableGameID(v *int) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -58,26 +45,20 @@ func (_u *CharacterrankUpdate) SetNillableGameID(v *int64) *CharacterrankUpdate 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CharacterrankUpdate) AddGameID(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddGameID(v int) *CharacterrankUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *CharacterrankUpdate) ClearGameID() *CharacterrankUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterID sets the "character_id" field.
-func (_u *CharacterrankUpdate) SetCharacterID(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetCharacterID(v int) *CharacterrankUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -85,7 +66,7 @@ func (_u *CharacterrankUpdate) SetNillableCharacterID(v *int64) *CharacterrankUp
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *CharacterrankUpdate) AddCharacterID(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddCharacterID(v int) *CharacterrankUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -97,14 +78,14 @@ func (_u *CharacterrankUpdate) ClearCharacterID() *CharacterrankUpdate {
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_u *CharacterrankUpdate) SetCharacterRank(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetCharacterRank(v int) *CharacterrankUpdate {
 	_u.mutation.ResetCharacterRank()
 	_u.mutation.SetCharacterRank(v)
 	return _u
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int) *CharacterrankUpdate {
 	if v != nil {
 		_u.SetCharacterRank(*v)
 	}
@@ -112,7 +93,7 @@ func (_u *CharacterrankUpdate) SetNillableCharacterRank(v *int64) *Characterrank
 }
 
 // AddCharacterRank adds value to the "character_rank" field.
-func (_u *CharacterrankUpdate) AddCharacterRank(v int64) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AddCharacterRank(v int) *CharacterrankUpdate {
 	_u.mutation.AddCharacterRank(v)
 	return _u
 }
@@ -205,13 +186,13 @@ func (_u *CharacterrankUpdate) ClearPower3BonusRate() *CharacterrankUpdate {
 }
 
 // SetRewardResourceBoxIds sets the "reward_resource_box_ids" field.
-func (_u *CharacterrankUpdate) SetRewardResourceBoxIds(v []interface{}) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetRewardResourceBoxIds(v json.RawMessage) *CharacterrankUpdate {
 	_u.mutation.SetRewardResourceBoxIds(v)
 	return _u
 }
 
 // AppendRewardResourceBoxIds appends value to the "reward_resource_box_ids" field.
-func (_u *CharacterrankUpdate) AppendRewardResourceBoxIds(v []interface{}) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AppendRewardResourceBoxIds(v json.RawMessage) *CharacterrankUpdate {
 	_u.mutation.AppendRewardResourceBoxIds(v)
 	return _u
 }
@@ -223,13 +204,13 @@ func (_u *CharacterrankUpdate) ClearRewardResourceBoxIds() *CharacterrankUpdate 
 }
 
 // SetCharacterRankAchieveResources sets the "character_rank_achieve_resources" field.
-func (_u *CharacterrankUpdate) SetCharacterRankAchieveResources(v []interface{}) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) SetCharacterRankAchieveResources(v json.RawMessage) *CharacterrankUpdate {
 	_u.mutation.SetCharacterRankAchieveResources(v)
 	return _u
 }
 
 // AppendCharacterRankAchieveResources appends value to the "character_rank_achieve_resources" field.
-func (_u *CharacterrankUpdate) AppendCharacterRankAchieveResources(v []interface{}) *CharacterrankUpdate {
+func (_u *CharacterrankUpdate) AppendCharacterRankAchieveResources(v json.RawMessage) *CharacterrankUpdate {
 	_u.mutation.AppendCharacterRankAchieveResources(v)
 	return _u
 }
@@ -237,6 +218,20 @@ func (_u *CharacterrankUpdate) AppendCharacterRankAchieveResources(v []interface
 // ClearCharacterRankAchieveResources clears the value of the "character_rank_achieve_resources" field.
 func (_u *CharacterrankUpdate) ClearCharacterRankAchieveResources() *CharacterrankUpdate {
 	_u.mutation.ClearCharacterRankAchieveResources()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CharacterrankUpdate) SetServerRegion(v string) *CharacterrankUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CharacterrankUpdate) SetNillableServerRegion(v *string) *CharacterrankUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -281,35 +276,29 @@ func (_u *CharacterrankUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(characterrank.FieldGameID, field.TypeInt64)
+		_spec.AddField(characterrank.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRank(); ok {
-		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt64, value)
+		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterRankCleared() {
-		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt64)
+		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(characterrank.FieldPower1BonusRate, field.TypeFloat64, value)
@@ -360,6 +349,9 @@ func (_u *CharacterrankUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if _u.mutation.CharacterRankAchieveResourcesCleared() {
 		_spec.ClearField(characterrank.FieldCharacterRankAchieveResources, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{characterrank.Label}
@@ -380,29 +372,15 @@ type CharacterrankUpdateOne struct {
 	mutation *CharacterrankMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *CharacterrankUpdateOne) SetServerRegion(v string) *CharacterrankUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableServerRegion(v *string) *CharacterrankUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *CharacterrankUpdateOne) SetGameID(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetGameID(v int) *CharacterrankUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -410,26 +388,20 @@ func (_u *CharacterrankUpdateOne) SetNillableGameID(v *int64) *CharacterrankUpda
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CharacterrankUpdateOne) AddGameID(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddGameID(v int) *CharacterrankUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *CharacterrankUpdateOne) ClearGameID() *CharacterrankUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterID sets the "character_id" field.
-func (_u *CharacterrankUpdateOne) SetCharacterID(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetCharacterID(v int) *CharacterrankUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -437,7 +409,7 @@ func (_u *CharacterrankUpdateOne) SetNillableCharacterID(v *int64) *Characterran
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *CharacterrankUpdateOne) AddCharacterID(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddCharacterID(v int) *CharacterrankUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -449,14 +421,14 @@ func (_u *CharacterrankUpdateOne) ClearCharacterID() *CharacterrankUpdateOne {
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_u *CharacterrankUpdateOne) SetCharacterRank(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetCharacterRank(v int) *CharacterrankUpdateOne {
 	_u.mutation.ResetCharacterRank()
 	_u.mutation.SetCharacterRank(v)
 	return _u
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int) *CharacterrankUpdateOne {
 	if v != nil {
 		_u.SetCharacterRank(*v)
 	}
@@ -464,7 +436,7 @@ func (_u *CharacterrankUpdateOne) SetNillableCharacterRank(v *int64) *Characterr
 }
 
 // AddCharacterRank adds value to the "character_rank" field.
-func (_u *CharacterrankUpdateOne) AddCharacterRank(v int64) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AddCharacterRank(v int) *CharacterrankUpdateOne {
 	_u.mutation.AddCharacterRank(v)
 	return _u
 }
@@ -557,13 +529,13 @@ func (_u *CharacterrankUpdateOne) ClearPower3BonusRate() *CharacterrankUpdateOne
 }
 
 // SetRewardResourceBoxIds sets the "reward_resource_box_ids" field.
-func (_u *CharacterrankUpdateOne) SetRewardResourceBoxIds(v []interface{}) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetRewardResourceBoxIds(v json.RawMessage) *CharacterrankUpdateOne {
 	_u.mutation.SetRewardResourceBoxIds(v)
 	return _u
 }
 
 // AppendRewardResourceBoxIds appends value to the "reward_resource_box_ids" field.
-func (_u *CharacterrankUpdateOne) AppendRewardResourceBoxIds(v []interface{}) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AppendRewardResourceBoxIds(v json.RawMessage) *CharacterrankUpdateOne {
 	_u.mutation.AppendRewardResourceBoxIds(v)
 	return _u
 }
@@ -575,13 +547,13 @@ func (_u *CharacterrankUpdateOne) ClearRewardResourceBoxIds() *CharacterrankUpda
 }
 
 // SetCharacterRankAchieveResources sets the "character_rank_achieve_resources" field.
-func (_u *CharacterrankUpdateOne) SetCharacterRankAchieveResources(v []interface{}) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) SetCharacterRankAchieveResources(v json.RawMessage) *CharacterrankUpdateOne {
 	_u.mutation.SetCharacterRankAchieveResources(v)
 	return _u
 }
 
 // AppendCharacterRankAchieveResources appends value to the "character_rank_achieve_resources" field.
-func (_u *CharacterrankUpdateOne) AppendCharacterRankAchieveResources(v []interface{}) *CharacterrankUpdateOne {
+func (_u *CharacterrankUpdateOne) AppendCharacterRankAchieveResources(v json.RawMessage) *CharacterrankUpdateOne {
 	_u.mutation.AppendCharacterRankAchieveResources(v)
 	return _u
 }
@@ -589,6 +561,20 @@ func (_u *CharacterrankUpdateOne) AppendCharacterRankAchieveResources(v []interf
 // ClearCharacterRankAchieveResources clears the value of the "character_rank_achieve_resources" field.
 func (_u *CharacterrankUpdateOne) ClearCharacterRankAchieveResources() *CharacterrankUpdateOne {
 	_u.mutation.ClearCharacterRankAchieveResources()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CharacterrankUpdateOne) SetServerRegion(v string) *CharacterrankUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CharacterrankUpdateOne) SetNillableServerRegion(v *string) *CharacterrankUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -663,35 +649,29 @@ func (_u *CharacterrankUpdateOne) sqlSave(ctx context.Context) (_node *Character
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(characterrank.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(characterrank.FieldGameID, field.TypeInt64)
+		_spec.AddField(characterrank.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(characterrank.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(characterrank.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterRank(); ok {
-		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt64, value)
+		_spec.AddField(characterrank.FieldCharacterRank, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterRankCleared() {
-		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt64)
+		_spec.ClearField(characterrank.FieldCharacterRank, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Power1BonusRate(); ok {
 		_spec.SetField(characterrank.FieldPower1BonusRate, field.TypeFloat64, value)
@@ -741,6 +721,9 @@ func (_u *CharacterrankUpdateOne) sqlSave(ctx context.Context) (_node *Character
 	}
 	if _u.mutation.CharacterRankAchieveResourcesCleared() {
 		_spec.ClearField(characterrank.FieldCharacterRankAchieveResources, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Characterrank{config: _u.config}
 	_spec.Assign = _node.assignValues

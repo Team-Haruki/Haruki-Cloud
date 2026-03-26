@@ -19,20 +19,14 @@ type EventmusicCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventmusicCreate) SetServerRegion(v string) *EventmusicCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *EventmusicCreate) SetEventID(v int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetEventID(v int) *EventmusicCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventmusicCreate) SetNillableEventID(v *int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetNillableEventID(v *int) *EventmusicCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -40,13 +34,13 @@ func (_c *EventmusicCreate) SetNillableEventID(v *int64) *EventmusicCreate {
 }
 
 // SetMusicID sets the "music_id" field.
-func (_c *EventmusicCreate) SetMusicID(v int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetMusicID(v int) *EventmusicCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *EventmusicCreate) SetNillableMusicID(v *int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetNillableMusicID(v *int) *EventmusicCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -54,13 +48,13 @@ func (_c *EventmusicCreate) SetNillableMusicID(v *int64) *EventmusicCreate {
 }
 
 // SetSeq sets the "seq" field.
-func (_c *EventmusicCreate) SetSeq(v int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetSeq(v int) *EventmusicCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *EventmusicCreate) SetNillableSeq(v *int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetNillableSeq(v *int) *EventmusicCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -68,16 +62,22 @@ func (_c *EventmusicCreate) SetNillableSeq(v *int64) *EventmusicCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *EventmusicCreate) SetReleaseConditionID(v int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetReleaseConditionID(v int) *EventmusicCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *EventmusicCreate) SetNillableReleaseConditionID(v *int64) *EventmusicCreate {
+func (_c *EventmusicCreate) SetNillableReleaseConditionID(v *int) *EventmusicCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventmusicCreate) SetServerRegion(v string) *EventmusicCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -144,25 +144,25 @@ func (_c *EventmusicCreate) createSpec() (*Eventmusic, *sqlgraph.CreateSpec) {
 		_node = &Eventmusic{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventmusic.Table, sqlgraph.NewFieldSpec(eventmusic.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventmusic.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(eventmusic.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt, value)
 		_node.ReleaseConditionID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

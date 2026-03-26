@@ -27,29 +27,15 @@ func (_u *EventmusicUpdate) Where(ps ...predicate.Eventmusic) *EventmusicUpdate 
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventmusicUpdate) SetServerRegion(v string) *EventmusicUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventmusicUpdate) SetNillableServerRegion(v *string) *EventmusicUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventmusicUpdate) SetEventID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetEventID(v int) *EventmusicUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventmusicUpdate) SetNillableEventID(v *int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetNillableEventID(v *int) *EventmusicUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -57,7 +43,7 @@ func (_u *EventmusicUpdate) SetNillableEventID(v *int64) *EventmusicUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventmusicUpdate) AddEventID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) AddEventID(v int) *EventmusicUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -69,14 +55,14 @@ func (_u *EventmusicUpdate) ClearEventID() *EventmusicUpdate {
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *EventmusicUpdate) SetMusicID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetMusicID(v int) *EventmusicUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *EventmusicUpdate) SetNillableMusicID(v *int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetNillableMusicID(v *int) *EventmusicUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -84,7 +70,7 @@ func (_u *EventmusicUpdate) SetNillableMusicID(v *int64) *EventmusicUpdate {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *EventmusicUpdate) AddMusicID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) AddMusicID(v int) *EventmusicUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -96,14 +82,14 @@ func (_u *EventmusicUpdate) ClearMusicID() *EventmusicUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *EventmusicUpdate) SetSeq(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetSeq(v int) *EventmusicUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *EventmusicUpdate) SetNillableSeq(v *int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetNillableSeq(v *int) *EventmusicUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -111,7 +97,7 @@ func (_u *EventmusicUpdate) SetNillableSeq(v *int64) *EventmusicUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *EventmusicUpdate) AddSeq(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) AddSeq(v int) *EventmusicUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -123,14 +109,14 @@ func (_u *EventmusicUpdate) ClearSeq() *EventmusicUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *EventmusicUpdate) SetReleaseConditionID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetReleaseConditionID(v int) *EventmusicUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *EventmusicUpdate) SetNillableReleaseConditionID(v *int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) SetNillableReleaseConditionID(v *int) *EventmusicUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -138,7 +124,7 @@ func (_u *EventmusicUpdate) SetNillableReleaseConditionID(v *int64) *EventmusicU
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *EventmusicUpdate) AddReleaseConditionID(v int64) *EventmusicUpdate {
+func (_u *EventmusicUpdate) AddReleaseConditionID(v int) *EventmusicUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -146,6 +132,20 @@ func (_u *EventmusicUpdate) AddReleaseConditionID(v int64) *EventmusicUpdate {
 // ClearReleaseConditionID clears the value of the "release_condition_id" field.
 func (_u *EventmusicUpdate) ClearReleaseConditionID() *EventmusicUpdate {
 	_u.mutation.ClearReleaseConditionID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventmusicUpdate) SetServerRegion(v string) *EventmusicUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventmusicUpdate) SetNillableServerRegion(v *string) *EventmusicUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -190,44 +190,44 @@ func (_u *EventmusicUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventmusic.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventmusic.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventmusic.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(eventmusic.FieldMusicID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldMusicID, field.TypeInt, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(eventmusic.FieldMusicID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldMusicID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(eventmusic.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(eventmusic.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(eventmusic.FieldSeq, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(eventmusic.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(eventmusic.FieldReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldReleaseConditionID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -249,29 +249,15 @@ type EventmusicUpdateOne struct {
 	mutation *EventmusicMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventmusicUpdateOne) SetServerRegion(v string) *EventmusicUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventmusicUpdateOne) SetNillableServerRegion(v *string) *EventmusicUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventmusicUpdateOne) SetEventID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetEventID(v int) *EventmusicUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventmusicUpdateOne) SetNillableEventID(v *int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetNillableEventID(v *int) *EventmusicUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -279,7 +265,7 @@ func (_u *EventmusicUpdateOne) SetNillableEventID(v *int64) *EventmusicUpdateOne
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventmusicUpdateOne) AddEventID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) AddEventID(v int) *EventmusicUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -291,14 +277,14 @@ func (_u *EventmusicUpdateOne) ClearEventID() *EventmusicUpdateOne {
 }
 
 // SetMusicID sets the "music_id" field.
-func (_u *EventmusicUpdateOne) SetMusicID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetMusicID(v int) *EventmusicUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *EventmusicUpdateOne) SetNillableMusicID(v *int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetNillableMusicID(v *int) *EventmusicUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -306,7 +292,7 @@ func (_u *EventmusicUpdateOne) SetNillableMusicID(v *int64) *EventmusicUpdateOne
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *EventmusicUpdateOne) AddMusicID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) AddMusicID(v int) *EventmusicUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -318,14 +304,14 @@ func (_u *EventmusicUpdateOne) ClearMusicID() *EventmusicUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *EventmusicUpdateOne) SetSeq(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetSeq(v int) *EventmusicUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *EventmusicUpdateOne) SetNillableSeq(v *int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetNillableSeq(v *int) *EventmusicUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -333,7 +319,7 @@ func (_u *EventmusicUpdateOne) SetNillableSeq(v *int64) *EventmusicUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *EventmusicUpdateOne) AddSeq(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) AddSeq(v int) *EventmusicUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -345,14 +331,14 @@ func (_u *EventmusicUpdateOne) ClearSeq() *EventmusicUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *EventmusicUpdateOne) SetReleaseConditionID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetReleaseConditionID(v int) *EventmusicUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *EventmusicUpdateOne) SetNillableReleaseConditionID(v *int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) SetNillableReleaseConditionID(v *int) *EventmusicUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -360,7 +346,7 @@ func (_u *EventmusicUpdateOne) SetNillableReleaseConditionID(v *int64) *Eventmus
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *EventmusicUpdateOne) AddReleaseConditionID(v int64) *EventmusicUpdateOne {
+func (_u *EventmusicUpdateOne) AddReleaseConditionID(v int) *EventmusicUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -368,6 +354,20 @@ func (_u *EventmusicUpdateOne) AddReleaseConditionID(v int64) *EventmusicUpdateO
 // ClearReleaseConditionID clears the value of the "release_condition_id" field.
 func (_u *EventmusicUpdateOne) ClearReleaseConditionID() *EventmusicUpdateOne {
 	_u.mutation.ClearReleaseConditionID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventmusicUpdateOne) SetServerRegion(v string) *EventmusicUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventmusicUpdateOne) SetNillableServerRegion(v *string) *EventmusicUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -442,44 +442,44 @@ func (_u *EventmusicUpdateOne) sqlSave(ctx context.Context) (_node *Eventmusic, 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventmusic.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventmusic.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventmusic.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldMusicID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(eventmusic.FieldMusicID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldMusicID, field.TypeInt, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(eventmusic.FieldMusicID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldMusicID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(eventmusic.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(eventmusic.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(eventmusic.FieldSeq, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(eventmusic.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(eventmusic.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(eventmusic.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(eventmusic.FieldReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(eventmusic.FieldReleaseConditionID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventmusic.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Eventmusic{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -262,12 +262,12 @@ func (_q *CardraritieQuery) Clone() *CardraritieQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Cardraritie.Query().
-//		GroupBy(cardraritie.FieldServerRegion).
+//		GroupBy(cardraritie.FieldCardRarityType).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *CardraritieQuery) GroupBy(field string, fields ...string) *CardraritieGroupBy {
@@ -285,11 +285,11 @@ func (_q *CardraritieQuery) GroupBy(field string, fields ...string) *Cardraritie
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //	}
 //
 //	client.Cardraritie.Query().
-//		Select(cardraritie.FieldServerRegion).
+//		Select(cardraritie.FieldCardRarityType).
 //		Scan(ctx, &v)
 func (_q *CardraritieQuery) Select(fields ...string) *CardraritieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

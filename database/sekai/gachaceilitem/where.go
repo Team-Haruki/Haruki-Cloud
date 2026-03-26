@@ -53,18 +53,13 @@ func IDLTE(id int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Gachaceilitem {
+func GameID(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GachaID applies equality check predicate on the "gacha_id" field. It's identical to GachaIDEQ.
-func GachaID(v int64) predicate.Gachaceilitem {
+func GachaID(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldGachaID, v))
 }
 
@@ -73,173 +68,98 @@ func Name(v string) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldName, v))
 }
 
-// AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
-func AssetbundleName(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldEQ(FieldAssetbundleName, v))
-}
-
 // ConvertStartAt applies equality check predicate on the "convert_start_at" field. It's identical to ConvertStartAtEQ.
-func ConvertStartAt(v int64) predicate.Gachaceilitem {
+func ConvertStartAt(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldConvertStartAt, v))
 }
 
 // ConvertResourceBoxID applies equality check predicate on the "convert_resource_box_id" field. It's identical to ConvertResourceBoxIDEQ.
-func ConvertResourceBoxID(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxID(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldConvertResourceBoxID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Gachaceilitem {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Gachaceilitem {
+func GameIDEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Gachaceilitem {
+func GameIDNEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Gachaceilitem {
+func GameIDIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Gachaceilitem {
+func GameIDNotIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Gachaceilitem {
+func GameIDGT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Gachaceilitem {
+func GameIDGTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Gachaceilitem {
+func GameIDLT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Gachaceilitem {
+func GameIDLTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldNotNull(FieldGameID))
-}
-
 // GachaIDEQ applies the EQ predicate on the "gacha_id" field.
-func GachaIDEQ(v int64) predicate.Gachaceilitem {
+func GachaIDEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldGachaID, v))
 }
 
 // GachaIDNEQ applies the NEQ predicate on the "gacha_id" field.
-func GachaIDNEQ(v int64) predicate.Gachaceilitem {
+func GachaIDNEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNEQ(FieldGachaID, v))
 }
 
 // GachaIDIn applies the In predicate on the "gacha_id" field.
-func GachaIDIn(vs ...int64) predicate.Gachaceilitem {
+func GachaIDIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIn(FieldGachaID, vs...))
 }
 
 // GachaIDNotIn applies the NotIn predicate on the "gacha_id" field.
-func GachaIDNotIn(vs ...int64) predicate.Gachaceilitem {
+func GachaIDNotIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotIn(FieldGachaID, vs...))
 }
 
 // GachaIDGT applies the GT predicate on the "gacha_id" field.
-func GachaIDGT(v int64) predicate.Gachaceilitem {
+func GachaIDGT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGT(FieldGachaID, v))
 }
 
 // GachaIDGTE applies the GTE predicate on the "gacha_id" field.
-func GachaIDGTE(v int64) predicate.Gachaceilitem {
+func GachaIDGTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGTE(FieldGachaID, v))
 }
 
 // GachaIDLT applies the LT predicate on the "gacha_id" field.
-func GachaIDLT(v int64) predicate.Gachaceilitem {
+func GachaIDLT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLT(FieldGachaID, v))
 }
 
 // GachaIDLTE applies the LTE predicate on the "gacha_id" field.
-func GachaIDLTE(v int64) predicate.Gachaceilitem {
+func GachaIDLTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldGachaID, v))
 }
 
@@ -328,61 +248,6 @@ func NameContainsFold(v string) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldName, v))
 }
 
-// AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.
-func AssetbundleNameEQ(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldEQ(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameNEQ applies the NEQ predicate on the "assetbundle_name" field.
-func AssetbundleNameNEQ(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldNEQ(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameIn applies the In predicate on the "assetbundle_name" field.
-func AssetbundleNameIn(vs ...string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldIn(FieldAssetbundleName, vs...))
-}
-
-// AssetbundleNameNotIn applies the NotIn predicate on the "assetbundle_name" field.
-func AssetbundleNameNotIn(vs ...string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldNotIn(FieldAssetbundleName, vs...))
-}
-
-// AssetbundleNameGT applies the GT predicate on the "assetbundle_name" field.
-func AssetbundleNameGT(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldGT(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameGTE applies the GTE predicate on the "assetbundle_name" field.
-func AssetbundleNameGTE(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldGTE(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameLT applies the LT predicate on the "assetbundle_name" field.
-func AssetbundleNameLT(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldLT(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameLTE applies the LTE predicate on the "assetbundle_name" field.
-func AssetbundleNameLTE(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldLTE(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameContains applies the Contains predicate on the "assetbundle_name" field.
-func AssetbundleNameContains(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldContains(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameHasPrefix applies the HasPrefix predicate on the "assetbundle_name" field.
-func AssetbundleNameHasPrefix(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldHasPrefix(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameHasSuffix applies the HasSuffix predicate on the "assetbundle_name" field.
-func AssetbundleNameHasSuffix(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldHasSuffix(FieldAssetbundleName, v))
-}
-
 // AssetbundleNameIsNil applies the IsNil predicate on the "assetbundle_name" field.
 func AssetbundleNameIsNil() predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIsNull(FieldAssetbundleName))
@@ -393,53 +258,43 @@ func AssetbundleNameNotNil() predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotNull(FieldAssetbundleName))
 }
 
-// AssetbundleNameEqualFold applies the EqualFold predicate on the "assetbundle_name" field.
-func AssetbundleNameEqualFold(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldEqualFold(FieldAssetbundleName, v))
-}
-
-// AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
-func AssetbundleNameContainsFold(v string) predicate.Gachaceilitem {
-	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldAssetbundleName, v))
-}
-
 // ConvertStartAtEQ applies the EQ predicate on the "convert_start_at" field.
-func ConvertStartAtEQ(v int64) predicate.Gachaceilitem {
+func ConvertStartAtEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldConvertStartAt, v))
 }
 
 // ConvertStartAtNEQ applies the NEQ predicate on the "convert_start_at" field.
-func ConvertStartAtNEQ(v int64) predicate.Gachaceilitem {
+func ConvertStartAtNEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNEQ(FieldConvertStartAt, v))
 }
 
 // ConvertStartAtIn applies the In predicate on the "convert_start_at" field.
-func ConvertStartAtIn(vs ...int64) predicate.Gachaceilitem {
+func ConvertStartAtIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIn(FieldConvertStartAt, vs...))
 }
 
 // ConvertStartAtNotIn applies the NotIn predicate on the "convert_start_at" field.
-func ConvertStartAtNotIn(vs ...int64) predicate.Gachaceilitem {
+func ConvertStartAtNotIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotIn(FieldConvertStartAt, vs...))
 }
 
 // ConvertStartAtGT applies the GT predicate on the "convert_start_at" field.
-func ConvertStartAtGT(v int64) predicate.Gachaceilitem {
+func ConvertStartAtGT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGT(FieldConvertStartAt, v))
 }
 
 // ConvertStartAtGTE applies the GTE predicate on the "convert_start_at" field.
-func ConvertStartAtGTE(v int64) predicate.Gachaceilitem {
+func ConvertStartAtGTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGTE(FieldConvertStartAt, v))
 }
 
 // ConvertStartAtLT applies the LT predicate on the "convert_start_at" field.
-func ConvertStartAtLT(v int64) predicate.Gachaceilitem {
+func ConvertStartAtLT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLT(FieldConvertStartAt, v))
 }
 
 // ConvertStartAtLTE applies the LTE predicate on the "convert_start_at" field.
-func ConvertStartAtLTE(v int64) predicate.Gachaceilitem {
+func ConvertStartAtLTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldConvertStartAt, v))
 }
 
@@ -454,42 +309,42 @@ func ConvertStartAtNotNil() predicate.Gachaceilitem {
 }
 
 // ConvertResourceBoxIDEQ applies the EQ predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDEQ(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldConvertResourceBoxID, v))
 }
 
 // ConvertResourceBoxIDNEQ applies the NEQ predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDNEQ(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDNEQ(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNEQ(FieldConvertResourceBoxID, v))
 }
 
 // ConvertResourceBoxIDIn applies the In predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDIn(vs ...int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIn(FieldConvertResourceBoxID, vs...))
 }
 
 // ConvertResourceBoxIDNotIn applies the NotIn predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDNotIn(vs ...int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDNotIn(vs ...int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotIn(FieldConvertResourceBoxID, vs...))
 }
 
 // ConvertResourceBoxIDGT applies the GT predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDGT(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDGT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGT(FieldConvertResourceBoxID, v))
 }
 
 // ConvertResourceBoxIDGTE applies the GTE predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDGTE(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDGTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldGTE(FieldConvertResourceBoxID, v))
 }
 
 // ConvertResourceBoxIDLT applies the LT predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDLT(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDLT(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLT(FieldConvertResourceBoxID, v))
 }
 
 // ConvertResourceBoxIDLTE applies the LTE predicate on the "convert_resource_box_id" field.
-func ConvertResourceBoxIDLTE(v int64) predicate.Gachaceilitem {
+func ConvertResourceBoxIDLTE(v int) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldLTE(FieldConvertResourceBoxID, v))
 }
 
@@ -501,6 +356,71 @@ func ConvertResourceBoxIDIsNil() predicate.Gachaceilitem {
 // ConvertResourceBoxIDNotNil applies the NotNil predicate on the "convert_resource_box_id" field.
 func ConvertResourceBoxIDNotNil() predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotNull(FieldConvertResourceBoxID))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

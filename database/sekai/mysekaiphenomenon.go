@@ -17,12 +17,10 @@ type Mysekaiphenomenon struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MysekaiPhenomenaBrightnessType holds the value of the "mysekai_phenomena_brightness_type" field.
-	MysekaiPhenomenaBrightnessType map[string]interface{} `json:"mysekai_phenomena_brightness_type,omitempty"`
+	MysekaiPhenomenaBrightnessType json.RawMessage `json:"mysekai_phenomena_brightness_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// EnglishName holds the value of the "english_name" field.
@@ -30,16 +28,18 @@ type Mysekaiphenomenon struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// MysekaiPhenomenaTimePeriodType holds the value of the "mysekai_phenomena_time_period_type" field.
-	MysekaiPhenomenaTimePeriodType map[string]interface{} `json:"mysekai_phenomena_time_period_type,omitempty"`
+	MysekaiPhenomenaTimePeriodType json.RawMessage `json:"mysekai_phenomena_time_period_type,omitempty"`
 	// MysekaiPhenomenaBackgroundColorID holds the value of the "mysekai_phenomena_background_color_id" field.
-	MysekaiPhenomenaBackgroundColorID int64 `json:"mysekai_phenomena_background_color_id,omitempty"`
+	MysekaiPhenomenaBackgroundColorID int `json:"mysekai_phenomena_background_color_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// RampTextureAssetbundleName holds the value of the "ramp_texture_assetbundle_name" field.
 	RampTextureAssetbundleName string `json:"ramp_texture_assetbundle_name,omitempty"`
 	// IconAssetbundleName holds the value of the "icon_assetbundle_name" field.
 	IconAssetbundleName string `json:"icon_assetbundle_name,omitempty"`
-	selectValues        sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -51,7 +51,7 @@ func (*Mysekaiphenomenon) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case mysekaiphenomenon.FieldID, mysekaiphenomenon.FieldGameID, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
 			values[i] = new(sql.NullInt64)
-		case mysekaiphenomenon.FieldServerRegion, mysekaiphenomenon.FieldName, mysekaiphenomenon.FieldEnglishName, mysekaiphenomenon.FieldDescription, mysekaiphenomenon.FieldAssetbundleName, mysekaiphenomenon.FieldRampTextureAssetbundleName, mysekaiphenomenon.FieldIconAssetbundleName:
+		case mysekaiphenomenon.FieldName, mysekaiphenomenon.FieldEnglishName, mysekaiphenomenon.FieldDescription, mysekaiphenomenon.FieldAssetbundleName, mysekaiphenomenon.FieldRampTextureAssetbundleName, mysekaiphenomenon.FieldIconAssetbundleName, mysekaiphenomenon.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -74,17 +74,11 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaiphenomenon.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaiphenomenon.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -124,7 +118,7 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_background_color_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiPhenomenaBackgroundColorID = value.Int64
+				_m.MysekaiPhenomenaBackgroundColorID = int(value.Int64)
 			}
 		case mysekaiphenomenon.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -143,6 +137,12 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field icon_assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.IconAssetbundleName = value.String
+			}
+		case mysekaiphenomenon.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -180,9 +180,6 @@ func (_m *Mysekaiphenomenon) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaiphenomenon(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -212,6 +209,9 @@ func (_m *Mysekaiphenomenon) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("icon_assetbundle_name=")
 	builder.WriteString(_m.IconAssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

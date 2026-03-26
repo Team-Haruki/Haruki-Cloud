@@ -16,21 +16,21 @@ type Eventcard struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// CardID holds the value of the "card_id" field.
-	CardID int64 `json:"card_id,omitempty"`
+	CardID int `json:"card_id,omitempty"`
 	// EventID holds the value of the "event_id" field.
-	EventID int64 `json:"event_id,omitempty"`
+	EventID int `json:"event_id,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// LeaderBonusRate holds the value of the "leader_bonus_rate" field.
 	LeaderBonusRate float64 `json:"leader_bonus_rate,omitempty"`
 	// IsDisplayCardStory holds the value of the "is_display_card_story" field.
 	IsDisplayCardStory bool `json:"is_display_card_story,omitempty"`
-	selectValues       sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -67,29 +67,23 @@ func (_m *Eventcard) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case eventcard.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case eventcard.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case eventcard.FieldCardID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_id", values[i])
 			} else if value.Valid {
-				_m.CardID = value.Int64
+				_m.CardID = int(value.Int64)
 			}
 		case eventcard.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = value.Int64
+				_m.EventID = int(value.Int64)
 			}
 		case eventcard.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -108,6 +102,12 @@ func (_m *Eventcard) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field is_display_card_story", values[i])
 			} else if value.Valid {
 				_m.IsDisplayCardStory = value.Bool
+			}
+		case eventcard.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -145,9 +145,6 @@ func (_m *Eventcard) String() string {
 	var builder strings.Builder
 	builder.WriteString("Eventcard(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -165,6 +162,9 @@ func (_m *Eventcard) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_display_card_story=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsDisplayCardStory))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -262,12 +262,12 @@ func (_q *MusictagQuery) Clone() *MusictagQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Musictag.Query().
-//		GroupBy(musictag.FieldServerRegion).
+//		GroupBy(musictag.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MusictagQuery) GroupBy(field string, fields ...string) *MusictagGroupBy {
@@ -285,11 +285,11 @@ func (_q *MusictagQuery) GroupBy(field string, fields ...string) *MusictagGroupB
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Musictag.Query().
-//		Select(musictag.FieldServerRegion).
+//		Select(musictag.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MusictagQuery) Select(fields ...string) *MusictagSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

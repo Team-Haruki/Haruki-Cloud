@@ -262,12 +262,12 @@ func (_q *CardsupplieQuery) Clone() *CardsupplieQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Cardsupplie.Query().
-//		GroupBy(cardsupplie.FieldServerRegion).
+//		GroupBy(cardsupplie.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *CardsupplieQuery) GroupBy(field string, fields ...string) *CardsupplieGroupBy {
@@ -285,11 +285,11 @@ func (_q *CardsupplieQuery) GroupBy(field string, fields ...string) *Cardsupplie
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Cardsupplie.Query().
-//		Select(cardsupplie.FieldServerRegion).
+//		Select(cardsupplie.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *CardsupplieQuery) Select(fields ...string) *CardsupplieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

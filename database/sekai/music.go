@@ -17,22 +17,20 @@ type Music struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
 	// Categories holds the value of the "categories" field.
-	Categories []interface{} `json:"categories,omitempty"`
+	Categories json.RawMessage `json:"categories,omitempty"`
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
 	Pronunciation string `json:"pronunciation,omitempty"`
 	// CreatorArtistID holds the value of the "creator_artist_id" field.
-	CreatorArtistID int64 `json:"creator_artist_id,omitempty"`
+	CreatorArtistID int `json:"creator_artist_id,omitempty"`
 	// Lyricist holds the value of the "lyricist" field.
 	Lyricist string `json:"lyricist,omitempty"`
 	// Composer holds the value of the "composer" field.
@@ -40,19 +38,19 @@ type Music struct {
 	// Arranger holds the value of the "arranger" field.
 	Arranger string `json:"arranger,omitempty"`
 	// DancerCount holds the value of the "dancer_count" field.
-	DancerCount int64 `json:"dancer_count,omitempty"`
+	DancerCount int `json:"dancer_count,omitempty"`
 	// SelfDancerPosition holds the value of the "self_dancer_position" field.
-	SelfDancerPosition int64 `json:"self_dancer_position,omitempty"`
+	SelfDancerPosition int `json:"self_dancer_position,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// LiveTalkBackgroundAssetbundleName holds the value of the "live_talk_background_assetbundle_name" field.
-	LiveTalkBackgroundAssetbundleName string `json:"live_talk_background_assetbundle_name,omitempty"`
+	LiveTalkBackgroundAssetbundleName json.RawMessage `json:"live_talk_background_assetbundle_name,omitempty"`
 	// PublishedAt holds the value of the "published_at" field.
-	PublishedAt int64 `json:"published_at,omitempty"`
+	PublishedAt int `json:"published_at,omitempty"`
 	// ReleasedAt holds the value of the "released_at" field.
-	ReleasedAt int64 `json:"released_at,omitempty"`
+	ReleasedAt int `json:"released_at,omitempty"`
 	// LiveStageID holds the value of the "live_stage_id" field.
-	LiveStageID int64 `json:"live_stage_id,omitempty"`
+	LiveStageID int `json:"live_stage_id,omitempty"`
 	// FillerSec holds the value of the "filler_sec" field.
 	FillerSec float64 `json:"filler_sec,omitempty"`
 	// IsNewlyWrittenMusic holds the value of the "is_newly_written_music" field.
@@ -60,9 +58,11 @@ type Music struct {
 	// IsFullLength holds the value of the "is_full_length" field.
 	IsFullLength bool `json:"is_full_length,omitempty"`
 	// MusicCollaborationID holds the value of the "music_collaboration_id" field.
-	MusicCollaborationID int64 `json:"music_collaboration_id,omitempty"`
+	MusicCollaborationID int `json:"music_collaboration_id,omitempty"`
 	// Infos holds the value of the "infos" field.
-	Infos        []interface{} `json:"infos,omitempty"`
+	Infos json.RawMessage `json:"infos,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -71,7 +71,7 @@ func (*Music) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case music.FieldCategories, music.FieldInfos:
+		case music.FieldCategories, music.FieldLiveTalkBackgroundAssetbundleName, music.FieldInfos:
 			values[i] = new([]byte)
 		case music.FieldIsNewlyWrittenMusic, music.FieldIsFullLength:
 			values[i] = new(sql.NullBool)
@@ -79,7 +79,7 @@ func (*Music) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case music.FieldID, music.FieldGameID, music.FieldSeq, music.FieldReleaseConditionID, music.FieldCreatorArtistID, music.FieldDancerCount, music.FieldSelfDancerPosition, music.FieldPublishedAt, music.FieldReleasedAt, music.FieldLiveStageID, music.FieldMusicCollaborationID:
 			values[i] = new(sql.NullInt64)
-		case music.FieldServerRegion, music.FieldTitle, music.FieldPronunciation, music.FieldLyricist, music.FieldComposer, music.FieldArranger, music.FieldAssetbundleName, music.FieldLiveTalkBackgroundAssetbundleName:
+		case music.FieldTitle, music.FieldPronunciation, music.FieldLyricist, music.FieldComposer, music.FieldArranger, music.FieldAssetbundleName, music.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -102,29 +102,23 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case music.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case music.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case music.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case music.FieldReleaseConditionID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
 			}
 		case music.FieldCategories:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -150,7 +144,7 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field creator_artist_id", values[i])
 			} else if value.Valid {
-				_m.CreatorArtistID = value.Int64
+				_m.CreatorArtistID = int(value.Int64)
 			}
 		case music.FieldLyricist:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -174,13 +168,13 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field dancer_count", values[i])
 			} else if value.Valid {
-				_m.DancerCount = value.Int64
+				_m.DancerCount = int(value.Int64)
 			}
 		case music.FieldSelfDancerPosition:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field self_dancer_position", values[i])
 			} else if value.Valid {
-				_m.SelfDancerPosition = value.Int64
+				_m.SelfDancerPosition = int(value.Int64)
 			}
 		case music.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -189,28 +183,30 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 				_m.AssetbundleName = value.String
 			}
 		case music.FieldLiveTalkBackgroundAssetbundleName:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field live_talk_background_assetbundle_name", values[i])
-			} else if value.Valid {
-				_m.LiveTalkBackgroundAssetbundleName = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.LiveTalkBackgroundAssetbundleName); err != nil {
+					return fmt.Errorf("unmarshal field live_talk_background_assetbundle_name: %w", err)
+				}
 			}
 		case music.FieldPublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field published_at", values[i])
 			} else if value.Valid {
-				_m.PublishedAt = value.Int64
+				_m.PublishedAt = int(value.Int64)
 			}
 		case music.FieldReleasedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field released_at", values[i])
 			} else if value.Valid {
-				_m.ReleasedAt = value.Int64
+				_m.ReleasedAt = int(value.Int64)
 			}
 		case music.FieldLiveStageID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field live_stage_id", values[i])
 			} else if value.Valid {
-				_m.LiveStageID = value.Int64
+				_m.LiveStageID = int(value.Int64)
 			}
 		case music.FieldFillerSec:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -234,7 +230,7 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_collaboration_id", values[i])
 			} else if value.Valid {
-				_m.MusicCollaborationID = value.Int64
+				_m.MusicCollaborationID = int(value.Int64)
 			}
 		case music.FieldInfos:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -243,6 +239,12 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Infos); err != nil {
 					return fmt.Errorf("unmarshal field infos: %w", err)
 				}
+			}
+		case music.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -280,9 +282,6 @@ func (_m *Music) String() string {
 	var builder strings.Builder
 	builder.WriteString("Music(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -323,7 +322,7 @@ func (_m *Music) String() string {
 	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("live_talk_background_assetbundle_name=")
-	builder.WriteString(_m.LiveTalkBackgroundAssetbundleName)
+	builder.WriteString(fmt.Sprintf("%v", _m.LiveTalkBackgroundAssetbundleName))
 	builder.WriteString(", ")
 	builder.WriteString("published_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PublishedAt))
@@ -348,6 +347,9 @@ func (_m *Music) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("infos=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Infos))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

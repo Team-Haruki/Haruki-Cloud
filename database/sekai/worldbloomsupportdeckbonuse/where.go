@@ -53,79 +53,14 @@ func IDLTE(id int) predicate.Worldbloomsupportdeckbonuse {
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
 func CardRarityType(v string) predicate.Worldbloomsupportdeckbonuse {
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEQ(FieldCardRarityType, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Worldbloomsupportdeckbonuse {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Worldbloomsupportdeckbonuse {
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEQ(FieldServerRegion, v))
-}
-
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
@@ -203,34 +138,69 @@ func CardRarityTypeContainsFold(v string) predicate.Worldbloomsupportdeckbonuse 
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContainsFold(FieldCardRarityType, v))
 }
 
-// WorldBloomSupportDeckCharacterBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_character_bonuses" field.
-func WorldBloomSupportDeckCharacterBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckCharacterBonuses))
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// WorldBloomSupportDeckCharacterBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_character_bonuses" field.
-func WorldBloomSupportDeckCharacterBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckCharacterBonuses))
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNEQ(FieldServerRegion, v))
 }
 
-// WorldBloomSupportDeckMasterRankBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_master_rank_bonuses" field.
-func WorldBloomSupportDeckMasterRankBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckMasterRankBonuses))
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIn(FieldServerRegion, vs...))
 }
 
-// WorldBloomSupportDeckMasterRankBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_master_rank_bonuses" field.
-func WorldBloomSupportDeckMasterRankBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckMasterRankBonuses))
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotIn(FieldServerRegion, vs...))
 }
 
-// WorldBloomSupportDeckSkillLevelBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_skill_level_bonuses" field.
-func WorldBloomSupportDeckSkillLevelBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckSkillLevelBonuses))
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldGT(FieldServerRegion, v))
 }
 
-// WorldBloomSupportDeckSkillLevelBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_skill_level_bonuses" field.
-func WorldBloomSupportDeckSkillLevelBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
-	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckSkillLevelBonuses))
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

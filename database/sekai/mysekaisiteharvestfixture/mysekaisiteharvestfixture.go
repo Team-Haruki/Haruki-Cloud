@@ -11,8 +11,6 @@ const (
 	Label = "mysekaisiteharvestfixture"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiSiteHarvestFixtureType holds the string denoting the mysekai_site_harvest_fixture_type field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldMysekaiSiteHarvestFixtureRarityType = "mysekai_site_harvest_fixture_rarity_type"
 	// FieldAssetbundleName holds the string denoting the assetbundle_name field in the database.
 	FieldAssetbundleName = "assetbundle_name"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaisiteharvestfixture in the database.
 	Table = "mysekaisiteharvestfixtures"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for mysekaisiteharvestfixture fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiSiteHarvestFixtureType,
 	FieldHp,
 	FieldLastAttackStamina,
 	FieldMysekaiSiteHarvestFixtureRarityType,
 	FieldAssetbundleName,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,11 +57,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -87,4 +82,9 @@ func ByLastAttackStamina(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

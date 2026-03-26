@@ -11,8 +11,6 @@ const (
 	Label = "honorgroup"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldName holds the string denoting the name field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldBackgroundAssetbundleName = "background_assetbundle_name"
 	// FieldFrameName holds the string denoting the frame_name field in the database.
 	FieldFrameName = "frame_name"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the honorgroup in the database.
 	Table = "honorgroups"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for honorgroup fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldName,
 	FieldPronunciation,
 	FieldHonorType,
 	FieldBackgroundAssetbundleName,
 	FieldFrameName,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,11 +59,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -79,11 +74,6 @@ func ByPronunciation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPronunciation, opts...).ToFunc()
 }
 
-// ByHonorType orders the results by the honor_type field.
-func ByHonorType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHonorType, opts...).ToFunc()
-}
-
 // ByBackgroundAssetbundleName orders the results by the background_assetbundle_name field.
 func ByBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBackgroundAssetbundleName, opts...).ToFunc()
@@ -92,4 +82,9 @@ func ByBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 // ByFrameName orders the results by the frame_name field.
 func ByFrameName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFrameName, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

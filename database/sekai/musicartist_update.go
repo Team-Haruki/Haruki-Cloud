@@ -27,29 +27,15 @@ func (_u *MusicArtistUpdate) Where(ps ...predicate.MusicArtist) *MusicArtistUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MusicArtistUpdate) SetServerRegion(v string) *MusicArtistUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MusicArtistUpdate) SetNillableServerRegion(v *string) *MusicArtistUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MusicArtistUpdate) SetGameID(v int64) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) SetGameID(v int) *MusicArtistUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicArtistUpdate) SetNillableGameID(v *int64) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) SetNillableGameID(v *int) *MusicArtistUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +43,8 @@ func (_u *MusicArtistUpdate) SetNillableGameID(v *int64) *MusicArtistUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicArtistUpdate) AddGameID(v int64) *MusicArtistUpdate {
+func (_u *MusicArtistUpdate) AddGameID(v int) *MusicArtistUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MusicArtistUpdate) ClearGameID() *MusicArtistUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -105,6 +85,20 @@ func (_u *MusicArtistUpdate) SetNillablePronunciation(v *string) *MusicArtistUpd
 // ClearPronunciation clears the value of the "pronunciation" field.
 func (_u *MusicArtistUpdate) ClearPronunciation() *MusicArtistUpdate {
 	_u.mutation.ClearPronunciation()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MusicArtistUpdate) SetServerRegion(v string) *MusicArtistUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MusicArtistUpdate) SetNillableServerRegion(v *string) *MusicArtistUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -149,17 +143,11 @@ func (_u *MusicArtistUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicartist.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(musicartist.FieldGameID, field.TypeInt64)
+		_spec.AddField(musicartist.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(musicartist.FieldName, field.TypeString, value)
@@ -172,6 +160,9 @@ func (_u *MusicArtistUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.PronunciationCleared() {
 		_spec.ClearField(musicartist.FieldPronunciation, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -193,29 +184,15 @@ type MusicArtistUpdateOne struct {
 	mutation *MusicArtistMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MusicArtistUpdateOne) SetServerRegion(v string) *MusicArtistUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MusicArtistUpdateOne) SetNillableServerRegion(v *string) *MusicArtistUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MusicArtistUpdateOne) SetGameID(v int64) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) SetGameID(v int) *MusicArtistUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int64) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int) *MusicArtistUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -223,14 +200,8 @@ func (_u *MusicArtistUpdateOne) SetNillableGameID(v *int64) *MusicArtistUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusicArtistUpdateOne) AddGameID(v int64) *MusicArtistUpdateOne {
+func (_u *MusicArtistUpdateOne) AddGameID(v int) *MusicArtistUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MusicArtistUpdateOne) ClearGameID() *MusicArtistUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -271,6 +242,20 @@ func (_u *MusicArtistUpdateOne) SetNillablePronunciation(v *string) *MusicArtist
 // ClearPronunciation clears the value of the "pronunciation" field.
 func (_u *MusicArtistUpdateOne) ClearPronunciation() *MusicArtistUpdateOne {
 	_u.mutation.ClearPronunciation()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MusicArtistUpdateOne) SetServerRegion(v string) *MusicArtistUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MusicArtistUpdateOne) SetNillableServerRegion(v *string) *MusicArtistUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -345,17 +330,11 @@ func (_u *MusicArtistUpdateOne) sqlSave(ctx context.Context) (_node *MusicArtist
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musicartist.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(musicartist.FieldGameID, field.TypeInt64)
+		_spec.AddField(musicartist.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(musicartist.FieldName, field.TypeString, value)
@@ -368,6 +347,9 @@ func (_u *MusicArtistUpdateOne) sqlSave(ctx context.Context) (_node *MusicArtist
 	}
 	if _u.mutation.PronunciationCleared() {
 		_spec.ClearField(musicartist.FieldPronunciation, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &MusicArtist{config: _u.config}
 	_spec.Assign = _node.assignValues

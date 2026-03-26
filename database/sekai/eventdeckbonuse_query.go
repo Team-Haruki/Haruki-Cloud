@@ -262,12 +262,12 @@ func (_q *EventdeckbonuseQuery) Clone() *EventdeckbonuseQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Eventdeckbonuse.Query().
-//		GroupBy(eventdeckbonuse.FieldServerRegion).
+//		GroupBy(eventdeckbonuse.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *EventdeckbonuseQuery) GroupBy(field string, fields ...string) *EventdeckbonuseGroupBy {
@@ -285,11 +285,11 @@ func (_q *EventdeckbonuseQuery) GroupBy(field string, fields ...string) *Eventde
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Eventdeckbonuse.Query().
-//		Select(eventdeckbonuse.FieldServerRegion).
+//		Select(eventdeckbonuse.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *EventdeckbonuseQuery) Select(fields ...string) *EventdeckbonuseSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *AreaitemUpdate) Where(ps ...predicate.Areaitem) *AreaitemUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *AreaitemUpdate) SetServerRegion(v string) *AreaitemUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *AreaitemUpdate) SetNillableServerRegion(v *string) *AreaitemUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *AreaitemUpdate) SetGameID(v int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetGameID(v int) *AreaitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaitemUpdate) SetNillableGameID(v *int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetNillableGameID(v *int) *AreaitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *AreaitemUpdate) SetNillableGameID(v *int64) *AreaitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaitemUpdate) AddGameID(v int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) AddGameID(v int) *AreaitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *AreaitemUpdate) ClearGameID() *AreaitemUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetAreaID sets the "area_id" field.
-func (_u *AreaitemUpdate) SetAreaID(v int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetAreaID(v int) *AreaitemUpdate {
 	_u.mutation.ResetAreaID()
 	_u.mutation.SetAreaID(v)
 	return _u
 }
 
 // SetNillableAreaID sets the "area_id" field if the given value is not nil.
-func (_u *AreaitemUpdate) SetNillableAreaID(v *int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetNillableAreaID(v *int) *AreaitemUpdate {
 	if v != nil {
 		_u.SetAreaID(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *AreaitemUpdate) SetNillableAreaID(v *int64) *AreaitemUpdate {
 }
 
 // AddAreaID adds value to the "area_id" field.
-func (_u *AreaitemUpdate) AddAreaID(v int64) *AreaitemUpdate {
+func (_u *AreaitemUpdate) AddAreaID(v int) *AreaitemUpdate {
 	_u.mutation.AddAreaID(v)
 	return _u
 }
@@ -136,16 +118,14 @@ func (_u *AreaitemUpdate) ClearFlavorText() *AreaitemUpdate {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_u *AreaitemUpdate) SetSpawnPoint(v string) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetSpawnPoint(v json.RawMessage) *AreaitemUpdate {
 	_u.mutation.SetSpawnPoint(v)
 	return _u
 }
 
-// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
-func (_u *AreaitemUpdate) SetNillableSpawnPoint(v *string) *AreaitemUpdate {
-	if v != nil {
-		_u.SetSpawnPoint(*v)
-	}
+// AppendSpawnPoint appends value to the "spawn_point" field.
+func (_u *AreaitemUpdate) AppendSpawnPoint(v json.RawMessage) *AreaitemUpdate {
+	_u.mutation.AppendSpawnPoint(v)
 	return _u
 }
 
@@ -172,6 +152,20 @@ func (_u *AreaitemUpdate) SetNillableAssetbundleName(v *string) *AreaitemUpdate 
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *AreaitemUpdate) ClearAssetbundleName() *AreaitemUpdate {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *AreaitemUpdate) SetServerRegion(v string) *AreaitemUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *AreaitemUpdate) SetNillableServerRegion(v *string) *AreaitemUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -216,26 +210,20 @@ func (_u *AreaitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(areaitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(areaitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(areaitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(areaitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AreaID(); ok {
-		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldAreaID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAreaID(); ok {
-		_spec.AddField(areaitem.FieldAreaID, field.TypeInt64, value)
+		_spec.AddField(areaitem.FieldAreaID, field.TypeInt, value)
 	}
 	if _u.mutation.AreaIDCleared() {
-		_spec.ClearField(areaitem.FieldAreaID, field.TypeInt64)
+		_spec.ClearField(areaitem.FieldAreaID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(areaitem.FieldName, field.TypeString, value)
@@ -250,16 +238,24 @@ func (_u *AreaitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(areaitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedSpawnPoint(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, areaitem.FieldSpawnPoint, value)
+		})
 	}
 	if _u.mutation.SpawnPointCleared() {
-		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeString)
+		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(areaitem.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(areaitem.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -281,29 +277,15 @@ type AreaitemUpdateOne struct {
 	mutation *AreaitemMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *AreaitemUpdateOne) SetServerRegion(v string) *AreaitemUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *AreaitemUpdateOne) SetNillableServerRegion(v *string) *AreaitemUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *AreaitemUpdateOne) SetGameID(v int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetGameID(v int) *AreaitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaitemUpdateOne) SetNillableGameID(v *int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetNillableGameID(v *int) *AreaitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -311,26 +293,20 @@ func (_u *AreaitemUpdateOne) SetNillableGameID(v *int64) *AreaitemUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaitemUpdateOne) AddGameID(v int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) AddGameID(v int) *AreaitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *AreaitemUpdateOne) ClearGameID() *AreaitemUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetAreaID sets the "area_id" field.
-func (_u *AreaitemUpdateOne) SetAreaID(v int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetAreaID(v int) *AreaitemUpdateOne {
 	_u.mutation.ResetAreaID()
 	_u.mutation.SetAreaID(v)
 	return _u
 }
 
 // SetNillableAreaID sets the "area_id" field if the given value is not nil.
-func (_u *AreaitemUpdateOne) SetNillableAreaID(v *int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetNillableAreaID(v *int) *AreaitemUpdateOne {
 	if v != nil {
 		_u.SetAreaID(*v)
 	}
@@ -338,7 +314,7 @@ func (_u *AreaitemUpdateOne) SetNillableAreaID(v *int64) *AreaitemUpdateOne {
 }
 
 // AddAreaID adds value to the "area_id" field.
-func (_u *AreaitemUpdateOne) AddAreaID(v int64) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) AddAreaID(v int) *AreaitemUpdateOne {
 	_u.mutation.AddAreaID(v)
 	return _u
 }
@@ -390,16 +366,14 @@ func (_u *AreaitemUpdateOne) ClearFlavorText() *AreaitemUpdateOne {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_u *AreaitemUpdateOne) SetSpawnPoint(v string) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetSpawnPoint(v json.RawMessage) *AreaitemUpdateOne {
 	_u.mutation.SetSpawnPoint(v)
 	return _u
 }
 
-// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
-func (_u *AreaitemUpdateOne) SetNillableSpawnPoint(v *string) *AreaitemUpdateOne {
-	if v != nil {
-		_u.SetSpawnPoint(*v)
-	}
+// AppendSpawnPoint appends value to the "spawn_point" field.
+func (_u *AreaitemUpdateOne) AppendSpawnPoint(v json.RawMessage) *AreaitemUpdateOne {
+	_u.mutation.AppendSpawnPoint(v)
 	return _u
 }
 
@@ -426,6 +400,20 @@ func (_u *AreaitemUpdateOne) SetNillableAssetbundleName(v *string) *AreaitemUpda
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *AreaitemUpdateOne) ClearAssetbundleName() *AreaitemUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *AreaitemUpdateOne) SetServerRegion(v string) *AreaitemUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *AreaitemUpdateOne) SetNillableServerRegion(v *string) *AreaitemUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -500,26 +488,20 @@ func (_u *AreaitemUpdateOne) sqlSave(ctx context.Context) (_node *Areaitem, err 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(areaitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(areaitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(areaitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(areaitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AreaID(); ok {
-		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldAreaID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAreaID(); ok {
-		_spec.AddField(areaitem.FieldAreaID, field.TypeInt64, value)
+		_spec.AddField(areaitem.FieldAreaID, field.TypeInt, value)
 	}
 	if _u.mutation.AreaIDCleared() {
-		_spec.ClearField(areaitem.FieldAreaID, field.TypeInt64)
+		_spec.ClearField(areaitem.FieldAreaID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(areaitem.FieldName, field.TypeString, value)
@@ -534,16 +516,24 @@ func (_u *AreaitemUpdateOne) sqlSave(ctx context.Context) (_node *Areaitem, err 
 		_spec.ClearField(areaitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedSpawnPoint(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, areaitem.FieldSpawnPoint, value)
+		})
 	}
 	if _u.mutation.SpawnPointCleared() {
-		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeString)
+		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(areaitem.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(areaitem.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Areaitem{config: _u.config}
 	_spec.Assign = _node.assignValues

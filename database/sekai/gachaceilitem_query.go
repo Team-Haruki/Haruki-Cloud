@@ -262,12 +262,12 @@ func (_q *GachaceilitemQuery) Clone() *GachaceilitemQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Gachaceilitem.Query().
-//		GroupBy(gachaceilitem.FieldServerRegion).
+//		GroupBy(gachaceilitem.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *GachaceilitemQuery) GroupBy(field string, fields ...string) *GachaceilitemGroupBy {
@@ -285,11 +285,11 @@ func (_q *GachaceilitemQuery) GroupBy(field string, fields ...string) *Gachaceil
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Gachaceilitem.Query().
-//		Select(gachaceilitem.FieldServerRegion).
+//		Select(gachaceilitem.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *GachaceilitemQuery) Select(fields ...string) *GachaceilitemSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

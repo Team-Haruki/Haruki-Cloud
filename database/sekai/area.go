@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
 	"strings"
@@ -16,39 +17,39 @@ type Area struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int64 `json:"group_id,omitempty"`
+	GroupID int `json:"group_id,omitempty"`
 	// IsBaseArea holds the value of the "is_base_area" field.
 	IsBaseArea bool `json:"is_base_area,omitempty"`
 	// AreaType holds the value of the "area_type" field.
-	AreaType string `json:"area_type,omitempty"`
+	AreaType json.RawMessage `json:"area_type,omitempty"`
 	// ViewType holds the value of the "view_type" field.
-	ViewType string `json:"view_type,omitempty"`
+	ViewType json.RawMessage `json:"view_type,omitempty"`
 	// DisplayTimelineType holds the value of the "display_timeline_type" field.
-	DisplayTimelineType string `json:"display_timeline_type,omitempty"`
+	DisplayTimelineType json.RawMessage `json:"display_timeline_type,omitempty"`
 	// AdditionalAreaType holds the value of the "additional_area_type" field.
-	AdditionalAreaType string `json:"additional_area_type,omitempty"`
+	AdditionalAreaType json.RawMessage `json:"additional_area_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
 	// SubName holds the value of the "sub_name" field.
 	SubName string `json:"sub_name,omitempty"`
 	// Label holds the value of the "label" field.
 	Label string `json:"label,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int64 `json:"start_at,omitempty"`
+	StartAt int `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
-	EndAt int64 `json:"end_at,omitempty"`
+	EndAt int `json:"end_at,omitempty"`
 	// ReleaseConditionId2 holds the value of the "release_condition_id2" field.
-	ReleaseConditionId2 int64 `json:"release_condition_id2,omitempty"`
-	selectValues        sql.SelectValues
+	ReleaseConditionId2 int `json:"release_condition_id2,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -56,11 +57,13 @@ func (*Area) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case area.FieldAreaType, area.FieldViewType, area.FieldDisplayTimelineType, area.FieldAdditionalAreaType:
+			values[i] = new([]byte)
 		case area.FieldIsBaseArea:
 			values[i] = new(sql.NullBool)
 		case area.FieldID, area.FieldGameID, area.FieldGroupID, area.FieldReleaseConditionID, area.FieldStartAt, area.FieldEndAt, area.FieldReleaseConditionId2:
 			values[i] = new(sql.NullInt64)
-		case area.FieldServerRegion, area.FieldAssetbundleName, area.FieldAreaType, area.FieldViewType, area.FieldDisplayTimelineType, area.FieldAdditionalAreaType, area.FieldName, area.FieldSubName, area.FieldLabel:
+		case area.FieldAssetbundleName, area.FieldName, area.FieldSubName, area.FieldLabel, area.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -83,17 +86,11 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case area.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case area.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case area.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -105,7 +102,7 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = value.Int64
+				_m.GroupID = int(value.Int64)
 			}
 		case area.FieldIsBaseArea:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -114,28 +111,36 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 				_m.IsBaseArea = value.Bool
 			}
 		case area.FieldAreaType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field area_type", values[i])
-			} else if value.Valid {
-				_m.AreaType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.AreaType); err != nil {
+					return fmt.Errorf("unmarshal field area_type: %w", err)
+				}
 			}
 		case area.FieldViewType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field view_type", values[i])
-			} else if value.Valid {
-				_m.ViewType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ViewType); err != nil {
+					return fmt.Errorf("unmarshal field view_type: %w", err)
+				}
 			}
 		case area.FieldDisplayTimelineType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field display_timeline_type", values[i])
-			} else if value.Valid {
-				_m.DisplayTimelineType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DisplayTimelineType); err != nil {
+					return fmt.Errorf("unmarshal field display_timeline_type: %w", err)
+				}
 			}
 		case area.FieldAdditionalAreaType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field additional_area_type", values[i])
-			} else if value.Valid {
-				_m.AdditionalAreaType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.AdditionalAreaType); err != nil {
+					return fmt.Errorf("unmarshal field additional_area_type: %w", err)
+				}
 			}
 		case area.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -147,7 +152,7 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
 			}
 		case area.FieldSubName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -165,19 +170,25 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
 			}
 		case area.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = value.Int64
+				_m.EndAt = int(value.Int64)
 			}
 		case area.FieldReleaseConditionId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id2", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionId2 = value.Int64
+				_m.ReleaseConditionId2 = int(value.Int64)
+			}
+		case area.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -215,9 +226,6 @@ func (_m *Area) String() string {
 	var builder strings.Builder
 	builder.WriteString("Area(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -231,16 +239,16 @@ func (_m *Area) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.IsBaseArea))
 	builder.WriteString(", ")
 	builder.WriteString("area_type=")
-	builder.WriteString(_m.AreaType)
+	builder.WriteString(fmt.Sprintf("%v", _m.AreaType))
 	builder.WriteString(", ")
 	builder.WriteString("view_type=")
-	builder.WriteString(_m.ViewType)
+	builder.WriteString(fmt.Sprintf("%v", _m.ViewType))
 	builder.WriteString(", ")
 	builder.WriteString("display_timeline_type=")
-	builder.WriteString(_m.DisplayTimelineType)
+	builder.WriteString(fmt.Sprintf("%v", _m.DisplayTimelineType))
 	builder.WriteString(", ")
 	builder.WriteString("additional_area_type=")
-	builder.WriteString(_m.AdditionalAreaType)
+	builder.WriteString(fmt.Sprintf("%v", _m.AdditionalAreaType))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -262,6 +270,9 @@ func (_m *Area) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("release_condition_id2=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ReleaseConditionId2))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

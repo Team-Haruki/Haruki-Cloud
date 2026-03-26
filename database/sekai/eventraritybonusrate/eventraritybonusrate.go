@@ -11,8 +11,6 @@ const (
 	Label = "eventraritybonusrate"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldCardRarityType holds the string denoting the card_rarity_type field in the database.
@@ -21,6 +19,8 @@ const (
 	FieldMasterRank = "master_rank"
 	// FieldBonusRate holds the string denoting the bonus_rate field in the database.
 	FieldBonusRate = "bonus_rate"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the eventraritybonusrate in the database.
 	Table = "eventraritybonusrates"
 )
@@ -28,11 +28,11 @@ const (
 // Columns holds all SQL columns for eventraritybonusrate fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldCardRarityType,
 	FieldMasterRank,
 	FieldBonusRate,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -53,19 +53,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByCardRarityType orders the results by the card_rarity_type field.
-func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
 }
 
 // ByMasterRank orders the results by the master_rank field.
@@ -76,4 +66,9 @@ func ByMasterRank(opts ...sql.OrderTermOption) OrderOption {
 // ByBonusRate orders the results by the bonus_rate field.
 func ByBonusRate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBonusRate, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

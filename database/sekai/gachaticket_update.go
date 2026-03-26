@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *GachaticketUpdate) Where(ps ...predicate.Gachaticket) *GachaticketUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GachaticketUpdate) SetServerRegion(v string) *GachaticketUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GachaticketUpdate) SetNillableServerRegion(v *string) *GachaticketUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GachaticketUpdate) SetGameID(v int64) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetGameID(v int) *GachaticketUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaticketUpdate) SetNillableGameID(v *int64) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetNillableGameID(v *int) *GachaticketUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +45,8 @@ func (_u *GachaticketUpdate) SetNillableGameID(v *int64) *GachaticketUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaticketUpdate) AddGameID(v int64) *GachaticketUpdate {
+func (_u *GachaticketUpdate) AddGameID(v int) *GachaticketUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GachaticketUpdate) ClearGameID() *GachaticketUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -109,22 +91,34 @@ func (_u *GachaticketUpdate) ClearAssetbundleName() *GachaticketUpdate {
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_u *GachaticketUpdate) SetGachaDisplayType(v string) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetGachaDisplayType(v json.RawMessage) *GachaticketUpdate {
 	_u.mutation.SetGachaDisplayType(v)
 	return _u
 }
 
-// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
-func (_u *GachaticketUpdate) SetNillableGachaDisplayType(v *string) *GachaticketUpdate {
-	if v != nil {
-		_u.SetGachaDisplayType(*v)
-	}
+// AppendGachaDisplayType appends value to the "gacha_display_type" field.
+func (_u *GachaticketUpdate) AppendGachaDisplayType(v json.RawMessage) *GachaticketUpdate {
+	_u.mutation.AppendGachaDisplayType(v)
 	return _u
 }
 
 // ClearGachaDisplayType clears the value of the "gacha_display_type" field.
 func (_u *GachaticketUpdate) ClearGachaDisplayType() *GachaticketUpdate {
 	_u.mutation.ClearGachaDisplayType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GachaticketUpdate) SetServerRegion(v string) *GachaticketUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GachaticketUpdate) SetNillableServerRegion(v *string) *GachaticketUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -169,17 +163,11 @@ func (_u *GachaticketUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaticket.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gachaticket.FieldGameID, field.TypeInt64)
+		_spec.AddField(gachaticket.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaticket.FieldName, field.TypeString, value)
@@ -194,10 +182,18 @@ func (_u *GachaticketUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(gachaticket.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGachaDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gachaticket.FieldGachaDisplayType, value)
+		})
 	}
 	if _u.mutation.GachaDisplayTypeCleared() {
-		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeString)
+		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -219,29 +215,15 @@ type GachaticketUpdateOne struct {
 	mutation *GachaticketMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GachaticketUpdateOne) SetServerRegion(v string) *GachaticketUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GachaticketUpdateOne) SetNillableServerRegion(v *string) *GachaticketUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GachaticketUpdateOne) SetGameID(v int64) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetGameID(v int) *GachaticketUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaticketUpdateOne) SetNillableGameID(v *int64) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetNillableGameID(v *int) *GachaticketUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -249,14 +231,8 @@ func (_u *GachaticketUpdateOne) SetNillableGameID(v *int64) *GachaticketUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaticketUpdateOne) AddGameID(v int64) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) AddGameID(v int) *GachaticketUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GachaticketUpdateOne) ClearGameID() *GachaticketUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -301,22 +277,34 @@ func (_u *GachaticketUpdateOne) ClearAssetbundleName() *GachaticketUpdateOne {
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_u *GachaticketUpdateOne) SetGachaDisplayType(v string) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetGachaDisplayType(v json.RawMessage) *GachaticketUpdateOne {
 	_u.mutation.SetGachaDisplayType(v)
 	return _u
 }
 
-// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
-func (_u *GachaticketUpdateOne) SetNillableGachaDisplayType(v *string) *GachaticketUpdateOne {
-	if v != nil {
-		_u.SetGachaDisplayType(*v)
-	}
+// AppendGachaDisplayType appends value to the "gacha_display_type" field.
+func (_u *GachaticketUpdateOne) AppendGachaDisplayType(v json.RawMessage) *GachaticketUpdateOne {
+	_u.mutation.AppendGachaDisplayType(v)
 	return _u
 }
 
 // ClearGachaDisplayType clears the value of the "gacha_display_type" field.
 func (_u *GachaticketUpdateOne) ClearGachaDisplayType() *GachaticketUpdateOne {
 	_u.mutation.ClearGachaDisplayType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GachaticketUpdateOne) SetServerRegion(v string) *GachaticketUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GachaticketUpdateOne) SetNillableServerRegion(v *string) *GachaticketUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -391,17 +379,11 @@ func (_u *GachaticketUpdateOne) sqlSave(ctx context.Context) (_node *Gachaticket
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gachaticket.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gachaticket.FieldGameID, field.TypeInt64)
+		_spec.AddField(gachaticket.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gachaticket.FieldName, field.TypeString, value)
@@ -416,10 +398,18 @@ func (_u *GachaticketUpdateOne) sqlSave(ctx context.Context) (_node *Gachaticket
 		_spec.ClearField(gachaticket.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGachaDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gachaticket.FieldGachaDisplayType, value)
+		})
 	}
 	if _u.mutation.GachaDisplayTypeCleared() {
-		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeString)
+		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Gachaticket{config: _u.config}
 	_spec.Assign = _node.assignValues

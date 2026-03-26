@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
@@ -19,23 +20,9 @@ type GachaticketCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *GachaticketCreate) SetServerRegion(v string) *GachaticketCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *GachaticketCreate) SetGameID(v int64) *GachaticketCreate {
+func (_c *GachaticketCreate) SetGameID(v int) *GachaticketCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *GachaticketCreate) SetNillableGameID(v *int64) *GachaticketCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -68,16 +55,14 @@ func (_c *GachaticketCreate) SetNillableAssetbundleName(v *string) *GachaticketC
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_c *GachaticketCreate) SetGachaDisplayType(v string) *GachaticketCreate {
+func (_c *GachaticketCreate) SetGachaDisplayType(v json.RawMessage) *GachaticketCreate {
 	_c.mutation.SetGachaDisplayType(v)
 	return _c
 }
 
-// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
-func (_c *GachaticketCreate) SetNillableGachaDisplayType(v *string) *GachaticketCreate {
-	if v != nil {
-		_c.SetGachaDisplayType(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *GachaticketCreate) SetServerRegion(v string) *GachaticketCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +100,9 @@ func (_c *GachaticketCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *GachaticketCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Gachaticket.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Gachaticket.server_region"`)}
 	}
@@ -144,12 +132,8 @@ func (_c *GachaticketCreate) createSpec() (*Gachaticket, *sqlgraph.CreateSpec) {
 		_node = &Gachaticket{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(gachaticket.Table, sqlgraph.NewFieldSpec(gachaticket.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gachaticket.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gachaticket.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -161,8 +145,12 @@ func (_c *GachaticketCreate) createSpec() (*Gachaticket, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
 		_node.GachaDisplayType = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -11,8 +11,6 @@ const (
 	Label = "masterlesson"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldCardRarityType holds the string denoting the card_rarity_type field in the database.
 	FieldCardRarityType = "card_rarity_type"
 	// FieldMasterRank holds the string denoting the master_rank field in the database.
@@ -29,6 +27,8 @@ const (
 	FieldCosts = "costs"
 	// FieldRewards holds the string denoting the rewards field in the database.
 	FieldRewards = "rewards"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the masterlesson in the database.
 	Table = "masterlessons"
 )
@@ -36,7 +36,6 @@ const (
 // Columns holds all SQL columns for masterlesson fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldCardRarityType,
 	FieldMasterRank,
 	FieldPower1BonusFixed,
@@ -45,6 +44,7 @@ var Columns = []string{
 	FieldCharacterRankExp,
 	FieldCosts,
 	FieldRewards,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -63,16 +63,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
-// ByCardRarityType orders the results by the card_rarity_type field.
-func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
 }
 
 // ByMasterRank orders the results by the master_rank field.
@@ -98,4 +88,9 @@ func ByPower3BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 // ByCharacterRankExp orders the results by the character_rank_exp field.
 func ByCharacterRankExp(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterRankExp, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

@@ -11,8 +11,6 @@ const (
 	Label = "gacha"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldGachaType holds the string denoting the gacha_type field in the database.
@@ -63,6 +61,8 @@ const (
 	FieldGachaFreebieGroupID = "gacha_freebie_group_id"
 	// FieldDailySpinLimit holds the string denoting the daily_spin_limit field in the database.
 	FieldDailySpinLimit = "daily_spin_limit"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the gacha in the database.
 	Table = "gachas"
 )
@@ -70,7 +70,6 @@ const (
 // Columns holds all SQL columns for gacha fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldGachaType,
 	FieldName,
@@ -96,6 +95,7 @@ var Columns = []string{
 	FieldGachaBonusItemReceivableRewardGroupID,
 	FieldGachaFreebieGroupID,
 	FieldDailySpinLimit,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -116,19 +116,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByGachaType orders the results by the gacha_type field.
-func ByGachaType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGachaType, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -214,4 +204,9 @@ func ByGachaFreebieGroupID(opts ...sql.OrderTermOption) OrderOption {
 // ByDailySpinLimit orders the results by the daily_spin_limit field.
 func ByDailySpinLimit(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDailySpinLimit, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

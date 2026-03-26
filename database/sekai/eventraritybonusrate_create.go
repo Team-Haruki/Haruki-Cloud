@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
@@ -19,48 +20,26 @@ type EventraritybonusrateCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventraritybonusrateCreate) SetServerRegion(v string) *EventraritybonusrateCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventraritybonusrateCreate) SetGameID(v int64) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetGameID(v int) *EventraritybonusrateCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventraritybonusrateCreate) SetNillableGameID(v *int64) *EventraritybonusrateCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_c *EventraritybonusrateCreate) SetCardRarityType(v string) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateCreate {
 	_c.mutation.SetCardRarityType(v)
 	return _c
 }
 
-// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
-func (_c *EventraritybonusrateCreate) SetNillableCardRarityType(v *string) *EventraritybonusrateCreate {
-	if v != nil {
-		_c.SetCardRarityType(*v)
-	}
-	return _c
-}
-
 // SetMasterRank sets the "master_rank" field.
-func (_c *EventraritybonusrateCreate) SetMasterRank(v int64) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetMasterRank(v int) *EventraritybonusrateCreate {
 	_c.mutation.SetMasterRank(v)
 	return _c
 }
 
 // SetNillableMasterRank sets the "master_rank" field if the given value is not nil.
-func (_c *EventraritybonusrateCreate) SetNillableMasterRank(v *int64) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetNillableMasterRank(v *int) *EventraritybonusrateCreate {
 	if v != nil {
 		_c.SetMasterRank(*v)
 	}
@@ -78,6 +57,12 @@ func (_c *EventraritybonusrateCreate) SetNillableBonusRate(v *float64) *Eventrar
 	if v != nil {
 		_c.SetBonusRate(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventraritybonusrateCreate) SetServerRegion(v string) *EventraritybonusrateCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +100,9 @@ func (_c *EventraritybonusrateCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventraritybonusrateCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventraritybonusrate.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventraritybonusrate.server_region"`)}
 	}
@@ -144,25 +132,25 @@ func (_c *EventraritybonusrateCreate) createSpec() (*Eventraritybonusrate, *sqlg
 		_node = &Eventraritybonusrate{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventraritybonusrate.Table, sqlgraph.NewFieldSpec(eventraritybonusrate.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {
-		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
+		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt, value)
 		_node.MasterRank = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {
 		_spec.SetField(eventraritybonusrate.FieldBonusRate, field.TypeFloat64, value)
 		_node.BonusRate = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventraritybonusrate.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

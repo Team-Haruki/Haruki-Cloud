@@ -11,8 +11,6 @@ const (
 	Label = "characterrank"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldCharacterID holds the string denoting the character_id field in the database.
@@ -29,6 +27,8 @@ const (
 	FieldRewardResourceBoxIds = "reward_resource_box_ids"
 	// FieldCharacterRankAchieveResources holds the string denoting the character_rank_achieve_resources field in the database.
 	FieldCharacterRankAchieveResources = "character_rank_achieve_resources"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the characterrank in the database.
 	Table = "characterranks"
 )
@@ -36,7 +36,6 @@ const (
 // Columns holds all SQL columns for characterrank fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldCharacterID,
 	FieldCharacterRank,
@@ -45,6 +44,7 @@ var Columns = []string{
 	FieldPower3BonusRate,
 	FieldRewardResourceBoxIds,
 	FieldCharacterRankAchieveResources,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -63,11 +63,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -98,4 +93,9 @@ func ByPower2BonusRate(opts ...sql.OrderTermOption) OrderOption {
 // ByPower3BonusRate orders the results by the power3_bonus_rate field.
 func ByPower3BonusRate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPower3BonusRate, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

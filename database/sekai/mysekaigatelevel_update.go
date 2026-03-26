@@ -27,29 +27,15 @@ func (_u *MysekaigatelevelUpdate) Where(ps ...predicate.Mysekaigatelevel) *Mysek
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigatelevelUpdate) SetServerRegion(v string) *MysekaigatelevelUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableServerRegion(v *string) *MysekaigatelevelUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigatelevelUpdate) SetGameID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetGameID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableGameID(v *int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetNillableGameID(v *int) *MysekaigatelevelUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *MysekaigatelevelUpdate) SetNillableGameID(v *int64) *MysekaigatelevelU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigatelevelUpdate) AddGameID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) AddGameID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigatelevelUpdate) ClearGameID() *MysekaigatelevelUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (_u *MysekaigatelevelUpdate) SetMysekaiGateID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetMysekaiGateID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.ResetMysekaiGateID()
 	_u.mutation.SetMysekaiGateID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateID sets the "mysekai_gate_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateID(v *int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateID(v *int) *MysekaigatelevelUpdate {
 	if v != nil {
 		_u.SetMysekaiGateID(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateID(v *int64) *Mysekaigat
 }
 
 // AddMysekaiGateID adds value to the "mysekai_gate_id" field.
-func (_u *MysekaigatelevelUpdate) AddMysekaiGateID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) AddMysekaiGateID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.AddMysekaiGateID(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *MysekaigatelevelUpdate) ClearMysekaiGateID() *MysekaigatelevelUpdate {
 }
 
 // SetLevel sets the "level" field.
-func (_u *MysekaigatelevelUpdate) SetLevel(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetLevel(v int) *MysekaigatelevelUpdate {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableLevel(v *int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetNillableLevel(v *int) *MysekaigatelevelUpdate {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *MysekaigatelevelUpdate) SetNillableLevel(v *int64) *MysekaigatelevelUp
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *MysekaigatelevelUpdate) AddLevel(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) AddLevel(v int) *MysekaigatelevelUpdate {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -123,14 +103,14 @@ func (_u *MysekaigatelevelUpdate) ClearLevel() *MysekaigatelevelUpdate {
 }
 
 // SetMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field.
-func (_u *MysekaigatelevelUpdate) SetMysekaiGateMaterialGroupID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetMysekaiGateMaterialGroupID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.ResetMysekaiGateMaterialGroupID()
 	_u.mutation.SetMysekaiGateMaterialGroupID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateMaterialGroupID(v *int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateMaterialGroupID(v *int) *MysekaigatelevelUpdate {
 	if v != nil {
 		_u.SetMysekaiGateMaterialGroupID(*v)
 	}
@@ -138,7 +118,7 @@ func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateMaterialGroupID(v *int64
 }
 
 // AddMysekaiGateMaterialGroupID adds value to the "mysekai_gate_material_group_id" field.
-func (_u *MysekaigatelevelUpdate) AddMysekaiGateMaterialGroupID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) AddMysekaiGateMaterialGroupID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.AddMysekaiGateMaterialGroupID(v)
 	return _u
 }
@@ -150,14 +130,14 @@ func (_u *MysekaigatelevelUpdate) ClearMysekaiGateMaterialGroupID() *Mysekaigate
 }
 
 // SetMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field.
-func (_u *MysekaigatelevelUpdate) SetMysekaiGateCharacterVisitCountRateID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetMysekaiGateCharacterVisitCountRateID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.ResetMysekaiGateCharacterVisitCountRateID()
 	_u.mutation.SetMysekaiGateCharacterVisitCountRateID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateCharacterVisitCountRateID(v *int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateCharacterVisitCountRateID(v *int) *MysekaigatelevelUpdate {
 	if v != nil {
 		_u.SetMysekaiGateCharacterVisitCountRateID(*v)
 	}
@@ -165,7 +145,7 @@ func (_u *MysekaigatelevelUpdate) SetNillableMysekaiGateCharacterVisitCountRateI
 }
 
 // AddMysekaiGateCharacterVisitCountRateID adds value to the "mysekai_gate_character_visit_count_rate_id" field.
-func (_u *MysekaigatelevelUpdate) AddMysekaiGateCharacterVisitCountRateID(v int64) *MysekaigatelevelUpdate {
+func (_u *MysekaigatelevelUpdate) AddMysekaiGateCharacterVisitCountRateID(v int) *MysekaigatelevelUpdate {
 	_u.mutation.AddMysekaiGateCharacterVisitCountRateID(v)
 	return _u
 }
@@ -200,6 +180,20 @@ func (_u *MysekaigatelevelUpdate) AddPowerBonusRate(v float64) *Mysekaigatelevel
 // ClearPowerBonusRate clears the value of the "power_bonus_rate" field.
 func (_u *MysekaigatelevelUpdate) ClearPowerBonusRate() *MysekaigatelevelUpdate {
 	_u.mutation.ClearPowerBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigatelevelUpdate) SetServerRegion(v string) *MysekaigatelevelUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigatelevelUpdate) SetNillableServerRegion(v *string) *MysekaigatelevelUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -244,53 +238,47 @@ func (_u *MysekaigatelevelUpdate) sqlSave(ctx context.Context) (_node int, err e
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigatelevel.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigatelevel.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiGateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(mysekaigatelevel.FieldLevel, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldLevel, field.TypeInt, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldLevel, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiGateMaterialGroupID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateMaterialGroupID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateMaterialGroupIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiGateCharacterVisitCountRateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateCharacterVisitCountRateID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateCharacterVisitCountRateIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PowerBonusRate(); ok {
 		_spec.SetField(mysekaigatelevel.FieldPowerBonusRate, field.TypeFloat64, value)
@@ -300,6 +288,9 @@ func (_u *MysekaigatelevelUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if _u.mutation.PowerBonusRateCleared() {
 		_spec.ClearField(mysekaigatelevel.FieldPowerBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigatelevel.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -321,29 +312,15 @@ type MysekaigatelevelUpdateOne struct {
 	mutation *MysekaigatelevelMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigatelevelUpdateOne) SetServerRegion(v string) *MysekaigatelevelUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableServerRegion(v *string) *MysekaigatelevelUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigatelevelUpdateOne) SetGameID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetGameID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableGameID(v *int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetNillableGameID(v *int) *MysekaigatelevelUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -351,26 +328,20 @@ func (_u *MysekaigatelevelUpdateOne) SetNillableGameID(v *int64) *Mysekaigatelev
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigatelevelUpdateOne) AddGameID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) AddGameID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigatelevelUpdateOne) ClearGameID() *MysekaigatelevelUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMysekaiGateID sets the "mysekai_gate_id" field.
-func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.ResetMysekaiGateID()
 	_u.mutation.SetMysekaiGateID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateID sets the "mysekai_gate_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateID(v *int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateID(v *int) *MysekaigatelevelUpdateOne {
 	if v != nil {
 		_u.SetMysekaiGateID(*v)
 	}
@@ -378,7 +349,7 @@ func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateID(v *int64) *Mysekai
 }
 
 // AddMysekaiGateID adds value to the "mysekai_gate_id" field.
-func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.AddMysekaiGateID(v)
 	return _u
 }
@@ -390,14 +361,14 @@ func (_u *MysekaigatelevelUpdateOne) ClearMysekaiGateID() *MysekaigatelevelUpdat
 }
 
 // SetLevel sets the "level" field.
-func (_u *MysekaigatelevelUpdateOne) SetLevel(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetLevel(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableLevel(v *int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetNillableLevel(v *int) *MysekaigatelevelUpdateOne {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -405,7 +376,7 @@ func (_u *MysekaigatelevelUpdateOne) SetNillableLevel(v *int64) *Mysekaigateleve
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *MysekaigatelevelUpdateOne) AddLevel(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) AddLevel(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -417,14 +388,14 @@ func (_u *MysekaigatelevelUpdateOne) ClearLevel() *MysekaigatelevelUpdateOne {
 }
 
 // SetMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field.
-func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateMaterialGroupID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateMaterialGroupID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.ResetMysekaiGateMaterialGroupID()
 	_u.mutation.SetMysekaiGateMaterialGroupID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateMaterialGroupID sets the "mysekai_gate_material_group_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateMaterialGroupID(v *int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateMaterialGroupID(v *int) *MysekaigatelevelUpdateOne {
 	if v != nil {
 		_u.SetMysekaiGateMaterialGroupID(*v)
 	}
@@ -432,7 +403,7 @@ func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateMaterialGroupID(v *in
 }
 
 // AddMysekaiGateMaterialGroupID adds value to the "mysekai_gate_material_group_id" field.
-func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateMaterialGroupID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateMaterialGroupID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.AddMysekaiGateMaterialGroupID(v)
 	return _u
 }
@@ -444,14 +415,14 @@ func (_u *MysekaigatelevelUpdateOne) ClearMysekaiGateMaterialGroupID() *Mysekaig
 }
 
 // SetMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field.
-func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateCharacterVisitCountRateID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetMysekaiGateCharacterVisitCountRateID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.ResetMysekaiGateCharacterVisitCountRateID()
 	_u.mutation.SetMysekaiGateCharacterVisitCountRateID(v)
 	return _u
 }
 
 // SetNillableMysekaiGateCharacterVisitCountRateID sets the "mysekai_gate_character_visit_count_rate_id" field if the given value is not nil.
-func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateCharacterVisitCountRateID(v *int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateCharacterVisitCountRateID(v *int) *MysekaigatelevelUpdateOne {
 	if v != nil {
 		_u.SetMysekaiGateCharacterVisitCountRateID(*v)
 	}
@@ -459,7 +430,7 @@ func (_u *MysekaigatelevelUpdateOne) SetNillableMysekaiGateCharacterVisitCountRa
 }
 
 // AddMysekaiGateCharacterVisitCountRateID adds value to the "mysekai_gate_character_visit_count_rate_id" field.
-func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateCharacterVisitCountRateID(v int64) *MysekaigatelevelUpdateOne {
+func (_u *MysekaigatelevelUpdateOne) AddMysekaiGateCharacterVisitCountRateID(v int) *MysekaigatelevelUpdateOne {
 	_u.mutation.AddMysekaiGateCharacterVisitCountRateID(v)
 	return _u
 }
@@ -494,6 +465,20 @@ func (_u *MysekaigatelevelUpdateOne) AddPowerBonusRate(v float64) *Mysekaigatele
 // ClearPowerBonusRate clears the value of the "power_bonus_rate" field.
 func (_u *MysekaigatelevelUpdateOne) ClearPowerBonusRate() *MysekaigatelevelUpdateOne {
 	_u.mutation.ClearPowerBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigatelevelUpdateOne) SetServerRegion(v string) *MysekaigatelevelUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigatelevelUpdateOne) SetNillableServerRegion(v *string) *MysekaigatelevelUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -568,53 +553,47 @@ func (_u *MysekaigatelevelUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigatelevel.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigatelevel.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiGateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(mysekaigatelevel.FieldLevel, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldLevel, field.TypeInt, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldLevel, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiGateMaterialGroupID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateMaterialGroupID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateMaterialGroupIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateMaterialGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiGateCharacterVisitCountRateID(); ok {
-		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64, value)
+		_spec.SetField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiGateCharacterVisitCountRateID(); ok {
-		_spec.AddField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64, value)
+		_spec.AddField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiGateCharacterVisitCountRateIDCleared() {
-		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt64)
+		_spec.ClearField(mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PowerBonusRate(); ok {
 		_spec.SetField(mysekaigatelevel.FieldPowerBonusRate, field.TypeFloat64, value)
@@ -624,6 +603,9 @@ func (_u *MysekaigatelevelUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 	}
 	if _u.mutation.PowerBonusRateCleared() {
 		_spec.ClearField(mysekaigatelevel.FieldPowerBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigatelevel.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaigatelevel{config: _u.config}
 	_spec.Assign = _node.assignValues

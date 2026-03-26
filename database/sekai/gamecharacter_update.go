@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacter"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *GamecharacterUpdate) Where(ps ...predicate.Gamecharacter) *Gamecharact
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GamecharacterUpdate) SetServerRegion(v string) *GamecharacterUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableServerRegion(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterUpdate) SetGameID(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetGameID(v int) *GamecharacterUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableGameID(v *int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableGameID(v *int) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *GamecharacterUpdate) SetNillableGameID(v *int64) *GamecharacterUpdate 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterUpdate) AddGameID(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddGameID(v int) *GamecharacterUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GamecharacterUpdate) ClearGameID() *GamecharacterUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *GamecharacterUpdate) SetSeq(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetSeq(v int) *GamecharacterUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableSeq(v *int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableSeq(v *int) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *GamecharacterUpdate) SetNillableSeq(v *int64) *GamecharacterUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GamecharacterUpdate) AddSeq(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddSeq(v int) *GamecharacterUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *GamecharacterUpdate) ClearSeq() *GamecharacterUpdate {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *GamecharacterUpdate) SetResourceID(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetResourceID(v int) *GamecharacterUpdate {
 	_u.mutation.ResetResourceID()
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableResourceID(v *int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetNillableResourceID(v *int) *GamecharacterUpdate {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *GamecharacterUpdate) SetNillableResourceID(v *int64) *GamecharacterUpd
 }
 
 // AddResourceID adds value to the "resource_id" field.
-func (_u *GamecharacterUpdate) AddResourceID(v int64) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) AddResourceID(v int) *GamecharacterUpdate {
 	_u.mutation.AddResourceID(v)
 	return _u
 }
@@ -243,16 +225,14 @@ func (_u *GamecharacterUpdate) ClearGivenNameEnglish() *GamecharacterUpdate {
 }
 
 // SetGender sets the "gender" field.
-func (_u *GamecharacterUpdate) SetGender(v string) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetGender(v json.RawMessage) *GamecharacterUpdate {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
-// SetNillableGender sets the "gender" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableGender(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetGender(*v)
-	}
+// AppendGender appends value to the "gender" field.
+func (_u *GamecharacterUpdate) AppendGender(v json.RawMessage) *GamecharacterUpdate {
+	_u.mutation.AppendGender(v)
 	return _u
 }
 
@@ -317,16 +297,14 @@ func (_u *GamecharacterUpdate) ClearLive2DHeightAdjustment() *GamecharacterUpdat
 }
 
 // SetFigure sets the "figure" field.
-func (_u *GamecharacterUpdate) SetFigure(v string) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetFigure(v json.RawMessage) *GamecharacterUpdate {
 	_u.mutation.SetFigure(v)
 	return _u
 }
 
-// SetNillableFigure sets the "figure" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableFigure(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetFigure(*v)
-	}
+// AppendFigure appends value to the "figure" field.
+func (_u *GamecharacterUpdate) AppendFigure(v json.RawMessage) *GamecharacterUpdate {
+	_u.mutation.AppendFigure(v)
 	return _u
 }
 
@@ -337,16 +315,14 @@ func (_u *GamecharacterUpdate) ClearFigure() *GamecharacterUpdate {
 }
 
 // SetBreastSize sets the "breast_size" field.
-func (_u *GamecharacterUpdate) SetBreastSize(v string) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetBreastSize(v json.RawMessage) *GamecharacterUpdate {
 	_u.mutation.SetBreastSize(v)
 	return _u
 }
 
-// SetNillableBreastSize sets the "breast_size" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableBreastSize(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetBreastSize(*v)
-	}
+// AppendBreastSize appends value to the "breast_size" field.
+func (_u *GamecharacterUpdate) AppendBreastSize(v json.RawMessage) *GamecharacterUpdate {
+	_u.mutation.AppendBreastSize(v)
 	return _u
 }
 
@@ -377,16 +353,14 @@ func (_u *GamecharacterUpdate) ClearModelName() *GamecharacterUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterUpdate) SetUnit(v string) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetUnit(v json.RawMessage) *GamecharacterUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableUnit(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *GamecharacterUpdate) AppendUnit(v json.RawMessage) *GamecharacterUpdate {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -397,22 +371,34 @@ func (_u *GamecharacterUpdate) ClearUnit() *GamecharacterUpdate {
 }
 
 // SetSupportUnitType sets the "support_unit_type" field.
-func (_u *GamecharacterUpdate) SetSupportUnitType(v string) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetSupportUnitType(v json.RawMessage) *GamecharacterUpdate {
 	_u.mutation.SetSupportUnitType(v)
 	return _u
 }
 
-// SetNillableSupportUnitType sets the "support_unit_type" field if the given value is not nil.
-func (_u *GamecharacterUpdate) SetNillableSupportUnitType(v *string) *GamecharacterUpdate {
-	if v != nil {
-		_u.SetSupportUnitType(*v)
-	}
+// AppendSupportUnitType appends value to the "support_unit_type" field.
+func (_u *GamecharacterUpdate) AppendSupportUnitType(v json.RawMessage) *GamecharacterUpdate {
+	_u.mutation.AppendSupportUnitType(v)
 	return _u
 }
 
 // ClearSupportUnitType clears the value of the "support_unit_type" field.
 func (_u *GamecharacterUpdate) ClearSupportUnitType() *GamecharacterUpdate {
 	_u.mutation.ClearSupportUnitType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GamecharacterUpdate) SetServerRegion(v string) *GamecharacterUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableServerRegion(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -457,35 +443,29 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gamecharacter.FieldGameID, field.TypeInt64)
+		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt64)
+		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResourceID(); ok {
-		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt64, value)
+		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt64)
+		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(gamecharacter.FieldFirstName, field.TypeString, value)
@@ -524,10 +504,15 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldGivenNameEnglish, field.TypeString)
 	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(gamecharacter.FieldGender, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldGender, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGender(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldGender, value)
+		})
 	}
 	if _u.mutation.GenderCleared() {
-		_spec.ClearField(gamecharacter.FieldGender, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldGender, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Height(); ok {
 		_spec.SetField(gamecharacter.FieldHeight, field.TypeFloat64, value)
@@ -548,16 +533,26 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldLive2DHeightAdjustment, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.Figure(); ok {
-		_spec.SetField(gamecharacter.FieldFigure, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldFigure, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedFigure(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldFigure, value)
+		})
 	}
 	if _u.mutation.FigureCleared() {
-		_spec.ClearField(gamecharacter.FieldFigure, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldFigure, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BreastSize(); ok {
-		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedBreastSize(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldBreastSize, value)
+		})
 	}
 	if _u.mutation.BreastSizeCleared() {
-		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ModelName(); ok {
 		_spec.SetField(gamecharacter.FieldModelName, field.TypeString, value)
@@ -566,16 +561,29 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldModelName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacter.FieldUnit, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacter.FieldUnit, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.SupportUnitType(); ok {
-		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedSupportUnitType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldSupportUnitType, value)
+		})
 	}
 	if _u.mutation.SupportUnitTypeCleared() {
-		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -597,29 +605,15 @@ type GamecharacterUpdateOne struct {
 	mutation *GamecharacterMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GamecharacterUpdateOne) SetServerRegion(v string) *GamecharacterUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableServerRegion(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GamecharacterUpdateOne) SetGameID(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetGameID(v int) *GamecharacterUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -627,26 +621,20 @@ func (_u *GamecharacterUpdateOne) SetNillableGameID(v *int64) *GamecharacterUpda
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GamecharacterUpdateOne) AddGameID(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddGameID(v int) *GamecharacterUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GamecharacterUpdateOne) ClearGameID() *GamecharacterUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *GamecharacterUpdateOne) SetSeq(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetSeq(v int) *GamecharacterUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -654,7 +642,7 @@ func (_u *GamecharacterUpdateOne) SetNillableSeq(v *int64) *GamecharacterUpdateO
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GamecharacterUpdateOne) AddSeq(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddSeq(v int) *GamecharacterUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -666,14 +654,14 @@ func (_u *GamecharacterUpdateOne) ClearSeq() *GamecharacterUpdateOne {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *GamecharacterUpdateOne) SetResourceID(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetResourceID(v int) *GamecharacterUpdateOne {
 	_u.mutation.ResetResourceID()
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int) *GamecharacterUpdateOne {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -681,7 +669,7 @@ func (_u *GamecharacterUpdateOne) SetNillableResourceID(v *int64) *Gamecharacter
 }
 
 // AddResourceID adds value to the "resource_id" field.
-func (_u *GamecharacterUpdateOne) AddResourceID(v int64) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) AddResourceID(v int) *GamecharacterUpdateOne {
 	_u.mutation.AddResourceID(v)
 	return _u
 }
@@ -813,16 +801,14 @@ func (_u *GamecharacterUpdateOne) ClearGivenNameEnglish() *GamecharacterUpdateOn
 }
 
 // SetGender sets the "gender" field.
-func (_u *GamecharacterUpdateOne) SetGender(v string) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetGender(v json.RawMessage) *GamecharacterUpdateOne {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
-// SetNillableGender sets the "gender" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableGender(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetGender(*v)
-	}
+// AppendGender appends value to the "gender" field.
+func (_u *GamecharacterUpdateOne) AppendGender(v json.RawMessage) *GamecharacterUpdateOne {
+	_u.mutation.AppendGender(v)
 	return _u
 }
 
@@ -887,16 +873,14 @@ func (_u *GamecharacterUpdateOne) ClearLive2DHeightAdjustment() *GamecharacterUp
 }
 
 // SetFigure sets the "figure" field.
-func (_u *GamecharacterUpdateOne) SetFigure(v string) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetFigure(v json.RawMessage) *GamecharacterUpdateOne {
 	_u.mutation.SetFigure(v)
 	return _u
 }
 
-// SetNillableFigure sets the "figure" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableFigure(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetFigure(*v)
-	}
+// AppendFigure appends value to the "figure" field.
+func (_u *GamecharacterUpdateOne) AppendFigure(v json.RawMessage) *GamecharacterUpdateOne {
+	_u.mutation.AppendFigure(v)
 	return _u
 }
 
@@ -907,16 +891,14 @@ func (_u *GamecharacterUpdateOne) ClearFigure() *GamecharacterUpdateOne {
 }
 
 // SetBreastSize sets the "breast_size" field.
-func (_u *GamecharacterUpdateOne) SetBreastSize(v string) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetBreastSize(v json.RawMessage) *GamecharacterUpdateOne {
 	_u.mutation.SetBreastSize(v)
 	return _u
 }
 
-// SetNillableBreastSize sets the "breast_size" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableBreastSize(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetBreastSize(*v)
-	}
+// AppendBreastSize appends value to the "breast_size" field.
+func (_u *GamecharacterUpdateOne) AppendBreastSize(v json.RawMessage) *GamecharacterUpdateOne {
+	_u.mutation.AppendBreastSize(v)
 	return _u
 }
 
@@ -947,16 +929,14 @@ func (_u *GamecharacterUpdateOne) ClearModelName() *GamecharacterUpdateOne {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterUpdateOne) SetUnit(v string) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetUnit(v json.RawMessage) *GamecharacterUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableUnit(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *GamecharacterUpdateOne) AppendUnit(v json.RawMessage) *GamecharacterUpdateOne {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -967,22 +947,34 @@ func (_u *GamecharacterUpdateOne) ClearUnit() *GamecharacterUpdateOne {
 }
 
 // SetSupportUnitType sets the "support_unit_type" field.
-func (_u *GamecharacterUpdateOne) SetSupportUnitType(v string) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetSupportUnitType(v json.RawMessage) *GamecharacterUpdateOne {
 	_u.mutation.SetSupportUnitType(v)
 	return _u
 }
 
-// SetNillableSupportUnitType sets the "support_unit_type" field if the given value is not nil.
-func (_u *GamecharacterUpdateOne) SetNillableSupportUnitType(v *string) *GamecharacterUpdateOne {
-	if v != nil {
-		_u.SetSupportUnitType(*v)
-	}
+// AppendSupportUnitType appends value to the "support_unit_type" field.
+func (_u *GamecharacterUpdateOne) AppendSupportUnitType(v json.RawMessage) *GamecharacterUpdateOne {
+	_u.mutation.AppendSupportUnitType(v)
 	return _u
 }
 
 // ClearSupportUnitType clears the value of the "support_unit_type" field.
 func (_u *GamecharacterUpdateOne) ClearSupportUnitType() *GamecharacterUpdateOne {
 	_u.mutation.ClearSupportUnitType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GamecharacterUpdateOne) SetServerRegion(v string) *GamecharacterUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableServerRegion(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -1057,35 +1049,29 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gamecharacter.FieldGameID, field.TypeInt64)
+		_spec.AddField(gamecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(gamecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt64)
+		_spec.ClearField(gamecharacter.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResourceID(); ok {
-		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt64, value)
+		_spec.AddField(gamecharacter.FieldResourceID, field.TypeInt, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt64)
+		_spec.ClearField(gamecharacter.FieldResourceID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(gamecharacter.FieldFirstName, field.TypeString, value)
@@ -1124,10 +1110,15 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldGivenNameEnglish, field.TypeString)
 	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(gamecharacter.FieldGender, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldGender, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGender(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldGender, value)
+		})
 	}
 	if _u.mutation.GenderCleared() {
-		_spec.ClearField(gamecharacter.FieldGender, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldGender, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Height(); ok {
 		_spec.SetField(gamecharacter.FieldHeight, field.TypeFloat64, value)
@@ -1148,16 +1139,26 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldLive2DHeightAdjustment, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.Figure(); ok {
-		_spec.SetField(gamecharacter.FieldFigure, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldFigure, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedFigure(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldFigure, value)
+		})
 	}
 	if _u.mutation.FigureCleared() {
-		_spec.ClearField(gamecharacter.FieldFigure, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldFigure, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BreastSize(); ok {
-		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedBreastSize(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldBreastSize, value)
+		})
 	}
 	if _u.mutation.BreastSizeCleared() {
-		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ModelName(); ok {
 		_spec.SetField(gamecharacter.FieldModelName, field.TypeString, value)
@@ -1166,16 +1167,29 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldModelName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacter.FieldUnit, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacter.FieldUnit, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.SupportUnitType(); ok {
-		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedSupportUnitType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gamecharacter.FieldSupportUnitType, value)
+		})
 	}
 	if _u.mutation.SupportUnitTypeCleared() {
-		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeString)
+		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Gamecharacter{config: _u.config}
 	_spec.Assign = _node.assignValues

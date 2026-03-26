@@ -11,8 +11,6 @@ const (
 	Label = "musicdifficultie"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMusicID holds the string denoting the music_id field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldTotalNoteCount = "total_note_count"
 	// FieldReleaseConditionID holds the string denoting the release_condition_id field in the database.
 	FieldReleaseConditionID = "release_condition_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the musicdifficultie in the database.
 	Table = "musicdifficulties"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for musicdifficultie fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMusicID,
 	FieldMusicDifficulty,
 	FieldPlayLevel,
 	FieldTotalNoteCount,
 	FieldReleaseConditionID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,11 +59,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -72,11 +67,6 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 // ByMusicID orders the results by the music_id field.
 func ByMusicID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicID, opts...).ToFunc()
-}
-
-// ByMusicDifficulty orders the results by the music_difficulty field.
-func ByMusicDifficulty(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMusicDifficulty, opts...).ToFunc()
 }
 
 // ByPlayLevel orders the results by the play_level field.
@@ -92,4 +82,9 @@ func ByTotalNoteCount(opts ...sql.OrderTermOption) OrderOption {
 // ByReleaseConditionID orders the results by the release_condition_id field.
 func ByReleaseConditionID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReleaseConditionID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

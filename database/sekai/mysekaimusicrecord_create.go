@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
@@ -19,43 +20,35 @@ type MysekaimusicrecordCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaimusicrecordCreate) SetServerRegion(v string) *MysekaimusicrecordCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimusicrecordCreate) SetGameID(v int64) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetGameID(v int) *MysekaimusicrecordCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaimusicrecordCreate) SetNillableGameID(v *int64) *MysekaimusicrecordCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_c *MysekaimusicrecordCreate) SetMysekaiMusicTrackType(v map[string]interface{}) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordCreate {
 	_c.mutation.SetMysekaiMusicTrackType(v)
 	return _c
 }
 
 // SetExternalID sets the "external_id" field.
-func (_c *MysekaimusicrecordCreate) SetExternalID(v int64) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetExternalID(v int) *MysekaimusicrecordCreate {
 	_c.mutation.SetExternalID(v)
 	return _c
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_c *MysekaimusicrecordCreate) SetNillableExternalID(v *int64) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetNillableExternalID(v *int) *MysekaimusicrecordCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaimusicrecordCreate) SetServerRegion(v string) *MysekaimusicrecordCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -93,6 +86,9 @@ func (_c *MysekaimusicrecordCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaimusicrecordCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaimusicrecord.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaimusicrecord.server_region"`)}
 	}
@@ -122,12 +118,8 @@ func (_c *MysekaimusicrecordCreate) createSpec() (*Mysekaimusicrecord, *sqlgraph
 		_node = &Mysekaimusicrecord{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaimusicrecord.Table, sqlgraph.NewFieldSpec(mysekaimusicrecord.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimusicrecord.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {
@@ -135,8 +127,12 @@ func (_c *MysekaimusicrecordCreate) createSpec() (*Mysekaimusicrecord, *sqlgraph
 		_node.MysekaiMusicTrackType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
+		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt, value)
 		_node.ExternalID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimusicrecord.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

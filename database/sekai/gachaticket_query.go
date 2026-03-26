@@ -262,12 +262,12 @@ func (_q *GachaticketQuery) Clone() *GachaticketQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Gachaticket.Query().
-//		GroupBy(gachaticket.FieldServerRegion).
+//		GroupBy(gachaticket.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *GachaticketQuery) GroupBy(field string, fields ...string) *GachaticketGroupBy {
@@ -285,11 +285,11 @@ func (_q *GachaticketQuery) GroupBy(field string, fields ...string) *Gachaticket
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Gachaticket.Query().
-//		Select(gachaticket.FieldServerRegion).
+//		Select(gachaticket.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *GachaticketQuery) Select(fields ...string) *GachaticketSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

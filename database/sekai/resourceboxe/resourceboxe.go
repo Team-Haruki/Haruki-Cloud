@@ -11,8 +11,6 @@ const (
 	Label = "resourceboxe"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldResourceBoxPurpose holds the string denoting the resource_box_purpose field in the database.
 	FieldResourceBoxPurpose = "resource_box_purpose"
 	// FieldGameID holds the string denoting the game_id field in the database.
@@ -27,6 +25,8 @@ const (
 	FieldName = "name"
 	// FieldAssetbundleName holds the string denoting the assetbundle_name field in the database.
 	FieldAssetbundleName = "assetbundle_name"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the resourceboxe in the database.
 	Table = "resourceboxes"
 )
@@ -34,7 +34,6 @@ const (
 // Columns holds all SQL columns for resourceboxe fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldResourceBoxPurpose,
 	FieldGameID,
 	FieldResourceBoxType,
@@ -42,6 +41,7 @@ var Columns = []string{
 	FieldDetails,
 	FieldName,
 	FieldAssetbundleName,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -62,24 +62,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
-// ByResourceBoxPurpose orders the results by the resource_box_purpose field.
-func ByResourceBoxPurpose(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldResourceBoxPurpose, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByResourceBoxType orders the results by the resource_box_type field.
-func ByResourceBoxType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldResourceBoxType, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.
@@ -95,4 +80,9 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

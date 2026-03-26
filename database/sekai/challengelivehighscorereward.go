@@ -16,17 +16,17 @@ type Challengelivehighscorereward struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// CharacterID holds the value of the "character_id" field.
+	CharacterID int `json:"character_id,omitempty"`
+	// HighScore holds the value of the "high_score" field.
+	HighScore int `json:"high_score,omitempty"`
+	// ResourceBoxID holds the value of the "resource_box_id" field.
+	ResourceBoxID int `json:"resource_box_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// CharacterID holds the value of the "character_id" field.
-	CharacterID int64 `json:"character_id,omitempty"`
-	// HighScore holds the value of the "high_score" field.
-	HighScore int64 `json:"high_score,omitempty"`
-	// ResourceBoxID holds the value of the "resource_box_id" field.
-	ResourceBoxID int64 `json:"resource_box_id,omitempty"`
-	selectValues  sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -59,35 +59,35 @@ func (_m *Challengelivehighscorereward) assignValues(columns []string, values []
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case challengelivehighscorereward.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case challengelivehighscorereward.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case challengelivehighscorereward.FieldCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = value.Int64
+				_m.CharacterID = int(value.Int64)
 			}
 		case challengelivehighscorereward.FieldHighScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field high_score", values[i])
 			} else if value.Valid {
-				_m.HighScore = value.Int64
+				_m.HighScore = int(value.Int64)
 			}
 		case challengelivehighscorereward.FieldResourceBoxID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_box_id", values[i])
 			} else if value.Valid {
-				_m.ResourceBoxID = value.Int64
+				_m.ResourceBoxID = int(value.Int64)
+			}
+		case challengelivehighscorereward.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Challengelivehighscorereward) String() string {
 	var builder strings.Builder
 	builder.WriteString("Challengelivehighscorereward(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Challengelivehighscorereward) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("resource_box_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ResourceBoxID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

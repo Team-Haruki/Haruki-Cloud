@@ -262,12 +262,12 @@ func (_q *AreaitemlevelQuery) Clone() *AreaitemlevelQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		AreaItemID int `json:"area_item_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Areaitemlevel.Query().
-//		GroupBy(areaitemlevel.FieldServerRegion).
+//		GroupBy(areaitemlevel.FieldAreaItemID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *AreaitemlevelQuery) GroupBy(field string, fields ...string) *AreaitemlevelGroupBy {
@@ -285,11 +285,11 @@ func (_q *AreaitemlevelQuery) GroupBy(field string, fields ...string) *Areaiteml
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		AreaItemID int `json:"area_item_id,omitempty"`
 //	}
 //
 //	client.Areaitemlevel.Query().
-//		Select(areaitemlevel.FieldServerRegion).
+//		Select(areaitemlevel.FieldAreaItemID).
 //		Scan(ctx, &v)
 func (_q *AreaitemlevelQuery) Select(fields ...string) *AreaitemlevelSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

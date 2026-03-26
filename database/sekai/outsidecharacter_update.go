@@ -27,29 +27,15 @@ func (_u *OutsidecharacterUpdate) Where(ps ...predicate.Outsidecharacter) *Outsi
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *OutsidecharacterUpdate) SetServerRegion(v string) *OutsidecharacterUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *OutsidecharacterUpdate) SetNillableServerRegion(v *string) *OutsidecharacterUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *OutsidecharacterUpdate) SetGameID(v int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) SetGameID(v int) *OutsidecharacterUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *OutsidecharacterUpdate) SetNillableGameID(v *int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) SetNillableGameID(v *int) *OutsidecharacterUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *OutsidecharacterUpdate) SetNillableGameID(v *int64) *OutsidecharacterU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *OutsidecharacterUpdate) AddGameID(v int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) AddGameID(v int) *OutsidecharacterUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *OutsidecharacterUpdate) ClearGameID() *OutsidecharacterUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *OutsidecharacterUpdate) SetSeq(v int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) SetSeq(v int) *OutsidecharacterUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *OutsidecharacterUpdate) SetNillableSeq(v *int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) SetNillableSeq(v *int) *OutsidecharacterUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *OutsidecharacterUpdate) SetNillableSeq(v *int64) *OutsidecharacterUpda
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *OutsidecharacterUpdate) AddSeq(v int64) *OutsidecharacterUpdate {
+func (_u *OutsidecharacterUpdate) AddSeq(v int) *OutsidecharacterUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -112,6 +92,20 @@ func (_u *OutsidecharacterUpdate) SetNillableName(v *string) *OutsidecharacterUp
 // ClearName clears the value of the "name" field.
 func (_u *OutsidecharacterUpdate) ClearName() *OutsidecharacterUpdate {
 	_u.mutation.ClearName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *OutsidecharacterUpdate) SetServerRegion(v string) *OutsidecharacterUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *OutsidecharacterUpdate) SetNillableServerRegion(v *string) *OutsidecharacterUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -156,32 +150,29 @@ func (_u *OutsidecharacterUpdate) sqlSave(ctx context.Context) (_node int, err e
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(outsidecharacter.FieldGameID, field.TypeInt64)
+		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(outsidecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(outsidecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(outsidecharacter.FieldSeq, field.TypeInt64)
+		_spec.ClearField(outsidecharacter.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(outsidecharacter.FieldName, field.TypeString, value)
 	}
 	if _u.mutation.NameCleared() {
 		_spec.ClearField(outsidecharacter.FieldName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -203,29 +194,15 @@ type OutsidecharacterUpdateOne struct {
 	mutation *OutsidecharacterMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *OutsidecharacterUpdateOne) SetServerRegion(v string) *OutsidecharacterUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *OutsidecharacterUpdateOne) SetNillableServerRegion(v *string) *OutsidecharacterUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *OutsidecharacterUpdateOne) SetGameID(v int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) SetGameID(v int) *OutsidecharacterUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *OutsidecharacterUpdateOne) SetNillableGameID(v *int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) SetNillableGameID(v *int) *OutsidecharacterUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -233,26 +210,20 @@ func (_u *OutsidecharacterUpdateOne) SetNillableGameID(v *int64) *Outsidecharact
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *OutsidecharacterUpdateOne) AddGameID(v int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) AddGameID(v int) *OutsidecharacterUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *OutsidecharacterUpdateOne) ClearGameID() *OutsidecharacterUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *OutsidecharacterUpdateOne) SetSeq(v int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) SetSeq(v int) *OutsidecharacterUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *OutsidecharacterUpdateOne) SetNillableSeq(v *int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) SetNillableSeq(v *int) *OutsidecharacterUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -260,7 +231,7 @@ func (_u *OutsidecharacterUpdateOne) SetNillableSeq(v *int64) *OutsidecharacterU
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *OutsidecharacterUpdateOne) AddSeq(v int64) *OutsidecharacterUpdateOne {
+func (_u *OutsidecharacterUpdateOne) AddSeq(v int) *OutsidecharacterUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -288,6 +259,20 @@ func (_u *OutsidecharacterUpdateOne) SetNillableName(v *string) *Outsidecharacte
 // ClearName clears the value of the "name" field.
 func (_u *OutsidecharacterUpdateOne) ClearName() *OutsidecharacterUpdateOne {
 	_u.mutation.ClearName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *OutsidecharacterUpdateOne) SetServerRegion(v string) *OutsidecharacterUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *OutsidecharacterUpdateOne) SetNillableServerRegion(v *string) *OutsidecharacterUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -362,32 +347,29 @@ func (_u *OutsidecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Outsid
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(outsidecharacter.FieldGameID, field.TypeInt64)
+		_spec.AddField(outsidecharacter.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(outsidecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(outsidecharacter.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(outsidecharacter.FieldSeq, field.TypeInt64)
+		_spec.ClearField(outsidecharacter.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(outsidecharacter.FieldName, field.TypeString, value)
 	}
 	if _u.mutation.NameCleared() {
 		_spec.ClearField(outsidecharacter.FieldName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Outsidecharacter{config: _u.config}
 	_spec.Assign = _node.assignValues

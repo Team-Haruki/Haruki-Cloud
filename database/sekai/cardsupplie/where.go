@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Cardsupplie {
+func GameID(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -73,119 +68,49 @@ func AssetbundleName(v string) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Cardsupplie {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Cardsupplie {
+func GameIDEQ(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Cardsupplie {
+func GameIDNEQ(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Cardsupplie {
+func GameIDIn(vs ...int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Cardsupplie {
+func GameIDNotIn(vs ...int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Cardsupplie {
+func GameIDGT(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Cardsupplie {
+func GameIDGTE(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Cardsupplie {
+func GameIDLT(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Cardsupplie {
+func GameIDLTE(v int) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Cardsupplie {
-	return predicate.Cardsupplie(sql.FieldNotNull(FieldGameID))
 }
 
 // CardSupplyTypeEQ applies the EQ predicate on the "card_supply_type" field.
@@ -336,6 +261,71 @@ func AssetbundleNameEqualFold(v string) predicate.Cardsupplie {
 // AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
 func AssetbundleNameContainsFold(v string) predicate.Cardsupplie {
 	return predicate.Cardsupplie(sql.FieldContainsFold(FieldAssetbundleName, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Cardsupplie {
+	return predicate.Cardsupplie(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

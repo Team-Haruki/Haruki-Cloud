@@ -27,29 +27,15 @@ func (_u *MysekaigamecharacterunitgroupUpdate) Where(ps ...predicate.Mysekaigame
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetServerRegion(v string) *MysekaigamecharacterunitgroupUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableServerRegion(v *string) *MysekaigamecharacterunitgroupUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameID(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameID(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameID(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameID(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameID(v *int64) *Myse
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameID(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameID(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameID() *MysekaigamecharacterunitgroupUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId1(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId1(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId1()
 	_u.mutation.SetGameCharacterUnitId1(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId1 sets the "game_character_unit_id1" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId1(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId1(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId1(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId1(v
 }
 
 // AddGameCharacterUnitId1 adds value to the "game_character_unit_id1" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId1(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId1(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameCharacterUnitId1(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameCharacterUnitId1() *Myse
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId2(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId2(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId2()
 	_u.mutation.SetGameCharacterUnitId2(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId2 sets the "game_character_unit_id2" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId2(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId2(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId2(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId2(v
 }
 
 // AddGameCharacterUnitId2 adds value to the "game_character_unit_id2" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId2(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId2(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameCharacterUnitId2(v)
 	return _u
 }
@@ -123,14 +103,14 @@ func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameCharacterUnitId2() *Myse
 }
 
 // SetGameCharacterUnitId3 sets the "game_character_unit_id3" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId3(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId3(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId3()
 	_u.mutation.SetGameCharacterUnitId3(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId3 sets the "game_character_unit_id3" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId3(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId3(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId3(*v)
 	}
@@ -138,7 +118,7 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId3(v
 }
 
 // AddGameCharacterUnitId3 adds value to the "game_character_unit_id3" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId3(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId3(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameCharacterUnitId3(v)
 	return _u
 }
@@ -150,14 +130,14 @@ func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameCharacterUnitId3() *Myse
 }
 
 // SetGameCharacterUnitId4 sets the "game_character_unit_id4" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId4(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId4(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId4()
 	_u.mutation.SetGameCharacterUnitId4(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId4 sets the "game_character_unit_id4" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId4(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId4(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId4(*v)
 	}
@@ -165,7 +145,7 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId4(v
 }
 
 // AddGameCharacterUnitId4 adds value to the "game_character_unit_id4" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId4(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId4(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameCharacterUnitId4(v)
 	return _u
 }
@@ -177,14 +157,14 @@ func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameCharacterUnitId4() *Myse
 }
 
 // SetGameCharacterUnitId5 sets the "game_character_unit_id5" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId5(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetGameCharacterUnitId5(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ResetGameCharacterUnitId5()
 	_u.mutation.SetGameCharacterUnitId5(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId5 sets the "game_character_unit_id5" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId5(v *int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId5(v *int) *MysekaigamecharacterunitgroupUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitId5(*v)
 	}
@@ -192,7 +172,7 @@ func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableGameCharacterUnitId5(v
 }
 
 // AddGameCharacterUnitId5 adds value to the "game_character_unit_id5" field.
-func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId5(v int64) *MysekaigamecharacterunitgroupUpdate {
+func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId5(v int) *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.AddGameCharacterUnitId5(v)
 	return _u
 }
@@ -200,6 +180,20 @@ func (_u *MysekaigamecharacterunitgroupUpdate) AddGameCharacterUnitId5(v int64) 
 // ClearGameCharacterUnitId5 clears the value of the "game_character_unit_id5" field.
 func (_u *MysekaigamecharacterunitgroupUpdate) ClearGameCharacterUnitId5() *MysekaigamecharacterunitgroupUpdate {
 	_u.mutation.ClearGameCharacterUnitId5()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigamecharacterunitgroupUpdate) SetServerRegion(v string) *MysekaigamecharacterunitgroupUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigamecharacterunitgroupUpdate) SetNillableServerRegion(v *string) *MysekaigamecharacterunitgroupUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -244,62 +238,59 @@ func (_u *MysekaigamecharacterunitgroupUpdate) sqlSave(ctx context.Context) (_no
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId1(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId1Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId2(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId2(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId2Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId3(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId3(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId3Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId4(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId4(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId4Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId5(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId5(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId5Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -321,29 +312,15 @@ type MysekaigamecharacterunitgroupUpdateOne struct {
 	mutation *MysekaigamecharacterunitgroupMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetServerRegion(v string) *MysekaigamecharacterunitgroupUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableServerRegion(v *string) *MysekaigamecharacterunitgroupUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameID(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameID(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameID(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameID(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -351,26 +328,20 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameID(v *int64) *M
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameID(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameID(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameID() *MysekaigamecharacterunitgroupUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGameCharacterUnitId1 sets the "game_character_unit_id1" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId1(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId1(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId1()
 	_u.mutation.SetGameCharacterUnitId1(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId1 sets the "game_character_unit_id1" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId1(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId1(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId1(*v)
 	}
@@ -378,7 +349,7 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId
 }
 
 // AddGameCharacterUnitId1 adds value to the "game_character_unit_id1" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId1(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId1(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameCharacterUnitId1(v)
 	return _u
 }
@@ -390,14 +361,14 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameCharacterUnitId1() *M
 }
 
 // SetGameCharacterUnitId2 sets the "game_character_unit_id2" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId2(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId2(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId2()
 	_u.mutation.SetGameCharacterUnitId2(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId2 sets the "game_character_unit_id2" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId2(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId2(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId2(*v)
 	}
@@ -405,7 +376,7 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId
 }
 
 // AddGameCharacterUnitId2 adds value to the "game_character_unit_id2" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId2(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId2(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameCharacterUnitId2(v)
 	return _u
 }
@@ -417,14 +388,14 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameCharacterUnitId2() *M
 }
 
 // SetGameCharacterUnitId3 sets the "game_character_unit_id3" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId3(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId3(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId3()
 	_u.mutation.SetGameCharacterUnitId3(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId3 sets the "game_character_unit_id3" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId3(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId3(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId3(*v)
 	}
@@ -432,7 +403,7 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId
 }
 
 // AddGameCharacterUnitId3 adds value to the "game_character_unit_id3" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId3(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId3(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameCharacterUnitId3(v)
 	return _u
 }
@@ -444,14 +415,14 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameCharacterUnitId3() *M
 }
 
 // SetGameCharacterUnitId4 sets the "game_character_unit_id4" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId4(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId4(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId4()
 	_u.mutation.SetGameCharacterUnitId4(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId4 sets the "game_character_unit_id4" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId4(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId4(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId4(*v)
 	}
@@ -459,7 +430,7 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId
 }
 
 // AddGameCharacterUnitId4 adds value to the "game_character_unit_id4" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId4(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId4(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameCharacterUnitId4(v)
 	return _u
 }
@@ -471,14 +442,14 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameCharacterUnitId4() *M
 }
 
 // SetGameCharacterUnitId5 sets the "game_character_unit_id5" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId5(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetGameCharacterUnitId5(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ResetGameCharacterUnitId5()
 	_u.mutation.SetGameCharacterUnitId5(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitId5 sets the "game_character_unit_id5" field if the given value is not nil.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId5(v *int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId5(v *int) *MysekaigamecharacterunitgroupUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitId5(*v)
 	}
@@ -486,7 +457,7 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableGameCharacterUnitId
 }
 
 // AddGameCharacterUnitId5 adds value to the "game_character_unit_id5" field.
-func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId5(v int64) *MysekaigamecharacterunitgroupUpdateOne {
+func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId5(v int) *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.AddGameCharacterUnitId5(v)
 	return _u
 }
@@ -494,6 +465,20 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) AddGameCharacterUnitId5(v int6
 // ClearGameCharacterUnitId5 clears the value of the "game_character_unit_id5" field.
 func (_u *MysekaigamecharacterunitgroupUpdateOne) ClearGameCharacterUnitId5() *MysekaigamecharacterunitgroupUpdateOne {
 	_u.mutation.ClearGameCharacterUnitId5()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetServerRegion(v string) *MysekaigamecharacterunitgroupUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigamecharacterunitgroupUpdateOne) SetNillableServerRegion(v *string) *MysekaigamecharacterunitgroupUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -568,62 +553,59 @@ func (_u *MysekaigamecharacterunitgroupUpdateOne) sqlSave(ctx context.Context) (
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId1(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId1(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId1Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId2(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId2(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId2Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId3(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId3(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId3Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId4(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId4(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId4Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitId5(); ok {
-		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64, value)
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitId5(); ok {
-		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64, value)
+		_spec.AddField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitId5Cleared() {
-		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt64)
+		_spec.ClearField(mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigamecharacterunitgroup.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaigamecharacterunitgroup{config: _u.config}
 	_spec.Assign = _node.assignValues

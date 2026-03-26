@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/costume3d"
 	"strings"
@@ -16,28 +17,26 @@ type Costume3D struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// Costume3DGroupID holds the value of the "costume3_d_group_id" field.
-	Costume3DGroupID int64 `json:"costume3_d_group_id,omitempty"`
+	Costume3DGroupID int `json:"costume3_d_group_id,omitempty"`
 	// Costume3DType holds the value of the "costume3_d_type" field.
-	Costume3DType string `json:"costume3_d_type,omitempty"`
+	Costume3DType json.RawMessage `json:"costume3_d_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// PartType holds the value of the "part_type" field.
-	PartType string `json:"part_type,omitempty"`
+	PartType json.RawMessage `json:"part_type,omitempty"`
 	// ColorID holds the value of the "color_id" field.
-	ColorID int64 `json:"color_id,omitempty"`
+	ColorID int `json:"color_id,omitempty"`
 	// ColorName holds the value of the "color_name" field.
 	ColorName string `json:"color_name,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int64 `json:"character_id,omitempty"`
+	CharacterID int `json:"character_id,omitempty"`
 	// Costume3DRarity holds the value of the "costume3_d_rarity" field.
-	Costume3DRarity string `json:"costume3_d_rarity,omitempty"`
+	Costume3DRarity json.RawMessage `json:"costume3_d_rarity,omitempty"`
 	// HowToObtain holds the value of the "how_to_obtain" field.
 	HowToObtain string `json:"how_to_obtain,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -45,11 +44,13 @@ type Costume3D struct {
 	// Designer holds the value of the "designer" field.
 	Designer string `json:"designer,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
-	ArchiveDisplayType string `json:"archive_display_type,omitempty"`
+	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
 	// ArchivePublishedAt holds the value of the "archive_published_at" field.
-	ArchivePublishedAt int64 `json:"archive_published_at,omitempty"`
+	ArchivePublishedAt int `json:"archive_published_at,omitempty"`
 	// PublishedAt holds the value of the "published_at" field.
-	PublishedAt  int64 `json:"published_at,omitempty"`
+	PublishedAt int `json:"published_at,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -58,9 +59,11 @@ func (*Costume3D) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case costume3d.FieldCostume3DType, costume3d.FieldPartType, costume3d.FieldCostume3DRarity, costume3d.FieldArchiveDisplayType:
+			values[i] = new([]byte)
 		case costume3d.FieldID, costume3d.FieldGameID, costume3d.FieldSeq, costume3d.FieldCostume3DGroupID, costume3d.FieldColorID, costume3d.FieldCharacterID, costume3d.FieldArchivePublishedAt, costume3d.FieldPublishedAt:
 			values[i] = new(sql.NullInt64)
-		case costume3d.FieldServerRegion, costume3d.FieldCostume3DType, costume3d.FieldName, costume3d.FieldPartType, costume3d.FieldColorName, costume3d.FieldCostume3DRarity, costume3d.FieldHowToObtain, costume3d.FieldAssetbundleName, costume3d.FieldDesigner, costume3d.FieldArchiveDisplayType:
+		case costume3d.FieldName, costume3d.FieldColorName, costume3d.FieldHowToObtain, costume3d.FieldAssetbundleName, costume3d.FieldDesigner, costume3d.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -83,35 +86,31 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case costume3d.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case costume3d.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case costume3d.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case costume3d.FieldCostume3DGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_group_id", values[i])
 			} else if value.Valid {
-				_m.Costume3DGroupID = value.Int64
+				_m.Costume3DGroupID = int(value.Int64)
 			}
 		case costume3d.FieldCostume3DType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_type", values[i])
-			} else if value.Valid {
-				_m.Costume3DType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Costume3DType); err != nil {
+					return fmt.Errorf("unmarshal field costume3_d_type: %w", err)
+				}
 			}
 		case costume3d.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -120,16 +119,18 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 				_m.Name = value.String
 			}
 		case costume3d.FieldPartType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field part_type", values[i])
-			} else if value.Valid {
-				_m.PartType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.PartType); err != nil {
+					return fmt.Errorf("unmarshal field part_type: %w", err)
+				}
 			}
 		case costume3d.FieldColorID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field color_id", values[i])
 			} else if value.Valid {
-				_m.ColorID = value.Int64
+				_m.ColorID = int(value.Int64)
 			}
 		case costume3d.FieldColorName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -141,13 +142,15 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = value.Int64
+				_m.CharacterID = int(value.Int64)
 			}
 		case costume3d.FieldCostume3DRarity:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_rarity", values[i])
-			} else if value.Valid {
-				_m.Costume3DRarity = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Costume3DRarity); err != nil {
+					return fmt.Errorf("unmarshal field costume3_d_rarity: %w", err)
+				}
 			}
 		case costume3d.FieldHowToObtain:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -168,22 +171,30 @@ func (_m *Costume3D) assignValues(columns []string, values []any) error {
 				_m.Designer = value.String
 			}
 		case costume3d.FieldArchiveDisplayType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_display_type", values[i])
-			} else if value.Valid {
-				_m.ArchiveDisplayType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ArchiveDisplayType); err != nil {
+					return fmt.Errorf("unmarshal field archive_display_type: %w", err)
+				}
 			}
 		case costume3d.FieldArchivePublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_published_at", values[i])
 			} else if value.Valid {
-				_m.ArchivePublishedAt = value.Int64
+				_m.ArchivePublishedAt = int(value.Int64)
 			}
 		case costume3d.FieldPublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field published_at", values[i])
 			} else if value.Valid {
-				_m.PublishedAt = value.Int64
+				_m.PublishedAt = int(value.Int64)
+			}
+		case costume3d.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -221,9 +232,6 @@ func (_m *Costume3D) String() string {
 	var builder strings.Builder
 	builder.WriteString("Costume3D(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -234,13 +242,13 @@ func (_m *Costume3D) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Costume3DGroupID))
 	builder.WriteString(", ")
 	builder.WriteString("costume3_d_type=")
-	builder.WriteString(_m.Costume3DType)
+	builder.WriteString(fmt.Sprintf("%v", _m.Costume3DType))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("part_type=")
-	builder.WriteString(_m.PartType)
+	builder.WriteString(fmt.Sprintf("%v", _m.PartType))
 	builder.WriteString(", ")
 	builder.WriteString("color_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ColorID))
@@ -252,7 +260,7 @@ func (_m *Costume3D) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterID))
 	builder.WriteString(", ")
 	builder.WriteString("costume3_d_rarity=")
-	builder.WriteString(_m.Costume3DRarity)
+	builder.WriteString(fmt.Sprintf("%v", _m.Costume3DRarity))
 	builder.WriteString(", ")
 	builder.WriteString("how_to_obtain=")
 	builder.WriteString(_m.HowToObtain)
@@ -264,13 +272,16 @@ func (_m *Costume3D) String() string {
 	builder.WriteString(_m.Designer)
 	builder.WriteString(", ")
 	builder.WriteString("archive_display_type=")
-	builder.WriteString(_m.ArchiveDisplayType)
+	builder.WriteString(fmt.Sprintf("%v", _m.ArchiveDisplayType))
 	builder.WriteString(", ")
 	builder.WriteString("archive_published_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ArchivePublishedAt))
 	builder.WriteString(", ")
 	builder.WriteString("published_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PublishedAt))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

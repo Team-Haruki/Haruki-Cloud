@@ -17,22 +17,22 @@ type Shopitem struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// ShopID holds the value of the "shop_id" field.
+	ShopID int `json:"shop_id,omitempty"`
+	// Seq holds the value of the "seq" field.
+	Seq int `json:"seq,omitempty"`
+	// ReleaseConditionID holds the value of the "release_condition_id" field.
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
+	// ResourceBoxID holds the value of the "resource_box_id" field.
+	ResourceBoxID int `json:"resource_box_id,omitempty"`
+	// Costs holds the value of the "costs" field.
+	Costs json.RawMessage `json:"costs,omitempty"`
+	// StartAt holds the value of the "start_at" field.
+	StartAt int `json:"start_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// ShopID holds the value of the "shop_id" field.
-	ShopID int64 `json:"shop_id,omitempty"`
-	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
-	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
-	// ResourceBoxID holds the value of the "resource_box_id" field.
-	ResourceBoxID int64 `json:"resource_box_id,omitempty"`
-	// Costs holds the value of the "costs" field.
-	Costs []interface{} `json:"costs,omitempty"`
-	// StartAt holds the value of the "start_at" field.
-	StartAt      int64 `json:"start_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -68,41 +68,35 @@ func (_m *Shopitem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case shopitem.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case shopitem.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case shopitem.FieldShopID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field shop_id", values[i])
 			} else if value.Valid {
-				_m.ShopID = value.Int64
+				_m.ShopID = int(value.Int64)
 			}
 		case shopitem.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case shopitem.FieldReleaseConditionID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
 			}
 		case shopitem.FieldResourceBoxID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_box_id", values[i])
 			} else if value.Valid {
-				_m.ResourceBoxID = value.Int64
+				_m.ResourceBoxID = int(value.Int64)
 			}
 		case shopitem.FieldCosts:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -116,7 +110,13 @@ func (_m *Shopitem) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
+			}
+		case shopitem.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -154,9 +154,6 @@ func (_m *Shopitem) String() string {
 	var builder strings.Builder
 	builder.WriteString("Shopitem(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -177,6 +174,9 @@ func (_m *Shopitem) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StartAt))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

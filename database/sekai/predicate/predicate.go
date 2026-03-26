@@ -48,9 +48,6 @@ type Challengelivehighscorereward func(*sql.Selector)
 // Character2D is the predicate function for character2d builders.
 type Character2D func(*sql.Selector)
 
-// Characterarchivemysekaicharactertalkgroup is the predicate function for characterarchivemysekaicharactertalkgroup builders.
-type Characterarchivemysekaicharactertalkgroup func(*sql.Selector)
-
 // Charactermissionv2Parametergroup is the predicate function for charactermissionv2parametergroup builders.
 type Charactermissionv2Parametergroup func(*sql.Selector)
 
@@ -153,17 +150,11 @@ type Mysekaicharactertalkconditiongroup func(*sql.Selector)
 // Mysekaicharactertalkfixturecommon is the predicate function for mysekaicharactertalkfixturecommon builders.
 type Mysekaicharactertalkfixturecommon func(*sql.Selector)
 
-// Mysekaicharactertalkfixturecommonmysekaifixturegroup is the predicate function for mysekaicharactertalkfixturecommonmysekaifixturegroup builders.
-type Mysekaicharactertalkfixturecommonmysekaifixturegroup func(*sql.Selector)
-
 // Mysekaifixture is the predicate function for mysekaifixture builders.
 type Mysekaifixture func(*sql.Selector)
 
 // Mysekaifixturegamecharactergroup is the predicate function for mysekaifixturegamecharactergroup builders.
 type Mysekaifixturegamecharactergroup func(*sql.Selector)
-
-// Mysekaifixturegamecharactergroupperformancebonuse is the predicate function for mysekaifixturegamecharactergroupperformancebonuse builders.
-type Mysekaifixturegamecharactergroupperformancebonuse func(*sql.Selector)
 
 // Mysekaifixturemaingenre is the predicate function for mysekaifixturemaingenre builders.
 type Mysekaifixturemaingenre func(*sql.Selector)
@@ -251,6 +242,3 @@ type Worldbloomdifferentattributebonuse func(*sql.Selector)
 
 // Worldbloomsupportdeckbonuse is the predicate function for worldbloomsupportdeckbonuse builders.
 type Worldbloomsupportdeckbonuse func(*sql.Selector)
-
-// Worldbloomsupportdeckuniteventlimitedbonuse is the predicate function for worldbloomsupportdeckuniteventlimitedbonuse builders.
-type Worldbloomsupportdeckuniteventlimitedbonuse func(*sql.Selector)

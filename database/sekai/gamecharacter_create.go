@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacter"
@@ -19,34 +20,20 @@ type GamecharacterCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *GamecharacterCreate) SetServerRegion(v string) *GamecharacterCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *GamecharacterCreate) SetGameID(v int64) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetGameID(v int) *GamecharacterCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableGameID(v *int64) *GamecharacterCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *GamecharacterCreate) SetSeq(v int64) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetSeq(v int) *GamecharacterCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableSeq(v *int64) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetNillableSeq(v *int) *GamecharacterCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *GamecharacterCreate) SetNillableSeq(v *int64) *GamecharacterCreate {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_c *GamecharacterCreate) SetResourceID(v int64) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetResourceID(v int) *GamecharacterCreate {
 	_c.mutation.SetResourceID(v)
 	return _c
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableResourceID(v *int64) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetNillableResourceID(v *int) *GamecharacterCreate {
 	if v != nil {
 		_c.SetResourceID(*v)
 	}
@@ -152,16 +139,8 @@ func (_c *GamecharacterCreate) SetNillableGivenNameEnglish(v *string) *Gamechara
 }
 
 // SetGender sets the "gender" field.
-func (_c *GamecharacterCreate) SetGender(v string) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetGender(v json.RawMessage) *GamecharacterCreate {
 	_c.mutation.SetGender(v)
-	return _c
-}
-
-// SetNillableGender sets the "gender" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableGender(v *string) *GamecharacterCreate {
-	if v != nil {
-		_c.SetGender(*v)
-	}
 	return _c
 }
 
@@ -194,30 +173,14 @@ func (_c *GamecharacterCreate) SetNillableLive2DHeightAdjustment(v *float64) *Ga
 }
 
 // SetFigure sets the "figure" field.
-func (_c *GamecharacterCreate) SetFigure(v string) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetFigure(v json.RawMessage) *GamecharacterCreate {
 	_c.mutation.SetFigure(v)
 	return _c
 }
 
-// SetNillableFigure sets the "figure" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableFigure(v *string) *GamecharacterCreate {
-	if v != nil {
-		_c.SetFigure(*v)
-	}
-	return _c
-}
-
 // SetBreastSize sets the "breast_size" field.
-func (_c *GamecharacterCreate) SetBreastSize(v string) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetBreastSize(v json.RawMessage) *GamecharacterCreate {
 	_c.mutation.SetBreastSize(v)
-	return _c
-}
-
-// SetNillableBreastSize sets the "breast_size" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableBreastSize(v *string) *GamecharacterCreate {
-	if v != nil {
-		_c.SetBreastSize(*v)
-	}
 	return _c
 }
 
@@ -236,30 +199,20 @@ func (_c *GamecharacterCreate) SetNillableModelName(v *string) *GamecharacterCre
 }
 
 // SetUnit sets the "unit" field.
-func (_c *GamecharacterCreate) SetUnit(v string) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetUnit(v json.RawMessage) *GamecharacterCreate {
 	_c.mutation.SetUnit(v)
 	return _c
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableUnit(v *string) *GamecharacterCreate {
-	if v != nil {
-		_c.SetUnit(*v)
-	}
-	return _c
-}
-
 // SetSupportUnitType sets the "support_unit_type" field.
-func (_c *GamecharacterCreate) SetSupportUnitType(v string) *GamecharacterCreate {
+func (_c *GamecharacterCreate) SetSupportUnitType(v json.RawMessage) *GamecharacterCreate {
 	_c.mutation.SetSupportUnitType(v)
 	return _c
 }
 
-// SetNillableSupportUnitType sets the "support_unit_type" field if the given value is not nil.
-func (_c *GamecharacterCreate) SetNillableSupportUnitType(v *string) *GamecharacterCreate {
-	if v != nil {
-		_c.SetSupportUnitType(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *GamecharacterCreate) SetServerRegion(v string) *GamecharacterCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -297,6 +250,9 @@ func (_c *GamecharacterCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *GamecharacterCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Gamecharacter.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Gamecharacter.server_region"`)}
 	}
@@ -326,20 +282,16 @@ func (_c *GamecharacterCreate) createSpec() (*Gamecharacter, *sqlgraph.CreateSpe
 		_node = &Gamecharacter{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(gamecharacter.Table, sqlgraph.NewFieldSpec(gamecharacter.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ResourceID(); ok {
-		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt64, value)
+		_spec.SetField(gamecharacter.FieldResourceID, field.TypeInt, value)
 		_node.ResourceID = value
 	}
 	if value, ok := _c.mutation.FirstName(); ok {
@@ -367,7 +319,7 @@ func (_c *GamecharacterCreate) createSpec() (*Gamecharacter, *sqlgraph.CreateSpe
 		_node.GivenNameEnglish = value
 	}
 	if value, ok := _c.mutation.Gender(); ok {
-		_spec.SetField(gamecharacter.FieldGender, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldGender, field.TypeJSON, value)
 		_node.Gender = value
 	}
 	if value, ok := _c.mutation.Height(); ok {
@@ -379,11 +331,11 @@ func (_c *GamecharacterCreate) createSpec() (*Gamecharacter, *sqlgraph.CreateSpe
 		_node.Live2DHeightAdjustment = value
 	}
 	if value, ok := _c.mutation.Figure(); ok {
-		_spec.SetField(gamecharacter.FieldFigure, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldFigure, field.TypeJSON, value)
 		_node.Figure = value
 	}
 	if value, ok := _c.mutation.BreastSize(); ok {
-		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeJSON, value)
 		_node.BreastSize = value
 	}
 	if value, ok := _c.mutation.ModelName(); ok {
@@ -391,12 +343,16 @@ func (_c *GamecharacterCreate) createSpec() (*Gamecharacter, *sqlgraph.CreateSpe
 		_node.ModelName = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(gamecharacter.FieldUnit, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldUnit, field.TypeJSON, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.SupportUnitType(); ok {
-		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeString, value)
+		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeJSON, value)
 		_node.SupportUnitType = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

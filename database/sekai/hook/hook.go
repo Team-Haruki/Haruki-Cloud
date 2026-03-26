@@ -176,18 +176,6 @@ func (f Character2DFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.Character2DMutation", m)
 }
 
-// The CharacterarchivemysekaicharactertalkgroupFunc type is an adapter to allow the use of ordinary
-// function as Characterarchivemysekaicharactertalkgroup mutator.
-type CharacterarchivemysekaicharactertalkgroupFunc func(context.Context, *sekai.CharacterarchivemysekaicharactertalkgroupMutation) (sekai.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f CharacterarchivemysekaicharactertalkgroupFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
-	if mv, ok := m.(*sekai.CharacterarchivemysekaicharactertalkgroupMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CharacterarchivemysekaicharactertalkgroupMutation", m)
-}
-
 // The Charactermissionv2ParametergroupFunc type is an adapter to allow the use of ordinary
 // function as Charactermissionv2Parametergroup mutator.
 type Charactermissionv2ParametergroupFunc func(context.Context, *sekai.Charactermissionv2ParametergroupMutation) (sekai.Value, error)
@@ -596,18 +584,6 @@ func (f MysekaicharactertalkfixturecommonFunc) Mutate(ctx context.Context, m sek
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaicharactertalkfixturecommonMutation", m)
 }
 
-// The MysekaicharactertalkfixturecommonmysekaifixturegroupFunc type is an adapter to allow the use of ordinary
-// function as Mysekaicharactertalkfixturecommonmysekaifixturegroup mutator.
-type MysekaicharactertalkfixturecommonmysekaifixturegroupFunc func(context.Context, *sekai.MysekaicharactertalkfixturecommonmysekaifixturegroupMutation) (sekai.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f MysekaicharactertalkfixturecommonmysekaifixturegroupFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
-	if mv, ok := m.(*sekai.MysekaicharactertalkfixturecommonmysekaifixturegroupMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaicharactertalkfixturecommonmysekaifixturegroupMutation", m)
-}
-
 // The MysekaifixtureFunc type is an adapter to allow the use of ordinary
 // function as Mysekaifixture mutator.
 type MysekaifixtureFunc func(context.Context, *sekai.MysekaifixtureMutation) (sekai.Value, error)
@@ -630,18 +606,6 @@ func (f MysekaifixturegamecharactergroupFunc) Mutate(ctx context.Context, m seka
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaifixturegamecharactergroupMutation", m)
-}
-
-// The MysekaifixturegamecharactergroupperformancebonuseFunc type is an adapter to allow the use of ordinary
-// function as Mysekaifixturegamecharactergroupperformancebonuse mutator.
-type MysekaifixturegamecharactergroupperformancebonuseFunc func(context.Context, *sekai.MysekaifixturegamecharactergroupperformancebonuseMutation) (sekai.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f MysekaifixturegamecharactergroupperformancebonuseFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
-	if mv, ok := m.(*sekai.MysekaifixturegamecharactergroupperformancebonuseMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaifixturegamecharactergroupperformancebonuseMutation", m)
 }
 
 // The MysekaifixturemaingenreFunc type is an adapter to allow the use of ordinary
@@ -990,18 +954,6 @@ func (f WorldbloomsupportdeckbonuseFunc) Mutate(ctx context.Context, m sekai.Mut
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.WorldbloomsupportdeckbonuseMutation", m)
-}
-
-// The WorldbloomsupportdeckuniteventlimitedbonuseFunc type is an adapter to allow the use of ordinary
-// function as Worldbloomsupportdeckuniteventlimitedbonuse mutator.
-type WorldbloomsupportdeckuniteventlimitedbonuseFunc func(context.Context, *sekai.WorldbloomsupportdeckuniteventlimitedbonuseMutation) (sekai.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f WorldbloomsupportdeckuniteventlimitedbonuseFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
-	if mv, ok := m.(*sekai.WorldbloomsupportdeckuniteventlimitedbonuseMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.WorldbloomsupportdeckuniteventlimitedbonuseMutation", m)
 }
 
 // Condition is a hook condition function.

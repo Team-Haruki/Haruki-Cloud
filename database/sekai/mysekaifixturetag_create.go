@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturetag"
@@ -19,23 +20,9 @@ type MysekaifixturetagCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaifixturetagCreate) SetServerRegion(v string) *MysekaifixturetagCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturetagCreate) SetGameID(v int64) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetGameID(v int) *MysekaifixturetagCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaifixturetagCreate) SetNillableGameID(v *int64) *MysekaifixturetagCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -68,22 +55,28 @@ func (_c *MysekaifixturetagCreate) SetNillablePronunciation(v *string) *Mysekaif
 }
 
 // SetMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field.
-func (_c *MysekaifixturetagCreate) SetMysekaiFixtureTagType(v map[string]interface{}) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagCreate {
 	_c.mutation.SetMysekaiFixtureTagType(v)
 	return _c
 }
 
 // SetExternalID sets the "external_id" field.
-func (_c *MysekaifixturetagCreate) SetExternalID(v int64) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetExternalID(v int) *MysekaifixturetagCreate {
 	_c.mutation.SetExternalID(v)
 	return _c
 }
 
 // SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_c *MysekaifixturetagCreate) SetNillableExternalID(v *int64) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetNillableExternalID(v *int) *MysekaifixturetagCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaifixturetagCreate) SetServerRegion(v string) *MysekaifixturetagCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -121,6 +114,9 @@ func (_c *MysekaifixturetagCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturetagCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturetag.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturetag.server_region"`)}
 	}
@@ -150,12 +146,8 @@ func (_c *MysekaifixturetagCreate) createSpec() (*Mysekaifixturetag, *sqlgraph.C
 		_node = &Mysekaifixturetag{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturetag.Table, sqlgraph.NewFieldSpec(mysekaifixturetag.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturetag.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturetag.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -171,8 +163,12 @@ func (_c *MysekaifixturetagCreate) createSpec() (*Mysekaifixturetag, *sqlgraph.C
 		_node.MysekaiFixtureTagType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt, value)
 		_node.ExternalID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturetag.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

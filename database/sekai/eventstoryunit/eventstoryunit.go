@@ -11,8 +11,6 @@ const (
 	Label = "eventstoryunit"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -23,6 +21,8 @@ const (
 	FieldUnit = "unit"
 	// FieldEventStoryUnitRelation holds the string denoting the event_story_unit_relation field in the database.
 	FieldEventStoryUnitRelation = "event_story_unit_relation"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the eventstoryunit in the database.
 	Table = "eventstoryunits"
 )
@@ -30,12 +30,12 @@ const (
 // Columns holds all SQL columns for eventstoryunit fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldEventStoryID,
 	FieldUnit,
 	FieldEventStoryUnitRelation,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -56,11 +56,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -76,12 +71,7 @@ func ByEventStoryID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEventStoryID, opts...).ToFunc()
 }
 
-// ByUnit orders the results by the unit field.
-func ByUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnit, opts...).ToFunc()
-}
-
-// ByEventStoryUnitRelation orders the results by the event_story_unit_relation field.
-func ByEventStoryUnitRelation(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEventStoryUnitRelation, opts...).ToFunc()
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

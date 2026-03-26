@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
@@ -19,23 +20,9 @@ type AreaCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *AreaCreate) SetServerRegion(v string) *AreaCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *AreaCreate) SetGameID(v int64) *AreaCreate {
+func (_c *AreaCreate) SetGameID(v int) *AreaCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableGameID(v *int64) *AreaCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -54,13 +41,13 @@ func (_c *AreaCreate) SetNillableAssetbundleName(v *string) *AreaCreate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *AreaCreate) SetGroupID(v int64) *AreaCreate {
+func (_c *AreaCreate) SetGroupID(v int) *AreaCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableGroupID(v *int64) *AreaCreate {
+func (_c *AreaCreate) SetNillableGroupID(v *int) *AreaCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -82,58 +69,26 @@ func (_c *AreaCreate) SetNillableIsBaseArea(v *bool) *AreaCreate {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_c *AreaCreate) SetAreaType(v string) *AreaCreate {
+func (_c *AreaCreate) SetAreaType(v json.RawMessage) *AreaCreate {
 	_c.mutation.SetAreaType(v)
 	return _c
 }
 
-// SetNillableAreaType sets the "area_type" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableAreaType(v *string) *AreaCreate {
-	if v != nil {
-		_c.SetAreaType(*v)
-	}
-	return _c
-}
-
 // SetViewType sets the "view_type" field.
-func (_c *AreaCreate) SetViewType(v string) *AreaCreate {
+func (_c *AreaCreate) SetViewType(v json.RawMessage) *AreaCreate {
 	_c.mutation.SetViewType(v)
 	return _c
 }
 
-// SetNillableViewType sets the "view_type" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableViewType(v *string) *AreaCreate {
-	if v != nil {
-		_c.SetViewType(*v)
-	}
-	return _c
-}
-
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_c *AreaCreate) SetDisplayTimelineType(v string) *AreaCreate {
+func (_c *AreaCreate) SetDisplayTimelineType(v json.RawMessage) *AreaCreate {
 	_c.mutation.SetDisplayTimelineType(v)
 	return _c
 }
 
-// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableDisplayTimelineType(v *string) *AreaCreate {
-	if v != nil {
-		_c.SetDisplayTimelineType(*v)
-	}
-	return _c
-}
-
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_c *AreaCreate) SetAdditionalAreaType(v string) *AreaCreate {
+func (_c *AreaCreate) SetAdditionalAreaType(v json.RawMessage) *AreaCreate {
 	_c.mutation.SetAdditionalAreaType(v)
-	return _c
-}
-
-// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableAdditionalAreaType(v *string) *AreaCreate {
-	if v != nil {
-		_c.SetAdditionalAreaType(*v)
-	}
 	return _c
 }
 
@@ -152,13 +107,13 @@ func (_c *AreaCreate) SetNillableName(v *string) *AreaCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *AreaCreate) SetReleaseConditionID(v int64) *AreaCreate {
+func (_c *AreaCreate) SetReleaseConditionID(v int) *AreaCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableReleaseConditionID(v *int64) *AreaCreate {
+func (_c *AreaCreate) SetNillableReleaseConditionID(v *int) *AreaCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -194,13 +149,13 @@ func (_c *AreaCreate) SetNillableLabel(v *string) *AreaCreate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *AreaCreate) SetStartAt(v int64) *AreaCreate {
+func (_c *AreaCreate) SetStartAt(v int) *AreaCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableStartAt(v *int64) *AreaCreate {
+func (_c *AreaCreate) SetNillableStartAt(v *int) *AreaCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -208,13 +163,13 @@ func (_c *AreaCreate) SetNillableStartAt(v *int64) *AreaCreate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *AreaCreate) SetEndAt(v int64) *AreaCreate {
+func (_c *AreaCreate) SetEndAt(v int) *AreaCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableEndAt(v *int64) *AreaCreate {
+func (_c *AreaCreate) SetNillableEndAt(v *int) *AreaCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -222,16 +177,22 @@ func (_c *AreaCreate) SetNillableEndAt(v *int64) *AreaCreate {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_c *AreaCreate) SetReleaseConditionId2(v int64) *AreaCreate {
+func (_c *AreaCreate) SetReleaseConditionId2(v int) *AreaCreate {
 	_c.mutation.SetReleaseConditionId2(v)
 	return _c
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_c *AreaCreate) SetNillableReleaseConditionId2(v *int64) *AreaCreate {
+func (_c *AreaCreate) SetNillableReleaseConditionId2(v *int) *AreaCreate {
 	if v != nil {
 		_c.SetReleaseConditionId2(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *AreaCreate) SetServerRegion(v string) *AreaCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -269,6 +230,9 @@ func (_c *AreaCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AreaCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Area.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Area.server_region"`)}
 	}
@@ -298,12 +262,8 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node = &Area{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(area.Table, sqlgraph.NewFieldSpec(area.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -311,7 +271,7 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.IsBaseArea(); ok {
@@ -319,19 +279,19 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.IsBaseArea = value
 	}
 	if value, ok := _c.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
 		_node.AreaType = value
 	}
 	if value, ok := _c.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeString, value)
+		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
 		_node.ViewType = value
 	}
 	if value, ok := _c.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
 		_node.DisplayTimelineType = value
 	}
 	if value, ok := _c.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
 		_node.AdditionalAreaType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -339,7 +299,7 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.SubName(); ok {
@@ -351,16 +311,20 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.Label = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
 		_node.ReleaseConditionId2 = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

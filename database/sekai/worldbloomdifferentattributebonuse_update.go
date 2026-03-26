@@ -27,29 +27,15 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) Where(ps ...predicate.Worldb
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetServerRegion(v string) *WorldbloomdifferentattributebonuseUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableServerRegion(v *string) *WorldbloomdifferentattributebonuseUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetAttributeCount sets the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdate {
 	_u.mutation.ResetAttributeCount()
 	_u.mutation.SetAttributeCount(v)
 	return _u
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseUpdate {
 	if v != nil {
 		_u.SetAttributeCount(*v)
 	}
@@ -57,7 +43,7 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableAttributeCount(v 
 }
 
 // AddAttributeCount adds value to the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdate) AddAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdate {
+func (_u *WorldbloomdifferentattributebonuseUpdate) AddAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdate {
 	_u.mutation.AddAttributeCount(v)
 	return _u
 }
@@ -92,6 +78,20 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) AddBonusRate(v float64) *Wor
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *WorldbloomdifferentattributebonuseUpdate) ClearBonusRate() *WorldbloomdifferentattributebonuseUpdate {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetServerRegion(v string) *WorldbloomdifferentattributebonuseUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomdifferentattributebonuseUpdate) SetNillableServerRegion(v *string) *WorldbloomdifferentattributebonuseUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -136,17 +136,14 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) sqlSave(ctx context.Context)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAttributeCount(); ok {
-		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
+		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
 	}
 	if _u.mutation.AttributeCountCleared() {
-		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64)
+		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -156,6 +153,9 @@ func (_u *WorldbloomdifferentattributebonuseUpdate) sqlSave(ctx context.Context)
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -177,29 +177,15 @@ type WorldbloomdifferentattributebonuseUpdateOne struct {
 	mutation *WorldbloomdifferentattributebonuseMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetServerRegion(v string) *WorldbloomdifferentattributebonuseUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableServerRegion(v *string) *WorldbloomdifferentattributebonuseUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetAttributeCount sets the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdateOne {
 	_u.mutation.ResetAttributeCount()
 	_u.mutation.SetAttributeCount(v)
 	return _u
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseUpdateOne {
 	if v != nil {
 		_u.SetAttributeCount(*v)
 	}
@@ -207,7 +193,7 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableAttributeCount
 }
 
 // AddAttributeCount adds value to the "attribute_count" field.
-func (_u *WorldbloomdifferentattributebonuseUpdateOne) AddAttributeCount(v int64) *WorldbloomdifferentattributebonuseUpdateOne {
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) AddAttributeCount(v int) *WorldbloomdifferentattributebonuseUpdateOne {
 	_u.mutation.AddAttributeCount(v)
 	return _u
 }
@@ -242,6 +228,20 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) AddBonusRate(v float64) *
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *WorldbloomdifferentattributebonuseUpdateOne) ClearBonusRate() *WorldbloomdifferentattributebonuseUpdateOne {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetServerRegion(v string) *WorldbloomdifferentattributebonuseUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomdifferentattributebonuseUpdateOne) SetNillableServerRegion(v *string) *WorldbloomdifferentattributebonuseUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -316,17 +316,14 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) sqlSave(ctx context.Conte
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAttributeCount(); ok {
-		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
+		_spec.AddField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
 	}
 	if _u.mutation.AttributeCountCleared() {
-		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64)
+		_spec.ClearField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -336,6 +333,9 @@ func (_u *WorldbloomdifferentattributebonuseUpdateOne) sqlSave(ctx context.Conte
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Worldbloomdifferentattributebonuse{config: _u.config}
 	_spec.Assign = _node.assignValues

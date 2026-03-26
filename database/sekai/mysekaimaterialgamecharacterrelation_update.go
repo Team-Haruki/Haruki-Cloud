@@ -27,29 +27,15 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) Where(ps ...predicate.Myse
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableServerRegion(v *string) *MysekaimaterialgamecharacterrelationUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGameID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGameID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameID(v *int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameID(v *int) *MysekaimaterialgamecharacterrelationUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameID(v *int64
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) ClearGameID() *MysekaimaterialgamecharacterrelationUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGroupID sets the "group_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGroupID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGroupID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGroupID(v *int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGroupID(v *int) *MysekaimaterialgamecharacterrelationUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGroupID(v *int6
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGroupID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGroupID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) ClearGroupID() *Mysekaimat
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetMysekaiMaterialID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetMysekaiMaterialID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableMysekaiMaterialID(v *int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableMysekaiMaterialID(v *int) *MysekaimaterialgamecharacterrelationUpdate {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableMysekaiMaterial
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) AddMysekaiMaterialID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) AddMysekaiMaterialID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -123,14 +103,14 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) ClearMysekaiMaterialID() *
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGameCharacterID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetGameCharacterID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameCharacterID(v *int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameCharacterID(v *int) *MysekaimaterialgamecharacterrelationUpdate {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -138,7 +118,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableGameCharacterID
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameCharacterID(v int64) *MysekaimaterialgamecharacterrelationUpdate {
+func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameCharacterID(v int) *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -146,6 +126,20 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) AddGameCharacterID(v int64
 // ClearGameCharacterID clears the value of the "game_character_id" field.
 func (_u *MysekaimaterialgamecharacterrelationUpdate) ClearGameCharacterID() *MysekaimaterialgamecharacterrelationUpdate {
 	_u.mutation.ClearGameCharacterID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaimaterialgamecharacterrelationUpdate) SetNillableServerRegion(v *string) *MysekaimaterialgamecharacterrelationUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -190,44 +184,41 @@ func (_u *MysekaimaterialgamecharacterrelationUpdate) sqlSave(ctx context.Contex
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -249,29 +240,15 @@ type MysekaimaterialgamecharacterrelationUpdateOne struct {
 	mutation *MysekaimaterialgamecharacterrelationMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableServerRegion(v *string) *MysekaimaterialgamecharacterrelationUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGameID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGameID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameID(v *int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameID(v *int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -279,26 +256,20 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameID(v *in
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) ClearGameID() *MysekaimaterialgamecharacterrelationUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGroupID sets the "group_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGroupID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGroupID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGroupID(v *int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGroupID(v *int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -306,7 +277,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGroupID(v *i
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGroupID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGroupID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -318,14 +289,14 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) ClearGroupID() *Mysekai
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetMysekaiMaterialID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetMysekaiMaterialID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableMysekaiMaterialID(v *int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableMysekaiMaterialID(v *int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -333,7 +304,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableMysekaiMater
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddMysekaiMaterialID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddMysekaiMaterialID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -345,14 +316,14 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) ClearMysekaiMaterialID(
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGameCharacterID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetGameCharacterID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameCharacterID(v *int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameCharacterID(v *int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -360,7 +331,7 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableGameCharacte
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameCharacterID(v int64) *MysekaimaterialgamecharacterrelationUpdateOne {
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameCharacterID(v int) *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -368,6 +339,20 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) AddGameCharacterID(v in
 // ClearGameCharacterID clears the value of the "game_character_id" field.
 func (_u *MysekaimaterialgamecharacterrelationUpdateOne) ClearGameCharacterID() *MysekaimaterialgamecharacterrelationUpdateOne {
 	_u.mutation.ClearGameCharacterID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaimaterialgamecharacterrelationUpdateOne) SetNillableServerRegion(v *string) *MysekaimaterialgamecharacterrelationUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -442,44 +427,41 @@ func (_u *MysekaimaterialgamecharacterrelationUpdateOne) sqlSave(ctx context.Con
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaimaterialgamecharacterrelation{config: _u.config}
 	_spec.Assign = _node.assignValues

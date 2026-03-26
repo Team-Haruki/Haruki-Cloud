@@ -262,12 +262,12 @@ func (_q *MysekaicharactertalkconditionQuery) Clone() *Mysekaicharactertalkcondi
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaicharactertalkcondition.Query().
-//		GroupBy(mysekaicharactertalkcondition.FieldServerRegion).
+//		GroupBy(mysekaicharactertalkcondition.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaicharactertalkconditionQuery) GroupBy(field string, fields ...string) *MysekaicharactertalkconditionGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaicharactertalkconditionQuery) GroupBy(field string, fields ...st
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaicharactertalkcondition.Query().
-//		Select(mysekaicharactertalkcondition.FieldServerRegion).
+//		Select(mysekaicharactertalkcondition.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaicharactertalkconditionQuery) Select(fields ...string) *MysekaicharactertalkconditionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -262,12 +262,12 @@ func (_q *VirtualliveQuery) Clone() *VirtualliveQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Virtuallive.Query().
-//		GroupBy(virtuallive.FieldServerRegion).
+//		GroupBy(virtuallive.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *VirtualliveQuery) GroupBy(field string, fields ...string) *VirtualliveGroupBy {
@@ -285,11 +285,11 @@ func (_q *VirtualliveQuery) GroupBy(field string, fields ...string) *Virtuallive
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Virtuallive.Query().
-//		Select(virtuallive.FieldServerRegion).
+//		Select(virtuallive.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *VirtualliveQuery) Select(fields ...string) *VirtualliveSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

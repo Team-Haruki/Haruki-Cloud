@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
@@ -19,23 +20,9 @@ type MysekaifixturemaingenreCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaifixturemaingenreCreate) SetServerRegion(v string) *MysekaifixturemaingenreCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturemaingenreCreate) SetGameID(v int64) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetGameID(v int) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaifixturemaingenreCreate) SetNillableGameID(v *int64) *MysekaifixturemaingenreCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -54,7 +41,7 @@ func (_c *MysekaifixturemaingenreCreate) SetNillableName(v *string) *Mysekaifixt
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_c *MysekaifixturemaingenreCreate) SetMysekaiFixtureMainGenreType(v map[string]interface{}) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetMysekaiFixtureMainGenreType(v)
 	return _c
 }
@@ -74,16 +61,22 @@ func (_c *MysekaifixturemaingenreCreate) SetNillableAssetbundleName(v *string) *
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaifixturemaingenreCreate) SetGroupID(v int64) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetGroupID(v int) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaifixturemaingenreCreate) SetNillableGroupID(v *int64) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetNillableGroupID(v *int) *MysekaifixturemaingenreCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaifixturemaingenreCreate) SetServerRegion(v string) *MysekaifixturemaingenreCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -121,6 +114,9 @@ func (_c *MysekaifixturemaingenreCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturemaingenreCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturemaingenre.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturemaingenre.server_region"`)}
 	}
@@ -150,12 +146,8 @@ func (_c *MysekaifixturemaingenreCreate) createSpec() (*Mysekaifixturemaingenre,
 		_node = &Mysekaifixturemaingenre{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturemaingenre.Table, sqlgraph.NewFieldSpec(mysekaifixturemaingenre.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -171,8 +163,12 @@ func (_c *MysekaifixturemaingenreCreate) createSpec() (*Mysekaifixturemaingenre,
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

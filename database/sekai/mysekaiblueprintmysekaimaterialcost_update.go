@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprintmysekaimaterialcost"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) Where(ps ...predicate.Mysek
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableServerRegion(v *string) *MysekaiblueprintmysekaimaterialcostUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetGameID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetGameID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableGameID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableGameID(v *int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableGameID(v *int64)
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddGameID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddGameID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearGameID() *MysekaiblueprintmysekaimaterialcostUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetMysekaiBlueprintID()
 	_u.mutation.SetMysekaiBlueprintID(v)
 	return _u
 }
 
 // SetNillableMysekaiBlueprintID sets the "mysekai_blueprint_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiBlueprintID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiBlueprintID(v *int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	if v != nil {
 		_u.SetMysekaiBlueprintID(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiBlueprint
 }
 
 // AddMysekaiBlueprintID adds value to the "mysekai_blueprint_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddMysekaiBlueprintID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.AddMysekaiBlueprintID(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearMysekaiBlueprintID() *
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiMaterialID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiMaterialID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiMaterialID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiMaterialID(v *int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiMaterialI
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddMysekaiMaterialID(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddMysekaiMaterialID(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -123,14 +105,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearMysekaiMaterialID() *M
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetSeq(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetSeq(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableSeq(v *int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableSeq(v *int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -138,7 +120,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableSeq(v *int64) *M
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddSeq(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddSeq(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -150,14 +132,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearSeq() *Mysekaiblueprin
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetQuantity(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetQuantity(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableQuantity(v *int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableQuantity(v *int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -165,7 +147,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableQuantity(v *int6
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddQuantity(v int64) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AddQuantity(v int) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -177,14 +159,34 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearQuantity() *Mysekaiblu
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintType(v map[string]interface{}) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.SetMysekaiBlueprintType(v)
+	return _u
+}
+
+// AppendMysekaiBlueprintType appends value to the "mysekai_blueprint_type" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AppendMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdate {
+	_u.mutation.AppendMysekaiBlueprintType(v)
 	return _u
 }
 
 // ClearMysekaiBlueprintType clears the value of the "mysekai_blueprint_type" field.
 func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearMysekaiBlueprintType() *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.ClearMysekaiBlueprintType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableServerRegion(v *string) *MysekaiblueprintmysekaimaterialcostUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -229,59 +231,61 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) sqlSave(ctx context.Context
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiBlueprintID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiBlueprintIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintType(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedMysekaiBlueprintType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, value)
+		})
+	}
 	if _u.mutation.MysekaiBlueprintTypeCleared() {
 		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -303,29 +307,15 @@ type MysekaiblueprintmysekaimaterialcostUpdateOne struct {
 	mutation *MysekaiblueprintmysekaimaterialcostMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableServerRegion(v *string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetGameID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetGameID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableGameID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableGameID(v *int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -333,26 +323,20 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableGameID(v *int
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddGameID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddGameID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearGameID() *MysekaiblueprintmysekaimaterialcostUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMysekaiBlueprintID sets the "mysekai_blueprint_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ResetMysekaiBlueprintID()
 	_u.mutation.SetMysekaiBlueprintID(v)
 	return _u
 }
 
 // SetNillableMysekaiBlueprintID sets the "mysekai_blueprint_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiBlueprintID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiBlueprintID(v *int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	if v != nil {
 		_u.SetMysekaiBlueprintID(*v)
 	}
@@ -360,7 +344,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiBluepr
 }
 
 // AddMysekaiBlueprintID adds value to the "mysekai_blueprint_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddMysekaiBlueprintID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddMysekaiBlueprintID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddMysekaiBlueprintID(v)
 	return _u
 }
@@ -372,14 +356,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearMysekaiBlueprintID(
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiMaterialID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiMaterialID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ResetMysekaiMaterialID()
 	_u.mutation.SetMysekaiMaterialID(v)
 	return _u
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiMaterialID(v *int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiMaterialID(v *int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	if v != nil {
 		_u.SetMysekaiMaterialID(*v)
 	}
@@ -387,7 +371,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiMateri
 }
 
 // AddMysekaiMaterialID adds value to the "mysekai_material_id" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddMysekaiMaterialID(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddMysekaiMaterialID(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddMysekaiMaterialID(v)
 	return _u
 }
@@ -399,14 +383,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearMysekaiMaterialID()
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetSeq(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetSeq(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableSeq(v *int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableSeq(v *int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -414,7 +398,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableSeq(v *int64)
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddSeq(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddSeq(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -426,14 +410,14 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearSeq() *Mysekaibluep
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetQuantity(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetQuantity(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableQuantity(v *int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableQuantity(v *int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -441,7 +425,7 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableQuantity(v *i
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddQuantity(v int64) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AddQuantity(v int) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -453,14 +437,34 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearQuantity() *Mysekai
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintType(v map[string]interface{}) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.SetMysekaiBlueprintType(v)
+	return _u
+}
+
+// AppendMysekaiBlueprintType appends value to the "mysekai_blueprint_type" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AppendMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+	_u.mutation.AppendMysekaiBlueprintType(v)
 	return _u
 }
 
 // ClearMysekaiBlueprintType clears the value of the "mysekai_blueprint_type" field.
 func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearMysekaiBlueprintType() *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.ClearMysekaiBlueprintType()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetServerRegion(v string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableServerRegion(v *string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -535,59 +539,61 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) sqlSave(ctx context.Cont
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiBlueprintID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiBlueprintIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMysekaiMaterialID(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt, value)
 	}
 	if _u.mutation.MysekaiMaterialIDCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintType(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedMysekaiBlueprintType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, value)
+		})
+	}
 	if _u.mutation.MysekaiBlueprintTypeCleared() {
 		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaiblueprintmysekaimaterialcost{config: _u.config}
 	_spec.Assign = _node.assignValues

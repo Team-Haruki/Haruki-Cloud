@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/virtuallive"
@@ -19,62 +20,32 @@ type VirtualliveCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *VirtualliveCreate) SetServerRegion(v string) *VirtualliveCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *VirtualliveCreate) SetGameID(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetGameID(v int) *VirtualliveCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableGameID(v *int64) *VirtualliveCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_c *VirtualliveCreate) SetVirtualLiveType(v string) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveType(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveType(v)
 	return _c
 }
 
-// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableVirtualLiveType(v *string) *VirtualliveCreate {
-	if v != nil {
-		_c.SetVirtualLiveType(*v)
-	}
-	return _c
-}
-
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_c *VirtualliveCreate) SetVirtualLivePlatform(v string) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLivePlatform(v)
 	return _c
 }
 
-// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableVirtualLivePlatform(v *string) *VirtualliveCreate {
-	if v != nil {
-		_c.SetVirtualLivePlatform(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *VirtualliveCreate) SetSeq(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetSeq(v int) *VirtualliveCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableSeq(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableSeq(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -110,13 +81,13 @@ func (_c *VirtualliveCreate) SetNillableAssetbundleName(v *string) *VirtualliveC
 }
 
 // SetScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field.
-func (_c *VirtualliveCreate) SetScreenMvMusicVocalID(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetScreenMvMusicVocalID(v int) *VirtualliveCreate {
 	_c.mutation.SetScreenMvMusicVocalID(v)
 	return _c
 }
 
 // SetNillableScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableScreenMvMusicVocalID(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableScreenMvMusicVocalID(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetScreenMvMusicVocalID(*v)
 	}
@@ -124,13 +95,13 @@ func (_c *VirtualliveCreate) SetNillableScreenMvMusicVocalID(v *int64) *Virtuall
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *VirtualliveCreate) SetStartAt(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetStartAt(v int) *VirtualliveCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableStartAt(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableStartAt(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -138,13 +109,13 @@ func (_c *VirtualliveCreate) SetNillableStartAt(v *int64) *VirtualliveCreate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *VirtualliveCreate) SetEndAt(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetEndAt(v int) *VirtualliveCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableEndAt(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableEndAt(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -152,13 +123,13 @@ func (_c *VirtualliveCreate) SetNillableEndAt(v *int64) *VirtualliveCreate {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (_c *VirtualliveCreate) SetRankingAnnounceAt(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetRankingAnnounceAt(v int) *VirtualliveCreate {
 	_c.mutation.SetRankingAnnounceAt(v)
 	return _c
 }
 
 // SetNillableRankingAnnounceAt sets the "ranking_announce_at" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableRankingAnnounceAt(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableRankingAnnounceAt(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetRankingAnnounceAt(*v)
 	}
@@ -166,79 +137,79 @@ func (_c *VirtualliveCreate) SetNillableRankingAnnounceAt(v *int64) *Virtuallive
 }
 
 // SetVirtualLiveSetlists sets the "virtual_live_setlists" field.
-func (_c *VirtualliveCreate) SetVirtualLiveSetlists(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveSetlists(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveSetlists(v)
 	return _c
 }
 
 // SetVirtualLiveBeginnerSchedules sets the "virtual_live_beginner_schedules" field.
-func (_c *VirtualliveCreate) SetVirtualLiveBeginnerSchedules(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveBeginnerSchedules(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveBeginnerSchedules(v)
 	return _c
 }
 
 // SetVirtualLiveSchedules sets the "virtual_live_schedules" field.
-func (_c *VirtualliveCreate) SetVirtualLiveSchedules(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveSchedules(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveSchedules(v)
 	return _c
 }
 
 // SetVirtualLiveCharacters sets the "virtual_live_characters" field.
-func (_c *VirtualliveCreate) SetVirtualLiveCharacters(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveCharacters(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveCharacters(v)
 	return _c
 }
 
 // SetVirtualLiveRewards sets the "virtual_live_rewards" field.
-func (_c *VirtualliveCreate) SetVirtualLiveRewards(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveRewards(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveRewards(v)
 	return _c
 }
 
 // SetVirtualLiveCheerPointRewards sets the "virtual_live_cheer_point_rewards" field.
-func (_c *VirtualliveCreate) SetVirtualLiveCheerPointRewards(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveCheerPointRewards(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveCheerPointRewards(v)
 	return _c
 }
 
 // SetVirtualLiveWaitingRoom sets the "virtual_live_waiting_room" field.
-func (_c *VirtualliveCreate) SetVirtualLiveWaitingRoom(v map[string]interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveWaitingRoom(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveWaitingRoom(v)
 	return _c
 }
 
 // SetVirtualItems sets the "virtual_items" field.
-func (_c *VirtualliveCreate) SetVirtualItems(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualItems(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualItems(v)
 	return _c
 }
 
 // SetVirtualLiveAppeals sets the "virtual_live_appeals" field.
-func (_c *VirtualliveCreate) SetVirtualLiveAppeals(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveAppeals(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveAppeals(v)
 	return _c
 }
 
 // SetVirtualLiveBackgroundMusics sets the "virtual_live_background_musics" field.
-func (_c *VirtualliveCreate) SetVirtualLiveBackgroundMusics(v []interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveBackgroundMusics(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveBackgroundMusics(v)
 	return _c
 }
 
 // SetVirtualLiveInformation sets the "virtual_live_information" field.
-func (_c *VirtualliveCreate) SetVirtualLiveInformation(v map[string]interface{}) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveInformation(v json.RawMessage) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveInformation(v)
 	return _c
 }
 
 // SetArchiveReleaseConditionID sets the "archive_release_condition_id" field.
-func (_c *VirtualliveCreate) SetArchiveReleaseConditionID(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetArchiveReleaseConditionID(v int) *VirtualliveCreate {
 	_c.mutation.SetArchiveReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableArchiveReleaseConditionID sets the "archive_release_condition_id" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableArchiveReleaseConditionID(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableArchiveReleaseConditionID(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetArchiveReleaseConditionID(*v)
 	}
@@ -246,13 +217,13 @@ func (_c *VirtualliveCreate) SetNillableArchiveReleaseConditionID(v *int64) *Vir
 }
 
 // SetSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field.
-func (_c *VirtualliveCreate) SetSubGameCharacterPenlightColorGroupID(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetSubGameCharacterPenlightColorGroupID(v int) *VirtualliveCreate {
 	_c.mutation.SetSubGameCharacterPenlightColorGroupID(v)
 	return _c
 }
 
 // SetNillableSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableSubGameCharacterPenlightColorGroupID(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableSubGameCharacterPenlightColorGroupID(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetSubGameCharacterPenlightColorGroupID(*v)
 	}
@@ -260,16 +231,22 @@ func (_c *VirtualliveCreate) SetNillableSubGameCharacterPenlightColorGroupID(v *
 }
 
 // SetVirtualLiveGroupID sets the "virtual_live_group_id" field.
-func (_c *VirtualliveCreate) SetVirtualLiveGroupID(v int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveGroupID(v int) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveGroupID(v)
 	return _c
 }
 
 // SetNillableVirtualLiveGroupID sets the "virtual_live_group_id" field if the given value is not nil.
-func (_c *VirtualliveCreate) SetNillableVirtualLiveGroupID(v *int64) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetNillableVirtualLiveGroupID(v *int) *VirtualliveCreate {
 	if v != nil {
 		_c.SetVirtualLiveGroupID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *VirtualliveCreate) SetServerRegion(v string) *VirtualliveCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -307,6 +284,9 @@ func (_c *VirtualliveCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *VirtualliveCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Virtuallive.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Virtuallive.server_region"`)}
 	}
@@ -336,24 +316,20 @@ func (_c *VirtualliveCreate) createSpec() (*Virtuallive, *sqlgraph.CreateSpec) {
 		_node = &Virtuallive{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(virtuallive.Table, sqlgraph.NewFieldSpec(virtuallive.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(virtuallive.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
 		_node.VirtualLiveType = value
 	}
 	if value, ok := _c.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
 		_node.VirtualLivePlatform = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(virtuallive.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -365,19 +341,19 @@ func (_c *VirtualliveCreate) createSpec() (*Virtuallive, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.ScreenMvMusicVocalID(); ok {
-		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt, value)
 		_node.ScreenMvMusicVocalID = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.RankingAnnounceAt(); ok {
-		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt, value)
 		_node.RankingAnnounceAt = value
 	}
 	if value, ok := _c.mutation.VirtualLiveSetlists(); ok {
@@ -425,16 +401,20 @@ func (_c *VirtualliveCreate) createSpec() (*Virtuallive, *sqlgraph.CreateSpec) {
 		_node.VirtualLiveInformation = value
 	}
 	if value, ok := _c.mutation.ArchiveReleaseConditionID(); ok {
-		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt, value)
 		_node.ArchiveReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.SubGameCharacterPenlightColorGroupID(); ok {
-		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt, value)
 		_node.SubGameCharacterPenlightColorGroupID = value
 	}
 	if value, ok := _c.mutation.VirtualLiveGroupID(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt, value)
 		_node.VirtualLiveGroupID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

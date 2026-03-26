@@ -16,16 +16,16 @@ type Bond struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// GroupID holds the value of the "group_id" field.
+	GroupID int `json:"group_id,omitempty"`
+	// CharacterId1 holds the value of the "character_id1" field.
+	CharacterId1 int `json:"character_id1,omitempty"`
+	// CharacterId2 holds the value of the "character_id2" field.
+	CharacterId2 int `json:"character_id2,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// GroupID holds the value of the "group_id" field.
-	GroupID int64 `json:"group_id,omitempty"`
-	// CharacterId1 holds the value of the "character_id1" field.
-	CharacterId1 int64 `json:"character_id1,omitempty"`
-	// CharacterId2 holds the value of the "character_id2" field.
-	CharacterId2 int64 `json:"character_id2,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -59,35 +59,35 @@ func (_m *Bond) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case bond.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case bond.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case bond.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = value.Int64
+				_m.GroupID = int(value.Int64)
 			}
 		case bond.FieldCharacterId1:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id1", values[i])
 			} else if value.Valid {
-				_m.CharacterId1 = value.Int64
+				_m.CharacterId1 = int(value.Int64)
 			}
 		case bond.FieldCharacterId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id2", values[i])
 			} else if value.Valid {
-				_m.CharacterId2 = value.Int64
+				_m.CharacterId2 = int(value.Int64)
+			}
+		case bond.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Bond) String() string {
 	var builder strings.Builder
 	builder.WriteString("Bond(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Bond) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("character_id2=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterId2))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

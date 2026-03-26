@@ -262,12 +262,12 @@ func (_q *SkillQuery) Clone() *SkillQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Skill.Query().
-//		GroupBy(skill.FieldServerRegion).
+//		GroupBy(skill.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *SkillQuery) GroupBy(field string, fields ...string) *SkillGroupBy {
@@ -285,11 +285,11 @@ func (_q *SkillQuery) GroupBy(field string, fields ...string) *SkillGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Skill.Query().
-//		Select(skill.FieldServerRegion).
+//		Select(skill.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *SkillQuery) Select(fields ...string) *SkillSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

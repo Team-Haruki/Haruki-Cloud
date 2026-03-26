@@ -262,12 +262,12 @@ func (_q *LevelQuery) Clone() *LevelQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Level.Query().
-//		GroupBy(level.FieldServerRegion).
+//		GroupBy(level.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *LevelQuery) GroupBy(field string, fields ...string) *LevelGroupBy {
@@ -285,11 +285,11 @@ func (_q *LevelQuery) GroupBy(field string, fields ...string) *LevelGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Level.Query().
-//		Select(level.FieldServerRegion).
+//		Select(level.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *LevelQuery) Select(fields ...string) *LevelSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

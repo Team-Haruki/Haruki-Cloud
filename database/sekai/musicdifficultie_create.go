@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -19,34 +20,20 @@ type MusicdifficultieCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MusicdifficultieCreate) SetServerRegion(v string) *MusicdifficultieCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MusicdifficultieCreate) SetGameID(v int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetGameID(v int) *MusicdifficultieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillableGameID(v *int64) *MusicdifficultieCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMusicID sets the "music_id" field.
-func (_c *MusicdifficultieCreate) SetMusicID(v int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetMusicID(v int) *MusicdifficultieCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillableMusicID(v *int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetNillableMusicID(v *int) *MusicdifficultieCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -54,27 +41,19 @@ func (_c *MusicdifficultieCreate) SetNillableMusicID(v *int64) *Musicdifficultie
 }
 
 // SetMusicDifficulty sets the "music_difficulty" field.
-func (_c *MusicdifficultieCreate) SetMusicDifficulty(v string) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetMusicDifficulty(v json.RawMessage) *MusicdifficultieCreate {
 	_c.mutation.SetMusicDifficulty(v)
 	return _c
 }
 
-// SetNillableMusicDifficulty sets the "music_difficulty" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillableMusicDifficulty(v *string) *MusicdifficultieCreate {
-	if v != nil {
-		_c.SetMusicDifficulty(*v)
-	}
-	return _c
-}
-
 // SetPlayLevel sets the "play_level" field.
-func (_c *MusicdifficultieCreate) SetPlayLevel(v int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetPlayLevel(v int) *MusicdifficultieCreate {
 	_c.mutation.SetPlayLevel(v)
 	return _c
 }
 
 // SetNillablePlayLevel sets the "play_level" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillablePlayLevel(v *int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetNillablePlayLevel(v *int) *MusicdifficultieCreate {
 	if v != nil {
 		_c.SetPlayLevel(*v)
 	}
@@ -82,13 +61,13 @@ func (_c *MusicdifficultieCreate) SetNillablePlayLevel(v *int64) *Musicdifficult
 }
 
 // SetTotalNoteCount sets the "total_note_count" field.
-func (_c *MusicdifficultieCreate) SetTotalNoteCount(v int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetTotalNoteCount(v int) *MusicdifficultieCreate {
 	_c.mutation.SetTotalNoteCount(v)
 	return _c
 }
 
 // SetNillableTotalNoteCount sets the "total_note_count" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillableTotalNoteCount(v *int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetNillableTotalNoteCount(v *int) *MusicdifficultieCreate {
 	if v != nil {
 		_c.SetTotalNoteCount(*v)
 	}
@@ -96,16 +75,22 @@ func (_c *MusicdifficultieCreate) SetNillableTotalNoteCount(v *int64) *Musicdiff
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *MusicdifficultieCreate) SetReleaseConditionID(v int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetReleaseConditionID(v int) *MusicdifficultieCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *MusicdifficultieCreate) SetNillableReleaseConditionID(v *int64) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetNillableReleaseConditionID(v *int) *MusicdifficultieCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MusicdifficultieCreate) SetServerRegion(v string) *MusicdifficultieCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -143,6 +128,9 @@ func (_c *MusicdifficultieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MusicdifficultieCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Musicdifficultie.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Musicdifficultie.server_region"`)}
 	}
@@ -172,33 +160,33 @@ func (_c *MusicdifficultieCreate) createSpec() (*Musicdifficultie, *sqlgraph.Cre
 		_node = &Musicdifficultie{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(musicdifficultie.Table, sqlgraph.NewFieldSpec(musicdifficultie.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(musicdifficultie.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musicdifficultie.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(musicdifficultie.FieldMusicID, field.TypeInt, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicDifficulty(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeString, value)
+		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
 		_node.MusicDifficulty = value
 	}
 	if value, ok := _c.mutation.PlayLevel(); ok {
-		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
+		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt, value)
 		_node.PlayLevel = value
 	}
 	if value, ok := _c.mutation.TotalNoteCount(); ok {
-		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt64, value)
+		_spec.SetField(musicdifficultie.FieldTotalNoteCount, field.TypeInt, value)
 		_node.TotalNoteCount = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(musicdifficultie.FieldReleaseConditionID, field.TypeInt, value)
 		_node.ReleaseConditionID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(musicdifficultie.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -17,12 +17,10 @@ type Mysekaifixture struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MysekaiFixtureType holds the value of the "mysekai_fixture_type" field.
-	MysekaiFixtureType map[string]interface{} `json:"mysekai_fixture_type,omitempty"`
+	MysekaiFixtureType json.RawMessage `json:"mysekai_fixture_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -30,48 +28,50 @@ type Mysekaifixture struct {
 	// FlavorText holds the value of the "flavor_text" field.
 	FlavorText string `json:"flavor_text,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// GridSize holds the value of the "grid_size" field.
-	GridSize map[string]interface{} `json:"grid_size,omitempty"`
+	GridSize json.RawMessage `json:"grid_size,omitempty"`
 	// MysekaiFixtureMainGenreID holds the value of the "mysekai_fixture_main_genre_id" field.
-	MysekaiFixtureMainGenreID int64 `json:"mysekai_fixture_main_genre_id,omitempty"`
+	MysekaiFixtureMainGenreID int `json:"mysekai_fixture_main_genre_id,omitempty"`
 	// MysekaiFixtureSubGenreID holds the value of the "mysekai_fixture_sub_genre_id" field.
-	MysekaiFixtureSubGenreID int64 `json:"mysekai_fixture_sub_genre_id,omitempty"`
+	MysekaiFixtureSubGenreID int `json:"mysekai_fixture_sub_genre_id,omitempty"`
 	// MysekaiFixtureHandleType holds the value of the "mysekai_fixture_handle_type" field.
-	MysekaiFixtureHandleType map[string]interface{} `json:"mysekai_fixture_handle_type,omitempty"`
+	MysekaiFixtureHandleType json.RawMessage `json:"mysekai_fixture_handle_type,omitempty"`
 	// MysekaiSettableSiteType holds the value of the "mysekai_settable_site_type" field.
-	MysekaiSettableSiteType map[string]interface{} `json:"mysekai_settable_site_type,omitempty"`
+	MysekaiSettableSiteType json.RawMessage `json:"mysekai_settable_site_type,omitempty"`
 	// MysekaiSettableLayoutType holds the value of the "mysekai_settable_layout_type" field.
-	MysekaiSettableLayoutType map[string]interface{} `json:"mysekai_settable_layout_type,omitempty"`
+	MysekaiSettableLayoutType json.RawMessage `json:"mysekai_settable_layout_type,omitempty"`
 	// MysekaiFixturePutType holds the value of the "mysekai_fixture_put_type" field.
-	MysekaiFixturePutType map[string]interface{} `json:"mysekai_fixture_put_type,omitempty"`
+	MysekaiFixturePutType json.RawMessage `json:"mysekai_fixture_put_type,omitempty"`
 	// MysekaiFixtureAnotherColors holds the value of the "mysekai_fixture_another_colors" field.
-	MysekaiFixtureAnotherColors []interface{} `json:"mysekai_fixture_another_colors,omitempty"`
+	MysekaiFixtureAnotherColors json.RawMessage `json:"mysekai_fixture_another_colors,omitempty"`
 	// MysekaiFixturePutSoundID holds the value of the "mysekai_fixture_put_sound_id" field.
-	MysekaiFixturePutSoundID int64 `json:"mysekai_fixture_put_sound_id,omitempty"`
+	MysekaiFixturePutSoundID int `json:"mysekai_fixture_put_sound_id,omitempty"`
 	// MysekaiFixtureFootstepID holds the value of the "mysekai_fixture_footstep_id" field.
-	MysekaiFixtureFootstepID int64 `json:"mysekai_fixture_footstep_id,omitempty"`
+	MysekaiFixtureFootstepID int `json:"mysekai_fixture_footstep_id,omitempty"`
 	// MysekaiFixtureTagGroup holds the value of the "mysekai_fixture_tag_group" field.
-	MysekaiFixtureTagGroup map[string]interface{} `json:"mysekai_fixture_tag_group,omitempty"`
+	MysekaiFixtureTagGroup json.RawMessage `json:"mysekai_fixture_tag_group,omitempty"`
 	// IsAssembled holds the value of the "is_assembled" field.
 	IsAssembled bool `json:"is_assembled,omitempty"`
 	// IsDisassembled holds the value of the "is_disassembled" field.
 	IsDisassembled bool `json:"is_disassembled,omitempty"`
 	// MysekaiFixturePlayerActionType holds the value of the "mysekai_fixture_player_action_type" field.
-	MysekaiFixturePlayerActionType map[string]interface{} `json:"mysekai_fixture_player_action_type,omitempty"`
+	MysekaiFixturePlayerActionType json.RawMessage `json:"mysekai_fixture_player_action_type,omitempty"`
 	// IsGameCharacterAction holds the value of the "is_game_character_action" field.
 	IsGameCharacterAction bool `json:"is_game_character_action,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// FirstPutCost holds the value of the "first_put_cost" field.
-	FirstPutCost int64 `json:"first_put_cost,omitempty"`
+	FirstPutCost int `json:"first_put_cost,omitempty"`
 	// SecondPutCost holds the value of the "second_put_cost" field.
-	SecondPutCost int64 `json:"second_put_cost,omitempty"`
+	SecondPutCost int `json:"second_put_cost,omitempty"`
 	// ColorCode holds the value of the "color_code" field.
 	ColorCode string `json:"color_code,omitempty"`
 	// MysekaiFixtureGameCharacterGroupPerformanceBonusID holds the value of the "mysekai_fixture_game_character_group_performance_bonus_id" field.
-	MysekaiFixtureGameCharacterGroupPerformanceBonusID int64 `json:"mysekai_fixture_game_character_group_performance_bonus_id,omitempty"`
-	selectValues                                       sql.SelectValues
+	MysekaiFixtureGameCharacterGroupPerformanceBonusID int `json:"mysekai_fixture_game_character_group_performance_bonus_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -85,7 +85,7 @@ func (*Mysekaifixture) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case mysekaifixture.FieldID, mysekaifixture.FieldGameID, mysekaifixture.FieldSeq, mysekaifixture.FieldMysekaiFixtureMainGenreID, mysekaifixture.FieldMysekaiFixtureSubGenreID, mysekaifixture.FieldMysekaiFixturePutSoundID, mysekaifixture.FieldMysekaiFixtureFootstepID, mysekaifixture.FieldFirstPutCost, mysekaifixture.FieldSecondPutCost, mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID:
 			values[i] = new(sql.NullInt64)
-		case mysekaifixture.FieldServerRegion, mysekaifixture.FieldName, mysekaifixture.FieldPronunciation, mysekaifixture.FieldFlavorText, mysekaifixture.FieldAssetbundleName, mysekaifixture.FieldColorCode:
+		case mysekaifixture.FieldName, mysekaifixture.FieldPronunciation, mysekaifixture.FieldFlavorText, mysekaifixture.FieldAssetbundleName, mysekaifixture.FieldColorCode, mysekaifixture.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -108,17 +108,11 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaifixture.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaifixture.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaifixture.FieldMysekaiFixtureType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -150,7 +144,7 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case mysekaifixture.FieldGridSize:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -164,13 +158,13 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_main_genre_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureMainGenreID = value.Int64
+				_m.MysekaiFixtureMainGenreID = int(value.Int64)
 			}
 		case mysekaifixture.FieldMysekaiFixtureSubGenreID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_sub_genre_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureSubGenreID = value.Int64
+				_m.MysekaiFixtureSubGenreID = int(value.Int64)
 			}
 		case mysekaifixture.FieldMysekaiFixtureHandleType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -216,13 +210,13 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_put_sound_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixturePutSoundID = value.Int64
+				_m.MysekaiFixturePutSoundID = int(value.Int64)
 			}
 		case mysekaifixture.FieldMysekaiFixtureFootstepID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_footstep_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureFootstepID = value.Int64
+				_m.MysekaiFixtureFootstepID = int(value.Int64)
 			}
 		case mysekaifixture.FieldMysekaiFixtureTagGroup:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -268,13 +262,13 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field first_put_cost", values[i])
 			} else if value.Valid {
-				_m.FirstPutCost = value.Int64
+				_m.FirstPutCost = int(value.Int64)
 			}
 		case mysekaifixture.FieldSecondPutCost:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field second_put_cost", values[i])
 			} else if value.Valid {
-				_m.SecondPutCost = value.Int64
+				_m.SecondPutCost = int(value.Int64)
 			}
 		case mysekaifixture.FieldColorCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -286,7 +280,13 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_game_character_group_performance_bonus_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiFixtureGameCharacterGroupPerformanceBonusID = value.Int64
+				_m.MysekaiFixtureGameCharacterGroupPerformanceBonusID = int(value.Int64)
+			}
+		case mysekaifixture.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -324,9 +324,6 @@ func (_m *Mysekaifixture) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaifixture(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -404,6 +401,9 @@ func (_m *Mysekaifixture) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_game_character_group_performance_bonus_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureGameCharacterGroupPerformanceBonusID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

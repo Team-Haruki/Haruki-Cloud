@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitemlevel"
@@ -19,20 +20,14 @@ type AreaitemlevelCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *AreaitemlevelCreate) SetServerRegion(v string) *AreaitemlevelCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetAreaItemID sets the "area_item_id" field.
-func (_c *AreaitemlevelCreate) SetAreaItemID(v int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetAreaItemID(v int) *AreaitemlevelCreate {
 	_c.mutation.SetAreaItemID(v)
 	return _c
 }
 
 // SetNillableAreaItemID sets the "area_item_id" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetAreaItemID(*v)
 	}
@@ -40,13 +35,13 @@ func (_c *AreaitemlevelCreate) SetNillableAreaItemID(v *int64) *AreaitemlevelCre
 }
 
 // SetLevel sets the "level" field.
-func (_c *AreaitemlevelCreate) SetLevel(v int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetLevel(v int) *AreaitemlevelCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableLevel(v *int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableLevel(v *int) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetLevel(*v)
 	}
@@ -54,41 +49,25 @@ func (_c *AreaitemlevelCreate) SetNillableLevel(v *int64) *AreaitemlevelCreate {
 }
 
 // SetTargetUnit sets the "target_unit" field.
-func (_c *AreaitemlevelCreate) SetTargetUnit(v string) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetUnit(v json.RawMessage) *AreaitemlevelCreate {
 	_c.mutation.SetTargetUnit(v)
 	return _c
 }
 
-// SetNillableTargetUnit sets the "target_unit" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableTargetUnit(v *string) *AreaitemlevelCreate {
-	if v != nil {
-		_c.SetTargetUnit(*v)
-	}
-	return _c
-}
-
 // SetTargetCardAttr sets the "target_card_attr" field.
-func (_c *AreaitemlevelCreate) SetTargetCardAttr(v string) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetCardAttr(v json.RawMessage) *AreaitemlevelCreate {
 	_c.mutation.SetTargetCardAttr(v)
 	return _c
 }
 
-// SetNillableTargetCardAttr sets the "target_card_attr" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableTargetCardAttr(v *string) *AreaitemlevelCreate {
-	if v != nil {
-		_c.SetTargetCardAttr(*v)
-	}
-	return _c
-}
-
 // SetTargetGameCharacterID sets the "target_game_character_id" field.
-func (_c *AreaitemlevelCreate) SetTargetGameCharacterID(v int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetGameCharacterID(v int) *AreaitemlevelCreate {
 	_c.mutation.SetTargetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableTargetGameCharacterID sets the "target_game_character_id" field if the given value is not nil.
-func (_c *AreaitemlevelCreate) SetNillableTargetGameCharacterID(v *int64) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetNillableTargetGameCharacterID(v *int) *AreaitemlevelCreate {
 	if v != nil {
 		_c.SetTargetGameCharacterID(*v)
 	}
@@ -193,6 +172,12 @@ func (_c *AreaitemlevelCreate) SetNillableSentence(v *string) *AreaitemlevelCrea
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *AreaitemlevelCreate) SetServerRegion(v string) *AreaitemlevelCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the AreaitemlevelMutation object of the builder.
 func (_c *AreaitemlevelCreate) Mutation() *AreaitemlevelMutation {
 	return _c.mutation
@@ -256,28 +241,24 @@ func (_c *AreaitemlevelCreate) createSpec() (*Areaitemlevel, *sqlgraph.CreateSpe
 		_node = &Areaitemlevel{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(areaitemlevel.Table, sqlgraph.NewFieldSpec(areaitemlevel.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(areaitemlevel.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.AreaItemID(); ok {
-		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt64, value)
+		_spec.SetField(areaitemlevel.FieldAreaItemID, field.TypeInt, value)
 		_node.AreaItemID = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(areaitemlevel.FieldLevel, field.TypeInt, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.TargetUnit(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeString, value)
+		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
 		_node.TargetUnit = value
 	}
 	if value, ok := _c.mutation.TargetCardAttr(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeString, value)
+		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON, value)
 		_node.TargetCardAttr = value
 	}
 	if value, ok := _c.mutation.TargetGameCharacterID(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt, value)
 		_node.TargetGameCharacterID = value
 	}
 	if value, ok := _c.mutation.Power1BonusRate(); ok {
@@ -307,6 +288,10 @@ func (_c *AreaitemlevelCreate) createSpec() (*Areaitemlevel, *sqlgraph.CreateSpe
 	if value, ok := _c.mutation.Sentence(); ok {
 		_spec.SetField(areaitemlevel.FieldSentence, field.TypeString, value)
 		_node.Sentence = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(areaitemlevel.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

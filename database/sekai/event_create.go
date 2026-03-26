@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/event"
@@ -19,37 +20,15 @@ type EventCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventCreate) SetServerRegion(v string) *EventCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventCreate) SetGameID(v int64) *EventCreate {
+func (_c *EventCreate) SetGameID(v int) *EventCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventCreate) SetNillableGameID(v *int64) *EventCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventType sets the "event_type" field.
-func (_c *EventCreate) SetEventType(v string) *EventCreate {
+func (_c *EventCreate) SetEventType(v json.RawMessage) *EventCreate {
 	_c.mutation.SetEventType(v)
-	return _c
-}
-
-// SetNillableEventType sets the "event_type" field if the given value is not nil.
-func (_c *EventCreate) SetNillableEventType(v *string) *EventCreate {
-	if v != nil {
-		_c.SetEventType(*v)
-	}
 	return _c
 }
 
@@ -96,13 +75,13 @@ func (_c *EventCreate) SetNillableBgmAssetbundleName(v *string) *EventCreate {
 }
 
 // SetEventOnlyComponentDisplayStartAt sets the "event_only_component_display_start_at" field.
-func (_c *EventCreate) SetEventOnlyComponentDisplayStartAt(v int64) *EventCreate {
+func (_c *EventCreate) SetEventOnlyComponentDisplayStartAt(v int) *EventCreate {
 	_c.mutation.SetEventOnlyComponentDisplayStartAt(v)
 	return _c
 }
 
 // SetNillableEventOnlyComponentDisplayStartAt sets the "event_only_component_display_start_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableEventOnlyComponentDisplayStartAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableEventOnlyComponentDisplayStartAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetEventOnlyComponentDisplayStartAt(*v)
 	}
@@ -110,13 +89,13 @@ func (_c *EventCreate) SetNillableEventOnlyComponentDisplayStartAt(v *int64) *Ev
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *EventCreate) SetStartAt(v int64) *EventCreate {
+func (_c *EventCreate) SetStartAt(v int) *EventCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableStartAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableStartAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -124,13 +103,13 @@ func (_c *EventCreate) SetNillableStartAt(v *int64) *EventCreate {
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (_c *EventCreate) SetAggregateAt(v int64) *EventCreate {
+func (_c *EventCreate) SetAggregateAt(v int) *EventCreate {
 	_c.mutation.SetAggregateAt(v)
 	return _c
 }
 
 // SetNillableAggregateAt sets the "aggregate_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableAggregateAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableAggregateAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetAggregateAt(*v)
 	}
@@ -138,13 +117,13 @@ func (_c *EventCreate) SetNillableAggregateAt(v *int64) *EventCreate {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (_c *EventCreate) SetRankingAnnounceAt(v int64) *EventCreate {
+func (_c *EventCreate) SetRankingAnnounceAt(v int) *EventCreate {
 	_c.mutation.SetRankingAnnounceAt(v)
 	return _c
 }
 
 // SetNillableRankingAnnounceAt sets the "ranking_announce_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableRankingAnnounceAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableRankingAnnounceAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetRankingAnnounceAt(*v)
 	}
@@ -152,13 +131,13 @@ func (_c *EventCreate) SetNillableRankingAnnounceAt(v *int64) *EventCreate {
 }
 
 // SetDistributionStartAt sets the "distribution_start_at" field.
-func (_c *EventCreate) SetDistributionStartAt(v int64) *EventCreate {
+func (_c *EventCreate) SetDistributionStartAt(v int) *EventCreate {
 	_c.mutation.SetDistributionStartAt(v)
 	return _c
 }
 
 // SetNillableDistributionStartAt sets the "distribution_start_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableDistributionStartAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableDistributionStartAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetDistributionStartAt(*v)
 	}
@@ -166,13 +145,13 @@ func (_c *EventCreate) SetNillableDistributionStartAt(v *int64) *EventCreate {
 }
 
 // SetEventOnlyComponentDisplayEndAt sets the "event_only_component_display_end_at" field.
-func (_c *EventCreate) SetEventOnlyComponentDisplayEndAt(v int64) *EventCreate {
+func (_c *EventCreate) SetEventOnlyComponentDisplayEndAt(v int) *EventCreate {
 	_c.mutation.SetEventOnlyComponentDisplayEndAt(v)
 	return _c
 }
 
 // SetNillableEventOnlyComponentDisplayEndAt sets the "event_only_component_display_end_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableEventOnlyComponentDisplayEndAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableEventOnlyComponentDisplayEndAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetEventOnlyComponentDisplayEndAt(*v)
 	}
@@ -180,13 +159,13 @@ func (_c *EventCreate) SetNillableEventOnlyComponentDisplayEndAt(v *int64) *Even
 }
 
 // SetClosedAt sets the "closed_at" field.
-func (_c *EventCreate) SetClosedAt(v int64) *EventCreate {
+func (_c *EventCreate) SetClosedAt(v int) *EventCreate {
 	_c.mutation.SetClosedAt(v)
 	return _c
 }
 
 // SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableClosedAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableClosedAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetClosedAt(*v)
 	}
@@ -194,13 +173,13 @@ func (_c *EventCreate) SetNillableClosedAt(v *int64) *EventCreate {
 }
 
 // SetDistributionEndAt sets the "distribution_end_at" field.
-func (_c *EventCreate) SetDistributionEndAt(v int64) *EventCreate {
+func (_c *EventCreate) SetDistributionEndAt(v int) *EventCreate {
 	_c.mutation.SetDistributionEndAt(v)
 	return _c
 }
 
 // SetNillableDistributionEndAt sets the "distribution_end_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableDistributionEndAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableDistributionEndAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetDistributionEndAt(*v)
 	}
@@ -208,13 +187,13 @@ func (_c *EventCreate) SetNillableDistributionEndAt(v *int64) *EventCreate {
 }
 
 // SetVirtualLiveID sets the "virtual_live_id" field.
-func (_c *EventCreate) SetVirtualLiveID(v int64) *EventCreate {
+func (_c *EventCreate) SetVirtualLiveID(v int) *EventCreate {
 	_c.mutation.SetVirtualLiveID(v)
 	return _c
 }
 
 // SetNillableVirtualLiveID sets the "virtual_live_id" field if the given value is not nil.
-func (_c *EventCreate) SetNillableVirtualLiveID(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableVirtualLiveID(v *int) *EventCreate {
 	if v != nil {
 		_c.SetVirtualLiveID(*v)
 	}
@@ -222,16 +201,8 @@ func (_c *EventCreate) SetNillableVirtualLiveID(v *int64) *EventCreate {
 }
 
 // SetUnit sets the "unit" field.
-func (_c *EventCreate) SetUnit(v string) *EventCreate {
+func (_c *EventCreate) SetUnit(v json.RawMessage) *EventCreate {
 	_c.mutation.SetUnit(v)
-	return _c
-}
-
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_c *EventCreate) SetNillableUnit(v *string) *EventCreate {
-	if v != nil {
-		_c.SetUnit(*v)
-	}
 	return _c
 }
 
@@ -250,36 +221,34 @@ func (_c *EventCreate) SetNillableIsCountLeaderCharacterPlay(v *bool) *EventCrea
 }
 
 // SetEventRankingRewardRanges sets the "event_ranking_reward_ranges" field.
-func (_c *EventCreate) SetEventRankingRewardRanges(v []interface{}) *EventCreate {
+func (_c *EventCreate) SetEventRankingRewardRanges(v json.RawMessage) *EventCreate {
 	_c.mutation.SetEventRankingRewardRanges(v)
 	return _c
 }
 
 // SetEventPointAssetbundleName sets the "event_point_assetbundle_name" field.
-func (_c *EventCreate) SetEventPointAssetbundleName(v string) *EventCreate {
+func (_c *EventCreate) SetEventPointAssetbundleName(v json.RawMessage) *EventCreate {
 	_c.mutation.SetEventPointAssetbundleName(v)
 	return _c
 }
 
-// SetNillableEventPointAssetbundleName sets the "event_point_assetbundle_name" field if the given value is not nil.
-func (_c *EventCreate) SetNillableEventPointAssetbundleName(v *string) *EventCreate {
-	if v != nil {
-		_c.SetEventPointAssetbundleName(*v)
-	}
-	return _c
-}
-
 // SetStandbyScreenDisplayStartAt sets the "standby_screen_display_start_at" field.
-func (_c *EventCreate) SetStandbyScreenDisplayStartAt(v int64) *EventCreate {
+func (_c *EventCreate) SetStandbyScreenDisplayStartAt(v int) *EventCreate {
 	_c.mutation.SetStandbyScreenDisplayStartAt(v)
 	return _c
 }
 
 // SetNillableStandbyScreenDisplayStartAt sets the "standby_screen_display_start_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableStandbyScreenDisplayStartAt(v *int64) *EventCreate {
+func (_c *EventCreate) SetNillableStandbyScreenDisplayStartAt(v *int) *EventCreate {
 	if v != nil {
 		_c.SetStandbyScreenDisplayStartAt(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventCreate) SetServerRegion(v string) *EventCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -317,6 +286,9 @@ func (_c *EventCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Event.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Event.server_region"`)}
 	}
@@ -346,16 +318,12 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node = &Event{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(event.Table, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(event.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(event.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(event.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventType(); ok {
-		_spec.SetField(event.FieldEventType, field.TypeString, value)
+		_spec.SetField(event.FieldEventType, field.TypeJSON, value)
 		_node.EventType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -371,43 +339,43 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.BgmAssetbundleName = value
 	}
 	if value, ok := _c.mutation.EventOnlyComponentDisplayStartAt(); ok {
-		_spec.SetField(event.FieldEventOnlyComponentDisplayStartAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldEventOnlyComponentDisplayStartAt, field.TypeInt, value)
 		_node.EventOnlyComponentDisplayStartAt = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(event.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.AggregateAt(); ok {
-		_spec.SetField(event.FieldAggregateAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldAggregateAt, field.TypeInt, value)
 		_node.AggregateAt = value
 	}
 	if value, ok := _c.mutation.RankingAnnounceAt(); ok {
-		_spec.SetField(event.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldRankingAnnounceAt, field.TypeInt, value)
 		_node.RankingAnnounceAt = value
 	}
 	if value, ok := _c.mutation.DistributionStartAt(); ok {
-		_spec.SetField(event.FieldDistributionStartAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldDistributionStartAt, field.TypeInt, value)
 		_node.DistributionStartAt = value
 	}
 	if value, ok := _c.mutation.EventOnlyComponentDisplayEndAt(); ok {
-		_spec.SetField(event.FieldEventOnlyComponentDisplayEndAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldEventOnlyComponentDisplayEndAt, field.TypeInt, value)
 		_node.EventOnlyComponentDisplayEndAt = value
 	}
 	if value, ok := _c.mutation.ClosedAt(); ok {
-		_spec.SetField(event.FieldClosedAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldClosedAt, field.TypeInt, value)
 		_node.ClosedAt = value
 	}
 	if value, ok := _c.mutation.DistributionEndAt(); ok {
-		_spec.SetField(event.FieldDistributionEndAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldDistributionEndAt, field.TypeInt, value)
 		_node.DistributionEndAt = value
 	}
 	if value, ok := _c.mutation.VirtualLiveID(); ok {
-		_spec.SetField(event.FieldVirtualLiveID, field.TypeInt64, value)
+		_spec.SetField(event.FieldVirtualLiveID, field.TypeInt, value)
 		_node.VirtualLiveID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(event.FieldUnit, field.TypeString, value)
+		_spec.SetField(event.FieldUnit, field.TypeJSON, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.IsCountLeaderCharacterPlay(); ok {
@@ -419,12 +387,16 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.EventRankingRewardRanges = value
 	}
 	if value, ok := _c.mutation.EventPointAssetbundleName(); ok {
-		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeString, value)
+		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeJSON, value)
 		_node.EventPointAssetbundleName = value
 	}
 	if value, ok := _c.mutation.StandbyScreenDisplayStartAt(); ok {
-		_spec.SetField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64, value)
+		_spec.SetField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt, value)
 		_node.StandbyScreenDisplayStartAt = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(event.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

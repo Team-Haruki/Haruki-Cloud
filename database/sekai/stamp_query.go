@@ -262,12 +262,12 @@ func (_q *StampQuery) Clone() *StampQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Stamp.Query().
-//		GroupBy(stamp.FieldServerRegion).
+//		GroupBy(stamp.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *StampQuery) GroupBy(field string, fields ...string) *StampGroupBy {
@@ -285,11 +285,11 @@ func (_q *StampQuery) GroupBy(field string, fields ...string) *StampGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Stamp.Query().
-//		Select(stamp.FieldServerRegion).
+//		Select(stamp.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *StampQuery) Select(fields ...string) *StampSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

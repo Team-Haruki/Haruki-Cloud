@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstoryunit"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *EventstoryunitUpdate) Where(ps ...predicate.Eventstoryunit) *Eventstor
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventstoryunitUpdate) SetServerRegion(v string) *EventstoryunitUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableServerRegion(v *string) *EventstoryunitUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventstoryunitUpdate) SetGameID(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetGameID(v int) *EventstoryunitUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableGameID(v *int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetNillableGameID(v *int) *EventstoryunitUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *EventstoryunitUpdate) SetNillableGameID(v *int64) *EventstoryunitUpdat
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstoryunitUpdate) AddGameID(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) AddGameID(v int) *EventstoryunitUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventstoryunitUpdate) ClearGameID() *EventstoryunitUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *EventstoryunitUpdate) SetSeq(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetSeq(v int) *EventstoryunitUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableSeq(v *int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetNillableSeq(v *int) *EventstoryunitUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *EventstoryunitUpdate) SetNillableSeq(v *int64) *EventstoryunitUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *EventstoryunitUpdate) AddSeq(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) AddSeq(v int) *EventstoryunitUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *EventstoryunitUpdate) ClearSeq() *EventstoryunitUpdate {
 }
 
 // SetEventStoryID sets the "event_story_id" field.
-func (_u *EventstoryunitUpdate) SetEventStoryID(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetEventStoryID(v int) *EventstoryunitUpdate {
 	_u.mutation.ResetEventStoryID()
 	_u.mutation.SetEventStoryID(v)
 	return _u
 }
 
 // SetNillableEventStoryID sets the "event_story_id" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableEventStoryID(v *int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetNillableEventStoryID(v *int) *EventstoryunitUpdate {
 	if v != nil {
 		_u.SetEventStoryID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *EventstoryunitUpdate) SetNillableEventStoryID(v *int64) *Eventstoryuni
 }
 
 // AddEventStoryID adds value to the "event_story_id" field.
-func (_u *EventstoryunitUpdate) AddEventStoryID(v int64) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) AddEventStoryID(v int) *EventstoryunitUpdate {
 	_u.mutation.AddEventStoryID(v)
 	return _u
 }
@@ -123,16 +105,14 @@ func (_u *EventstoryunitUpdate) ClearEventStoryID() *EventstoryunitUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventstoryunitUpdate) SetUnit(v string) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetUnit(v json.RawMessage) *EventstoryunitUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableUnit(v *string) *EventstoryunitUpdate {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *EventstoryunitUpdate) AppendUnit(v json.RawMessage) *EventstoryunitUpdate {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -143,22 +123,34 @@ func (_u *EventstoryunitUpdate) ClearUnit() *EventstoryunitUpdate {
 }
 
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdate) SetEventStoryUnitRelation(v string) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdate {
 	_u.mutation.SetEventStoryUnitRelation(v)
 	return _u
 }
 
-// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
-func (_u *EventstoryunitUpdate) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitUpdate {
-	if v != nil {
-		_u.SetEventStoryUnitRelation(*v)
-	}
+// AppendEventStoryUnitRelation appends value to the "event_story_unit_relation" field.
+func (_u *EventstoryunitUpdate) AppendEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdate {
+	_u.mutation.AppendEventStoryUnitRelation(v)
 	return _u
 }
 
 // ClearEventStoryUnitRelation clears the value of the "event_story_unit_relation" field.
 func (_u *EventstoryunitUpdate) ClearEventStoryUnitRelation() *EventstoryunitUpdate {
 	_u.mutation.ClearEventStoryUnitRelation()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventstoryunitUpdate) SetServerRegion(v string) *EventstoryunitUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventstoryunitUpdate) SetNillableServerRegion(v *string) *EventstoryunitUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -203,47 +195,54 @@ func (_u *EventstoryunitUpdate) sqlSave(ctx context.Context) (_node int, err err
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventstoryunit.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(eventstoryunit.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(eventstoryunit.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(eventstoryunit.FieldSeq, field.TypeInt64)
+		_spec.ClearField(eventstoryunit.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EventStoryID(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventStoryID(); ok {
-		_spec.AddField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
+		_spec.AddField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
 	}
 	if _u.mutation.EventStoryIDCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt64)
+		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventstoryunit.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeString)
+		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEventStoryUnitRelation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventstoryunit.FieldEventStoryUnitRelation, value)
+		})
 	}
 	if _u.mutation.EventStoryUnitRelationCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString)
+		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -265,29 +264,15 @@ type EventstoryunitUpdateOne struct {
 	mutation *EventstoryunitMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventstoryunitUpdateOne) SetServerRegion(v string) *EventstoryunitUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableServerRegion(v *string) *EventstoryunitUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventstoryunitUpdateOne) SetGameID(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetGameID(v int) *EventstoryunitUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableGameID(v *int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetNillableGameID(v *int) *EventstoryunitUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -295,26 +280,20 @@ func (_u *EventstoryunitUpdateOne) SetNillableGameID(v *int64) *EventstoryunitUp
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstoryunitUpdateOne) AddGameID(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) AddGameID(v int) *EventstoryunitUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventstoryunitUpdateOne) ClearGameID() *EventstoryunitUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *EventstoryunitUpdateOne) SetSeq(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetSeq(v int) *EventstoryunitUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableSeq(v *int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetNillableSeq(v *int) *EventstoryunitUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -322,7 +301,7 @@ func (_u *EventstoryunitUpdateOne) SetNillableSeq(v *int64) *EventstoryunitUpdat
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *EventstoryunitUpdateOne) AddSeq(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) AddSeq(v int) *EventstoryunitUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -334,14 +313,14 @@ func (_u *EventstoryunitUpdateOne) ClearSeq() *EventstoryunitUpdateOne {
 }
 
 // SetEventStoryID sets the "event_story_id" field.
-func (_u *EventstoryunitUpdateOne) SetEventStoryID(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetEventStoryID(v int) *EventstoryunitUpdateOne {
 	_u.mutation.ResetEventStoryID()
 	_u.mutation.SetEventStoryID(v)
 	return _u
 }
 
 // SetNillableEventStoryID sets the "event_story_id" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableEventStoryID(v *int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetNillableEventStoryID(v *int) *EventstoryunitUpdateOne {
 	if v != nil {
 		_u.SetEventStoryID(*v)
 	}
@@ -349,7 +328,7 @@ func (_u *EventstoryunitUpdateOne) SetNillableEventStoryID(v *int64) *Eventstory
 }
 
 // AddEventStoryID adds value to the "event_story_id" field.
-func (_u *EventstoryunitUpdateOne) AddEventStoryID(v int64) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) AddEventStoryID(v int) *EventstoryunitUpdateOne {
 	_u.mutation.AddEventStoryID(v)
 	return _u
 }
@@ -361,16 +340,14 @@ func (_u *EventstoryunitUpdateOne) ClearEventStoryID() *EventstoryunitUpdateOne 
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventstoryunitUpdateOne) SetUnit(v string) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetUnit(v json.RawMessage) *EventstoryunitUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableUnit(v *string) *EventstoryunitUpdateOne {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *EventstoryunitUpdateOne) AppendUnit(v json.RawMessage) *EventstoryunitUpdateOne {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -381,22 +358,34 @@ func (_u *EventstoryunitUpdateOne) ClearUnit() *EventstoryunitUpdateOne {
 }
 
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdateOne) SetEventStoryUnitRelation(v string) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdateOne {
 	_u.mutation.SetEventStoryUnitRelation(v)
 	return _u
 }
 
-// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
-func (_u *EventstoryunitUpdateOne) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitUpdateOne {
-	if v != nil {
-		_u.SetEventStoryUnitRelation(*v)
-	}
+// AppendEventStoryUnitRelation appends value to the "event_story_unit_relation" field.
+func (_u *EventstoryunitUpdateOne) AppendEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdateOne {
+	_u.mutation.AppendEventStoryUnitRelation(v)
 	return _u
 }
 
 // ClearEventStoryUnitRelation clears the value of the "event_story_unit_relation" field.
 func (_u *EventstoryunitUpdateOne) ClearEventStoryUnitRelation() *EventstoryunitUpdateOne {
 	_u.mutation.ClearEventStoryUnitRelation()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventstoryunitUpdateOne) SetServerRegion(v string) *EventstoryunitUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventstoryunitUpdateOne) SetNillableServerRegion(v *string) *EventstoryunitUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -471,47 +460,54 @@ func (_u *EventstoryunitUpdateOne) sqlSave(ctx context.Context) (_node *Eventsto
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventstoryunit.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventstoryunit.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(eventstoryunit.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(eventstoryunit.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(eventstoryunit.FieldSeq, field.TypeInt64)
+		_spec.ClearField(eventstoryunit.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EventStoryID(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventStoryID(); ok {
-		_spec.AddField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
+		_spec.AddField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
 	}
 	if _u.mutation.EventStoryIDCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt64)
+		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventstoryunit.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeString)
+		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEventStoryUnitRelation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventstoryunit.FieldEventStoryUnitRelation, value)
+		})
 	}
 	if _u.mutation.EventStoryUnitRelationCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString)
+		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Eventstoryunit{config: _u.config}
 	_spec.Assign = _node.assignValues

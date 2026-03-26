@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *WorldbloomUpdate) Where(ps ...predicate.Worldbloom) *WorldbloomUpdate 
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomUpdate) SetServerRegion(v string) *WorldbloomUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableServerRegion(v *string) *WorldbloomUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *WorldbloomUpdate) SetGameID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetGameID(v int) *WorldbloomUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableGameID(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableGameID(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *WorldbloomUpdate) SetNillableGameID(v *int64) *WorldbloomUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *WorldbloomUpdate) AddGameID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddGameID(v int) *WorldbloomUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *WorldbloomUpdate) ClearGameID() *WorldbloomUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *WorldbloomUpdate) SetEventID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetEventID(v int) *WorldbloomUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableEventID(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableEventID(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *WorldbloomUpdate) SetNillableEventID(v *int64) *WorldbloomUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *WorldbloomUpdate) AddEventID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddEventID(v int) *WorldbloomUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *WorldbloomUpdate) ClearEventID() *WorldbloomUpdate {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *WorldbloomUpdate) SetGameCharacterID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetGameCharacterID(v int) *WorldbloomUpdate {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableGameCharacterID(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableGameCharacterID(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *WorldbloomUpdate) SetNillableGameCharacterID(v *int64) *WorldbloomUpda
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *WorldbloomUpdate) AddGameCharacterID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddGameCharacterID(v int) *WorldbloomUpdate {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -123,16 +105,14 @@ func (_u *WorldbloomUpdate) ClearGameCharacterID() *WorldbloomUpdate {
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdate) SetWorldBloomChapterType(v string) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdate {
 	_u.mutation.SetWorldBloomChapterType(v)
 	return _u
 }
 
-// SetNillableWorldBloomChapterType sets the "world_bloom_chapter_type" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableWorldBloomChapterType(v *string) *WorldbloomUpdate {
-	if v != nil {
-		_u.SetWorldBloomChapterType(*v)
-	}
+// AppendWorldBloomChapterType appends value to the "world_bloom_chapter_type" field.
+func (_u *WorldbloomUpdate) AppendWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdate {
+	_u.mutation.AppendWorldBloomChapterType(v)
 	return _u
 }
 
@@ -143,14 +123,14 @@ func (_u *WorldbloomUpdate) ClearWorldBloomChapterType() *WorldbloomUpdate {
 }
 
 // SetChapterNo sets the "chapter_no" field.
-func (_u *WorldbloomUpdate) SetChapterNo(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetChapterNo(v int) *WorldbloomUpdate {
 	_u.mutation.ResetChapterNo()
 	_u.mutation.SetChapterNo(v)
 	return _u
 }
 
 // SetNillableChapterNo sets the "chapter_no" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableChapterNo(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableChapterNo(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetChapterNo(*v)
 	}
@@ -158,7 +138,7 @@ func (_u *WorldbloomUpdate) SetNillableChapterNo(v *int64) *WorldbloomUpdate {
 }
 
 // AddChapterNo adds value to the "chapter_no" field.
-func (_u *WorldbloomUpdate) AddChapterNo(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddChapterNo(v int) *WorldbloomUpdate {
 	_u.mutation.AddChapterNo(v)
 	return _u
 }
@@ -170,14 +150,14 @@ func (_u *WorldbloomUpdate) ClearChapterNo() *WorldbloomUpdate {
 }
 
 // SetChapterStartAt sets the "chapter_start_at" field.
-func (_u *WorldbloomUpdate) SetChapterStartAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetChapterStartAt(v int) *WorldbloomUpdate {
 	_u.mutation.ResetChapterStartAt()
 	_u.mutation.SetChapterStartAt(v)
 	return _u
 }
 
 // SetNillableChapterStartAt sets the "chapter_start_at" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableChapterStartAt(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableChapterStartAt(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetChapterStartAt(*v)
 	}
@@ -185,7 +165,7 @@ func (_u *WorldbloomUpdate) SetNillableChapterStartAt(v *int64) *WorldbloomUpdat
 }
 
 // AddChapterStartAt adds value to the "chapter_start_at" field.
-func (_u *WorldbloomUpdate) AddChapterStartAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddChapterStartAt(v int) *WorldbloomUpdate {
 	_u.mutation.AddChapterStartAt(v)
 	return _u
 }
@@ -197,14 +177,14 @@ func (_u *WorldbloomUpdate) ClearChapterStartAt() *WorldbloomUpdate {
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (_u *WorldbloomUpdate) SetAggregateAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetAggregateAt(v int) *WorldbloomUpdate {
 	_u.mutation.ResetAggregateAt()
 	_u.mutation.SetAggregateAt(v)
 	return _u
 }
 
 // SetNillableAggregateAt sets the "aggregate_at" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableAggregateAt(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableAggregateAt(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetAggregateAt(*v)
 	}
@@ -212,7 +192,7 @@ func (_u *WorldbloomUpdate) SetNillableAggregateAt(v *int64) *WorldbloomUpdate {
 }
 
 // AddAggregateAt adds value to the "aggregate_at" field.
-func (_u *WorldbloomUpdate) AddAggregateAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddAggregateAt(v int) *WorldbloomUpdate {
 	_u.mutation.AddAggregateAt(v)
 	return _u
 }
@@ -224,14 +204,14 @@ func (_u *WorldbloomUpdate) ClearAggregateAt() *WorldbloomUpdate {
 }
 
 // SetChapterEndAt sets the "chapter_end_at" field.
-func (_u *WorldbloomUpdate) SetChapterEndAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetChapterEndAt(v int) *WorldbloomUpdate {
 	_u.mutation.ResetChapterEndAt()
 	_u.mutation.SetChapterEndAt(v)
 	return _u
 }
 
 // SetNillableChapterEndAt sets the "chapter_end_at" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableChapterEndAt(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableChapterEndAt(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetChapterEndAt(*v)
 	}
@@ -239,7 +219,7 @@ func (_u *WorldbloomUpdate) SetNillableChapterEndAt(v *int64) *WorldbloomUpdate 
 }
 
 // AddChapterEndAt adds value to the "chapter_end_at" field.
-func (_u *WorldbloomUpdate) AddChapterEndAt(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddChapterEndAt(v int) *WorldbloomUpdate {
 	_u.mutation.AddChapterEndAt(v)
 	return _u
 }
@@ -271,14 +251,14 @@ func (_u *WorldbloomUpdate) ClearIsSupplemental() *WorldbloomUpdate {
 }
 
 // SetCostume2DID sets the "costume2_d_id" field.
-func (_u *WorldbloomUpdate) SetCostume2DID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetCostume2DID(v int) *WorldbloomUpdate {
 	_u.mutation.ResetCostume2DID()
 	_u.mutation.SetCostume2DID(v)
 	return _u
 }
 
 // SetNillableCostume2DID sets the "costume2_d_id" field if the given value is not nil.
-func (_u *WorldbloomUpdate) SetNillableCostume2DID(v *int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetNillableCostume2DID(v *int) *WorldbloomUpdate {
 	if v != nil {
 		_u.SetCostume2DID(*v)
 	}
@@ -286,7 +266,7 @@ func (_u *WorldbloomUpdate) SetNillableCostume2DID(v *int64) *WorldbloomUpdate {
 }
 
 // AddCostume2DID adds value to the "costume2_d_id" field.
-func (_u *WorldbloomUpdate) AddCostume2DID(v int64) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) AddCostume2DID(v int) *WorldbloomUpdate {
 	_u.mutation.AddCostume2DID(v)
 	return _u
 }
@@ -294,6 +274,20 @@ func (_u *WorldbloomUpdate) AddCostume2DID(v int64) *WorldbloomUpdate {
 // ClearCostume2DID clears the value of the "costume2_d_id" field.
 func (_u *WorldbloomUpdate) ClearCostume2DID() *WorldbloomUpdate {
 	_u.mutation.ClearCostume2DID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomUpdate) SetServerRegion(v string) *WorldbloomUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomUpdate) SetNillableServerRegion(v *string) *WorldbloomUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -338,77 +332,76 @@ func (_u *WorldbloomUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloom.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(worldbloom.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(worldbloom.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(worldbloom.FieldGameID, field.TypeInt64)
+		_spec.AddField(worldbloom.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(worldbloom.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(worldbloom.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(worldbloom.FieldEventID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(worldbloom.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WorldBloomChapterType(); ok {
-		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeString, value)
+		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomChapterType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloom.FieldWorldBloomChapterType, value)
+		})
 	}
 	if _u.mutation.WorldBloomChapterTypeCleared() {
-		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeString)
+		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ChapterNo(); ok {
-		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterNo(); ok {
-		_spec.AddField(worldbloom.FieldChapterNo, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterNo, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterNoCleared() {
-		_spec.ClearField(worldbloom.FieldChapterNo, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterNo, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ChapterStartAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterStartAt(); ok {
-		_spec.AddField(worldbloom.FieldChapterStartAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterStartAtCleared() {
-		_spec.ClearField(worldbloom.FieldChapterStartAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AggregateAt(); ok {
-		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAggregateAt(); ok {
-		_spec.AddField(worldbloom.FieldAggregateAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldAggregateAt, field.TypeInt, value)
 	}
 	if _u.mutation.AggregateAtCleared() {
-		_spec.ClearField(worldbloom.FieldAggregateAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldAggregateAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ChapterEndAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterEndAt(); ok {
-		_spec.AddField(worldbloom.FieldChapterEndAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterEndAtCleared() {
-		_spec.ClearField(worldbloom.FieldChapterEndAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsSupplemental(); ok {
 		_spec.SetField(worldbloom.FieldIsSupplemental, field.TypeBool, value)
@@ -417,13 +410,16 @@ func (_u *WorldbloomUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(worldbloom.FieldIsSupplemental, field.TypeBool)
 	}
 	if value, ok := _u.mutation.Costume2DID(); ok {
-		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCostume2DID(); ok {
-		_spec.AddField(worldbloom.FieldCostume2DID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldCostume2DID, field.TypeInt, value)
 	}
 	if _u.mutation.Costume2DIDCleared() {
-		_spec.ClearField(worldbloom.FieldCostume2DID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldCostume2DID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloom.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -445,29 +441,15 @@ type WorldbloomUpdateOne struct {
 	mutation *WorldbloomMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomUpdateOne) SetServerRegion(v string) *WorldbloomUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableServerRegion(v *string) *WorldbloomUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *WorldbloomUpdateOne) SetGameID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetGameID(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableGameID(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableGameID(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -475,26 +457,20 @@ func (_u *WorldbloomUpdateOne) SetNillableGameID(v *int64) *WorldbloomUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *WorldbloomUpdateOne) AddGameID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddGameID(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *WorldbloomUpdateOne) ClearGameID() *WorldbloomUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *WorldbloomUpdateOne) SetEventID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetEventID(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableEventID(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableEventID(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -502,7 +478,7 @@ func (_u *WorldbloomUpdateOne) SetNillableEventID(v *int64) *WorldbloomUpdateOne
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *WorldbloomUpdateOne) AddEventID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddEventID(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -514,14 +490,14 @@ func (_u *WorldbloomUpdateOne) ClearEventID() *WorldbloomUpdateOne {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *WorldbloomUpdateOne) SetGameCharacterID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetGameCharacterID(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableGameCharacterID(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableGameCharacterID(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -529,7 +505,7 @@ func (_u *WorldbloomUpdateOne) SetNillableGameCharacterID(v *int64) *WorldbloomU
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *WorldbloomUpdateOne) AddGameCharacterID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddGameCharacterID(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -541,16 +517,14 @@ func (_u *WorldbloomUpdateOne) ClearGameCharacterID() *WorldbloomUpdateOne {
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdateOne) SetWorldBloomChapterType(v string) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdateOne {
 	_u.mutation.SetWorldBloomChapterType(v)
 	return _u
 }
 
-// SetNillableWorldBloomChapterType sets the "world_bloom_chapter_type" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableWorldBloomChapterType(v *string) *WorldbloomUpdateOne {
-	if v != nil {
-		_u.SetWorldBloomChapterType(*v)
-	}
+// AppendWorldBloomChapterType appends value to the "world_bloom_chapter_type" field.
+func (_u *WorldbloomUpdateOne) AppendWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdateOne {
+	_u.mutation.AppendWorldBloomChapterType(v)
 	return _u
 }
 
@@ -561,14 +535,14 @@ func (_u *WorldbloomUpdateOne) ClearWorldBloomChapterType() *WorldbloomUpdateOne
 }
 
 // SetChapterNo sets the "chapter_no" field.
-func (_u *WorldbloomUpdateOne) SetChapterNo(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetChapterNo(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetChapterNo()
 	_u.mutation.SetChapterNo(v)
 	return _u
 }
 
 // SetNillableChapterNo sets the "chapter_no" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableChapterNo(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableChapterNo(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetChapterNo(*v)
 	}
@@ -576,7 +550,7 @@ func (_u *WorldbloomUpdateOne) SetNillableChapterNo(v *int64) *WorldbloomUpdateO
 }
 
 // AddChapterNo adds value to the "chapter_no" field.
-func (_u *WorldbloomUpdateOne) AddChapterNo(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddChapterNo(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddChapterNo(v)
 	return _u
 }
@@ -588,14 +562,14 @@ func (_u *WorldbloomUpdateOne) ClearChapterNo() *WorldbloomUpdateOne {
 }
 
 // SetChapterStartAt sets the "chapter_start_at" field.
-func (_u *WorldbloomUpdateOne) SetChapterStartAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetChapterStartAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetChapterStartAt()
 	_u.mutation.SetChapterStartAt(v)
 	return _u
 }
 
 // SetNillableChapterStartAt sets the "chapter_start_at" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableChapterStartAt(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableChapterStartAt(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetChapterStartAt(*v)
 	}
@@ -603,7 +577,7 @@ func (_u *WorldbloomUpdateOne) SetNillableChapterStartAt(v *int64) *WorldbloomUp
 }
 
 // AddChapterStartAt adds value to the "chapter_start_at" field.
-func (_u *WorldbloomUpdateOne) AddChapterStartAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddChapterStartAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddChapterStartAt(v)
 	return _u
 }
@@ -615,14 +589,14 @@ func (_u *WorldbloomUpdateOne) ClearChapterStartAt() *WorldbloomUpdateOne {
 }
 
 // SetAggregateAt sets the "aggregate_at" field.
-func (_u *WorldbloomUpdateOne) SetAggregateAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetAggregateAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetAggregateAt()
 	_u.mutation.SetAggregateAt(v)
 	return _u
 }
 
 // SetNillableAggregateAt sets the "aggregate_at" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableAggregateAt(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableAggregateAt(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetAggregateAt(*v)
 	}
@@ -630,7 +604,7 @@ func (_u *WorldbloomUpdateOne) SetNillableAggregateAt(v *int64) *WorldbloomUpdat
 }
 
 // AddAggregateAt adds value to the "aggregate_at" field.
-func (_u *WorldbloomUpdateOne) AddAggregateAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddAggregateAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddAggregateAt(v)
 	return _u
 }
@@ -642,14 +616,14 @@ func (_u *WorldbloomUpdateOne) ClearAggregateAt() *WorldbloomUpdateOne {
 }
 
 // SetChapterEndAt sets the "chapter_end_at" field.
-func (_u *WorldbloomUpdateOne) SetChapterEndAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetChapterEndAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetChapterEndAt()
 	_u.mutation.SetChapterEndAt(v)
 	return _u
 }
 
 // SetNillableChapterEndAt sets the "chapter_end_at" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableChapterEndAt(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableChapterEndAt(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetChapterEndAt(*v)
 	}
@@ -657,7 +631,7 @@ func (_u *WorldbloomUpdateOne) SetNillableChapterEndAt(v *int64) *WorldbloomUpda
 }
 
 // AddChapterEndAt adds value to the "chapter_end_at" field.
-func (_u *WorldbloomUpdateOne) AddChapterEndAt(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddChapterEndAt(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddChapterEndAt(v)
 	return _u
 }
@@ -689,14 +663,14 @@ func (_u *WorldbloomUpdateOne) ClearIsSupplemental() *WorldbloomUpdateOne {
 }
 
 // SetCostume2DID sets the "costume2_d_id" field.
-func (_u *WorldbloomUpdateOne) SetCostume2DID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetCostume2DID(v int) *WorldbloomUpdateOne {
 	_u.mutation.ResetCostume2DID()
 	_u.mutation.SetCostume2DID(v)
 	return _u
 }
 
 // SetNillableCostume2DID sets the "costume2_d_id" field if the given value is not nil.
-func (_u *WorldbloomUpdateOne) SetNillableCostume2DID(v *int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetNillableCostume2DID(v *int) *WorldbloomUpdateOne {
 	if v != nil {
 		_u.SetCostume2DID(*v)
 	}
@@ -704,7 +678,7 @@ func (_u *WorldbloomUpdateOne) SetNillableCostume2DID(v *int64) *WorldbloomUpdat
 }
 
 // AddCostume2DID adds value to the "costume2_d_id" field.
-func (_u *WorldbloomUpdateOne) AddCostume2DID(v int64) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) AddCostume2DID(v int) *WorldbloomUpdateOne {
 	_u.mutation.AddCostume2DID(v)
 	return _u
 }
@@ -712,6 +686,20 @@ func (_u *WorldbloomUpdateOne) AddCostume2DID(v int64) *WorldbloomUpdateOne {
 // ClearCostume2DID clears the value of the "costume2_d_id" field.
 func (_u *WorldbloomUpdateOne) ClearCostume2DID() *WorldbloomUpdateOne {
 	_u.mutation.ClearCostume2DID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomUpdateOne) SetServerRegion(v string) *WorldbloomUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomUpdateOne) SetNillableServerRegion(v *string) *WorldbloomUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -786,77 +774,76 @@ func (_u *WorldbloomUpdateOne) sqlSave(ctx context.Context) (_node *Worldbloom, 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloom.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(worldbloom.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(worldbloom.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(worldbloom.FieldGameID, field.TypeInt64)
+		_spec.AddField(worldbloom.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(worldbloom.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(worldbloom.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(worldbloom.FieldEventID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(worldbloom.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WorldBloomChapterType(); ok {
-		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeString, value)
+		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomChapterType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloom.FieldWorldBloomChapterType, value)
+		})
 	}
 	if _u.mutation.WorldBloomChapterTypeCleared() {
-		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeString)
+		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ChapterNo(); ok {
-		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterNo(); ok {
-		_spec.AddField(worldbloom.FieldChapterNo, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterNo, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterNoCleared() {
-		_spec.ClearField(worldbloom.FieldChapterNo, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterNo, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ChapterStartAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterStartAt(); ok {
-		_spec.AddField(worldbloom.FieldChapterStartAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterStartAtCleared() {
-		_spec.ClearField(worldbloom.FieldChapterStartAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AggregateAt(); ok {
-		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldAggregateAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedAggregateAt(); ok {
-		_spec.AddField(worldbloom.FieldAggregateAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldAggregateAt, field.TypeInt, value)
 	}
 	if _u.mutation.AggregateAtCleared() {
-		_spec.ClearField(worldbloom.FieldAggregateAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldAggregateAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ChapterEndAt(); ok {
-		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldChapterEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedChapterEndAt(); ok {
-		_spec.AddField(worldbloom.FieldChapterEndAt, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldChapterEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.ChapterEndAtCleared() {
-		_spec.ClearField(worldbloom.FieldChapterEndAt, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldChapterEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsSupplemental(); ok {
 		_spec.SetField(worldbloom.FieldIsSupplemental, field.TypeBool, value)
@@ -865,13 +852,16 @@ func (_u *WorldbloomUpdateOne) sqlSave(ctx context.Context) (_node *Worldbloom, 
 		_spec.ClearField(worldbloom.FieldIsSupplemental, field.TypeBool)
 	}
 	if value, ok := _u.mutation.Costume2DID(); ok {
-		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt64, value)
+		_spec.SetField(worldbloom.FieldCostume2DID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCostume2DID(); ok {
-		_spec.AddField(worldbloom.FieldCostume2DID, field.TypeInt64, value)
+		_spec.AddField(worldbloom.FieldCostume2DID, field.TypeInt, value)
 	}
 	if _u.mutation.Costume2DIDCleared() {
-		_spec.ClearField(worldbloom.FieldCostume2DID, field.TypeInt64)
+		_spec.ClearField(worldbloom.FieldCostume2DID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloom.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Worldbloom{config: _u.config}
 	_spec.Assign = _node.assignValues

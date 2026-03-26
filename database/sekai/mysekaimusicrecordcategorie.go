@@ -17,18 +17,18 @@ type Mysekaimusicrecordcategorie struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
-	MysekaiMusicTrackType map[string]interface{} `json:"mysekai_music_track_type,omitempty"`
+	MysekaiMusicTrackType json.RawMessage `json:"mysekai_music_track_type,omitempty"`
 	// Unit holds the value of the "unit" field.
-	Unit         string `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -41,7 +41,7 @@ func (*Mysekaimusicrecordcategorie) scanValues(columns []string) ([]any, error) 
 			values[i] = new([]byte)
 		case mysekaimusicrecordcategorie.FieldID, mysekaimusicrecordcategorie.FieldGameID, mysekaimusicrecordcategorie.FieldSeq:
 			values[i] = new(sql.NullInt64)
-		case mysekaimusicrecordcategorie.FieldServerRegion, mysekaimusicrecordcategorie.FieldName, mysekaimusicrecordcategorie.FieldUnit:
+		case mysekaimusicrecordcategorie.FieldName, mysekaimusicrecordcategorie.FieldUnit, mysekaimusicrecordcategorie.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -64,17 +64,11 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaimusicrecordcategorie.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaimusicrecordcategorie.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaimusicrecordcategorie.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -86,7 +80,7 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -101,6 +95,12 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
 			} else if value.Valid {
 				_m.Unit = value.String
+			}
+		case mysekaimusicrecordcategorie.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -138,9 +138,6 @@ func (_m *Mysekaimusicrecordcategorie) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaimusicrecordcategorie(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -155,6 +152,9 @@ func (_m *Mysekaimusicrecordcategorie) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
 	builder.WriteString(_m.Unit)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -19,34 +19,20 @@ type MysekaimaterialgamecharacterrelationCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetGameID(v int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetGameID(v int) *MysekaimaterialgamecharacterrelationCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGameID(v *int64) *MysekaimaterialgamecharacterrelationCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetGroupID(v int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetGroupID(v int) *MysekaimaterialgamecharacterrelationCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGroupID(v *int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGroupID(v *int) *MysekaimaterialgamecharacterrelationCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGroupID(v *int6
 }
 
 // SetMysekaiMaterialID sets the "mysekai_material_id" field.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetMysekaiMaterialID(v int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetMysekaiMaterialID(v int) *MysekaimaterialgamecharacterrelationCreate {
 	_c.mutation.SetMysekaiMaterialID(v)
 	return _c
 }
 
 // SetNillableMysekaiMaterialID sets the "mysekai_material_id" field if the given value is not nil.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableMysekaiMaterialID(v *int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableMysekaiMaterialID(v *int) *MysekaimaterialgamecharacterrelationCreate {
 	if v != nil {
 		_c.SetMysekaiMaterialID(*v)
 	}
@@ -68,16 +54,22 @@ func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableMysekaiMaterial
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetGameCharacterID(v int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetGameCharacterID(v int) *MysekaimaterialgamecharacterrelationCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGameCharacterID(v *int64) *MysekaimaterialgamecharacterrelationCreate {
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetNillableGameCharacterID(v *int) *MysekaimaterialgamecharacterrelationCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaimaterialgamecharacterrelationCreate) SetServerRegion(v string) *MysekaimaterialgamecharacterrelationCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +107,9 @@ func (_c *MysekaimaterialgamecharacterrelationCreate) ExecX(ctx context.Context)
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaimaterialgamecharacterrelationCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaimaterialgamecharacterrelation.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaimaterialgamecharacterrelation.server_region"`)}
 	}
@@ -144,25 +139,25 @@ func (_c *MysekaimaterialgamecharacterrelationCreate) createSpec() (*Mysekaimate
 		_node = &Mysekaimaterialgamecharacterrelation{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaimaterialgamecharacterrelation.Table, sqlgraph.NewFieldSpec(mysekaimaterialgamecharacterrelation.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldMysekaiMaterialID, field.TypeInt, value)
 		_node.MysekaiMaterialID = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldGameCharacterID, field.TypeInt, value)
 		_node.GameCharacterID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimaterialgamecharacterrelation.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

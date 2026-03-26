@@ -53,18 +53,13 @@ func IDLTE(id int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Outsidecharacter {
+func GameID(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Outsidecharacter {
+func Seq(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -73,158 +68,88 @@ func Name(v string) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldName, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Outsidecharacter {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Outsidecharacter {
+func GameIDEQ(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Outsidecharacter {
+func GameIDNEQ(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Outsidecharacter {
+func GameIDIn(vs ...int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Outsidecharacter {
+func GameIDNotIn(vs ...int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Outsidecharacter {
+func GameIDGT(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Outsidecharacter {
+func GameIDGTE(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Outsidecharacter {
+func GameIDLT(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Outsidecharacter {
+func GameIDLTE(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Outsidecharacter {
-	return predicate.Outsidecharacter(sql.FieldNotNull(FieldGameID))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Outsidecharacter {
+func SeqEQ(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Outsidecharacter {
+func SeqNEQ(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Outsidecharacter {
+func SeqIn(vs ...int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Outsidecharacter {
+func SeqNotIn(vs ...int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Outsidecharacter {
+func SeqGT(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Outsidecharacter {
+func SeqGTE(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Outsidecharacter {
+func SeqLT(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Outsidecharacter {
+func SeqLTE(v int) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -311,6 +236,71 @@ func NameEqualFold(v string) predicate.Outsidecharacter {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Outsidecharacter {
 	return predicate.Outsidecharacter(sql.FieldContainsFold(FieldName, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Outsidecharacter {
+	return predicate.Outsidecharacter(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

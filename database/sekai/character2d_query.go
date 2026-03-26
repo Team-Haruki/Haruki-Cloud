@@ -262,12 +262,12 @@ func (_q *Character2DQuery) Clone() *Character2DQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Character2D.Query().
-//		GroupBy(character2d.FieldServerRegion).
+//		GroupBy(character2d.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *Character2DQuery) GroupBy(field string, fields ...string) *Character2DGroupBy {
@@ -285,11 +285,11 @@ func (_q *Character2DQuery) GroupBy(field string, fields ...string) *Character2D
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Character2D.Query().
-//		Select(character2d.FieldServerRegion).
+//		Select(character2d.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *Character2DQuery) Select(fields ...string) *Character2DSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstoryunit"
@@ -19,34 +20,20 @@ type EventstoryunitCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventstoryunitCreate) SetServerRegion(v string) *EventstoryunitCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventstoryunitCreate) SetGameID(v int64) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetGameID(v int) *EventstoryunitCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableGameID(v *int64) *EventstoryunitCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *EventstoryunitCreate) SetSeq(v int64) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetSeq(v int) *EventstoryunitCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableSeq(v *int64) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetNillableSeq(v *int) *EventstoryunitCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *EventstoryunitCreate) SetNillableSeq(v *int64) *EventstoryunitCreate {
 }
 
 // SetEventStoryID sets the "event_story_id" field.
-func (_c *EventstoryunitCreate) SetEventStoryID(v int64) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetEventStoryID(v int) *EventstoryunitCreate {
 	_c.mutation.SetEventStoryID(v)
 	return _c
 }
 
 // SetNillableEventStoryID sets the "event_story_id" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int64) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int) *EventstoryunitCreate {
 	if v != nil {
 		_c.SetEventStoryID(*v)
 	}
@@ -68,30 +55,20 @@ func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int64) *Eventstoryuni
 }
 
 // SetUnit sets the "unit" field.
-func (_c *EventstoryunitCreate) SetUnit(v string) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetUnit(v json.RawMessage) *EventstoryunitCreate {
 	_c.mutation.SetUnit(v)
 	return _c
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableUnit(v *string) *EventstoryunitCreate {
-	if v != nil {
-		_c.SetUnit(*v)
-	}
-	return _c
-}
-
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_c *EventstoryunitCreate) SetEventStoryUnitRelation(v string) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitCreate {
 	_c.mutation.SetEventStoryUnitRelation(v)
 	return _c
 }
 
-// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
-func (_c *EventstoryunitCreate) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitCreate {
-	if v != nil {
-		_c.SetEventStoryUnitRelation(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *EventstoryunitCreate) SetServerRegion(v string) *EventstoryunitCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -129,6 +106,9 @@ func (_c *EventstoryunitCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventstoryunitCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventstoryunit.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventstoryunit.server_region"`)}
 	}
@@ -158,29 +138,29 @@ func (_c *EventstoryunitCreate) createSpec() (*Eventstoryunit, *sqlgraph.CreateS
 		_node = &Eventstoryunit{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventstoryunit.Table, sqlgraph.NewFieldSpec(eventstoryunit.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.EventStoryID(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt64, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryID, field.TypeInt, value)
 		_node.EventStoryID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
 		_node.EventStoryUnitRelation = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -19,20 +19,14 @@ type WorldbloomdifferentattributebonuseCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *WorldbloomdifferentattributebonuseCreate) SetServerRegion(v string) *WorldbloomdifferentattributebonuseCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetAttributeCount sets the "attribute_count" field.
-func (_c *WorldbloomdifferentattributebonuseCreate) SetAttributeCount(v int64) *WorldbloomdifferentattributebonuseCreate {
+func (_c *WorldbloomdifferentattributebonuseCreate) SetAttributeCount(v int) *WorldbloomdifferentattributebonuseCreate {
 	_c.mutation.SetAttributeCount(v)
 	return _c
 }
 
 // SetNillableAttributeCount sets the "attribute_count" field if the given value is not nil.
-func (_c *WorldbloomdifferentattributebonuseCreate) SetNillableAttributeCount(v *int64) *WorldbloomdifferentattributebonuseCreate {
+func (_c *WorldbloomdifferentattributebonuseCreate) SetNillableAttributeCount(v *int) *WorldbloomdifferentattributebonuseCreate {
 	if v != nil {
 		_c.SetAttributeCount(*v)
 	}
@@ -50,6 +44,12 @@ func (_c *WorldbloomdifferentattributebonuseCreate) SetNillableBonusRate(v *floa
 	if v != nil {
 		_c.SetBonusRate(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *WorldbloomdifferentattributebonuseCreate) SetServerRegion(v string) *WorldbloomdifferentattributebonuseCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -116,17 +116,17 @@ func (_c *WorldbloomdifferentattributebonuseCreate) createSpec() (*Worldbloomdif
 		_node = &Worldbloomdifferentattributebonuse{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(worldbloomdifferentattributebonuse.Table, sqlgraph.NewFieldSpec(worldbloomdifferentattributebonuse.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.AttributeCount(); ok {
-		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt64, value)
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldAttributeCount, field.TypeInt, value)
 		_node.AttributeCount = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {
 		_spec.SetField(worldbloomdifferentattributebonuse.FieldBonusRate, field.TypeFloat64, value)
 		_node.BonusRate = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloomdifferentattributebonuse.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

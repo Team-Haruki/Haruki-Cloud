@@ -19,34 +19,20 @@ type MysekaicharactertalkconditiongroupCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetServerRegion(v string) *MysekaicharactertalkconditiongroupCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetGameID(v int64) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetGameID(v int) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGameID(v *int64) *MysekaicharactertalkconditiongroupCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetGroupID sets the "group_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetGroupID(v int64) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetGroupID(v int) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int64) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int) *MysekaicharactertalkconditiongroupCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -54,16 +40,22 @@ func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableGroupID(v *int64)
 }
 
 // SetMysekaiCharacterTalkConditionID sets the "mysekai_character_talk_condition_id" field.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetMysekaiCharacterTalkConditionID(v int64) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetMysekaiCharacterTalkConditionID(v int) *MysekaicharactertalkconditiongroupCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkConditionID sets the "mysekai_character_talk_condition_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableMysekaiCharacterTalkConditionID(v *int64) *MysekaicharactertalkconditiongroupCreate {
+func (_c *MysekaicharactertalkconditiongroupCreate) SetNillableMysekaiCharacterTalkConditionID(v *int) *MysekaicharactertalkconditiongroupCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkConditionID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaicharactertalkconditiongroupCreate) SetServerRegion(v string) *MysekaicharactertalkconditiongroupCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -101,6 +93,9 @@ func (_c *MysekaicharactertalkconditiongroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaicharactertalkconditiongroupCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaicharactertalkconditiongroup.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaicharactertalkconditiongroup.server_region"`)}
 	}
@@ -130,21 +125,21 @@ func (_c *MysekaicharactertalkconditiongroupCreate) createSpec() (*Mysekaicharac
 		_node = &Mysekaicharactertalkconditiongroup{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalkconditiongroup.Table, sqlgraph.NewFieldSpec(mysekaicharactertalkconditiongroup.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionID(); ok {
-		_spec.SetField(mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldMysekaiCharacterTalkConditionID, field.TypeInt, value)
 		_node.MysekaiCharacterTalkConditionID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaicharactertalkconditiongroup.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

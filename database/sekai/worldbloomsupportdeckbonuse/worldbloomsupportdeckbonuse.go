@@ -11,16 +11,10 @@ const (
 	Label = "worldbloomsupportdeckbonuse"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldCardRarityType holds the string denoting the card_rarity_type field in the database.
 	FieldCardRarityType = "card_rarity_type"
-	// FieldWorldBloomSupportDeckCharacterBonuses holds the string denoting the world_bloom_support_deck_character_bonuses field in the database.
-	FieldWorldBloomSupportDeckCharacterBonuses = "world_bloom_support_deck_character_bonuses"
-	// FieldWorldBloomSupportDeckMasterRankBonuses holds the string denoting the world_bloom_support_deck_master_rank_bonuses field in the database.
-	FieldWorldBloomSupportDeckMasterRankBonuses = "world_bloom_support_deck_master_rank_bonuses"
-	// FieldWorldBloomSupportDeckSkillLevelBonuses holds the string denoting the world_bloom_support_deck_skill_level_bonuses field in the database.
-	FieldWorldBloomSupportDeckSkillLevelBonuses = "world_bloom_support_deck_skill_level_bonuses"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the worldbloomsupportdeckbonuse in the database.
 	Table = "worldbloomsupportdeckbonuses"
 )
@@ -28,11 +22,8 @@ const (
 // Columns holds all SQL columns for worldbloomsupportdeckbonuse fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldCardRarityType,
-	FieldWorldBloomSupportDeckCharacterBonuses,
-	FieldWorldBloomSupportDeckMasterRankBonuses,
-	FieldWorldBloomSupportDeckSkillLevelBonuses,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -53,12 +44,12 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByCardRarityType orders the results by the card_rarity_type field.
 func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

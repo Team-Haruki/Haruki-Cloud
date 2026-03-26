@@ -262,12 +262,12 @@ func (_q *MysekaisiteharvestfixtureQuery) Clone() *MysekaisiteharvestfixtureQuer
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaisiteharvestfixture.Query().
-//		GroupBy(mysekaisiteharvestfixture.FieldServerRegion).
+//		GroupBy(mysekaisiteharvestfixture.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaisiteharvestfixtureQuery) GroupBy(field string, fields ...string) *MysekaisiteharvestfixtureGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaisiteharvestfixtureQuery) GroupBy(field string, fields ...string
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaisiteharvestfixture.Query().
-//		Select(mysekaisiteharvestfixture.FieldServerRegion).
+//		Select(mysekaisiteharvestfixture.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaisiteharvestfixtureQuery) Select(fields ...string) *MysekaisiteharvestfixtureSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

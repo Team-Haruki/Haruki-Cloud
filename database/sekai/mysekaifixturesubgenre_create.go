@@ -19,23 +19,9 @@ type MysekaifixturesubgenreCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaifixturesubgenreCreate) SetServerRegion(v string) *MysekaifixturesubgenreCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaifixturesubgenreCreate) SetGameID(v int64) *MysekaifixturesubgenreCreate {
+func (_c *MysekaifixturesubgenreCreate) SetGameID(v int) *MysekaifixturesubgenreCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaifixturesubgenreCreate) SetNillableGameID(v *int64) *MysekaifixturesubgenreCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -81,6 +67,12 @@ func (_c *MysekaifixturesubgenreCreate) SetNillableAssetbundleName(v *string) *M
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaifixturesubgenreCreate) SetServerRegion(v string) *MysekaifixturesubgenreCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the MysekaifixturesubgenreMutation object of the builder.
 func (_c *MysekaifixturesubgenreCreate) Mutation() *MysekaifixturesubgenreMutation {
 	return _c.mutation
@@ -115,6 +107,9 @@ func (_c *MysekaifixturesubgenreCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaifixturesubgenreCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaifixturesubgenre.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaifixturesubgenre.server_region"`)}
 	}
@@ -144,12 +139,8 @@ func (_c *MysekaifixturesubgenreCreate) createSpec() (*Mysekaifixturesubgenre, *
 		_node = &Mysekaifixturesubgenre{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaifixturesubgenre.Table, sqlgraph.NewFieldSpec(mysekaifixturesubgenre.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturesubgenre.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturesubgenre.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -163,6 +154,10 @@ func (_c *MysekaifixturesubgenreCreate) createSpec() (*Mysekaifixturesubgenre, *
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaifixturesubgenre.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturesubgenre.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

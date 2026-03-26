@@ -262,12 +262,12 @@ func (_q *CardmysekaicanvasbonuseQuery) Clone() *CardmysekaicanvasbonuseQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Cardmysekaicanvasbonuse.Query().
-//		GroupBy(cardmysekaicanvasbonuse.FieldServerRegion).
+//		GroupBy(cardmysekaicanvasbonuse.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *CardmysekaicanvasbonuseQuery) GroupBy(field string, fields ...string) *CardmysekaicanvasbonuseGroupBy {
@@ -285,11 +285,11 @@ func (_q *CardmysekaicanvasbonuseQuery) GroupBy(field string, fields ...string) 
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Cardmysekaicanvasbonuse.Query().
-//		Select(cardmysekaicanvasbonuse.FieldServerRegion).
+//		Select(cardmysekaicanvasbonuse.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *CardmysekaicanvasbonuseQuery) Select(fields ...string) *CardmysekaicanvasbonuseSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

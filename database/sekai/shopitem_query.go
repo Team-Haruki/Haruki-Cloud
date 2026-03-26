@@ -262,12 +262,12 @@ func (_q *ShopitemQuery) Clone() *ShopitemQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Shopitem.Query().
-//		GroupBy(shopitem.FieldServerRegion).
+//		GroupBy(shopitem.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *ShopitemQuery) GroupBy(field string, fields ...string) *ShopitemGroupBy {
@@ -285,11 +285,11 @@ func (_q *ShopitemQuery) GroupBy(field string, fields ...string) *ShopitemGroupB
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Shopitem.Query().
-//		Select(shopitem.FieldServerRegion).
+//		Select(shopitem.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *ShopitemQuery) Select(fields ...string) *ShopitemSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

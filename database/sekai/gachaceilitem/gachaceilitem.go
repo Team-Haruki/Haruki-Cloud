@@ -11,8 +11,6 @@ const (
 	Label = "gachaceilitem"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldGachaID holds the string denoting the gacha_id field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldConvertStartAt = "convert_start_at"
 	// FieldConvertResourceBoxID holds the string denoting the convert_resource_box_id field in the database.
 	FieldConvertResourceBoxID = "convert_resource_box_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the gachaceilitem in the database.
 	Table = "gachaceilitems"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for gachaceilitem fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldGachaID,
 	FieldName,
 	FieldAssetbundleName,
 	FieldConvertStartAt,
 	FieldConvertResourceBoxID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,11 +59,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -79,11 +74,6 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
-// ByAssetbundleName orders the results by the assetbundle_name field.
-func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
-}
-
 // ByConvertStartAt orders the results by the convert_start_at field.
 func ByConvertStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldConvertStartAt, opts...).ToFunc()
@@ -92,4 +82,9 @@ func ByConvertStartAt(opts ...sql.OrderTermOption) OrderOption {
 // ByConvertResourceBoxID orders the results by the convert_resource_box_id field.
 func ByConvertResourceBoxID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldConvertResourceBoxID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

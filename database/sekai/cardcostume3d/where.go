@@ -53,24 +53,144 @@ func IDLTE(id int) predicate.Cardcostume3D {
 	return predicate.Cardcostume3D(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // CardID applies equality check predicate on the "card_id" field. It's identical to CardIDEQ.
-func CardID(v int64) predicate.Cardcostume3D {
+func CardID(v int) predicate.Cardcostume3D {
 	return predicate.Cardcostume3D(sql.FieldEQ(FieldCardID, v))
 }
 
 // Costume3DID applies equality check predicate on the "costume3_d_id" field. It's identical to Costume3DIDEQ.
-func Costume3DID(v int64) predicate.Cardcostume3D {
+func Costume3DID(v int) predicate.Cardcostume3D {
 	return predicate.Cardcostume3D(sql.FieldEQ(FieldCostume3DID, v))
 }
 
 // IsInitialObtainHair applies equality check predicate on the "is_initial_obtain_hair" field. It's identical to IsInitialObtainHairEQ.
 func IsInitialObtainHair(v bool) predicate.Cardcostume3D {
 	return predicate.Cardcostume3D(sql.FieldEQ(FieldIsInitialObtainHair, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// CardIDEQ applies the EQ predicate on the "card_id" field.
+func CardIDEQ(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldEQ(FieldCardID, v))
+}
+
+// CardIDNEQ applies the NEQ predicate on the "card_id" field.
+func CardIDNEQ(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNEQ(FieldCardID, v))
+}
+
+// CardIDIn applies the In predicate on the "card_id" field.
+func CardIDIn(vs ...int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldIn(FieldCardID, vs...))
+}
+
+// CardIDNotIn applies the NotIn predicate on the "card_id" field.
+func CardIDNotIn(vs ...int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNotIn(FieldCardID, vs...))
+}
+
+// CardIDGT applies the GT predicate on the "card_id" field.
+func CardIDGT(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldGT(FieldCardID, v))
+}
+
+// CardIDGTE applies the GTE predicate on the "card_id" field.
+func CardIDGTE(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldGTE(FieldCardID, v))
+}
+
+// CardIDLT applies the LT predicate on the "card_id" field.
+func CardIDLT(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldLT(FieldCardID, v))
+}
+
+// CardIDLTE applies the LTE predicate on the "card_id" field.
+func CardIDLTE(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldLTE(FieldCardID, v))
+}
+
+// CardIDIsNil applies the IsNil predicate on the "card_id" field.
+func CardIDIsNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldIsNull(FieldCardID))
+}
+
+// CardIDNotNil applies the NotNil predicate on the "card_id" field.
+func CardIDNotNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNotNull(FieldCardID))
+}
+
+// Costume3DIDEQ applies the EQ predicate on the "costume3_d_id" field.
+func Costume3DIDEQ(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldEQ(FieldCostume3DID, v))
+}
+
+// Costume3DIDNEQ applies the NEQ predicate on the "costume3_d_id" field.
+func Costume3DIDNEQ(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNEQ(FieldCostume3DID, v))
+}
+
+// Costume3DIDIn applies the In predicate on the "costume3_d_id" field.
+func Costume3DIDIn(vs ...int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldIn(FieldCostume3DID, vs...))
+}
+
+// Costume3DIDNotIn applies the NotIn predicate on the "costume3_d_id" field.
+func Costume3DIDNotIn(vs ...int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNotIn(FieldCostume3DID, vs...))
+}
+
+// Costume3DIDGT applies the GT predicate on the "costume3_d_id" field.
+func Costume3DIDGT(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldGT(FieldCostume3DID, v))
+}
+
+// Costume3DIDGTE applies the GTE predicate on the "costume3_d_id" field.
+func Costume3DIDGTE(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldGTE(FieldCostume3DID, v))
+}
+
+// Costume3DIDLT applies the LT predicate on the "costume3_d_id" field.
+func Costume3DIDLT(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldLT(FieldCostume3DID, v))
+}
+
+// Costume3DIDLTE applies the LTE predicate on the "costume3_d_id" field.
+func Costume3DIDLTE(v int) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldLTE(FieldCostume3DID, v))
+}
+
+// Costume3DIDIsNil applies the IsNil predicate on the "costume3_d_id" field.
+func Costume3DIDIsNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldIsNull(FieldCostume3DID))
+}
+
+// Costume3DIDNotNil applies the NotNil predicate on the "costume3_d_id" field.
+func Costume3DIDNotNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNotNull(FieldCostume3DID))
+}
+
+// IsInitialObtainHairEQ applies the EQ predicate on the "is_initial_obtain_hair" field.
+func IsInitialObtainHairEQ(v bool) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldEQ(FieldIsInitialObtainHair, v))
+}
+
+// IsInitialObtainHairNEQ applies the NEQ predicate on the "is_initial_obtain_hair" field.
+func IsInitialObtainHairNEQ(v bool) predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNEQ(FieldIsInitialObtainHair, v))
+}
+
+// IsInitialObtainHairIsNil applies the IsNil predicate on the "is_initial_obtain_hair" field.
+func IsInitialObtainHairIsNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldIsNull(FieldIsInitialObtainHair))
+}
+
+// IsInitialObtainHairNotNil applies the NotNil predicate on the "is_initial_obtain_hair" field.
+func IsInitialObtainHairNotNil() predicate.Cardcostume3D {
+	return predicate.Cardcostume3D(sql.FieldNotNull(FieldIsInitialObtainHair))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -136,126 +256,6 @@ func ServerRegionEqualFold(v string) predicate.Cardcostume3D {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Cardcostume3D {
 	return predicate.Cardcostume3D(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// CardIDEQ applies the EQ predicate on the "card_id" field.
-func CardIDEQ(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldEQ(FieldCardID, v))
-}
-
-// CardIDNEQ applies the NEQ predicate on the "card_id" field.
-func CardIDNEQ(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNEQ(FieldCardID, v))
-}
-
-// CardIDIn applies the In predicate on the "card_id" field.
-func CardIDIn(vs ...int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldIn(FieldCardID, vs...))
-}
-
-// CardIDNotIn applies the NotIn predicate on the "card_id" field.
-func CardIDNotIn(vs ...int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNotIn(FieldCardID, vs...))
-}
-
-// CardIDGT applies the GT predicate on the "card_id" field.
-func CardIDGT(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldGT(FieldCardID, v))
-}
-
-// CardIDGTE applies the GTE predicate on the "card_id" field.
-func CardIDGTE(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldGTE(FieldCardID, v))
-}
-
-// CardIDLT applies the LT predicate on the "card_id" field.
-func CardIDLT(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldLT(FieldCardID, v))
-}
-
-// CardIDLTE applies the LTE predicate on the "card_id" field.
-func CardIDLTE(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldLTE(FieldCardID, v))
-}
-
-// CardIDIsNil applies the IsNil predicate on the "card_id" field.
-func CardIDIsNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldIsNull(FieldCardID))
-}
-
-// CardIDNotNil applies the NotNil predicate on the "card_id" field.
-func CardIDNotNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNotNull(FieldCardID))
-}
-
-// Costume3DIDEQ applies the EQ predicate on the "costume3_d_id" field.
-func Costume3DIDEQ(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldEQ(FieldCostume3DID, v))
-}
-
-// Costume3DIDNEQ applies the NEQ predicate on the "costume3_d_id" field.
-func Costume3DIDNEQ(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNEQ(FieldCostume3DID, v))
-}
-
-// Costume3DIDIn applies the In predicate on the "costume3_d_id" field.
-func Costume3DIDIn(vs ...int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldIn(FieldCostume3DID, vs...))
-}
-
-// Costume3DIDNotIn applies the NotIn predicate on the "costume3_d_id" field.
-func Costume3DIDNotIn(vs ...int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNotIn(FieldCostume3DID, vs...))
-}
-
-// Costume3DIDGT applies the GT predicate on the "costume3_d_id" field.
-func Costume3DIDGT(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldGT(FieldCostume3DID, v))
-}
-
-// Costume3DIDGTE applies the GTE predicate on the "costume3_d_id" field.
-func Costume3DIDGTE(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldGTE(FieldCostume3DID, v))
-}
-
-// Costume3DIDLT applies the LT predicate on the "costume3_d_id" field.
-func Costume3DIDLT(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldLT(FieldCostume3DID, v))
-}
-
-// Costume3DIDLTE applies the LTE predicate on the "costume3_d_id" field.
-func Costume3DIDLTE(v int64) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldLTE(FieldCostume3DID, v))
-}
-
-// Costume3DIDIsNil applies the IsNil predicate on the "costume3_d_id" field.
-func Costume3DIDIsNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldIsNull(FieldCostume3DID))
-}
-
-// Costume3DIDNotNil applies the NotNil predicate on the "costume3_d_id" field.
-func Costume3DIDNotNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNotNull(FieldCostume3DID))
-}
-
-// IsInitialObtainHairEQ applies the EQ predicate on the "is_initial_obtain_hair" field.
-func IsInitialObtainHairEQ(v bool) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldEQ(FieldIsInitialObtainHair, v))
-}
-
-// IsInitialObtainHairNEQ applies the NEQ predicate on the "is_initial_obtain_hair" field.
-func IsInitialObtainHairNEQ(v bool) predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNEQ(FieldIsInitialObtainHair, v))
-}
-
-// IsInitialObtainHairIsNil applies the IsNil predicate on the "is_initial_obtain_hair" field.
-func IsInitialObtainHairIsNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldIsNull(FieldIsInitialObtainHair))
-}
-
-// IsInitialObtainHairNotNil applies the NotNil predicate on the "is_initial_obtain_hair" field.
-func IsInitialObtainHairNotNil() predicate.Cardcostume3D {
-	return predicate.Cardcostume3D(sql.FieldNotNull(FieldIsInitialObtainHair))
 }
 
 // And groups predicates with the AND operator between them.

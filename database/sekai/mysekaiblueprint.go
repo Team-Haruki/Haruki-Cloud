@@ -17,23 +17,23 @@ type Mysekaiblueprint struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MysekaiCraftType holds the value of the "mysekai_craft_type" field.
-	MysekaiCraftType map[string]interface{} `json:"mysekai_craft_type,omitempty"`
+	MysekaiCraftType json.RawMessage `json:"mysekai_craft_type,omitempty"`
 	// CraftTargetID holds the value of the "craft_target_id" field.
-	CraftTargetID int64 `json:"craft_target_id,omitempty"`
+	CraftTargetID int `json:"craft_target_id,omitempty"`
 	// IsEnableSketch holds the value of the "is_enable_sketch" field.
 	IsEnableSketch bool `json:"is_enable_sketch,omitempty"`
 	// IsObtainedByConvert holds the value of the "is_obtained_by_convert" field.
 	IsObtainedByConvert bool `json:"is_obtained_by_convert,omitempty"`
 	// CraftCountLimit holds the value of the "craft_count_limit" field.
-	CraftCountLimit int64 `json:"craft_count_limit,omitempty"`
+	CraftCountLimit int `json:"craft_count_limit,omitempty"`
 	// IsAvailableWithoutPossession holds the value of the "is_available_without_possession" field.
 	IsAvailableWithoutPossession bool `json:"is_available_without_possession,omitempty"`
-	selectValues                 sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -70,17 +70,11 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaiblueprint.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaiblueprint.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaiblueprint.FieldMysekaiCraftType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -94,7 +88,7 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field craft_target_id", values[i])
 			} else if value.Valid {
-				_m.CraftTargetID = value.Int64
+				_m.CraftTargetID = int(value.Int64)
 			}
 		case mysekaiblueprint.FieldIsEnableSketch:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -112,13 +106,19 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field craft_count_limit", values[i])
 			} else if value.Valid {
-				_m.CraftCountLimit = value.Int64
+				_m.CraftCountLimit = int(value.Int64)
 			}
 		case mysekaiblueprint.FieldIsAvailableWithoutPossession:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_available_without_possession", values[i])
 			} else if value.Valid {
 				_m.IsAvailableWithoutPossession = value.Bool
+			}
+		case mysekaiblueprint.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -156,9 +156,6 @@ func (_m *Mysekaiblueprint) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaiblueprint(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -179,6 +176,9 @@ func (_m *Mysekaiblueprint) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_available_without_possession=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsAvailableWithoutPossession))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

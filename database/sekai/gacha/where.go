@@ -53,19 +53,9 @@ func IDLTE(id int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Gacha {
+func GameID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGameID, v))
-}
-
-// GachaType applies equality check predicate on the "gacha_type" field. It's identical to GachaTypeEQ.
-func GachaType(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldEQ(FieldGachaType, v))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
@@ -74,7 +64,7 @@ func Name(v string) predicate.Gacha {
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Gacha {
+func Seq(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -84,17 +74,17 @@ func AssetbundleName(v string) predicate.Gacha {
 }
 
 // GachaCardRarityRateGroupID applies equality check predicate on the "gacha_card_rarity_rate_group_id" field. It's identical to GachaCardRarityRateGroupIDEQ.
-func GachaCardRarityRateGroupID(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaCardRarityRateGroupID, v))
 }
 
 // StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int64) predicate.Gacha {
+func StartAt(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldStartAt, v))
 }
 
 // EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
-func EndAt(v int64) predicate.Gacha {
+func EndAt(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldEndAt, v))
 }
 
@@ -104,223 +94,98 @@ func IsShowPeriod(v bool) predicate.Gacha {
 }
 
 // GachaCeilItemID applies equality check predicate on the "gacha_ceil_item_id" field. It's identical to GachaCeilItemIDEQ.
-func GachaCeilItemID(v int64) predicate.Gacha {
+func GachaCeilItemID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaCeilItemID, v))
 }
 
 // WishSelectCount applies equality check predicate on the "wish_select_count" field. It's identical to WishSelectCountEQ.
-func WishSelectCount(v int64) predicate.Gacha {
+func WishSelectCount(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishSelectCount, v))
 }
 
 // WishFixedSelectCount applies equality check predicate on the "wish_fixed_select_count" field. It's identical to WishFixedSelectCountEQ.
-func WishFixedSelectCount(v int64) predicate.Gacha {
+func WishFixedSelectCount(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishFixedSelectCount, v))
 }
 
 // WishLimitedSelectCount applies equality check predicate on the "wish_limited_select_count" field. It's identical to WishLimitedSelectCountEQ.
-func WishLimitedSelectCount(v int64) predicate.Gacha {
+func WishLimitedSelectCount(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishLimitedSelectCount, v))
 }
 
 // DrawableGachaHour applies equality check predicate on the "drawable_gacha_hour" field. It's identical to DrawableGachaHourEQ.
-func DrawableGachaHour(v int64) predicate.Gacha {
+func DrawableGachaHour(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldDrawableGachaHour, v))
 }
 
 // GachaBonusID applies equality check predicate on the "gacha_bonus_id" field. It's identical to GachaBonusIDEQ.
-func GachaBonusID(v int64) predicate.Gacha {
+func GachaBonusID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaBonusID, v))
 }
 
 // SpinLimit applies equality check predicate on the "spin_limit" field. It's identical to SpinLimitEQ.
-func SpinLimit(v int64) predicate.Gacha {
+func SpinLimit(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldSpinLimit, v))
 }
 
 // GachaBonusItemReceivableRewardGroupID applies equality check predicate on the "gacha_bonus_item_receivable_reward_group_id" field. It's identical to GachaBonusItemReceivableRewardGroupIDEQ.
-func GachaBonusItemReceivableRewardGroupID(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaFreebieGroupID applies equality check predicate on the "gacha_freebie_group_id" field. It's identical to GachaFreebieGroupIDEQ.
-func GachaFreebieGroupID(v int64) predicate.Gacha {
+func GachaFreebieGroupID(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaFreebieGroupID, v))
 }
 
 // DailySpinLimit applies equality check predicate on the "daily_spin_limit" field. It's identical to DailySpinLimitEQ.
-func DailySpinLimit(v int64) predicate.Gacha {
+func DailySpinLimit(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldDailySpinLimit, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Gacha {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Gacha {
+func GameIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Gacha {
+func GameIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Gacha {
+func GameIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Gacha {
+func GameIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Gacha {
+func GameIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Gacha {
+func GameIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Gacha {
+func GameIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Gacha {
+func GameIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Gacha {
-	return predicate.Gacha(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Gacha {
-	return predicate.Gacha(sql.FieldNotNull(FieldGameID))
-}
-
-// GachaTypeEQ applies the EQ predicate on the "gacha_type" field.
-func GachaTypeEQ(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldEQ(FieldGachaType, v))
-}
-
-// GachaTypeNEQ applies the NEQ predicate on the "gacha_type" field.
-func GachaTypeNEQ(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldNEQ(FieldGachaType, v))
-}
-
-// GachaTypeIn applies the In predicate on the "gacha_type" field.
-func GachaTypeIn(vs ...string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldIn(FieldGachaType, vs...))
-}
-
-// GachaTypeNotIn applies the NotIn predicate on the "gacha_type" field.
-func GachaTypeNotIn(vs ...string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldNotIn(FieldGachaType, vs...))
-}
-
-// GachaTypeGT applies the GT predicate on the "gacha_type" field.
-func GachaTypeGT(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldGT(FieldGachaType, v))
-}
-
-// GachaTypeGTE applies the GTE predicate on the "gacha_type" field.
-func GachaTypeGTE(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldGTE(FieldGachaType, v))
-}
-
-// GachaTypeLT applies the LT predicate on the "gacha_type" field.
-func GachaTypeLT(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldLT(FieldGachaType, v))
-}
-
-// GachaTypeLTE applies the LTE predicate on the "gacha_type" field.
-func GachaTypeLTE(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldLTE(FieldGachaType, v))
-}
-
-// GachaTypeContains applies the Contains predicate on the "gacha_type" field.
-func GachaTypeContains(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldContains(FieldGachaType, v))
-}
-
-// GachaTypeHasPrefix applies the HasPrefix predicate on the "gacha_type" field.
-func GachaTypeHasPrefix(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldHasPrefix(FieldGachaType, v))
-}
-
-// GachaTypeHasSuffix applies the HasSuffix predicate on the "gacha_type" field.
-func GachaTypeHasSuffix(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldHasSuffix(FieldGachaType, v))
 }
 
 // GachaTypeIsNil applies the IsNil predicate on the "gacha_type" field.
@@ -331,16 +196,6 @@ func GachaTypeIsNil() predicate.Gacha {
 // GachaTypeNotNil applies the NotNil predicate on the "gacha_type" field.
 func GachaTypeNotNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotNull(FieldGachaType))
-}
-
-// GachaTypeEqualFold applies the EqualFold predicate on the "gacha_type" field.
-func GachaTypeEqualFold(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldEqualFold(FieldGachaType, v))
-}
-
-// GachaTypeContainsFold applies the ContainsFold predicate on the "gacha_type" field.
-func GachaTypeContainsFold(v string) predicate.Gacha {
-	return predicate.Gacha(sql.FieldContainsFold(FieldGachaType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -419,42 +274,42 @@ func NameContainsFold(v string) predicate.Gacha {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Gacha {
+func SeqEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Gacha {
+func SeqNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Gacha {
+func SeqIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Gacha {
+func SeqNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Gacha {
+func SeqGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Gacha {
+func SeqGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Gacha {
+func SeqLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Gacha {
+func SeqLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -544,42 +399,42 @@ func AssetbundleNameContainsFold(v string) predicate.Gacha {
 }
 
 // GachaCardRarityRateGroupIDEQ applies the EQ predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDEQ(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaCardRarityRateGroupID, v))
 }
 
 // GachaCardRarityRateGroupIDNEQ applies the NEQ predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDNEQ(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGachaCardRarityRateGroupID, v))
 }
 
 // GachaCardRarityRateGroupIDIn applies the In predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDIn(vs ...int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGachaCardRarityRateGroupID, vs...))
 }
 
 // GachaCardRarityRateGroupIDNotIn applies the NotIn predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDNotIn(vs ...int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGachaCardRarityRateGroupID, vs...))
 }
 
 // GachaCardRarityRateGroupIDGT applies the GT predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDGT(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGachaCardRarityRateGroupID, v))
 }
 
 // GachaCardRarityRateGroupIDGTE applies the GTE predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDGTE(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGachaCardRarityRateGroupID, v))
 }
 
 // GachaCardRarityRateGroupIDLT applies the LT predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDLT(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGachaCardRarityRateGroupID, v))
 }
 
 // GachaCardRarityRateGroupIDLTE applies the LTE predicate on the "gacha_card_rarity_rate_group_id" field.
-func GachaCardRarityRateGroupIDLTE(v int64) predicate.Gacha {
+func GachaCardRarityRateGroupIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGachaCardRarityRateGroupID, v))
 }
 
@@ -594,42 +449,42 @@ func GachaCardRarityRateGroupIDNotNil() predicate.Gacha {
 }
 
 // StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int64) predicate.Gacha {
+func StartAtEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldStartAt, v))
 }
 
 // StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int64) predicate.Gacha {
+func StartAtNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldStartAt, v))
 }
 
 // StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int64) predicate.Gacha {
+func StartAtIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldStartAt, vs...))
 }
 
 // StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int64) predicate.Gacha {
+func StartAtNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldStartAt, vs...))
 }
 
 // StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int64) predicate.Gacha {
+func StartAtGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldStartAt, v))
 }
 
 // StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int64) predicate.Gacha {
+func StartAtGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldStartAt, v))
 }
 
 // StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int64) predicate.Gacha {
+func StartAtLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldStartAt, v))
 }
 
 // StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int64) predicate.Gacha {
+func StartAtLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldStartAt, v))
 }
 
@@ -644,42 +499,42 @@ func StartAtNotNil() predicate.Gacha {
 }
 
 // EndAtEQ applies the EQ predicate on the "end_at" field.
-func EndAtEQ(v int64) predicate.Gacha {
+func EndAtEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldEndAt, v))
 }
 
 // EndAtNEQ applies the NEQ predicate on the "end_at" field.
-func EndAtNEQ(v int64) predicate.Gacha {
+func EndAtNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldEndAt, v))
 }
 
 // EndAtIn applies the In predicate on the "end_at" field.
-func EndAtIn(vs ...int64) predicate.Gacha {
+func EndAtIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldEndAt, vs...))
 }
 
 // EndAtNotIn applies the NotIn predicate on the "end_at" field.
-func EndAtNotIn(vs ...int64) predicate.Gacha {
+func EndAtNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldEndAt, vs...))
 }
 
 // EndAtGT applies the GT predicate on the "end_at" field.
-func EndAtGT(v int64) predicate.Gacha {
+func EndAtGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldEndAt, v))
 }
 
 // EndAtGTE applies the GTE predicate on the "end_at" field.
-func EndAtGTE(v int64) predicate.Gacha {
+func EndAtGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldEndAt, v))
 }
 
 // EndAtLT applies the LT predicate on the "end_at" field.
-func EndAtLT(v int64) predicate.Gacha {
+func EndAtLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldEndAt, v))
 }
 
 // EndAtLTE applies the LTE predicate on the "end_at" field.
-func EndAtLTE(v int64) predicate.Gacha {
+func EndAtLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldEndAt, v))
 }
 
@@ -714,42 +569,42 @@ func IsShowPeriodNotNil() predicate.Gacha {
 }
 
 // GachaCeilItemIDEQ applies the EQ predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDEQ(v int64) predicate.Gacha {
+func GachaCeilItemIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaCeilItemID, v))
 }
 
 // GachaCeilItemIDNEQ applies the NEQ predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDNEQ(v int64) predicate.Gacha {
+func GachaCeilItemIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGachaCeilItemID, v))
 }
 
 // GachaCeilItemIDIn applies the In predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDIn(vs ...int64) predicate.Gacha {
+func GachaCeilItemIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGachaCeilItemID, vs...))
 }
 
 // GachaCeilItemIDNotIn applies the NotIn predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDNotIn(vs ...int64) predicate.Gacha {
+func GachaCeilItemIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGachaCeilItemID, vs...))
 }
 
 // GachaCeilItemIDGT applies the GT predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDGT(v int64) predicate.Gacha {
+func GachaCeilItemIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGachaCeilItemID, v))
 }
 
 // GachaCeilItemIDGTE applies the GTE predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDGTE(v int64) predicate.Gacha {
+func GachaCeilItemIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGachaCeilItemID, v))
 }
 
 // GachaCeilItemIDLT applies the LT predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDLT(v int64) predicate.Gacha {
+func GachaCeilItemIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGachaCeilItemID, v))
 }
 
 // GachaCeilItemIDLTE applies the LTE predicate on the "gacha_ceil_item_id" field.
-func GachaCeilItemIDLTE(v int64) predicate.Gacha {
+func GachaCeilItemIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGachaCeilItemID, v))
 }
 
@@ -764,42 +619,42 @@ func GachaCeilItemIDNotNil() predicate.Gacha {
 }
 
 // WishSelectCountEQ applies the EQ predicate on the "wish_select_count" field.
-func WishSelectCountEQ(v int64) predicate.Gacha {
+func WishSelectCountEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishSelectCount, v))
 }
 
 // WishSelectCountNEQ applies the NEQ predicate on the "wish_select_count" field.
-func WishSelectCountNEQ(v int64) predicate.Gacha {
+func WishSelectCountNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldWishSelectCount, v))
 }
 
 // WishSelectCountIn applies the In predicate on the "wish_select_count" field.
-func WishSelectCountIn(vs ...int64) predicate.Gacha {
+func WishSelectCountIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldWishSelectCount, vs...))
 }
 
 // WishSelectCountNotIn applies the NotIn predicate on the "wish_select_count" field.
-func WishSelectCountNotIn(vs ...int64) predicate.Gacha {
+func WishSelectCountNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldWishSelectCount, vs...))
 }
 
 // WishSelectCountGT applies the GT predicate on the "wish_select_count" field.
-func WishSelectCountGT(v int64) predicate.Gacha {
+func WishSelectCountGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldWishSelectCount, v))
 }
 
 // WishSelectCountGTE applies the GTE predicate on the "wish_select_count" field.
-func WishSelectCountGTE(v int64) predicate.Gacha {
+func WishSelectCountGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldWishSelectCount, v))
 }
 
 // WishSelectCountLT applies the LT predicate on the "wish_select_count" field.
-func WishSelectCountLT(v int64) predicate.Gacha {
+func WishSelectCountLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldWishSelectCount, v))
 }
 
 // WishSelectCountLTE applies the LTE predicate on the "wish_select_count" field.
-func WishSelectCountLTE(v int64) predicate.Gacha {
+func WishSelectCountLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldWishSelectCount, v))
 }
 
@@ -814,42 +669,42 @@ func WishSelectCountNotNil() predicate.Gacha {
 }
 
 // WishFixedSelectCountEQ applies the EQ predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountEQ(v int64) predicate.Gacha {
+func WishFixedSelectCountEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishFixedSelectCount, v))
 }
 
 // WishFixedSelectCountNEQ applies the NEQ predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountNEQ(v int64) predicate.Gacha {
+func WishFixedSelectCountNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldWishFixedSelectCount, v))
 }
 
 // WishFixedSelectCountIn applies the In predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountIn(vs ...int64) predicate.Gacha {
+func WishFixedSelectCountIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldWishFixedSelectCount, vs...))
 }
 
 // WishFixedSelectCountNotIn applies the NotIn predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountNotIn(vs ...int64) predicate.Gacha {
+func WishFixedSelectCountNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldWishFixedSelectCount, vs...))
 }
 
 // WishFixedSelectCountGT applies the GT predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountGT(v int64) predicate.Gacha {
+func WishFixedSelectCountGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldWishFixedSelectCount, v))
 }
 
 // WishFixedSelectCountGTE applies the GTE predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountGTE(v int64) predicate.Gacha {
+func WishFixedSelectCountGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldWishFixedSelectCount, v))
 }
 
 // WishFixedSelectCountLT applies the LT predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountLT(v int64) predicate.Gacha {
+func WishFixedSelectCountLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldWishFixedSelectCount, v))
 }
 
 // WishFixedSelectCountLTE applies the LTE predicate on the "wish_fixed_select_count" field.
-func WishFixedSelectCountLTE(v int64) predicate.Gacha {
+func WishFixedSelectCountLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldWishFixedSelectCount, v))
 }
 
@@ -864,42 +719,42 @@ func WishFixedSelectCountNotNil() predicate.Gacha {
 }
 
 // WishLimitedSelectCountEQ applies the EQ predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountEQ(v int64) predicate.Gacha {
+func WishLimitedSelectCountEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldWishLimitedSelectCount, v))
 }
 
 // WishLimitedSelectCountNEQ applies the NEQ predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountNEQ(v int64) predicate.Gacha {
+func WishLimitedSelectCountNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldWishLimitedSelectCount, v))
 }
 
 // WishLimitedSelectCountIn applies the In predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountIn(vs ...int64) predicate.Gacha {
+func WishLimitedSelectCountIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldWishLimitedSelectCount, vs...))
 }
 
 // WishLimitedSelectCountNotIn applies the NotIn predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountNotIn(vs ...int64) predicate.Gacha {
+func WishLimitedSelectCountNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldWishLimitedSelectCount, vs...))
 }
 
 // WishLimitedSelectCountGT applies the GT predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountGT(v int64) predicate.Gacha {
+func WishLimitedSelectCountGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldWishLimitedSelectCount, v))
 }
 
 // WishLimitedSelectCountGTE applies the GTE predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountGTE(v int64) predicate.Gacha {
+func WishLimitedSelectCountGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldWishLimitedSelectCount, v))
 }
 
 // WishLimitedSelectCountLT applies the LT predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountLT(v int64) predicate.Gacha {
+func WishLimitedSelectCountLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldWishLimitedSelectCount, v))
 }
 
 // WishLimitedSelectCountLTE applies the LTE predicate on the "wish_limited_select_count" field.
-func WishLimitedSelectCountLTE(v int64) predicate.Gacha {
+func WishLimitedSelectCountLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldWishLimitedSelectCount, v))
 }
 
@@ -974,42 +829,42 @@ func GachaInformationNotNil() predicate.Gacha {
 }
 
 // DrawableGachaHourEQ applies the EQ predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourEQ(v int64) predicate.Gacha {
+func DrawableGachaHourEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldDrawableGachaHour, v))
 }
 
 // DrawableGachaHourNEQ applies the NEQ predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourNEQ(v int64) predicate.Gacha {
+func DrawableGachaHourNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldDrawableGachaHour, v))
 }
 
 // DrawableGachaHourIn applies the In predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourIn(vs ...int64) predicate.Gacha {
+func DrawableGachaHourIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldDrawableGachaHour, vs...))
 }
 
 // DrawableGachaHourNotIn applies the NotIn predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourNotIn(vs ...int64) predicate.Gacha {
+func DrawableGachaHourNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldDrawableGachaHour, vs...))
 }
 
 // DrawableGachaHourGT applies the GT predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourGT(v int64) predicate.Gacha {
+func DrawableGachaHourGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldDrawableGachaHour, v))
 }
 
 // DrawableGachaHourGTE applies the GTE predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourGTE(v int64) predicate.Gacha {
+func DrawableGachaHourGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldDrawableGachaHour, v))
 }
 
 // DrawableGachaHourLT applies the LT predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourLT(v int64) predicate.Gacha {
+func DrawableGachaHourLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldDrawableGachaHour, v))
 }
 
 // DrawableGachaHourLTE applies the LTE predicate on the "drawable_gacha_hour" field.
-func DrawableGachaHourLTE(v int64) predicate.Gacha {
+func DrawableGachaHourLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldDrawableGachaHour, v))
 }
 
@@ -1024,42 +879,42 @@ func DrawableGachaHourNotNil() predicate.Gacha {
 }
 
 // GachaBonusIDEQ applies the EQ predicate on the "gacha_bonus_id" field.
-func GachaBonusIDEQ(v int64) predicate.Gacha {
+func GachaBonusIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaBonusID, v))
 }
 
 // GachaBonusIDNEQ applies the NEQ predicate on the "gacha_bonus_id" field.
-func GachaBonusIDNEQ(v int64) predicate.Gacha {
+func GachaBonusIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGachaBonusID, v))
 }
 
 // GachaBonusIDIn applies the In predicate on the "gacha_bonus_id" field.
-func GachaBonusIDIn(vs ...int64) predicate.Gacha {
+func GachaBonusIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGachaBonusID, vs...))
 }
 
 // GachaBonusIDNotIn applies the NotIn predicate on the "gacha_bonus_id" field.
-func GachaBonusIDNotIn(vs ...int64) predicate.Gacha {
+func GachaBonusIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGachaBonusID, vs...))
 }
 
 // GachaBonusIDGT applies the GT predicate on the "gacha_bonus_id" field.
-func GachaBonusIDGT(v int64) predicate.Gacha {
+func GachaBonusIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGachaBonusID, v))
 }
 
 // GachaBonusIDGTE applies the GTE predicate on the "gacha_bonus_id" field.
-func GachaBonusIDGTE(v int64) predicate.Gacha {
+func GachaBonusIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGachaBonusID, v))
 }
 
 // GachaBonusIDLT applies the LT predicate on the "gacha_bonus_id" field.
-func GachaBonusIDLT(v int64) predicate.Gacha {
+func GachaBonusIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGachaBonusID, v))
 }
 
 // GachaBonusIDLTE applies the LTE predicate on the "gacha_bonus_id" field.
-func GachaBonusIDLTE(v int64) predicate.Gacha {
+func GachaBonusIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGachaBonusID, v))
 }
 
@@ -1074,42 +929,42 @@ func GachaBonusIDNotNil() predicate.Gacha {
 }
 
 // SpinLimitEQ applies the EQ predicate on the "spin_limit" field.
-func SpinLimitEQ(v int64) predicate.Gacha {
+func SpinLimitEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldSpinLimit, v))
 }
 
 // SpinLimitNEQ applies the NEQ predicate on the "spin_limit" field.
-func SpinLimitNEQ(v int64) predicate.Gacha {
+func SpinLimitNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldSpinLimit, v))
 }
 
 // SpinLimitIn applies the In predicate on the "spin_limit" field.
-func SpinLimitIn(vs ...int64) predicate.Gacha {
+func SpinLimitIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldSpinLimit, vs...))
 }
 
 // SpinLimitNotIn applies the NotIn predicate on the "spin_limit" field.
-func SpinLimitNotIn(vs ...int64) predicate.Gacha {
+func SpinLimitNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldSpinLimit, vs...))
 }
 
 // SpinLimitGT applies the GT predicate on the "spin_limit" field.
-func SpinLimitGT(v int64) predicate.Gacha {
+func SpinLimitGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldSpinLimit, v))
 }
 
 // SpinLimitGTE applies the GTE predicate on the "spin_limit" field.
-func SpinLimitGTE(v int64) predicate.Gacha {
+func SpinLimitGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldSpinLimit, v))
 }
 
 // SpinLimitLT applies the LT predicate on the "spin_limit" field.
-func SpinLimitLT(v int64) predicate.Gacha {
+func SpinLimitLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldSpinLimit, v))
 }
 
 // SpinLimitLTE applies the LTE predicate on the "spin_limit" field.
-func SpinLimitLTE(v int64) predicate.Gacha {
+func SpinLimitLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldSpinLimit, v))
 }
 
@@ -1124,42 +979,42 @@ func SpinLimitNotNil() predicate.Gacha {
 }
 
 // GachaBonusItemReceivableRewardGroupIDEQ applies the EQ predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDEQ(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaBonusItemReceivableRewardGroupIDNEQ applies the NEQ predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDNEQ(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaBonusItemReceivableRewardGroupIDIn applies the In predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDIn(vs ...int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGachaBonusItemReceivableRewardGroupID, vs...))
 }
 
 // GachaBonusItemReceivableRewardGroupIDNotIn applies the NotIn predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDNotIn(vs ...int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGachaBonusItemReceivableRewardGroupID, vs...))
 }
 
 // GachaBonusItemReceivableRewardGroupIDGT applies the GT predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDGT(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaBonusItemReceivableRewardGroupIDGTE applies the GTE predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDGTE(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaBonusItemReceivableRewardGroupIDLT applies the LT predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDLT(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
 // GachaBonusItemReceivableRewardGroupIDLTE applies the LTE predicate on the "gacha_bonus_item_receivable_reward_group_id" field.
-func GachaBonusItemReceivableRewardGroupIDLTE(v int64) predicate.Gacha {
+func GachaBonusItemReceivableRewardGroupIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGachaBonusItemReceivableRewardGroupID, v))
 }
 
@@ -1174,42 +1029,42 @@ func GachaBonusItemReceivableRewardGroupIDNotNil() predicate.Gacha {
 }
 
 // GachaFreebieGroupIDEQ applies the EQ predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDEQ(v int64) predicate.Gacha {
+func GachaFreebieGroupIDEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGachaFreebieGroupID, v))
 }
 
 // GachaFreebieGroupIDNEQ applies the NEQ predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDNEQ(v int64) predicate.Gacha {
+func GachaFreebieGroupIDNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldGachaFreebieGroupID, v))
 }
 
 // GachaFreebieGroupIDIn applies the In predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDIn(vs ...int64) predicate.Gacha {
+func GachaFreebieGroupIDIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldGachaFreebieGroupID, vs...))
 }
 
 // GachaFreebieGroupIDNotIn applies the NotIn predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDNotIn(vs ...int64) predicate.Gacha {
+func GachaFreebieGroupIDNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldGachaFreebieGroupID, vs...))
 }
 
 // GachaFreebieGroupIDGT applies the GT predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDGT(v int64) predicate.Gacha {
+func GachaFreebieGroupIDGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldGachaFreebieGroupID, v))
 }
 
 // GachaFreebieGroupIDGTE applies the GTE predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDGTE(v int64) predicate.Gacha {
+func GachaFreebieGroupIDGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldGachaFreebieGroupID, v))
 }
 
 // GachaFreebieGroupIDLT applies the LT predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDLT(v int64) predicate.Gacha {
+func GachaFreebieGroupIDLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldGachaFreebieGroupID, v))
 }
 
 // GachaFreebieGroupIDLTE applies the LTE predicate on the "gacha_freebie_group_id" field.
-func GachaFreebieGroupIDLTE(v int64) predicate.Gacha {
+func GachaFreebieGroupIDLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldGachaFreebieGroupID, v))
 }
 
@@ -1224,42 +1079,42 @@ func GachaFreebieGroupIDNotNil() predicate.Gacha {
 }
 
 // DailySpinLimitEQ applies the EQ predicate on the "daily_spin_limit" field.
-func DailySpinLimitEQ(v int64) predicate.Gacha {
+func DailySpinLimitEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldDailySpinLimit, v))
 }
 
 // DailySpinLimitNEQ applies the NEQ predicate on the "daily_spin_limit" field.
-func DailySpinLimitNEQ(v int64) predicate.Gacha {
+func DailySpinLimitNEQ(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNEQ(FieldDailySpinLimit, v))
 }
 
 // DailySpinLimitIn applies the In predicate on the "daily_spin_limit" field.
-func DailySpinLimitIn(vs ...int64) predicate.Gacha {
+func DailySpinLimitIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldIn(FieldDailySpinLimit, vs...))
 }
 
 // DailySpinLimitNotIn applies the NotIn predicate on the "daily_spin_limit" field.
-func DailySpinLimitNotIn(vs ...int64) predicate.Gacha {
+func DailySpinLimitNotIn(vs ...int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotIn(FieldDailySpinLimit, vs...))
 }
 
 // DailySpinLimitGT applies the GT predicate on the "daily_spin_limit" field.
-func DailySpinLimitGT(v int64) predicate.Gacha {
+func DailySpinLimitGT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGT(FieldDailySpinLimit, v))
 }
 
 // DailySpinLimitGTE applies the GTE predicate on the "daily_spin_limit" field.
-func DailySpinLimitGTE(v int64) predicate.Gacha {
+func DailySpinLimitGTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldGTE(FieldDailySpinLimit, v))
 }
 
 // DailySpinLimitLT applies the LT predicate on the "daily_spin_limit" field.
-func DailySpinLimitLT(v int64) predicate.Gacha {
+func DailySpinLimitLT(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLT(FieldDailySpinLimit, v))
 }
 
 // DailySpinLimitLTE applies the LTE predicate on the "daily_spin_limit" field.
-func DailySpinLimitLTE(v int64) predicate.Gacha {
+func DailySpinLimitLTE(v int) predicate.Gacha {
 	return predicate.Gacha(sql.FieldLTE(FieldDailySpinLimit, v))
 }
 
@@ -1271,6 +1126,71 @@ func DailySpinLimitIsNil() predicate.Gacha {
 // DailySpinLimitNotNil applies the NotNil predicate on the "daily_spin_limit" field.
 func DailySpinLimitNotNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotNull(FieldDailySpinLimit))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

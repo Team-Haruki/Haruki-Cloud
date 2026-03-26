@@ -262,12 +262,12 @@ func (_q *EventmusicQuery) Clone() *EventmusicQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		EventID int `json:"event_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Eventmusic.Query().
-//		GroupBy(eventmusic.FieldServerRegion).
+//		GroupBy(eventmusic.FieldEventID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *EventmusicQuery) GroupBy(field string, fields ...string) *EventmusicGroupBy {
@@ -285,11 +285,11 @@ func (_q *EventmusicQuery) GroupBy(field string, fields ...string) *EventmusicGr
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		EventID int `json:"event_id,omitempty"`
 //	}
 //
 //	client.Eventmusic.Query().
-//		Select(eventmusic.FieldServerRegion).
+//		Select(eventmusic.FieldEventID).
 //		Scan(ctx, &v)
 func (_q *EventmusicQuery) Select(fields ...string) *EventmusicSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -17,20 +17,18 @@ type Bondshonor struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// BondsGroupID holds the value of the "bonds_group_id" field.
-	BondsGroupID int64 `json:"bonds_group_id,omitempty"`
+	BondsGroupID int `json:"bonds_group_id,omitempty"`
 	// GameCharacterUnitId1 holds the value of the "game_character_unit_id1" field.
-	GameCharacterUnitId1 int64 `json:"game_character_unit_id1,omitempty"`
+	GameCharacterUnitId1 int `json:"game_character_unit_id1,omitempty"`
 	// GameCharacterUnitId2 holds the value of the "game_character_unit_id2" field.
-	GameCharacterUnitId2 int64 `json:"game_character_unit_id2,omitempty"`
+	GameCharacterUnitId2 int `json:"game_character_unit_id2,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
-	HonorRarity string `json:"honor_rarity,omitempty"`
+	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -38,10 +36,12 @@ type Bondshonor struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Levels holds the value of the "levels" field.
-	Levels []interface{} `json:"levels,omitempty"`
+	Levels json.RawMessage `json:"levels,omitempty"`
 	// ConfigurableUnitVirtualSinger holds the value of the "configurable_unit_virtual_singer" field.
 	ConfigurableUnitVirtualSinger bool `json:"configurable_unit_virtual_singer,omitempty"`
-	selectValues                  sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -49,13 +49,13 @@ func (*Bondshonor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case bondshonor.FieldLevels:
+		case bondshonor.FieldHonorRarity, bondshonor.FieldLevels:
 			values[i] = new([]byte)
 		case bondshonor.FieldConfigurableUnitVirtualSinger:
 			values[i] = new(sql.NullBool)
 		case bondshonor.FieldID, bondshonor.FieldGameID, bondshonor.FieldSeq, bondshonor.FieldBondsGroupID, bondshonor.FieldGameCharacterUnitId1, bondshonor.FieldGameCharacterUnitId2:
 			values[i] = new(sql.NullInt64)
-		case bondshonor.FieldServerRegion, bondshonor.FieldHonorRarity, bondshonor.FieldName, bondshonor.FieldPronunciation, bondshonor.FieldDescription:
+		case bondshonor.FieldName, bondshonor.FieldPronunciation, bondshonor.FieldDescription, bondshonor.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -78,47 +78,43 @@ func (_m *Bondshonor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case bondshonor.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case bondshonor.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case bondshonor.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case bondshonor.FieldBondsGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field bonds_group_id", values[i])
 			} else if value.Valid {
-				_m.BondsGroupID = value.Int64
+				_m.BondsGroupID = int(value.Int64)
 			}
 		case bondshonor.FieldGameCharacterUnitId1:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id1", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId1 = value.Int64
+				_m.GameCharacterUnitId1 = int(value.Int64)
 			}
 		case bondshonor.FieldGameCharacterUnitId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id2", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId2 = value.Int64
+				_m.GameCharacterUnitId2 = int(value.Int64)
 			}
 		case bondshonor.FieldHonorRarity:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_rarity", values[i])
-			} else if value.Valid {
-				_m.HonorRarity = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.HonorRarity); err != nil {
+					return fmt.Errorf("unmarshal field honor_rarity: %w", err)
+				}
 			}
 		case bondshonor.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -151,6 +147,12 @@ func (_m *Bondshonor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field configurable_unit_virtual_singer", values[i])
 			} else if value.Valid {
 				_m.ConfigurableUnitVirtualSinger = value.Bool
+			}
+		case bondshonor.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -188,9 +190,6 @@ func (_m *Bondshonor) String() string {
 	var builder strings.Builder
 	builder.WriteString("Bondshonor(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -207,7 +206,7 @@ func (_m *Bondshonor) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitId2))
 	builder.WriteString(", ")
 	builder.WriteString("honor_rarity=")
-	builder.WriteString(_m.HonorRarity)
+	builder.WriteString(fmt.Sprintf("%v", _m.HonorRarity))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -223,6 +222,9 @@ func (_m *Bondshonor) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("configurable_unit_virtual_singer=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ConfigurableUnitVirtualSinger))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

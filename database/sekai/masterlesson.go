@@ -17,24 +17,24 @@ type Masterlesson struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// CardRarityType holds the value of the "card_rarity_type" field.
+	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+	// MasterRank holds the value of the "master_rank" field.
+	MasterRank int `json:"master_rank,omitempty"`
+	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
+	Power1BonusFixed int `json:"power1_bonus_fixed,omitempty"`
+	// Power2BonusFixed holds the value of the "power2_bonus_fixed" field.
+	Power2BonusFixed int `json:"power2_bonus_fixed,omitempty"`
+	// Power3BonusFixed holds the value of the "power3_bonus_fixed" field.
+	Power3BonusFixed int `json:"power3_bonus_fixed,omitempty"`
+	// CharacterRankExp holds the value of the "character_rank_exp" field.
+	CharacterRankExp int `json:"character_rank_exp,omitempty"`
+	// Costs holds the value of the "costs" field.
+	Costs json.RawMessage `json:"costs,omitempty"`
+	// Rewards holds the value of the "rewards" field.
+	Rewards json.RawMessage `json:"rewards,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// CardRarityType holds the value of the "card_rarity_type" field.
-	CardRarityType string `json:"card_rarity_type,omitempty"`
-	// MasterRank holds the value of the "master_rank" field.
-	MasterRank int64 `json:"master_rank,omitempty"`
-	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
-	Power1BonusFixed int64 `json:"power1_bonus_fixed,omitempty"`
-	// Power2BonusFixed holds the value of the "power2_bonus_fixed" field.
-	Power2BonusFixed int64 `json:"power2_bonus_fixed,omitempty"`
-	// Power3BonusFixed holds the value of the "power3_bonus_fixed" field.
-	Power3BonusFixed int64 `json:"power3_bonus_fixed,omitempty"`
-	// CharacterRankExp holds the value of the "character_rank_exp" field.
-	CharacterRankExp int64 `json:"character_rank_exp,omitempty"`
-	// Costs holds the value of the "costs" field.
-	Costs []interface{} `json:"costs,omitempty"`
-	// Rewards holds the value of the "rewards" field.
-	Rewards      []interface{} `json:"rewards,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -43,11 +43,11 @@ func (*Masterlesson) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case masterlesson.FieldCosts, masterlesson.FieldRewards:
+		case masterlesson.FieldCardRarityType, masterlesson.FieldCosts, masterlesson.FieldRewards:
 			values[i] = new([]byte)
 		case masterlesson.FieldID, masterlesson.FieldMasterRank, masterlesson.FieldPower1BonusFixed, masterlesson.FieldPower2BonusFixed, masterlesson.FieldPower3BonusFixed, masterlesson.FieldCharacterRankExp:
 			values[i] = new(sql.NullInt64)
-		case masterlesson.FieldServerRegion, masterlesson.FieldCardRarityType:
+		case masterlesson.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -70,47 +70,43 @@ func (_m *Masterlesson) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case masterlesson.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case masterlesson.FieldCardRarityType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
-			} else if value.Valid {
-				_m.CardRarityType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardRarityType); err != nil {
+					return fmt.Errorf("unmarshal field card_rarity_type: %w", err)
+				}
 			}
 		case masterlesson.FieldMasterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field master_rank", values[i])
 			} else if value.Valid {
-				_m.MasterRank = value.Int64
+				_m.MasterRank = int(value.Int64)
 			}
 		case masterlesson.FieldPower1BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power1_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power1BonusFixed = value.Int64
+				_m.Power1BonusFixed = int(value.Int64)
 			}
 		case masterlesson.FieldPower2BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power2_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power2BonusFixed = value.Int64
+				_m.Power2BonusFixed = int(value.Int64)
 			}
 		case masterlesson.FieldPower3BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power3_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power3BonusFixed = value.Int64
+				_m.Power3BonusFixed = int(value.Int64)
 			}
 		case masterlesson.FieldCharacterRankExp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_rank_exp", values[i])
 			} else if value.Valid {
-				_m.CharacterRankExp = value.Int64
+				_m.CharacterRankExp = int(value.Int64)
 			}
 		case masterlesson.FieldCosts:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -127,6 +123,12 @@ func (_m *Masterlesson) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Rewards); err != nil {
 					return fmt.Errorf("unmarshal field rewards: %w", err)
 				}
+			}
+		case masterlesson.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -164,11 +166,8 @@ func (_m *Masterlesson) String() string {
 	var builder strings.Builder
 	builder.WriteString("Masterlesson(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("card_rarity_type=")
-	builder.WriteString(_m.CardRarityType)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardRarityType))
 	builder.WriteString(", ")
 	builder.WriteString("master_rank=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MasterRank))
@@ -190,6 +189,9 @@ func (_m *Masterlesson) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("rewards=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Rewards))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

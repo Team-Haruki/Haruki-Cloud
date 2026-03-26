@@ -262,12 +262,12 @@ func (_q *CheerfulcarnivalteamQuery) Clone() *CheerfulcarnivalteamQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Cheerfulcarnivalteam.Query().
-//		GroupBy(cheerfulcarnivalteam.FieldServerRegion).
+//		GroupBy(cheerfulcarnivalteam.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *CheerfulcarnivalteamQuery) GroupBy(field string, fields ...string) *CheerfulcarnivalteamGroupBy {
@@ -285,11 +285,11 @@ func (_q *CheerfulcarnivalteamQuery) GroupBy(field string, fields ...string) *Ch
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Cheerfulcarnivalteam.Query().
-//		Select(cheerfulcarnivalteam.FieldServerRegion).
+//		Select(cheerfulcarnivalteam.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *CheerfulcarnivalteamQuery) Select(fields ...string) *CheerfulcarnivalteamSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

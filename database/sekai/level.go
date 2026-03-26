@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/level"
 	"strings"
@@ -16,16 +17,16 @@ type Level struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// LevelType holds the value of the "level_type" field.
+	LevelType json.RawMessage `json:"level_type,omitempty"`
+	// Level holds the value of the "level" field.
+	Level int `json:"level,omitempty"`
+	// TotalExp holds the value of the "total_exp" field.
+	TotalExp int `json:"total_exp,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// LevelType holds the value of the "level_type" field.
-	LevelType string `json:"level_type,omitempty"`
-	// Level holds the value of the "level" field.
-	Level int64 `json:"level,omitempty"`
-	// TotalExp holds the value of the "total_exp" field.
-	TotalExp     int64 `json:"total_exp,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -34,9 +35,11 @@ func (*Level) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case level.FieldLevelType:
+			values[i] = new([]byte)
 		case level.FieldID, level.FieldGameID, level.FieldLevel, level.FieldTotalExp:
 			values[i] = new(sql.NullInt64)
-		case level.FieldServerRegion, level.FieldLevelType:
+		case level.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -59,35 +62,37 @@ func (_m *Level) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case level.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case level.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case level.FieldLevelType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field level_type", values[i])
-			} else if value.Valid {
-				_m.LevelType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.LevelType); err != nil {
+					return fmt.Errorf("unmarshal field level_type: %w", err)
+				}
 			}
 		case level.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = value.Int64
+				_m.Level = int(value.Int64)
 			}
 		case level.FieldTotalExp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field total_exp", values[i])
 			} else if value.Valid {
-				_m.TotalExp = value.Int64
+				_m.TotalExp = int(value.Int64)
+			}
+		case level.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,20 +130,20 @@ func (_m *Level) String() string {
 	var builder strings.Builder
 	builder.WriteString("Level(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("level_type=")
-	builder.WriteString(_m.LevelType)
+	builder.WriteString(fmt.Sprintf("%v", _m.LevelType))
 	builder.WriteString(", ")
 	builder.WriteString("level=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Level))
 	builder.WriteString(", ")
 	builder.WriteString("total_exp=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TotalExp))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

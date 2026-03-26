@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameID(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,7 +64,7 @@ func Name(v string) predicate.Mysekaimusicrecordcategorie {
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Mysekaimusicrecordcategorie {
+func Seq(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -78,119 +73,49 @@ func Unit(v string) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldUnit, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Mysekaimusicrecordcategorie {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDEQ(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDNEQ(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDNotIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDGT(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDGTE(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDLT(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaimusicrecordcategorie {
+func GameIDLTE(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaimusicrecordcategorie {
-	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotNull(FieldGameID))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -269,42 +194,42 @@ func NameContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqEQ(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqNEQ(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
+func SeqIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Mysekaimusicrecordcategorie {
+func SeqNotIn(vs ...int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqGT(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqGTE(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqLT(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Mysekaimusicrecordcategorie {
+func SeqLTE(v int) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -401,6 +326,71 @@ func UnitEqualFold(v string) predicate.Mysekaimusicrecordcategorie {
 // UnitContainsFold applies the ContainsFold predicate on the "unit" field.
 func UnitContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldContainsFold(FieldUnit, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

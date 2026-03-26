@@ -19,34 +19,20 @@ type EventcardCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventcardCreate) SetServerRegion(v string) *EventcardCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventcardCreate) SetGameID(v int64) *EventcardCreate {
+func (_c *EventcardCreate) SetGameID(v int) *EventcardCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventcardCreate) SetNillableGameID(v *int64) *EventcardCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetCardID sets the "card_id" field.
-func (_c *EventcardCreate) SetCardID(v int64) *EventcardCreate {
+func (_c *EventcardCreate) SetCardID(v int) *EventcardCreate {
 	_c.mutation.SetCardID(v)
 	return _c
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_c *EventcardCreate) SetNillableCardID(v *int64) *EventcardCreate {
+func (_c *EventcardCreate) SetNillableCardID(v *int) *EventcardCreate {
 	if v != nil {
 		_c.SetCardID(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *EventcardCreate) SetNillableCardID(v *int64) *EventcardCreate {
 }
 
 // SetEventID sets the "event_id" field.
-func (_c *EventcardCreate) SetEventID(v int64) *EventcardCreate {
+func (_c *EventcardCreate) SetEventID(v int) *EventcardCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventcardCreate) SetNillableEventID(v *int64) *EventcardCreate {
+func (_c *EventcardCreate) SetNillableEventID(v *int) *EventcardCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -109,6 +95,12 @@ func (_c *EventcardCreate) SetNillableIsDisplayCardStory(v *bool) *EventcardCrea
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *EventcardCreate) SetServerRegion(v string) *EventcardCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the EventcardMutation object of the builder.
 func (_c *EventcardCreate) Mutation() *EventcardMutation {
 	return _c.mutation
@@ -143,6 +135,9 @@ func (_c *EventcardCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventcardCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventcard.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventcard.server_region"`)}
 	}
@@ -172,20 +167,16 @@ func (_c *EventcardCreate) createSpec() (*Eventcard, *sqlgraph.CreateSpec) {
 		_node = &Eventcard{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventcard.Table, sqlgraph.NewFieldSpec(eventcard.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventcard.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventcard.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventcard.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardID(); ok {
-		_spec.SetField(eventcard.FieldCardID, field.TypeInt64, value)
+		_spec.SetField(eventcard.FieldCardID, field.TypeInt, value)
 		_node.CardID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventcard.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventcard.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {
@@ -199,6 +190,10 @@ func (_c *EventcardCreate) createSpec() (*Eventcard, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IsDisplayCardStory(); ok {
 		_spec.SetField(eventcard.FieldIsDisplayCardStory, field.TypeBool, value)
 		_node.IsDisplayCardStory = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventcard.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

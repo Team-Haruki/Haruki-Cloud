@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musictag"
@@ -19,34 +20,20 @@ type MusictagCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MusictagCreate) SetServerRegion(v string) *MusictagCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MusictagCreate) SetGameID(v int64) *MusictagCreate {
+func (_c *MusictagCreate) SetGameID(v int) *MusictagCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableGameID(v *int64) *MusictagCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMusicID sets the "music_id" field.
-func (_c *MusictagCreate) SetMusicID(v int64) *MusictagCreate {
+func (_c *MusictagCreate) SetMusicID(v int) *MusictagCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableMusicID(v *int64) *MusictagCreate {
+func (_c *MusictagCreate) SetNillableMusicID(v *int) *MusictagCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -54,30 +41,28 @@ func (_c *MusictagCreate) SetNillableMusicID(v *int64) *MusictagCreate {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_c *MusictagCreate) SetMusicTag(v string) *MusictagCreate {
+func (_c *MusictagCreate) SetMusicTag(v json.RawMessage) *MusictagCreate {
 	_c.mutation.SetMusicTag(v)
 	return _c
 }
 
-// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableMusicTag(v *string) *MusictagCreate {
-	if v != nil {
-		_c.SetMusicTag(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *MusictagCreate) SetSeq(v int64) *MusictagCreate {
+func (_c *MusictagCreate) SetSeq(v int) *MusictagCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MusictagCreate) SetNillableSeq(v *int64) *MusictagCreate {
+func (_c *MusictagCreate) SetNillableSeq(v *int) *MusictagCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MusictagCreate) SetServerRegion(v string) *MusictagCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +100,9 @@ func (_c *MusictagCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MusictagCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Musictag.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Musictag.server_region"`)}
 	}
@@ -144,25 +132,25 @@ func (_c *MusictagCreate) createSpec() (*Musictag, *sqlgraph.CreateSpec) {
 		_node = &Musictag{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(musictag.Table, sqlgraph.NewFieldSpec(musictag.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
+		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
 		_node.MusicTag = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

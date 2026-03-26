@@ -16,16 +16,16 @@ type Mysekaigatematerialgroup struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// GroupID holds the value of the "group_id" field.
+	GroupID int `json:"group_id,omitempty"`
+	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
+	MysekaiMaterialID int `json:"mysekai_material_id,omitempty"`
+	// Quantity holds the value of the "quantity" field.
+	Quantity int `json:"quantity,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// GroupID holds the value of the "group_id" field.
-	GroupID int64 `json:"group_id,omitempty"`
-	// MysekaiMaterialID holds the value of the "mysekai_material_id" field.
-	MysekaiMaterialID int64 `json:"mysekai_material_id,omitempty"`
-	// Quantity holds the value of the "quantity" field.
-	Quantity     int64 `json:"quantity,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -59,35 +59,35 @@ func (_m *Mysekaigatematerialgroup) assignValues(columns []string, values []any)
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaigatematerialgroup.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaigatematerialgroup.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaigatematerialgroup.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = value.Int64
+				_m.GroupID = int(value.Int64)
 			}
 		case mysekaigatematerialgroup.FieldMysekaiMaterialID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiMaterialID = value.Int64
+				_m.MysekaiMaterialID = int(value.Int64)
 			}
 		case mysekaigatematerialgroup.FieldQuantity:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field quantity", values[i])
 			} else if value.Valid {
-				_m.Quantity = value.Int64
+				_m.Quantity = int(value.Int64)
+			}
+		case mysekaigatematerialgroup.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Mysekaigatematerialgroup) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaigatematerialgroup(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Mysekaigatematerialgroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("quantity=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Quantity))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

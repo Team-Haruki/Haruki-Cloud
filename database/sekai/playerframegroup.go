@@ -16,17 +16,17 @@ type Playerframegroup struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
-	selectValues    sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -36,7 +36,7 @@ func (*Playerframegroup) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case playerframegroup.FieldID, playerframegroup.FieldGameID, playerframegroup.FieldSeq:
 			values[i] = new(sql.NullInt64)
-		case playerframegroup.FieldServerRegion, playerframegroup.FieldName, playerframegroup.FieldAssetbundleName:
+		case playerframegroup.FieldName, playerframegroup.FieldAssetbundleName, playerframegroup.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -59,23 +59,17 @@ func (_m *Playerframegroup) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case playerframegroup.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case playerframegroup.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case playerframegroup.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case playerframegroup.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,6 +82,12 @@ func (_m *Playerframegroup) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.AssetbundleName = value.String
+			}
+		case playerframegroup.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Playerframegroup) String() string {
 	var builder strings.Builder
 	builder.WriteString("Playerframegroup(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Playerframegroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

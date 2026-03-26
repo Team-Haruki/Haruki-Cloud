@@ -16,16 +16,16 @@ type Limitedtimemusic struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MusicID holds the value of the "music_id" field.
+	MusicID int `json:"music_id,omitempty"`
+	// StartAt holds the value of the "start_at" field.
+	StartAt int `json:"start_at,omitempty"`
+	// EndAt holds the value of the "end_at" field.
+	EndAt int `json:"end_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MusicID holds the value of the "music_id" field.
-	MusicID int64 `json:"music_id,omitempty"`
-	// StartAt holds the value of the "start_at" field.
-	StartAt int64 `json:"start_at,omitempty"`
-	// EndAt holds the value of the "end_at" field.
-	EndAt        int64 `json:"end_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -59,35 +59,35 @@ func (_m *Limitedtimemusic) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case limitedtimemusic.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case limitedtimemusic.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case limitedtimemusic.FieldMusicID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_id", values[i])
 			} else if value.Valid {
-				_m.MusicID = value.Int64
+				_m.MusicID = int(value.Int64)
 			}
 		case limitedtimemusic.FieldStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
 			}
 		case limitedtimemusic.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = value.Int64
+				_m.EndAt = int(value.Int64)
+			}
+		case limitedtimemusic.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +125,6 @@ func (_m *Limitedtimemusic) String() string {
 	var builder strings.Builder
 	builder.WriteString("Limitedtimemusic(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -139,6 +136,9 @@ func (_m *Limitedtimemusic) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("end_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.EndAt))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

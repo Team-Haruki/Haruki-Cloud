@@ -11,8 +11,6 @@ const (
 	Label = "virtuallive"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldVirtualLiveType holds the string denoting the virtual_live_type field in the database.
@@ -61,6 +59,8 @@ const (
 	FieldSubGameCharacterPenlightColorGroupID = "sub_game_character_penlight_color_group_id"
 	// FieldVirtualLiveGroupID holds the string denoting the virtual_live_group_id field in the database.
 	FieldVirtualLiveGroupID = "virtual_live_group_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the virtuallive in the database.
 	Table = "virtuallives"
 )
@@ -68,7 +68,6 @@ const (
 // Columns holds all SQL columns for virtuallive fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldVirtualLiveType,
 	FieldVirtualLivePlatform,
@@ -93,6 +92,7 @@ var Columns = []string{
 	FieldArchiveReleaseConditionID,
 	FieldSubGameCharacterPenlightColorGroupID,
 	FieldVirtualLiveGroupID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -113,24 +113,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
-}
-
-// ByVirtualLiveType orders the results by the virtual_live_type field.
-func ByVirtualLiveType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVirtualLiveType, opts...).ToFunc()
-}
-
-// ByVirtualLivePlatform orders the results by the virtual_live_platform field.
-func ByVirtualLivePlatform(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVirtualLivePlatform, opts...).ToFunc()
 }
 
 // BySeq orders the results by the seq field.
@@ -181,4 +166,9 @@ func BySubGameCharacterPenlightColorGroupID(opts ...sql.OrderTermOption) OrderOp
 // ByVirtualLiveGroupID orders the results by the virtual_live_group_id field.
 func ByVirtualLiveGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVirtualLiveGroupID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

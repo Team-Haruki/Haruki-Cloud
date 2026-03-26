@@ -53,29 +53,174 @@ func IDLTE(id int) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Eventraritybonusrate {
+func GameID(v int) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
 }
 
-// CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
-func CardRarityType(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldCardRarityType, v))
-}
-
 // MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
-func MasterRank(v int64) predicate.Eventraritybonusrate {
+func MasterRank(v int) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
 }
 
 // BonusRate applies equality check predicate on the "bonus_rate" field. It's identical to BonusRateEQ.
 func BonusRate(v float64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldBonusRate, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldGameID, v))
+}
+
+// CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
+func CardRarityTypeIsNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldCardRarityType))
+}
+
+// CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
+func CardRarityTypeNotNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldCardRarityType))
+}
+
+// MasterRankEQ applies the EQ predicate on the "master_rank" field.
+func MasterRankEQ(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
+}
+
+// MasterRankNEQ applies the NEQ predicate on the "master_rank" field.
+func MasterRankNEQ(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldMasterRank, v))
+}
+
+// MasterRankIn applies the In predicate on the "master_rank" field.
+func MasterRankIn(vs ...int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIn(FieldMasterRank, vs...))
+}
+
+// MasterRankNotIn applies the NotIn predicate on the "master_rank" field.
+func MasterRankNotIn(vs ...int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldMasterRank, vs...))
+}
+
+// MasterRankGT applies the GT predicate on the "master_rank" field.
+func MasterRankGT(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGT(FieldMasterRank, v))
+}
+
+// MasterRankGTE applies the GTE predicate on the "master_rank" field.
+func MasterRankGTE(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldMasterRank, v))
+}
+
+// MasterRankLT applies the LT predicate on the "master_rank" field.
+func MasterRankLT(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLT(FieldMasterRank, v))
+}
+
+// MasterRankLTE applies the LTE predicate on the "master_rank" field.
+func MasterRankLTE(v int) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldMasterRank, v))
+}
+
+// MasterRankIsNil applies the IsNil predicate on the "master_rank" field.
+func MasterRankIsNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldMasterRank))
+}
+
+// MasterRankNotNil applies the NotNil predicate on the "master_rank" field.
+func MasterRankNotNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldMasterRank))
+}
+
+// BonusRateEQ applies the EQ predicate on the "bonus_rate" field.
+func BonusRateEQ(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldBonusRate, v))
+}
+
+// BonusRateNEQ applies the NEQ predicate on the "bonus_rate" field.
+func BonusRateNEQ(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldBonusRate, v))
+}
+
+// BonusRateIn applies the In predicate on the "bonus_rate" field.
+func BonusRateIn(vs ...float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIn(FieldBonusRate, vs...))
+}
+
+// BonusRateNotIn applies the NotIn predicate on the "bonus_rate" field.
+func BonusRateNotIn(vs ...float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldBonusRate, vs...))
+}
+
+// BonusRateGT applies the GT predicate on the "bonus_rate" field.
+func BonusRateGT(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGT(FieldBonusRate, v))
+}
+
+// BonusRateGTE applies the GTE predicate on the "bonus_rate" field.
+func BonusRateGTE(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldBonusRate, v))
+}
+
+// BonusRateLT applies the LT predicate on the "bonus_rate" field.
+func BonusRateLT(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLT(FieldBonusRate, v))
+}
+
+// BonusRateLTE applies the LTE predicate on the "bonus_rate" field.
+func BonusRateLTE(v float64) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldBonusRate, v))
+}
+
+// BonusRateIsNil applies the IsNil predicate on the "bonus_rate" field.
+func BonusRateIsNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldBonusRate))
+}
+
+// BonusRateNotNil applies the NotNil predicate on the "bonus_rate" field.
+func BonusRateNotNil() predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldBonusRate))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,231 +286,6 @@ func ServerRegionEqualFold(v string) predicate.Eventraritybonusrate {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldGameID))
-}
-
-// CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
-func CardRarityTypeEQ(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldCardRarityType, v))
-}
-
-// CardRarityTypeNEQ applies the NEQ predicate on the "card_rarity_type" field.
-func CardRarityTypeNEQ(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldCardRarityType, v))
-}
-
-// CardRarityTypeIn applies the In predicate on the "card_rarity_type" field.
-func CardRarityTypeIn(vs ...string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIn(FieldCardRarityType, vs...))
-}
-
-// CardRarityTypeNotIn applies the NotIn predicate on the "card_rarity_type" field.
-func CardRarityTypeNotIn(vs ...string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldCardRarityType, vs...))
-}
-
-// CardRarityTypeGT applies the GT predicate on the "card_rarity_type" field.
-func CardRarityTypeGT(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGT(FieldCardRarityType, v))
-}
-
-// CardRarityTypeGTE applies the GTE predicate on the "card_rarity_type" field.
-func CardRarityTypeGTE(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldCardRarityType, v))
-}
-
-// CardRarityTypeLT applies the LT predicate on the "card_rarity_type" field.
-func CardRarityTypeLT(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLT(FieldCardRarityType, v))
-}
-
-// CardRarityTypeLTE applies the LTE predicate on the "card_rarity_type" field.
-func CardRarityTypeLTE(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldCardRarityType, v))
-}
-
-// CardRarityTypeContains applies the Contains predicate on the "card_rarity_type" field.
-func CardRarityTypeContains(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldContains(FieldCardRarityType, v))
-}
-
-// CardRarityTypeHasPrefix applies the HasPrefix predicate on the "card_rarity_type" field.
-func CardRarityTypeHasPrefix(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldHasPrefix(FieldCardRarityType, v))
-}
-
-// CardRarityTypeHasSuffix applies the HasSuffix predicate on the "card_rarity_type" field.
-func CardRarityTypeHasSuffix(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldHasSuffix(FieldCardRarityType, v))
-}
-
-// CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
-func CardRarityTypeIsNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldCardRarityType))
-}
-
-// CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
-func CardRarityTypeNotNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldCardRarityType))
-}
-
-// CardRarityTypeEqualFold applies the EqualFold predicate on the "card_rarity_type" field.
-func CardRarityTypeEqualFold(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEqualFold(FieldCardRarityType, v))
-}
-
-// CardRarityTypeContainsFold applies the ContainsFold predicate on the "card_rarity_type" field.
-func CardRarityTypeContainsFold(v string) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldContainsFold(FieldCardRarityType, v))
-}
-
-// MasterRankEQ applies the EQ predicate on the "master_rank" field.
-func MasterRankEQ(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
-}
-
-// MasterRankNEQ applies the NEQ predicate on the "master_rank" field.
-func MasterRankNEQ(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldMasterRank, v))
-}
-
-// MasterRankIn applies the In predicate on the "master_rank" field.
-func MasterRankIn(vs ...int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIn(FieldMasterRank, vs...))
-}
-
-// MasterRankNotIn applies the NotIn predicate on the "master_rank" field.
-func MasterRankNotIn(vs ...int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldMasterRank, vs...))
-}
-
-// MasterRankGT applies the GT predicate on the "master_rank" field.
-func MasterRankGT(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGT(FieldMasterRank, v))
-}
-
-// MasterRankGTE applies the GTE predicate on the "master_rank" field.
-func MasterRankGTE(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldMasterRank, v))
-}
-
-// MasterRankLT applies the LT predicate on the "master_rank" field.
-func MasterRankLT(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLT(FieldMasterRank, v))
-}
-
-// MasterRankLTE applies the LTE predicate on the "master_rank" field.
-func MasterRankLTE(v int64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldMasterRank, v))
-}
-
-// MasterRankIsNil applies the IsNil predicate on the "master_rank" field.
-func MasterRankIsNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldMasterRank))
-}
-
-// MasterRankNotNil applies the NotNil predicate on the "master_rank" field.
-func MasterRankNotNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldMasterRank))
-}
-
-// BonusRateEQ applies the EQ predicate on the "bonus_rate" field.
-func BonusRateEQ(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldBonusRate, v))
-}
-
-// BonusRateNEQ applies the NEQ predicate on the "bonus_rate" field.
-func BonusRateNEQ(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldBonusRate, v))
-}
-
-// BonusRateIn applies the In predicate on the "bonus_rate" field.
-func BonusRateIn(vs ...float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIn(FieldBonusRate, vs...))
-}
-
-// BonusRateNotIn applies the NotIn predicate on the "bonus_rate" field.
-func BonusRateNotIn(vs ...float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldBonusRate, vs...))
-}
-
-// BonusRateGT applies the GT predicate on the "bonus_rate" field.
-func BonusRateGT(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGT(FieldBonusRate, v))
-}
-
-// BonusRateGTE applies the GTE predicate on the "bonus_rate" field.
-func BonusRateGTE(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldBonusRate, v))
-}
-
-// BonusRateLT applies the LT predicate on the "bonus_rate" field.
-func BonusRateLT(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLT(FieldBonusRate, v))
-}
-
-// BonusRateLTE applies the LTE predicate on the "bonus_rate" field.
-func BonusRateLTE(v float64) predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldBonusRate, v))
-}
-
-// BonusRateIsNil applies the IsNil predicate on the "bonus_rate" field.
-func BonusRateIsNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldBonusRate))
-}
-
-// BonusRateNotNil applies the NotNil predicate on the "bonus_rate" field.
-func BonusRateNotNil() predicate.Eventraritybonusrate {
-	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldBonusRate))
 }
 
 // And groups predicates with the AND operator between them.

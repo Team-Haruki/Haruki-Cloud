@@ -27,29 +27,15 @@ func (_u *NgwordUpdate) Where(ps ...predicate.Ngword) *NgwordUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *NgwordUpdate) SetServerRegion(v string) *NgwordUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *NgwordUpdate) SetNillableServerRegion(v *string) *NgwordUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *NgwordUpdate) SetGameID(v int64) *NgwordUpdate {
+func (_u *NgwordUpdate) SetGameID(v int) *NgwordUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *NgwordUpdate) SetNillableGameID(v *int64) *NgwordUpdate {
+func (_u *NgwordUpdate) SetNillableGameID(v *int) *NgwordUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +43,8 @@ func (_u *NgwordUpdate) SetNillableGameID(v *int64) *NgwordUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *NgwordUpdate) AddGameID(v int64) *NgwordUpdate {
+func (_u *NgwordUpdate) AddGameID(v int) *NgwordUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *NgwordUpdate) ClearGameID() *NgwordUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -85,6 +65,20 @@ func (_u *NgwordUpdate) SetNillableWord(v *string) *NgwordUpdate {
 // ClearWord clears the value of the "word" field.
 func (_u *NgwordUpdate) ClearWord() *NgwordUpdate {
 	_u.mutation.ClearWord()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *NgwordUpdate) SetServerRegion(v string) *NgwordUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *NgwordUpdate) SetNillableServerRegion(v *string) *NgwordUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -129,23 +123,20 @@ func (_u *NgwordUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(ngword.FieldGameID, field.TypeInt64)
+		_spec.AddField(ngword.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)
 	}
 	if _u.mutation.WordCleared() {
 		_spec.ClearField(ngword.FieldWord, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -167,29 +158,15 @@ type NgwordUpdateOne struct {
 	mutation *NgwordMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *NgwordUpdateOne) SetServerRegion(v string) *NgwordUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *NgwordUpdateOne) SetNillableServerRegion(v *string) *NgwordUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *NgwordUpdateOne) SetGameID(v int64) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) SetGameID(v int) *NgwordUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *NgwordUpdateOne) SetNillableGameID(v *int64) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) SetNillableGameID(v *int) *NgwordUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -197,14 +174,8 @@ func (_u *NgwordUpdateOne) SetNillableGameID(v *int64) *NgwordUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *NgwordUpdateOne) AddGameID(v int64) *NgwordUpdateOne {
+func (_u *NgwordUpdateOne) AddGameID(v int) *NgwordUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *NgwordUpdateOne) ClearGameID() *NgwordUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -225,6 +196,20 @@ func (_u *NgwordUpdateOne) SetNillableWord(v *string) *NgwordUpdateOne {
 // ClearWord clears the value of the "word" field.
 func (_u *NgwordUpdateOne) ClearWord() *NgwordUpdateOne {
 	_u.mutation.ClearWord()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *NgwordUpdateOne) SetServerRegion(v string) *NgwordUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *NgwordUpdateOne) SetNillableServerRegion(v *string) *NgwordUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -299,23 +284,20 @@ func (_u *NgwordUpdateOne) sqlSave(ctx context.Context) (_node *Ngword, err erro
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(ngword.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(ngword.FieldGameID, field.TypeInt64)
+		_spec.AddField(ngword.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)
 	}
 	if _u.mutation.WordCleared() {
 		_spec.ClearField(ngword.FieldWord, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Ngword{config: _u.config}
 	_spec.Assign = _node.assignValues

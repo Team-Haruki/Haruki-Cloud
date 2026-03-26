@@ -27,29 +27,15 @@ func (_u *PlayerframegroupUpdate) Where(ps ...predicate.Playerframegroup) *Playe
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *PlayerframegroupUpdate) SetServerRegion(v string) *PlayerframegroupUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *PlayerframegroupUpdate) SetNillableServerRegion(v *string) *PlayerframegroupUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *PlayerframegroupUpdate) SetGameID(v int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) SetGameID(v int) *PlayerframegroupUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *PlayerframegroupUpdate) SetNillableGameID(v *int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) SetNillableGameID(v *int) *PlayerframegroupUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *PlayerframegroupUpdate) SetNillableGameID(v *int64) *PlayerframegroupU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *PlayerframegroupUpdate) AddGameID(v int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) AddGameID(v int) *PlayerframegroupUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *PlayerframegroupUpdate) ClearGameID() *PlayerframegroupUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *PlayerframegroupUpdate) SetSeq(v int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) SetSeq(v int) *PlayerframegroupUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *PlayerframegroupUpdate) SetNillableSeq(v *int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) SetNillableSeq(v *int) *PlayerframegroupUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *PlayerframegroupUpdate) SetNillableSeq(v *int64) *PlayerframegroupUpda
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *PlayerframegroupUpdate) AddSeq(v int64) *PlayerframegroupUpdate {
+func (_u *PlayerframegroupUpdate) AddSeq(v int) *PlayerframegroupUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -135,6 +115,20 @@ func (_u *PlayerframegroupUpdate) ClearAssetbundleName() *PlayerframegroupUpdate
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *PlayerframegroupUpdate) SetServerRegion(v string) *PlayerframegroupUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *PlayerframegroupUpdate) SetNillableServerRegion(v *string) *PlayerframegroupUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the PlayerframegroupMutation object of the builder.
 func (_u *PlayerframegroupUpdate) Mutation() *PlayerframegroupMutation {
 	return _u.mutation
@@ -176,26 +170,20 @@ func (_u *PlayerframegroupUpdate) sqlSave(ctx context.Context) (_node int, err e
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(playerframegroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(playerframegroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(playerframegroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(playerframegroup.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(playerframegroup.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(playerframegroup.FieldSeq, field.TypeInt64)
+		_spec.ClearField(playerframegroup.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(playerframegroup.FieldName, field.TypeString, value)
@@ -208,6 +196,9 @@ func (_u *PlayerframegroupUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(playerframegroup.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -229,29 +220,15 @@ type PlayerframegroupUpdateOne struct {
 	mutation *PlayerframegroupMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *PlayerframegroupUpdateOne) SetServerRegion(v string) *PlayerframegroupUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *PlayerframegroupUpdateOne) SetNillableServerRegion(v *string) *PlayerframegroupUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *PlayerframegroupUpdateOne) SetGameID(v int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) SetGameID(v int) *PlayerframegroupUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *PlayerframegroupUpdateOne) SetNillableGameID(v *int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) SetNillableGameID(v *int) *PlayerframegroupUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -259,26 +236,20 @@ func (_u *PlayerframegroupUpdateOne) SetNillableGameID(v *int64) *Playerframegro
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *PlayerframegroupUpdateOne) AddGameID(v int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) AddGameID(v int) *PlayerframegroupUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *PlayerframegroupUpdateOne) ClearGameID() *PlayerframegroupUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *PlayerframegroupUpdateOne) SetSeq(v int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) SetSeq(v int) *PlayerframegroupUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *PlayerframegroupUpdateOne) SetNillableSeq(v *int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) SetNillableSeq(v *int) *PlayerframegroupUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -286,7 +257,7 @@ func (_u *PlayerframegroupUpdateOne) SetNillableSeq(v *int64) *PlayerframegroupU
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *PlayerframegroupUpdateOne) AddSeq(v int64) *PlayerframegroupUpdateOne {
+func (_u *PlayerframegroupUpdateOne) AddSeq(v int) *PlayerframegroupUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -334,6 +305,20 @@ func (_u *PlayerframegroupUpdateOne) SetNillableAssetbundleName(v *string) *Play
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *PlayerframegroupUpdateOne) ClearAssetbundleName() *PlayerframegroupUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *PlayerframegroupUpdateOne) SetServerRegion(v string) *PlayerframegroupUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *PlayerframegroupUpdateOne) SetNillableServerRegion(v *string) *PlayerframegroupUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -408,26 +393,20 @@ func (_u *PlayerframegroupUpdateOne) sqlSave(ctx context.Context) (_node *Player
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(playerframegroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(playerframegroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(playerframegroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(playerframegroup.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(playerframegroup.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(playerframegroup.FieldSeq, field.TypeInt64)
+		_spec.ClearField(playerframegroup.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(playerframegroup.FieldName, field.TypeString, value)
@@ -440,6 +419,9 @@ func (_u *PlayerframegroupUpdateOne) sqlSave(ctx context.Context) (_node *Player
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(playerframegroup.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Playerframegroup{config: _u.config}
 	_spec.Assign = _node.assignValues

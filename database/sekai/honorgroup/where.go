@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Honorgroup {
+func GameID(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -73,11 +68,6 @@ func Pronunciation(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldPronunciation, v))
 }
 
-// HonorType applies equality check predicate on the "honor_type" field. It's identical to HonorTypeEQ.
-func HonorType(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldEQ(FieldHonorType, v))
-}
-
 // BackgroundAssetbundleName applies equality check predicate on the "background_assetbundle_name" field. It's identical to BackgroundAssetbundleNameEQ.
 func BackgroundAssetbundleName(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldBackgroundAssetbundleName, v))
@@ -88,119 +78,49 @@ func FrameName(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldFrameName, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Honorgroup {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Honorgroup {
+func GameIDEQ(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Honorgroup {
+func GameIDNEQ(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Honorgroup {
+func GameIDIn(vs ...int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Honorgroup {
+func GameIDNotIn(vs ...int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Honorgroup {
+func GameIDGT(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Honorgroup {
+func GameIDGTE(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Honorgroup {
+func GameIDLT(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Honorgroup {
+func GameIDLTE(v int) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldNotNull(FieldGameID))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -353,61 +273,6 @@ func PronunciationContainsFold(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldContainsFold(FieldPronunciation, v))
 }
 
-// HonorTypeEQ applies the EQ predicate on the "honor_type" field.
-func HonorTypeEQ(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldEQ(FieldHonorType, v))
-}
-
-// HonorTypeNEQ applies the NEQ predicate on the "honor_type" field.
-func HonorTypeNEQ(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldNEQ(FieldHonorType, v))
-}
-
-// HonorTypeIn applies the In predicate on the "honor_type" field.
-func HonorTypeIn(vs ...string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldIn(FieldHonorType, vs...))
-}
-
-// HonorTypeNotIn applies the NotIn predicate on the "honor_type" field.
-func HonorTypeNotIn(vs ...string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldNotIn(FieldHonorType, vs...))
-}
-
-// HonorTypeGT applies the GT predicate on the "honor_type" field.
-func HonorTypeGT(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldGT(FieldHonorType, v))
-}
-
-// HonorTypeGTE applies the GTE predicate on the "honor_type" field.
-func HonorTypeGTE(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldGTE(FieldHonorType, v))
-}
-
-// HonorTypeLT applies the LT predicate on the "honor_type" field.
-func HonorTypeLT(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldLT(FieldHonorType, v))
-}
-
-// HonorTypeLTE applies the LTE predicate on the "honor_type" field.
-func HonorTypeLTE(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldLTE(FieldHonorType, v))
-}
-
-// HonorTypeContains applies the Contains predicate on the "honor_type" field.
-func HonorTypeContains(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldContains(FieldHonorType, v))
-}
-
-// HonorTypeHasPrefix applies the HasPrefix predicate on the "honor_type" field.
-func HonorTypeHasPrefix(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldHasPrefix(FieldHonorType, v))
-}
-
-// HonorTypeHasSuffix applies the HasSuffix predicate on the "honor_type" field.
-func HonorTypeHasSuffix(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldHasSuffix(FieldHonorType, v))
-}
-
 // HonorTypeIsNil applies the IsNil predicate on the "honor_type" field.
 func HonorTypeIsNil() predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldIsNull(FieldHonorType))
@@ -416,16 +281,6 @@ func HonorTypeIsNil() predicate.Honorgroup {
 // HonorTypeNotNil applies the NotNil predicate on the "honor_type" field.
 func HonorTypeNotNil() predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldNotNull(FieldHonorType))
-}
-
-// HonorTypeEqualFold applies the EqualFold predicate on the "honor_type" field.
-func HonorTypeEqualFold(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldEqualFold(FieldHonorType, v))
-}
-
-// HonorTypeContainsFold applies the ContainsFold predicate on the "honor_type" field.
-func HonorTypeContainsFold(v string) predicate.Honorgroup {
-	return predicate.Honorgroup(sql.FieldContainsFold(FieldHonorType, v))
 }
 
 // BackgroundAssetbundleNameEQ applies the EQ predicate on the "background_assetbundle_name" field.
@@ -576,6 +431,71 @@ func FrameNameEqualFold(v string) predicate.Honorgroup {
 // FrameNameContainsFold applies the ContainsFold predicate on the "frame_name" field.
 func FrameNameContainsFold(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldContainsFold(FieldFrameName, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

@@ -11,8 +11,6 @@ const (
 	Label = "shopitem"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldShopID holds the string denoting the shop_id field in the database.
@@ -27,6 +25,8 @@ const (
 	FieldCosts = "costs"
 	// FieldStartAt holds the string denoting the start_at field in the database.
 	FieldStartAt = "start_at"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the shopitem in the database.
 	Table = "shopitems"
 )
@@ -34,7 +34,6 @@ const (
 // Columns holds all SQL columns for shopitem fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldShopID,
 	FieldSeq,
@@ -42,6 +41,7 @@ var Columns = []string{
 	FieldResourceBoxID,
 	FieldCosts,
 	FieldStartAt,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -60,11 +60,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -95,4 +90,9 @@ func ByResourceBoxID(opts ...sql.OrderTermOption) OrderOption {
 // ByStartAt orders the results by the start_at field.
 func ByStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStartAt, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

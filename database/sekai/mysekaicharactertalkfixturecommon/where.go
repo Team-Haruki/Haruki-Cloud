@@ -53,29 +53,229 @@ func IDLTE(id int) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
+func GameCharacterUnitID(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameCharacterUnitID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID applies equality check predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field. It's identical to MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupID applies equality check predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field. It's identical to MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ.
+func MysekaiCharacterTalkFixtureCommonTweetGroupID(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaicharactertalkfixturecommon {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameID, v))
 }
 
-// GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
-func GameCharacterUnitID(v int64) predicate.Mysekaicharactertalkfixturecommon {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldGameID, v))
+}
+
+// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID applies equality check predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field. It's identical to MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v int64) predicate.Mysekaicharactertalkfixturecommon {
+// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
+}
+
+// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDGTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDLTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldGameCharacterUnitID, v))
+}
+
+// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldGameCharacterUnitID))
+}
+
+// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
+func GameCharacterUnitIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldGameCharacterUnitID))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeIsNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonType))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeNotNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonType))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
 }
 
-// MysekaiCharacterTalkFixtureCommonTweetGroupID applies equality check predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field. It's identical to MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ.
-func MysekaiCharacterTalkFixtureCommonTweetGroupID(v int64) predicate.Mysekaicharactertalkfixturecommon {
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNEQ applies the NEQ predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIn applies the In predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotIn applies the NotIn predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGT applies the GT predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGTE applies the GTE predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLT applies the LT predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLTE applies the LTE predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID))
+}
+
+// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
+func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDNEQ applies the NEQ predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDNEQ(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDIn applies the In predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDNotIn applies the NotIn predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDNotIn(vs ...int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDGT applies the GT predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDGT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDGTE applies the GTE predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDGTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDLT applies the LT predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDLT(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDLTE applies the LTE predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDLTE(v int) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID))
+}
+
+// MysekaiCharacterTalkFixtureCommonTweetGroupIDNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
+func MysekaiCharacterTalkFixtureCommonTweetGroupIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,216 +341,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaicharactertalkfixturecommon
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldGameID))
-}
-
-// GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
-}
-
-// GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldGameCharacterUnitID, v))
-}
-
-// GameCharacterUnitIDIsNil applies the IsNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldGameCharacterUnitID))
-}
-
-// GameCharacterUnitIDNotNil applies the NotNil predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldGameCharacterUnitID))
-}
-
-// MysekaiCharacterTalkFixtureCommonTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_type" field.
-func MysekaiCharacterTalkFixtureCommonTypeIsNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonType))
-}
-
-// MysekaiCharacterTalkFixtureCommonTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_type" field.
-func MysekaiCharacterTalkFixtureCommonTypeNotNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonType))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNEQ applies the NEQ predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIn applies the In predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, vs...))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotIn applies the NotIn predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, vs...))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGT applies the GT predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGTE applies the GTE predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDGTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLT applies the LT predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLTE applies the LTE predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDLTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID))
-}
-
-// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDNEQ applies the NEQ predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDNEQ(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDIn applies the In predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, vs...))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDNotIn applies the NotIn predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDNotIn(vs ...int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, vs...))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDGT applies the GT predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDGT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDGTE applies the GTE predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDGTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDLT applies the LT predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDLT(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDLTE applies the LTE predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDLTE(v int64) predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, v))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDIsNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID))
-}
-
-// MysekaiCharacterTalkFixtureCommonTweetGroupIDNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func MysekaiCharacterTalkFixtureCommonTweetGroupIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
-	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID))
 }
 
 // And groups predicates with the AND operator between them.

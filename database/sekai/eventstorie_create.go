@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstorie"
@@ -19,34 +20,20 @@ type EventstorieCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventstorieCreate) SetServerRegion(v string) *EventstorieCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventstorieCreate) SetGameID(v int64) *EventstorieCreate {
+func (_c *EventstorieCreate) SetGameID(v int) *EventstorieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventstorieCreate) SetNillableGameID(v *int64) *EventstorieCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *EventstorieCreate) SetEventID(v int64) *EventstorieCreate {
+func (_c *EventstorieCreate) SetEventID(v int) *EventstorieCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventstorieCreate) SetNillableEventID(v *int64) *EventstorieCreate {
+func (_c *EventstorieCreate) SetNillableEventID(v *int) *EventstorieCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *EventstorieCreate) SetNillableOutline(v *string) *EventstorieCreate {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_c *EventstorieCreate) SetBannerGameCharacterUnitID(v int64) *EventstorieCreate {
+func (_c *EventstorieCreate) SetBannerGameCharacterUnitID(v int) *EventstorieCreate {
 	_c.mutation.SetBannerGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_c *EventstorieCreate) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieCreate {
+func (_c *EventstorieCreate) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieCreate {
 	if v != nil {
 		_c.SetBannerGameCharacterUnitID(*v)
 	}
@@ -96,8 +83,14 @@ func (_c *EventstorieCreate) SetNillableAssetbundleName(v *string) *EventstorieC
 }
 
 // SetEventStoryEpisodes sets the "event_story_episodes" field.
-func (_c *EventstorieCreate) SetEventStoryEpisodes(v []interface{}) *EventstorieCreate {
+func (_c *EventstorieCreate) SetEventStoryEpisodes(v json.RawMessage) *EventstorieCreate {
 	_c.mutation.SetEventStoryEpisodes(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventstorieCreate) SetServerRegion(v string) *EventstorieCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -135,6 +128,9 @@ func (_c *EventstorieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventstorieCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventstorie.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventstorie.server_region"`)}
 	}
@@ -164,16 +160,12 @@ func (_c *EventstorieCreate) createSpec() (*Eventstorie, *sqlgraph.CreateSpec) {
 		_node = &Eventstorie{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventstorie.Table, sqlgraph.NewFieldSpec(eventstorie.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Outline(); ok {
@@ -181,7 +173,7 @@ func (_c *EventstorieCreate) createSpec() (*Eventstorie, *sqlgraph.CreateSpec) {
 		_node.Outline = value
 	}
 	if value, ok := _c.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
 		_node.BannerGameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -191,6 +183,10 @@ func (_c *EventstorieCreate) createSpec() (*Eventstorie, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.EventStoryEpisodes(); ok {
 		_spec.SetField(eventstorie.FieldEventStoryEpisodes, field.TypeJSON, value)
 		_node.EventStoryEpisodes = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

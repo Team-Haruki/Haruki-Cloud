@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstoryunit"
 	"strings"
@@ -16,19 +17,19 @@ type Eventstoryunit struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// Seq holds the value of the "seq" field.
+	Seq int `json:"seq,omitempty"`
+	// EventStoryID holds the value of the "event_story_id" field.
+	EventStoryID int `json:"event_story_id,omitempty"`
+	// Unit holds the value of the "unit" field.
+	Unit json.RawMessage `json:"unit,omitempty"`
+	// EventStoryUnitRelation holds the value of the "event_story_unit_relation" field.
+	EventStoryUnitRelation json.RawMessage `json:"event_story_unit_relation,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
-	// EventStoryID holds the value of the "event_story_id" field.
-	EventStoryID int64 `json:"event_story_id,omitempty"`
-	// Unit holds the value of the "unit" field.
-	Unit string `json:"unit,omitempty"`
-	// EventStoryUnitRelation holds the value of the "event_story_unit_relation" field.
-	EventStoryUnitRelation string `json:"event_story_unit_relation,omitempty"`
-	selectValues           sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -36,9 +37,11 @@ func (*Eventstoryunit) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case eventstoryunit.FieldUnit, eventstoryunit.FieldEventStoryUnitRelation:
+			values[i] = new([]byte)
 		case eventstoryunit.FieldID, eventstoryunit.FieldGameID, eventstoryunit.FieldSeq, eventstoryunit.FieldEventStoryID:
 			values[i] = new(sql.NullInt64)
-		case eventstoryunit.FieldServerRegion, eventstoryunit.FieldUnit, eventstoryunit.FieldEventStoryUnitRelation:
+		case eventstoryunit.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -61,41 +64,45 @@ func (_m *Eventstoryunit) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case eventstoryunit.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case eventstoryunit.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case eventstoryunit.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case eventstoryunit.FieldEventStoryID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_story_id", values[i])
 			} else if value.Valid {
-				_m.EventStoryID = value.Int64
+				_m.EventStoryID = int(value.Int64)
 			}
 		case eventstoryunit.FieldUnit:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
-			} else if value.Valid {
-				_m.Unit = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Unit); err != nil {
+					return fmt.Errorf("unmarshal field unit: %w", err)
+				}
 			}
 		case eventstoryunit.FieldEventStoryUnitRelation:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field event_story_unit_relation", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.EventStoryUnitRelation); err != nil {
+					return fmt.Errorf("unmarshal field event_story_unit_relation: %w", err)
+				}
+			}
+		case eventstoryunit.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
 			} else if value.Valid {
-				_m.EventStoryUnitRelation = value.String
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -133,9 +140,6 @@ func (_m *Eventstoryunit) String() string {
 	var builder strings.Builder
 	builder.WriteString("Eventstoryunit(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -146,10 +150,13 @@ func (_m *Eventstoryunit) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.EventStoryID))
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
-	builder.WriteString(_m.Unit)
+	builder.WriteString(fmt.Sprintf("%v", _m.Unit))
 	builder.WriteString(", ")
 	builder.WriteString("event_story_unit_relation=")
-	builder.WriteString(_m.EventStoryUnitRelation)
+	builder.WriteString(fmt.Sprintf("%v", _m.EventStoryUnitRelation))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

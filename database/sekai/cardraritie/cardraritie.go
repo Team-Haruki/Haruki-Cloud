@@ -11,8 +11,6 @@ const (
 	Label = "cardraritie"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldCardRarityType holds the string denoting the card_rarity_type field in the database.
 	FieldCardRarityType = "card_rarity_type"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -23,6 +21,8 @@ const (
 	FieldMaxSkillLevel = "max_skill_level"
 	// FieldTrainingMaxLevel holds the string denoting the training_max_level field in the database.
 	FieldTrainingMaxLevel = "training_max_level"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the cardraritie in the database.
 	Table = "cardrarities"
 )
@@ -30,12 +30,12 @@ const (
 // Columns holds all SQL columns for cardraritie fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldCardRarityType,
 	FieldSeq,
 	FieldMaxLevel,
 	FieldMaxSkillLevel,
 	FieldTrainingMaxLevel,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -54,11 +54,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByCardRarityType orders the results by the card_rarity_type field.
@@ -84,4 +79,9 @@ func ByMaxSkillLevel(opts ...sql.OrderTermOption) OrderOption {
 // ByTrainingMaxLevel orders the results by the training_max_level field.
 func ByTrainingMaxLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTrainingMaxLevel, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

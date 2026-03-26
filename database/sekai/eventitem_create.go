@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventitem"
@@ -19,34 +20,20 @@ type EventitemCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventitemCreate) SetServerRegion(v string) *EventitemCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventitemCreate) SetGameID(v int64) *EventitemCreate {
+func (_c *EventitemCreate) SetGameID(v int) *EventitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableGameID(v *int64) *EventitemCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *EventitemCreate) SetEventID(v int64) *EventitemCreate {
+func (_c *EventitemCreate) SetEventID(v int) *EventitemCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableEventID(v *int64) *EventitemCreate {
+func (_c *EventitemCreate) SetNillableEventID(v *int) *EventitemCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -54,30 +41,14 @@ func (_c *EventitemCreate) SetNillableEventID(v *int64) *EventitemCreate {
 }
 
 // SetName sets the "name" field.
-func (_c *EventitemCreate) SetName(v string) *EventitemCreate {
+func (_c *EventitemCreate) SetName(v json.RawMessage) *EventitemCreate {
 	_c.mutation.SetName(v)
 	return _c
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableName(v *string) *EventitemCreate {
-	if v != nil {
-		_c.SetName(*v)
-	}
-	return _c
-}
-
 // SetFlavorText sets the "flavor_text" field.
-func (_c *EventitemCreate) SetFlavorText(v string) *EventitemCreate {
+func (_c *EventitemCreate) SetFlavorText(v json.RawMessage) *EventitemCreate {
 	_c.mutation.SetFlavorText(v)
-	return _c
-}
-
-// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableFlavorText(v *string) *EventitemCreate {
-	if v != nil {
-		_c.SetFlavorText(*v)
-	}
 	return _c
 }
 
@@ -96,16 +67,22 @@ func (_c *EventitemCreate) SetNillableAssetbundleName(v *string) *EventitemCreat
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_c *EventitemCreate) SetGameCharacterID(v int64) *EventitemCreate {
+func (_c *EventitemCreate) SetGameCharacterID(v int) *EventitemCreate {
 	_c.mutation.SetGameCharacterID(v)
 	return _c
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_c *EventitemCreate) SetNillableGameCharacterID(v *int64) *EventitemCreate {
+func (_c *EventitemCreate) SetNillableGameCharacterID(v *int) *EventitemCreate {
 	if v != nil {
 		_c.SetGameCharacterID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventitemCreate) SetServerRegion(v string) *EventitemCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -143,6 +120,9 @@ func (_c *EventitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventitemCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventitem.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventitem.server_region"`)}
 	}
@@ -172,24 +152,20 @@ func (_c *EventitemCreate) createSpec() (*Eventitem, *sqlgraph.CreateSpec) {
 		_node = &Eventitem{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventitem.Table, sqlgraph.NewFieldSpec(eventitem.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventitem.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventitem.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventitem.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventitem.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(eventitem.FieldName, field.TypeString, value)
+		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.FlavorText(); ok {
-		_spec.SetField(eventitem.FieldFlavorText, field.TypeString, value)
+		_spec.SetField(eventitem.FieldFlavorText, field.TypeJSON, value)
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -197,8 +173,12 @@ func (_c *EventitemCreate) createSpec() (*Eventitem, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GameCharacterID(); ok {
-		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(eventitem.FieldGameCharacterID, field.TypeInt, value)
 		_node.GameCharacterID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventitem.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

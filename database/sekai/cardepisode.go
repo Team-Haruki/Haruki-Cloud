@@ -17,14 +17,12 @@ type Cardepisode struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// CardID holds the value of the "card_id" field.
-	CardID int64 `json:"card_id,omitempty"`
+	CardID int `json:"card_id,omitempty"`
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
 	// ScenarioID holds the value of the "scenario_id" field.
@@ -32,20 +30,22 @@ type Cardepisode struct {
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
 	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
-	Power1BonusFixed int64 `json:"power1_bonus_fixed,omitempty"`
+	Power1BonusFixed int `json:"power1_bonus_fixed,omitempty"`
 	// Power2BonusFixed holds the value of the "power2_bonus_fixed" field.
-	Power2BonusFixed int64 `json:"power2_bonus_fixed,omitempty"`
+	Power2BonusFixed int `json:"power2_bonus_fixed,omitempty"`
 	// Power3BonusFixed holds the value of the "power3_bonus_fixed" field.
-	Power3BonusFixed int64 `json:"power3_bonus_fixed,omitempty"`
+	Power3BonusFixed int `json:"power3_bonus_fixed,omitempty"`
 	// RewardResourceBoxIds holds the value of the "reward_resource_box_ids" field.
-	RewardResourceBoxIds []interface{} `json:"reward_resource_box_ids,omitempty"`
+	RewardResourceBoxIds json.RawMessage `json:"reward_resource_box_ids,omitempty"`
 	// Costs holds the value of the "costs" field.
-	Costs []interface{} `json:"costs,omitempty"`
+	Costs json.RawMessage `json:"costs,omitempty"`
 	// CardEpisodePartType holds the value of the "card_episode_part_type" field.
-	CardEpisodePartType string `json:"card_episode_part_type,omitempty"`
-	selectValues        sql.SelectValues
+	CardEpisodePartType json.RawMessage `json:"card_episode_part_type,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -53,11 +53,11 @@ func (*Cardepisode) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case cardepisode.FieldRewardResourceBoxIds, cardepisode.FieldCosts:
+		case cardepisode.FieldRewardResourceBoxIds, cardepisode.FieldCosts, cardepisode.FieldCardEpisodePartType:
 			values[i] = new([]byte)
 		case cardepisode.FieldID, cardepisode.FieldGameID, cardepisode.FieldSeq, cardepisode.FieldCardID, cardepisode.FieldReleaseConditionID, cardepisode.FieldPower1BonusFixed, cardepisode.FieldPower2BonusFixed, cardepisode.FieldPower3BonusFixed:
 			values[i] = new(sql.NullInt64)
-		case cardepisode.FieldServerRegion, cardepisode.FieldTitle, cardepisode.FieldScenarioID, cardepisode.FieldAssetbundleName, cardepisode.FieldCardEpisodePartType:
+		case cardepisode.FieldTitle, cardepisode.FieldScenarioID, cardepisode.FieldAssetbundleName, cardepisode.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -80,29 +80,23 @@ func (_m *Cardepisode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case cardepisode.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case cardepisode.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case cardepisode.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case cardepisode.FieldCardID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_id", values[i])
 			} else if value.Valid {
-				_m.CardID = value.Int64
+				_m.CardID = int(value.Int64)
 			}
 		case cardepisode.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -126,25 +120,25 @@ func (_m *Cardepisode) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
 			}
 		case cardepisode.FieldPower1BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power1_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power1BonusFixed = value.Int64
+				_m.Power1BonusFixed = int(value.Int64)
 			}
 		case cardepisode.FieldPower2BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power2_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power2BonusFixed = value.Int64
+				_m.Power2BonusFixed = int(value.Int64)
 			}
 		case cardepisode.FieldPower3BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power3_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power3BonusFixed = value.Int64
+				_m.Power3BonusFixed = int(value.Int64)
 			}
 		case cardepisode.FieldRewardResourceBoxIds:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -163,10 +157,18 @@ func (_m *Cardepisode) assignValues(columns []string, values []any) error {
 				}
 			}
 		case cardepisode.FieldCardEpisodePartType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_episode_part_type", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardEpisodePartType); err != nil {
+					return fmt.Errorf("unmarshal field card_episode_part_type: %w", err)
+				}
+			}
+		case cardepisode.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
 			} else if value.Valid {
-				_m.CardEpisodePartType = value.String
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -204,9 +206,6 @@ func (_m *Cardepisode) String() string {
 	var builder strings.Builder
 	builder.WriteString("Cardepisode(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -244,7 +243,10 @@ func (_m *Cardepisode) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Costs))
 	builder.WriteString(", ")
 	builder.WriteString("card_episode_part_type=")
-	builder.WriteString(_m.CardEpisodePartType)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardEpisodePartType))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

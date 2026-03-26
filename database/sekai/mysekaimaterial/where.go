@@ -53,18 +53,13 @@ func IDLTE(id int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaimaterial {
+func GameID(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Mysekaimaterial {
+func Seq(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -94,162 +89,92 @@ func ModelAssetbundleName(v string) predicate.Mysekaimaterial {
 }
 
 // MysekaiPhenomenaGroupID applies equality check predicate on the "mysekai_phenomena_group_id" field. It's identical to MysekaiPhenomenaGroupIDEQ.
-func MysekaiPhenomenaGroupID(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupID(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiPhenomenaGroupID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Mysekaimaterial {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaimaterial {
+func GameIDEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaimaterial {
+func GameIDNEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaimaterial {
+func GameIDIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaimaterial {
+func GameIDNotIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaimaterial {
+func GameIDGT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaimaterial {
+func GameIDGTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaimaterial {
+func GameIDLT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaimaterial {
+func GameIDLTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaimaterial {
-	return predicate.Mysekaimaterial(sql.FieldNotNull(FieldGameID))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Mysekaimaterial {
+func SeqEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Mysekaimaterial {
+func SeqNEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Mysekaimaterial {
+func SeqIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Mysekaimaterial {
+func SeqNotIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Mysekaimaterial {
+func SeqGT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Mysekaimaterial {
+func SeqGTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Mysekaimaterial {
+func SeqLT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Mysekaimaterial {
+func SeqLTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -669,42 +594,42 @@ func MysekaiSiteIdsNotNil() predicate.Mysekaimaterial {
 }
 
 // MysekaiPhenomenaGroupIDEQ applies the EQ predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDEQ(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiPhenomenaGroupID, v))
 }
 
 // MysekaiPhenomenaGroupIDNEQ applies the NEQ predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDNEQ(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDNEQ(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldMysekaiPhenomenaGroupID, v))
 }
 
 // MysekaiPhenomenaGroupIDIn applies the In predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDIn(vs ...int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldIn(FieldMysekaiPhenomenaGroupID, vs...))
 }
 
 // MysekaiPhenomenaGroupIDNotIn applies the NotIn predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDNotIn(vs ...int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDNotIn(vs ...int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldMysekaiPhenomenaGroupID, vs...))
 }
 
 // MysekaiPhenomenaGroupIDGT applies the GT predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDGT(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDGT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGT(FieldMysekaiPhenomenaGroupID, v))
 }
 
 // MysekaiPhenomenaGroupIDGTE applies the GTE predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDGTE(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDGTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldGTE(FieldMysekaiPhenomenaGroupID, v))
 }
 
 // MysekaiPhenomenaGroupIDLT applies the LT predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDLT(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDLT(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLT(FieldMysekaiPhenomenaGroupID, v))
 }
 
 // MysekaiPhenomenaGroupIDLTE applies the LTE predicate on the "mysekai_phenomena_group_id" field.
-func MysekaiPhenomenaGroupIDLTE(v int64) predicate.Mysekaimaterial {
+func MysekaiPhenomenaGroupIDLTE(v int) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldLTE(FieldMysekaiPhenomenaGroupID, v))
 }
 
@@ -716,6 +641,71 @@ func MysekaiPhenomenaGroupIDIsNil() predicate.Mysekaimaterial {
 // MysekaiPhenomenaGroupIDNotNil applies the NotNil predicate on the "mysekai_phenomena_group_id" field.
 func MysekaiPhenomenaGroupIDNotNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotNull(FieldMysekaiPhenomenaGroupID))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

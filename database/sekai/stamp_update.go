@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *StampUpdate) Where(ps ...predicate.Stamp) *StampUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *StampUpdate) SetServerRegion(v string) *StampUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableServerRegion(v *string) *StampUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *StampUpdate) SetGameID(v int64) *StampUpdate {
+func (_u *StampUpdate) SetGameID(v int) *StampUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableGameID(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableGameID(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,28 +45,20 @@ func (_u *StampUpdate) SetNillableGameID(v *int64) *StampUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *StampUpdate) AddGameID(v int64) *StampUpdate {
+func (_u *StampUpdate) AddGameID(v int) *StampUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *StampUpdate) ClearGameID() *StampUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetStampType sets the "stamp_type" field.
-func (_u *StampUpdate) SetStampType(v string) *StampUpdate {
+func (_u *StampUpdate) SetStampType(v json.RawMessage) *StampUpdate {
 	_u.mutation.SetStampType(v)
 	return _u
 }
 
-// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableStampType(v *string) *StampUpdate {
-	if v != nil {
-		_u.SetStampType(*v)
-	}
+// AppendStampType appends value to the "stamp_type" field.
+func (_u *StampUpdate) AppendStampType(v json.RawMessage) *StampUpdate {
+	_u.mutation.AppendStampType(v)
 	return _u
 }
 
@@ -89,14 +69,14 @@ func (_u *StampUpdate) ClearStampType() *StampUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *StampUpdate) SetSeq(v int64) *StampUpdate {
+func (_u *StampUpdate) SetSeq(v int) *StampUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableSeq(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableSeq(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -104,7 +84,7 @@ func (_u *StampUpdate) SetNillableSeq(v *int64) *StampUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *StampUpdate) AddSeq(v int64) *StampUpdate {
+func (_u *StampUpdate) AddSeq(v int) *StampUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -156,16 +136,14 @@ func (_u *StampUpdate) ClearAssetbundleName() *StampUpdate {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_u *StampUpdate) SetBalloonAssetbundleName(v string) *StampUpdate {
+func (_u *StampUpdate) SetBalloonAssetbundleName(v json.RawMessage) *StampUpdate {
 	_u.mutation.SetBalloonAssetbundleName(v)
 	return _u
 }
 
-// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableBalloonAssetbundleName(v *string) *StampUpdate {
-	if v != nil {
-		_u.SetBalloonAssetbundleName(*v)
-	}
+// AppendBalloonAssetbundleName appends value to the "balloon_assetbundle_name" field.
+func (_u *StampUpdate) AppendBalloonAssetbundleName(v json.RawMessage) *StampUpdate {
+	_u.mutation.AppendBalloonAssetbundleName(v)
 	return _u
 }
 
@@ -176,14 +154,14 @@ func (_u *StampUpdate) ClearBalloonAssetbundleName() *StampUpdate {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (_u *StampUpdate) SetCharacterId1(v int64) *StampUpdate {
+func (_u *StampUpdate) SetCharacterId1(v int) *StampUpdate {
 	_u.mutation.ResetCharacterId1()
 	_u.mutation.SetCharacterId1(v)
 	return _u
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableCharacterId1(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableCharacterId1(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetCharacterId1(*v)
 	}
@@ -191,7 +169,7 @@ func (_u *StampUpdate) SetNillableCharacterId1(v *int64) *StampUpdate {
 }
 
 // AddCharacterId1 adds value to the "character_id1" field.
-func (_u *StampUpdate) AddCharacterId1(v int64) *StampUpdate {
+func (_u *StampUpdate) AddCharacterId1(v int) *StampUpdate {
 	_u.mutation.AddCharacterId1(v)
 	return _u
 }
@@ -203,14 +181,14 @@ func (_u *StampUpdate) ClearCharacterId1() *StampUpdate {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *StampUpdate) SetGameCharacterUnitID(v int64) *StampUpdate {
+func (_u *StampUpdate) SetGameCharacterUnitID(v int) *StampUpdate {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableGameCharacterUnitID(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableGameCharacterUnitID(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -218,7 +196,7 @@ func (_u *StampUpdate) SetNillableGameCharacterUnitID(v *int64) *StampUpdate {
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *StampUpdate) AddGameCharacterUnitID(v int64) *StampUpdate {
+func (_u *StampUpdate) AddGameCharacterUnitID(v int) *StampUpdate {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -230,14 +208,14 @@ func (_u *StampUpdate) ClearGameCharacterUnitID() *StampUpdate {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *StampUpdate) SetArchivePublishedAt(v int64) *StampUpdate {
+func (_u *StampUpdate) SetArchivePublishedAt(v int) *StampUpdate {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableArchivePublishedAt(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableArchivePublishedAt(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -245,7 +223,7 @@ func (_u *StampUpdate) SetNillableArchivePublishedAt(v *int64) *StampUpdate {
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *StampUpdate) AddArchivePublishedAt(v int64) *StampUpdate {
+func (_u *StampUpdate) AddArchivePublishedAt(v int) *StampUpdate {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -277,16 +255,14 @@ func (_u *StampUpdate) ClearDescription() *StampUpdate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *StampUpdate) SetArchiveDisplayType(v string) *StampUpdate {
+func (_u *StampUpdate) SetArchiveDisplayType(v json.RawMessage) *StampUpdate {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableArchiveDisplayType(v *string) *StampUpdate {
-	if v != nil {
-		_u.SetArchiveDisplayType(*v)
-	}
+// AppendArchiveDisplayType appends value to the "archive_display_type" field.
+func (_u *StampUpdate) AppendArchiveDisplayType(v json.RawMessage) *StampUpdate {
+	_u.mutation.AppendArchiveDisplayType(v)
 	return _u
 }
 
@@ -297,14 +273,14 @@ func (_u *StampUpdate) ClearArchiveDisplayType() *StampUpdate {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (_u *StampUpdate) SetCharacterId2(v int64) *StampUpdate {
+func (_u *StampUpdate) SetCharacterId2(v int) *StampUpdate {
 	_u.mutation.ResetCharacterId2()
 	_u.mutation.SetCharacterId2(v)
 	return _u
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_u *StampUpdate) SetNillableCharacterId2(v *int64) *StampUpdate {
+func (_u *StampUpdate) SetNillableCharacterId2(v *int) *StampUpdate {
 	if v != nil {
 		_u.SetCharacterId2(*v)
 	}
@@ -312,7 +288,7 @@ func (_u *StampUpdate) SetNillableCharacterId2(v *int64) *StampUpdate {
 }
 
 // AddCharacterId2 adds value to the "character_id2" field.
-func (_u *StampUpdate) AddCharacterId2(v int64) *StampUpdate {
+func (_u *StampUpdate) AddCharacterId2(v int) *StampUpdate {
 	_u.mutation.AddCharacterId2(v)
 	return _u
 }
@@ -320,6 +296,20 @@ func (_u *StampUpdate) AddCharacterId2(v int64) *StampUpdate {
 // ClearCharacterId2 clears the value of the "character_id2" field.
 func (_u *StampUpdate) ClearCharacterId2() *StampUpdate {
 	_u.mutation.ClearCharacterId2()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *StampUpdate) SetServerRegion(v string) *StampUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *StampUpdate) SetNillableServerRegion(v *string) *StampUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -364,32 +354,31 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(stamp.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(stamp.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
+		_spec.AddField(stamp.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
+		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedStampType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldStampType, value)
+		})
 	}
 	if _u.mutation.StampTypeCleared() {
-		_spec.ClearField(stamp.FieldStampType, field.TypeString)
+		_spec.ClearField(stamp.FieldStampType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(stamp.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(stamp.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(stamp.FieldSeq, field.TypeInt64)
+		_spec.ClearField(stamp.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(stamp.FieldName, field.TypeString, value)
@@ -404,37 +393,42 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(stamp.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedBalloonAssetbundleName(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldBalloonAssetbundleName, value)
+		})
 	}
 	if _u.mutation.BalloonAssetbundleNameCleared() {
-		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeString)
+		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
-		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId1(); ok {
-		_spec.AddField(stamp.FieldCharacterId1, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldCharacterId1, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterId1Cleared() {
-		_spec.ClearField(stamp.FieldCharacterId1, field.TypeInt64)
+		_spec.ClearField(stamp.FieldCharacterId1, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(stamp.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(stamp.FieldGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(stamp.FieldGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(stamp.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(stamp.FieldArchivePublishedAt, field.TypeInt64)
+		_spec.ClearField(stamp.FieldArchivePublishedAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(stamp.FieldDescription, field.TypeString, value)
@@ -443,19 +437,27 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(stamp.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldArchiveDisplayType, value)
+		})
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeString)
+		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
-		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId2(); ok {
-		_spec.AddField(stamp.FieldCharacterId2, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldCharacterId2, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterId2Cleared() {
-		_spec.ClearField(stamp.FieldCharacterId2, field.TypeInt64)
+		_spec.ClearField(stamp.FieldCharacterId2, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -477,29 +479,15 @@ type StampUpdateOne struct {
 	mutation *StampMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *StampUpdateOne) SetServerRegion(v string) *StampUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableServerRegion(v *string) *StampUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *StampUpdateOne) SetGameID(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetGameID(v int) *StampUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableGameID(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableGameID(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -507,28 +495,20 @@ func (_u *StampUpdateOne) SetNillableGameID(v *int64) *StampUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *StampUpdateOne) AddGameID(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddGameID(v int) *StampUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *StampUpdateOne) ClearGameID() *StampUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetStampType sets the "stamp_type" field.
-func (_u *StampUpdateOne) SetStampType(v string) *StampUpdateOne {
+func (_u *StampUpdateOne) SetStampType(v json.RawMessage) *StampUpdateOne {
 	_u.mutation.SetStampType(v)
 	return _u
 }
 
-// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableStampType(v *string) *StampUpdateOne {
-	if v != nil {
-		_u.SetStampType(*v)
-	}
+// AppendStampType appends value to the "stamp_type" field.
+func (_u *StampUpdateOne) AppendStampType(v json.RawMessage) *StampUpdateOne {
+	_u.mutation.AppendStampType(v)
 	return _u
 }
 
@@ -539,14 +519,14 @@ func (_u *StampUpdateOne) ClearStampType() *StampUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *StampUpdateOne) SetSeq(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetSeq(v int) *StampUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableSeq(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableSeq(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -554,7 +534,7 @@ func (_u *StampUpdateOne) SetNillableSeq(v *int64) *StampUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *StampUpdateOne) AddSeq(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddSeq(v int) *StampUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -606,16 +586,14 @@ func (_u *StampUpdateOne) ClearAssetbundleName() *StampUpdateOne {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_u *StampUpdateOne) SetBalloonAssetbundleName(v string) *StampUpdateOne {
+func (_u *StampUpdateOne) SetBalloonAssetbundleName(v json.RawMessage) *StampUpdateOne {
 	_u.mutation.SetBalloonAssetbundleName(v)
 	return _u
 }
 
-// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableBalloonAssetbundleName(v *string) *StampUpdateOne {
-	if v != nil {
-		_u.SetBalloonAssetbundleName(*v)
-	}
+// AppendBalloonAssetbundleName appends value to the "balloon_assetbundle_name" field.
+func (_u *StampUpdateOne) AppendBalloonAssetbundleName(v json.RawMessage) *StampUpdateOne {
+	_u.mutation.AppendBalloonAssetbundleName(v)
 	return _u
 }
 
@@ -626,14 +604,14 @@ func (_u *StampUpdateOne) ClearBalloonAssetbundleName() *StampUpdateOne {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (_u *StampUpdateOne) SetCharacterId1(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetCharacterId1(v int) *StampUpdateOne {
 	_u.mutation.ResetCharacterId1()
 	_u.mutation.SetCharacterId1(v)
 	return _u
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableCharacterId1(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableCharacterId1(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetCharacterId1(*v)
 	}
@@ -641,7 +619,7 @@ func (_u *StampUpdateOne) SetNillableCharacterId1(v *int64) *StampUpdateOne {
 }
 
 // AddCharacterId1 adds value to the "character_id1" field.
-func (_u *StampUpdateOne) AddCharacterId1(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddCharacterId1(v int) *StampUpdateOne {
 	_u.mutation.AddCharacterId1(v)
 	return _u
 }
@@ -653,14 +631,14 @@ func (_u *StampUpdateOne) ClearCharacterId1() *StampUpdateOne {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *StampUpdateOne) SetGameCharacterUnitID(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetGameCharacterUnitID(v int) *StampUpdateOne {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableGameCharacterUnitID(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableGameCharacterUnitID(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -668,7 +646,7 @@ func (_u *StampUpdateOne) SetNillableGameCharacterUnitID(v *int64) *StampUpdateO
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *StampUpdateOne) AddGameCharacterUnitID(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddGameCharacterUnitID(v int) *StampUpdateOne {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -680,14 +658,14 @@ func (_u *StampUpdateOne) ClearGameCharacterUnitID() *StampUpdateOne {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *StampUpdateOne) SetArchivePublishedAt(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetArchivePublishedAt(v int) *StampUpdateOne {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableArchivePublishedAt(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableArchivePublishedAt(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -695,7 +673,7 @@ func (_u *StampUpdateOne) SetNillableArchivePublishedAt(v *int64) *StampUpdateOn
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *StampUpdateOne) AddArchivePublishedAt(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddArchivePublishedAt(v int) *StampUpdateOne {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -727,16 +705,14 @@ func (_u *StampUpdateOne) ClearDescription() *StampUpdateOne {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *StampUpdateOne) SetArchiveDisplayType(v string) *StampUpdateOne {
+func (_u *StampUpdateOne) SetArchiveDisplayType(v json.RawMessage) *StampUpdateOne {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableArchiveDisplayType(v *string) *StampUpdateOne {
-	if v != nil {
-		_u.SetArchiveDisplayType(*v)
-	}
+// AppendArchiveDisplayType appends value to the "archive_display_type" field.
+func (_u *StampUpdateOne) AppendArchiveDisplayType(v json.RawMessage) *StampUpdateOne {
+	_u.mutation.AppendArchiveDisplayType(v)
 	return _u
 }
 
@@ -747,14 +723,14 @@ func (_u *StampUpdateOne) ClearArchiveDisplayType() *StampUpdateOne {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (_u *StampUpdateOne) SetCharacterId2(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetCharacterId2(v int) *StampUpdateOne {
 	_u.mutation.ResetCharacterId2()
 	_u.mutation.SetCharacterId2(v)
 	return _u
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_u *StampUpdateOne) SetNillableCharacterId2(v *int64) *StampUpdateOne {
+func (_u *StampUpdateOne) SetNillableCharacterId2(v *int) *StampUpdateOne {
 	if v != nil {
 		_u.SetCharacterId2(*v)
 	}
@@ -762,7 +738,7 @@ func (_u *StampUpdateOne) SetNillableCharacterId2(v *int64) *StampUpdateOne {
 }
 
 // AddCharacterId2 adds value to the "character_id2" field.
-func (_u *StampUpdateOne) AddCharacterId2(v int64) *StampUpdateOne {
+func (_u *StampUpdateOne) AddCharacterId2(v int) *StampUpdateOne {
 	_u.mutation.AddCharacterId2(v)
 	return _u
 }
@@ -770,6 +746,20 @@ func (_u *StampUpdateOne) AddCharacterId2(v int64) *StampUpdateOne {
 // ClearCharacterId2 clears the value of the "character_id2" field.
 func (_u *StampUpdateOne) ClearCharacterId2() *StampUpdateOne {
 	_u.mutation.ClearCharacterId2()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *StampUpdateOne) SetServerRegion(v string) *StampUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *StampUpdateOne) SetNillableServerRegion(v *string) *StampUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -844,32 +834,31 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(stamp.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(stamp.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
+		_spec.AddField(stamp.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
+		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedStampType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldStampType, value)
+		})
 	}
 	if _u.mutation.StampTypeCleared() {
-		_spec.ClearField(stamp.FieldStampType, field.TypeString)
+		_spec.ClearField(stamp.FieldStampType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(stamp.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(stamp.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(stamp.FieldSeq, field.TypeInt64)
+		_spec.ClearField(stamp.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(stamp.FieldName, field.TypeString, value)
@@ -884,37 +873,42 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 		_spec.ClearField(stamp.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedBalloonAssetbundleName(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldBalloonAssetbundleName, value)
+		})
 	}
 	if _u.mutation.BalloonAssetbundleNameCleared() {
-		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeString)
+		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
-		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId1(); ok {
-		_spec.AddField(stamp.FieldCharacterId1, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldCharacterId1, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterId1Cleared() {
-		_spec.ClearField(stamp.FieldCharacterId1, field.TypeInt64)
+		_spec.ClearField(stamp.FieldCharacterId1, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(stamp.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(stamp.FieldGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(stamp.FieldGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(stamp.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(stamp.FieldArchivePublishedAt, field.TypeInt64)
+		_spec.ClearField(stamp.FieldArchivePublishedAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(stamp.FieldDescription, field.TypeString, value)
@@ -923,19 +917,27 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 		_spec.ClearField(stamp.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, stamp.FieldArchiveDisplayType, value)
+		})
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeString)
+		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
-		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterId2(); ok {
-		_spec.AddField(stamp.FieldCharacterId2, field.TypeInt64, value)
+		_spec.AddField(stamp.FieldCharacterId2, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterId2Cleared() {
-		_spec.ClearField(stamp.FieldCharacterId2, field.TypeInt64)
+		_spec.ClearField(stamp.FieldCharacterId2, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Stamp{config: _u.config}
 	_spec.Assign = _node.assignValues

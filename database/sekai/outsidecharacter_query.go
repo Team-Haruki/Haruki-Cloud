@@ -262,12 +262,12 @@ func (_q *OutsidecharacterQuery) Clone() *OutsidecharacterQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Outsidecharacter.Query().
-//		GroupBy(outsidecharacter.FieldServerRegion).
+//		GroupBy(outsidecharacter.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *OutsidecharacterQuery) GroupBy(field string, fields ...string) *OutsidecharacterGroupBy {
@@ -285,11 +285,11 @@ func (_q *OutsidecharacterQuery) GroupBy(field string, fields ...string) *Outsid
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Outsidecharacter.Query().
-//		Select(outsidecharacter.FieldServerRegion).
+//		Select(outsidecharacter.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *OutsidecharacterQuery) Select(fields ...string) *OutsidecharacterSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

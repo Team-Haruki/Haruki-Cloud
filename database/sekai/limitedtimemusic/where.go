@@ -53,29 +53,219 @@ func IDLTE(id int) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldGameID, v))
+}
+
+// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
+func MusicID(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldMusicID, v))
+}
+
+// StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
+func StartAt(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldStartAt, v))
+}
+
+// EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
+func EndAt(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldEndAt, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Limitedtimemusic {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldGameID, v))
 }
 
-// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
-func MusicID(v int64) predicate.Limitedtimemusic {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLTE(FieldGameID, v))
+}
+
+// MusicIDEQ applies the EQ predicate on the "music_id" field.
+func MusicIDEQ(v int) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldMusicID, v))
 }
 
-// StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int64) predicate.Limitedtimemusic {
+// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
+func MusicIDNEQ(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldMusicID, v))
+}
+
+// MusicIDIn applies the In predicate on the "music_id" field.
+func MusicIDIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIn(FieldMusicID, vs...))
+}
+
+// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
+func MusicIDNotIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldMusicID, vs...))
+}
+
+// MusicIDGT applies the GT predicate on the "music_id" field.
+func MusicIDGT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGT(FieldMusicID, v))
+}
+
+// MusicIDGTE applies the GTE predicate on the "music_id" field.
+func MusicIDGTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGTE(FieldMusicID, v))
+}
+
+// MusicIDLT applies the LT predicate on the "music_id" field.
+func MusicIDLT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLT(FieldMusicID, v))
+}
+
+// MusicIDLTE applies the LTE predicate on the "music_id" field.
+func MusicIDLTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLTE(FieldMusicID, v))
+}
+
+// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
+func MusicIDIsNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldMusicID))
+}
+
+// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
+func MusicIDNotNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldMusicID))
+}
+
+// StartAtEQ applies the EQ predicate on the "start_at" field.
+func StartAtEQ(v int) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldStartAt, v))
 }
 
-// EndAt applies equality check predicate on the "end_at" field. It's identical to EndAtEQ.
-func EndAt(v int64) predicate.Limitedtimemusic {
+// StartAtNEQ applies the NEQ predicate on the "start_at" field.
+func StartAtNEQ(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldStartAt, v))
+}
+
+// StartAtIn applies the In predicate on the "start_at" field.
+func StartAtIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIn(FieldStartAt, vs...))
+}
+
+// StartAtNotIn applies the NotIn predicate on the "start_at" field.
+func StartAtNotIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldStartAt, vs...))
+}
+
+// StartAtGT applies the GT predicate on the "start_at" field.
+func StartAtGT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGT(FieldStartAt, v))
+}
+
+// StartAtGTE applies the GTE predicate on the "start_at" field.
+func StartAtGTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGTE(FieldStartAt, v))
+}
+
+// StartAtLT applies the LT predicate on the "start_at" field.
+func StartAtLT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLT(FieldStartAt, v))
+}
+
+// StartAtLTE applies the LTE predicate on the "start_at" field.
+func StartAtLTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLTE(FieldStartAt, v))
+}
+
+// StartAtIsNil applies the IsNil predicate on the "start_at" field.
+func StartAtIsNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldStartAt))
+}
+
+// StartAtNotNil applies the NotNil predicate on the "start_at" field.
+func StartAtNotNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldStartAt))
+}
+
+// EndAtEQ applies the EQ predicate on the "end_at" field.
+func EndAtEQ(v int) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldEndAt, v))
+}
+
+// EndAtNEQ applies the NEQ predicate on the "end_at" field.
+func EndAtNEQ(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldEndAt, v))
+}
+
+// EndAtIn applies the In predicate on the "end_at" field.
+func EndAtIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIn(FieldEndAt, vs...))
+}
+
+// EndAtNotIn applies the NotIn predicate on the "end_at" field.
+func EndAtNotIn(vs ...int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldEndAt, vs...))
+}
+
+// EndAtGT applies the GT predicate on the "end_at" field.
+func EndAtGT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGT(FieldEndAt, v))
+}
+
+// EndAtGTE applies the GTE predicate on the "end_at" field.
+func EndAtGTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGTE(FieldEndAt, v))
+}
+
+// EndAtLT applies the LT predicate on the "end_at" field.
+func EndAtLT(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLT(FieldEndAt, v))
+}
+
+// EndAtLTE applies the LTE predicate on the "end_at" field.
+func EndAtLTE(v int) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLTE(FieldEndAt, v))
+}
+
+// EndAtIsNil applies the IsNil predicate on the "end_at" field.
+func EndAtIsNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldEndAt))
+}
+
+// EndAtNotNil applies the NotNil predicate on the "end_at" field.
+func EndAtNotNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldEndAt))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,206 +331,6 @@ func ServerRegionEqualFold(v string) predicate.Limitedtimemusic {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldGameID))
-}
-
-// MusicIDEQ applies the EQ predicate on the "music_id" field.
-func MusicIDEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldEQ(FieldMusicID, v))
-}
-
-// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
-func MusicIDNEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldMusicID, v))
-}
-
-// MusicIDIn applies the In predicate on the "music_id" field.
-func MusicIDIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIn(FieldMusicID, vs...))
-}
-
-// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
-func MusicIDNotIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldMusicID, vs...))
-}
-
-// MusicIDGT applies the GT predicate on the "music_id" field.
-func MusicIDGT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGT(FieldMusicID, v))
-}
-
-// MusicIDGTE applies the GTE predicate on the "music_id" field.
-func MusicIDGTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGTE(FieldMusicID, v))
-}
-
-// MusicIDLT applies the LT predicate on the "music_id" field.
-func MusicIDLT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLT(FieldMusicID, v))
-}
-
-// MusicIDLTE applies the LTE predicate on the "music_id" field.
-func MusicIDLTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLTE(FieldMusicID, v))
-}
-
-// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
-func MusicIDIsNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldMusicID))
-}
-
-// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
-func MusicIDNotNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldMusicID))
-}
-
-// StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldEQ(FieldStartAt, v))
-}
-
-// StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldStartAt, v))
-}
-
-// StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIn(FieldStartAt, vs...))
-}
-
-// StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldStartAt, vs...))
-}
-
-// StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGT(FieldStartAt, v))
-}
-
-// StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGTE(FieldStartAt, v))
-}
-
-// StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLT(FieldStartAt, v))
-}
-
-// StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLTE(FieldStartAt, v))
-}
-
-// StartAtIsNil applies the IsNil predicate on the "start_at" field.
-func StartAtIsNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldStartAt))
-}
-
-// StartAtNotNil applies the NotNil predicate on the "start_at" field.
-func StartAtNotNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldStartAt))
-}
-
-// EndAtEQ applies the EQ predicate on the "end_at" field.
-func EndAtEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldEQ(FieldEndAt, v))
-}
-
-// EndAtNEQ applies the NEQ predicate on the "end_at" field.
-func EndAtNEQ(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldEndAt, v))
-}
-
-// EndAtIn applies the In predicate on the "end_at" field.
-func EndAtIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIn(FieldEndAt, vs...))
-}
-
-// EndAtNotIn applies the NotIn predicate on the "end_at" field.
-func EndAtNotIn(vs ...int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldEndAt, vs...))
-}
-
-// EndAtGT applies the GT predicate on the "end_at" field.
-func EndAtGT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGT(FieldEndAt, v))
-}
-
-// EndAtGTE applies the GTE predicate on the "end_at" field.
-func EndAtGTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldGTE(FieldEndAt, v))
-}
-
-// EndAtLT applies the LT predicate on the "end_at" field.
-func EndAtLT(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLT(FieldEndAt, v))
-}
-
-// EndAtLTE applies the LTE predicate on the "end_at" field.
-func EndAtLTE(v int64) predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldLTE(FieldEndAt, v))
-}
-
-// EndAtIsNil applies the IsNil predicate on the "end_at" field.
-func EndAtIsNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldEndAt))
-}
-
-// EndAtNotNil applies the NotNil predicate on the "end_at" field.
-func EndAtNotNil() predicate.Limitedtimemusic {
-	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldEndAt))
 }
 
 // And groups predicates with the AND operator between them.

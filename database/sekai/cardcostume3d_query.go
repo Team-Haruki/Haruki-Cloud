@@ -262,12 +262,12 @@ func (_q *Cardcostume3DQuery) Clone() *Cardcostume3DQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardID int `json:"card_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Cardcostume3D.Query().
-//		GroupBy(cardcostume3d.FieldServerRegion).
+//		GroupBy(cardcostume3d.FieldCardID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *Cardcostume3DQuery) GroupBy(field string, fields ...string) *Cardcostume3DGroupBy {
@@ -285,11 +285,11 @@ func (_q *Cardcostume3DQuery) GroupBy(field string, fields ...string) *Cardcostu
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardID int `json:"card_id,omitempty"`
 //	}
 //
 //	client.Cardcostume3D.Query().
-//		Select(cardcostume3d.FieldServerRegion).
+//		Select(cardcostume3d.FieldCardID).
 //		Scan(ctx, &v)
 func (_q *Cardcostume3DQuery) Select(fields ...string) *Cardcostume3DSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

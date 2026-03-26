@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/characterrank"
@@ -19,34 +20,20 @@ type CharacterrankCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *CharacterrankCreate) SetServerRegion(v string) *CharacterrankCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *CharacterrankCreate) SetGameID(v int64) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetGameID(v int) *CharacterrankCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *CharacterrankCreate) SetNillableGameID(v *int64) *CharacterrankCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetCharacterID sets the "character_id" field.
-func (_c *CharacterrankCreate) SetCharacterID(v int64) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetCharacterID(v int) *CharacterrankCreate {
 	_c.mutation.SetCharacterID(v)
 	return _c
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_c *CharacterrankCreate) SetNillableCharacterID(v *int64) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetNillableCharacterID(v *int) *CharacterrankCreate {
 	if v != nil {
 		_c.SetCharacterID(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *CharacterrankCreate) SetNillableCharacterID(v *int64) *CharacterrankCr
 }
 
 // SetCharacterRank sets the "character_rank" field.
-func (_c *CharacterrankCreate) SetCharacterRank(v int64) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetCharacterRank(v int) *CharacterrankCreate {
 	_c.mutation.SetCharacterRank(v)
 	return _c
 }
 
 // SetNillableCharacterRank sets the "character_rank" field if the given value is not nil.
-func (_c *CharacterrankCreate) SetNillableCharacterRank(v *int64) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetNillableCharacterRank(v *int) *CharacterrankCreate {
 	if v != nil {
 		_c.SetCharacterRank(*v)
 	}
@@ -110,14 +97,20 @@ func (_c *CharacterrankCreate) SetNillablePower3BonusRate(v *float64) *Character
 }
 
 // SetRewardResourceBoxIds sets the "reward_resource_box_ids" field.
-func (_c *CharacterrankCreate) SetRewardResourceBoxIds(v []interface{}) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetRewardResourceBoxIds(v json.RawMessage) *CharacterrankCreate {
 	_c.mutation.SetRewardResourceBoxIds(v)
 	return _c
 }
 
 // SetCharacterRankAchieveResources sets the "character_rank_achieve_resources" field.
-func (_c *CharacterrankCreate) SetCharacterRankAchieveResources(v []interface{}) *CharacterrankCreate {
+func (_c *CharacterrankCreate) SetCharacterRankAchieveResources(v json.RawMessage) *CharacterrankCreate {
 	_c.mutation.SetCharacterRankAchieveResources(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *CharacterrankCreate) SetServerRegion(v string) *CharacterrankCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -155,6 +148,9 @@ func (_c *CharacterrankCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CharacterrankCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Characterrank.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Characterrank.server_region"`)}
 	}
@@ -184,20 +180,16 @@ func (_c *CharacterrankCreate) createSpec() (*Characterrank, *sqlgraph.CreateSpe
 		_node = &Characterrank{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(characterrank.Table, sqlgraph.NewFieldSpec(characterrank.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(characterrank.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CharacterID(); ok {
-		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterID, field.TypeInt, value)
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.CharacterRank(); ok {
-		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt64, value)
+		_spec.SetField(characterrank.FieldCharacterRank, field.TypeInt, value)
 		_node.CharacterRank = value
 	}
 	if value, ok := _c.mutation.Power1BonusRate(); ok {
@@ -219,6 +211,10 @@ func (_c *CharacterrankCreate) createSpec() (*Characterrank, *sqlgraph.CreateSpe
 	if value, ok := _c.mutation.CharacterRankAchieveResources(); ok {
 		_spec.SetField(characterrank.FieldCharacterRankAchieveResources, field.TypeJSON, value)
 		_node.CharacterRankAchieveResources = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(characterrank.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

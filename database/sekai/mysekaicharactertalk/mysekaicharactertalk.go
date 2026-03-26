@@ -11,8 +11,6 @@ const (
 	Label = "mysekaicharactertalk"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiGameCharacterUnitGroupID holds the string denoting the mysekai_game_character_unit_group_id field in the database.
@@ -31,6 +29,8 @@ const (
 	FieldLua = "lua"
 	// FieldIsEnabledForMulti holds the string denoting the is_enabled_for_multi field in the database.
 	FieldIsEnabledForMulti = "is_enabled_for_multi"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaicharactertalk in the database.
 	Table = "mysekaicharactertalks"
 )
@@ -38,7 +38,6 @@ const (
 // Columns holds all SQL columns for mysekaicharactertalk fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiGameCharacterUnitGroupID,
 	FieldMysekaiCharacterTalkConditionGroupID,
@@ -48,6 +47,7 @@ var Columns = []string{
 	FieldAssetbundleName,
 	FieldLua,
 	FieldIsEnabledForMulti,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -66,11 +66,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -103,11 +98,6 @@ func ByCharacterArchiveMysekaiCharacterTalkGroupID(opts ...sql.OrderTermOption) 
 	return sql.OrderByField(FieldCharacterArchiveMysekaiCharacterTalkGroupID, opts...).ToFunc()
 }
 
-// ByAssetbundleName orders the results by the assetbundle_name field.
-func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
-}
-
 // ByLua orders the results by the lua field.
 func ByLua(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLua, opts...).ToFunc()
@@ -116,4 +106,9 @@ func ByLua(opts ...sql.OrderTermOption) OrderOption {
 // ByIsEnabledForMulti orders the results by the is_enabled_for_multi field.
 func ByIsEnabledForMulti(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsEnabledForMulti, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

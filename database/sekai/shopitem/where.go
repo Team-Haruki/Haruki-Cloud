@@ -53,39 +53,339 @@ func IDLTE(id int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldGameID, v))
+}
+
+// ShopID applies equality check predicate on the "shop_id" field. It's identical to ShopIDEQ.
+func ShopID(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldShopID, v))
+}
+
+// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
+func Seq(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldSeq, v))
+}
+
+// ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
+func ReleaseConditionID(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldReleaseConditionID, v))
+}
+
+// ResourceBoxID applies equality check predicate on the "resource_box_id" field. It's identical to ResourceBoxIDEQ.
+func ResourceBoxID(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldResourceBoxID, v))
+}
+
+// StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
+func StartAt(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldEQ(FieldStartAt, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Shopitem {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldGameID, v))
 }
 
-// ShopID applies equality check predicate on the "shop_id" field. It's identical to ShopIDEQ.
-func ShopID(v int64) predicate.Shopitem {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldGameID, v))
+}
+
+// ShopIDEQ applies the EQ predicate on the "shop_id" field.
+func ShopIDEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldShopID, v))
 }
 
-// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Shopitem {
+// ShopIDNEQ applies the NEQ predicate on the "shop_id" field.
+func ShopIDNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldShopID, v))
+}
+
+// ShopIDIn applies the In predicate on the "shop_id" field.
+func ShopIDIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldShopID, vs...))
+}
+
+// ShopIDNotIn applies the NotIn predicate on the "shop_id" field.
+func ShopIDNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldShopID, vs...))
+}
+
+// ShopIDGT applies the GT predicate on the "shop_id" field.
+func ShopIDGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldShopID, v))
+}
+
+// ShopIDGTE applies the GTE predicate on the "shop_id" field.
+func ShopIDGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldShopID, v))
+}
+
+// ShopIDLT applies the LT predicate on the "shop_id" field.
+func ShopIDLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldShopID, v))
+}
+
+// ShopIDLTE applies the LTE predicate on the "shop_id" field.
+func ShopIDLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldShopID, v))
+}
+
+// ShopIDIsNil applies the IsNil predicate on the "shop_id" field.
+func ShopIDIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldShopID))
+}
+
+// ShopIDNotNil applies the NotNil predicate on the "shop_id" field.
+func ShopIDNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldShopID))
+}
+
+// SeqEQ applies the EQ predicate on the "seq" field.
+func SeqEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldSeq, v))
 }
 
-// ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
-func ReleaseConditionID(v int64) predicate.Shopitem {
+// SeqNEQ applies the NEQ predicate on the "seq" field.
+func SeqNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldSeq, v))
+}
+
+// SeqIn applies the In predicate on the "seq" field.
+func SeqIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldSeq, vs...))
+}
+
+// SeqNotIn applies the NotIn predicate on the "seq" field.
+func SeqNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldSeq, vs...))
+}
+
+// SeqGT applies the GT predicate on the "seq" field.
+func SeqGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldSeq, v))
+}
+
+// SeqGTE applies the GTE predicate on the "seq" field.
+func SeqGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldSeq, v))
+}
+
+// SeqLT applies the LT predicate on the "seq" field.
+func SeqLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldSeq, v))
+}
+
+// SeqLTE applies the LTE predicate on the "seq" field.
+func SeqLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldSeq, v))
+}
+
+// SeqIsNil applies the IsNil predicate on the "seq" field.
+func SeqIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldSeq))
+}
+
+// SeqNotNil applies the NotNil predicate on the "seq" field.
+func SeqNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldSeq))
+}
+
+// ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
+func ReleaseConditionIDEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldReleaseConditionID, v))
 }
 
-// ResourceBoxID applies equality check predicate on the "resource_box_id" field. It's identical to ResourceBoxIDEQ.
-func ResourceBoxID(v int64) predicate.Shopitem {
+// ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
+func ReleaseConditionIDNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
+func ReleaseConditionIDIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldReleaseConditionID, vs...))
+}
+
+// ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
+func ReleaseConditionIDNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldReleaseConditionID, vs...))
+}
+
+// ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
+func ReleaseConditionIDGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
+func ReleaseConditionIDGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
+func ReleaseConditionIDLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
+func ReleaseConditionIDLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDIsNil applies the IsNil predicate on the "release_condition_id" field.
+func ReleaseConditionIDIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldReleaseConditionID))
+}
+
+// ReleaseConditionIDNotNil applies the NotNil predicate on the "release_condition_id" field.
+func ReleaseConditionIDNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldReleaseConditionID))
+}
+
+// ResourceBoxIDEQ applies the EQ predicate on the "resource_box_id" field.
+func ResourceBoxIDEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldResourceBoxID, v))
 }
 
-// StartAt applies equality check predicate on the "start_at" field. It's identical to StartAtEQ.
-func StartAt(v int64) predicate.Shopitem {
+// ResourceBoxIDNEQ applies the NEQ predicate on the "resource_box_id" field.
+func ResourceBoxIDNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDIn applies the In predicate on the "resource_box_id" field.
+func ResourceBoxIDIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldResourceBoxID, vs...))
+}
+
+// ResourceBoxIDNotIn applies the NotIn predicate on the "resource_box_id" field.
+func ResourceBoxIDNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldResourceBoxID, vs...))
+}
+
+// ResourceBoxIDGT applies the GT predicate on the "resource_box_id" field.
+func ResourceBoxIDGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDGTE applies the GTE predicate on the "resource_box_id" field.
+func ResourceBoxIDGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDLT applies the LT predicate on the "resource_box_id" field.
+func ResourceBoxIDLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDLTE applies the LTE predicate on the "resource_box_id" field.
+func ResourceBoxIDLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDIsNil applies the IsNil predicate on the "resource_box_id" field.
+func ResourceBoxIDIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldResourceBoxID))
+}
+
+// ResourceBoxIDNotNil applies the NotNil predicate on the "resource_box_id" field.
+func ResourceBoxIDNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldResourceBoxID))
+}
+
+// CostsIsNil applies the IsNil predicate on the "costs" field.
+func CostsIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldCosts))
+}
+
+// CostsNotNil applies the NotNil predicate on the "costs" field.
+func CostsNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldCosts))
+}
+
+// StartAtEQ applies the EQ predicate on the "start_at" field.
+func StartAtEQ(v int) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldEQ(FieldStartAt, v))
+}
+
+// StartAtNEQ applies the NEQ predicate on the "start_at" field.
+func StartAtNEQ(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNEQ(FieldStartAt, v))
+}
+
+// StartAtIn applies the In predicate on the "start_at" field.
+func StartAtIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIn(FieldStartAt, vs...))
+}
+
+// StartAtNotIn applies the NotIn predicate on the "start_at" field.
+func StartAtNotIn(vs ...int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotIn(FieldStartAt, vs...))
+}
+
+// StartAtGT applies the GT predicate on the "start_at" field.
+func StartAtGT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGT(FieldStartAt, v))
+}
+
+// StartAtGTE applies the GTE predicate on the "start_at" field.
+func StartAtGTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldGTE(FieldStartAt, v))
+}
+
+// StartAtLT applies the LT predicate on the "start_at" field.
+func StartAtLT(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLT(FieldStartAt, v))
+}
+
+// StartAtLTE applies the LTE predicate on the "start_at" field.
+func StartAtLTE(v int) predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldLTE(FieldStartAt, v))
+}
+
+// StartAtIsNil applies the IsNil predicate on the "start_at" field.
+func StartAtIsNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldIsNull(FieldStartAt))
+}
+
+// StartAtNotNil applies the NotNil predicate on the "start_at" field.
+func StartAtNotNil() predicate.Shopitem {
+	return predicate.Shopitem(sql.FieldNotNull(FieldStartAt))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,316 +451,6 @@ func ServerRegionEqualFold(v string) predicate.Shopitem {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Shopitem {
 	return predicate.Shopitem(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldGameID))
-}
-
-// ShopIDEQ applies the EQ predicate on the "shop_id" field.
-func ShopIDEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldShopID, v))
-}
-
-// ShopIDNEQ applies the NEQ predicate on the "shop_id" field.
-func ShopIDNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldShopID, v))
-}
-
-// ShopIDIn applies the In predicate on the "shop_id" field.
-func ShopIDIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldShopID, vs...))
-}
-
-// ShopIDNotIn applies the NotIn predicate on the "shop_id" field.
-func ShopIDNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldShopID, vs...))
-}
-
-// ShopIDGT applies the GT predicate on the "shop_id" field.
-func ShopIDGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldShopID, v))
-}
-
-// ShopIDGTE applies the GTE predicate on the "shop_id" field.
-func ShopIDGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldShopID, v))
-}
-
-// ShopIDLT applies the LT predicate on the "shop_id" field.
-func ShopIDLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldShopID, v))
-}
-
-// ShopIDLTE applies the LTE predicate on the "shop_id" field.
-func ShopIDLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldShopID, v))
-}
-
-// ShopIDIsNil applies the IsNil predicate on the "shop_id" field.
-func ShopIDIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldShopID))
-}
-
-// ShopIDNotNil applies the NotNil predicate on the "shop_id" field.
-func ShopIDNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldShopID))
-}
-
-// SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldSeq, v))
-}
-
-// SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldSeq, v))
-}
-
-// SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldSeq, vs...))
-}
-
-// SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldSeq, vs...))
-}
-
-// SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldSeq, v))
-}
-
-// SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldSeq, v))
-}
-
-// SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldSeq, v))
-}
-
-// SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldSeq, v))
-}
-
-// SeqIsNil applies the IsNil predicate on the "seq" field.
-func SeqIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldSeq))
-}
-
-// SeqNotNil applies the NotNil predicate on the "seq" field.
-func SeqNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldSeq))
-}
-
-// ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
-func ReleaseConditionIDIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldReleaseConditionID, vs...))
-}
-
-// ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldReleaseConditionID, vs...))
-}
-
-// ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
-func ReleaseConditionIDGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
-func ReleaseConditionIDLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDIsNil applies the IsNil predicate on the "release_condition_id" field.
-func ReleaseConditionIDIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldReleaseConditionID))
-}
-
-// ReleaseConditionIDNotNil applies the NotNil predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldReleaseConditionID))
-}
-
-// ResourceBoxIDEQ applies the EQ predicate on the "resource_box_id" field.
-func ResourceBoxIDEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDNEQ applies the NEQ predicate on the "resource_box_id" field.
-func ResourceBoxIDNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDIn applies the In predicate on the "resource_box_id" field.
-func ResourceBoxIDIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldResourceBoxID, vs...))
-}
-
-// ResourceBoxIDNotIn applies the NotIn predicate on the "resource_box_id" field.
-func ResourceBoxIDNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldResourceBoxID, vs...))
-}
-
-// ResourceBoxIDGT applies the GT predicate on the "resource_box_id" field.
-func ResourceBoxIDGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDGTE applies the GTE predicate on the "resource_box_id" field.
-func ResourceBoxIDGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDLT applies the LT predicate on the "resource_box_id" field.
-func ResourceBoxIDLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDLTE applies the LTE predicate on the "resource_box_id" field.
-func ResourceBoxIDLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDIsNil applies the IsNil predicate on the "resource_box_id" field.
-func ResourceBoxIDIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldResourceBoxID))
-}
-
-// ResourceBoxIDNotNil applies the NotNil predicate on the "resource_box_id" field.
-func ResourceBoxIDNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldResourceBoxID))
-}
-
-// CostsIsNil applies the IsNil predicate on the "costs" field.
-func CostsIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldCosts))
-}
-
-// CostsNotNil applies the NotNil predicate on the "costs" field.
-func CostsNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldCosts))
-}
-
-// StartAtEQ applies the EQ predicate on the "start_at" field.
-func StartAtEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldEQ(FieldStartAt, v))
-}
-
-// StartAtNEQ applies the NEQ predicate on the "start_at" field.
-func StartAtNEQ(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNEQ(FieldStartAt, v))
-}
-
-// StartAtIn applies the In predicate on the "start_at" field.
-func StartAtIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIn(FieldStartAt, vs...))
-}
-
-// StartAtNotIn applies the NotIn predicate on the "start_at" field.
-func StartAtNotIn(vs ...int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotIn(FieldStartAt, vs...))
-}
-
-// StartAtGT applies the GT predicate on the "start_at" field.
-func StartAtGT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGT(FieldStartAt, v))
-}
-
-// StartAtGTE applies the GTE predicate on the "start_at" field.
-func StartAtGTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldGTE(FieldStartAt, v))
-}
-
-// StartAtLT applies the LT predicate on the "start_at" field.
-func StartAtLT(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLT(FieldStartAt, v))
-}
-
-// StartAtLTE applies the LTE predicate on the "start_at" field.
-func StartAtLTE(v int64) predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldLTE(FieldStartAt, v))
-}
-
-// StartAtIsNil applies the IsNil predicate on the "start_at" field.
-func StartAtIsNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldIsNull(FieldStartAt))
-}
-
-// StartAtNotNil applies the NotNil predicate on the "start_at" field.
-func StartAtNotNil() predicate.Shopitem {
-	return predicate.Shopitem(sql.FieldNotNull(FieldStartAt))
 }
 
 // And groups predicates with the AND operator between them.

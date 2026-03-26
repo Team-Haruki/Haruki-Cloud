@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/level"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *LevelUpdate) Where(ps ...predicate.Level) *LevelUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *LevelUpdate) SetServerRegion(v string) *LevelUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *LevelUpdate) SetNillableServerRegion(v *string) *LevelUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *LevelUpdate) SetGameID(v int64) *LevelUpdate {
+func (_u *LevelUpdate) SetGameID(v int) *LevelUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *LevelUpdate) SetNillableGameID(v *int64) *LevelUpdate {
+func (_u *LevelUpdate) SetNillableGameID(v *int) *LevelUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,28 +45,20 @@ func (_u *LevelUpdate) SetNillableGameID(v *int64) *LevelUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *LevelUpdate) AddGameID(v int64) *LevelUpdate {
+func (_u *LevelUpdate) AddGameID(v int) *LevelUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *LevelUpdate) ClearGameID() *LevelUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetLevelType sets the "level_type" field.
-func (_u *LevelUpdate) SetLevelType(v string) *LevelUpdate {
+func (_u *LevelUpdate) SetLevelType(v json.RawMessage) *LevelUpdate {
 	_u.mutation.SetLevelType(v)
 	return _u
 }
 
-// SetNillableLevelType sets the "level_type" field if the given value is not nil.
-func (_u *LevelUpdate) SetNillableLevelType(v *string) *LevelUpdate {
-	if v != nil {
-		_u.SetLevelType(*v)
-	}
+// AppendLevelType appends value to the "level_type" field.
+func (_u *LevelUpdate) AppendLevelType(v json.RawMessage) *LevelUpdate {
+	_u.mutation.AppendLevelType(v)
 	return _u
 }
 
@@ -89,14 +69,14 @@ func (_u *LevelUpdate) ClearLevelType() *LevelUpdate {
 }
 
 // SetLevel sets the "level" field.
-func (_u *LevelUpdate) SetLevel(v int64) *LevelUpdate {
+func (_u *LevelUpdate) SetLevel(v int) *LevelUpdate {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *LevelUpdate) SetNillableLevel(v *int64) *LevelUpdate {
+func (_u *LevelUpdate) SetNillableLevel(v *int) *LevelUpdate {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -104,7 +84,7 @@ func (_u *LevelUpdate) SetNillableLevel(v *int64) *LevelUpdate {
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *LevelUpdate) AddLevel(v int64) *LevelUpdate {
+func (_u *LevelUpdate) AddLevel(v int) *LevelUpdate {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -116,14 +96,14 @@ func (_u *LevelUpdate) ClearLevel() *LevelUpdate {
 }
 
 // SetTotalExp sets the "total_exp" field.
-func (_u *LevelUpdate) SetTotalExp(v int64) *LevelUpdate {
+func (_u *LevelUpdate) SetTotalExp(v int) *LevelUpdate {
 	_u.mutation.ResetTotalExp()
 	_u.mutation.SetTotalExp(v)
 	return _u
 }
 
 // SetNillableTotalExp sets the "total_exp" field if the given value is not nil.
-func (_u *LevelUpdate) SetNillableTotalExp(v *int64) *LevelUpdate {
+func (_u *LevelUpdate) SetNillableTotalExp(v *int) *LevelUpdate {
 	if v != nil {
 		_u.SetTotalExp(*v)
 	}
@@ -131,7 +111,7 @@ func (_u *LevelUpdate) SetNillableTotalExp(v *int64) *LevelUpdate {
 }
 
 // AddTotalExp adds value to the "total_exp" field.
-func (_u *LevelUpdate) AddTotalExp(v int64) *LevelUpdate {
+func (_u *LevelUpdate) AddTotalExp(v int) *LevelUpdate {
 	_u.mutation.AddTotalExp(v)
 	return _u
 }
@@ -139,6 +119,20 @@ func (_u *LevelUpdate) AddTotalExp(v int64) *LevelUpdate {
 // ClearTotalExp clears the value of the "total_exp" field.
 func (_u *LevelUpdate) ClearTotalExp() *LevelUpdate {
 	_u.mutation.ClearTotalExp()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *LevelUpdate) SetServerRegion(v string) *LevelUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *LevelUpdate) SetNillableServerRegion(v *string) *LevelUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -183,41 +177,43 @@ func (_u *LevelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(level.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(level.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(level.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(level.FieldGameID, field.TypeInt64)
+		_spec.AddField(level.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeString, value)
+		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedLevelType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, level.FieldLevelType, value)
+		})
 	}
 	if _u.mutation.LevelTypeCleared() {
-		_spec.ClearField(level.FieldLevelType, field.TypeString)
+		_spec.ClearField(level.FieldLevelType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(level.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(level.FieldLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(level.FieldLevel, field.TypeInt64, value)
+		_spec.AddField(level.FieldLevel, field.TypeInt, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(level.FieldLevel, field.TypeInt64)
+		_spec.ClearField(level.FieldLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.TotalExp(); ok {
-		_spec.SetField(level.FieldTotalExp, field.TypeInt64, value)
+		_spec.SetField(level.FieldTotalExp, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedTotalExp(); ok {
-		_spec.AddField(level.FieldTotalExp, field.TypeInt64, value)
+		_spec.AddField(level.FieldTotalExp, field.TypeInt, value)
 	}
 	if _u.mutation.TotalExpCleared() {
-		_spec.ClearField(level.FieldTotalExp, field.TypeInt64)
+		_spec.ClearField(level.FieldTotalExp, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -239,29 +235,15 @@ type LevelUpdateOne struct {
 	mutation *LevelMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *LevelUpdateOne) SetServerRegion(v string) *LevelUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *LevelUpdateOne) SetNillableServerRegion(v *string) *LevelUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *LevelUpdateOne) SetGameID(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetGameID(v int) *LevelUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *LevelUpdateOne) SetNillableGameID(v *int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetNillableGameID(v *int) *LevelUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -269,28 +251,20 @@ func (_u *LevelUpdateOne) SetNillableGameID(v *int64) *LevelUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *LevelUpdateOne) AddGameID(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) AddGameID(v int) *LevelUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *LevelUpdateOne) ClearGameID() *LevelUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetLevelType sets the "level_type" field.
-func (_u *LevelUpdateOne) SetLevelType(v string) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetLevelType(v json.RawMessage) *LevelUpdateOne {
 	_u.mutation.SetLevelType(v)
 	return _u
 }
 
-// SetNillableLevelType sets the "level_type" field if the given value is not nil.
-func (_u *LevelUpdateOne) SetNillableLevelType(v *string) *LevelUpdateOne {
-	if v != nil {
-		_u.SetLevelType(*v)
-	}
+// AppendLevelType appends value to the "level_type" field.
+func (_u *LevelUpdateOne) AppendLevelType(v json.RawMessage) *LevelUpdateOne {
+	_u.mutation.AppendLevelType(v)
 	return _u
 }
 
@@ -301,14 +275,14 @@ func (_u *LevelUpdateOne) ClearLevelType() *LevelUpdateOne {
 }
 
 // SetLevel sets the "level" field.
-func (_u *LevelUpdateOne) SetLevel(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetLevel(v int) *LevelUpdateOne {
 	_u.mutation.ResetLevel()
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *LevelUpdateOne) SetNillableLevel(v *int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetNillableLevel(v *int) *LevelUpdateOne {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -316,7 +290,7 @@ func (_u *LevelUpdateOne) SetNillableLevel(v *int64) *LevelUpdateOne {
 }
 
 // AddLevel adds value to the "level" field.
-func (_u *LevelUpdateOne) AddLevel(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) AddLevel(v int) *LevelUpdateOne {
 	_u.mutation.AddLevel(v)
 	return _u
 }
@@ -328,14 +302,14 @@ func (_u *LevelUpdateOne) ClearLevel() *LevelUpdateOne {
 }
 
 // SetTotalExp sets the "total_exp" field.
-func (_u *LevelUpdateOne) SetTotalExp(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetTotalExp(v int) *LevelUpdateOne {
 	_u.mutation.ResetTotalExp()
 	_u.mutation.SetTotalExp(v)
 	return _u
 }
 
 // SetNillableTotalExp sets the "total_exp" field if the given value is not nil.
-func (_u *LevelUpdateOne) SetNillableTotalExp(v *int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetNillableTotalExp(v *int) *LevelUpdateOne {
 	if v != nil {
 		_u.SetTotalExp(*v)
 	}
@@ -343,7 +317,7 @@ func (_u *LevelUpdateOne) SetNillableTotalExp(v *int64) *LevelUpdateOne {
 }
 
 // AddTotalExp adds value to the "total_exp" field.
-func (_u *LevelUpdateOne) AddTotalExp(v int64) *LevelUpdateOne {
+func (_u *LevelUpdateOne) AddTotalExp(v int) *LevelUpdateOne {
 	_u.mutation.AddTotalExp(v)
 	return _u
 }
@@ -351,6 +325,20 @@ func (_u *LevelUpdateOne) AddTotalExp(v int64) *LevelUpdateOne {
 // ClearTotalExp clears the value of the "total_exp" field.
 func (_u *LevelUpdateOne) ClearTotalExp() *LevelUpdateOne {
 	_u.mutation.ClearTotalExp()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *LevelUpdateOne) SetServerRegion(v string) *LevelUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *LevelUpdateOne) SetNillableServerRegion(v *string) *LevelUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -425,41 +413,43 @@ func (_u *LevelUpdateOne) sqlSave(ctx context.Context) (_node *Level, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(level.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(level.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(level.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(level.FieldGameID, field.TypeInt64)
+		_spec.AddField(level.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeString, value)
+		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedLevelType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, level.FieldLevelType, value)
+		})
 	}
 	if _u.mutation.LevelTypeCleared() {
-		_spec.ClearField(level.FieldLevelType, field.TypeString)
+		_spec.ClearField(level.FieldLevelType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(level.FieldLevel, field.TypeInt64, value)
+		_spec.SetField(level.FieldLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedLevel(); ok {
-		_spec.AddField(level.FieldLevel, field.TypeInt64, value)
+		_spec.AddField(level.FieldLevel, field.TypeInt, value)
 	}
 	if _u.mutation.LevelCleared() {
-		_spec.ClearField(level.FieldLevel, field.TypeInt64)
+		_spec.ClearField(level.FieldLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.TotalExp(); ok {
-		_spec.SetField(level.FieldTotalExp, field.TypeInt64, value)
+		_spec.SetField(level.FieldTotalExp, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedTotalExp(); ok {
-		_spec.AddField(level.FieldTotalExp, field.TypeInt64, value)
+		_spec.AddField(level.FieldTotalExp, field.TypeInt, value)
 	}
 	if _u.mutation.TotalExpCleared() {
-		_spec.ClearField(level.FieldTotalExp, field.TypeInt64)
+		_spec.ClearField(level.FieldTotalExp, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(level.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Level{config: _u.config}
 	_spec.Assign = _node.assignValues

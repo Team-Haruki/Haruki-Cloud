@@ -53,39 +53,29 @@ func IDLTE(id int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Bondshonor {
+func GameID(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Bondshonor {
+func Seq(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldSeq, v))
 }
 
 // BondsGroupID applies equality check predicate on the "bonds_group_id" field. It's identical to BondsGroupIDEQ.
-func BondsGroupID(v int64) predicate.Bondshonor {
+func BondsGroupID(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldBondsGroupID, v))
 }
 
 // GameCharacterUnitId1 applies equality check predicate on the "game_character_unit_id1" field. It's identical to GameCharacterUnitId1EQ.
-func GameCharacterUnitId1(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId2 applies equality check predicate on the "game_character_unit_id2" field. It's identical to GameCharacterUnitId2EQ.
-func GameCharacterUnitId2(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameCharacterUnitId2, v))
-}
-
-// HonorRarity applies equality check predicate on the "honor_rarity" field. It's identical to HonorRarityEQ.
-func HonorRarity(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldEQ(FieldHonorRarity, v))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
@@ -108,158 +98,88 @@ func ConfigurableUnitVirtualSinger(v bool) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldConfigurableUnitVirtualSinger, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Bondshonor {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Bondshonor {
+func GameIDEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Bondshonor {
+func GameIDNEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Bondshonor {
+func GameIDIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Bondshonor {
+func GameIDNotIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Bondshonor {
+func GameIDGT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Bondshonor {
+func GameIDGTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Bondshonor {
+func GameIDLT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Bondshonor {
+func GameIDLTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldNotNull(FieldGameID))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Bondshonor {
+func SeqEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Bondshonor {
+func SeqNEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Bondshonor {
+func SeqIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Bondshonor {
+func SeqNotIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Bondshonor {
+func SeqGT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Bondshonor {
+func SeqGTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Bondshonor {
+func SeqLT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Bondshonor {
+func SeqLTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -274,42 +194,42 @@ func SeqNotNil() predicate.Bondshonor {
 }
 
 // BondsGroupIDEQ applies the EQ predicate on the "bonds_group_id" field.
-func BondsGroupIDEQ(v int64) predicate.Bondshonor {
+func BondsGroupIDEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldBondsGroupID, v))
 }
 
 // BondsGroupIDNEQ applies the NEQ predicate on the "bonds_group_id" field.
-func BondsGroupIDNEQ(v int64) predicate.Bondshonor {
+func BondsGroupIDNEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNEQ(FieldBondsGroupID, v))
 }
 
 // BondsGroupIDIn applies the In predicate on the "bonds_group_id" field.
-func BondsGroupIDIn(vs ...int64) predicate.Bondshonor {
+func BondsGroupIDIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIn(FieldBondsGroupID, vs...))
 }
 
 // BondsGroupIDNotIn applies the NotIn predicate on the "bonds_group_id" field.
-func BondsGroupIDNotIn(vs ...int64) predicate.Bondshonor {
+func BondsGroupIDNotIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotIn(FieldBondsGroupID, vs...))
 }
 
 // BondsGroupIDGT applies the GT predicate on the "bonds_group_id" field.
-func BondsGroupIDGT(v int64) predicate.Bondshonor {
+func BondsGroupIDGT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGT(FieldBondsGroupID, v))
 }
 
 // BondsGroupIDGTE applies the GTE predicate on the "bonds_group_id" field.
-func BondsGroupIDGTE(v int64) predicate.Bondshonor {
+func BondsGroupIDGTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGTE(FieldBondsGroupID, v))
 }
 
 // BondsGroupIDLT applies the LT predicate on the "bonds_group_id" field.
-func BondsGroupIDLT(v int64) predicate.Bondshonor {
+func BondsGroupIDLT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLT(FieldBondsGroupID, v))
 }
 
 // BondsGroupIDLTE applies the LTE predicate on the "bonds_group_id" field.
-func BondsGroupIDLTE(v int64) predicate.Bondshonor {
+func BondsGroupIDLTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldBondsGroupID, v))
 }
 
@@ -324,42 +244,42 @@ func BondsGroupIDNotNil() predicate.Bondshonor {
 }
 
 // GameCharacterUnitId1EQ applies the EQ predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1EQ(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1EQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId1NEQ applies the NEQ predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1NEQ(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1NEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNEQ(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId1In applies the In predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1In(vs ...int64) predicate.Bondshonor {
+func GameCharacterUnitId1In(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIn(FieldGameCharacterUnitId1, vs...))
 }
 
 // GameCharacterUnitId1NotIn applies the NotIn predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1NotIn(vs ...int64) predicate.Bondshonor {
+func GameCharacterUnitId1NotIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotIn(FieldGameCharacterUnitId1, vs...))
 }
 
 // GameCharacterUnitId1GT applies the GT predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1GT(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1GT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGT(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId1GTE applies the GTE predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1GTE(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1GTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGTE(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId1LT applies the LT predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1LT(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1LT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLT(FieldGameCharacterUnitId1, v))
 }
 
 // GameCharacterUnitId1LTE applies the LTE predicate on the "game_character_unit_id1" field.
-func GameCharacterUnitId1LTE(v int64) predicate.Bondshonor {
+func GameCharacterUnitId1LTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldGameCharacterUnitId1, v))
 }
 
@@ -374,42 +294,42 @@ func GameCharacterUnitId1NotNil() predicate.Bondshonor {
 }
 
 // GameCharacterUnitId2EQ applies the EQ predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2EQ(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2EQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameCharacterUnitId2, v))
 }
 
 // GameCharacterUnitId2NEQ applies the NEQ predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2NEQ(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2NEQ(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNEQ(FieldGameCharacterUnitId2, v))
 }
 
 // GameCharacterUnitId2In applies the In predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2In(vs ...int64) predicate.Bondshonor {
+func GameCharacterUnitId2In(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIn(FieldGameCharacterUnitId2, vs...))
 }
 
 // GameCharacterUnitId2NotIn applies the NotIn predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2NotIn(vs ...int64) predicate.Bondshonor {
+func GameCharacterUnitId2NotIn(vs ...int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotIn(FieldGameCharacterUnitId2, vs...))
 }
 
 // GameCharacterUnitId2GT applies the GT predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2GT(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2GT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGT(FieldGameCharacterUnitId2, v))
 }
 
 // GameCharacterUnitId2GTE applies the GTE predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2GTE(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2GTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldGTE(FieldGameCharacterUnitId2, v))
 }
 
 // GameCharacterUnitId2LT applies the LT predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2LT(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2LT(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLT(FieldGameCharacterUnitId2, v))
 }
 
 // GameCharacterUnitId2LTE applies the LTE predicate on the "game_character_unit_id2" field.
-func GameCharacterUnitId2LTE(v int64) predicate.Bondshonor {
+func GameCharacterUnitId2LTE(v int) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldLTE(FieldGameCharacterUnitId2, v))
 }
 
@@ -423,61 +343,6 @@ func GameCharacterUnitId2NotNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotNull(FieldGameCharacterUnitId2))
 }
 
-// HonorRarityEQ applies the EQ predicate on the "honor_rarity" field.
-func HonorRarityEQ(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldEQ(FieldHonorRarity, v))
-}
-
-// HonorRarityNEQ applies the NEQ predicate on the "honor_rarity" field.
-func HonorRarityNEQ(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldNEQ(FieldHonorRarity, v))
-}
-
-// HonorRarityIn applies the In predicate on the "honor_rarity" field.
-func HonorRarityIn(vs ...string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldIn(FieldHonorRarity, vs...))
-}
-
-// HonorRarityNotIn applies the NotIn predicate on the "honor_rarity" field.
-func HonorRarityNotIn(vs ...string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldNotIn(FieldHonorRarity, vs...))
-}
-
-// HonorRarityGT applies the GT predicate on the "honor_rarity" field.
-func HonorRarityGT(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldGT(FieldHonorRarity, v))
-}
-
-// HonorRarityGTE applies the GTE predicate on the "honor_rarity" field.
-func HonorRarityGTE(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldGTE(FieldHonorRarity, v))
-}
-
-// HonorRarityLT applies the LT predicate on the "honor_rarity" field.
-func HonorRarityLT(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldLT(FieldHonorRarity, v))
-}
-
-// HonorRarityLTE applies the LTE predicate on the "honor_rarity" field.
-func HonorRarityLTE(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldLTE(FieldHonorRarity, v))
-}
-
-// HonorRarityContains applies the Contains predicate on the "honor_rarity" field.
-func HonorRarityContains(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldContains(FieldHonorRarity, v))
-}
-
-// HonorRarityHasPrefix applies the HasPrefix predicate on the "honor_rarity" field.
-func HonorRarityHasPrefix(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldHasPrefix(FieldHonorRarity, v))
-}
-
-// HonorRarityHasSuffix applies the HasSuffix predicate on the "honor_rarity" field.
-func HonorRarityHasSuffix(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldHasSuffix(FieldHonorRarity, v))
-}
-
 // HonorRarityIsNil applies the IsNil predicate on the "honor_rarity" field.
 func HonorRarityIsNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIsNull(FieldHonorRarity))
@@ -486,16 +351,6 @@ func HonorRarityIsNil() predicate.Bondshonor {
 // HonorRarityNotNil applies the NotNil predicate on the "honor_rarity" field.
 func HonorRarityNotNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotNull(FieldHonorRarity))
-}
-
-// HonorRarityEqualFold applies the EqualFold predicate on the "honor_rarity" field.
-func HonorRarityEqualFold(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldEqualFold(FieldHonorRarity, v))
-}
-
-// HonorRarityContainsFold applies the ContainsFold predicate on the "honor_rarity" field.
-func HonorRarityContainsFold(v string) predicate.Bondshonor {
-	return predicate.Bondshonor(sql.FieldContainsFold(FieldHonorRarity, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -751,6 +606,71 @@ func ConfigurableUnitVirtualSingerIsNil() predicate.Bondshonor {
 // ConfigurableUnitVirtualSingerNotNil applies the NotNil predicate on the "configurable_unit_virtual_singer" field.
 func ConfigurableUnitVirtualSingerNotNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotNull(FieldConfigurableUnitVirtualSinger))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

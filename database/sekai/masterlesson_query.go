@@ -262,12 +262,12 @@ func (_q *MasterlessonQuery) Clone() *MasterlessonQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Masterlesson.Query().
-//		GroupBy(masterlesson.FieldServerRegion).
+//		GroupBy(masterlesson.FieldCardRarityType).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MasterlessonQuery) GroupBy(field string, fields ...string) *MasterlessonGroupBy {
@@ -285,11 +285,11 @@ func (_q *MasterlessonQuery) GroupBy(field string, fields ...string) *Masterless
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
 //	}
 //
 //	client.Masterlesson.Query().
-//		Select(masterlesson.FieldServerRegion).
+//		Select(masterlesson.FieldCardRarityType).
 //		Scan(ctx, &v)
 func (_q *MasterlessonQuery) Select(fields ...string) *MasterlessonSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

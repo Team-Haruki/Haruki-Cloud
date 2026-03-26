@@ -262,12 +262,12 @@ func (_q *MysekaiblueprintmysekaimaterialcostQuery) Clone() *Mysekaiblueprintmys
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaiblueprintmysekaimaterialcost.Query().
-//		GroupBy(mysekaiblueprintmysekaimaterialcost.FieldServerRegion).
+//		GroupBy(mysekaiblueprintmysekaimaterialcost.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaiblueprintmysekaimaterialcostQuery) GroupBy(field string, fields ...string) *MysekaiblueprintmysekaimaterialcostGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaiblueprintmysekaimaterialcostQuery) GroupBy(field string, fields
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaiblueprintmysekaimaterialcost.Query().
-//		Select(mysekaiblueprintmysekaimaterialcost.FieldServerRegion).
+//		Select(mysekaiblueprintmysekaimaterialcost.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaiblueprintmysekaimaterialcostQuery) Select(fields ...string) *MysekaiblueprintmysekaimaterialcostSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

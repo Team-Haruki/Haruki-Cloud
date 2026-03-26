@@ -27,29 +27,15 @@ func (_u *MysekaiitemUpdate) Where(ps ...predicate.Mysekaiitem) *MysekaiitemUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiitemUpdate) SetServerRegion(v string) *MysekaiitemUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiitemUpdate) SetNillableServerRegion(v *string) *MysekaiitemUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiitemUpdate) SetGameID(v int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetGameID(v int) *MysekaiitemUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiitemUpdate) SetNillableGameID(v *int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetNillableGameID(v *int) *MysekaiitemUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *MysekaiitemUpdate) SetNillableGameID(v *int64) *MysekaiitemUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiitemUpdate) AddGameID(v int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) AddGameID(v int) *MysekaiitemUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiitemUpdate) ClearGameID() *MysekaiitemUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *MysekaiitemUpdate) SetSeq(v int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetSeq(v int) *MysekaiitemUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiitemUpdate) SetNillableSeq(v *int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) SetNillableSeq(v *int) *MysekaiitemUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *MysekaiitemUpdate) SetNillableSeq(v *int64) *MysekaiitemUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiitemUpdate) AddSeq(v int64) *MysekaiitemUpdate {
+func (_u *MysekaiitemUpdate) AddSeq(v int) *MysekaiitemUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -195,6 +175,20 @@ func (_u *MysekaiitemUpdate) ClearIconAssetbundleName() *MysekaiitemUpdate {
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiitemUpdate) SetServerRegion(v string) *MysekaiitemUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiitemUpdate) SetNillableServerRegion(v *string) *MysekaiitemUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the MysekaiitemMutation object of the builder.
 func (_u *MysekaiitemUpdate) Mutation() *MysekaiitemMutation {
 	return _u.mutation
@@ -236,26 +230,20 @@ func (_u *MysekaiitemUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt64)
+		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiItemType(); ok {
 		_spec.SetField(mysekaiitem.FieldMysekaiItemType, field.TypeString, value)
@@ -287,6 +275,9 @@ func (_u *MysekaiitemUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.IconAssetbundleNameCleared() {
 		_spec.ClearField(mysekaiitem.FieldIconAssetbundleName, field.TypeString)
 	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{mysekaiitem.Label}
@@ -307,29 +298,15 @@ type MysekaiitemUpdateOne struct {
 	mutation *MysekaiitemMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiitemUpdateOne) SetServerRegion(v string) *MysekaiitemUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiitemUpdateOne) SetNillableServerRegion(v *string) *MysekaiitemUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiitemUpdateOne) SetGameID(v int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetGameID(v int) *MysekaiitemUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int) *MysekaiitemUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -337,26 +314,20 @@ func (_u *MysekaiitemUpdateOne) SetNillableGameID(v *int64) *MysekaiitemUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiitemUpdateOne) AddGameID(v int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) AddGameID(v int) *MysekaiitemUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiitemUpdateOne) ClearGameID() *MysekaiitemUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *MysekaiitemUpdateOne) SetSeq(v int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetSeq(v int) *MysekaiitemUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int) *MysekaiitemUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -364,7 +335,7 @@ func (_u *MysekaiitemUpdateOne) SetNillableSeq(v *int64) *MysekaiitemUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MysekaiitemUpdateOne) AddSeq(v int64) *MysekaiitemUpdateOne {
+func (_u *MysekaiitemUpdateOne) AddSeq(v int) *MysekaiitemUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -475,6 +446,20 @@ func (_u *MysekaiitemUpdateOne) ClearIconAssetbundleName() *MysekaiitemUpdateOne
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiitemUpdateOne) SetServerRegion(v string) *MysekaiitemUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiitemUpdateOne) SetNillableServerRegion(v *string) *MysekaiitemUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the MysekaiitemMutation object of the builder.
 func (_u *MysekaiitemUpdateOne) Mutation() *MysekaiitemMutation {
 	return _u.mutation
@@ -546,26 +531,20 @@ func (_u *MysekaiitemUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaiitem
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiitem.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiitem.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(mysekaiitem.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt64)
+		_spec.ClearField(mysekaiitem.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MysekaiItemType(); ok {
 		_spec.SetField(mysekaiitem.FieldMysekaiItemType, field.TypeString, value)
@@ -596,6 +575,9 @@ func (_u *MysekaiitemUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaiitem
 	}
 	if _u.mutation.IconAssetbundleNameCleared() {
 		_spec.ClearField(mysekaiitem.FieldIconAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaiitem{config: _u.config}
 	_spec.Assign = _node.assignValues

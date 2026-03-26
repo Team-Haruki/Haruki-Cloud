@@ -262,12 +262,12 @@ func (_q *GamecharacterunitQuery) Clone() *GamecharacterunitQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Gamecharacterunit.Query().
-//		GroupBy(gamecharacterunit.FieldServerRegion).
+//		GroupBy(gamecharacterunit.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *GamecharacterunitQuery) GroupBy(field string, fields ...string) *GamecharacterunitGroupBy {
@@ -285,11 +285,11 @@ func (_q *GamecharacterunitQuery) GroupBy(field string, fields ...string) *Gamec
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Gamecharacterunit.Query().
-//		Select(gamecharacterunit.FieldServerRegion).
+//		Select(gamecharacterunit.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *GamecharacterunitQuery) Select(fields ...string) *GamecharacterunitSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

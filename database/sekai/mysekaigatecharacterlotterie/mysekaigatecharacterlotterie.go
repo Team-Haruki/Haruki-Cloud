@@ -11,8 +11,6 @@ const (
 	Label = "mysekaigatecharacterlotterie"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiGateID holds the string denoting the mysekai_gate_id field in the database.
@@ -21,6 +19,8 @@ const (
 	FieldGameCharacterUnitID = "game_character_unit_id"
 	// FieldVisitableMysekaiGateLevel holds the string denoting the visitable_mysekai_gate_level field in the database.
 	FieldVisitableMysekaiGateLevel = "visitable_mysekai_gate_level"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaigatecharacterlotterie in the database.
 	Table = "mysekaigatecharacterlotteries"
 )
@@ -28,11 +28,11 @@ const (
 // Columns holds all SQL columns for mysekaigatecharacterlotterie fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiGateID,
 	FieldGameCharacterUnitID,
 	FieldVisitableMysekaiGateLevel,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -53,11 +53,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -76,4 +71,9 @@ func ByGameCharacterUnitID(opts ...sql.OrderTermOption) OrderOption {
 // ByVisitableMysekaiGateLevel orders the results by the visitable_mysekai_gate_level field.
 func ByVisitableMysekaiGateLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVisitableMysekaiGateLevel, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

@@ -17,14 +17,12 @@ type Characterrank struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int64 `json:"character_id,omitempty"`
+	CharacterID int `json:"character_id,omitempty"`
 	// CharacterRank holds the value of the "character_rank" field.
-	CharacterRank int64 `json:"character_rank,omitempty"`
+	CharacterRank int `json:"character_rank,omitempty"`
 	// Power1BonusRate holds the value of the "power1_bonus_rate" field.
 	Power1BonusRate float64 `json:"power1_bonus_rate,omitempty"`
 	// Power2BonusRate holds the value of the "power2_bonus_rate" field.
@@ -32,10 +30,12 @@ type Characterrank struct {
 	// Power3BonusRate holds the value of the "power3_bonus_rate" field.
 	Power3BonusRate float64 `json:"power3_bonus_rate,omitempty"`
 	// RewardResourceBoxIds holds the value of the "reward_resource_box_ids" field.
-	RewardResourceBoxIds []interface{} `json:"reward_resource_box_ids,omitempty"`
+	RewardResourceBoxIds json.RawMessage `json:"reward_resource_box_ids,omitempty"`
 	// CharacterRankAchieveResources holds the value of the "character_rank_achieve_resources" field.
-	CharacterRankAchieveResources []interface{} `json:"character_rank_achieve_resources,omitempty"`
-	selectValues                  sql.SelectValues
+	CharacterRankAchieveResources json.RawMessage `json:"character_rank_achieve_resources,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -72,29 +72,23 @@ func (_m *Characterrank) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case characterrank.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case characterrank.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case characterrank.FieldCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = value.Int64
+				_m.CharacterID = int(value.Int64)
 			}
 		case characterrank.FieldCharacterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_rank", values[i])
 			} else if value.Valid {
-				_m.CharacterRank = value.Int64
+				_m.CharacterRank = int(value.Int64)
 			}
 		case characterrank.FieldPower1BonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -129,6 +123,12 @@ func (_m *Characterrank) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.CharacterRankAchieveResources); err != nil {
 					return fmt.Errorf("unmarshal field character_rank_achieve_resources: %w", err)
 				}
+			}
+		case characterrank.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -166,9 +166,6 @@ func (_m *Characterrank) String() string {
 	var builder strings.Builder
 	builder.WriteString("Characterrank(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -192,6 +189,9 @@ func (_m *Characterrank) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("character_rank_achieve_resources=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterRankAchieveResources))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

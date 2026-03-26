@@ -262,12 +262,12 @@ func (_q *MysekaigatecharacterlotterieQuery) Clone() *Mysekaigatecharacterlotter
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaigatecharacterlotterie.Query().
-//		GroupBy(mysekaigatecharacterlotterie.FieldServerRegion).
+//		GroupBy(mysekaigatecharacterlotterie.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaigatecharacterlotterieQuery) GroupBy(field string, fields ...string) *MysekaigatecharacterlotterieGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaigatecharacterlotterieQuery) GroupBy(field string, fields ...str
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaigatecharacterlotterie.Query().
-//		Select(mysekaigatecharacterlotterie.FieldServerRegion).
+//		Select(mysekaigatecharacterlotterie.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaigatecharacterlotterieQuery) Select(fields ...string) *MysekaigatecharacterlotterieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

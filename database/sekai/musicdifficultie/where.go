@@ -53,39 +53,284 @@ func IDLTE(id int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldEQ(FieldGameID, v))
+}
+
+// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
+func MusicID(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldEQ(FieldMusicID, v))
+}
+
+// PlayLevel applies equality check predicate on the "play_level" field. It's identical to PlayLevelEQ.
+func PlayLevel(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldEQ(FieldPlayLevel, v))
+}
+
+// TotalNoteCount applies equality check predicate on the "total_note_count" field. It's identical to TotalNoteCountEQ.
+func TotalNoteCount(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldEQ(FieldTotalNoteCount, v))
+}
+
+// ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
+func ReleaseConditionID(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldEQ(FieldReleaseConditionID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Musicdifficultie {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldGameID, v))
 }
 
-// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
-func MusicID(v int64) predicate.Musicdifficultie {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLTE(FieldGameID, v))
+}
+
+// MusicIDEQ applies the EQ predicate on the "music_id" field.
+func MusicIDEQ(v int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldMusicID, v))
 }
 
-// MusicDifficulty applies equality check predicate on the "music_difficulty" field. It's identical to MusicDifficultyEQ.
-func MusicDifficulty(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldMusicDifficulty, v))
+// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
+func MusicIDNEQ(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNEQ(FieldMusicID, v))
 }
 
-// PlayLevel applies equality check predicate on the "play_level" field. It's identical to PlayLevelEQ.
-func PlayLevel(v int64) predicate.Musicdifficultie {
+// MusicIDIn applies the In predicate on the "music_id" field.
+func MusicIDIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIn(FieldMusicID, vs...))
+}
+
+// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
+func MusicIDNotIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotIn(FieldMusicID, vs...))
+}
+
+// MusicIDGT applies the GT predicate on the "music_id" field.
+func MusicIDGT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGT(FieldMusicID, v))
+}
+
+// MusicIDGTE applies the GTE predicate on the "music_id" field.
+func MusicIDGTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGTE(FieldMusicID, v))
+}
+
+// MusicIDLT applies the LT predicate on the "music_id" field.
+func MusicIDLT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLT(FieldMusicID, v))
+}
+
+// MusicIDLTE applies the LTE predicate on the "music_id" field.
+func MusicIDLTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLTE(FieldMusicID, v))
+}
+
+// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
+func MusicIDIsNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIsNull(FieldMusicID))
+}
+
+// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
+func MusicIDNotNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotNull(FieldMusicID))
+}
+
+// MusicDifficultyIsNil applies the IsNil predicate on the "music_difficulty" field.
+func MusicDifficultyIsNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIsNull(FieldMusicDifficulty))
+}
+
+// MusicDifficultyNotNil applies the NotNil predicate on the "music_difficulty" field.
+func MusicDifficultyNotNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotNull(FieldMusicDifficulty))
+}
+
+// PlayLevelEQ applies the EQ predicate on the "play_level" field.
+func PlayLevelEQ(v int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldPlayLevel, v))
 }
 
-// TotalNoteCount applies equality check predicate on the "total_note_count" field. It's identical to TotalNoteCountEQ.
-func TotalNoteCount(v int64) predicate.Musicdifficultie {
+// PlayLevelNEQ applies the NEQ predicate on the "play_level" field.
+func PlayLevelNEQ(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNEQ(FieldPlayLevel, v))
+}
+
+// PlayLevelIn applies the In predicate on the "play_level" field.
+func PlayLevelIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIn(FieldPlayLevel, vs...))
+}
+
+// PlayLevelNotIn applies the NotIn predicate on the "play_level" field.
+func PlayLevelNotIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotIn(FieldPlayLevel, vs...))
+}
+
+// PlayLevelGT applies the GT predicate on the "play_level" field.
+func PlayLevelGT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGT(FieldPlayLevel, v))
+}
+
+// PlayLevelGTE applies the GTE predicate on the "play_level" field.
+func PlayLevelGTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGTE(FieldPlayLevel, v))
+}
+
+// PlayLevelLT applies the LT predicate on the "play_level" field.
+func PlayLevelLT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLT(FieldPlayLevel, v))
+}
+
+// PlayLevelLTE applies the LTE predicate on the "play_level" field.
+func PlayLevelLTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLTE(FieldPlayLevel, v))
+}
+
+// PlayLevelIsNil applies the IsNil predicate on the "play_level" field.
+func PlayLevelIsNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIsNull(FieldPlayLevel))
+}
+
+// PlayLevelNotNil applies the NotNil predicate on the "play_level" field.
+func PlayLevelNotNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotNull(FieldPlayLevel))
+}
+
+// TotalNoteCountEQ applies the EQ predicate on the "total_note_count" field.
+func TotalNoteCountEQ(v int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldTotalNoteCount, v))
 }
 
-// ReleaseConditionID applies equality check predicate on the "release_condition_id" field. It's identical to ReleaseConditionIDEQ.
-func ReleaseConditionID(v int64) predicate.Musicdifficultie {
+// TotalNoteCountNEQ applies the NEQ predicate on the "total_note_count" field.
+func TotalNoteCountNEQ(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNEQ(FieldTotalNoteCount, v))
+}
+
+// TotalNoteCountIn applies the In predicate on the "total_note_count" field.
+func TotalNoteCountIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIn(FieldTotalNoteCount, vs...))
+}
+
+// TotalNoteCountNotIn applies the NotIn predicate on the "total_note_count" field.
+func TotalNoteCountNotIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotIn(FieldTotalNoteCount, vs...))
+}
+
+// TotalNoteCountGT applies the GT predicate on the "total_note_count" field.
+func TotalNoteCountGT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGT(FieldTotalNoteCount, v))
+}
+
+// TotalNoteCountGTE applies the GTE predicate on the "total_note_count" field.
+func TotalNoteCountGTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGTE(FieldTotalNoteCount, v))
+}
+
+// TotalNoteCountLT applies the LT predicate on the "total_note_count" field.
+func TotalNoteCountLT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLT(FieldTotalNoteCount, v))
+}
+
+// TotalNoteCountLTE applies the LTE predicate on the "total_note_count" field.
+func TotalNoteCountLTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLTE(FieldTotalNoteCount, v))
+}
+
+// TotalNoteCountIsNil applies the IsNil predicate on the "total_note_count" field.
+func TotalNoteCountIsNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIsNull(FieldTotalNoteCount))
+}
+
+// TotalNoteCountNotNil applies the NotNil predicate on the "total_note_count" field.
+func TotalNoteCountNotNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotNull(FieldTotalNoteCount))
+}
+
+// ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
+func ReleaseConditionIDEQ(v int) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldEQ(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
+func ReleaseConditionIDNEQ(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNEQ(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
+func ReleaseConditionIDIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIn(FieldReleaseConditionID, vs...))
+}
+
+// ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
+func ReleaseConditionIDNotIn(vs ...int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotIn(FieldReleaseConditionID, vs...))
+}
+
+// ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
+func ReleaseConditionIDGT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGT(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
+func ReleaseConditionIDGTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldGTE(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
+func ReleaseConditionIDLT(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLT(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
+func ReleaseConditionIDLTE(v int) predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldLTE(FieldReleaseConditionID, v))
+}
+
+// ReleaseConditionIDIsNil applies the IsNil predicate on the "release_condition_id" field.
+func ReleaseConditionIDIsNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldIsNull(FieldReleaseConditionID))
+}
+
+// ReleaseConditionIDNotNil applies the NotNil predicate on the "release_condition_id" field.
+func ReleaseConditionIDNotNil() predicate.Musicdifficultie {
+	return predicate.Musicdifficultie(sql.FieldNotNull(FieldReleaseConditionID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,331 +396,6 @@ func ServerRegionEqualFold(v string) predicate.Musicdifficultie {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Musicdifficultie {
 	return predicate.Musicdifficultie(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldGameID))
-}
-
-// MusicIDEQ applies the EQ predicate on the "music_id" field.
-func MusicIDEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldMusicID, v))
-}
-
-// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
-func MusicIDNEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldMusicID, v))
-}
-
-// MusicIDIn applies the In predicate on the "music_id" field.
-func MusicIDIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldMusicID, vs...))
-}
-
-// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
-func MusicIDNotIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldMusicID, vs...))
-}
-
-// MusicIDGT applies the GT predicate on the "music_id" field.
-func MusicIDGT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldMusicID, v))
-}
-
-// MusicIDGTE applies the GTE predicate on the "music_id" field.
-func MusicIDGTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldMusicID, v))
-}
-
-// MusicIDLT applies the LT predicate on the "music_id" field.
-func MusicIDLT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldMusicID, v))
-}
-
-// MusicIDLTE applies the LTE predicate on the "music_id" field.
-func MusicIDLTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldMusicID, v))
-}
-
-// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
-func MusicIDIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldMusicID))
-}
-
-// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
-func MusicIDNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldMusicID))
-}
-
-// MusicDifficultyEQ applies the EQ predicate on the "music_difficulty" field.
-func MusicDifficultyEQ(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyNEQ applies the NEQ predicate on the "music_difficulty" field.
-func MusicDifficultyNEQ(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyIn applies the In predicate on the "music_difficulty" field.
-func MusicDifficultyIn(vs ...string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldMusicDifficulty, vs...))
-}
-
-// MusicDifficultyNotIn applies the NotIn predicate on the "music_difficulty" field.
-func MusicDifficultyNotIn(vs ...string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldMusicDifficulty, vs...))
-}
-
-// MusicDifficultyGT applies the GT predicate on the "music_difficulty" field.
-func MusicDifficultyGT(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyGTE applies the GTE predicate on the "music_difficulty" field.
-func MusicDifficultyGTE(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyLT applies the LT predicate on the "music_difficulty" field.
-func MusicDifficultyLT(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyLTE applies the LTE predicate on the "music_difficulty" field.
-func MusicDifficultyLTE(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyContains applies the Contains predicate on the "music_difficulty" field.
-func MusicDifficultyContains(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldContains(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyHasPrefix applies the HasPrefix predicate on the "music_difficulty" field.
-func MusicDifficultyHasPrefix(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldHasPrefix(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyHasSuffix applies the HasSuffix predicate on the "music_difficulty" field.
-func MusicDifficultyHasSuffix(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldHasSuffix(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyIsNil applies the IsNil predicate on the "music_difficulty" field.
-func MusicDifficultyIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldMusicDifficulty))
-}
-
-// MusicDifficultyNotNil applies the NotNil predicate on the "music_difficulty" field.
-func MusicDifficultyNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldMusicDifficulty))
-}
-
-// MusicDifficultyEqualFold applies the EqualFold predicate on the "music_difficulty" field.
-func MusicDifficultyEqualFold(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEqualFold(FieldMusicDifficulty, v))
-}
-
-// MusicDifficultyContainsFold applies the ContainsFold predicate on the "music_difficulty" field.
-func MusicDifficultyContainsFold(v string) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldContainsFold(FieldMusicDifficulty, v))
-}
-
-// PlayLevelEQ applies the EQ predicate on the "play_level" field.
-func PlayLevelEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldPlayLevel, v))
-}
-
-// PlayLevelNEQ applies the NEQ predicate on the "play_level" field.
-func PlayLevelNEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldPlayLevel, v))
-}
-
-// PlayLevelIn applies the In predicate on the "play_level" field.
-func PlayLevelIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldPlayLevel, vs...))
-}
-
-// PlayLevelNotIn applies the NotIn predicate on the "play_level" field.
-func PlayLevelNotIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldPlayLevel, vs...))
-}
-
-// PlayLevelGT applies the GT predicate on the "play_level" field.
-func PlayLevelGT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldPlayLevel, v))
-}
-
-// PlayLevelGTE applies the GTE predicate on the "play_level" field.
-func PlayLevelGTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldPlayLevel, v))
-}
-
-// PlayLevelLT applies the LT predicate on the "play_level" field.
-func PlayLevelLT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldPlayLevel, v))
-}
-
-// PlayLevelLTE applies the LTE predicate on the "play_level" field.
-func PlayLevelLTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldPlayLevel, v))
-}
-
-// PlayLevelIsNil applies the IsNil predicate on the "play_level" field.
-func PlayLevelIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldPlayLevel))
-}
-
-// PlayLevelNotNil applies the NotNil predicate on the "play_level" field.
-func PlayLevelNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldPlayLevel))
-}
-
-// TotalNoteCountEQ applies the EQ predicate on the "total_note_count" field.
-func TotalNoteCountEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountNEQ applies the NEQ predicate on the "total_note_count" field.
-func TotalNoteCountNEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountIn applies the In predicate on the "total_note_count" field.
-func TotalNoteCountIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldTotalNoteCount, vs...))
-}
-
-// TotalNoteCountNotIn applies the NotIn predicate on the "total_note_count" field.
-func TotalNoteCountNotIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldTotalNoteCount, vs...))
-}
-
-// TotalNoteCountGT applies the GT predicate on the "total_note_count" field.
-func TotalNoteCountGT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountGTE applies the GTE predicate on the "total_note_count" field.
-func TotalNoteCountGTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountLT applies the LT predicate on the "total_note_count" field.
-func TotalNoteCountLT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountLTE applies the LTE predicate on the "total_note_count" field.
-func TotalNoteCountLTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldTotalNoteCount, v))
-}
-
-// TotalNoteCountIsNil applies the IsNil predicate on the "total_note_count" field.
-func TotalNoteCountIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldTotalNoteCount))
-}
-
-// TotalNoteCountNotNil applies the NotNil predicate on the "total_note_count" field.
-func TotalNoteCountNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldTotalNoteCount))
-}
-
-// ReleaseConditionIDEQ applies the EQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldEQ(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDNEQ applies the NEQ predicate on the "release_condition_id" field.
-func ReleaseConditionIDNEQ(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNEQ(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDIn applies the In predicate on the "release_condition_id" field.
-func ReleaseConditionIDIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIn(FieldReleaseConditionID, vs...))
-}
-
-// ReleaseConditionIDNotIn applies the NotIn predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotIn(vs ...int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotIn(FieldReleaseConditionID, vs...))
-}
-
-// ReleaseConditionIDGT applies the GT predicate on the "release_condition_id" field.
-func ReleaseConditionIDGT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGT(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDGTE applies the GTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDGTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldGTE(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDLT applies the LT predicate on the "release_condition_id" field.
-func ReleaseConditionIDLT(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLT(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDLTE applies the LTE predicate on the "release_condition_id" field.
-func ReleaseConditionIDLTE(v int64) predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldLTE(FieldReleaseConditionID, v))
-}
-
-// ReleaseConditionIDIsNil applies the IsNil predicate on the "release_condition_id" field.
-func ReleaseConditionIDIsNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldIsNull(FieldReleaseConditionID))
-}
-
-// ReleaseConditionIDNotNil applies the NotNil predicate on the "release_condition_id" field.
-func ReleaseConditionIDNotNil() predicate.Musicdifficultie {
-	return predicate.Musicdifficultie(sql.FieldNotNull(FieldReleaseConditionID))
 }
 
 // And groups predicates with the AND operator between them.

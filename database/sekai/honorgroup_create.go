@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/honorgroup"
@@ -19,23 +20,9 @@ type HonorgroupCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *HonorgroupCreate) SetServerRegion(v string) *HonorgroupCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *HonorgroupCreate) SetGameID(v int64) *HonorgroupCreate {
+func (_c *HonorgroupCreate) SetGameID(v int) *HonorgroupCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *HonorgroupCreate) SetNillableGameID(v *int64) *HonorgroupCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -68,16 +55,8 @@ func (_c *HonorgroupCreate) SetNillablePronunciation(v *string) *HonorgroupCreat
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_c *HonorgroupCreate) SetHonorType(v string) *HonorgroupCreate {
+func (_c *HonorgroupCreate) SetHonorType(v json.RawMessage) *HonorgroupCreate {
 	_c.mutation.SetHonorType(v)
-	return _c
-}
-
-// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
-func (_c *HonorgroupCreate) SetNillableHonorType(v *string) *HonorgroupCreate {
-	if v != nil {
-		_c.SetHonorType(*v)
-	}
 	return _c
 }
 
@@ -106,6 +85,12 @@ func (_c *HonorgroupCreate) SetNillableFrameName(v *string) *HonorgroupCreate {
 	if v != nil {
 		_c.SetFrameName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *HonorgroupCreate) SetServerRegion(v string) *HonorgroupCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -143,6 +128,9 @@ func (_c *HonorgroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *HonorgroupCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Honorgroup.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Honorgroup.server_region"`)}
 	}
@@ -172,12 +160,8 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 		_node = &Honorgroup{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(honorgroup.Table, sqlgraph.NewFieldSpec(honorgroup.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -189,7 +173,7 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 		_node.Pronunciation = value
 	}
 	if value, ok := _c.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
 		_node.HonorType = value
 	}
 	if value, ok := _c.mutation.BackgroundAssetbundleName(); ok {
@@ -199,6 +183,10 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.FrameName(); ok {
 		_spec.SetField(honorgroup.FieldFrameName, field.TypeString, value)
 		_node.FrameName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

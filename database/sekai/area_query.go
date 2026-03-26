@@ -262,12 +262,12 @@ func (_q *AreaQuery) Clone() *AreaQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Area.Query().
-//		GroupBy(area.FieldServerRegion).
+//		GroupBy(area.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *AreaQuery) GroupBy(field string, fields ...string) *AreaGroupBy {
@@ -285,11 +285,11 @@ func (_q *AreaQuery) GroupBy(field string, fields ...string) *AreaGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Area.Query().
-//		Select(area.FieldServerRegion).
+//		Select(area.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *AreaQuery) Select(fields ...string) *AreaSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

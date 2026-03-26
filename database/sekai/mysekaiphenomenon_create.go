@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
@@ -19,28 +20,14 @@ type MysekaiphenomenonCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaiphenomenonCreate) SetServerRegion(v string) *MysekaiphenomenonCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiphenomenonCreate) SetGameID(v int64) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetGameID(v int) *MysekaiphenomenonCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaiphenomenonCreate) SetNillableGameID(v *int64) *MysekaiphenomenonCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBrightnessType(v map[string]interface{}) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaBrightnessType(v)
 	return _c
 }
@@ -88,19 +75,19 @@ func (_c *MysekaiphenomenonCreate) SetNillableDescription(v *string) *Mysekaiphe
 }
 
 // SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaTimePeriodType(v map[string]interface{}) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaTimePeriodType(v)
 	return _c
 }
 
 // SetMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBackgroundColorID(v int64) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBackgroundColorID(v int) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaBackgroundColorID(v)
 	return _c
 }
 
 // SetNillableMysekaiPhenomenaBackgroundColorID sets the "mysekai_phenomena_background_color_id" field if the given value is not nil.
-func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int64) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaBackgroundColorID(v *int) *MysekaiphenomenonCreate {
 	if v != nil {
 		_c.SetMysekaiPhenomenaBackgroundColorID(*v)
 	}
@@ -149,6 +136,12 @@ func (_c *MysekaiphenomenonCreate) SetNillableIconAssetbundleName(v *string) *My
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaiphenomenonCreate) SetServerRegion(v string) *MysekaiphenomenonCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the MysekaiphenomenonMutation object of the builder.
 func (_c *MysekaiphenomenonCreate) Mutation() *MysekaiphenomenonMutation {
 	return _c.mutation
@@ -183,6 +176,9 @@ func (_c *MysekaiphenomenonCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiphenomenonCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiphenomenon.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiphenomenon.server_region"`)}
 	}
@@ -212,12 +208,8 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_node = &Mysekaiphenomenon{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaiphenomenon.Table, sqlgraph.NewFieldSpec(mysekaiphenomenon.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiphenomenon.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBrightnessType(); ok {
@@ -241,7 +233,7 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_node.MysekaiPhenomenaTimePeriodType = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt, value)
 		_node.MysekaiPhenomenaBackgroundColorID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -255,6 +247,10 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 	if value, ok := _c.mutation.IconAssetbundleName(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldIconAssetbundleName, field.TypeString, value)
 		_node.IconAssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiphenomenon.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

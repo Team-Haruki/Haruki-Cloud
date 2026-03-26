@@ -262,12 +262,12 @@ func (_q *Costume3DQuery) Clone() *Costume3DQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Costume3D.Query().
-//		GroupBy(costume3d.FieldServerRegion).
+//		GroupBy(costume3d.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *Costume3DQuery) GroupBy(field string, fields ...string) *Costume3DGroupBy {
@@ -285,11 +285,11 @@ func (_q *Costume3DQuery) GroupBy(field string, fields ...string) *Costume3DGrou
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Costume3D.Query().
-//		Select(costume3d.FieldServerRegion).
+//		Select(costume3d.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *Costume3DQuery) Select(fields ...string) *Costume3DSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

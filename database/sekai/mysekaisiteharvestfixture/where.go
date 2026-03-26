@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaisiteharvestfixture {
+func GameID(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -69,12 +64,12 @@ func MysekaiSiteHarvestFixtureType(v string) predicate.Mysekaisiteharvestfixture
 }
 
 // Hp applies equality check predicate on the "hp" field. It's identical to HpEQ.
-func Hp(v int64) predicate.Mysekaisiteharvestfixture {
+func Hp(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldHp, v))
 }
 
 // LastAttackStamina applies equality check predicate on the "last_attack_stamina" field. It's identical to LastAttackStaminaEQ.
-func LastAttackStamina(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStamina(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldLastAttackStamina, v))
 }
 
@@ -83,119 +78,49 @@ func AssetbundleName(v string) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Mysekaisiteharvestfixture {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDNEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func GameIDIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func GameIDNotIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDGT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDGTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDLT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaisiteharvestfixture {
+func GameIDLTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaisiteharvestfixture {
-	return predicate.Mysekaisiteharvestfixture(sql.FieldNotNull(FieldGameID))
 }
 
 // MysekaiSiteHarvestFixtureTypeEQ applies the EQ predicate on the "mysekai_site_harvest_fixture_type" field.
@@ -274,42 +199,42 @@ func MysekaiSiteHarvestFixtureTypeContainsFold(v string) predicate.Mysekaisiteha
 }
 
 // HpEQ applies the EQ predicate on the "hp" field.
-func HpEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func HpEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldHp, v))
 }
 
 // HpNEQ applies the NEQ predicate on the "hp" field.
-func HpNEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func HpNEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldHp, v))
 }
 
 // HpIn applies the In predicate on the "hp" field.
-func HpIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func HpIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldHp, vs...))
 }
 
 // HpNotIn applies the NotIn predicate on the "hp" field.
-func HpNotIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func HpNotIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldHp, vs...))
 }
 
 // HpGT applies the GT predicate on the "hp" field.
-func HpGT(v int64) predicate.Mysekaisiteharvestfixture {
+func HpGT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldHp, v))
 }
 
 // HpGTE applies the GTE predicate on the "hp" field.
-func HpGTE(v int64) predicate.Mysekaisiteharvestfixture {
+func HpGTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldHp, v))
 }
 
 // HpLT applies the LT predicate on the "hp" field.
-func HpLT(v int64) predicate.Mysekaisiteharvestfixture {
+func HpLT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldHp, v))
 }
 
 // HpLTE applies the LTE predicate on the "hp" field.
-func HpLTE(v int64) predicate.Mysekaisiteharvestfixture {
+func HpLTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldHp, v))
 }
 
@@ -324,42 +249,42 @@ func HpNotNil() predicate.Mysekaisiteharvestfixture {
 }
 
 // LastAttackStaminaEQ applies the EQ predicate on the "last_attack_stamina" field.
-func LastAttackStaminaEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldLastAttackStamina, v))
 }
 
 // LastAttackStaminaNEQ applies the NEQ predicate on the "last_attack_stamina" field.
-func LastAttackStaminaNEQ(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaNEQ(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldLastAttackStamina, v))
 }
 
 // LastAttackStaminaIn applies the In predicate on the "last_attack_stamina" field.
-func LastAttackStaminaIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldLastAttackStamina, vs...))
 }
 
 // LastAttackStaminaNotIn applies the NotIn predicate on the "last_attack_stamina" field.
-func LastAttackStaminaNotIn(vs ...int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaNotIn(vs ...int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldLastAttackStamina, vs...))
 }
 
 // LastAttackStaminaGT applies the GT predicate on the "last_attack_stamina" field.
-func LastAttackStaminaGT(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaGT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldLastAttackStamina, v))
 }
 
 // LastAttackStaminaGTE applies the GTE predicate on the "last_attack_stamina" field.
-func LastAttackStaminaGTE(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaGTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldLastAttackStamina, v))
 }
 
 // LastAttackStaminaLT applies the LT predicate on the "last_attack_stamina" field.
-func LastAttackStaminaLT(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaLT(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldLastAttackStamina, v))
 }
 
 // LastAttackStaminaLTE applies the LTE predicate on the "last_attack_stamina" field.
-func LastAttackStaminaLTE(v int64) predicate.Mysekaisiteharvestfixture {
+func LastAttackStaminaLTE(v int) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldLastAttackStamina, v))
 }
 
@@ -456,6 +381,71 @@ func AssetbundleNameEqualFold(v string) predicate.Mysekaisiteharvestfixture {
 // AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
 func AssetbundleNameContainsFold(v string) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldContainsFold(FieldAssetbundleName, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

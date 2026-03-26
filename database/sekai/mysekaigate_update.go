@@ -27,29 +27,15 @@ func (_u *MysekaigateUpdate) Where(ps ...predicate.Mysekaigate) *MysekaigateUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigateUpdate) SetServerRegion(v string) *MysekaigateUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigateUpdate) SetNillableServerRegion(v *string) *MysekaigateUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigateUpdate) SetGameID(v int64) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) SetGameID(v int) *MysekaigateUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigateUpdate) SetNillableGameID(v *int64) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) SetNillableGameID(v *int) *MysekaigateUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +43,8 @@ func (_u *MysekaigateUpdate) SetNillableGameID(v *int64) *MysekaigateUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigateUpdate) AddGameID(v int64) *MysekaigateUpdate {
+func (_u *MysekaigateUpdate) AddGameID(v int) *MysekaigateUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigateUpdate) ClearGameID() *MysekaigateUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -128,6 +108,20 @@ func (_u *MysekaigateUpdate) ClearAssetbundleName() *MysekaigateUpdate {
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigateUpdate) SetServerRegion(v string) *MysekaigateUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigateUpdate) SetNillableServerRegion(v *string) *MysekaigateUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the MysekaigateMutation object of the builder.
 func (_u *MysekaigateUpdate) Mutation() *MysekaigateMutation {
 	return _u.mutation
@@ -169,17 +163,11 @@ func (_u *MysekaigateUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigate.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaigate.FieldUnit, field.TypeString, value)
@@ -198,6 +186,9 @@ func (_u *MysekaigateUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(mysekaigate.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -219,29 +210,15 @@ type MysekaigateUpdateOne struct {
 	mutation *MysekaigateMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaigateUpdateOne) SetServerRegion(v string) *MysekaigateUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaigateUpdateOne) SetNillableServerRegion(v *string) *MysekaigateUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaigateUpdateOne) SetGameID(v int64) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) SetGameID(v int) *MysekaigateUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int64) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int) *MysekaigateUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -249,14 +226,8 @@ func (_u *MysekaigateUpdateOne) SetNillableGameID(v *int64) *MysekaigateUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaigateUpdateOne) AddGameID(v int64) *MysekaigateUpdateOne {
+func (_u *MysekaigateUpdateOne) AddGameID(v int) *MysekaigateUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaigateUpdateOne) ClearGameID() *MysekaigateUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -317,6 +288,20 @@ func (_u *MysekaigateUpdateOne) SetNillableAssetbundleName(v *string) *Mysekaiga
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *MysekaigateUpdateOne) ClearAssetbundleName() *MysekaigateUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaigateUpdateOne) SetServerRegion(v string) *MysekaigateUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaigateUpdateOne) SetNillableServerRegion(v *string) *MysekaigateUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -391,17 +376,11 @@ func (_u *MysekaigateUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaigate
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaigate.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaigate.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaigate.FieldUnit, field.TypeString, value)
@@ -420,6 +399,9 @@ func (_u *MysekaigateUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaigate
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(mysekaigate.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaigate{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -53,39 +53,329 @@ func IDLTE(id int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaigatelevel {
+func GameID(v int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldGameID, v))
 }
 
 // MysekaiGateID applies equality check predicate on the "mysekai_gate_id" field. It's identical to MysekaiGateIDEQ.
-func MysekaiGateID(v int64) predicate.Mysekaigatelevel {
+func MysekaiGateID(v int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateID, v))
 }
 
 // Level applies equality check predicate on the "level" field. It's identical to LevelEQ.
-func Level(v int64) predicate.Mysekaigatelevel {
+func Level(v int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldLevel, v))
 }
 
 // MysekaiGateMaterialGroupID applies equality check predicate on the "mysekai_gate_material_group_id" field. It's identical to MysekaiGateMaterialGroupIDEQ.
-func MysekaiGateMaterialGroupID(v int64) predicate.Mysekaigatelevel {
+func MysekaiGateMaterialGroupID(v int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateMaterialGroupID, v))
 }
 
 // MysekaiGateCharacterVisitCountRateID applies equality check predicate on the "mysekai_gate_character_visit_count_rate_id" field. It's identical to MysekaiGateCharacterVisitCountRateIDEQ.
-func MysekaiGateCharacterVisitCountRateID(v int64) predicate.Mysekaigatelevel {
+func MysekaiGateCharacterVisitCountRateID(v int) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateCharacterVisitCountRateID, v))
 }
 
 // PowerBonusRate applies equality check predicate on the "power_bonus_rate" field. It's identical to PowerBonusRateEQ.
 func PowerBonusRate(v float64) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldPowerBonusRate, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldGameID, v))
+}
+
+// MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDNEQ applies the NEQ predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDIn applies the In predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateID, vs...))
+}
+
+// MysekaiGateIDNotIn applies the NotIn predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNotIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateID, vs...))
+}
+
+// MysekaiGateIDGT applies the GT predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDGT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDGTE applies the GTE predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDGTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDLT applies the LT predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDLT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDLTE applies the LTE predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDLTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateID, v))
+}
+
+// MysekaiGateIDIsNil applies the IsNil predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateID))
+}
+
+// MysekaiGateIDNotNil applies the NotNil predicate on the "mysekai_gate_id" field.
+func MysekaiGateIDNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateID))
+}
+
+// LevelEQ applies the EQ predicate on the "level" field.
+func LevelEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldLevel, v))
+}
+
+// LevelNEQ applies the NEQ predicate on the "level" field.
+func LevelNEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldLevel, v))
+}
+
+// LevelIn applies the In predicate on the "level" field.
+func LevelIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldLevel, vs...))
+}
+
+// LevelNotIn applies the NotIn predicate on the "level" field.
+func LevelNotIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldLevel, vs...))
+}
+
+// LevelGT applies the GT predicate on the "level" field.
+func LevelGT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldLevel, v))
+}
+
+// LevelGTE applies the GTE predicate on the "level" field.
+func LevelGTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldLevel, v))
+}
+
+// LevelLT applies the LT predicate on the "level" field.
+func LevelLT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldLevel, v))
+}
+
+// LevelLTE applies the LTE predicate on the "level" field.
+func LevelLTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldLevel, v))
+}
+
+// LevelIsNil applies the IsNil predicate on the "level" field.
+func LevelIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldLevel))
+}
+
+// LevelNotNil applies the NotNil predicate on the "level" field.
+func LevelNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldLevel))
+}
+
+// MysekaiGateMaterialGroupIDEQ applies the EQ predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDNEQ applies the NEQ predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDNEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDIn applies the In predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateMaterialGroupID, vs...))
+}
+
+// MysekaiGateMaterialGroupIDNotIn applies the NotIn predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDNotIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateMaterialGroupID, vs...))
+}
+
+// MysekaiGateMaterialGroupIDGT applies the GT predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDGT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDGTE applies the GTE predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDGTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDLT applies the LT predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDLT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDLTE applies the LTE predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDLTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateMaterialGroupID, v))
+}
+
+// MysekaiGateMaterialGroupIDIsNil applies the IsNil predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateMaterialGroupID))
+}
+
+// MysekaiGateMaterialGroupIDNotNil applies the NotNil predicate on the "mysekai_gate_material_group_id" field.
+func MysekaiGateMaterialGroupIDNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateMaterialGroupID))
+}
+
+// MysekaiGateCharacterVisitCountRateIDEQ applies the EQ predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDNEQ applies the NEQ predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDNEQ(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDIn applies the In predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateCharacterVisitCountRateID, vs...))
+}
+
+// MysekaiGateCharacterVisitCountRateIDNotIn applies the NotIn predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDNotIn(vs ...int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateCharacterVisitCountRateID, vs...))
+}
+
+// MysekaiGateCharacterVisitCountRateIDGT applies the GT predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDGT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDGTE applies the GTE predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDGTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDLT applies the LT predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDLT(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDLTE applies the LTE predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDLTE(v int) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateCharacterVisitCountRateID, v))
+}
+
+// MysekaiGateCharacterVisitCountRateIDIsNil applies the IsNil predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateCharacterVisitCountRateID))
+}
+
+// MysekaiGateCharacterVisitCountRateIDNotNil applies the NotNil predicate on the "mysekai_gate_character_visit_count_rate_id" field.
+func MysekaiGateCharacterVisitCountRateIDNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateCharacterVisitCountRateID))
+}
+
+// PowerBonusRateEQ applies the EQ predicate on the "power_bonus_rate" field.
+func PowerBonusRateEQ(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateNEQ applies the NEQ predicate on the "power_bonus_rate" field.
+func PowerBonusRateNEQ(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateIn applies the In predicate on the "power_bonus_rate" field.
+func PowerBonusRateIn(vs ...float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIn(FieldPowerBonusRate, vs...))
+}
+
+// PowerBonusRateNotIn applies the NotIn predicate on the "power_bonus_rate" field.
+func PowerBonusRateNotIn(vs ...float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldPowerBonusRate, vs...))
+}
+
+// PowerBonusRateGT applies the GT predicate on the "power_bonus_rate" field.
+func PowerBonusRateGT(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGT(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateGTE applies the GTE predicate on the "power_bonus_rate" field.
+func PowerBonusRateGTE(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateLT applies the LT predicate on the "power_bonus_rate" field.
+func PowerBonusRateLT(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLT(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateLTE applies the LTE predicate on the "power_bonus_rate" field.
+func PowerBonusRateLTE(v float64) predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldPowerBonusRate, v))
+}
+
+// PowerBonusRateIsNil applies the IsNil predicate on the "power_bonus_rate" field.
+func PowerBonusRateIsNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldPowerBonusRate))
+}
+
+// PowerBonusRateNotNil applies the NotNil predicate on the "power_bonus_rate" field.
+func PowerBonusRateNotNil() predicate.Mysekaigatelevel {
+	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldPowerBonusRate))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,306 +441,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaigatelevel {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaigatelevel {
 	return predicate.Mysekaigatelevel(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldGameID))
-}
-
-// MysekaiGateIDEQ applies the EQ predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDNEQ applies the NEQ predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDIn applies the In predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateID, vs...))
-}
-
-// MysekaiGateIDNotIn applies the NotIn predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNotIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateID, vs...))
-}
-
-// MysekaiGateIDGT applies the GT predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDGT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDGTE applies the GTE predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDGTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDLT applies the LT predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDLT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDLTE applies the LTE predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDLTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateID, v))
-}
-
-// MysekaiGateIDIsNil applies the IsNil predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateID))
-}
-
-// MysekaiGateIDNotNil applies the NotNil predicate on the "mysekai_gate_id" field.
-func MysekaiGateIDNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateID))
-}
-
-// LevelEQ applies the EQ predicate on the "level" field.
-func LevelEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldLevel, v))
-}
-
-// LevelNEQ applies the NEQ predicate on the "level" field.
-func LevelNEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldLevel, v))
-}
-
-// LevelIn applies the In predicate on the "level" field.
-func LevelIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldLevel, vs...))
-}
-
-// LevelNotIn applies the NotIn predicate on the "level" field.
-func LevelNotIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldLevel, vs...))
-}
-
-// LevelGT applies the GT predicate on the "level" field.
-func LevelGT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldLevel, v))
-}
-
-// LevelGTE applies the GTE predicate on the "level" field.
-func LevelGTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldLevel, v))
-}
-
-// LevelLT applies the LT predicate on the "level" field.
-func LevelLT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldLevel, v))
-}
-
-// LevelLTE applies the LTE predicate on the "level" field.
-func LevelLTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldLevel, v))
-}
-
-// LevelIsNil applies the IsNil predicate on the "level" field.
-func LevelIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldLevel))
-}
-
-// LevelNotNil applies the NotNil predicate on the "level" field.
-func LevelNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldLevel))
-}
-
-// MysekaiGateMaterialGroupIDEQ applies the EQ predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDNEQ applies the NEQ predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDNEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDIn applies the In predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateMaterialGroupID, vs...))
-}
-
-// MysekaiGateMaterialGroupIDNotIn applies the NotIn predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDNotIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateMaterialGroupID, vs...))
-}
-
-// MysekaiGateMaterialGroupIDGT applies the GT predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDGT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDGTE applies the GTE predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDGTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDLT applies the LT predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDLT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDLTE applies the LTE predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDLTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateMaterialGroupID, v))
-}
-
-// MysekaiGateMaterialGroupIDIsNil applies the IsNil predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateMaterialGroupID))
-}
-
-// MysekaiGateMaterialGroupIDNotNil applies the NotNil predicate on the "mysekai_gate_material_group_id" field.
-func MysekaiGateMaterialGroupIDNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateMaterialGroupID))
-}
-
-// MysekaiGateCharacterVisitCountRateIDEQ applies the EQ predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDNEQ applies the NEQ predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDNEQ(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDIn applies the In predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldMysekaiGateCharacterVisitCountRateID, vs...))
-}
-
-// MysekaiGateCharacterVisitCountRateIDNotIn applies the NotIn predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDNotIn(vs ...int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldMysekaiGateCharacterVisitCountRateID, vs...))
-}
-
-// MysekaiGateCharacterVisitCountRateIDGT applies the GT predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDGT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDGTE applies the GTE predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDGTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDLT applies the LT predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDLT(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDLTE applies the LTE predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDLTE(v int64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldMysekaiGateCharacterVisitCountRateID, v))
-}
-
-// MysekaiGateCharacterVisitCountRateIDIsNil applies the IsNil predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldMysekaiGateCharacterVisitCountRateID))
-}
-
-// MysekaiGateCharacterVisitCountRateIDNotNil applies the NotNil predicate on the "mysekai_gate_character_visit_count_rate_id" field.
-func MysekaiGateCharacterVisitCountRateIDNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldMysekaiGateCharacterVisitCountRateID))
-}
-
-// PowerBonusRateEQ applies the EQ predicate on the "power_bonus_rate" field.
-func PowerBonusRateEQ(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldEQ(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateNEQ applies the NEQ predicate on the "power_bonus_rate" field.
-func PowerBonusRateNEQ(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNEQ(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateIn applies the In predicate on the "power_bonus_rate" field.
-func PowerBonusRateIn(vs ...float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIn(FieldPowerBonusRate, vs...))
-}
-
-// PowerBonusRateNotIn applies the NotIn predicate on the "power_bonus_rate" field.
-func PowerBonusRateNotIn(vs ...float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotIn(FieldPowerBonusRate, vs...))
-}
-
-// PowerBonusRateGT applies the GT predicate on the "power_bonus_rate" field.
-func PowerBonusRateGT(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGT(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateGTE applies the GTE predicate on the "power_bonus_rate" field.
-func PowerBonusRateGTE(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldGTE(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateLT applies the LT predicate on the "power_bonus_rate" field.
-func PowerBonusRateLT(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLT(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateLTE applies the LTE predicate on the "power_bonus_rate" field.
-func PowerBonusRateLTE(v float64) predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldLTE(FieldPowerBonusRate, v))
-}
-
-// PowerBonusRateIsNil applies the IsNil predicate on the "power_bonus_rate" field.
-func PowerBonusRateIsNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldIsNull(FieldPowerBonusRate))
-}
-
-// PowerBonusRateNotNil applies the NotNil predicate on the "power_bonus_rate" field.
-func PowerBonusRateNotNil() predicate.Mysekaigatelevel {
-	return predicate.Mysekaigatelevel(sql.FieldNotNull(FieldPowerBonusRate))
 }
 
 // And groups predicates with the AND operator between them.

@@ -262,12 +262,12 @@ func (_q *ResourceboxeQuery) Clone() *ResourceboxeQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		ResourceBoxPurpose json.RawMessage `json:"resource_box_purpose,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Resourceboxe.Query().
-//		GroupBy(resourceboxe.FieldServerRegion).
+//		GroupBy(resourceboxe.FieldResourceBoxPurpose).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *ResourceboxeQuery) GroupBy(field string, fields ...string) *ResourceboxeGroupBy {
@@ -285,11 +285,11 @@ func (_q *ResourceboxeQuery) GroupBy(field string, fields ...string) *Resourcebo
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		ResourceBoxPurpose json.RawMessage `json:"resource_box_purpose,omitempty"`
 //	}
 //
 //	client.Resourceboxe.Query().
-//		Select(resourceboxe.FieldServerRegion).
+//		Select(resourceboxe.FieldResourceBoxPurpose).
 //		Scan(ctx, &v)
 func (_q *ResourceboxeQuery) Select(fields ...string) *ResourceboxeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -19,23 +19,9 @@ type MusicArtistCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MusicArtistCreate) SetServerRegion(v string) *MusicArtistCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MusicArtistCreate) SetGameID(v int64) *MusicArtistCreate {
+func (_c *MusicArtistCreate) SetGameID(v int) *MusicArtistCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MusicArtistCreate) SetNillableGameID(v *int64) *MusicArtistCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -64,6 +50,12 @@ func (_c *MusicArtistCreate) SetNillablePronunciation(v *string) *MusicArtistCre
 	if v != nil {
 		_c.SetPronunciation(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MusicArtistCreate) SetServerRegion(v string) *MusicArtistCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -101,6 +93,9 @@ func (_c *MusicArtistCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MusicArtistCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "MusicArtist.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "MusicArtist.server_region"`)}
 	}
@@ -130,12 +125,8 @@ func (_c *MusicArtistCreate) createSpec() (*MusicArtist, *sqlgraph.CreateSpec) {
 		_node = &MusicArtist{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(musicartist.Table, sqlgraph.NewFieldSpec(musicartist.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(musicartist.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musicartist.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -145,6 +136,10 @@ func (_c *MusicArtistCreate) createSpec() (*MusicArtist, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Pronunciation(); ok {
 		_spec.SetField(musicartist.FieldPronunciation, field.TypeString, value)
 		_node.Pronunciation = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(musicartist.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

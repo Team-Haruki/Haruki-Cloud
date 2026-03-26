@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
 	"strings"
@@ -16,16 +17,16 @@ type Eventraritybonusrate struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// CardRarityType holds the value of the "card_rarity_type" field.
+	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+	// MasterRank holds the value of the "master_rank" field.
+	MasterRank int `json:"master_rank,omitempty"`
+	// BonusRate holds the value of the "bonus_rate" field.
+	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// CardRarityType holds the value of the "card_rarity_type" field.
-	CardRarityType string `json:"card_rarity_type,omitempty"`
-	// MasterRank holds the value of the "master_rank" field.
-	MasterRank int64 `json:"master_rank,omitempty"`
-	// BonusRate holds the value of the "bonus_rate" field.
-	BonusRate    float64 `json:"bonus_rate,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -34,11 +35,13 @@ func (*Eventraritybonusrate) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case eventraritybonusrate.FieldCardRarityType:
+			values[i] = new([]byte)
 		case eventraritybonusrate.FieldBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case eventraritybonusrate.FieldID, eventraritybonusrate.FieldGameID, eventraritybonusrate.FieldMasterRank:
 			values[i] = new(sql.NullInt64)
-		case eventraritybonusrate.FieldServerRegion, eventraritybonusrate.FieldCardRarityType:
+		case eventraritybonusrate.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -61,35 +64,37 @@ func (_m *Eventraritybonusrate) assignValues(columns []string, values []any) err
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case eventraritybonusrate.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case eventraritybonusrate.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case eventraritybonusrate.FieldCardRarityType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
-			} else if value.Valid {
-				_m.CardRarityType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardRarityType); err != nil {
+					return fmt.Errorf("unmarshal field card_rarity_type: %w", err)
+				}
 			}
 		case eventraritybonusrate.FieldMasterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field master_rank", values[i])
 			} else if value.Valid {
-				_m.MasterRank = value.Int64
+				_m.MasterRank = int(value.Int64)
 			}
 		case eventraritybonusrate.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field bonus_rate", values[i])
 			} else if value.Valid {
 				_m.BonusRate = value.Float64
+			}
+		case eventraritybonusrate.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -127,20 +132,20 @@ func (_m *Eventraritybonusrate) String() string {
 	var builder strings.Builder
 	builder.WriteString("Eventraritybonusrate(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("card_rarity_type=")
-	builder.WriteString(_m.CardRarityType)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardRarityType))
 	builder.WriteString(", ")
 	builder.WriteString("master_rank=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MasterRank))
 	builder.WriteString(", ")
 	builder.WriteString("bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BonusRate))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

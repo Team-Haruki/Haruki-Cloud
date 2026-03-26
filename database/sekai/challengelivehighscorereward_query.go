@@ -262,12 +262,12 @@ func (_q *ChallengelivehighscorerewardQuery) Clone() *Challengelivehighscorerewa
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Challengelivehighscorereward.Query().
-//		GroupBy(challengelivehighscorereward.FieldServerRegion).
+//		GroupBy(challengelivehighscorereward.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *ChallengelivehighscorerewardQuery) GroupBy(field string, fields ...string) *ChallengelivehighscorerewardGroupBy {
@@ -285,11 +285,11 @@ func (_q *ChallengelivehighscorerewardQuery) GroupBy(field string, fields ...str
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Challengelivehighscorereward.Query().
-//		Select(challengelivehighscorereward.FieldServerRegion).
+//		Select(challengelivehighscorereward.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *ChallengelivehighscorerewardQuery) Select(fields ...string) *ChallengelivehighscorerewardSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

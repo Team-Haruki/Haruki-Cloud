@@ -262,12 +262,12 @@ func (_q *PlayerframegroupQuery) Clone() *PlayerframegroupQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Playerframegroup.Query().
-//		GroupBy(playerframegroup.FieldServerRegion).
+//		GroupBy(playerframegroup.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *PlayerframegroupQuery) GroupBy(field string, fields ...string) *PlayerframegroupGroupBy {
@@ -285,11 +285,11 @@ func (_q *PlayerframegroupQuery) GroupBy(field string, fields ...string) *Player
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Playerframegroup.Query().
-//		Select(playerframegroup.FieldServerRegion).
+//		Select(playerframegroup.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *PlayerframegroupQuery) Select(fields ...string) *PlayerframegroupSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

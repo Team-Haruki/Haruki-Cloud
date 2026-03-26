@@ -27,20 +27,6 @@ func (_u *CardraritieUpdate) Where(ps ...predicate.Cardraritie) *CardraritieUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *CardraritieUpdate) SetServerRegion(v string) *CardraritieUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CardraritieUpdate) SetNillableServerRegion(v *string) *CardraritieUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetCardRarityType sets the "card_rarity_type" field.
 func (_u *CardraritieUpdate) SetCardRarityType(v string) *CardraritieUpdate {
 	_u.mutation.SetCardRarityType(v)
@@ -62,14 +48,14 @@ func (_u *CardraritieUpdate) ClearCardRarityType() *CardraritieUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CardraritieUpdate) SetSeq(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetSeq(v int) *CardraritieUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CardraritieUpdate) SetNillableSeq(v *int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetNillableSeq(v *int) *CardraritieUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -77,7 +63,7 @@ func (_u *CardraritieUpdate) SetNillableSeq(v *int64) *CardraritieUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CardraritieUpdate) AddSeq(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) AddSeq(v int) *CardraritieUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -89,14 +75,14 @@ func (_u *CardraritieUpdate) ClearSeq() *CardraritieUpdate {
 }
 
 // SetMaxLevel sets the "max_level" field.
-func (_u *CardraritieUpdate) SetMaxLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetMaxLevel(v int) *CardraritieUpdate {
 	_u.mutation.ResetMaxLevel()
 	_u.mutation.SetMaxLevel(v)
 	return _u
 }
 
 // SetNillableMaxLevel sets the "max_level" field if the given value is not nil.
-func (_u *CardraritieUpdate) SetNillableMaxLevel(v *int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetNillableMaxLevel(v *int) *CardraritieUpdate {
 	if v != nil {
 		_u.SetMaxLevel(*v)
 	}
@@ -104,7 +90,7 @@ func (_u *CardraritieUpdate) SetNillableMaxLevel(v *int64) *CardraritieUpdate {
 }
 
 // AddMaxLevel adds value to the "max_level" field.
-func (_u *CardraritieUpdate) AddMaxLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) AddMaxLevel(v int) *CardraritieUpdate {
 	_u.mutation.AddMaxLevel(v)
 	return _u
 }
@@ -116,14 +102,14 @@ func (_u *CardraritieUpdate) ClearMaxLevel() *CardraritieUpdate {
 }
 
 // SetMaxSkillLevel sets the "max_skill_level" field.
-func (_u *CardraritieUpdate) SetMaxSkillLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetMaxSkillLevel(v int) *CardraritieUpdate {
 	_u.mutation.ResetMaxSkillLevel()
 	_u.mutation.SetMaxSkillLevel(v)
 	return _u
 }
 
 // SetNillableMaxSkillLevel sets the "max_skill_level" field if the given value is not nil.
-func (_u *CardraritieUpdate) SetNillableMaxSkillLevel(v *int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetNillableMaxSkillLevel(v *int) *CardraritieUpdate {
 	if v != nil {
 		_u.SetMaxSkillLevel(*v)
 	}
@@ -131,7 +117,7 @@ func (_u *CardraritieUpdate) SetNillableMaxSkillLevel(v *int64) *CardraritieUpda
 }
 
 // AddMaxSkillLevel adds value to the "max_skill_level" field.
-func (_u *CardraritieUpdate) AddMaxSkillLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) AddMaxSkillLevel(v int) *CardraritieUpdate {
 	_u.mutation.AddMaxSkillLevel(v)
 	return _u
 }
@@ -143,14 +129,14 @@ func (_u *CardraritieUpdate) ClearMaxSkillLevel() *CardraritieUpdate {
 }
 
 // SetTrainingMaxLevel sets the "training_max_level" field.
-func (_u *CardraritieUpdate) SetTrainingMaxLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetTrainingMaxLevel(v int) *CardraritieUpdate {
 	_u.mutation.ResetTrainingMaxLevel()
 	_u.mutation.SetTrainingMaxLevel(v)
 	return _u
 }
 
 // SetNillableTrainingMaxLevel sets the "training_max_level" field if the given value is not nil.
-func (_u *CardraritieUpdate) SetNillableTrainingMaxLevel(v *int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) SetNillableTrainingMaxLevel(v *int) *CardraritieUpdate {
 	if v != nil {
 		_u.SetTrainingMaxLevel(*v)
 	}
@@ -158,7 +144,7 @@ func (_u *CardraritieUpdate) SetNillableTrainingMaxLevel(v *int64) *CardraritieU
 }
 
 // AddTrainingMaxLevel adds value to the "training_max_level" field.
-func (_u *CardraritieUpdate) AddTrainingMaxLevel(v int64) *CardraritieUpdate {
+func (_u *CardraritieUpdate) AddTrainingMaxLevel(v int) *CardraritieUpdate {
 	_u.mutation.AddTrainingMaxLevel(v)
 	return _u
 }
@@ -166,6 +152,20 @@ func (_u *CardraritieUpdate) AddTrainingMaxLevel(v int64) *CardraritieUpdate {
 // ClearTrainingMaxLevel clears the value of the "training_max_level" field.
 func (_u *CardraritieUpdate) ClearTrainingMaxLevel() *CardraritieUpdate {
 	_u.mutation.ClearTrainingMaxLevel()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CardraritieUpdate) SetServerRegion(v string) *CardraritieUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CardraritieUpdate) SetNillableServerRegion(v *string) *CardraritieUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -210,9 +210,6 @@ func (_u *CardraritieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(cardraritie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardraritie.FieldCardRarityType, field.TypeString, value)
 	}
@@ -220,40 +217,43 @@ func (_u *CardraritieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(cardraritie.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cardraritie.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cardraritie.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cardraritie.FieldSeq, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MaxLevel(); ok {
-		_spec.SetField(cardraritie.FieldMaxLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldMaxLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMaxLevel(); ok {
-		_spec.AddField(cardraritie.FieldMaxLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldMaxLevel, field.TypeInt, value)
 	}
 	if _u.mutation.MaxLevelCleared() {
-		_spec.ClearField(cardraritie.FieldMaxLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldMaxLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MaxSkillLevel(); ok {
-		_spec.SetField(cardraritie.FieldMaxSkillLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldMaxSkillLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMaxSkillLevel(); ok {
-		_spec.AddField(cardraritie.FieldMaxSkillLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldMaxSkillLevel, field.TypeInt, value)
 	}
 	if _u.mutation.MaxSkillLevelCleared() {
-		_spec.ClearField(cardraritie.FieldMaxSkillLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldMaxSkillLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.TrainingMaxLevel(); ok {
-		_spec.SetField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldTrainingMaxLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedTrainingMaxLevel(); ok {
-		_spec.AddField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldTrainingMaxLevel, field.TypeInt, value)
 	}
 	if _u.mutation.TrainingMaxLevelCleared() {
-		_spec.ClearField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldTrainingMaxLevel, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(cardraritie.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -273,20 +273,6 @@ type CardraritieUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *CardraritieMutation
-}
-
-// SetServerRegion sets the "server_region" field.
-func (_u *CardraritieUpdateOne) SetServerRegion(v string) *CardraritieUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CardraritieUpdateOne) SetNillableServerRegion(v *string) *CardraritieUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
@@ -310,14 +296,14 @@ func (_u *CardraritieUpdateOne) ClearCardRarityType() *CardraritieUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *CardraritieUpdateOne) SetSeq(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetSeq(v int) *CardraritieUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *CardraritieUpdateOne) SetNillableSeq(v *int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetNillableSeq(v *int) *CardraritieUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -325,7 +311,7 @@ func (_u *CardraritieUpdateOne) SetNillableSeq(v *int64) *CardraritieUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *CardraritieUpdateOne) AddSeq(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) AddSeq(v int) *CardraritieUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -337,14 +323,14 @@ func (_u *CardraritieUpdateOne) ClearSeq() *CardraritieUpdateOne {
 }
 
 // SetMaxLevel sets the "max_level" field.
-func (_u *CardraritieUpdateOne) SetMaxLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetMaxLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.ResetMaxLevel()
 	_u.mutation.SetMaxLevel(v)
 	return _u
 }
 
 // SetNillableMaxLevel sets the "max_level" field if the given value is not nil.
-func (_u *CardraritieUpdateOne) SetNillableMaxLevel(v *int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetNillableMaxLevel(v *int) *CardraritieUpdateOne {
 	if v != nil {
 		_u.SetMaxLevel(*v)
 	}
@@ -352,7 +338,7 @@ func (_u *CardraritieUpdateOne) SetNillableMaxLevel(v *int64) *CardraritieUpdate
 }
 
 // AddMaxLevel adds value to the "max_level" field.
-func (_u *CardraritieUpdateOne) AddMaxLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) AddMaxLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.AddMaxLevel(v)
 	return _u
 }
@@ -364,14 +350,14 @@ func (_u *CardraritieUpdateOne) ClearMaxLevel() *CardraritieUpdateOne {
 }
 
 // SetMaxSkillLevel sets the "max_skill_level" field.
-func (_u *CardraritieUpdateOne) SetMaxSkillLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetMaxSkillLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.ResetMaxSkillLevel()
 	_u.mutation.SetMaxSkillLevel(v)
 	return _u
 }
 
 // SetNillableMaxSkillLevel sets the "max_skill_level" field if the given value is not nil.
-func (_u *CardraritieUpdateOne) SetNillableMaxSkillLevel(v *int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetNillableMaxSkillLevel(v *int) *CardraritieUpdateOne {
 	if v != nil {
 		_u.SetMaxSkillLevel(*v)
 	}
@@ -379,7 +365,7 @@ func (_u *CardraritieUpdateOne) SetNillableMaxSkillLevel(v *int64) *CardraritieU
 }
 
 // AddMaxSkillLevel adds value to the "max_skill_level" field.
-func (_u *CardraritieUpdateOne) AddMaxSkillLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) AddMaxSkillLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.AddMaxSkillLevel(v)
 	return _u
 }
@@ -391,14 +377,14 @@ func (_u *CardraritieUpdateOne) ClearMaxSkillLevel() *CardraritieUpdateOne {
 }
 
 // SetTrainingMaxLevel sets the "training_max_level" field.
-func (_u *CardraritieUpdateOne) SetTrainingMaxLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetTrainingMaxLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.ResetTrainingMaxLevel()
 	_u.mutation.SetTrainingMaxLevel(v)
 	return _u
 }
 
 // SetNillableTrainingMaxLevel sets the "training_max_level" field if the given value is not nil.
-func (_u *CardraritieUpdateOne) SetNillableTrainingMaxLevel(v *int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) SetNillableTrainingMaxLevel(v *int) *CardraritieUpdateOne {
 	if v != nil {
 		_u.SetTrainingMaxLevel(*v)
 	}
@@ -406,7 +392,7 @@ func (_u *CardraritieUpdateOne) SetNillableTrainingMaxLevel(v *int64) *Cardrarit
 }
 
 // AddTrainingMaxLevel adds value to the "training_max_level" field.
-func (_u *CardraritieUpdateOne) AddTrainingMaxLevel(v int64) *CardraritieUpdateOne {
+func (_u *CardraritieUpdateOne) AddTrainingMaxLevel(v int) *CardraritieUpdateOne {
 	_u.mutation.AddTrainingMaxLevel(v)
 	return _u
 }
@@ -414,6 +400,20 @@ func (_u *CardraritieUpdateOne) AddTrainingMaxLevel(v int64) *CardraritieUpdateO
 // ClearTrainingMaxLevel clears the value of the "training_max_level" field.
 func (_u *CardraritieUpdateOne) ClearTrainingMaxLevel() *CardraritieUpdateOne {
 	_u.mutation.ClearTrainingMaxLevel()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CardraritieUpdateOne) SetServerRegion(v string) *CardraritieUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CardraritieUpdateOne) SetNillableServerRegion(v *string) *CardraritieUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -488,9 +488,6 @@ func (_u *CardraritieUpdateOne) sqlSave(ctx context.Context) (_node *Cardraritie
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(cardraritie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(cardraritie.FieldCardRarityType, field.TypeString, value)
 	}
@@ -498,40 +495,43 @@ func (_u *CardraritieUpdateOne) sqlSave(ctx context.Context) (_node *Cardraritie
 		_spec.ClearField(cardraritie.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(cardraritie.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(cardraritie.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(cardraritie.FieldSeq, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MaxLevel(); ok {
-		_spec.SetField(cardraritie.FieldMaxLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldMaxLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMaxLevel(); ok {
-		_spec.AddField(cardraritie.FieldMaxLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldMaxLevel, field.TypeInt, value)
 	}
 	if _u.mutation.MaxLevelCleared() {
-		_spec.ClearField(cardraritie.FieldMaxLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldMaxLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MaxSkillLevel(); ok {
-		_spec.SetField(cardraritie.FieldMaxSkillLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldMaxSkillLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMaxSkillLevel(); ok {
-		_spec.AddField(cardraritie.FieldMaxSkillLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldMaxSkillLevel, field.TypeInt, value)
 	}
 	if _u.mutation.MaxSkillLevelCleared() {
-		_spec.ClearField(cardraritie.FieldMaxSkillLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldMaxSkillLevel, field.TypeInt)
 	}
 	if value, ok := _u.mutation.TrainingMaxLevel(); ok {
-		_spec.SetField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64, value)
+		_spec.SetField(cardraritie.FieldTrainingMaxLevel, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedTrainingMaxLevel(); ok {
-		_spec.AddField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64, value)
+		_spec.AddField(cardraritie.FieldTrainingMaxLevel, field.TypeInt, value)
 	}
 	if _u.mutation.TrainingMaxLevelCleared() {
-		_spec.ClearField(cardraritie.FieldTrainingMaxLevel, field.TypeInt64)
+		_spec.ClearField(cardraritie.FieldTrainingMaxLevel, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(cardraritie.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Cardraritie{config: _u.config}
 	_spec.Assign = _node.assignValues

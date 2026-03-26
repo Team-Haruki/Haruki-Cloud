@@ -16,19 +16,19 @@ type Cardmysekaicanvasbonuse struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType string `json:"card_rarity_type,omitempty"`
 	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
-	Power1BonusFixed int64 `json:"power1_bonus_fixed,omitempty"`
+	Power1BonusFixed int `json:"power1_bonus_fixed,omitempty"`
 	// Power2BonusFixed holds the value of the "power2_bonus_fixed" field.
-	Power2BonusFixed int64 `json:"power2_bonus_fixed,omitempty"`
+	Power2BonusFixed int `json:"power2_bonus_fixed,omitempty"`
 	// Power3BonusFixed holds the value of the "power3_bonus_fixed" field.
-	Power3BonusFixed int64 `json:"power3_bonus_fixed,omitempty"`
-	selectValues     sql.SelectValues
+	Power3BonusFixed int `json:"power3_bonus_fixed,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,7 +38,7 @@ func (*Cardmysekaicanvasbonuse) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case cardmysekaicanvasbonuse.FieldID, cardmysekaicanvasbonuse.FieldGameID, cardmysekaicanvasbonuse.FieldPower1BonusFixed, cardmysekaicanvasbonuse.FieldPower2BonusFixed, cardmysekaicanvasbonuse.FieldPower3BonusFixed:
 			values[i] = new(sql.NullInt64)
-		case cardmysekaicanvasbonuse.FieldServerRegion, cardmysekaicanvasbonuse.FieldCardRarityType:
+		case cardmysekaicanvasbonuse.FieldCardRarityType, cardmysekaicanvasbonuse.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -61,17 +61,11 @@ func (_m *Cardmysekaicanvasbonuse) assignValues(columns []string, values []any) 
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case cardmysekaicanvasbonuse.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case cardmysekaicanvasbonuse.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case cardmysekaicanvasbonuse.FieldCardRarityType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -83,19 +77,25 @@ func (_m *Cardmysekaicanvasbonuse) assignValues(columns []string, values []any) 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power1_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power1BonusFixed = value.Int64
+				_m.Power1BonusFixed = int(value.Int64)
 			}
 		case cardmysekaicanvasbonuse.FieldPower2BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power2_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power2BonusFixed = value.Int64
+				_m.Power2BonusFixed = int(value.Int64)
 			}
 		case cardmysekaicanvasbonuse.FieldPower3BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field power3_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.Power3BonusFixed = value.Int64
+				_m.Power3BonusFixed = int(value.Int64)
+			}
+		case cardmysekaicanvasbonuse.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -133,9 +133,6 @@ func (_m *Cardmysekaicanvasbonuse) String() string {
 	var builder strings.Builder
 	builder.WriteString("Cardmysekaicanvasbonuse(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -150,6 +147,9 @@ func (_m *Cardmysekaicanvasbonuse) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("power3_bonus_fixed=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Power3BonusFixed))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

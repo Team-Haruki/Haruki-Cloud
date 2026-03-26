@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *EventdeckbonuseUpdate) Where(ps ...predicate.Eventdeckbonuse) *Eventde
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventdeckbonuseUpdate) SetServerRegion(v string) *EventdeckbonuseUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableServerRegion(v *string) *EventdeckbonuseUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventdeckbonuseUpdate) SetGameID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetGameID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *EventdeckbonuseUpdate) SetNillableGameID(v *int64) *EventdeckbonuseUpd
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventdeckbonuseUpdate) AddGameID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddGameID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventdeckbonuseUpdate) ClearGameID() *EventdeckbonuseUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventdeckbonuseUpdate) SetEventID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetEventID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *EventdeckbonuseUpdate) SetNillableEventID(v *int64) *EventdeckbonuseUp
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventdeckbonuseUpdate) AddEventID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddEventID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *EventdeckbonuseUpdate) ClearEventID() *EventdeckbonuseUpdate {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdate) SetGameCharacterUnitID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetGameCharacterUnitID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseUpdate {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *EventdeckbonuseUpdate) SetNillableGameCharacterUnitID(v *int64) *Event
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdate) AddGameCharacterUnitID(v int64) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) AddGameCharacterUnitID(v int) *EventdeckbonuseUpdate {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -123,16 +105,14 @@ func (_u *EventdeckbonuseUpdate) ClearGameCharacterUnitID() *EventdeckbonuseUpda
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_u *EventdeckbonuseUpdate) SetCardAttr(v string) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetCardAttr(v json.RawMessage) *EventdeckbonuseUpdate {
 	_u.mutation.SetCardAttr(v)
 	return _u
 }
 
-// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdate) SetNillableCardAttr(v *string) *EventdeckbonuseUpdate {
-	if v != nil {
-		_u.SetCardAttr(*v)
-	}
+// AppendCardAttr appends value to the "card_attr" field.
+func (_u *EventdeckbonuseUpdate) AppendCardAttr(v json.RawMessage) *EventdeckbonuseUpdate {
+	_u.mutation.AppendCardAttr(v)
 	return _u
 }
 
@@ -166,6 +146,20 @@ func (_u *EventdeckbonuseUpdate) AddBonusRate(v float64) *EventdeckbonuseUpdate 
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *EventdeckbonuseUpdate) ClearBonusRate() *EventdeckbonuseUpdate {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventdeckbonuseUpdate) SetServerRegion(v string) *EventdeckbonuseUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventdeckbonuseUpdate) SetNillableServerRegion(v *string) *EventdeckbonuseUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -210,41 +204,40 @@ func (_u *EventdeckbonuseUpdate) sqlSave(ctx context.Context) (_node int, err er
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCardAttr(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventdeckbonuse.FieldCardAttr, value)
+		})
 	}
 	if _u.mutation.CardAttrCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeString)
+		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -254,6 +247,9 @@ func (_u *EventdeckbonuseUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -275,29 +271,15 @@ type EventdeckbonuseUpdateOne struct {
 	mutation *EventdeckbonuseMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventdeckbonuseUpdateOne) SetServerRegion(v string) *EventdeckbonuseUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableServerRegion(v *string) *EventdeckbonuseUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetGameID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetGameID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -305,26 +287,20 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableGameID(v *int64) *Eventdeckbonuse
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddGameID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddGameID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventdeckbonuseUpdateOne) ClearGameID() *EventdeckbonuseUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetEventID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetEventID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -332,7 +308,7 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableEventID(v *int64) *Eventdeckbonus
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddEventID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddEventID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -344,14 +320,14 @@ func (_u *EventdeckbonuseUpdateOne) ClearEventID() *EventdeckbonuseUpdateOne {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdateOne) SetGameCharacterUnitID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetGameCharacterUnitID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.ResetGameCharacterUnitID()
 	_u.mutation.SetGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterUnitID(*v)
 	}
@@ -359,7 +335,7 @@ func (_u *EventdeckbonuseUpdateOne) SetNillableGameCharacterUnitID(v *int64) *Ev
 }
 
 // AddGameCharacterUnitID adds value to the "game_character_unit_id" field.
-func (_u *EventdeckbonuseUpdateOne) AddGameCharacterUnitID(v int64) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) AddGameCharacterUnitID(v int) *EventdeckbonuseUpdateOne {
 	_u.mutation.AddGameCharacterUnitID(v)
 	return _u
 }
@@ -371,16 +347,14 @@ func (_u *EventdeckbonuseUpdateOne) ClearGameCharacterUnitID() *EventdeckbonuseU
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_u *EventdeckbonuseUpdateOne) SetCardAttr(v string) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetCardAttr(v json.RawMessage) *EventdeckbonuseUpdateOne {
 	_u.mutation.SetCardAttr(v)
 	return _u
 }
 
-// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
-func (_u *EventdeckbonuseUpdateOne) SetNillableCardAttr(v *string) *EventdeckbonuseUpdateOne {
-	if v != nil {
-		_u.SetCardAttr(*v)
-	}
+// AppendCardAttr appends value to the "card_attr" field.
+func (_u *EventdeckbonuseUpdateOne) AppendCardAttr(v json.RawMessage) *EventdeckbonuseUpdateOne {
+	_u.mutation.AppendCardAttr(v)
 	return _u
 }
 
@@ -414,6 +388,20 @@ func (_u *EventdeckbonuseUpdateOne) AddBonusRate(v float64) *EventdeckbonuseUpda
 // ClearBonusRate clears the value of the "bonus_rate" field.
 func (_u *EventdeckbonuseUpdateOne) ClearBonusRate() *EventdeckbonuseUpdateOne {
 	_u.mutation.ClearBonusRate()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventdeckbonuseUpdateOne) SetServerRegion(v string) *EventdeckbonuseUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventdeckbonuseUpdateOne) SetNillableServerRegion(v *string) *EventdeckbonuseUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -488,41 +476,40 @@ func (_u *EventdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_node *Eventde
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventdeckbonuse.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterUnitID(); ok {
-		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterUnitIDCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCardAttr(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, eventdeckbonuse.FieldCardAttr, value)
+		})
 	}
 	if _u.mutation.CardAttrCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeString)
+		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -532,6 +519,9 @@ func (_u *EventdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_node *Eventde
 	}
 	if _u.mutation.BonusRateCleared() {
 		_spec.ClearField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Eventdeckbonuse{config: _u.config}
 	_spec.Assign = _node.assignValues

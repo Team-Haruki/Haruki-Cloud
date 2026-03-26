@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
@@ -19,34 +20,20 @@ type AreaitemCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *AreaitemCreate) SetServerRegion(v string) *AreaitemCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *AreaitemCreate) SetGameID(v int64) *AreaitemCreate {
+func (_c *AreaitemCreate) SetGameID(v int) *AreaitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *AreaitemCreate) SetNillableGameID(v *int64) *AreaitemCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetAreaID sets the "area_id" field.
-func (_c *AreaitemCreate) SetAreaID(v int64) *AreaitemCreate {
+func (_c *AreaitemCreate) SetAreaID(v int) *AreaitemCreate {
 	_c.mutation.SetAreaID(v)
 	return _c
 }
 
 // SetNillableAreaID sets the "area_id" field if the given value is not nil.
-func (_c *AreaitemCreate) SetNillableAreaID(v *int64) *AreaitemCreate {
+func (_c *AreaitemCreate) SetNillableAreaID(v *int) *AreaitemCreate {
 	if v != nil {
 		_c.SetAreaID(*v)
 	}
@@ -82,16 +69,8 @@ func (_c *AreaitemCreate) SetNillableFlavorText(v *string) *AreaitemCreate {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_c *AreaitemCreate) SetSpawnPoint(v string) *AreaitemCreate {
+func (_c *AreaitemCreate) SetSpawnPoint(v json.RawMessage) *AreaitemCreate {
 	_c.mutation.SetSpawnPoint(v)
-	return _c
-}
-
-// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
-func (_c *AreaitemCreate) SetNillableSpawnPoint(v *string) *AreaitemCreate {
-	if v != nil {
-		_c.SetSpawnPoint(*v)
-	}
 	return _c
 }
 
@@ -106,6 +85,12 @@ func (_c *AreaitemCreate) SetNillableAssetbundleName(v *string) *AreaitemCreate 
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *AreaitemCreate) SetServerRegion(v string) *AreaitemCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -143,6 +128,9 @@ func (_c *AreaitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AreaitemCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Areaitem.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Areaitem.server_region"`)}
 	}
@@ -172,16 +160,12 @@ func (_c *AreaitemCreate) createSpec() (*Areaitem, *sqlgraph.CreateSpec) {
 		_node = &Areaitem{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(areaitem.Table, sqlgraph.NewFieldSpec(areaitem.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(areaitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.AreaID(); ok {
-		_spec.SetField(areaitem.FieldAreaID, field.TypeInt64, value)
+		_spec.SetField(areaitem.FieldAreaID, field.TypeInt, value)
 		_node.AreaID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -193,12 +177,16 @@ func (_c *AreaitemCreate) createSpec() (*Areaitem, *sqlgraph.CreateSpec) {
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
 		_node.SpawnPoint = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(areaitem.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(areaitem.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -11,8 +11,6 @@ const (
 	Label = "music"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -57,6 +55,8 @@ const (
 	FieldMusicCollaborationID = "music_collaboration_id"
 	// FieldInfos holds the string denoting the infos field in the database.
 	FieldInfos = "infos"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the music in the database.
 	Table = "musics"
 )
@@ -64,7 +64,6 @@ const (
 // Columns holds all SQL columns for music fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldReleaseConditionID,
@@ -87,6 +86,7 @@ var Columns = []string{
 	FieldIsFullLength,
 	FieldMusicCollaborationID,
 	FieldInfos,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -105,11 +105,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -172,11 +167,6 @@ func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
 }
 
-// ByLiveTalkBackgroundAssetbundleName orders the results by the live_talk_background_assetbundle_name field.
-func ByLiveTalkBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldLiveTalkBackgroundAssetbundleName, opts...).ToFunc()
-}
-
 // ByPublishedAt orders the results by the published_at field.
 func ByPublishedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPublishedAt, opts...).ToFunc()
@@ -210,4 +200,9 @@ func ByIsFullLength(opts ...sql.OrderTermOption) OrderOption {
 // ByMusicCollaborationID orders the results by the music_collaboration_id field.
 func ByMusicCollaborationID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicCollaborationID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

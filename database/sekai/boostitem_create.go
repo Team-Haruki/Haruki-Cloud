@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
@@ -19,34 +20,20 @@ type BoostitemCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *BoostitemCreate) SetServerRegion(v string) *BoostitemCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *BoostitemCreate) SetGameID(v int64) *BoostitemCreate {
+func (_c *BoostitemCreate) SetGameID(v int) *BoostitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableGameID(v *int64) *BoostitemCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *BoostitemCreate) SetSeq(v int64) *BoostitemCreate {
+func (_c *BoostitemCreate) SetSeq(v int) *BoostitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableSeq(v *int64) *BoostitemCreate {
+func (_c *BoostitemCreate) SetNillableSeq(v *int) *BoostitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *BoostitemCreate) SetNillableName(v *string) *BoostitemCreate {
 }
 
 // SetRecoveryValue sets the "recovery_value" field.
-func (_c *BoostitemCreate) SetRecoveryValue(v int64) *BoostitemCreate {
+func (_c *BoostitemCreate) SetRecoveryValue(v int) *BoostitemCreate {
 	_c.mutation.SetRecoveryValue(v)
 	return _c
 }
 
 // SetNillableRecoveryValue sets the "recovery_value" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableRecoveryValue(v *int64) *BoostitemCreate {
+func (_c *BoostitemCreate) SetNillableRecoveryValue(v *int) *BoostitemCreate {
 	if v != nil {
 		_c.SetRecoveryValue(*v)
 	}
@@ -96,16 +83,14 @@ func (_c *BoostitemCreate) SetNillableAssetBundleName(v *string) *BoostitemCreat
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_c *BoostitemCreate) SetFlavorText(v string) *BoostitemCreate {
+func (_c *BoostitemCreate) SetFlavorText(v json.RawMessage) *BoostitemCreate {
 	_c.mutation.SetFlavorText(v)
 	return _c
 }
 
-// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
-func (_c *BoostitemCreate) SetNillableFlavorText(v *string) *BoostitemCreate {
-	if v != nil {
-		_c.SetFlavorText(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *BoostitemCreate) SetServerRegion(v string) *BoostitemCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -143,6 +128,9 @@ func (_c *BoostitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BoostitemCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Boostitem.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Boostitem.server_region"`)}
 	}
@@ -172,16 +160,12 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_node = &Boostitem{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(boostitem.Table, sqlgraph.NewFieldSpec(boostitem.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(boostitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(boostitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -189,7 +173,7 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.RecoveryValue(); ok {
-		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt64, value)
+		_spec.SetField(boostitem.FieldRecoveryValue, field.TypeInt, value)
 		_node.RecoveryValue = value
 	}
 	if value, ok := _c.mutation.AssetBundleName(); ok {
@@ -197,8 +181,12 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_node.AssetBundleName = value
 	}
 	if value, ok := _c.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
 		_node.FlavorText = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprint"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *MysekaiblueprintUpdate) Where(ps ...predicate.Mysekaiblueprint) *Mysek
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiblueprintUpdate) SetServerRegion(v string) *MysekaiblueprintUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableServerRegion(v *string) *MysekaiblueprintUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintUpdate) SetGameID(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetGameID(v int) *MysekaiblueprintUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,20 +45,20 @@ func (_u *MysekaiblueprintUpdate) SetNillableGameID(v *int64) *MysekaiblueprintU
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintUpdate) AddGameID(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddGameID(v int) *MysekaiblueprintUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiblueprintUpdate) ClearGameID() *MysekaiblueprintUpdate {
-	_u.mutation.ClearGameID()
+// SetMysekaiCraftType sets the "mysekai_craft_type" field.
+func (_u *MysekaiblueprintUpdate) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdate {
+	_u.mutation.SetMysekaiCraftType(v)
 	return _u
 }
 
-// SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdate) SetMysekaiCraftType(v map[string]interface{}) *MysekaiblueprintUpdate {
-	_u.mutation.SetMysekaiCraftType(v)
+// AppendMysekaiCraftType appends value to the "mysekai_craft_type" field.
+func (_u *MysekaiblueprintUpdate) AppendMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdate {
+	_u.mutation.AppendMysekaiCraftType(v)
 	return _u
 }
 
@@ -81,14 +69,14 @@ func (_u *MysekaiblueprintUpdate) ClearMysekaiCraftType() *MysekaiblueprintUpdat
 }
 
 // SetCraftTargetID sets the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdate) SetCraftTargetID(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetCraftTargetID(v int) *MysekaiblueprintUpdate {
 	_u.mutation.ResetCraftTargetID()
 	_u.mutation.SetCraftTargetID(v)
 	return _u
 }
 
 // SetNillableCraftTargetID sets the "craft_target_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetCraftTargetID(*v)
 	}
@@ -96,7 +84,7 @@ func (_u *MysekaiblueprintUpdate) SetNillableCraftTargetID(v *int64) *Mysekaiblu
 }
 
 // AddCraftTargetID adds value to the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdate) AddCraftTargetID(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddCraftTargetID(v int) *MysekaiblueprintUpdate {
 	_u.mutation.AddCraftTargetID(v)
 	return _u
 }
@@ -148,14 +136,14 @@ func (_u *MysekaiblueprintUpdate) ClearIsObtainedByConvert() *MysekaiblueprintUp
 }
 
 // SetCraftCountLimit sets the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdate) SetCraftCountLimit(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetCraftCountLimit(v int) *MysekaiblueprintUpdate {
 	_u.mutation.ResetCraftCountLimit()
 	_u.mutation.SetCraftCountLimit(v)
 	return _u
 }
 
 // SetNillableCraftCountLimit sets the "craft_count_limit" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int) *MysekaiblueprintUpdate {
 	if v != nil {
 		_u.SetCraftCountLimit(*v)
 	}
@@ -163,7 +151,7 @@ func (_u *MysekaiblueprintUpdate) SetNillableCraftCountLimit(v *int64) *Mysekaib
 }
 
 // AddCraftCountLimit adds value to the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdate) AddCraftCountLimit(v int64) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) AddCraftCountLimit(v int) *MysekaiblueprintUpdate {
 	_u.mutation.AddCraftCountLimit(v)
 	return _u
 }
@@ -191,6 +179,20 @@ func (_u *MysekaiblueprintUpdate) SetNillableIsAvailableWithoutPossession(v *boo
 // ClearIsAvailableWithoutPossession clears the value of the "is_available_without_possession" field.
 func (_u *MysekaiblueprintUpdate) ClearIsAvailableWithoutPossession() *MysekaiblueprintUpdate {
 	_u.mutation.ClearIsAvailableWithoutPossession()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiblueprintUpdate) SetServerRegion(v string) *MysekaiblueprintUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiblueprintUpdate) SetNillableServerRegion(v *string) *MysekaiblueprintUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -235,32 +237,31 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiblueprint.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMysekaiCraftType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaiblueprint.FieldMysekaiCraftType, value)
+		})
 	}
 	if _u.mutation.MysekaiCraftTypeCleared() {
 		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCraftTargetID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
 	}
 	if _u.mutation.CraftTargetIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsEnableSketch(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsEnableSketch, field.TypeBool, value)
@@ -275,19 +276,22 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(mysekaiblueprint.FieldIsObtainedByConvert, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CraftCountLimit(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCraftCountLimit(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
 	}
 	if _u.mutation.CraftCountLimitCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsAvailableWithoutPossession(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool, value)
 	}
 	if _u.mutation.IsAvailableWithoutPossessionCleared() {
 		_spec.ClearField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiblueprint.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -309,29 +313,15 @@ type MysekaiblueprintUpdateOne struct {
 	mutation *MysekaiblueprintMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaiblueprintUpdateOne) SetServerRegion(v string) *MysekaiblueprintUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableServerRegion(v *string) *MysekaiblueprintUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaiblueprintUpdateOne) SetGameID(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetGameID(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -339,20 +329,20 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableGameID(v *int64) *Mysekaibluepri
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaiblueprintUpdateOne) AddGameID(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddGameID(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaiblueprintUpdateOne) ClearGameID() *MysekaiblueprintUpdateOne {
-	_u.mutation.ClearGameID()
+// SetMysekaiCraftType sets the "mysekai_craft_type" field.
+func (_u *MysekaiblueprintUpdateOne) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdateOne {
+	_u.mutation.SetMysekaiCraftType(v)
 	return _u
 }
 
-// SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdateOne) SetMysekaiCraftType(v map[string]interface{}) *MysekaiblueprintUpdateOne {
-	_u.mutation.SetMysekaiCraftType(v)
+// AppendMysekaiCraftType appends value to the "mysekai_craft_type" field.
+func (_u *MysekaiblueprintUpdateOne) AppendMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdateOne {
+	_u.mutation.AppendMysekaiCraftType(v)
 	return _u
 }
 
@@ -363,14 +353,14 @@ func (_u *MysekaiblueprintUpdateOne) ClearMysekaiCraftType() *MysekaiblueprintUp
 }
 
 // SetCraftTargetID sets the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdateOne) SetCraftTargetID(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetCraftTargetID(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetCraftTargetID()
 	_u.mutation.SetCraftTargetID(v)
 	return _u
 }
 
 // SetNillableCraftTargetID sets the "craft_target_id" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetCraftTargetID(*v)
 	}
@@ -378,7 +368,7 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableCraftTargetID(v *int64) *Mysekai
 }
 
 // AddCraftTargetID adds value to the "craft_target_id" field.
-func (_u *MysekaiblueprintUpdateOne) AddCraftTargetID(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddCraftTargetID(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddCraftTargetID(v)
 	return _u
 }
@@ -430,14 +420,14 @@ func (_u *MysekaiblueprintUpdateOne) ClearIsObtainedByConvert() *Mysekaiblueprin
 }
 
 // SetCraftCountLimit sets the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdateOne) SetCraftCountLimit(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetCraftCountLimit(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.ResetCraftCountLimit()
 	_u.mutation.SetCraftCountLimit(v)
 	return _u
 }
 
 // SetNillableCraftCountLimit sets the "craft_count_limit" field if the given value is not nil.
-func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int) *MysekaiblueprintUpdateOne {
 	if v != nil {
 		_u.SetCraftCountLimit(*v)
 	}
@@ -445,7 +435,7 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableCraftCountLimit(v *int64) *Mysek
 }
 
 // AddCraftCountLimit adds value to the "craft_count_limit" field.
-func (_u *MysekaiblueprintUpdateOne) AddCraftCountLimit(v int64) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) AddCraftCountLimit(v int) *MysekaiblueprintUpdateOne {
 	_u.mutation.AddCraftCountLimit(v)
 	return _u
 }
@@ -473,6 +463,20 @@ func (_u *MysekaiblueprintUpdateOne) SetNillableIsAvailableWithoutPossession(v *
 // ClearIsAvailableWithoutPossession clears the value of the "is_available_without_possession" field.
 func (_u *MysekaiblueprintUpdateOne) ClearIsAvailableWithoutPossession() *MysekaiblueprintUpdateOne {
 	_u.mutation.ClearIsAvailableWithoutPossession()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaiblueprintUpdateOne) SetServerRegion(v string) *MysekaiblueprintUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaiblueprintUpdateOne) SetNillableServerRegion(v *string) *MysekaiblueprintUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -547,32 +551,31 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiblueprint.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaiblueprint.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
 		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMysekaiCraftType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaiblueprint.FieldMysekaiCraftType, value)
+		})
 	}
 	if _u.mutation.MysekaiCraftTypeCleared() {
 		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCraftTargetID(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt, value)
 	}
 	if _u.mutation.CraftTargetIDCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsEnableSketch(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsEnableSketch, field.TypeBool, value)
@@ -587,19 +590,22 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 		_spec.ClearField(mysekaiblueprint.FieldIsObtainedByConvert, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CraftCountLimit(); ok {
-		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
+		_spec.SetField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCraftCountLimit(); ok {
-		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64, value)
+		_spec.AddField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt, value)
 	}
 	if _u.mutation.CraftCountLimitCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt64)
+		_spec.ClearField(mysekaiblueprint.FieldCraftCountLimit, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsAvailableWithoutPossession(); ok {
 		_spec.SetField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool, value)
 	}
 	if _u.mutation.IsAvailableWithoutPossessionCleared() {
 		_spec.ClearField(mysekaiblueprint.FieldIsAvailableWithoutPossession, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiblueprint.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaiblueprint{config: _u.config}
 	_spec.Assign = _node.assignValues

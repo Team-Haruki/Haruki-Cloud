@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -19,34 +20,20 @@ type EventdeckbonuseCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventdeckbonuseCreate) SetServerRegion(v string) *EventdeckbonuseCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventdeckbonuseCreate) SetGameID(v int64) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetGameID(v int) *EventdeckbonuseCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableGameID(v *int64) *EventdeckbonuseCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *EventdeckbonuseCreate) SetEventID(v int64) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetEventID(v int) *EventdeckbonuseCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int64) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int) *EventdeckbonuseCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *EventdeckbonuseCreate) SetNillableEventID(v *int64) *EventdeckbonuseCr
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_c *EventdeckbonuseCreate) SetGameCharacterUnitID(v int64) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetGameCharacterUnitID(v int) *EventdeckbonuseCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int64) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int) *EventdeckbonuseCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitID(*v)
 	}
@@ -68,16 +55,8 @@ func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int64) *Event
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_c *EventdeckbonuseCreate) SetCardAttr(v string) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetCardAttr(v json.RawMessage) *EventdeckbonuseCreate {
 	_c.mutation.SetCardAttr(v)
-	return _c
-}
-
-// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
-func (_c *EventdeckbonuseCreate) SetNillableCardAttr(v *string) *EventdeckbonuseCreate {
-	if v != nil {
-		_c.SetCardAttr(*v)
-	}
 	return _c
 }
 
@@ -92,6 +71,12 @@ func (_c *EventdeckbonuseCreate) SetNillableBonusRate(v *float64) *Eventdeckbonu
 	if v != nil {
 		_c.SetBonusRate(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventdeckbonuseCreate) SetServerRegion(v string) *EventdeckbonuseCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -129,6 +114,9 @@ func (_c *EventdeckbonuseCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventdeckbonuseCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventdeckbonuse.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventdeckbonuse.server_region"`)}
 	}
@@ -158,29 +146,29 @@ func (_c *EventdeckbonuseCreate) createSpec() (*Eventdeckbonuse, *sqlgraph.Creat
 		_node = &Eventdeckbonuse{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventdeckbonuse.Table, sqlgraph.NewFieldSpec(eventdeckbonuse.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt, value)
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
 		_node.CardAttr = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {
 		_spec.SetField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64, value)
 		_node.BonusRate = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventdeckbonuse.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

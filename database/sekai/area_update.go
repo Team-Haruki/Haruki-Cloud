@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *AreaUpdate) Where(ps ...predicate.Area) *AreaUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *AreaUpdate) SetServerRegion(v string) *AreaUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableServerRegion(v *string) *AreaUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *AreaUpdate) SetGameID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetGameID(v int) *AreaUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableGameID(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableGameID(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +45,8 @@ func (_u *AreaUpdate) SetNillableGameID(v *int64) *AreaUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaUpdate) AddGameID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddGameID(v int) *AreaUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *AreaUpdate) ClearGameID() *AreaUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -89,14 +71,14 @@ func (_u *AreaUpdate) ClearAssetbundleName() *AreaUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *AreaUpdate) SetGroupID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetGroupID(v int) *AreaUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableGroupID(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableGroupID(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -104,7 +86,7 @@ func (_u *AreaUpdate) SetNillableGroupID(v *int64) *AreaUpdate {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *AreaUpdate) AddGroupID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddGroupID(v int) *AreaUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -136,16 +118,14 @@ func (_u *AreaUpdate) ClearIsBaseArea() *AreaUpdate {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_u *AreaUpdate) SetAreaType(v string) *AreaUpdate {
+func (_u *AreaUpdate) SetAreaType(v json.RawMessage) *AreaUpdate {
 	_u.mutation.SetAreaType(v)
 	return _u
 }
 
-// SetNillableAreaType sets the "area_type" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableAreaType(v *string) *AreaUpdate {
-	if v != nil {
-		_u.SetAreaType(*v)
-	}
+// AppendAreaType appends value to the "area_type" field.
+func (_u *AreaUpdate) AppendAreaType(v json.RawMessage) *AreaUpdate {
+	_u.mutation.AppendAreaType(v)
 	return _u
 }
 
@@ -156,16 +136,14 @@ func (_u *AreaUpdate) ClearAreaType() *AreaUpdate {
 }
 
 // SetViewType sets the "view_type" field.
-func (_u *AreaUpdate) SetViewType(v string) *AreaUpdate {
+func (_u *AreaUpdate) SetViewType(v json.RawMessage) *AreaUpdate {
 	_u.mutation.SetViewType(v)
 	return _u
 }
 
-// SetNillableViewType sets the "view_type" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableViewType(v *string) *AreaUpdate {
-	if v != nil {
-		_u.SetViewType(*v)
-	}
+// AppendViewType appends value to the "view_type" field.
+func (_u *AreaUpdate) AppendViewType(v json.RawMessage) *AreaUpdate {
+	_u.mutation.AppendViewType(v)
 	return _u
 }
 
@@ -176,16 +154,14 @@ func (_u *AreaUpdate) ClearViewType() *AreaUpdate {
 }
 
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_u *AreaUpdate) SetDisplayTimelineType(v string) *AreaUpdate {
+func (_u *AreaUpdate) SetDisplayTimelineType(v json.RawMessage) *AreaUpdate {
 	_u.mutation.SetDisplayTimelineType(v)
 	return _u
 }
 
-// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableDisplayTimelineType(v *string) *AreaUpdate {
-	if v != nil {
-		_u.SetDisplayTimelineType(*v)
-	}
+// AppendDisplayTimelineType appends value to the "display_timeline_type" field.
+func (_u *AreaUpdate) AppendDisplayTimelineType(v json.RawMessage) *AreaUpdate {
+	_u.mutation.AppendDisplayTimelineType(v)
 	return _u
 }
 
@@ -196,16 +172,14 @@ func (_u *AreaUpdate) ClearDisplayTimelineType() *AreaUpdate {
 }
 
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_u *AreaUpdate) SetAdditionalAreaType(v string) *AreaUpdate {
+func (_u *AreaUpdate) SetAdditionalAreaType(v json.RawMessage) *AreaUpdate {
 	_u.mutation.SetAdditionalAreaType(v)
 	return _u
 }
 
-// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableAdditionalAreaType(v *string) *AreaUpdate {
-	if v != nil {
-		_u.SetAdditionalAreaType(*v)
-	}
+// AppendAdditionalAreaType appends value to the "additional_area_type" field.
+func (_u *AreaUpdate) AppendAdditionalAreaType(v json.RawMessage) *AreaUpdate {
+	_u.mutation.AppendAdditionalAreaType(v)
 	return _u
 }
 
@@ -236,14 +210,14 @@ func (_u *AreaUpdate) ClearName() *AreaUpdate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *AreaUpdate) SetReleaseConditionID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetReleaseConditionID(v int) *AreaUpdate {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -251,7 +225,7 @@ func (_u *AreaUpdate) SetNillableReleaseConditionID(v *int64) *AreaUpdate {
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *AreaUpdate) AddReleaseConditionID(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddReleaseConditionID(v int) *AreaUpdate {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -303,14 +277,14 @@ func (_u *AreaUpdate) ClearLabel() *AreaUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *AreaUpdate) SetStartAt(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetStartAt(v int) *AreaUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableStartAt(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableStartAt(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -318,7 +292,7 @@ func (_u *AreaUpdate) SetNillableStartAt(v *int64) *AreaUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *AreaUpdate) AddStartAt(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddStartAt(v int) *AreaUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -330,14 +304,14 @@ func (_u *AreaUpdate) ClearStartAt() *AreaUpdate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *AreaUpdate) SetEndAt(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetEndAt(v int) *AreaUpdate {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableEndAt(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableEndAt(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -345,7 +319,7 @@ func (_u *AreaUpdate) SetNillableEndAt(v *int64) *AreaUpdate {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *AreaUpdate) AddEndAt(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddEndAt(v int) *AreaUpdate {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -357,14 +331,14 @@ func (_u *AreaUpdate) ClearEndAt() *AreaUpdate {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_u *AreaUpdate) SetReleaseConditionId2(v int64) *AreaUpdate {
+func (_u *AreaUpdate) SetReleaseConditionId2(v int) *AreaUpdate {
 	_u.mutation.ResetReleaseConditionId2()
 	_u.mutation.SetReleaseConditionId2(v)
 	return _u
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int64) *AreaUpdate {
+func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int) *AreaUpdate {
 	if v != nil {
 		_u.SetReleaseConditionId2(*v)
 	}
@@ -372,7 +346,7 @@ func (_u *AreaUpdate) SetNillableReleaseConditionId2(v *int64) *AreaUpdate {
 }
 
 // AddReleaseConditionId2 adds value to the "release_condition_id2" field.
-func (_u *AreaUpdate) AddReleaseConditionId2(v int64) *AreaUpdate {
+func (_u *AreaUpdate) AddReleaseConditionId2(v int) *AreaUpdate {
 	_u.mutation.AddReleaseConditionId2(v)
 	return _u
 }
@@ -380,6 +354,20 @@ func (_u *AreaUpdate) AddReleaseConditionId2(v int64) *AreaUpdate {
 // ClearReleaseConditionId2 clears the value of the "release_condition_id2" field.
 func (_u *AreaUpdate) ClearReleaseConditionId2() *AreaUpdate {
 	_u.mutation.ClearReleaseConditionId2()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *AreaUpdate) SetServerRegion(v string) *AreaUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *AreaUpdate) SetNillableServerRegion(v *string) *AreaUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -424,17 +412,11 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(area.FieldGameID, field.TypeInt64)
+		_spec.AddField(area.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)
@@ -443,13 +425,13 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(area.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(area.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(area.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(area.FieldGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsBaseArea(); ok {
 		_spec.SetField(area.FieldIsBaseArea, field.TypeBool, value)
@@ -458,28 +440,48 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldIsBaseArea, field.TypeBool)
 	}
 	if value, ok := _u.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAreaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldAreaType, value)
+		})
 	}
 	if _u.mutation.AreaTypeCleared() {
-		_spec.ClearField(area.FieldAreaType, field.TypeString)
+		_spec.ClearField(area.FieldAreaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeString, value)
+		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedViewType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldViewType, value)
+		})
 	}
 	if _u.mutation.ViewTypeCleared() {
-		_spec.ClearField(area.FieldViewType, field.TypeString)
+		_spec.ClearField(area.FieldViewType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDisplayTimelineType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldDisplayTimelineType, value)
+		})
 	}
 	if _u.mutation.DisplayTimelineTypeCleared() {
-		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeString)
+		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAdditionalAreaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldAdditionalAreaType, value)
+		})
 	}
 	if _u.mutation.AdditionalAreaTypeCleared() {
-		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeString)
+		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(area.FieldName, field.TypeString, value)
@@ -488,13 +490,13 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SubName(); ok {
 		_spec.SetField(area.FieldSubName, field.TypeString, value)
@@ -509,31 +511,34 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldLabel, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(area.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(area.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(area.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(area.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(area.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(area.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(area.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(area.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionId2(); ok {
-		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt64, value)
+		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionId2Cleared() {
-		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt64)
+		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -555,29 +560,15 @@ type AreaUpdateOne struct {
 	mutation *AreaMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *AreaUpdateOne) SetServerRegion(v string) *AreaUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableServerRegion(v *string) *AreaUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *AreaUpdateOne) SetGameID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetGameID(v int) *AreaUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableGameID(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableGameID(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -585,14 +576,8 @@ func (_u *AreaUpdateOne) SetNillableGameID(v *int64) *AreaUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *AreaUpdateOne) AddGameID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddGameID(v int) *AreaUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *AreaUpdateOne) ClearGameID() *AreaUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -617,14 +602,14 @@ func (_u *AreaUpdateOne) ClearAssetbundleName() *AreaUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *AreaUpdateOne) SetGroupID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetGroupID(v int) *AreaUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableGroupID(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableGroupID(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -632,7 +617,7 @@ func (_u *AreaUpdateOne) SetNillableGroupID(v *int64) *AreaUpdateOne {
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *AreaUpdateOne) AddGroupID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddGroupID(v int) *AreaUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -664,16 +649,14 @@ func (_u *AreaUpdateOne) ClearIsBaseArea() *AreaUpdateOne {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_u *AreaUpdateOne) SetAreaType(v string) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetAreaType(v json.RawMessage) *AreaUpdateOne {
 	_u.mutation.SetAreaType(v)
 	return _u
 }
 
-// SetNillableAreaType sets the "area_type" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableAreaType(v *string) *AreaUpdateOne {
-	if v != nil {
-		_u.SetAreaType(*v)
-	}
+// AppendAreaType appends value to the "area_type" field.
+func (_u *AreaUpdateOne) AppendAreaType(v json.RawMessage) *AreaUpdateOne {
+	_u.mutation.AppendAreaType(v)
 	return _u
 }
 
@@ -684,16 +667,14 @@ func (_u *AreaUpdateOne) ClearAreaType() *AreaUpdateOne {
 }
 
 // SetViewType sets the "view_type" field.
-func (_u *AreaUpdateOne) SetViewType(v string) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetViewType(v json.RawMessage) *AreaUpdateOne {
 	_u.mutation.SetViewType(v)
 	return _u
 }
 
-// SetNillableViewType sets the "view_type" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableViewType(v *string) *AreaUpdateOne {
-	if v != nil {
-		_u.SetViewType(*v)
-	}
+// AppendViewType appends value to the "view_type" field.
+func (_u *AreaUpdateOne) AppendViewType(v json.RawMessage) *AreaUpdateOne {
+	_u.mutation.AppendViewType(v)
 	return _u
 }
 
@@ -704,16 +685,14 @@ func (_u *AreaUpdateOne) ClearViewType() *AreaUpdateOne {
 }
 
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_u *AreaUpdateOne) SetDisplayTimelineType(v string) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetDisplayTimelineType(v json.RawMessage) *AreaUpdateOne {
 	_u.mutation.SetDisplayTimelineType(v)
 	return _u
 }
 
-// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableDisplayTimelineType(v *string) *AreaUpdateOne {
-	if v != nil {
-		_u.SetDisplayTimelineType(*v)
-	}
+// AppendDisplayTimelineType appends value to the "display_timeline_type" field.
+func (_u *AreaUpdateOne) AppendDisplayTimelineType(v json.RawMessage) *AreaUpdateOne {
+	_u.mutation.AppendDisplayTimelineType(v)
 	return _u
 }
 
@@ -724,16 +703,14 @@ func (_u *AreaUpdateOne) ClearDisplayTimelineType() *AreaUpdateOne {
 }
 
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_u *AreaUpdateOne) SetAdditionalAreaType(v string) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetAdditionalAreaType(v json.RawMessage) *AreaUpdateOne {
 	_u.mutation.SetAdditionalAreaType(v)
 	return _u
 }
 
-// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableAdditionalAreaType(v *string) *AreaUpdateOne {
-	if v != nil {
-		_u.SetAdditionalAreaType(*v)
-	}
+// AppendAdditionalAreaType appends value to the "additional_area_type" field.
+func (_u *AreaUpdateOne) AppendAdditionalAreaType(v json.RawMessage) *AreaUpdateOne {
+	_u.mutation.AppendAdditionalAreaType(v)
 	return _u
 }
 
@@ -764,14 +741,14 @@ func (_u *AreaUpdateOne) ClearName() *AreaUpdateOne {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_u *AreaUpdateOne) SetReleaseConditionID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetReleaseConditionID(v int) *AreaUpdateOne {
 	_u.mutation.ResetReleaseConditionID()
 	_u.mutation.SetReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionID(*v)
 	}
@@ -779,7 +756,7 @@ func (_u *AreaUpdateOne) SetNillableReleaseConditionID(v *int64) *AreaUpdateOne 
 }
 
 // AddReleaseConditionID adds value to the "release_condition_id" field.
-func (_u *AreaUpdateOne) AddReleaseConditionID(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddReleaseConditionID(v int) *AreaUpdateOne {
 	_u.mutation.AddReleaseConditionID(v)
 	return _u
 }
@@ -831,14 +808,14 @@ func (_u *AreaUpdateOne) ClearLabel() *AreaUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *AreaUpdateOne) SetStartAt(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetStartAt(v int) *AreaUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableStartAt(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableStartAt(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -846,7 +823,7 @@ func (_u *AreaUpdateOne) SetNillableStartAt(v *int64) *AreaUpdateOne {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *AreaUpdateOne) AddStartAt(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddStartAt(v int) *AreaUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -858,14 +835,14 @@ func (_u *AreaUpdateOne) ClearStartAt() *AreaUpdateOne {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *AreaUpdateOne) SetEndAt(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetEndAt(v int) *AreaUpdateOne {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableEndAt(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableEndAt(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -873,7 +850,7 @@ func (_u *AreaUpdateOne) SetNillableEndAt(v *int64) *AreaUpdateOne {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *AreaUpdateOne) AddEndAt(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddEndAt(v int) *AreaUpdateOne {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -885,14 +862,14 @@ func (_u *AreaUpdateOne) ClearEndAt() *AreaUpdateOne {
 }
 
 // SetReleaseConditionId2 sets the "release_condition_id2" field.
-func (_u *AreaUpdateOne) SetReleaseConditionId2(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetReleaseConditionId2(v int) *AreaUpdateOne {
 	_u.mutation.ResetReleaseConditionId2()
 	_u.mutation.SetReleaseConditionId2(v)
 	return _u
 }
 
 // SetNillableReleaseConditionId2 sets the "release_condition_id2" field if the given value is not nil.
-func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int) *AreaUpdateOne {
 	if v != nil {
 		_u.SetReleaseConditionId2(*v)
 	}
@@ -900,7 +877,7 @@ func (_u *AreaUpdateOne) SetNillableReleaseConditionId2(v *int64) *AreaUpdateOne
 }
 
 // AddReleaseConditionId2 adds value to the "release_condition_id2" field.
-func (_u *AreaUpdateOne) AddReleaseConditionId2(v int64) *AreaUpdateOne {
+func (_u *AreaUpdateOne) AddReleaseConditionId2(v int) *AreaUpdateOne {
 	_u.mutation.AddReleaseConditionId2(v)
 	return _u
 }
@@ -908,6 +885,20 @@ func (_u *AreaUpdateOne) AddReleaseConditionId2(v int64) *AreaUpdateOne {
 // ClearReleaseConditionId2 clears the value of the "release_condition_id2" field.
 func (_u *AreaUpdateOne) ClearReleaseConditionId2() *AreaUpdateOne {
 	_u.mutation.ClearReleaseConditionId2()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *AreaUpdateOne) SetServerRegion(v string) *AreaUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *AreaUpdateOne) SetNillableServerRegion(v *string) *AreaUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -982,17 +973,11 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(area.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(area.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(area.FieldGameID, field.TypeInt64)
+		_spec.AddField(area.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(area.FieldAssetbundleName, field.TypeString, value)
@@ -1001,13 +986,13 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(area.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(area.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(area.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(area.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(area.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(area.FieldGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsBaseArea(); ok {
 		_spec.SetField(area.FieldIsBaseArea, field.TypeBool, value)
@@ -1016,28 +1001,48 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldIsBaseArea, field.TypeBool)
 	}
 	if value, ok := _u.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAreaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldAreaType, value)
+		})
 	}
 	if _u.mutation.AreaTypeCleared() {
-		_spec.ClearField(area.FieldAreaType, field.TypeString)
+		_spec.ClearField(area.FieldAreaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeString, value)
+		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedViewType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldViewType, value)
+		})
 	}
 	if _u.mutation.ViewTypeCleared() {
-		_spec.ClearField(area.FieldViewType, field.TypeString)
+		_spec.ClearField(area.FieldViewType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDisplayTimelineType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldDisplayTimelineType, value)
+		})
 	}
 	if _u.mutation.DisplayTimelineTypeCleared() {
-		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeString)
+		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAdditionalAreaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, area.FieldAdditionalAreaType, value)
+		})
 	}
 	if _u.mutation.AdditionalAreaTypeCleared() {
-		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeString)
+		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(area.FieldName, field.TypeString, value)
@@ -1046,13 +1051,13 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionID(); ok {
-		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(area.FieldReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionIDCleared() {
-		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(area.FieldReleaseConditionID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SubName(); ok {
 		_spec.SetField(area.FieldSubName, field.TypeString, value)
@@ -1067,31 +1072,34 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldLabel, field.TypeString)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(area.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(area.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(area.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(area.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(area.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(area.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(area.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(area.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(area.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(area.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(area.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ReleaseConditionId2(); ok {
-		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt64, value)
+		_spec.SetField(area.FieldReleaseConditionId2, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedReleaseConditionId2(); ok {
-		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt64, value)
+		_spec.AddField(area.FieldReleaseConditionId2, field.TypeInt, value)
 	}
 	if _u.mutation.ReleaseConditionId2Cleared() {
-		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt64)
+		_spec.ClearField(area.FieldReleaseConditionId2, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(area.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Area{config: _u.config}
 	_spec.Assign = _node.assignValues

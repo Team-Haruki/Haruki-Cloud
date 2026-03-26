@@ -53,29 +53,174 @@ func IDLTE(id int) predicate.Musictag {
 	return predicate.Musictag(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldEQ(FieldGameID, v))
+}
+
+// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
+func MusicID(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldEQ(FieldMusicID, v))
+}
+
+// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
+func Seq(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldEQ(FieldSeq, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Musictag {
 	return predicate.Musictag(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Musictag {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Musictag {
 	return predicate.Musictag(sql.FieldEQ(FieldGameID, v))
 }
 
-// MusicID applies equality check predicate on the "music_id" field. It's identical to MusicIDEQ.
-func MusicID(v int64) predicate.Musictag {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLTE(FieldGameID, v))
+}
+
+// MusicIDEQ applies the EQ predicate on the "music_id" field.
+func MusicIDEQ(v int) predicate.Musictag {
 	return predicate.Musictag(sql.FieldEQ(FieldMusicID, v))
 }
 
-// MusicTag applies equality check predicate on the "music_tag" field. It's identical to MusicTagEQ.
-func MusicTag(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEQ(FieldMusicTag, v))
+// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
+func MusicIDNEQ(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNEQ(FieldMusicID, v))
 }
 
-// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Musictag {
+// MusicIDIn applies the In predicate on the "music_id" field.
+func MusicIDIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldIn(FieldMusicID, vs...))
+}
+
+// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
+func MusicIDNotIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotIn(FieldMusicID, vs...))
+}
+
+// MusicIDGT applies the GT predicate on the "music_id" field.
+func MusicIDGT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGT(FieldMusicID, v))
+}
+
+// MusicIDGTE applies the GTE predicate on the "music_id" field.
+func MusicIDGTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGTE(FieldMusicID, v))
+}
+
+// MusicIDLT applies the LT predicate on the "music_id" field.
+func MusicIDLT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLT(FieldMusicID, v))
+}
+
+// MusicIDLTE applies the LTE predicate on the "music_id" field.
+func MusicIDLTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLTE(FieldMusicID, v))
+}
+
+// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
+func MusicIDIsNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldIsNull(FieldMusicID))
+}
+
+// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
+func MusicIDNotNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotNull(FieldMusicID))
+}
+
+// MusicTagIsNil applies the IsNil predicate on the "music_tag" field.
+func MusicTagIsNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldIsNull(FieldMusicTag))
+}
+
+// MusicTagNotNil applies the NotNil predicate on the "music_tag" field.
+func MusicTagNotNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotNull(FieldMusicTag))
+}
+
+// SeqEQ applies the EQ predicate on the "seq" field.
+func SeqEQ(v int) predicate.Musictag {
 	return predicate.Musictag(sql.FieldEQ(FieldSeq, v))
+}
+
+// SeqNEQ applies the NEQ predicate on the "seq" field.
+func SeqNEQ(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNEQ(FieldSeq, v))
+}
+
+// SeqIn applies the In predicate on the "seq" field.
+func SeqIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldIn(FieldSeq, vs...))
+}
+
+// SeqNotIn applies the NotIn predicate on the "seq" field.
+func SeqNotIn(vs ...int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotIn(FieldSeq, vs...))
+}
+
+// SeqGT applies the GT predicate on the "seq" field.
+func SeqGT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGT(FieldSeq, v))
+}
+
+// SeqGTE applies the GTE predicate on the "seq" field.
+func SeqGTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldGTE(FieldSeq, v))
+}
+
+// SeqLT applies the LT predicate on the "seq" field.
+func SeqLT(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLT(FieldSeq, v))
+}
+
+// SeqLTE applies the LTE predicate on the "seq" field.
+func SeqLTE(v int) predicate.Musictag {
+	return predicate.Musictag(sql.FieldLTE(FieldSeq, v))
+}
+
+// SeqIsNil applies the IsNil predicate on the "seq" field.
+func SeqIsNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldIsNull(FieldSeq))
+}
+
+// SeqNotNil applies the NotNil predicate on the "seq" field.
+func SeqNotNil() predicate.Musictag {
+	return predicate.Musictag(sql.FieldNotNull(FieldSeq))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,231 +286,6 @@ func ServerRegionEqualFold(v string) predicate.Musictag {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Musictag {
 	return predicate.Musictag(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotNull(FieldGameID))
-}
-
-// MusicIDEQ applies the EQ predicate on the "music_id" field.
-func MusicIDEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEQ(FieldMusicID, v))
-}
-
-// MusicIDNEQ applies the NEQ predicate on the "music_id" field.
-func MusicIDNEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNEQ(FieldMusicID, v))
-}
-
-// MusicIDIn applies the In predicate on the "music_id" field.
-func MusicIDIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldIn(FieldMusicID, vs...))
-}
-
-// MusicIDNotIn applies the NotIn predicate on the "music_id" field.
-func MusicIDNotIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotIn(FieldMusicID, vs...))
-}
-
-// MusicIDGT applies the GT predicate on the "music_id" field.
-func MusicIDGT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGT(FieldMusicID, v))
-}
-
-// MusicIDGTE applies the GTE predicate on the "music_id" field.
-func MusicIDGTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGTE(FieldMusicID, v))
-}
-
-// MusicIDLT applies the LT predicate on the "music_id" field.
-func MusicIDLT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLT(FieldMusicID, v))
-}
-
-// MusicIDLTE applies the LTE predicate on the "music_id" field.
-func MusicIDLTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLTE(FieldMusicID, v))
-}
-
-// MusicIDIsNil applies the IsNil predicate on the "music_id" field.
-func MusicIDIsNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldIsNull(FieldMusicID))
-}
-
-// MusicIDNotNil applies the NotNil predicate on the "music_id" field.
-func MusicIDNotNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotNull(FieldMusicID))
-}
-
-// MusicTagEQ applies the EQ predicate on the "music_tag" field.
-func MusicTagEQ(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEQ(FieldMusicTag, v))
-}
-
-// MusicTagNEQ applies the NEQ predicate on the "music_tag" field.
-func MusicTagNEQ(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNEQ(FieldMusicTag, v))
-}
-
-// MusicTagIn applies the In predicate on the "music_tag" field.
-func MusicTagIn(vs ...string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldIn(FieldMusicTag, vs...))
-}
-
-// MusicTagNotIn applies the NotIn predicate on the "music_tag" field.
-func MusicTagNotIn(vs ...string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotIn(FieldMusicTag, vs...))
-}
-
-// MusicTagGT applies the GT predicate on the "music_tag" field.
-func MusicTagGT(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGT(FieldMusicTag, v))
-}
-
-// MusicTagGTE applies the GTE predicate on the "music_tag" field.
-func MusicTagGTE(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGTE(FieldMusicTag, v))
-}
-
-// MusicTagLT applies the LT predicate on the "music_tag" field.
-func MusicTagLT(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLT(FieldMusicTag, v))
-}
-
-// MusicTagLTE applies the LTE predicate on the "music_tag" field.
-func MusicTagLTE(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLTE(FieldMusicTag, v))
-}
-
-// MusicTagContains applies the Contains predicate on the "music_tag" field.
-func MusicTagContains(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldContains(FieldMusicTag, v))
-}
-
-// MusicTagHasPrefix applies the HasPrefix predicate on the "music_tag" field.
-func MusicTagHasPrefix(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldHasPrefix(FieldMusicTag, v))
-}
-
-// MusicTagHasSuffix applies the HasSuffix predicate on the "music_tag" field.
-func MusicTagHasSuffix(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldHasSuffix(FieldMusicTag, v))
-}
-
-// MusicTagIsNil applies the IsNil predicate on the "music_tag" field.
-func MusicTagIsNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldIsNull(FieldMusicTag))
-}
-
-// MusicTagNotNil applies the NotNil predicate on the "music_tag" field.
-func MusicTagNotNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotNull(FieldMusicTag))
-}
-
-// MusicTagEqualFold applies the EqualFold predicate on the "music_tag" field.
-func MusicTagEqualFold(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEqualFold(FieldMusicTag, v))
-}
-
-// MusicTagContainsFold applies the ContainsFold predicate on the "music_tag" field.
-func MusicTagContainsFold(v string) predicate.Musictag {
-	return predicate.Musictag(sql.FieldContainsFold(FieldMusicTag, v))
-}
-
-// SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldEQ(FieldSeq, v))
-}
-
-// SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNEQ(FieldSeq, v))
-}
-
-// SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldIn(FieldSeq, vs...))
-}
-
-// SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotIn(FieldSeq, vs...))
-}
-
-// SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGT(FieldSeq, v))
-}
-
-// SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldGTE(FieldSeq, v))
-}
-
-// SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLT(FieldSeq, v))
-}
-
-// SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Musictag {
-	return predicate.Musictag(sql.FieldLTE(FieldSeq, v))
-}
-
-// SeqIsNil applies the IsNil predicate on the "seq" field.
-func SeqIsNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldIsNull(FieldSeq))
-}
-
-// SeqNotNil applies the NotNil predicate on the "seq" field.
-func SeqNotNil() predicate.Musictag {
-	return predicate.Musictag(sql.FieldNotNull(FieldSeq))
 }
 
 // And groups predicates with the AND operator between them.

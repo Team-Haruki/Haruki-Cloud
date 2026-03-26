@@ -11,8 +11,6 @@ const (
 	Label = "honor"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -33,6 +31,8 @@ const (
 	FieldHonorMissionType = "honor_mission_type"
 	// FieldStartAt holds the string denoting the start_at field in the database.
 	FieldStartAt = "start_at"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the honor in the database.
 	Table = "honors"
 )
@@ -40,7 +40,6 @@ const (
 // Columns holds all SQL columns for honor fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldGroupID,
@@ -51,6 +50,7 @@ var Columns = []string{
 	FieldHonorTypeID,
 	FieldHonorMissionType,
 	FieldStartAt,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -71,11 +71,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -89,11 +84,6 @@ func BySeq(opts ...sql.OrderTermOption) OrderOption {
 // ByGroupID orders the results by the group_id field.
 func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGroupID, opts...).ToFunc()
-}
-
-// ByHonorRarity orders the results by the honor_rarity field.
-func ByHonorRarity(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHonorRarity, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -119,4 +109,9 @@ func ByHonorMissionType(opts ...sql.OrderTermOption) OrderOption {
 // ByStartAt orders the results by the start_at field.
 func ByStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStartAt, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

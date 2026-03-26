@@ -53,29 +53,14 @@ func IDLTE(id int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Eventitem {
+func GameID(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int64) predicate.Eventitem {
+func EventID(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldEventID, v))
-}
-
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEQ(FieldName, v))
-}
-
-// FlavorText applies equality check predicate on the "flavor_text" field. It's identical to FlavorTextEQ.
-func FlavorText(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEQ(FieldFlavorText, v))
 }
 
 // AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
@@ -84,162 +69,92 @@ func AssetbundleName(v string) predicate.Eventitem {
 }
 
 // GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
-func GameCharacterID(v int64) predicate.Eventitem {
+func GameCharacterID(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Eventitem {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Eventitem {
+func GameIDEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Eventitem {
+func GameIDNEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Eventitem {
+func GameIDIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Eventitem {
+func GameIDNotIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Eventitem {
+func GameIDGT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Eventitem {
+func GameIDGTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Eventitem {
+func GameIDLT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Eventitem {
+func GameIDLTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNotNull(FieldGameID))
-}
-
 // EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int64) predicate.Eventitem {
+func EventIDEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldEventID, v))
 }
 
 // EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int64) predicate.Eventitem {
+func EventIDNEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNEQ(FieldEventID, v))
 }
 
 // EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int64) predicate.Eventitem {
+func EventIDIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIn(FieldEventID, vs...))
 }
 
 // EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int64) predicate.Eventitem {
+func EventIDNotIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotIn(FieldEventID, vs...))
 }
 
 // EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int64) predicate.Eventitem {
+func EventIDGT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGT(FieldEventID, v))
 }
 
 // EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int64) predicate.Eventitem {
+func EventIDGTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGTE(FieldEventID, v))
 }
 
 // EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int64) predicate.Eventitem {
+func EventIDLT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLT(FieldEventID, v))
 }
 
 // EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int64) predicate.Eventitem {
+func EventIDLTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLTE(FieldEventID, v))
 }
 
@@ -253,61 +168,6 @@ func EventIDNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldEventID))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEQ(FieldName, v))
-}
-
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNEQ(FieldName, v))
-}
-
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldIn(FieldName, vs...))
-}
-
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNotIn(FieldName, vs...))
-}
-
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGT(FieldName, v))
-}
-
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGTE(FieldName, v))
-}
-
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLT(FieldName, v))
-}
-
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLTE(FieldName, v))
-}
-
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContains(FieldName, v))
-}
-
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasPrefix(FieldName, v))
-}
-
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasSuffix(FieldName, v))
-}
-
 // NameIsNil applies the IsNil predicate on the "name" field.
 func NameIsNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIsNull(FieldName))
@@ -318,71 +178,6 @@ func NameNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldName))
 }
 
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEqualFold(FieldName, v))
-}
-
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContainsFold(FieldName, v))
-}
-
-// FlavorTextEQ applies the EQ predicate on the "flavor_text" field.
-func FlavorTextEQ(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEQ(FieldFlavorText, v))
-}
-
-// FlavorTextNEQ applies the NEQ predicate on the "flavor_text" field.
-func FlavorTextNEQ(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNEQ(FieldFlavorText, v))
-}
-
-// FlavorTextIn applies the In predicate on the "flavor_text" field.
-func FlavorTextIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldIn(FieldFlavorText, vs...))
-}
-
-// FlavorTextNotIn applies the NotIn predicate on the "flavor_text" field.
-func FlavorTextNotIn(vs ...string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldNotIn(FieldFlavorText, vs...))
-}
-
-// FlavorTextGT applies the GT predicate on the "flavor_text" field.
-func FlavorTextGT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGT(FieldFlavorText, v))
-}
-
-// FlavorTextGTE applies the GTE predicate on the "flavor_text" field.
-func FlavorTextGTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldGTE(FieldFlavorText, v))
-}
-
-// FlavorTextLT applies the LT predicate on the "flavor_text" field.
-func FlavorTextLT(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLT(FieldFlavorText, v))
-}
-
-// FlavorTextLTE applies the LTE predicate on the "flavor_text" field.
-func FlavorTextLTE(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldLTE(FieldFlavorText, v))
-}
-
-// FlavorTextContains applies the Contains predicate on the "flavor_text" field.
-func FlavorTextContains(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContains(FieldFlavorText, v))
-}
-
-// FlavorTextHasPrefix applies the HasPrefix predicate on the "flavor_text" field.
-func FlavorTextHasPrefix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasPrefix(FieldFlavorText, v))
-}
-
-// FlavorTextHasSuffix applies the HasSuffix predicate on the "flavor_text" field.
-func FlavorTextHasSuffix(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldHasSuffix(FieldFlavorText, v))
-}
-
 // FlavorTextIsNil applies the IsNil predicate on the "flavor_text" field.
 func FlavorTextIsNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIsNull(FieldFlavorText))
@@ -391,16 +186,6 @@ func FlavorTextIsNil() predicate.Eventitem {
 // FlavorTextNotNil applies the NotNil predicate on the "flavor_text" field.
 func FlavorTextNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldFlavorText))
-}
-
-// FlavorTextEqualFold applies the EqualFold predicate on the "flavor_text" field.
-func FlavorTextEqualFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldEqualFold(FieldFlavorText, v))
-}
-
-// FlavorTextContainsFold applies the ContainsFold predicate on the "flavor_text" field.
-func FlavorTextContainsFold(v string) predicate.Eventitem {
-	return predicate.Eventitem(sql.FieldContainsFold(FieldFlavorText, v))
 }
 
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.
@@ -479,42 +264,42 @@ func AssetbundleNameContainsFold(v string) predicate.Eventitem {
 }
 
 // GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
-func GameCharacterIDEQ(v int64) predicate.Eventitem {
+func GameCharacterIDEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
-func GameCharacterIDNEQ(v int64) predicate.Eventitem {
+func GameCharacterIDNEQ(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDIn applies the In predicate on the "game_character_id" field.
-func GameCharacterIDIn(vs ...int64) predicate.Eventitem {
+func GameCharacterIDIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
-func GameCharacterIDNotIn(vs ...int64) predicate.Eventitem {
+func GameCharacterIDNotIn(vs ...int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
-func GameCharacterIDGT(v int64) predicate.Eventitem {
+func GameCharacterIDGT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
-func GameCharacterIDGTE(v int64) predicate.Eventitem {
+func GameCharacterIDGTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldGTE(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
-func GameCharacterIDLT(v int64) predicate.Eventitem {
+func GameCharacterIDLT(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
-func GameCharacterIDLTE(v int64) predicate.Eventitem {
+func GameCharacterIDLTE(v int) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldLTE(FieldGameCharacterID, v))
 }
 
@@ -526,6 +311,71 @@ func GameCharacterIDIsNil() predicate.Eventitem {
 // GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
 func GameCharacterIDNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldGameCharacterID))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

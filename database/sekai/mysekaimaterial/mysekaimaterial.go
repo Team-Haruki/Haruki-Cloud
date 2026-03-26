@@ -11,8 +11,6 @@ const (
 	Label = "mysekaimaterial"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -35,6 +33,8 @@ const (
 	FieldMysekaiSiteIds = "mysekai_site_ids"
 	// FieldMysekaiPhenomenaGroupID holds the string denoting the mysekai_phenomena_group_id field in the database.
 	FieldMysekaiPhenomenaGroupID = "mysekai_phenomena_group_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaimaterial in the database.
 	Table = "mysekaimaterials"
 )
@@ -42,7 +42,6 @@ const (
 // Columns holds all SQL columns for mysekaimaterial fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldMysekaiMaterialType,
@@ -54,6 +53,7 @@ var Columns = []string{
 	FieldModelAssetbundleName,
 	FieldMysekaiSiteIds,
 	FieldMysekaiPhenomenaGroupID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -72,11 +72,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -117,4 +112,9 @@ func ByModelAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 // ByMysekaiPhenomenaGroupID orders the results by the mysekai_phenomena_group_id field.
 func ByMysekaiPhenomenaGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiPhenomenaGroupID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

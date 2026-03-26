@@ -16,19 +16,19 @@ type Cardraritie struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType string `json:"card_rarity_type,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// MaxLevel holds the value of the "max_level" field.
-	MaxLevel int64 `json:"max_level,omitempty"`
+	MaxLevel int `json:"max_level,omitempty"`
 	// MaxSkillLevel holds the value of the "max_skill_level" field.
-	MaxSkillLevel int64 `json:"max_skill_level,omitempty"`
+	MaxSkillLevel int `json:"max_skill_level,omitempty"`
 	// TrainingMaxLevel holds the value of the "training_max_level" field.
-	TrainingMaxLevel int64 `json:"training_max_level,omitempty"`
-	selectValues     sql.SelectValues
+	TrainingMaxLevel int `json:"training_max_level,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,7 +38,7 @@ func (*Cardraritie) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case cardraritie.FieldID, cardraritie.FieldSeq, cardraritie.FieldMaxLevel, cardraritie.FieldMaxSkillLevel, cardraritie.FieldTrainingMaxLevel:
 			values[i] = new(sql.NullInt64)
-		case cardraritie.FieldServerRegion, cardraritie.FieldCardRarityType:
+		case cardraritie.FieldCardRarityType, cardraritie.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -61,12 +61,6 @@ func (_m *Cardraritie) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case cardraritie.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case cardraritie.FieldCardRarityType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
@@ -77,25 +71,31 @@ func (_m *Cardraritie) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case cardraritie.FieldMaxLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_level", values[i])
 			} else if value.Valid {
-				_m.MaxLevel = value.Int64
+				_m.MaxLevel = int(value.Int64)
 			}
 		case cardraritie.FieldMaxSkillLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_skill_level", values[i])
 			} else if value.Valid {
-				_m.MaxSkillLevel = value.Int64
+				_m.MaxSkillLevel = int(value.Int64)
 			}
 		case cardraritie.FieldTrainingMaxLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field training_max_level", values[i])
 			} else if value.Valid {
-				_m.TrainingMaxLevel = value.Int64
+				_m.TrainingMaxLevel = int(value.Int64)
+			}
+		case cardraritie.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -133,9 +133,6 @@ func (_m *Cardraritie) String() string {
 	var builder strings.Builder
 	builder.WriteString("Cardraritie(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("card_rarity_type=")
 	builder.WriteString(_m.CardRarityType)
 	builder.WriteString(", ")
@@ -150,6 +147,9 @@ func (_m *Cardraritie) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("training_max_level=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TrainingMaxLevel))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

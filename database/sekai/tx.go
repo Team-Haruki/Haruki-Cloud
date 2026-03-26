@@ -40,8 +40,6 @@ type Tx struct {
 	Challengelivehighscorereward *ChallengelivehighscorerewardClient
 	// Character2D is the client for interacting with the Character2D builders.
 	Character2D *Character2DClient
-	// Characterarchivemysekaicharactertalkgroup is the client for interacting with the Characterarchivemysekaicharactertalkgroup builders.
-	Characterarchivemysekaicharactertalkgroup *CharacterarchivemysekaicharactertalkgroupClient
 	// Charactermissionv2Parametergroup is the client for interacting with the Charactermissionv2Parametergroup builders.
 	Charactermissionv2Parametergroup *Charactermissionv2ParametergroupClient
 	// Characterrank is the client for interacting with the Characterrank builders.
@@ -110,14 +108,10 @@ type Tx struct {
 	Mysekaicharactertalkconditiongroup *MysekaicharactertalkconditiongroupClient
 	// Mysekaicharactertalkfixturecommon is the client for interacting with the Mysekaicharactertalkfixturecommon builders.
 	Mysekaicharactertalkfixturecommon *MysekaicharactertalkfixturecommonClient
-	// Mysekaicharactertalkfixturecommonmysekaifixturegroup is the client for interacting with the Mysekaicharactertalkfixturecommonmysekaifixturegroup builders.
-	Mysekaicharactertalkfixturecommonmysekaifixturegroup *MysekaicharactertalkfixturecommonmysekaifixturegroupClient
 	// Mysekaifixture is the client for interacting with the Mysekaifixture builders.
 	Mysekaifixture *MysekaifixtureClient
 	// Mysekaifixturegamecharactergroup is the client for interacting with the Mysekaifixturegamecharactergroup builders.
 	Mysekaifixturegamecharactergroup *MysekaifixturegamecharactergroupClient
-	// Mysekaifixturegamecharactergroupperformancebonuse is the client for interacting with the Mysekaifixturegamecharactergroupperformancebonuse builders.
-	Mysekaifixturegamecharactergroupperformancebonuse *MysekaifixturegamecharactergroupperformancebonuseClient
 	// Mysekaifixturemaingenre is the client for interacting with the Mysekaifixturemaingenre builders.
 	Mysekaifixturemaingenre *MysekaifixturemaingenreClient
 	// Mysekaifixtureonlydisassemblematerial is the client for interacting with the Mysekaifixtureonlydisassemblematerial builders.
@@ -176,8 +170,6 @@ type Tx struct {
 	Worldbloomdifferentattributebonuse *WorldbloomdifferentattributebonuseClient
 	// Worldbloomsupportdeckbonuse is the client for interacting with the Worldbloomsupportdeckbonuse builders.
 	Worldbloomsupportdeckbonuse *WorldbloomsupportdeckbonuseClient
-	// Worldbloomsupportdeckuniteventlimitedbonuse is the client for interacting with the Worldbloomsupportdeckuniteventlimitedbonuse builders.
-	Worldbloomsupportdeckuniteventlimitedbonuse *WorldbloomsupportdeckuniteventlimitedbonuseClient
 
 	// lazily loaded.
 	client     *Client
@@ -323,7 +315,6 @@ func (tx *Tx) init() {
 	tx.Cardsupplie = NewCardsupplieClient(tx.config)
 	tx.Challengelivehighscorereward = NewChallengelivehighscorerewardClient(tx.config)
 	tx.Character2D = NewCharacter2DClient(tx.config)
-	tx.Characterarchivemysekaicharactertalkgroup = NewCharacterarchivemysekaicharactertalkgroupClient(tx.config)
 	tx.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(tx.config)
 	tx.Characterrank = NewCharacterrankClient(tx.config)
 	tx.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(tx.config)
@@ -358,10 +349,8 @@ func (tx *Tx) init() {
 	tx.Mysekaicharactertalkcondition = NewMysekaicharactertalkconditionClient(tx.config)
 	tx.Mysekaicharactertalkconditiongroup = NewMysekaicharactertalkconditiongroupClient(tx.config)
 	tx.Mysekaicharactertalkfixturecommon = NewMysekaicharactertalkfixturecommonClient(tx.config)
-	tx.Mysekaicharactertalkfixturecommonmysekaifixturegroup = NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(tx.config)
 	tx.Mysekaifixture = NewMysekaifixtureClient(tx.config)
 	tx.Mysekaifixturegamecharactergroup = NewMysekaifixturegamecharactergroupClient(tx.config)
-	tx.Mysekaifixturegamecharactergroupperformancebonuse = NewMysekaifixturegamecharactergroupperformancebonuseClient(tx.config)
 	tx.Mysekaifixturemaingenre = NewMysekaifixturemaingenreClient(tx.config)
 	tx.Mysekaifixtureonlydisassemblematerial = NewMysekaifixtureonlydisassemblematerialClient(tx.config)
 	tx.Mysekaifixturesubgenre = NewMysekaifixturesubgenreClient(tx.config)
@@ -391,7 +380,6 @@ func (tx *Tx) init() {
 	tx.Worldbloom = NewWorldbloomClient(tx.config)
 	tx.Worldbloomdifferentattributebonuse = NewWorldbloomdifferentattributebonuseClient(tx.config)
 	tx.Worldbloomsupportdeckbonuse = NewWorldbloomsupportdeckbonuseClient(tx.config)
-	tx.Worldbloomsupportdeckuniteventlimitedbonuse = NewWorldbloomsupportdeckuniteventlimitedbonuseClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

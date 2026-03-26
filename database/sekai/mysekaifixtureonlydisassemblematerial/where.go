@@ -53,34 +53,274 @@ func IDLTE(id int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldGameID, v))
+}
+
+// MysekaiFixtureID applies equality check predicate on the "mysekai_fixture_id" field. It's identical to MysekaiFixtureIDEQ.
+func MysekaiFixtureID(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
+func MysekaiMaterialID(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiMaterialID, v))
+}
+
+// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
+func Seq(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldSeq, v))
+}
+
+// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
+func Quantity(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldQuantity, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldGameID, v))
 }
 
-// MysekaiFixtureID applies equality check predicate on the "mysekai_fixture_id" field. It's identical to MysekaiFixtureIDEQ.
-func MysekaiFixtureID(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldGameID, v))
+}
+
+// MysekaiFixtureIDEQ applies the EQ predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiFixtureID, v))
 }
 
-// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
-func MysekaiMaterialID(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
+// MysekaiFixtureIDNEQ applies the NEQ predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDNEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiFixtureIDIn applies the In predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldMysekaiFixtureID, vs...))
+}
+
+// MysekaiFixtureIDNotIn applies the NotIn predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDNotIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldMysekaiFixtureID, vs...))
+}
+
+// MysekaiFixtureIDGT applies the GT predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDGT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiFixtureIDGTE applies the GTE predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDGTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiFixtureIDLT applies the LT predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDLT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiFixtureIDLTE applies the LTE predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDLTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldMysekaiFixtureID, v))
+}
+
+// MysekaiFixtureIDIsNil applies the IsNil predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldMysekaiFixtureID))
+}
+
+// MysekaiFixtureIDNotNil applies the NotNil predicate on the "mysekai_fixture_id" field.
+func MysekaiFixtureIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldMysekaiFixtureID))
+}
+
+// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiMaterialID, v))
 }
 
-// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
+// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldMysekaiMaterialID))
+}
+
+// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldMysekaiMaterialID))
+}
+
+// SeqEQ applies the EQ predicate on the "seq" field.
+func SeqEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldSeq, v))
 }
 
-// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
-func Quantity(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
+// SeqNEQ applies the NEQ predicate on the "seq" field.
+func SeqNEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldSeq, v))
+}
+
+// SeqIn applies the In predicate on the "seq" field.
+func SeqIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldSeq, vs...))
+}
+
+// SeqNotIn applies the NotIn predicate on the "seq" field.
+func SeqNotIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldSeq, vs...))
+}
+
+// SeqGT applies the GT predicate on the "seq" field.
+func SeqGT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldSeq, v))
+}
+
+// SeqGTE applies the GTE predicate on the "seq" field.
+func SeqGTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldSeq, v))
+}
+
+// SeqLT applies the LT predicate on the "seq" field.
+func SeqLT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldSeq, v))
+}
+
+// SeqLTE applies the LTE predicate on the "seq" field.
+func SeqLTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldSeq, v))
+}
+
+// SeqIsNil applies the IsNil predicate on the "seq" field.
+func SeqIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldSeq))
+}
+
+// SeqNotNil applies the NotNil predicate on the "seq" field.
+func SeqNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldSeq))
+}
+
+// QuantityEQ applies the EQ predicate on the "quantity" field.
+func QuantityEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldQuantity, v))
+}
+
+// QuantityNEQ applies the NEQ predicate on the "quantity" field.
+func QuantityNEQ(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldQuantity, v))
+}
+
+// QuantityIn applies the In predicate on the "quantity" field.
+func QuantityIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldQuantity, vs...))
+}
+
+// QuantityNotIn applies the NotIn predicate on the "quantity" field.
+func QuantityNotIn(vs ...int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldQuantity, vs...))
+}
+
+// QuantityGT applies the GT predicate on the "quantity" field.
+func QuantityGT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldQuantity, v))
+}
+
+// QuantityGTE applies the GTE predicate on the "quantity" field.
+func QuantityGTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldQuantity, v))
+}
+
+// QuantityLT applies the LT predicate on the "quantity" field.
+func QuantityLT(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldQuantity, v))
+}
+
+// QuantityLTE applies the LTE predicate on the "quantity" field.
+func QuantityLTE(v int) predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldQuantity, v))
+}
+
+// QuantityIsNil applies the IsNil predicate on the "quantity" field.
+func QuantityIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldQuantity))
+}
+
+// QuantityNotNil applies the NotNil predicate on the "quantity" field.
+func QuantityNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
+	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldQuantity))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -146,256 +386,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaifixtureonlydisassemblemate
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaifixtureonlydisassemblematerial {
 	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldGameID))
-}
-
-// MysekaiFixtureIDEQ applies the EQ predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDNEQ applies the NEQ predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDNEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDIn applies the In predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldMysekaiFixtureID, vs...))
-}
-
-// MysekaiFixtureIDNotIn applies the NotIn predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDNotIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldMysekaiFixtureID, vs...))
-}
-
-// MysekaiFixtureIDGT applies the GT predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDGT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDGTE applies the GTE predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDGTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDLT applies the LT predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDLT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDLTE applies the LTE predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldMysekaiFixtureID, v))
-}
-
-// MysekaiFixtureIDIsNil applies the IsNil predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldMysekaiFixtureID))
-}
-
-// MysekaiFixtureIDNotNil applies the NotNil predicate on the "mysekai_fixture_id" field.
-func MysekaiFixtureIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldMysekaiFixtureID))
-}
-
-// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldMysekaiMaterialID))
-}
-
-// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldMysekaiMaterialID))
-}
-
-// SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldSeq, v))
-}
-
-// SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldSeq, v))
-}
-
-// SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldSeq, vs...))
-}
-
-// SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldSeq, vs...))
-}
-
-// SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldSeq, v))
-}
-
-// SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldSeq, v))
-}
-
-// SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldSeq, v))
-}
-
-// SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldSeq, v))
-}
-
-// SeqIsNil applies the IsNil predicate on the "seq" field.
-func SeqIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldSeq))
-}
-
-// SeqNotNil applies the NotNil predicate on the "seq" field.
-func SeqNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldSeq))
-}
-
-// QuantityEQ applies the EQ predicate on the "quantity" field.
-func QuantityEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldEQ(FieldQuantity, v))
-}
-
-// QuantityNEQ applies the NEQ predicate on the "quantity" field.
-func QuantityNEQ(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNEQ(FieldQuantity, v))
-}
-
-// QuantityIn applies the In predicate on the "quantity" field.
-func QuantityIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIn(FieldQuantity, vs...))
-}
-
-// QuantityNotIn applies the NotIn predicate on the "quantity" field.
-func QuantityNotIn(vs ...int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotIn(FieldQuantity, vs...))
-}
-
-// QuantityGT applies the GT predicate on the "quantity" field.
-func QuantityGT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGT(FieldQuantity, v))
-}
-
-// QuantityGTE applies the GTE predicate on the "quantity" field.
-func QuantityGTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldGTE(FieldQuantity, v))
-}
-
-// QuantityLT applies the LT predicate on the "quantity" field.
-func QuantityLT(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLT(FieldQuantity, v))
-}
-
-// QuantityLTE applies the LTE predicate on the "quantity" field.
-func QuantityLTE(v int64) predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldLTE(FieldQuantity, v))
-}
-
-// QuantityIsNil applies the IsNil predicate on the "quantity" field.
-func QuantityIsNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldIsNull(FieldQuantity))
-}
-
-// QuantityNotNil applies the NotNil predicate on the "quantity" field.
-func QuantityNotNil() predicate.Mysekaifixtureonlydisassemblematerial {
-	return predicate.Mysekaifixtureonlydisassemblematerial(sql.FieldNotNull(FieldQuantity))
 }
 
 // And groups predicates with the AND operator between them.

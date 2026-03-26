@@ -11,8 +11,6 @@ const (
 	Label = "worldbloom"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldEventID holds the string denoting the event_id field in the database.
@@ -33,6 +31,8 @@ const (
 	FieldIsSupplemental = "is_supplemental"
 	// FieldCostume2DID holds the string denoting the costume2_d_id field in the database.
 	FieldCostume2DID = "costume2_d_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the worldbloom in the database.
 	Table = "worldblooms"
 )
@@ -40,7 +40,6 @@ const (
 // Columns holds all SQL columns for worldbloom fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldEventID,
 	FieldGameCharacterID,
@@ -51,6 +50,7 @@ var Columns = []string{
 	FieldChapterEndAt,
 	FieldIsSupplemental,
 	FieldCostume2DID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -71,11 +71,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -89,11 +84,6 @@ func ByEventID(opts ...sql.OrderTermOption) OrderOption {
 // ByGameCharacterID orders the results by the game_character_id field.
 func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
-}
-
-// ByWorldBloomChapterType orders the results by the world_bloom_chapter_type field.
-func ByWorldBloomChapterType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorldBloomChapterType, opts...).ToFunc()
 }
 
 // ByChapterNo orders the results by the chapter_no field.
@@ -124,4 +114,9 @@ func ByIsSupplemental(opts ...sql.OrderTermOption) OrderOption {
 // ByCostume2DID orders the results by the costume2_d_id field.
 func ByCostume2DID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCostume2DID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

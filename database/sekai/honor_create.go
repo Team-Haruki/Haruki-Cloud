@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/honor"
@@ -19,34 +20,20 @@ type HonorCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *HonorCreate) SetServerRegion(v string) *HonorCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *HonorCreate) SetGameID(v int64) *HonorCreate {
+func (_c *HonorCreate) SetGameID(v int) *HonorCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableGameID(v *int64) *HonorCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *HonorCreate) SetSeq(v int64) *HonorCreate {
+func (_c *HonorCreate) SetSeq(v int) *HonorCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableSeq(v *int64) *HonorCreate {
+func (_c *HonorCreate) SetNillableSeq(v *int) *HonorCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *HonorCreate) SetNillableSeq(v *int64) *HonorCreate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (_c *HonorCreate) SetGroupID(v int64) *HonorCreate {
+func (_c *HonorCreate) SetGroupID(v int) *HonorCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableGroupID(v *int64) *HonorCreate {
+func (_c *HonorCreate) SetNillableGroupID(v *int) *HonorCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -68,16 +55,8 @@ func (_c *HonorCreate) SetNillableGroupID(v *int64) *HonorCreate {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_c *HonorCreate) SetHonorRarity(v string) *HonorCreate {
+func (_c *HonorCreate) SetHonorRarity(v json.RawMessage) *HonorCreate {
 	_c.mutation.SetHonorRarity(v)
-	return _c
-}
-
-// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableHonorRarity(v *string) *HonorCreate {
-	if v != nil {
-		_c.SetHonorRarity(*v)
-	}
 	return _c
 }
 
@@ -110,19 +89,19 @@ func (_c *HonorCreate) SetNillableAssetbundleName(v *string) *HonorCreate {
 }
 
 // SetLevels sets the "levels" field.
-func (_c *HonorCreate) SetLevels(v []interface{}) *HonorCreate {
+func (_c *HonorCreate) SetLevels(v json.RawMessage) *HonorCreate {
 	_c.mutation.SetLevels(v)
 	return _c
 }
 
 // SetHonorTypeID sets the "honor_type_id" field.
-func (_c *HonorCreate) SetHonorTypeID(v int64) *HonorCreate {
+func (_c *HonorCreate) SetHonorTypeID(v int) *HonorCreate {
 	_c.mutation.SetHonorTypeID(v)
 	return _c
 }
 
 // SetNillableHonorTypeID sets the "honor_type_id" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableHonorTypeID(v *int64) *HonorCreate {
+func (_c *HonorCreate) SetNillableHonorTypeID(v *int) *HonorCreate {
 	if v != nil {
 		_c.SetHonorTypeID(*v)
 	}
@@ -144,16 +123,22 @@ func (_c *HonorCreate) SetNillableHonorMissionType(v *string) *HonorCreate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *HonorCreate) SetStartAt(v int64) *HonorCreate {
+func (_c *HonorCreate) SetStartAt(v int) *HonorCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *HonorCreate) SetNillableStartAt(v *int64) *HonorCreate {
+func (_c *HonorCreate) SetNillableStartAt(v *int) *HonorCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *HonorCreate) SetServerRegion(v string) *HonorCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -191,6 +176,9 @@ func (_c *HonorCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *HonorCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Honor.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Honor.server_region"`)}
 	}
@@ -220,24 +208,20 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node = &Honor{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(honor.Table, sqlgraph.NewFieldSpec(honor.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(honor.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(honor.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(honor.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(honor.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(honor.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(honor.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(honor.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.HonorRarity(); ok {
-		_spec.SetField(honor.FieldHonorRarity, field.TypeString, value)
+		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
 		_node.HonorRarity = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -253,7 +237,7 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node.Levels = value
 	}
 	if value, ok := _c.mutation.HonorTypeID(); ok {
-		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt64, value)
+		_spec.SetField(honor.FieldHonorTypeID, field.TypeInt, value)
 		_node.HonorTypeID = value
 	}
 	if value, ok := _c.mutation.HonorMissionType(); ok {
@@ -261,8 +245,12 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node.HonorMissionType = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(honor.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(honor.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(honor.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

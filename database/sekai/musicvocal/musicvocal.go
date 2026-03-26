@@ -11,8 +11,6 @@ const (
 	Label = "musicvocal"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMusicID holds the string denoting the music_id field in the database.
@@ -35,6 +33,8 @@ const (
 	FieldSpecialSeasonID = "special_season_id"
 	// FieldArchiveDisplayType holds the string denoting the archive_display_type field in the database.
 	FieldArchiveDisplayType = "archive_display_type"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the musicvocal in the database.
 	Table = "musicvocals"
 )
@@ -42,7 +42,6 @@ const (
 // Columns holds all SQL columns for musicvocal fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMusicID,
 	FieldMusicVocalType,
@@ -54,6 +53,7 @@ var Columns = []string{
 	FieldArchivePublishedAt,
 	FieldSpecialSeasonID,
 	FieldArchiveDisplayType,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -74,11 +74,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -87,11 +82,6 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 // ByMusicID orders the results by the music_id field.
 func ByMusicID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicID, opts...).ToFunc()
-}
-
-// ByMusicVocalType orders the results by the music_vocal_type field.
-func ByMusicVocalType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMusicVocalType, opts...).ToFunc()
 }
 
 // BySeq orders the results by the seq field.
@@ -124,7 +114,7 @@ func BySpecialSeasonID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialSeasonID, opts...).ToFunc()
 }
 
-// ByArchiveDisplayType orders the results by the archive_display_type field.
-func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

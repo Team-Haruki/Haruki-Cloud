@@ -11,8 +11,6 @@ const (
 	Label = "areaitemlevel"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldAreaItemID holds the string denoting the area_item_id field in the database.
 	FieldAreaItemID = "area_item_id"
 	// FieldLevel holds the string denoting the level field in the database.
@@ -37,6 +35,8 @@ const (
 	FieldPower3AllMatchBonusRate = "power3_all_match_bonus_rate"
 	// FieldSentence holds the string denoting the sentence field in the database.
 	FieldSentence = "sentence"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the areaitemlevel in the database.
 	Table = "areaitemlevels"
 )
@@ -44,7 +44,6 @@ const (
 // Columns holds all SQL columns for areaitemlevel fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldAreaItemID,
 	FieldLevel,
 	FieldTargetUnit,
@@ -57,6 +56,7 @@ var Columns = []string{
 	FieldPower3BonusRate,
 	FieldPower3AllMatchBonusRate,
 	FieldSentence,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -77,11 +77,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByAreaItemID orders the results by the area_item_id field.
 func ByAreaItemID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAreaItemID, opts...).ToFunc()
@@ -90,16 +85,6 @@ func ByAreaItemID(opts ...sql.OrderTermOption) OrderOption {
 // ByLevel orders the results by the level field.
 func ByLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLevel, opts...).ToFunc()
-}
-
-// ByTargetUnit orders the results by the target_unit field.
-func ByTargetUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTargetUnit, opts...).ToFunc()
-}
-
-// ByTargetCardAttr orders the results by the target_card_attr field.
-func ByTargetCardAttr(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTargetCardAttr, opts...).ToFunc()
 }
 
 // ByTargetGameCharacterID orders the results by the target_game_character_id field.
@@ -140,4 +125,9 @@ func ByPower3AllMatchBonusRate(opts ...sql.OrderTermOption) OrderOption {
 // BySentence orders the results by the sentence field.
 func BySentence(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSentence, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

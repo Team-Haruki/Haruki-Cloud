@@ -262,12 +262,12 @@ func (_q *WorldbloomsupportdeckbonuseQuery) Clone() *Worldbloomsupportdeckbonuse
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Worldbloomsupportdeckbonuse.Query().
-//		GroupBy(worldbloomsupportdeckbonuse.FieldServerRegion).
+//		GroupBy(worldbloomsupportdeckbonuse.FieldCardRarityType).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *WorldbloomsupportdeckbonuseQuery) GroupBy(field string, fields ...string) *WorldbloomsupportdeckbonuseGroupBy {
@@ -285,11 +285,11 @@ func (_q *WorldbloomsupportdeckbonuseQuery) GroupBy(field string, fields ...stri
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //	}
 //
 //	client.Worldbloomsupportdeckbonuse.Query().
-//		Select(worldbloomsupportdeckbonuse.FieldServerRegion).
+//		Select(worldbloomsupportdeckbonuse.FieldCardRarityType).
 //		Scan(ctx, &v)
 func (_q *WorldbloomsupportdeckbonuseQuery) Select(fields ...string) *WorldbloomsupportdeckbonuseSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -53,29 +53,219 @@ func IDLTE(id int) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGameID, v))
+}
+
+// GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
+func GroupID(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGroupID, v))
+}
+
+// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
+func MysekaiMaterialID(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldMysekaiMaterialID, v))
+}
+
+// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
+func Quantity(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldQuantity, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaigatematerialgroup {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGameID, v))
 }
 
-// GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int64) predicate.Mysekaigatematerialgroup {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldGameID, v))
+}
+
+// GroupIDEQ applies the EQ predicate on the "group_id" field.
+func GroupIDEQ(v int) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGroupID, v))
 }
 
-// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
-func MysekaiMaterialID(v int64) predicate.Mysekaigatematerialgroup {
+// GroupIDNEQ applies the NEQ predicate on the "group_id" field.
+func GroupIDNEQ(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldGroupID, v))
+}
+
+// GroupIDIn applies the In predicate on the "group_id" field.
+func GroupIDIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldGroupID, vs...))
+}
+
+// GroupIDNotIn applies the NotIn predicate on the "group_id" field.
+func GroupIDNotIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldGroupID, vs...))
+}
+
+// GroupIDGT applies the GT predicate on the "group_id" field.
+func GroupIDGT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldGroupID, v))
+}
+
+// GroupIDGTE applies the GTE predicate on the "group_id" field.
+func GroupIDGTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldGroupID, v))
+}
+
+// GroupIDLT applies the LT predicate on the "group_id" field.
+func GroupIDLT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldGroupID, v))
+}
+
+// GroupIDLTE applies the LTE predicate on the "group_id" field.
+func GroupIDLTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldGroupID, v))
+}
+
+// GroupIDIsNil applies the IsNil predicate on the "group_id" field.
+func GroupIDIsNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldGroupID))
+}
+
+// GroupIDNotNil applies the NotNil predicate on the "group_id" field.
+func GroupIDNotNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldGroupID))
+}
+
+// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDEQ(v int) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldMysekaiMaterialID, v))
 }
 
-// Quantity applies equality check predicate on the "quantity" field. It's identical to QuantityEQ.
-func Quantity(v int64) predicate.Mysekaigatematerialgroup {
+// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNEQ(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIsNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldMysekaiMaterialID))
+}
+
+// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldMysekaiMaterialID))
+}
+
+// QuantityEQ applies the EQ predicate on the "quantity" field.
+func QuantityEQ(v int) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldQuantity, v))
+}
+
+// QuantityNEQ applies the NEQ predicate on the "quantity" field.
+func QuantityNEQ(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldQuantity, v))
+}
+
+// QuantityIn applies the In predicate on the "quantity" field.
+func QuantityIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldQuantity, vs...))
+}
+
+// QuantityNotIn applies the NotIn predicate on the "quantity" field.
+func QuantityNotIn(vs ...int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldQuantity, vs...))
+}
+
+// QuantityGT applies the GT predicate on the "quantity" field.
+func QuantityGT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldQuantity, v))
+}
+
+// QuantityGTE applies the GTE predicate on the "quantity" field.
+func QuantityGTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldQuantity, v))
+}
+
+// QuantityLT applies the LT predicate on the "quantity" field.
+func QuantityLT(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldQuantity, v))
+}
+
+// QuantityLTE applies the LTE predicate on the "quantity" field.
+func QuantityLTE(v int) predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldQuantity, v))
+}
+
+// QuantityIsNil applies the IsNil predicate on the "quantity" field.
+func QuantityIsNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldQuantity))
+}
+
+// QuantityNotNil applies the NotNil predicate on the "quantity" field.
+func QuantityNotNil() predicate.Mysekaigatematerialgroup {
+	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldQuantity))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,206 +331,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaigatematerialgroup {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaigatematerialgroup {
 	return predicate.Mysekaigatematerialgroup(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldGameID))
-}
-
-// GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldGroupID, v))
-}
-
-// GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldGroupID, v))
-}
-
-// GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldGroupID, vs...))
-}
-
-// GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldGroupID, vs...))
-}
-
-// GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldGroupID, v))
-}
-
-// GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldGroupID, v))
-}
-
-// GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldGroupID, v))
-}
-
-// GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldGroupID, v))
-}
-
-// GroupIDIsNil applies the IsNil predicate on the "group_id" field.
-func GroupIDIsNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldGroupID))
-}
-
-// GroupIDNotNil applies the NotNil predicate on the "group_id" field.
-func GroupIDNotNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldGroupID))
-}
-
-// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIsNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldMysekaiMaterialID))
-}
-
-// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldMysekaiMaterialID))
-}
-
-// QuantityEQ applies the EQ predicate on the "quantity" field.
-func QuantityEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldEQ(FieldQuantity, v))
-}
-
-// QuantityNEQ applies the NEQ predicate on the "quantity" field.
-func QuantityNEQ(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNEQ(FieldQuantity, v))
-}
-
-// QuantityIn applies the In predicate on the "quantity" field.
-func QuantityIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIn(FieldQuantity, vs...))
-}
-
-// QuantityNotIn applies the NotIn predicate on the "quantity" field.
-func QuantityNotIn(vs ...int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotIn(FieldQuantity, vs...))
-}
-
-// QuantityGT applies the GT predicate on the "quantity" field.
-func QuantityGT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGT(FieldQuantity, v))
-}
-
-// QuantityGTE applies the GTE predicate on the "quantity" field.
-func QuantityGTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldGTE(FieldQuantity, v))
-}
-
-// QuantityLT applies the LT predicate on the "quantity" field.
-func QuantityLT(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLT(FieldQuantity, v))
-}
-
-// QuantityLTE applies the LTE predicate on the "quantity" field.
-func QuantityLTE(v int64) predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldLTE(FieldQuantity, v))
-}
-
-// QuantityIsNil applies the IsNil predicate on the "quantity" field.
-func QuantityIsNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldIsNull(FieldQuantity))
-}
-
-// QuantityNotNil applies the NotNil predicate on the "quantity" field.
-func QuantityNotNil() predicate.Mysekaigatematerialgroup {
-	return predicate.Mysekaigatematerialgroup(sql.FieldNotNull(FieldQuantity))
 }
 
 // And groups predicates with the AND operator between them.

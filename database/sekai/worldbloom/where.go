@@ -53,48 +53,38 @@ func IDLTE(id int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Worldbloom {
+func GameID(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldGameID, v))
 }
 
 // EventID applies equality check predicate on the "event_id" field. It's identical to EventIDEQ.
-func EventID(v int64) predicate.Worldbloom {
+func EventID(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldEventID, v))
 }
 
 // GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
-func GameCharacterID(v int64) predicate.Worldbloom {
+func GameCharacterID(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
-// WorldBloomChapterType applies equality check predicate on the "world_bloom_chapter_type" field. It's identical to WorldBloomChapterTypeEQ.
-func WorldBloomChapterType(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldWorldBloomChapterType, v))
-}
-
 // ChapterNo applies equality check predicate on the "chapter_no" field. It's identical to ChapterNoEQ.
-func ChapterNo(v int64) predicate.Worldbloom {
+func ChapterNo(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldChapterNo, v))
 }
 
 // ChapterStartAt applies equality check predicate on the "chapter_start_at" field. It's identical to ChapterStartAtEQ.
-func ChapterStartAt(v int64) predicate.Worldbloom {
+func ChapterStartAt(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldChapterStartAt, v))
 }
 
 // AggregateAt applies equality check predicate on the "aggregate_at" field. It's identical to AggregateAtEQ.
-func AggregateAt(v int64) predicate.Worldbloom {
+func AggregateAt(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldAggregateAt, v))
 }
 
 // ChapterEndAt applies equality check predicate on the "chapter_end_at" field. It's identical to ChapterEndAtEQ.
-func ChapterEndAt(v int64) predicate.Worldbloom {
+func ChapterEndAt(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldChapterEndAt, v))
 }
 
@@ -104,8 +94,433 @@ func IsSupplemental(v bool) predicate.Worldbloom {
 }
 
 // Costume2DID applies equality check predicate on the "costume2_d_id" field. It's identical to Costume2DIDEQ.
-func Costume2DID(v int64) predicate.Worldbloom {
+func Costume2DID(v int) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldCostume2DID, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldGameID, v))
+}
+
+// EventIDEQ applies the EQ predicate on the "event_id" field.
+func EventIDEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldEventID, v))
+}
+
+// EventIDNEQ applies the NEQ predicate on the "event_id" field.
+func EventIDNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldEventID, v))
+}
+
+// EventIDIn applies the In predicate on the "event_id" field.
+func EventIDIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldEventID, vs...))
+}
+
+// EventIDNotIn applies the NotIn predicate on the "event_id" field.
+func EventIDNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldEventID, vs...))
+}
+
+// EventIDGT applies the GT predicate on the "event_id" field.
+func EventIDGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldEventID, v))
+}
+
+// EventIDGTE applies the GTE predicate on the "event_id" field.
+func EventIDGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldEventID, v))
+}
+
+// EventIDLT applies the LT predicate on the "event_id" field.
+func EventIDLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldEventID, v))
+}
+
+// EventIDLTE applies the LTE predicate on the "event_id" field.
+func EventIDLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldEventID, v))
+}
+
+// EventIDIsNil applies the IsNil predicate on the "event_id" field.
+func EventIDIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldEventID))
+}
+
+// EventIDNotNil applies the NotNil predicate on the "event_id" field.
+func EventIDNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldEventID))
+}
+
+// GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
+func GameCharacterIDEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
+func GameCharacterIDNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDIn applies the In predicate on the "game_character_id" field.
+func GameCharacterIDIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldGameCharacterID, vs...))
+}
+
+// GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
+func GameCharacterIDNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldGameCharacterID, vs...))
+}
+
+// GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
+func GameCharacterIDGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
+func GameCharacterIDGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
+func GameCharacterIDLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
+func GameCharacterIDLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDIsNil applies the IsNil predicate on the "game_character_id" field.
+func GameCharacterIDIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldGameCharacterID))
+}
+
+// GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
+func GameCharacterIDNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldGameCharacterID))
+}
+
+// WorldBloomChapterTypeIsNil applies the IsNil predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldWorldBloomChapterType))
+}
+
+// WorldBloomChapterTypeNotNil applies the NotNil predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldWorldBloomChapterType))
+}
+
+// ChapterNoEQ applies the EQ predicate on the "chapter_no" field.
+func ChapterNoEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldChapterNo, v))
+}
+
+// ChapterNoNEQ applies the NEQ predicate on the "chapter_no" field.
+func ChapterNoNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterNo, v))
+}
+
+// ChapterNoIn applies the In predicate on the "chapter_no" field.
+func ChapterNoIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldChapterNo, vs...))
+}
+
+// ChapterNoNotIn applies the NotIn predicate on the "chapter_no" field.
+func ChapterNoNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterNo, vs...))
+}
+
+// ChapterNoGT applies the GT predicate on the "chapter_no" field.
+func ChapterNoGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldChapterNo, v))
+}
+
+// ChapterNoGTE applies the GTE predicate on the "chapter_no" field.
+func ChapterNoGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldChapterNo, v))
+}
+
+// ChapterNoLT applies the LT predicate on the "chapter_no" field.
+func ChapterNoLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldChapterNo, v))
+}
+
+// ChapterNoLTE applies the LTE predicate on the "chapter_no" field.
+func ChapterNoLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldChapterNo, v))
+}
+
+// ChapterNoIsNil applies the IsNil predicate on the "chapter_no" field.
+func ChapterNoIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterNo))
+}
+
+// ChapterNoNotNil applies the NotNil predicate on the "chapter_no" field.
+func ChapterNoNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterNo))
+}
+
+// ChapterStartAtEQ applies the EQ predicate on the "chapter_start_at" field.
+func ChapterStartAtEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtNEQ applies the NEQ predicate on the "chapter_start_at" field.
+func ChapterStartAtNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtIn applies the In predicate on the "chapter_start_at" field.
+func ChapterStartAtIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldChapterStartAt, vs...))
+}
+
+// ChapterStartAtNotIn applies the NotIn predicate on the "chapter_start_at" field.
+func ChapterStartAtNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterStartAt, vs...))
+}
+
+// ChapterStartAtGT applies the GT predicate on the "chapter_start_at" field.
+func ChapterStartAtGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtGTE applies the GTE predicate on the "chapter_start_at" field.
+func ChapterStartAtGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtLT applies the LT predicate on the "chapter_start_at" field.
+func ChapterStartAtLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtLTE applies the LTE predicate on the "chapter_start_at" field.
+func ChapterStartAtLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldChapterStartAt, v))
+}
+
+// ChapterStartAtIsNil applies the IsNil predicate on the "chapter_start_at" field.
+func ChapterStartAtIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterStartAt))
+}
+
+// ChapterStartAtNotNil applies the NotNil predicate on the "chapter_start_at" field.
+func ChapterStartAtNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterStartAt))
+}
+
+// AggregateAtEQ applies the EQ predicate on the "aggregate_at" field.
+func AggregateAtEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldAggregateAt, v))
+}
+
+// AggregateAtNEQ applies the NEQ predicate on the "aggregate_at" field.
+func AggregateAtNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldAggregateAt, v))
+}
+
+// AggregateAtIn applies the In predicate on the "aggregate_at" field.
+func AggregateAtIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldAggregateAt, vs...))
+}
+
+// AggregateAtNotIn applies the NotIn predicate on the "aggregate_at" field.
+func AggregateAtNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldAggregateAt, vs...))
+}
+
+// AggregateAtGT applies the GT predicate on the "aggregate_at" field.
+func AggregateAtGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldAggregateAt, v))
+}
+
+// AggregateAtGTE applies the GTE predicate on the "aggregate_at" field.
+func AggregateAtGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldAggregateAt, v))
+}
+
+// AggregateAtLT applies the LT predicate on the "aggregate_at" field.
+func AggregateAtLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldAggregateAt, v))
+}
+
+// AggregateAtLTE applies the LTE predicate on the "aggregate_at" field.
+func AggregateAtLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldAggregateAt, v))
+}
+
+// AggregateAtIsNil applies the IsNil predicate on the "aggregate_at" field.
+func AggregateAtIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldAggregateAt))
+}
+
+// AggregateAtNotNil applies the NotNil predicate on the "aggregate_at" field.
+func AggregateAtNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldAggregateAt))
+}
+
+// ChapterEndAtEQ applies the EQ predicate on the "chapter_end_at" field.
+func ChapterEndAtEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtNEQ applies the NEQ predicate on the "chapter_end_at" field.
+func ChapterEndAtNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtIn applies the In predicate on the "chapter_end_at" field.
+func ChapterEndAtIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldChapterEndAt, vs...))
+}
+
+// ChapterEndAtNotIn applies the NotIn predicate on the "chapter_end_at" field.
+func ChapterEndAtNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterEndAt, vs...))
+}
+
+// ChapterEndAtGT applies the GT predicate on the "chapter_end_at" field.
+func ChapterEndAtGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtGTE applies the GTE predicate on the "chapter_end_at" field.
+func ChapterEndAtGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtLT applies the LT predicate on the "chapter_end_at" field.
+func ChapterEndAtLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtLTE applies the LTE predicate on the "chapter_end_at" field.
+func ChapterEndAtLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldChapterEndAt, v))
+}
+
+// ChapterEndAtIsNil applies the IsNil predicate on the "chapter_end_at" field.
+func ChapterEndAtIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterEndAt))
+}
+
+// ChapterEndAtNotNil applies the NotNil predicate on the "chapter_end_at" field.
+func ChapterEndAtNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterEndAt))
+}
+
+// IsSupplementalEQ applies the EQ predicate on the "is_supplemental" field.
+func IsSupplementalEQ(v bool) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldIsSupplemental, v))
+}
+
+// IsSupplementalNEQ applies the NEQ predicate on the "is_supplemental" field.
+func IsSupplementalNEQ(v bool) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldIsSupplemental, v))
+}
+
+// IsSupplementalIsNil applies the IsNil predicate on the "is_supplemental" field.
+func IsSupplementalIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldIsSupplemental))
+}
+
+// IsSupplementalNotNil applies the NotNil predicate on the "is_supplemental" field.
+func IsSupplementalNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldIsSupplemental))
+}
+
+// Costume2DIDEQ applies the EQ predicate on the "costume2_d_id" field.
+func Costume2DIDEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldCostume2DID, v))
+}
+
+// Costume2DIDNEQ applies the NEQ predicate on the "costume2_d_id" field.
+func Costume2DIDNEQ(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldCostume2DID, v))
+}
+
+// Costume2DIDIn applies the In predicate on the "costume2_d_id" field.
+func Costume2DIDIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldCostume2DID, vs...))
+}
+
+// Costume2DIDNotIn applies the NotIn predicate on the "costume2_d_id" field.
+func Costume2DIDNotIn(vs ...int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldCostume2DID, vs...))
+}
+
+// Costume2DIDGT applies the GT predicate on the "costume2_d_id" field.
+func Costume2DIDGT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldCostume2DID, v))
+}
+
+// Costume2DIDGTE applies the GTE predicate on the "costume2_d_id" field.
+func Costume2DIDGTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldCostume2DID, v))
+}
+
+// Costume2DIDLT applies the LT predicate on the "costume2_d_id" field.
+func Costume2DIDLT(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldCostume2DID, v))
+}
+
+// Costume2DIDLTE applies the LTE predicate on the "costume2_d_id" field.
+func Costume2DIDLTE(v int) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldCostume2DID, v))
+}
+
+// Costume2DIDIsNil applies the IsNil predicate on the "costume2_d_id" field.
+func Costume2DIDIsNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIsNull(FieldCostume2DID))
+}
+
+// Costume2DIDNotNil applies the NotNil predicate on the "costume2_d_id" field.
+func Costume2DIDNotNil() predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotNull(FieldCostume2DID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -171,501 +586,6 @@ func ServerRegionEqualFold(v string) predicate.Worldbloom {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldGameID))
-}
-
-// EventIDEQ applies the EQ predicate on the "event_id" field.
-func EventIDEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldEventID, v))
-}
-
-// EventIDNEQ applies the NEQ predicate on the "event_id" field.
-func EventIDNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldEventID, v))
-}
-
-// EventIDIn applies the In predicate on the "event_id" field.
-func EventIDIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldEventID, vs...))
-}
-
-// EventIDNotIn applies the NotIn predicate on the "event_id" field.
-func EventIDNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldEventID, vs...))
-}
-
-// EventIDGT applies the GT predicate on the "event_id" field.
-func EventIDGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldEventID, v))
-}
-
-// EventIDGTE applies the GTE predicate on the "event_id" field.
-func EventIDGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldEventID, v))
-}
-
-// EventIDLT applies the LT predicate on the "event_id" field.
-func EventIDLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldEventID, v))
-}
-
-// EventIDLTE applies the LTE predicate on the "event_id" field.
-func EventIDLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldEventID, v))
-}
-
-// EventIDIsNil applies the IsNil predicate on the "event_id" field.
-func EventIDIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldEventID))
-}
-
-// EventIDNotNil applies the NotNil predicate on the "event_id" field.
-func EventIDNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldEventID))
-}
-
-// GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
-func GameCharacterIDEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
-func GameCharacterIDNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDIn applies the In predicate on the "game_character_id" field.
-func GameCharacterIDIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldGameCharacterID, vs...))
-}
-
-// GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
-func GameCharacterIDNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldGameCharacterID, vs...))
-}
-
-// GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
-func GameCharacterIDGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
-func GameCharacterIDGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
-func GameCharacterIDLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
-func GameCharacterIDLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDIsNil applies the IsNil predicate on the "game_character_id" field.
-func GameCharacterIDIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldGameCharacterID))
-}
-
-// GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
-func GameCharacterIDNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldGameCharacterID))
-}
-
-// WorldBloomChapterTypeEQ applies the EQ predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeEQ(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeNEQ applies the NEQ predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeNEQ(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeIn applies the In predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeIn(vs ...string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldWorldBloomChapterType, vs...))
-}
-
-// WorldBloomChapterTypeNotIn applies the NotIn predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeNotIn(vs ...string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldWorldBloomChapterType, vs...))
-}
-
-// WorldBloomChapterTypeGT applies the GT predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeGT(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeGTE applies the GTE predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeGTE(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeLT applies the LT predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeLT(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeLTE applies the LTE predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeLTE(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeContains applies the Contains predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeContains(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldContains(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeHasPrefix applies the HasPrefix predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeHasPrefix(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldHasPrefix(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeHasSuffix applies the HasSuffix predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeHasSuffix(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldHasSuffix(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeIsNil applies the IsNil predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldWorldBloomChapterType))
-}
-
-// WorldBloomChapterTypeNotNil applies the NotNil predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldWorldBloomChapterType))
-}
-
-// WorldBloomChapterTypeEqualFold applies the EqualFold predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeEqualFold(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEqualFold(FieldWorldBloomChapterType, v))
-}
-
-// WorldBloomChapterTypeContainsFold applies the ContainsFold predicate on the "world_bloom_chapter_type" field.
-func WorldBloomChapterTypeContainsFold(v string) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldContainsFold(FieldWorldBloomChapterType, v))
-}
-
-// ChapterNoEQ applies the EQ predicate on the "chapter_no" field.
-func ChapterNoEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldChapterNo, v))
-}
-
-// ChapterNoNEQ applies the NEQ predicate on the "chapter_no" field.
-func ChapterNoNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterNo, v))
-}
-
-// ChapterNoIn applies the In predicate on the "chapter_no" field.
-func ChapterNoIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldChapterNo, vs...))
-}
-
-// ChapterNoNotIn applies the NotIn predicate on the "chapter_no" field.
-func ChapterNoNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterNo, vs...))
-}
-
-// ChapterNoGT applies the GT predicate on the "chapter_no" field.
-func ChapterNoGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldChapterNo, v))
-}
-
-// ChapterNoGTE applies the GTE predicate on the "chapter_no" field.
-func ChapterNoGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldChapterNo, v))
-}
-
-// ChapterNoLT applies the LT predicate on the "chapter_no" field.
-func ChapterNoLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldChapterNo, v))
-}
-
-// ChapterNoLTE applies the LTE predicate on the "chapter_no" field.
-func ChapterNoLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldChapterNo, v))
-}
-
-// ChapterNoIsNil applies the IsNil predicate on the "chapter_no" field.
-func ChapterNoIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterNo))
-}
-
-// ChapterNoNotNil applies the NotNil predicate on the "chapter_no" field.
-func ChapterNoNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterNo))
-}
-
-// ChapterStartAtEQ applies the EQ predicate on the "chapter_start_at" field.
-func ChapterStartAtEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtNEQ applies the NEQ predicate on the "chapter_start_at" field.
-func ChapterStartAtNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtIn applies the In predicate on the "chapter_start_at" field.
-func ChapterStartAtIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldChapterStartAt, vs...))
-}
-
-// ChapterStartAtNotIn applies the NotIn predicate on the "chapter_start_at" field.
-func ChapterStartAtNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterStartAt, vs...))
-}
-
-// ChapterStartAtGT applies the GT predicate on the "chapter_start_at" field.
-func ChapterStartAtGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtGTE applies the GTE predicate on the "chapter_start_at" field.
-func ChapterStartAtGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtLT applies the LT predicate on the "chapter_start_at" field.
-func ChapterStartAtLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtLTE applies the LTE predicate on the "chapter_start_at" field.
-func ChapterStartAtLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldChapterStartAt, v))
-}
-
-// ChapterStartAtIsNil applies the IsNil predicate on the "chapter_start_at" field.
-func ChapterStartAtIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterStartAt))
-}
-
-// ChapterStartAtNotNil applies the NotNil predicate on the "chapter_start_at" field.
-func ChapterStartAtNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterStartAt))
-}
-
-// AggregateAtEQ applies the EQ predicate on the "aggregate_at" field.
-func AggregateAtEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldAggregateAt, v))
-}
-
-// AggregateAtNEQ applies the NEQ predicate on the "aggregate_at" field.
-func AggregateAtNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldAggregateAt, v))
-}
-
-// AggregateAtIn applies the In predicate on the "aggregate_at" field.
-func AggregateAtIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldAggregateAt, vs...))
-}
-
-// AggregateAtNotIn applies the NotIn predicate on the "aggregate_at" field.
-func AggregateAtNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldAggregateAt, vs...))
-}
-
-// AggregateAtGT applies the GT predicate on the "aggregate_at" field.
-func AggregateAtGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldAggregateAt, v))
-}
-
-// AggregateAtGTE applies the GTE predicate on the "aggregate_at" field.
-func AggregateAtGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldAggregateAt, v))
-}
-
-// AggregateAtLT applies the LT predicate on the "aggregate_at" field.
-func AggregateAtLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldAggregateAt, v))
-}
-
-// AggregateAtLTE applies the LTE predicate on the "aggregate_at" field.
-func AggregateAtLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldAggregateAt, v))
-}
-
-// AggregateAtIsNil applies the IsNil predicate on the "aggregate_at" field.
-func AggregateAtIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldAggregateAt))
-}
-
-// AggregateAtNotNil applies the NotNil predicate on the "aggregate_at" field.
-func AggregateAtNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldAggregateAt))
-}
-
-// ChapterEndAtEQ applies the EQ predicate on the "chapter_end_at" field.
-func ChapterEndAtEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtNEQ applies the NEQ predicate on the "chapter_end_at" field.
-func ChapterEndAtNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtIn applies the In predicate on the "chapter_end_at" field.
-func ChapterEndAtIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldChapterEndAt, vs...))
-}
-
-// ChapterEndAtNotIn applies the NotIn predicate on the "chapter_end_at" field.
-func ChapterEndAtNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldChapterEndAt, vs...))
-}
-
-// ChapterEndAtGT applies the GT predicate on the "chapter_end_at" field.
-func ChapterEndAtGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtGTE applies the GTE predicate on the "chapter_end_at" field.
-func ChapterEndAtGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtLT applies the LT predicate on the "chapter_end_at" field.
-func ChapterEndAtLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtLTE applies the LTE predicate on the "chapter_end_at" field.
-func ChapterEndAtLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldChapterEndAt, v))
-}
-
-// ChapterEndAtIsNil applies the IsNil predicate on the "chapter_end_at" field.
-func ChapterEndAtIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldChapterEndAt))
-}
-
-// ChapterEndAtNotNil applies the NotNil predicate on the "chapter_end_at" field.
-func ChapterEndAtNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldChapterEndAt))
-}
-
-// IsSupplementalEQ applies the EQ predicate on the "is_supplemental" field.
-func IsSupplementalEQ(v bool) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldIsSupplemental, v))
-}
-
-// IsSupplementalNEQ applies the NEQ predicate on the "is_supplemental" field.
-func IsSupplementalNEQ(v bool) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldIsSupplemental, v))
-}
-
-// IsSupplementalIsNil applies the IsNil predicate on the "is_supplemental" field.
-func IsSupplementalIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldIsSupplemental))
-}
-
-// IsSupplementalNotNil applies the NotNil predicate on the "is_supplemental" field.
-func IsSupplementalNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldIsSupplemental))
-}
-
-// Costume2DIDEQ applies the EQ predicate on the "costume2_d_id" field.
-func Costume2DIDEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldEQ(FieldCostume2DID, v))
-}
-
-// Costume2DIDNEQ applies the NEQ predicate on the "costume2_d_id" field.
-func Costume2DIDNEQ(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNEQ(FieldCostume2DID, v))
-}
-
-// Costume2DIDIn applies the In predicate on the "costume2_d_id" field.
-func Costume2DIDIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIn(FieldCostume2DID, vs...))
-}
-
-// Costume2DIDNotIn applies the NotIn predicate on the "costume2_d_id" field.
-func Costume2DIDNotIn(vs ...int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotIn(FieldCostume2DID, vs...))
-}
-
-// Costume2DIDGT applies the GT predicate on the "costume2_d_id" field.
-func Costume2DIDGT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGT(FieldCostume2DID, v))
-}
-
-// Costume2DIDGTE applies the GTE predicate on the "costume2_d_id" field.
-func Costume2DIDGTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldGTE(FieldCostume2DID, v))
-}
-
-// Costume2DIDLT applies the LT predicate on the "costume2_d_id" field.
-func Costume2DIDLT(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLT(FieldCostume2DID, v))
-}
-
-// Costume2DIDLTE applies the LTE predicate on the "costume2_d_id" field.
-func Costume2DIDLTE(v int64) predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldLTE(FieldCostume2DID, v))
-}
-
-// Costume2DIDIsNil applies the IsNil predicate on the "costume2_d_id" field.
-func Costume2DIDIsNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldIsNull(FieldCostume2DID))
-}
-
-// Costume2DIDNotNil applies the NotNil predicate on the "costume2_d_id" field.
-func Costume2DIDNotNil() predicate.Worldbloom {
-	return predicate.Worldbloom(sql.FieldNotNull(FieldCostume2DID))
 }
 
 // And groups predicates with the AND operator between them.

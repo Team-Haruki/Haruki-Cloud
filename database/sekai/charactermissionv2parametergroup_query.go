@@ -262,12 +262,12 @@ func (_q *Charactermissionv2ParametergroupQuery) Clone() *Charactermissionv2Para
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Charactermissionv2Parametergroup.Query().
-//		GroupBy(charactermissionv2parametergroup.FieldServerRegion).
+//		GroupBy(charactermissionv2parametergroup.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *Charactermissionv2ParametergroupQuery) GroupBy(field string, fields ...string) *Charactermissionv2ParametergroupGroupBy {
@@ -285,11 +285,11 @@ func (_q *Charactermissionv2ParametergroupQuery) GroupBy(field string, fields ..
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Charactermissionv2Parametergroup.Query().
-//		Select(charactermissionv2parametergroup.FieldServerRegion).
+//		Select(charactermissionv2parametergroup.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *Charactermissionv2ParametergroupQuery) Select(fields ...string) *Charactermissionv2ParametergroupSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

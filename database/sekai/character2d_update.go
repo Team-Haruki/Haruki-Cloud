@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/character2d"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *Character2DUpdate) Where(ps ...predicate.Character2D) *Character2DUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Character2DUpdate) SetServerRegion(v string) *Character2DUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableServerRegion(v *string) *Character2DUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Character2DUpdate) SetGameID(v int64) *Character2DUpdate {
+func (_u *Character2DUpdate) SetGameID(v int) *Character2DUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableGameID(v *int64) *Character2DUpdate {
+func (_u *Character2DUpdate) SetNillableGameID(v *int) *Character2DUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,28 +45,20 @@ func (_u *Character2DUpdate) SetNillableGameID(v *int64) *Character2DUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Character2DUpdate) AddGameID(v int64) *Character2DUpdate {
+func (_u *Character2DUpdate) AddGameID(v int) *Character2DUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Character2DUpdate) ClearGameID() *Character2DUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterType sets the "character_type" field.
-func (_u *Character2DUpdate) SetCharacterType(v string) *Character2DUpdate {
+func (_u *Character2DUpdate) SetCharacterType(v json.RawMessage) *Character2DUpdate {
 	_u.mutation.SetCharacterType(v)
 	return _u
 }
 
-// SetNillableCharacterType sets the "character_type" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableCharacterType(v *string) *Character2DUpdate {
-	if v != nil {
-		_u.SetCharacterType(*v)
-	}
+// AppendCharacterType appends value to the "character_type" field.
+func (_u *Character2DUpdate) AppendCharacterType(v json.RawMessage) *Character2DUpdate {
+	_u.mutation.AppendCharacterType(v)
 	return _u
 }
 
@@ -109,14 +89,14 @@ func (_u *Character2DUpdate) ClearIsNextGrade() *Character2DUpdate {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Character2DUpdate) SetCharacterID(v int64) *Character2DUpdate {
+func (_u *Character2DUpdate) SetCharacterID(v int) *Character2DUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableCharacterID(v *int64) *Character2DUpdate {
+func (_u *Character2DUpdate) SetNillableCharacterID(v *int) *Character2DUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -124,7 +104,7 @@ func (_u *Character2DUpdate) SetNillableCharacterID(v *int64) *Character2DUpdate
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Character2DUpdate) AddCharacterID(v int64) *Character2DUpdate {
+func (_u *Character2DUpdate) AddCharacterID(v int) *Character2DUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -136,16 +116,14 @@ func (_u *Character2DUpdate) ClearCharacterID() *Character2DUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *Character2DUpdate) SetUnit(v string) *Character2DUpdate {
+func (_u *Character2DUpdate) SetUnit(v json.RawMessage) *Character2DUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableUnit(v *string) *Character2DUpdate {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *Character2DUpdate) AppendUnit(v json.RawMessage) *Character2DUpdate {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -196,22 +174,34 @@ func (_u *Character2DUpdate) ClearAssetName() *Character2DUpdate {
 }
 
 // SetCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field.
-func (_u *Character2DUpdate) SetCharacterIconAssetbundleName(v string) *Character2DUpdate {
+func (_u *Character2DUpdate) SetCharacterIconAssetbundleName(v json.RawMessage) *Character2DUpdate {
 	_u.mutation.SetCharacterIconAssetbundleName(v)
 	return _u
 }
 
-// SetNillableCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field if the given value is not nil.
-func (_u *Character2DUpdate) SetNillableCharacterIconAssetbundleName(v *string) *Character2DUpdate {
-	if v != nil {
-		_u.SetCharacterIconAssetbundleName(*v)
-	}
+// AppendCharacterIconAssetbundleName appends value to the "character_icon_assetbundle_name" field.
+func (_u *Character2DUpdate) AppendCharacterIconAssetbundleName(v json.RawMessage) *Character2DUpdate {
+	_u.mutation.AppendCharacterIconAssetbundleName(v)
 	return _u
 }
 
 // ClearCharacterIconAssetbundleName clears the value of the "character_icon_assetbundle_name" field.
 func (_u *Character2DUpdate) ClearCharacterIconAssetbundleName() *Character2DUpdate {
 	_u.mutation.ClearCharacterIconAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Character2DUpdate) SetServerRegion(v string) *Character2DUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Character2DUpdate) SetNillableServerRegion(v *string) *Character2DUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -256,23 +246,22 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(character2d.FieldGameID, field.TypeInt64)
+		_spec.AddField(character2d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterType(); ok {
-		_spec.SetField(character2d.FieldCharacterType, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCharacterType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldCharacterType, value)
+		})
 	}
 	if _u.mutation.CharacterTypeCleared() {
-		_spec.ClearField(character2d.FieldCharacterType, field.TypeString)
+		_spec.ClearField(character2d.FieldCharacterType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsNextGrade(); ok {
 		_spec.SetField(character2d.FieldIsNextGrade, field.TypeBool, value)
@@ -281,19 +270,24 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(character2d.FieldIsNextGrade, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(character2d.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(character2d.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(character2d.FieldUnit, field.TypeString, value)
+		_spec.SetField(character2d.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(character2d.FieldUnit, field.TypeString)
+		_spec.ClearField(character2d.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsEnabledFlipDisplay(); ok {
 		_spec.SetField(character2d.FieldIsEnabledFlipDisplay, field.TypeBool, value)
@@ -308,10 +302,18 @@ func (_u *Character2DUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(character2d.FieldAssetName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterIconAssetbundleName(); ok {
-		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCharacterIconAssetbundleName(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldCharacterIconAssetbundleName, value)
+		})
 	}
 	if _u.mutation.CharacterIconAssetbundleNameCleared() {
-		_spec.ClearField(character2d.FieldCharacterIconAssetbundleName, field.TypeString)
+		_spec.ClearField(character2d.FieldCharacterIconAssetbundleName, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -333,29 +335,15 @@ type Character2DUpdateOne struct {
 	mutation *Character2DMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Character2DUpdateOne) SetServerRegion(v string) *Character2DUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableServerRegion(v *string) *Character2DUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Character2DUpdateOne) SetGameID(v int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetGameID(v int) *Character2DUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableGameID(v *int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetNillableGameID(v *int) *Character2DUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -363,28 +351,20 @@ func (_u *Character2DUpdateOne) SetNillableGameID(v *int64) *Character2DUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Character2DUpdateOne) AddGameID(v int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) AddGameID(v int) *Character2DUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Character2DUpdateOne) ClearGameID() *Character2DUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterType sets the "character_type" field.
-func (_u *Character2DUpdateOne) SetCharacterType(v string) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetCharacterType(v json.RawMessage) *Character2DUpdateOne {
 	_u.mutation.SetCharacterType(v)
 	return _u
 }
 
-// SetNillableCharacterType sets the "character_type" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableCharacterType(v *string) *Character2DUpdateOne {
-	if v != nil {
-		_u.SetCharacterType(*v)
-	}
+// AppendCharacterType appends value to the "character_type" field.
+func (_u *Character2DUpdateOne) AppendCharacterType(v json.RawMessage) *Character2DUpdateOne {
+	_u.mutation.AppendCharacterType(v)
 	return _u
 }
 
@@ -415,14 +395,14 @@ func (_u *Character2DUpdateOne) ClearIsNextGrade() *Character2DUpdateOne {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Character2DUpdateOne) SetCharacterID(v int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetCharacterID(v int) *Character2DUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int) *Character2DUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -430,7 +410,7 @@ func (_u *Character2DUpdateOne) SetNillableCharacterID(v *int64) *Character2DUpd
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Character2DUpdateOne) AddCharacterID(v int64) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) AddCharacterID(v int) *Character2DUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -442,16 +422,14 @@ func (_u *Character2DUpdateOne) ClearCharacterID() *Character2DUpdateOne {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *Character2DUpdateOne) SetUnit(v string) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetUnit(v json.RawMessage) *Character2DUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableUnit(v *string) *Character2DUpdateOne {
-	if v != nil {
-		_u.SetUnit(*v)
-	}
+// AppendUnit appends value to the "unit" field.
+func (_u *Character2DUpdateOne) AppendUnit(v json.RawMessage) *Character2DUpdateOne {
+	_u.mutation.AppendUnit(v)
 	return _u
 }
 
@@ -502,22 +480,34 @@ func (_u *Character2DUpdateOne) ClearAssetName() *Character2DUpdateOne {
 }
 
 // SetCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field.
-func (_u *Character2DUpdateOne) SetCharacterIconAssetbundleName(v string) *Character2DUpdateOne {
+func (_u *Character2DUpdateOne) SetCharacterIconAssetbundleName(v json.RawMessage) *Character2DUpdateOne {
 	_u.mutation.SetCharacterIconAssetbundleName(v)
 	return _u
 }
 
-// SetNillableCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field if the given value is not nil.
-func (_u *Character2DUpdateOne) SetNillableCharacterIconAssetbundleName(v *string) *Character2DUpdateOne {
-	if v != nil {
-		_u.SetCharacterIconAssetbundleName(*v)
-	}
+// AppendCharacterIconAssetbundleName appends value to the "character_icon_assetbundle_name" field.
+func (_u *Character2DUpdateOne) AppendCharacterIconAssetbundleName(v json.RawMessage) *Character2DUpdateOne {
+	_u.mutation.AppendCharacterIconAssetbundleName(v)
 	return _u
 }
 
 // ClearCharacterIconAssetbundleName clears the value of the "character_icon_assetbundle_name" field.
 func (_u *Character2DUpdateOne) ClearCharacterIconAssetbundleName() *Character2DUpdateOne {
 	_u.mutation.ClearCharacterIconAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Character2DUpdateOne) SetServerRegion(v string) *Character2DUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Character2DUpdateOne) SetNillableServerRegion(v *string) *Character2DUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -592,23 +582,22 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(character2d.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(character2d.FieldGameID, field.TypeInt64)
+		_spec.AddField(character2d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterType(); ok {
-		_spec.SetField(character2d.FieldCharacterType, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCharacterType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldCharacterType, value)
+		})
 	}
 	if _u.mutation.CharacterTypeCleared() {
-		_spec.ClearField(character2d.FieldCharacterType, field.TypeString)
+		_spec.ClearField(character2d.FieldCharacterType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsNextGrade(); ok {
 		_spec.SetField(character2d.FieldIsNextGrade, field.TypeBool, value)
@@ -617,19 +606,24 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 		_spec.ClearField(character2d.FieldIsNextGrade, field.TypeBool)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(character2d.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(character2d.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(character2d.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(character2d.FieldUnit, field.TypeString, value)
+		_spec.SetField(character2d.FieldUnit, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUnit(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldUnit, value)
+		})
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(character2d.FieldUnit, field.TypeString)
+		_spec.ClearField(character2d.FieldUnit, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsEnabledFlipDisplay(); ok {
 		_spec.SetField(character2d.FieldIsEnabledFlipDisplay, field.TypeBool, value)
@@ -644,10 +638,18 @@ func (_u *Character2DUpdateOne) sqlSave(ctx context.Context) (_node *Character2D
 		_spec.ClearField(character2d.FieldAssetName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterIconAssetbundleName(); ok {
-		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCharacterIconAssetbundleName(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, character2d.FieldCharacterIconAssetbundleName, value)
+		})
 	}
 	if _u.mutation.CharacterIconAssetbundleNameCleared() {
-		_spec.ClearField(character2d.FieldCharacterIconAssetbundleName, field.TypeString)
+		_spec.ClearField(character2d.FieldCharacterIconAssetbundleName, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Character2D{config: _u.config}
 	_spec.Assign = _node.assignValues

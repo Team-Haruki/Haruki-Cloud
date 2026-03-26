@@ -262,12 +262,12 @@ func (_q *MysekaimusicrecordcategorieQuery) Clone() *Mysekaimusicrecordcategorie
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaimusicrecordcategorie.Query().
-//		GroupBy(mysekaimusicrecordcategorie.FieldServerRegion).
+//		GroupBy(mysekaimusicrecordcategorie.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaimusicrecordcategorieQuery) GroupBy(field string, fields ...string) *MysekaimusicrecordcategorieGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaimusicrecordcategorieQuery) GroupBy(field string, fields ...stri
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaimusicrecordcategorie.Query().
-//		Select(mysekaimusicrecordcategorie.FieldServerRegion).
+//		Select(mysekaimusicrecordcategorie.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaimusicrecordcategorieQuery) Select(fields ...string) *MysekaimusicrecordcategorieSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -27,29 +27,15 @@ func (_u *CardsupplieUpdate) Where(ps ...predicate.Cardsupplie) *CardsupplieUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *CardsupplieUpdate) SetServerRegion(v string) *CardsupplieUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CardsupplieUpdate) SetNillableServerRegion(v *string) *CardsupplieUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *CardsupplieUpdate) SetGameID(v int64) *CardsupplieUpdate {
+func (_u *CardsupplieUpdate) SetGameID(v int) *CardsupplieUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardsupplieUpdate) SetNillableGameID(v *int64) *CardsupplieUpdate {
+func (_u *CardsupplieUpdate) SetNillableGameID(v *int) *CardsupplieUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +43,8 @@ func (_u *CardsupplieUpdate) SetNillableGameID(v *int64) *CardsupplieUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardsupplieUpdate) AddGameID(v int64) *CardsupplieUpdate {
+func (_u *CardsupplieUpdate) AddGameID(v int) *CardsupplieUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *CardsupplieUpdate) ClearGameID() *CardsupplieUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -105,6 +85,20 @@ func (_u *CardsupplieUpdate) SetNillableAssetbundleName(v *string) *CardsupplieU
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *CardsupplieUpdate) ClearAssetbundleName() *CardsupplieUpdate {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CardsupplieUpdate) SetServerRegion(v string) *CardsupplieUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CardsupplieUpdate) SetNillableServerRegion(v *string) *CardsupplieUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -149,17 +143,11 @@ func (_u *CardsupplieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardsupplie.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(cardsupplie.FieldGameID, field.TypeInt64)
+		_spec.AddField(cardsupplie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CardSupplyType(); ok {
 		_spec.SetField(cardsupplie.FieldCardSupplyType, field.TypeString, value)
@@ -172,6 +160,9 @@ func (_u *CardsupplieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(cardsupplie.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -193,29 +184,15 @@ type CardsupplieUpdateOne struct {
 	mutation *CardsupplieMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *CardsupplieUpdateOne) SetServerRegion(v string) *CardsupplieUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *CardsupplieUpdateOne) SetNillableServerRegion(v *string) *CardsupplieUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *CardsupplieUpdateOne) SetGameID(v int64) *CardsupplieUpdateOne {
+func (_u *CardsupplieUpdateOne) SetGameID(v int) *CardsupplieUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *CardsupplieUpdateOne) SetNillableGameID(v *int64) *CardsupplieUpdateOne {
+func (_u *CardsupplieUpdateOne) SetNillableGameID(v *int) *CardsupplieUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -223,14 +200,8 @@ func (_u *CardsupplieUpdateOne) SetNillableGameID(v *int64) *CardsupplieUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *CardsupplieUpdateOne) AddGameID(v int64) *CardsupplieUpdateOne {
+func (_u *CardsupplieUpdateOne) AddGameID(v int) *CardsupplieUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *CardsupplieUpdateOne) ClearGameID() *CardsupplieUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -271,6 +242,20 @@ func (_u *CardsupplieUpdateOne) SetNillableAssetbundleName(v *string) *Cardsuppl
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *CardsupplieUpdateOne) ClearAssetbundleName() *CardsupplieUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *CardsupplieUpdateOne) SetServerRegion(v string) *CardsupplieUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *CardsupplieUpdateOne) SetNillableServerRegion(v *string) *CardsupplieUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -345,17 +330,11 @@ func (_u *CardsupplieUpdateOne) sqlSave(ctx context.Context) (_node *Cardsupplie
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(cardsupplie.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(cardsupplie.FieldGameID, field.TypeInt64)
+		_spec.AddField(cardsupplie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CardSupplyType(); ok {
 		_spec.SetField(cardsupplie.FieldCardSupplyType, field.TypeString, value)
@@ -368,6 +347,9 @@ func (_u *CardsupplieUpdateOne) sqlSave(ctx context.Context) (_node *Cardsupplie
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(cardsupplie.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Cardsupplie{config: _u.config}
 	_spec.Assign = _node.assignValues

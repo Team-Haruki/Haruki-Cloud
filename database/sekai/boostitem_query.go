@@ -262,12 +262,12 @@ func (_q *BoostitemQuery) Clone() *BoostitemQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Boostitem.Query().
-//		GroupBy(boostitem.FieldServerRegion).
+//		GroupBy(boostitem.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *BoostitemQuery) GroupBy(field string, fields ...string) *BoostitemGroupBy {
@@ -285,11 +285,11 @@ func (_q *BoostitemQuery) GroupBy(field string, fields ...string) *BoostitemGrou
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Boostitem.Query().
-//		Select(boostitem.FieldServerRegion).
+//		Select(boostitem.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *BoostitemQuery) Select(fields ...string) *BoostitemSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

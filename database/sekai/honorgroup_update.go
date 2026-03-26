@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/honorgroup"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *HonorgroupUpdate) Where(ps ...predicate.Honorgroup) *HonorgroupUpdate 
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *HonorgroupUpdate) SetServerRegion(v string) *HonorgroupUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *HonorgroupUpdate) SetNillableServerRegion(v *string) *HonorgroupUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *HonorgroupUpdate) SetGameID(v int64) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetGameID(v int) *HonorgroupUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorgroupUpdate) SetNillableGameID(v *int64) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetNillableGameID(v *int) *HonorgroupUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +45,8 @@ func (_u *HonorgroupUpdate) SetNillableGameID(v *int64) *HonorgroupUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorgroupUpdate) AddGameID(v int64) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) AddGameID(v int) *HonorgroupUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *HonorgroupUpdate) ClearGameID() *HonorgroupUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -109,16 +91,14 @@ func (_u *HonorgroupUpdate) ClearPronunciation() *HonorgroupUpdate {
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_u *HonorgroupUpdate) SetHonorType(v string) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetHonorType(v json.RawMessage) *HonorgroupUpdate {
 	_u.mutation.SetHonorType(v)
 	return _u
 }
 
-// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
-func (_u *HonorgroupUpdate) SetNillableHonorType(v *string) *HonorgroupUpdate {
-	if v != nil {
-		_u.SetHonorType(*v)
-	}
+// AppendHonorType appends value to the "honor_type" field.
+func (_u *HonorgroupUpdate) AppendHonorType(v json.RawMessage) *HonorgroupUpdate {
+	_u.mutation.AppendHonorType(v)
 	return _u
 }
 
@@ -168,6 +148,20 @@ func (_u *HonorgroupUpdate) ClearFrameName() *HonorgroupUpdate {
 	return _u
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_u *HonorgroupUpdate) SetServerRegion(v string) *HonorgroupUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *HonorgroupUpdate) SetNillableServerRegion(v *string) *HonorgroupUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
+	return _u
+}
+
 // Mutation returns the HonorgroupMutation object of the builder.
 func (_u *HonorgroupUpdate) Mutation() *HonorgroupMutation {
 	return _u.mutation
@@ -209,17 +203,11 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(honorgroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(honorgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)
@@ -234,10 +222,15 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(honorgroup.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedHonorType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, honorgroup.FieldHonorType, value)
+		})
 	}
 	if _u.mutation.HonorTypeCleared() {
-		_spec.ClearField(honorgroup.FieldHonorType, field.TypeString)
+		_spec.ClearField(honorgroup.FieldHonorType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BackgroundAssetbundleName(); ok {
 		_spec.SetField(honorgroup.FieldBackgroundAssetbundleName, field.TypeString, value)
@@ -250,6 +243,9 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _u.mutation.FrameNameCleared() {
 		_spec.ClearField(honorgroup.FieldFrameName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -271,29 +267,15 @@ type HonorgroupUpdateOne struct {
 	mutation *HonorgroupMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *HonorgroupUpdateOne) SetServerRegion(v string) *HonorgroupUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *HonorgroupUpdateOne) SetNillableServerRegion(v *string) *HonorgroupUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *HonorgroupUpdateOne) SetGameID(v int64) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetGameID(v int) *HonorgroupUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int64) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int) *HonorgroupUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -301,14 +283,8 @@ func (_u *HonorgroupUpdateOne) SetNillableGameID(v *int64) *HonorgroupUpdateOne 
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *HonorgroupUpdateOne) AddGameID(v int64) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) AddGameID(v int) *HonorgroupUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *HonorgroupUpdateOne) ClearGameID() *HonorgroupUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -353,16 +329,14 @@ func (_u *HonorgroupUpdateOne) ClearPronunciation() *HonorgroupUpdateOne {
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_u *HonorgroupUpdateOne) SetHonorType(v string) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetHonorType(v json.RawMessage) *HonorgroupUpdateOne {
 	_u.mutation.SetHonorType(v)
 	return _u
 }
 
-// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
-func (_u *HonorgroupUpdateOne) SetNillableHonorType(v *string) *HonorgroupUpdateOne {
-	if v != nil {
-		_u.SetHonorType(*v)
-	}
+// AppendHonorType appends value to the "honor_type" field.
+func (_u *HonorgroupUpdateOne) AppendHonorType(v json.RawMessage) *HonorgroupUpdateOne {
+	_u.mutation.AppendHonorType(v)
 	return _u
 }
 
@@ -409,6 +383,20 @@ func (_u *HonorgroupUpdateOne) SetNillableFrameName(v *string) *HonorgroupUpdate
 // ClearFrameName clears the value of the "frame_name" field.
 func (_u *HonorgroupUpdateOne) ClearFrameName() *HonorgroupUpdateOne {
 	_u.mutation.ClearFrameName()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *HonorgroupUpdateOne) SetServerRegion(v string) *HonorgroupUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *HonorgroupUpdateOne) SetNillableServerRegion(v *string) *HonorgroupUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -483,17 +471,11 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(honorgroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(honorgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(honorgroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(honorgroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(honorgroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honorgroup.FieldName, field.TypeString, value)
@@ -508,10 +490,15 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 		_spec.ClearField(honorgroup.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedHonorType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, honorgroup.FieldHonorType, value)
+		})
 	}
 	if _u.mutation.HonorTypeCleared() {
-		_spec.ClearField(honorgroup.FieldHonorType, field.TypeString)
+		_spec.ClearField(honorgroup.FieldHonorType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.BackgroundAssetbundleName(); ok {
 		_spec.SetField(honorgroup.FieldBackgroundAssetbundleName, field.TypeString, value)
@@ -524,6 +511,9 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 	}
 	if _u.mutation.FrameNameCleared() {
 		_spec.ClearField(honorgroup.FieldFrameName, field.TypeString)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Honorgroup{config: _u.config}
 	_spec.Assign = _node.assignValues

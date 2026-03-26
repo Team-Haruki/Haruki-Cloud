@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitemlevel"
 	"strings"
@@ -16,18 +17,16 @@ type Areaitemlevel struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// AreaItemID holds the value of the "area_item_id" field.
-	AreaItemID int64 `json:"area_item_id,omitempty"`
+	AreaItemID int `json:"area_item_id,omitempty"`
 	// Level holds the value of the "level" field.
-	Level int64 `json:"level,omitempty"`
+	Level int `json:"level,omitempty"`
 	// TargetUnit holds the value of the "target_unit" field.
-	TargetUnit string `json:"target_unit,omitempty"`
+	TargetUnit json.RawMessage `json:"target_unit,omitempty"`
 	// TargetCardAttr holds the value of the "target_card_attr" field.
-	TargetCardAttr string `json:"target_card_attr,omitempty"`
+	TargetCardAttr json.RawMessage `json:"target_card_attr,omitempty"`
 	// TargetGameCharacterID holds the value of the "target_game_character_id" field.
-	TargetGameCharacterID int64 `json:"target_game_character_id,omitempty"`
+	TargetGameCharacterID int `json:"target_game_character_id,omitempty"`
 	// Power1BonusRate holds the value of the "power1_bonus_rate" field.
 	Power1BonusRate float64 `json:"power1_bonus_rate,omitempty"`
 	// Power1AllMatchBonusRate holds the value of the "power1_all_match_bonus_rate" field.
@@ -41,7 +40,9 @@ type Areaitemlevel struct {
 	// Power3AllMatchBonusRate holds the value of the "power3_all_match_bonus_rate" field.
 	Power3AllMatchBonusRate float64 `json:"power3_all_match_bonus_rate,omitempty"`
 	// Sentence holds the value of the "sentence" field.
-	Sentence     string `json:"sentence,omitempty"`
+	Sentence string `json:"sentence,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -50,11 +51,13 @@ func (*Areaitemlevel) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case areaitemlevel.FieldTargetUnit, areaitemlevel.FieldTargetCardAttr:
+			values[i] = new([]byte)
 		case areaitemlevel.FieldPower1BonusRate, areaitemlevel.FieldPower1AllMatchBonusRate, areaitemlevel.FieldPower2BonusRate, areaitemlevel.FieldPower2AllMatchBonusRate, areaitemlevel.FieldPower3BonusRate, areaitemlevel.FieldPower3AllMatchBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case areaitemlevel.FieldID, areaitemlevel.FieldAreaItemID, areaitemlevel.FieldLevel, areaitemlevel.FieldTargetGameCharacterID:
 			values[i] = new(sql.NullInt64)
-		case areaitemlevel.FieldServerRegion, areaitemlevel.FieldTargetUnit, areaitemlevel.FieldTargetCardAttr, areaitemlevel.FieldSentence:
+		case areaitemlevel.FieldSentence, areaitemlevel.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -77,41 +80,39 @@ func (_m *Areaitemlevel) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case areaitemlevel.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case areaitemlevel.FieldAreaItemID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field area_item_id", values[i])
 			} else if value.Valid {
-				_m.AreaItemID = value.Int64
+				_m.AreaItemID = int(value.Int64)
 			}
 		case areaitemlevel.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = value.Int64
+				_m.Level = int(value.Int64)
 			}
 		case areaitemlevel.FieldTargetUnit:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field target_unit", values[i])
-			} else if value.Valid {
-				_m.TargetUnit = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.TargetUnit); err != nil {
+					return fmt.Errorf("unmarshal field target_unit: %w", err)
+				}
 			}
 		case areaitemlevel.FieldTargetCardAttr:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field target_card_attr", values[i])
-			} else if value.Valid {
-				_m.TargetCardAttr = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.TargetCardAttr); err != nil {
+					return fmt.Errorf("unmarshal field target_card_attr: %w", err)
+				}
 			}
 		case areaitemlevel.FieldTargetGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field target_game_character_id", values[i])
 			} else if value.Valid {
-				_m.TargetGameCharacterID = value.Int64
+				_m.TargetGameCharacterID = int(value.Int64)
 			}
 		case areaitemlevel.FieldPower1BonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -155,6 +156,12 @@ func (_m *Areaitemlevel) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Sentence = value.String
 			}
+		case areaitemlevel.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -191,9 +198,6 @@ func (_m *Areaitemlevel) String() string {
 	var builder strings.Builder
 	builder.WriteString("Areaitemlevel(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("area_item_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AreaItemID))
 	builder.WriteString(", ")
@@ -201,10 +205,10 @@ func (_m *Areaitemlevel) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Level))
 	builder.WriteString(", ")
 	builder.WriteString("target_unit=")
-	builder.WriteString(_m.TargetUnit)
+	builder.WriteString(fmt.Sprintf("%v", _m.TargetUnit))
 	builder.WriteString(", ")
 	builder.WriteString("target_card_attr=")
-	builder.WriteString(_m.TargetCardAttr)
+	builder.WriteString(fmt.Sprintf("%v", _m.TargetCardAttr))
 	builder.WriteString(", ")
 	builder.WriteString("target_game_character_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TargetGameCharacterID))
@@ -229,6 +233,9 @@ func (_m *Areaitemlevel) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("sentence=")
 	builder.WriteString(_m.Sentence)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

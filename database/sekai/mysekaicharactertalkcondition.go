@@ -17,15 +17,15 @@ type Mysekaicharactertalkcondition struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MysekaiCharacterTalkConditionType holds the value of the "mysekai_character_talk_condition_type" field.
+	MysekaiCharacterTalkConditionType json.RawMessage `json:"mysekai_character_talk_condition_type,omitempty"`
+	// MysekaiCharacterTalkConditionTypeValue holds the value of the "mysekai_character_talk_condition_type_value" field.
+	MysekaiCharacterTalkConditionTypeValue int `json:"mysekai_character_talk_condition_type_value,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MysekaiCharacterTalkConditionType holds the value of the "mysekai_character_talk_condition_type" field.
-	MysekaiCharacterTalkConditionType map[string]interface{} `json:"mysekai_character_talk_condition_type,omitempty"`
-	// MysekaiCharacterTalkConditionTypeValue holds the value of the "mysekai_character_talk_condition_type_value" field.
-	MysekaiCharacterTalkConditionTypeValue int64 `json:"mysekai_character_talk_condition_type_value,omitempty"`
-	selectValues                           sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -60,17 +60,11 @@ func (_m *Mysekaicharactertalkcondition) assignValues(columns []string, values [
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaicharactertalkcondition.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaicharactertalkcondition.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -84,7 +78,13 @@ func (_m *Mysekaicharactertalkcondition) assignValues(columns []string, values [
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_type_value", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkConditionTypeValue = value.Int64
+				_m.MysekaiCharacterTalkConditionTypeValue = int(value.Int64)
+			}
+		case mysekaicharactertalkcondition.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -122,9 +122,6 @@ func (_m *Mysekaicharactertalkcondition) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaicharactertalkcondition(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -133,6 +130,9 @@ func (_m *Mysekaicharactertalkcondition) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_character_talk_condition_type_value=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCharacterTalkConditionTypeValue))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

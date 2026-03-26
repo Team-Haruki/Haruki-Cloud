@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/costume3d"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *Costume3DUpdate) Where(ps ...predicate.Costume3D) *Costume3DUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Costume3DUpdate) SetServerRegion(v string) *Costume3DUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableServerRegion(v *string) *Costume3DUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Costume3DUpdate) SetGameID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetGameID(v int) *Costume3DUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableGameID(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableGameID(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *Costume3DUpdate) SetNillableGameID(v *int64) *Costume3DUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Costume3DUpdate) AddGameID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddGameID(v int) *Costume3DUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Costume3DUpdate) ClearGameID() *Costume3DUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *Costume3DUpdate) SetSeq(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetSeq(v int) *Costume3DUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableSeq(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableSeq(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *Costume3DUpdate) SetNillableSeq(v *int64) *Costume3DUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *Costume3DUpdate) AddSeq(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddSeq(v int) *Costume3DUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -96,14 +78,14 @@ func (_u *Costume3DUpdate) ClearSeq() *Costume3DUpdate {
 }
 
 // SetCostume3DGroupID sets the "costume3_d_group_id" field.
-func (_u *Costume3DUpdate) SetCostume3DGroupID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetCostume3DGroupID(v int) *Costume3DUpdate {
 	_u.mutation.ResetCostume3DGroupID()
 	_u.mutation.SetCostume3DGroupID(v)
 	return _u
 }
 
 // SetNillableCostume3DGroupID sets the "costume3_d_group_id" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableCostume3DGroupID(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableCostume3DGroupID(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetCostume3DGroupID(*v)
 	}
@@ -111,7 +93,7 @@ func (_u *Costume3DUpdate) SetNillableCostume3DGroupID(v *int64) *Costume3DUpdat
 }
 
 // AddCostume3DGroupID adds value to the "costume3_d_group_id" field.
-func (_u *Costume3DUpdate) AddCostume3DGroupID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddCostume3DGroupID(v int) *Costume3DUpdate {
 	_u.mutation.AddCostume3DGroupID(v)
 	return _u
 }
@@ -123,16 +105,14 @@ func (_u *Costume3DUpdate) ClearCostume3DGroupID() *Costume3DUpdate {
 }
 
 // SetCostume3DType sets the "costume3_d_type" field.
-func (_u *Costume3DUpdate) SetCostume3DType(v string) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetCostume3DType(v json.RawMessage) *Costume3DUpdate {
 	_u.mutation.SetCostume3DType(v)
 	return _u
 }
 
-// SetNillableCostume3DType sets the "costume3_d_type" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableCostume3DType(v *string) *Costume3DUpdate {
-	if v != nil {
-		_u.SetCostume3DType(*v)
-	}
+// AppendCostume3DType appends value to the "costume3_d_type" field.
+func (_u *Costume3DUpdate) AppendCostume3DType(v json.RawMessage) *Costume3DUpdate {
+	_u.mutation.AppendCostume3DType(v)
 	return _u
 }
 
@@ -163,16 +143,14 @@ func (_u *Costume3DUpdate) ClearName() *Costume3DUpdate {
 }
 
 // SetPartType sets the "part_type" field.
-func (_u *Costume3DUpdate) SetPartType(v string) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetPartType(v json.RawMessage) *Costume3DUpdate {
 	_u.mutation.SetPartType(v)
 	return _u
 }
 
-// SetNillablePartType sets the "part_type" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillablePartType(v *string) *Costume3DUpdate {
-	if v != nil {
-		_u.SetPartType(*v)
-	}
+// AppendPartType appends value to the "part_type" field.
+func (_u *Costume3DUpdate) AppendPartType(v json.RawMessage) *Costume3DUpdate {
+	_u.mutation.AppendPartType(v)
 	return _u
 }
 
@@ -183,14 +161,14 @@ func (_u *Costume3DUpdate) ClearPartType() *Costume3DUpdate {
 }
 
 // SetColorID sets the "color_id" field.
-func (_u *Costume3DUpdate) SetColorID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetColorID(v int) *Costume3DUpdate {
 	_u.mutation.ResetColorID()
 	_u.mutation.SetColorID(v)
 	return _u
 }
 
 // SetNillableColorID sets the "color_id" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableColorID(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableColorID(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetColorID(*v)
 	}
@@ -198,7 +176,7 @@ func (_u *Costume3DUpdate) SetNillableColorID(v *int64) *Costume3DUpdate {
 }
 
 // AddColorID adds value to the "color_id" field.
-func (_u *Costume3DUpdate) AddColorID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddColorID(v int) *Costume3DUpdate {
 	_u.mutation.AddColorID(v)
 	return _u
 }
@@ -230,14 +208,14 @@ func (_u *Costume3DUpdate) ClearColorName() *Costume3DUpdate {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Costume3DUpdate) SetCharacterID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetCharacterID(v int) *Costume3DUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableCharacterID(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableCharacterID(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -245,7 +223,7 @@ func (_u *Costume3DUpdate) SetNillableCharacterID(v *int64) *Costume3DUpdate {
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Costume3DUpdate) AddCharacterID(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddCharacterID(v int) *Costume3DUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -257,16 +235,14 @@ func (_u *Costume3DUpdate) ClearCharacterID() *Costume3DUpdate {
 }
 
 // SetCostume3DRarity sets the "costume3_d_rarity" field.
-func (_u *Costume3DUpdate) SetCostume3DRarity(v string) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetCostume3DRarity(v json.RawMessage) *Costume3DUpdate {
 	_u.mutation.SetCostume3DRarity(v)
 	return _u
 }
 
-// SetNillableCostume3DRarity sets the "costume3_d_rarity" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableCostume3DRarity(v *string) *Costume3DUpdate {
-	if v != nil {
-		_u.SetCostume3DRarity(*v)
-	}
+// AppendCostume3DRarity appends value to the "costume3_d_rarity" field.
+func (_u *Costume3DUpdate) AppendCostume3DRarity(v json.RawMessage) *Costume3DUpdate {
+	_u.mutation.AppendCostume3DRarity(v)
 	return _u
 }
 
@@ -337,16 +313,14 @@ func (_u *Costume3DUpdate) ClearDesigner() *Costume3DUpdate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *Costume3DUpdate) SetArchiveDisplayType(v string) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetArchiveDisplayType(v json.RawMessage) *Costume3DUpdate {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableArchiveDisplayType(v *string) *Costume3DUpdate {
-	if v != nil {
-		_u.SetArchiveDisplayType(*v)
-	}
+// AppendArchiveDisplayType appends value to the "archive_display_type" field.
+func (_u *Costume3DUpdate) AppendArchiveDisplayType(v json.RawMessage) *Costume3DUpdate {
+	_u.mutation.AppendArchiveDisplayType(v)
 	return _u
 }
 
@@ -357,14 +331,14 @@ func (_u *Costume3DUpdate) ClearArchiveDisplayType() *Costume3DUpdate {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *Costume3DUpdate) SetArchivePublishedAt(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetArchivePublishedAt(v int) *Costume3DUpdate {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillableArchivePublishedAt(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillableArchivePublishedAt(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -372,7 +346,7 @@ func (_u *Costume3DUpdate) SetNillableArchivePublishedAt(v *int64) *Costume3DUpd
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *Costume3DUpdate) AddArchivePublishedAt(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddArchivePublishedAt(v int) *Costume3DUpdate {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -384,14 +358,14 @@ func (_u *Costume3DUpdate) ClearArchivePublishedAt() *Costume3DUpdate {
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (_u *Costume3DUpdate) SetPublishedAt(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetPublishedAt(v int) *Costume3DUpdate {
 	_u.mutation.ResetPublishedAt()
 	_u.mutation.SetPublishedAt(v)
 	return _u
 }
 
 // SetNillablePublishedAt sets the "published_at" field if the given value is not nil.
-func (_u *Costume3DUpdate) SetNillablePublishedAt(v *int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) SetNillablePublishedAt(v *int) *Costume3DUpdate {
 	if v != nil {
 		_u.SetPublishedAt(*v)
 	}
@@ -399,7 +373,7 @@ func (_u *Costume3DUpdate) SetNillablePublishedAt(v *int64) *Costume3DUpdate {
 }
 
 // AddPublishedAt adds value to the "published_at" field.
-func (_u *Costume3DUpdate) AddPublishedAt(v int64) *Costume3DUpdate {
+func (_u *Costume3DUpdate) AddPublishedAt(v int) *Costume3DUpdate {
 	_u.mutation.AddPublishedAt(v)
 	return _u
 }
@@ -407,6 +381,20 @@ func (_u *Costume3DUpdate) AddPublishedAt(v int64) *Costume3DUpdate {
 // ClearPublishedAt clears the value of the "published_at" field.
 func (_u *Costume3DUpdate) ClearPublishedAt() *Costume3DUpdate {
 	_u.mutation.ClearPublishedAt()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Costume3DUpdate) SetServerRegion(v string) *Costume3DUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Costume3DUpdate) SetNillableServerRegion(v *string) *Costume3DUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -451,41 +439,40 @@ func (_u *Costume3DUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(costume3d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(costume3d.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(costume3d.FieldGameID, field.TypeInt64)
+		_spec.AddField(costume3d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(costume3d.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(costume3d.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(costume3d.FieldSeq, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DGroupID(); ok {
-		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCostume3DGroupID(); ok {
-		_spec.AddField(costume3d.FieldCostume3DGroupID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldCostume3DGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.Costume3DGroupIDCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DGroupID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldCostume3DGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DType(); ok {
-		_spec.SetField(costume3d.FieldCostume3DType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCostume3DType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldCostume3DType, value)
+		})
 	}
 	if _u.mutation.Costume3DTypeCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DType, field.TypeString)
+		_spec.ClearField(costume3d.FieldCostume3DType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(costume3d.FieldName, field.TypeString, value)
@@ -494,19 +481,24 @@ func (_u *Costume3DUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(costume3d.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.PartType(); ok {
-		_spec.SetField(costume3d.FieldPartType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldPartType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedPartType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldPartType, value)
+		})
 	}
 	if _u.mutation.PartTypeCleared() {
-		_spec.ClearField(costume3d.FieldPartType, field.TypeString)
+		_spec.ClearField(costume3d.FieldPartType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ColorID(); ok {
-		_spec.SetField(costume3d.FieldColorID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldColorID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedColorID(); ok {
-		_spec.AddField(costume3d.FieldColorID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldColorID, field.TypeInt, value)
 	}
 	if _u.mutation.ColorIDCleared() {
-		_spec.ClearField(costume3d.FieldColorID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldColorID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ColorName(); ok {
 		_spec.SetField(costume3d.FieldColorName, field.TypeString, value)
@@ -515,19 +507,24 @@ func (_u *Costume3DUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(costume3d.FieldColorName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(costume3d.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(costume3d.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DRarity(); ok {
-		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCostume3DRarity(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldCostume3DRarity, value)
+		})
 	}
 	if _u.mutation.Costume3DRarityCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DRarity, field.TypeString)
+		_spec.ClearField(costume3d.FieldCostume3DRarity, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.HowToObtain(); ok {
 		_spec.SetField(costume3d.FieldHowToObtain, field.TypeString, value)
@@ -548,28 +545,36 @@ func (_u *Costume3DUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(costume3d.FieldDesigner, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldArchiveDisplayType, value)
+		})
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(costume3d.FieldArchiveDisplayType, field.TypeString)
+		_spec.ClearField(costume3d.FieldArchiveDisplayType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(costume3d.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(costume3d.FieldArchivePublishedAt, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldArchivePublishedAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PublishedAt(); ok {
-		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPublishedAt(); ok {
-		_spec.AddField(costume3d.FieldPublishedAt, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldPublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.PublishedAtCleared() {
-		_spec.ClearField(costume3d.FieldPublishedAt, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldPublishedAt, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -591,29 +596,15 @@ type Costume3DUpdateOne struct {
 	mutation *Costume3DMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Costume3DUpdateOne) SetServerRegion(v string) *Costume3DUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableServerRegion(v *string) *Costume3DUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Costume3DUpdateOne) SetGameID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetGameID(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableGameID(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableGameID(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -621,26 +612,20 @@ func (_u *Costume3DUpdateOne) SetNillableGameID(v *int64) *Costume3DUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Costume3DUpdateOne) AddGameID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddGameID(v int) *Costume3DUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Costume3DUpdateOne) ClearGameID() *Costume3DUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *Costume3DUpdateOne) SetSeq(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetSeq(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableSeq(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableSeq(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -648,7 +633,7 @@ func (_u *Costume3DUpdateOne) SetNillableSeq(v *int64) *Costume3DUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *Costume3DUpdateOne) AddSeq(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddSeq(v int) *Costume3DUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -660,14 +645,14 @@ func (_u *Costume3DUpdateOne) ClearSeq() *Costume3DUpdateOne {
 }
 
 // SetCostume3DGroupID sets the "costume3_d_group_id" field.
-func (_u *Costume3DUpdateOne) SetCostume3DGroupID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetCostume3DGroupID(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetCostume3DGroupID()
 	_u.mutation.SetCostume3DGroupID(v)
 	return _u
 }
 
 // SetNillableCostume3DGroupID sets the "costume3_d_group_id" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableCostume3DGroupID(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableCostume3DGroupID(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetCostume3DGroupID(*v)
 	}
@@ -675,7 +660,7 @@ func (_u *Costume3DUpdateOne) SetNillableCostume3DGroupID(v *int64) *Costume3DUp
 }
 
 // AddCostume3DGroupID adds value to the "costume3_d_group_id" field.
-func (_u *Costume3DUpdateOne) AddCostume3DGroupID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddCostume3DGroupID(v int) *Costume3DUpdateOne {
 	_u.mutation.AddCostume3DGroupID(v)
 	return _u
 }
@@ -687,16 +672,14 @@ func (_u *Costume3DUpdateOne) ClearCostume3DGroupID() *Costume3DUpdateOne {
 }
 
 // SetCostume3DType sets the "costume3_d_type" field.
-func (_u *Costume3DUpdateOne) SetCostume3DType(v string) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetCostume3DType(v json.RawMessage) *Costume3DUpdateOne {
 	_u.mutation.SetCostume3DType(v)
 	return _u
 }
 
-// SetNillableCostume3DType sets the "costume3_d_type" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableCostume3DType(v *string) *Costume3DUpdateOne {
-	if v != nil {
-		_u.SetCostume3DType(*v)
-	}
+// AppendCostume3DType appends value to the "costume3_d_type" field.
+func (_u *Costume3DUpdateOne) AppendCostume3DType(v json.RawMessage) *Costume3DUpdateOne {
+	_u.mutation.AppendCostume3DType(v)
 	return _u
 }
 
@@ -727,16 +710,14 @@ func (_u *Costume3DUpdateOne) ClearName() *Costume3DUpdateOne {
 }
 
 // SetPartType sets the "part_type" field.
-func (_u *Costume3DUpdateOne) SetPartType(v string) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetPartType(v json.RawMessage) *Costume3DUpdateOne {
 	_u.mutation.SetPartType(v)
 	return _u
 }
 
-// SetNillablePartType sets the "part_type" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillablePartType(v *string) *Costume3DUpdateOne {
-	if v != nil {
-		_u.SetPartType(*v)
-	}
+// AppendPartType appends value to the "part_type" field.
+func (_u *Costume3DUpdateOne) AppendPartType(v json.RawMessage) *Costume3DUpdateOne {
+	_u.mutation.AppendPartType(v)
 	return _u
 }
 
@@ -747,14 +728,14 @@ func (_u *Costume3DUpdateOne) ClearPartType() *Costume3DUpdateOne {
 }
 
 // SetColorID sets the "color_id" field.
-func (_u *Costume3DUpdateOne) SetColorID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetColorID(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetColorID()
 	_u.mutation.SetColorID(v)
 	return _u
 }
 
 // SetNillableColorID sets the "color_id" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableColorID(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableColorID(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetColorID(*v)
 	}
@@ -762,7 +743,7 @@ func (_u *Costume3DUpdateOne) SetNillableColorID(v *int64) *Costume3DUpdateOne {
 }
 
 // AddColorID adds value to the "color_id" field.
-func (_u *Costume3DUpdateOne) AddColorID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddColorID(v int) *Costume3DUpdateOne {
 	_u.mutation.AddColorID(v)
 	return _u
 }
@@ -794,14 +775,14 @@ func (_u *Costume3DUpdateOne) ClearColorName() *Costume3DUpdateOne {
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_u *Costume3DUpdateOne) SetCharacterID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetCharacterID(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableCharacterID(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableCharacterID(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -809,7 +790,7 @@ func (_u *Costume3DUpdateOne) SetNillableCharacterID(v *int64) *Costume3DUpdateO
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *Costume3DUpdateOne) AddCharacterID(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddCharacterID(v int) *Costume3DUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -821,16 +802,14 @@ func (_u *Costume3DUpdateOne) ClearCharacterID() *Costume3DUpdateOne {
 }
 
 // SetCostume3DRarity sets the "costume3_d_rarity" field.
-func (_u *Costume3DUpdateOne) SetCostume3DRarity(v string) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetCostume3DRarity(v json.RawMessage) *Costume3DUpdateOne {
 	_u.mutation.SetCostume3DRarity(v)
 	return _u
 }
 
-// SetNillableCostume3DRarity sets the "costume3_d_rarity" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableCostume3DRarity(v *string) *Costume3DUpdateOne {
-	if v != nil {
-		_u.SetCostume3DRarity(*v)
-	}
+// AppendCostume3DRarity appends value to the "costume3_d_rarity" field.
+func (_u *Costume3DUpdateOne) AppendCostume3DRarity(v json.RawMessage) *Costume3DUpdateOne {
+	_u.mutation.AppendCostume3DRarity(v)
 	return _u
 }
 
@@ -901,16 +880,14 @@ func (_u *Costume3DUpdateOne) ClearDesigner() *Costume3DUpdateOne {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *Costume3DUpdateOne) SetArchiveDisplayType(v string) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetArchiveDisplayType(v json.RawMessage) *Costume3DUpdateOne {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableArchiveDisplayType(v *string) *Costume3DUpdateOne {
-	if v != nil {
-		_u.SetArchiveDisplayType(*v)
-	}
+// AppendArchiveDisplayType appends value to the "archive_display_type" field.
+func (_u *Costume3DUpdateOne) AppendArchiveDisplayType(v json.RawMessage) *Costume3DUpdateOne {
+	_u.mutation.AppendArchiveDisplayType(v)
 	return _u
 }
 
@@ -921,14 +898,14 @@ func (_u *Costume3DUpdateOne) ClearArchiveDisplayType() *Costume3DUpdateOne {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_u *Costume3DUpdateOne) SetArchivePublishedAt(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetArchivePublishedAt(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetArchivePublishedAt()
 	_u.mutation.SetArchivePublishedAt(v)
 	return _u
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillableArchivePublishedAt(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillableArchivePublishedAt(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetArchivePublishedAt(*v)
 	}
@@ -936,7 +913,7 @@ func (_u *Costume3DUpdateOne) SetNillableArchivePublishedAt(v *int64) *Costume3D
 }
 
 // AddArchivePublishedAt adds value to the "archive_published_at" field.
-func (_u *Costume3DUpdateOne) AddArchivePublishedAt(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddArchivePublishedAt(v int) *Costume3DUpdateOne {
 	_u.mutation.AddArchivePublishedAt(v)
 	return _u
 }
@@ -948,14 +925,14 @@ func (_u *Costume3DUpdateOne) ClearArchivePublishedAt() *Costume3DUpdateOne {
 }
 
 // SetPublishedAt sets the "published_at" field.
-func (_u *Costume3DUpdateOne) SetPublishedAt(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetPublishedAt(v int) *Costume3DUpdateOne {
 	_u.mutation.ResetPublishedAt()
 	_u.mutation.SetPublishedAt(v)
 	return _u
 }
 
 // SetNillablePublishedAt sets the "published_at" field if the given value is not nil.
-func (_u *Costume3DUpdateOne) SetNillablePublishedAt(v *int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) SetNillablePublishedAt(v *int) *Costume3DUpdateOne {
 	if v != nil {
 		_u.SetPublishedAt(*v)
 	}
@@ -963,7 +940,7 @@ func (_u *Costume3DUpdateOne) SetNillablePublishedAt(v *int64) *Costume3DUpdateO
 }
 
 // AddPublishedAt adds value to the "published_at" field.
-func (_u *Costume3DUpdateOne) AddPublishedAt(v int64) *Costume3DUpdateOne {
+func (_u *Costume3DUpdateOne) AddPublishedAt(v int) *Costume3DUpdateOne {
 	_u.mutation.AddPublishedAt(v)
 	return _u
 }
@@ -971,6 +948,20 @@ func (_u *Costume3DUpdateOne) AddPublishedAt(v int64) *Costume3DUpdateOne {
 // ClearPublishedAt clears the value of the "published_at" field.
 func (_u *Costume3DUpdateOne) ClearPublishedAt() *Costume3DUpdateOne {
 	_u.mutation.ClearPublishedAt()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Costume3DUpdateOne) SetServerRegion(v string) *Costume3DUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Costume3DUpdateOne) SetNillableServerRegion(v *string) *Costume3DUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -1045,41 +1036,40 @@ func (_u *Costume3DUpdateOne) sqlSave(ctx context.Context) (_node *Costume3D, er
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(costume3d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(costume3d.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(costume3d.FieldGameID, field.TypeInt64)
+		_spec.AddField(costume3d.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(costume3d.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(costume3d.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(costume3d.FieldSeq, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DGroupID(); ok {
-		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCostume3DGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCostume3DGroupID(); ok {
-		_spec.AddField(costume3d.FieldCostume3DGroupID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldCostume3DGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.Costume3DGroupIDCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DGroupID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldCostume3DGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DType(); ok {
-		_spec.SetField(costume3d.FieldCostume3DType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCostume3DType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldCostume3DType, value)
+		})
 	}
 	if _u.mutation.Costume3DTypeCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DType, field.TypeString)
+		_spec.ClearField(costume3d.FieldCostume3DType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(costume3d.FieldName, field.TypeString, value)
@@ -1088,19 +1078,24 @@ func (_u *Costume3DUpdateOne) sqlSave(ctx context.Context) (_node *Costume3D, er
 		_spec.ClearField(costume3d.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.PartType(); ok {
-		_spec.SetField(costume3d.FieldPartType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldPartType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedPartType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldPartType, value)
+		})
 	}
 	if _u.mutation.PartTypeCleared() {
-		_spec.ClearField(costume3d.FieldPartType, field.TypeString)
+		_spec.ClearField(costume3d.FieldPartType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ColorID(); ok {
-		_spec.SetField(costume3d.FieldColorID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldColorID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedColorID(); ok {
-		_spec.AddField(costume3d.FieldColorID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldColorID, field.TypeInt, value)
 	}
 	if _u.mutation.ColorIDCleared() {
-		_spec.ClearField(costume3d.FieldColorID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldColorID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ColorName(); ok {
 		_spec.SetField(costume3d.FieldColorName, field.TypeString, value)
@@ -1109,19 +1104,24 @@ func (_u *Costume3DUpdateOne) sqlSave(ctx context.Context) (_node *Costume3D, er
 		_spec.ClearField(costume3d.FieldColorName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(costume3d.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(costume3d.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Costume3DRarity(); ok {
-		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeString, value)
+		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCostume3DRarity(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldCostume3DRarity, value)
+		})
 	}
 	if _u.mutation.Costume3DRarityCleared() {
-		_spec.ClearField(costume3d.FieldCostume3DRarity, field.TypeString)
+		_spec.ClearField(costume3d.FieldCostume3DRarity, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.HowToObtain(); ok {
 		_spec.SetField(costume3d.FieldHowToObtain, field.TypeString, value)
@@ -1142,28 +1142,36 @@ func (_u *Costume3DUpdateOne) sqlSave(ctx context.Context) (_node *Costume3D, er
 		_spec.ClearField(costume3d.FieldDesigner, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, costume3d.FieldArchiveDisplayType, value)
+		})
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(costume3d.FieldArchiveDisplayType, field.TypeString)
+		_spec.ClearField(costume3d.FieldArchiveDisplayType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchivePublishedAt(); ok {
-		_spec.AddField(costume3d.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldArchivePublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.ArchivePublishedAtCleared() {
-		_spec.ClearField(costume3d.FieldArchivePublishedAt, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldArchivePublishedAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PublishedAt(); ok {
-		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt64, value)
+		_spec.SetField(costume3d.FieldPublishedAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPublishedAt(); ok {
-		_spec.AddField(costume3d.FieldPublishedAt, field.TypeInt64, value)
+		_spec.AddField(costume3d.FieldPublishedAt, field.TypeInt, value)
 	}
 	if _u.mutation.PublishedAtCleared() {
-		_spec.ClearField(costume3d.FieldPublishedAt, field.TypeInt64)
+		_spec.ClearField(costume3d.FieldPublishedAt, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(costume3d.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Costume3D{config: _u.config}
 	_spec.Assign = _node.assignValues

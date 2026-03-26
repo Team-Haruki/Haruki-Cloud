@@ -262,12 +262,12 @@ func (_q *BondQuery) Clone() *BondQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Bond.Query().
-//		GroupBy(bond.FieldServerRegion).
+//		GroupBy(bond.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *BondQuery) GroupBy(field string, fields ...string) *BondGroupBy {
@@ -285,11 +285,11 @@ func (_q *BondQuery) GroupBy(field string, fields ...string) *BondGroupBy {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Bond.Query().
-//		Select(bond.FieldServerRegion).
+//		Select(bond.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *BondQuery) Select(fields ...string) *BondSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -11,8 +11,6 @@ const (
 	Label = "mysekaigatelevel"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiGateID holds the string denoting the mysekai_gate_id field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldMysekaiGateCharacterVisitCountRateID = "mysekai_gate_character_visit_count_rate_id"
 	// FieldPowerBonusRate holds the string denoting the power_bonus_rate field in the database.
 	FieldPowerBonusRate = "power_bonus_rate"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaigatelevel in the database.
 	Table = "mysekaigatelevels"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for mysekaigatelevel fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiGateID,
 	FieldLevel,
 	FieldMysekaiGateMaterialGroupID,
 	FieldMysekaiGateCharacterVisitCountRateID,
 	FieldPowerBonusRate,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,11 +57,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -92,4 +87,9 @@ func ByMysekaiGateCharacterVisitCountRateID(opts ...sql.OrderTermOption) OrderOp
 // ByPowerBonusRate orders the results by the power_bonus_rate field.
 func ByPowerBonusRate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPowerBonusRate, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

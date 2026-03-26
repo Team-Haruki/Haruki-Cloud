@@ -19,23 +19,9 @@ type CardsupplieCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *CardsupplieCreate) SetServerRegion(v string) *CardsupplieCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *CardsupplieCreate) SetGameID(v int64) *CardsupplieCreate {
+func (_c *CardsupplieCreate) SetGameID(v int) *CardsupplieCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *CardsupplieCreate) SetNillableGameID(v *int64) *CardsupplieCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -64,6 +50,12 @@ func (_c *CardsupplieCreate) SetNillableAssetbundleName(v *string) *CardsupplieC
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *CardsupplieCreate) SetServerRegion(v string) *CardsupplieCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -101,6 +93,9 @@ func (_c *CardsupplieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CardsupplieCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Cardsupplie.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Cardsupplie.server_region"`)}
 	}
@@ -130,12 +125,8 @@ func (_c *CardsupplieCreate) createSpec() (*Cardsupplie, *sqlgraph.CreateSpec) {
 		_node = &Cardsupplie{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(cardsupplie.Table, sqlgraph.NewFieldSpec(cardsupplie.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(cardsupplie.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardSupplyType(); ok {
@@ -145,6 +136,10 @@ func (_c *CardsupplieCreate) createSpec() (*Cardsupplie, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(cardsupplie.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(cardsupplie.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

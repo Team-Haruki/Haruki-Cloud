@@ -19,34 +19,20 @@ type LimitedtimemusicCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *LimitedtimemusicCreate) SetServerRegion(v string) *LimitedtimemusicCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *LimitedtimemusicCreate) SetGameID(v int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetGameID(v int) *LimitedtimemusicCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableGameID(v *int64) *LimitedtimemusicCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetMusicID sets the "music_id" field.
-func (_c *LimitedtimemusicCreate) SetMusicID(v int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetMusicID(v int) *LimitedtimemusicCreate {
 	_c.mutation.SetMusicID(v)
 	return _c
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetMusicID(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *LimitedtimemusicCreate) SetNillableMusicID(v *int64) *Limitedtimemusic
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *LimitedtimemusicCreate) SetStartAt(v int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetStartAt(v int) *LimitedtimemusicCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -68,16 +54,22 @@ func (_c *LimitedtimemusicCreate) SetNillableStartAt(v *int64) *Limitedtimemusic
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *LimitedtimemusicCreate) SetEndAt(v int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetEndAt(v int) *LimitedtimemusicCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *LimitedtimemusicCreate) SetNillableEndAt(v *int64) *LimitedtimemusicCreate {
+func (_c *LimitedtimemusicCreate) SetNillableEndAt(v *int) *LimitedtimemusicCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *LimitedtimemusicCreate) SetServerRegion(v string) *LimitedtimemusicCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +107,9 @@ func (_c *LimitedtimemusicCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *LimitedtimemusicCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Limitedtimemusic.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Limitedtimemusic.server_region"`)}
 	}
@@ -144,25 +139,25 @@ func (_c *LimitedtimemusicCreate) createSpec() (*Limitedtimemusic, *sqlgraph.Cre
 		_node = &Limitedtimemusic{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(limitedtimemusic.Table, sqlgraph.NewFieldSpec(limitedtimemusic.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(limitedtimemusic.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MusicID(); ok {
-		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(limitedtimemusic.FieldMusicID, field.TypeInt, value)
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(limitedtimemusic.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt, value)
 		_node.EndAt = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -53,29 +53,219 @@ func IDLTE(id int) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameID, v))
+}
+
+// GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
+func GroupID(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGroupID, v))
+}
+
+// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
+func MysekaiMaterialID(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldMysekaiMaterialID, v))
+}
+
+// GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
+func GameCharacterID(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameCharacterID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaimaterialgamecharacterrelation {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameID, v))
 }
 
-// GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int64) predicate.Mysekaimaterialgamecharacterrelation {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGameID, v))
+}
+
+// GroupIDEQ applies the EQ predicate on the "group_id" field.
+func GroupIDEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGroupID, v))
 }
 
-// MysekaiMaterialID applies equality check predicate on the "mysekai_material_id" field. It's identical to MysekaiMaterialIDEQ.
-func MysekaiMaterialID(v int64) predicate.Mysekaimaterialgamecharacterrelation {
+// GroupIDNEQ applies the NEQ predicate on the "group_id" field.
+func GroupIDNEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGroupID, v))
+}
+
+// GroupIDIn applies the In predicate on the "group_id" field.
+func GroupIDIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGroupID, vs...))
+}
+
+// GroupIDNotIn applies the NotIn predicate on the "group_id" field.
+func GroupIDNotIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGroupID, vs...))
+}
+
+// GroupIDGT applies the GT predicate on the "group_id" field.
+func GroupIDGT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGroupID, v))
+}
+
+// GroupIDGTE applies the GTE predicate on the "group_id" field.
+func GroupIDGTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGroupID, v))
+}
+
+// GroupIDLT applies the LT predicate on the "group_id" field.
+func GroupIDLT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGroupID, v))
+}
+
+// GroupIDLTE applies the LTE predicate on the "group_id" field.
+func GroupIDLTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGroupID, v))
+}
+
+// GroupIDIsNil applies the IsNil predicate on the "group_id" field.
+func GroupIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldGroupID))
+}
+
+// GroupIDNotNil applies the NotNil predicate on the "group_id" field.
+func GroupIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldGroupID))
+}
+
+// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldMysekaiMaterialID, v))
 }
 
-// GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
-func GameCharacterID(v int64) predicate.Mysekaimaterialgamecharacterrelation {
+// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
+}
+
+// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDGTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDLTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldMysekaiMaterialID, v))
+}
+
+// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldMysekaiMaterialID))
+}
+
+// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
+func MysekaiMaterialIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldMysekaiMaterialID))
+}
+
+// GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
+func GameCharacterIDEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
+func GameCharacterIDNEQ(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDIn applies the In predicate on the "game_character_id" field.
+func GameCharacterIDIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGameCharacterID, vs...))
+}
+
+// GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
+func GameCharacterIDNotIn(vs ...int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGameCharacterID, vs...))
+}
+
+// GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
+func GameCharacterIDGT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
+func GameCharacterIDGTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
+func GameCharacterIDLT(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
+func GameCharacterIDLTE(v int) predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGameCharacterID, v))
+}
+
+// GameCharacterIDIsNil applies the IsNil predicate on the "game_character_id" field.
+func GameCharacterIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldGameCharacterID))
+}
+
+// GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
+func GameCharacterIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
+	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldGameCharacterID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,206 +331,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaimaterialgamecharacterrelat
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaimaterialgamecharacterrelation {
 	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldGameID))
-}
-
-// GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGroupID, v))
-}
-
-// GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGroupID, v))
-}
-
-// GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGroupID, vs...))
-}
-
-// GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGroupID, vs...))
-}
-
-// GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGroupID, v))
-}
-
-// GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGroupID, v))
-}
-
-// GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGroupID, v))
-}
-
-// GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGroupID, v))
-}
-
-// GroupIDIsNil applies the IsNil predicate on the "group_id" field.
-func GroupIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldGroupID))
-}
-
-// GroupIDNotNil applies the NotNil predicate on the "group_id" field.
-func GroupIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldGroupID))
-}
-
-// MysekaiMaterialIDEQ applies the EQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDNEQ applies the NEQ predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIn applies the In predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDNotIn applies the NotIn predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldMysekaiMaterialID, vs...))
-}
-
-// MysekaiMaterialIDGT applies the GT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDGTE applies the GTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDGTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLT applies the LT predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDLTE applies the LTE predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDLTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldMysekaiMaterialID, v))
-}
-
-// MysekaiMaterialIDIsNil applies the IsNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldMysekaiMaterialID))
-}
-
-// MysekaiMaterialIDNotNil applies the NotNil predicate on the "mysekai_material_id" field.
-func MysekaiMaterialIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldMysekaiMaterialID))
-}
-
-// GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
-func GameCharacterIDEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldEQ(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
-func GameCharacterIDNEQ(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNEQ(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDIn applies the In predicate on the "game_character_id" field.
-func GameCharacterIDIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIn(FieldGameCharacterID, vs...))
-}
-
-// GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
-func GameCharacterIDNotIn(vs ...int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotIn(FieldGameCharacterID, vs...))
-}
-
-// GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
-func GameCharacterIDGT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGT(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
-func GameCharacterIDGTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldGTE(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
-func GameCharacterIDLT(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLT(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
-func GameCharacterIDLTE(v int64) predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldLTE(FieldGameCharacterID, v))
-}
-
-// GameCharacterIDIsNil applies the IsNil predicate on the "game_character_id" field.
-func GameCharacterIDIsNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldIsNull(FieldGameCharacterID))
-}
-
-// GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
-func GameCharacterIDNotNil() predicate.Mysekaimaterialgamecharacterrelation {
-	return predicate.Mysekaimaterialgamecharacterrelation(sql.FieldNotNull(FieldGameCharacterID))
 }
 
 // And groups predicates with the AND operator between them.

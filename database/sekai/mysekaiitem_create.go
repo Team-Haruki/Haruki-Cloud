@@ -19,34 +19,20 @@ type MysekaiitemCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaiitemCreate) SetServerRegion(v string) *MysekaiitemCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiitemCreate) SetGameID(v int64) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetGameID(v int) *MysekaiitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaiitemCreate) SetNillableGameID(v *int64) *MysekaiitemCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *MysekaiitemCreate) SetSeq(v int64) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetSeq(v int) *MysekaiitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaiitemCreate) SetNillableSeq(v *int64) *MysekaiitemCreate {
+func (_c *MysekaiitemCreate) SetNillableSeq(v *int) *MysekaiitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -123,6 +109,12 @@ func (_c *MysekaiitemCreate) SetNillableIconAssetbundleName(v *string) *Mysekaii
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaiitemCreate) SetServerRegion(v string) *MysekaiitemCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the MysekaiitemMutation object of the builder.
 func (_c *MysekaiitemCreate) Mutation() *MysekaiitemMutation {
 	return _c.mutation
@@ -157,6 +149,9 @@ func (_c *MysekaiitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiitemCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiitem.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiitem.server_region"`)}
 	}
@@ -186,16 +181,12 @@ func (_c *MysekaiitemCreate) createSpec() (*Mysekaiitem, *sqlgraph.CreateSpec) {
 		_node = &Mysekaiitem{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaiitem.Table, sqlgraph.NewFieldSpec(mysekaiitem.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaiitem.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiItemType(); ok {
@@ -217,6 +208,10 @@ func (_c *MysekaiitemCreate) createSpec() (*Mysekaiitem, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IconAssetbundleName(); ok {
 		_spec.SetField(mysekaiitem.FieldIconAssetbundleName, field.TypeString, value)
 		_node.IconAssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiitem.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

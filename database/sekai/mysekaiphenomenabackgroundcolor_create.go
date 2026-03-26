@@ -19,23 +19,9 @@ type MysekaiphenomenabackgroundcolorCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaiphenomenabackgroundcolorCreate) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaiphenomenabackgroundcolorCreate) SetGameID(v int64) *MysekaiphenomenabackgroundcolorCreate {
+func (_c *MysekaiphenomenabackgroundcolorCreate) SetGameID(v int) *MysekaiphenomenabackgroundcolorCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaiphenomenabackgroundcolorCreate) SetNillableGameID(v *int64) *MysekaiphenomenabackgroundcolorCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -109,6 +95,12 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) SetNillableGroundHighlightColor
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaiphenomenabackgroundcolorCreate) SetServerRegion(v string) *MysekaiphenomenabackgroundcolorCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the MysekaiphenomenabackgroundcolorMutation object of the builder.
 func (_c *MysekaiphenomenabackgroundcolorCreate) Mutation() *MysekaiphenomenabackgroundcolorMutation {
 	return _c.mutation
@@ -143,6 +135,9 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaiphenomenabackgroundcolorCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaiphenomenabackgroundcolor.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaiphenomenabackgroundcolor.server_region"`)}
 	}
@@ -172,12 +167,8 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) createSpec() (*Mysekaiphenomena
 		_node = &Mysekaiphenomenabackgroundcolor{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaiphenomenabackgroundcolor.Table, sqlgraph.NewFieldSpec(mysekaiphenomenabackgroundcolor.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.BaseColor(); ok {
@@ -199,6 +190,10 @@ func (_c *MysekaiphenomenabackgroundcolorCreate) createSpec() (*Mysekaiphenomena
 	if value, ok := _c.mutation.GroundHighlightColor(); ok {
 		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldGroundHighlightColor, field.TypeString, value)
 		_node.GroundHighlightColor = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaiphenomenabackgroundcolor.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

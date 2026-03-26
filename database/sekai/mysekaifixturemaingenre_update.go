@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *MysekaifixturemaingenreUpdate) Where(ps ...predicate.Mysekaifixturemai
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaifixturemaingenreUpdate) SetServerRegion(v string) *MysekaifixturemaingenreUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdate) SetNillableServerRegion(v *string) *MysekaifixturemaingenreUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdate) SetGameID(v int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetGameID(v int) *MysekaifixturemaingenreUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdate) SetNillableGameID(v *int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetNillableGameID(v *int) *MysekaifixturemaingenreUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,14 +45,8 @@ func (_u *MysekaifixturemaingenreUpdate) SetNillableGameID(v *int64) *Mysekaifix
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdate) AddGameID(v int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) AddGameID(v int) *MysekaifixturemaingenreUpdate {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdate) ClearGameID() *MysekaifixturemaingenreUpdate {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -89,8 +71,14 @@ func (_u *MysekaifixturemaingenreUpdate) ClearName() *MysekaifixturemaingenreUpd
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdate) SetMysekaiFixtureMainGenreType(v map[string]interface{}) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdate {
 	_u.mutation.SetMysekaiFixtureMainGenreType(v)
+	return _u
+}
+
+// AppendMysekaiFixtureMainGenreType appends value to the "mysekai_fixture_main_genre_type" field.
+func (_u *MysekaifixturemaingenreUpdate) AppendMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdate {
+	_u.mutation.AppendMysekaiFixtureMainGenreType(v)
 	return _u
 }
 
@@ -121,14 +109,14 @@ func (_u *MysekaifixturemaingenreUpdate) ClearAssetbundleName() *Mysekaifixturem
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *MysekaifixturemaingenreUpdate) SetGroupID(v int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetGroupID(v int) *MysekaifixturemaingenreUpdate {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdate) SetNillableGroupID(v *int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetNillableGroupID(v *int) *MysekaifixturemaingenreUpdate {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -136,7 +124,7 @@ func (_u *MysekaifixturemaingenreUpdate) SetNillableGroupID(v *int64) *Mysekaifi
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *MysekaifixturemaingenreUpdate) AddGroupID(v int64) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) AddGroupID(v int) *MysekaifixturemaingenreUpdate {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -144,6 +132,20 @@ func (_u *MysekaifixturemaingenreUpdate) AddGroupID(v int64) *Mysekaifixturemain
 // ClearGroupID clears the value of the "group_id" field.
 func (_u *MysekaifixturemaingenreUpdate) ClearGroupID() *MysekaifixturemaingenreUpdate {
 	_u.mutation.ClearGroupID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaifixturemaingenreUpdate) SetServerRegion(v string) *MysekaifixturemaingenreUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaifixturemaingenreUpdate) SetNillableServerRegion(v *string) *MysekaifixturemaingenreUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -188,17 +190,11 @@ func (_u *MysekaifixturemaingenreUpdate) sqlSave(ctx context.Context) (_node int
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldName, field.TypeString, value)
@@ -208,6 +204,11 @@ func (_u *MysekaifixturemaingenreUpdate) sqlSave(ctx context.Context) (_node int
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreType(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMysekaiFixtureMainGenreType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, value)
+		})
 	}
 	if _u.mutation.MysekaiFixtureMainGenreTypeCleared() {
 		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON)
@@ -219,13 +220,16 @@ func (_u *MysekaifixturemaingenreUpdate) sqlSave(ctx context.Context) (_node int
 		_spec.ClearField(mysekaifixturemaingenre.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -247,29 +251,15 @@ type MysekaifixturemaingenreUpdateOne struct {
 	mutation *MysekaifixturemaingenreMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MysekaifixturemaingenreUpdateOne) SetServerRegion(v string) *MysekaifixturemaingenreUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdateOne) SetNillableServerRegion(v *string) *MysekaifixturemaingenreUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdateOne) SetGameID(v int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetGameID(v int) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGameID(v *int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGameID(v *int) *MysekaifixturemaingenreUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -277,14 +267,8 @@ func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGameID(v *int64) *Mysekai
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdateOne) AddGameID(v int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) AddGameID(v int) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.AddGameID(v)
-	return _u
-}
-
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MysekaifixturemaingenreUpdateOne) ClearGameID() *MysekaifixturemaingenreUpdateOne {
-	_u.mutation.ClearGameID()
 	return _u
 }
 
@@ -309,8 +293,14 @@ func (_u *MysekaifixturemaingenreUpdateOne) ClearName() *Mysekaifixturemaingenre
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdateOne) SetMysekaiFixtureMainGenreType(v map[string]interface{}) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.SetMysekaiFixtureMainGenreType(v)
+	return _u
+}
+
+// AppendMysekaiFixtureMainGenreType appends value to the "mysekai_fixture_main_genre_type" field.
+func (_u *MysekaifixturemaingenreUpdateOne) AppendMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdateOne {
+	_u.mutation.AppendMysekaiFixtureMainGenreType(v)
 	return _u
 }
 
@@ -341,14 +331,14 @@ func (_u *MysekaifixturemaingenreUpdateOne) ClearAssetbundleName() *Mysekaifixtu
 }
 
 // SetGroupID sets the "group_id" field.
-func (_u *MysekaifixturemaingenreUpdateOne) SetGroupID(v int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetGroupID(v int) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.ResetGroupID()
 	_u.mutation.SetGroupID(v)
 	return _u
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGroupID(v *int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGroupID(v *int) *MysekaifixturemaingenreUpdateOne {
 	if v != nil {
 		_u.SetGroupID(*v)
 	}
@@ -356,7 +346,7 @@ func (_u *MysekaifixturemaingenreUpdateOne) SetNillableGroupID(v *int64) *Myseka
 }
 
 // AddGroupID adds value to the "group_id" field.
-func (_u *MysekaifixturemaingenreUpdateOne) AddGroupID(v int64) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) AddGroupID(v int) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.AddGroupID(v)
 	return _u
 }
@@ -364,6 +354,20 @@ func (_u *MysekaifixturemaingenreUpdateOne) AddGroupID(v int64) *Mysekaifixturem
 // ClearGroupID clears the value of the "group_id" field.
 func (_u *MysekaifixturemaingenreUpdateOne) ClearGroupID() *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.ClearGroupID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MysekaifixturemaingenreUpdateOne) SetServerRegion(v string) *MysekaifixturemaingenreUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MysekaifixturemaingenreUpdateOne) SetNillableServerRegion(v *string) *MysekaifixturemaingenreUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -438,17 +442,11 @@ func (_u *MysekaifixturemaingenreUpdateOne) sqlSave(ctx context.Context) (_node 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldGameID, field.TypeInt64)
+		_spec.AddField(mysekaifixturemaingenre.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldName, field.TypeString, value)
@@ -458,6 +456,11 @@ func (_u *MysekaifixturemaingenreUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreType(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMysekaiFixtureMainGenreType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, value)
+		})
 	}
 	if _u.mutation.MysekaiFixtureMainGenreTypeCleared() {
 		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON)
@@ -469,13 +472,16 @@ func (_u *MysekaifixturemaingenreUpdateOne) sqlSave(ctx context.Context) (_node 
 		_spec.ClearField(mysekaifixturemaingenre.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GroupID(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
-		_spec.AddField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64, value)
+		_spec.AddField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GroupIDCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt64)
+		_spec.ClearField(mysekaifixturemaingenre.FieldGroupID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaifixturemaingenre.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Mysekaifixturemaingenre{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -17,14 +17,12 @@ type Mysekaimaterial struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// MysekaiMaterialType holds the value of the "mysekai_material_type" field.
-	MysekaiMaterialType map[string]interface{} `json:"mysekai_material_type,omitempty"`
+	MysekaiMaterialType json.RawMessage `json:"mysekai_material_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -32,16 +30,18 @@ type Mysekaimaterial struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// MysekaiMaterialRarityType holds the value of the "mysekai_material_rarity_type" field.
-	MysekaiMaterialRarityType map[string]interface{} `json:"mysekai_material_rarity_type,omitempty"`
+	MysekaiMaterialRarityType json.RawMessage `json:"mysekai_material_rarity_type,omitempty"`
 	// IconAssetbundleName holds the value of the "icon_assetbundle_name" field.
 	IconAssetbundleName string `json:"icon_assetbundle_name,omitempty"`
 	// ModelAssetbundleName holds the value of the "model_assetbundle_name" field.
 	ModelAssetbundleName string `json:"model_assetbundle_name,omitempty"`
 	// MysekaiSiteIds holds the value of the "mysekai_site_ids" field.
-	MysekaiSiteIds []interface{} `json:"mysekai_site_ids,omitempty"`
+	MysekaiSiteIds json.RawMessage `json:"mysekai_site_ids,omitempty"`
 	// MysekaiPhenomenaGroupID holds the value of the "mysekai_phenomena_group_id" field.
-	MysekaiPhenomenaGroupID int64 `json:"mysekai_phenomena_group_id,omitempty"`
-	selectValues            sql.SelectValues
+	MysekaiPhenomenaGroupID int `json:"mysekai_phenomena_group_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -53,7 +53,7 @@ func (*Mysekaimaterial) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case mysekaimaterial.FieldID, mysekaimaterial.FieldGameID, mysekaimaterial.FieldSeq, mysekaimaterial.FieldMysekaiPhenomenaGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaimaterial.FieldServerRegion, mysekaimaterial.FieldName, mysekaimaterial.FieldPronunciation, mysekaimaterial.FieldDescription, mysekaimaterial.FieldIconAssetbundleName, mysekaimaterial.FieldModelAssetbundleName:
+		case mysekaimaterial.FieldName, mysekaimaterial.FieldPronunciation, mysekaimaterial.FieldDescription, mysekaimaterial.FieldIconAssetbundleName, mysekaimaterial.FieldModelAssetbundleName, mysekaimaterial.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -76,23 +76,17 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaimaterial.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaimaterial.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaimaterial.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case mysekaimaterial.FieldMysekaiMaterialType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -152,7 +146,13 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiPhenomenaGroupID = value.Int64
+				_m.MysekaiPhenomenaGroupID = int(value.Int64)
+			}
+		case mysekaimaterial.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -190,9 +190,6 @@ func (_m *Mysekaimaterial) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaimaterial(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -225,6 +222,9 @@ func (_m *Mysekaimaterial) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_phenomena_group_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiPhenomenaGroupID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

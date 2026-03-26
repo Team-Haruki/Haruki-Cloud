@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musictag"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,29 +29,15 @@ func (_u *MusictagUpdate) Where(ps ...predicate.Musictag) *MusictagUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MusictagUpdate) SetServerRegion(v string) *MusictagUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableServerRegion(v *string) *MusictagUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MusictagUpdate) SetGameID(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetGameID(v int) *MusictagUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableGameID(v *int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableGameID(v *int) *MusictagUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +45,20 @@ func (_u *MusictagUpdate) SetNillableGameID(v *int64) *MusictagUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusictagUpdate) AddGameID(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) AddGameID(v int) *MusictagUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MusictagUpdate) ClearGameID() *MusictagUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMusicID sets the "music_id" field.
-func (_u *MusictagUpdate) SetMusicID(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetMusicID(v int) *MusictagUpdate {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableMusicID(v *int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableMusicID(v *int) *MusictagUpdate {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -84,7 +66,7 @@ func (_u *MusictagUpdate) SetNillableMusicID(v *int64) *MusictagUpdate {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusictagUpdate) AddMusicID(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) AddMusicID(v int) *MusictagUpdate {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -96,16 +78,14 @@ func (_u *MusictagUpdate) ClearMusicID() *MusictagUpdate {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_u *MusictagUpdate) SetMusicTag(v string) *MusictagUpdate {
+func (_u *MusictagUpdate) SetMusicTag(v json.RawMessage) *MusictagUpdate {
 	_u.mutation.SetMusicTag(v)
 	return _u
 }
 
-// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableMusicTag(v *string) *MusictagUpdate {
-	if v != nil {
-		_u.SetMusicTag(*v)
-	}
+// AppendMusicTag appends value to the "music_tag" field.
+func (_u *MusictagUpdate) AppendMusicTag(v json.RawMessage) *MusictagUpdate {
+	_u.mutation.AppendMusicTag(v)
 	return _u
 }
 
@@ -116,14 +96,14 @@ func (_u *MusictagUpdate) ClearMusicTag() *MusictagUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusictagUpdate) SetSeq(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetSeq(v int) *MusictagUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusictagUpdate) SetNillableSeq(v *int64) *MusictagUpdate {
+func (_u *MusictagUpdate) SetNillableSeq(v *int) *MusictagUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -131,7 +111,7 @@ func (_u *MusictagUpdate) SetNillableSeq(v *int64) *MusictagUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusictagUpdate) AddSeq(v int64) *MusictagUpdate {
+func (_u *MusictagUpdate) AddSeq(v int) *MusictagUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -139,6 +119,20 @@ func (_u *MusictagUpdate) AddSeq(v int64) *MusictagUpdate {
 // ClearSeq clears the value of the "seq" field.
 func (_u *MusictagUpdate) ClearSeq() *MusictagUpdate {
 	_u.mutation.ClearSeq()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MusictagUpdate) SetServerRegion(v string) *MusictagUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MusictagUpdate) SetNillableServerRegion(v *string) *MusictagUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -183,41 +177,43 @@ func (_u *MusictagUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musictag.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(musictag.FieldGameID, field.TypeInt64)
+		_spec.AddField(musictag.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musictag.FieldMusicID, field.TypeInt64, value)
+		_spec.AddField(musictag.FieldMusicID, field.TypeInt, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
+		_spec.ClearField(musictag.FieldMusicID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
+		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMusicTag(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, musictag.FieldMusicTag, value)
+		})
 	}
 	if _u.mutation.MusicTagCleared() {
-		_spec.ClearField(musictag.FieldMusicTag, field.TypeString)
+		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musictag.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(musictag.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musictag.FieldSeq, field.TypeInt64)
+		_spec.ClearField(musictag.FieldSeq, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -239,29 +235,15 @@ type MusictagUpdateOne struct {
 	mutation *MusictagMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *MusictagUpdateOne) SetServerRegion(v string) *MusictagUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableServerRegion(v *string) *MusictagUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *MusictagUpdateOne) SetGameID(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetGameID(v int) *MusictagUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableGameID(v *int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableGameID(v *int) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -269,26 +251,20 @@ func (_u *MusictagUpdateOne) SetNillableGameID(v *int64) *MusictagUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *MusictagUpdateOne) AddGameID(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddGameID(v int) *MusictagUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *MusictagUpdateOne) ClearGameID() *MusictagUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetMusicID sets the "music_id" field.
-func (_u *MusictagUpdateOne) SetMusicID(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetMusicID(v int) *MusictagUpdateOne {
 	_u.mutation.ResetMusicID()
 	_u.mutation.SetMusicID(v)
 	return _u
 }
 
 // SetNillableMusicID sets the "music_id" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableMusicID(v *int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableMusicID(v *int) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetMusicID(*v)
 	}
@@ -296,7 +272,7 @@ func (_u *MusictagUpdateOne) SetNillableMusicID(v *int64) *MusictagUpdateOne {
 }
 
 // AddMusicID adds value to the "music_id" field.
-func (_u *MusictagUpdateOne) AddMusicID(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddMusicID(v int) *MusictagUpdateOne {
 	_u.mutation.AddMusicID(v)
 	return _u
 }
@@ -308,16 +284,14 @@ func (_u *MusictagUpdateOne) ClearMusicID() *MusictagUpdateOne {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_u *MusictagUpdateOne) SetMusicTag(v string) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetMusicTag(v json.RawMessage) *MusictagUpdateOne {
 	_u.mutation.SetMusicTag(v)
 	return _u
 }
 
-// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableMusicTag(v *string) *MusictagUpdateOne {
-	if v != nil {
-		_u.SetMusicTag(*v)
-	}
+// AppendMusicTag appends value to the "music_tag" field.
+func (_u *MusictagUpdateOne) AppendMusicTag(v json.RawMessage) *MusictagUpdateOne {
+	_u.mutation.AppendMusicTag(v)
 	return _u
 }
 
@@ -328,14 +302,14 @@ func (_u *MusictagUpdateOne) ClearMusicTag() *MusictagUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *MusictagUpdateOne) SetSeq(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetSeq(v int) *MusictagUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *MusictagUpdateOne) SetNillableSeq(v *int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetNillableSeq(v *int) *MusictagUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -343,7 +317,7 @@ func (_u *MusictagUpdateOne) SetNillableSeq(v *int64) *MusictagUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *MusictagUpdateOne) AddSeq(v int64) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) AddSeq(v int) *MusictagUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -351,6 +325,20 @@ func (_u *MusictagUpdateOne) AddSeq(v int64) *MusictagUpdateOne {
 // ClearSeq clears the value of the "seq" field.
 func (_u *MusictagUpdateOne) ClearSeq() *MusictagUpdateOne {
 	_u.mutation.ClearSeq()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *MusictagUpdateOne) SetServerRegion(v string) *MusictagUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *MusictagUpdateOne) SetNillableServerRegion(v *string) *MusictagUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -425,41 +413,43 @@ func (_u *MusictagUpdateOne) sqlSave(ctx context.Context) (_node *Musictag, err 
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(musictag.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(musictag.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(musictag.FieldGameID, field.TypeInt64)
+		_spec.AddField(musictag.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.MusicID(); ok {
-		_spec.SetField(musictag.FieldMusicID, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldMusicID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedMusicID(); ok {
-		_spec.AddField(musictag.FieldMusicID, field.TypeInt64, value)
+		_spec.AddField(musictag.FieldMusicID, field.TypeInt, value)
 	}
 	if _u.mutation.MusicIDCleared() {
-		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
+		_spec.ClearField(musictag.FieldMusicID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
+		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedMusicTag(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, musictag.FieldMusicTag, value)
+		})
 	}
 	if _u.mutation.MusicTagCleared() {
-		_spec.ClearField(musictag.FieldMusicTag, field.TypeString)
+		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(musictag.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(musictag.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(musictag.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(musictag.FieldSeq, field.TypeInt64)
+		_spec.ClearField(musictag.FieldSeq, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(musictag.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Musictag{config: _u.config}
 	_spec.Assign = _node.assignValues

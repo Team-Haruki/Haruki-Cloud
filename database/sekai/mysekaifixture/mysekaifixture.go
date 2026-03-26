@@ -11,8 +11,6 @@ const (
 	Label = "mysekaifixture"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldMysekaiFixtureType holds the string denoting the mysekai_fixture_type field in the database.
@@ -65,6 +63,8 @@ const (
 	FieldColorCode = "color_code"
 	// FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID holds the string denoting the mysekai_fixture_game_character_group_performance_bonus_id field in the database.
 	FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID = "mysekai_fixture_game_character_group_performance_bonus_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaifixture in the database.
 	Table = "mysekaifixtures"
 )
@@ -72,7 +72,6 @@ const (
 // Columns holds all SQL columns for mysekaifixture fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldMysekaiFixtureType,
 	FieldName,
@@ -99,6 +98,7 @@ var Columns = []string{
 	FieldSecondPutCost,
 	FieldColorCode,
 	FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -117,11 +117,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -207,4 +202,9 @@ func ByColorCode(opts ...sql.OrderTermOption) OrderOption {
 // ByMysekaiFixtureGameCharacterGroupPerformanceBonusID orders the results by the mysekai_fixture_game_character_group_performance_bonus_id field.
 func ByMysekaiFixtureGameCharacterGroupPerformanceBonusID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

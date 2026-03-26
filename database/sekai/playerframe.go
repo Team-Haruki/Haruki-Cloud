@@ -16,19 +16,19 @@ type Playerframe struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// PlayerFrameGroupID holds the value of the "player_frame_group_id" field.
-	PlayerFrameGroupID int64 `json:"player_frame_group_id,omitempty"`
+	PlayerFrameGroupID int `json:"player_frame_group_id,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
-	GameCharacterID int64 `json:"game_character_id,omitempty"`
-	selectValues    sql.SelectValues
+	GameCharacterID int `json:"game_character_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,7 +38,7 @@ func (*Playerframe) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case playerframe.FieldID, playerframe.FieldGameID, playerframe.FieldSeq, playerframe.FieldPlayerFrameGroupID, playerframe.FieldGameCharacterID:
 			values[i] = new(sql.NullInt64)
-		case playerframe.FieldServerRegion, playerframe.FieldDescription:
+		case playerframe.FieldDescription, playerframe.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -61,29 +61,23 @@ func (_m *Playerframe) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case playerframe.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case playerframe.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case playerframe.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case playerframe.FieldPlayerFrameGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field player_frame_group_id", values[i])
 			} else if value.Valid {
-				_m.PlayerFrameGroupID = value.Int64
+				_m.PlayerFrameGroupID = int(value.Int64)
 			}
 		case playerframe.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -95,7 +89,13 @@ func (_m *Playerframe) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterID = value.Int64
+				_m.GameCharacterID = int(value.Int64)
+			}
+		case playerframe.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -133,9 +133,6 @@ func (_m *Playerframe) String() string {
 	var builder strings.Builder
 	builder.WriteString("Playerframe(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -150,6 +147,9 @@ func (_m *Playerframe) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("game_character_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

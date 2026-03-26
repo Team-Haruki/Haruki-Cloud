@@ -53,39 +53,314 @@ func IDLTE(id int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldLTE(FieldID, id))
 }
 
+// MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
+func MasterRank(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldMasterRank, v))
+}
+
+// Power1BonusFixed applies equality check predicate on the "power1_bonus_fixed" field. It's identical to Power1BonusFixedEQ.
+func Power1BonusFixed(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldPower1BonusFixed, v))
+}
+
+// Power2BonusFixed applies equality check predicate on the "power2_bonus_fixed" field. It's identical to Power2BonusFixedEQ.
+func Power2BonusFixed(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldPower2BonusFixed, v))
+}
+
+// Power3BonusFixed applies equality check predicate on the "power3_bonus_fixed" field. It's identical to Power3BonusFixedEQ.
+func Power3BonusFixed(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldPower3BonusFixed, v))
+}
+
+// CharacterRankExp applies equality check predicate on the "character_rank_exp" field. It's identical to CharacterRankExpEQ.
+func CharacterRankExp(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldCharacterRankExp, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
-func CardRarityType(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldCardRarityType, v))
+// CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
+func CardRarityTypeIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldCardRarityType))
 }
 
-// MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
-func MasterRank(v int64) predicate.Masterlesson {
+// CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
+func CardRarityTypeNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldCardRarityType))
+}
+
+// MasterRankEQ applies the EQ predicate on the "master_rank" field.
+func MasterRankEQ(v int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldMasterRank, v))
 }
 
-// Power1BonusFixed applies equality check predicate on the "power1_bonus_fixed" field. It's identical to Power1BonusFixedEQ.
-func Power1BonusFixed(v int64) predicate.Masterlesson {
+// MasterRankNEQ applies the NEQ predicate on the "master_rank" field.
+func MasterRankNEQ(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldMasterRank, v))
+}
+
+// MasterRankIn applies the In predicate on the "master_rank" field.
+func MasterRankIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldMasterRank, vs...))
+}
+
+// MasterRankNotIn applies the NotIn predicate on the "master_rank" field.
+func MasterRankNotIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldMasterRank, vs...))
+}
+
+// MasterRankGT applies the GT predicate on the "master_rank" field.
+func MasterRankGT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldMasterRank, v))
+}
+
+// MasterRankGTE applies the GTE predicate on the "master_rank" field.
+func MasterRankGTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldMasterRank, v))
+}
+
+// MasterRankLT applies the LT predicate on the "master_rank" field.
+func MasterRankLT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldMasterRank, v))
+}
+
+// MasterRankLTE applies the LTE predicate on the "master_rank" field.
+func MasterRankLTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldMasterRank, v))
+}
+
+// MasterRankIsNil applies the IsNil predicate on the "master_rank" field.
+func MasterRankIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldMasterRank))
+}
+
+// MasterRankNotNil applies the NotNil predicate on the "master_rank" field.
+func MasterRankNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldMasterRank))
+}
+
+// Power1BonusFixedEQ applies the EQ predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedEQ(v int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldPower1BonusFixed, v))
 }
 
-// Power2BonusFixed applies equality check predicate on the "power2_bonus_fixed" field. It's identical to Power2BonusFixedEQ.
-func Power2BonusFixed(v int64) predicate.Masterlesson {
+// Power1BonusFixedNEQ applies the NEQ predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedNEQ(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldPower1BonusFixed, v))
+}
+
+// Power1BonusFixedIn applies the In predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldPower1BonusFixed, vs...))
+}
+
+// Power1BonusFixedNotIn applies the NotIn predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedNotIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldPower1BonusFixed, vs...))
+}
+
+// Power1BonusFixedGT applies the GT predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedGT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldPower1BonusFixed, v))
+}
+
+// Power1BonusFixedGTE applies the GTE predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedGTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldPower1BonusFixed, v))
+}
+
+// Power1BonusFixedLT applies the LT predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedLT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldPower1BonusFixed, v))
+}
+
+// Power1BonusFixedLTE applies the LTE predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedLTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldPower1BonusFixed, v))
+}
+
+// Power1BonusFixedIsNil applies the IsNil predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldPower1BonusFixed))
+}
+
+// Power1BonusFixedNotNil applies the NotNil predicate on the "power1_bonus_fixed" field.
+func Power1BonusFixedNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldPower1BonusFixed))
+}
+
+// Power2BonusFixedEQ applies the EQ predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedEQ(v int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldPower2BonusFixed, v))
 }
 
-// Power3BonusFixed applies equality check predicate on the "power3_bonus_fixed" field. It's identical to Power3BonusFixedEQ.
-func Power3BonusFixed(v int64) predicate.Masterlesson {
+// Power2BonusFixedNEQ applies the NEQ predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedNEQ(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldPower2BonusFixed, v))
+}
+
+// Power2BonusFixedIn applies the In predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldPower2BonusFixed, vs...))
+}
+
+// Power2BonusFixedNotIn applies the NotIn predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedNotIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldPower2BonusFixed, vs...))
+}
+
+// Power2BonusFixedGT applies the GT predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedGT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldPower2BonusFixed, v))
+}
+
+// Power2BonusFixedGTE applies the GTE predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedGTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldPower2BonusFixed, v))
+}
+
+// Power2BonusFixedLT applies the LT predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedLT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldPower2BonusFixed, v))
+}
+
+// Power2BonusFixedLTE applies the LTE predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedLTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldPower2BonusFixed, v))
+}
+
+// Power2BonusFixedIsNil applies the IsNil predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldPower2BonusFixed))
+}
+
+// Power2BonusFixedNotNil applies the NotNil predicate on the "power2_bonus_fixed" field.
+func Power2BonusFixedNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldPower2BonusFixed))
+}
+
+// Power3BonusFixedEQ applies the EQ predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedEQ(v int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldPower3BonusFixed, v))
 }
 
-// CharacterRankExp applies equality check predicate on the "character_rank_exp" field. It's identical to CharacterRankExpEQ.
-func CharacterRankExp(v int64) predicate.Masterlesson {
+// Power3BonusFixedNEQ applies the NEQ predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedNEQ(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldPower3BonusFixed, v))
+}
+
+// Power3BonusFixedIn applies the In predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldPower3BonusFixed, vs...))
+}
+
+// Power3BonusFixedNotIn applies the NotIn predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedNotIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldPower3BonusFixed, vs...))
+}
+
+// Power3BonusFixedGT applies the GT predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedGT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldPower3BonusFixed, v))
+}
+
+// Power3BonusFixedGTE applies the GTE predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedGTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldPower3BonusFixed, v))
+}
+
+// Power3BonusFixedLT applies the LT predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedLT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldPower3BonusFixed, v))
+}
+
+// Power3BonusFixedLTE applies the LTE predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedLTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldPower3BonusFixed, v))
+}
+
+// Power3BonusFixedIsNil applies the IsNil predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldPower3BonusFixed))
+}
+
+// Power3BonusFixedNotNil applies the NotNil predicate on the "power3_bonus_fixed" field.
+func Power3BonusFixedNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldPower3BonusFixed))
+}
+
+// CharacterRankExpEQ applies the EQ predicate on the "character_rank_exp" field.
+func CharacterRankExpEQ(v int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpNEQ applies the NEQ predicate on the "character_rank_exp" field.
+func CharacterRankExpNEQ(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpIn applies the In predicate on the "character_rank_exp" field.
+func CharacterRankExpIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldCharacterRankExp, vs...))
+}
+
+// CharacterRankExpNotIn applies the NotIn predicate on the "character_rank_exp" field.
+func CharacterRankExpNotIn(vs ...int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldCharacterRankExp, vs...))
+}
+
+// CharacterRankExpGT applies the GT predicate on the "character_rank_exp" field.
+func CharacterRankExpGT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpGTE applies the GTE predicate on the "character_rank_exp" field.
+func CharacterRankExpGTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpLT applies the LT predicate on the "character_rank_exp" field.
+func CharacterRankExpLT(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpLTE applies the LTE predicate on the "character_rank_exp" field.
+func CharacterRankExpLTE(v int) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldCharacterRankExp, v))
+}
+
+// CharacterRankExpIsNil applies the IsNil predicate on the "character_rank_exp" field.
+func CharacterRankExpIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldCharacterRankExp))
+}
+
+// CharacterRankExpNotNil applies the NotNil predicate on the "character_rank_exp" field.
+func CharacterRankExpNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldCharacterRankExp))
+}
+
+// CostsIsNil applies the IsNil predicate on the "costs" field.
+func CostsIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldCosts))
+}
+
+// CostsNotNil applies the NotNil predicate on the "costs" field.
+func CostsNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldCosts))
+}
+
+// RewardsIsNil applies the IsNil predicate on the "rewards" field.
+func RewardsIsNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIsNull(FieldRewards))
+}
+
+// RewardsNotNil applies the NotNil predicate on the "rewards" field.
+func RewardsNotNil() predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotNull(FieldRewards))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,351 +426,6 @@ func ServerRegionEqualFold(v string) predicate.Masterlesson {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
-func CardRarityTypeEQ(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldCardRarityType, v))
-}
-
-// CardRarityTypeNEQ applies the NEQ predicate on the "card_rarity_type" field.
-func CardRarityTypeNEQ(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldCardRarityType, v))
-}
-
-// CardRarityTypeIn applies the In predicate on the "card_rarity_type" field.
-func CardRarityTypeIn(vs ...string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldCardRarityType, vs...))
-}
-
-// CardRarityTypeNotIn applies the NotIn predicate on the "card_rarity_type" field.
-func CardRarityTypeNotIn(vs ...string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldCardRarityType, vs...))
-}
-
-// CardRarityTypeGT applies the GT predicate on the "card_rarity_type" field.
-func CardRarityTypeGT(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldCardRarityType, v))
-}
-
-// CardRarityTypeGTE applies the GTE predicate on the "card_rarity_type" field.
-func CardRarityTypeGTE(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldCardRarityType, v))
-}
-
-// CardRarityTypeLT applies the LT predicate on the "card_rarity_type" field.
-func CardRarityTypeLT(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldCardRarityType, v))
-}
-
-// CardRarityTypeLTE applies the LTE predicate on the "card_rarity_type" field.
-func CardRarityTypeLTE(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldCardRarityType, v))
-}
-
-// CardRarityTypeContains applies the Contains predicate on the "card_rarity_type" field.
-func CardRarityTypeContains(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldContains(FieldCardRarityType, v))
-}
-
-// CardRarityTypeHasPrefix applies the HasPrefix predicate on the "card_rarity_type" field.
-func CardRarityTypeHasPrefix(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldHasPrefix(FieldCardRarityType, v))
-}
-
-// CardRarityTypeHasSuffix applies the HasSuffix predicate on the "card_rarity_type" field.
-func CardRarityTypeHasSuffix(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldHasSuffix(FieldCardRarityType, v))
-}
-
-// CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
-func CardRarityTypeIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldCardRarityType))
-}
-
-// CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
-func CardRarityTypeNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldCardRarityType))
-}
-
-// CardRarityTypeEqualFold applies the EqualFold predicate on the "card_rarity_type" field.
-func CardRarityTypeEqualFold(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEqualFold(FieldCardRarityType, v))
-}
-
-// CardRarityTypeContainsFold applies the ContainsFold predicate on the "card_rarity_type" field.
-func CardRarityTypeContainsFold(v string) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldContainsFold(FieldCardRarityType, v))
-}
-
-// MasterRankEQ applies the EQ predicate on the "master_rank" field.
-func MasterRankEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldMasterRank, v))
-}
-
-// MasterRankNEQ applies the NEQ predicate on the "master_rank" field.
-func MasterRankNEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldMasterRank, v))
-}
-
-// MasterRankIn applies the In predicate on the "master_rank" field.
-func MasterRankIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldMasterRank, vs...))
-}
-
-// MasterRankNotIn applies the NotIn predicate on the "master_rank" field.
-func MasterRankNotIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldMasterRank, vs...))
-}
-
-// MasterRankGT applies the GT predicate on the "master_rank" field.
-func MasterRankGT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldMasterRank, v))
-}
-
-// MasterRankGTE applies the GTE predicate on the "master_rank" field.
-func MasterRankGTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldMasterRank, v))
-}
-
-// MasterRankLT applies the LT predicate on the "master_rank" field.
-func MasterRankLT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldMasterRank, v))
-}
-
-// MasterRankLTE applies the LTE predicate on the "master_rank" field.
-func MasterRankLTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldMasterRank, v))
-}
-
-// MasterRankIsNil applies the IsNil predicate on the "master_rank" field.
-func MasterRankIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldMasterRank))
-}
-
-// MasterRankNotNil applies the NotNil predicate on the "master_rank" field.
-func MasterRankNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldMasterRank))
-}
-
-// Power1BonusFixedEQ applies the EQ predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedNEQ applies the NEQ predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedNEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedIn applies the In predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldPower1BonusFixed, vs...))
-}
-
-// Power1BonusFixedNotIn applies the NotIn predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedNotIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldPower1BonusFixed, vs...))
-}
-
-// Power1BonusFixedGT applies the GT predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedGT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedGTE applies the GTE predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedGTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedLT applies the LT predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedLT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedLTE applies the LTE predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedLTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldPower1BonusFixed, v))
-}
-
-// Power1BonusFixedIsNil applies the IsNil predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldPower1BonusFixed))
-}
-
-// Power1BonusFixedNotNil applies the NotNil predicate on the "power1_bonus_fixed" field.
-func Power1BonusFixedNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldPower1BonusFixed))
-}
-
-// Power2BonusFixedEQ applies the EQ predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedNEQ applies the NEQ predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedNEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedIn applies the In predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldPower2BonusFixed, vs...))
-}
-
-// Power2BonusFixedNotIn applies the NotIn predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedNotIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldPower2BonusFixed, vs...))
-}
-
-// Power2BonusFixedGT applies the GT predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedGT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedGTE applies the GTE predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedGTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedLT applies the LT predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedLT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedLTE applies the LTE predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedLTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldPower2BonusFixed, v))
-}
-
-// Power2BonusFixedIsNil applies the IsNil predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldPower2BonusFixed))
-}
-
-// Power2BonusFixedNotNil applies the NotNil predicate on the "power2_bonus_fixed" field.
-func Power2BonusFixedNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldPower2BonusFixed))
-}
-
-// Power3BonusFixedEQ applies the EQ predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedNEQ applies the NEQ predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedNEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedIn applies the In predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldPower3BonusFixed, vs...))
-}
-
-// Power3BonusFixedNotIn applies the NotIn predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedNotIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldPower3BonusFixed, vs...))
-}
-
-// Power3BonusFixedGT applies the GT predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedGT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedGTE applies the GTE predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedGTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedLT applies the LT predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedLT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedLTE applies the LTE predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedLTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldPower3BonusFixed, v))
-}
-
-// Power3BonusFixedIsNil applies the IsNil predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldPower3BonusFixed))
-}
-
-// Power3BonusFixedNotNil applies the NotNil predicate on the "power3_bonus_fixed" field.
-func Power3BonusFixedNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldPower3BonusFixed))
-}
-
-// CharacterRankExpEQ applies the EQ predicate on the "character_rank_exp" field.
-func CharacterRankExpEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldEQ(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpNEQ applies the NEQ predicate on the "character_rank_exp" field.
-func CharacterRankExpNEQ(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNEQ(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpIn applies the In predicate on the "character_rank_exp" field.
-func CharacterRankExpIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIn(FieldCharacterRankExp, vs...))
-}
-
-// CharacterRankExpNotIn applies the NotIn predicate on the "character_rank_exp" field.
-func CharacterRankExpNotIn(vs ...int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotIn(FieldCharacterRankExp, vs...))
-}
-
-// CharacterRankExpGT applies the GT predicate on the "character_rank_exp" field.
-func CharacterRankExpGT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGT(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpGTE applies the GTE predicate on the "character_rank_exp" field.
-func CharacterRankExpGTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldGTE(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpLT applies the LT predicate on the "character_rank_exp" field.
-func CharacterRankExpLT(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLT(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpLTE applies the LTE predicate on the "character_rank_exp" field.
-func CharacterRankExpLTE(v int64) predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldLTE(FieldCharacterRankExp, v))
-}
-
-// CharacterRankExpIsNil applies the IsNil predicate on the "character_rank_exp" field.
-func CharacterRankExpIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldCharacterRankExp))
-}
-
-// CharacterRankExpNotNil applies the NotNil predicate on the "character_rank_exp" field.
-func CharacterRankExpNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldCharacterRankExp))
-}
-
-// CostsIsNil applies the IsNil predicate on the "costs" field.
-func CostsIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldCosts))
-}
-
-// CostsNotNil applies the NotNil predicate on the "costs" field.
-func CostsNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldCosts))
-}
-
-// RewardsIsNil applies the IsNil predicate on the "rewards" field.
-func RewardsIsNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldIsNull(FieldRewards))
-}
-
-// RewardsNotNil applies the NotNil predicate on the "rewards" field.
-func RewardsNotNil() predicate.Masterlesson {
-	return predicate.Masterlesson(sql.FieldNotNull(FieldRewards))
 }
 
 // And groups predicates with the AND operator between them.

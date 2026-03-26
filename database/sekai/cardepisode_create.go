@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/cardepisode"
@@ -19,34 +20,20 @@ type CardepisodeCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *CardepisodeCreate) SetServerRegion(v string) *CardepisodeCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *CardepisodeCreate) SetGameID(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetGameID(v int) *CardepisodeCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillableGameID(v *int64) *CardepisodeCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *CardepisodeCreate) SetSeq(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetSeq(v int) *CardepisodeCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillableSeq(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillableSeq(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *CardepisodeCreate) SetNillableSeq(v *int64) *CardepisodeCreate {
 }
 
 // SetCardID sets the "card_id" field.
-func (_c *CardepisodeCreate) SetCardID(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetCardID(v int) *CardepisodeCreate {
 	_c.mutation.SetCardID(v)
 	return _c
 }
 
 // SetNillableCardID sets the "card_id" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillableCardID(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillableCardID(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetCardID(*v)
 	}
@@ -110,13 +97,13 @@ func (_c *CardepisodeCreate) SetNillableAssetbundleName(v *string) *CardepisodeC
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *CardepisodeCreate) SetReleaseConditionID(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetReleaseConditionID(v int) *CardepisodeCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillableReleaseConditionID(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillableReleaseConditionID(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -124,13 +111,13 @@ func (_c *CardepisodeCreate) SetNillableReleaseConditionID(v *int64) *Cardepisod
 }
 
 // SetPower1BonusFixed sets the "power1_bonus_fixed" field.
-func (_c *CardepisodeCreate) SetPower1BonusFixed(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetPower1BonusFixed(v int) *CardepisodeCreate {
 	_c.mutation.SetPower1BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower1BonusFixed sets the "power1_bonus_fixed" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillablePower1BonusFixed(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillablePower1BonusFixed(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetPower1BonusFixed(*v)
 	}
@@ -138,13 +125,13 @@ func (_c *CardepisodeCreate) SetNillablePower1BonusFixed(v *int64) *CardepisodeC
 }
 
 // SetPower2BonusFixed sets the "power2_bonus_fixed" field.
-func (_c *CardepisodeCreate) SetPower2BonusFixed(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetPower2BonusFixed(v int) *CardepisodeCreate {
 	_c.mutation.SetPower2BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower2BonusFixed sets the "power2_bonus_fixed" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillablePower2BonusFixed(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillablePower2BonusFixed(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetPower2BonusFixed(*v)
 	}
@@ -152,13 +139,13 @@ func (_c *CardepisodeCreate) SetNillablePower2BonusFixed(v *int64) *CardepisodeC
 }
 
 // SetPower3BonusFixed sets the "power3_bonus_fixed" field.
-func (_c *CardepisodeCreate) SetPower3BonusFixed(v int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetPower3BonusFixed(v int) *CardepisodeCreate {
 	_c.mutation.SetPower3BonusFixed(v)
 	return _c
 }
 
 // SetNillablePower3BonusFixed sets the "power3_bonus_fixed" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillablePower3BonusFixed(v *int64) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetNillablePower3BonusFixed(v *int) *CardepisodeCreate {
 	if v != nil {
 		_c.SetPower3BonusFixed(*v)
 	}
@@ -166,28 +153,26 @@ func (_c *CardepisodeCreate) SetNillablePower3BonusFixed(v *int64) *CardepisodeC
 }
 
 // SetRewardResourceBoxIds sets the "reward_resource_box_ids" field.
-func (_c *CardepisodeCreate) SetRewardResourceBoxIds(v []interface{}) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetRewardResourceBoxIds(v json.RawMessage) *CardepisodeCreate {
 	_c.mutation.SetRewardResourceBoxIds(v)
 	return _c
 }
 
 // SetCosts sets the "costs" field.
-func (_c *CardepisodeCreate) SetCosts(v []interface{}) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetCosts(v json.RawMessage) *CardepisodeCreate {
 	_c.mutation.SetCosts(v)
 	return _c
 }
 
 // SetCardEpisodePartType sets the "card_episode_part_type" field.
-func (_c *CardepisodeCreate) SetCardEpisodePartType(v string) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetCardEpisodePartType(v json.RawMessage) *CardepisodeCreate {
 	_c.mutation.SetCardEpisodePartType(v)
 	return _c
 }
 
-// SetNillableCardEpisodePartType sets the "card_episode_part_type" field if the given value is not nil.
-func (_c *CardepisodeCreate) SetNillableCardEpisodePartType(v *string) *CardepisodeCreate {
-	if v != nil {
-		_c.SetCardEpisodePartType(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *CardepisodeCreate) SetServerRegion(v string) *CardepisodeCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -225,6 +210,9 @@ func (_c *CardepisodeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CardepisodeCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Cardepisode.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Cardepisode.server_region"`)}
 	}
@@ -254,20 +242,16 @@ func (_c *CardepisodeCreate) createSpec() (*Cardepisode, *sqlgraph.CreateSpec) {
 		_node = &Cardepisode{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(cardepisode.Table, sqlgraph.NewFieldSpec(cardepisode.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(cardepisode.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(cardepisode.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(cardepisode.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.CardID(); ok {
-		_spec.SetField(cardepisode.FieldCardID, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldCardID, field.TypeInt, value)
 		_node.CardID = value
 	}
 	if value, ok := _c.mutation.Title(); ok {
@@ -283,19 +267,19 @@ func (_c *CardepisodeCreate) createSpec() (*Cardepisode, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldReleaseConditionID, field.TypeInt, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.Power1BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldPower1BonusFixed, field.TypeInt, value)
 		_node.Power1BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power2BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldPower2BonusFixed, field.TypeInt, value)
 		_node.Power2BonusFixed = value
 	}
 	if value, ok := _c.mutation.Power3BonusFixed(); ok {
-		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt64, value)
+		_spec.SetField(cardepisode.FieldPower3BonusFixed, field.TypeInt, value)
 		_node.Power3BonusFixed = value
 	}
 	if value, ok := _c.mutation.RewardResourceBoxIds(); ok {
@@ -307,8 +291,12 @@ func (_c *CardepisodeCreate) createSpec() (*Cardepisode, *sqlgraph.CreateSpec) {
 		_node.Costs = value
 	}
 	if value, ok := _c.mutation.CardEpisodePartType(); ok {
-		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeString, value)
+		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeJSON, value)
 		_node.CardEpisodePartType = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(cardepisode.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

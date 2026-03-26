@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstorie"
@@ -28,29 +29,15 @@ func (_u *EventstorieUpdate) Where(ps ...predicate.Eventstorie) *EventstorieUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventstorieUpdate) SetServerRegion(v string) *EventstorieUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableServerRegion(v *string) *EventstorieUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventstorieUpdate) SetGameID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetGameID(v int) *EventstorieUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableGameID(v *int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableGameID(v *int) *EventstorieUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -58,26 +45,20 @@ func (_u *EventstorieUpdate) SetNillableGameID(v *int64) *EventstorieUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstorieUpdate) AddGameID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddGameID(v int) *EventstorieUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventstorieUpdate) ClearGameID() *EventstorieUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventstorieUpdate) SetEventID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetEventID(v int) *EventstorieUpdate {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableEventID(v *int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableEventID(v *int) *EventstorieUpdate {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -85,7 +66,7 @@ func (_u *EventstorieUpdate) SetNillableEventID(v *int64) *EventstorieUpdate {
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventstorieUpdate) AddEventID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddEventID(v int) *EventstorieUpdate {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -117,14 +98,14 @@ func (_u *EventstorieUpdate) ClearOutline() *EventstorieUpdate {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdate) SetBannerGameCharacterUnitID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetBannerGameCharacterUnitID(v int) *EventstorieUpdate {
 	_u.mutation.ResetBannerGameCharacterUnitID()
 	_u.mutation.SetBannerGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieUpdate {
 	if v != nil {
 		_u.SetBannerGameCharacterUnitID(*v)
 	}
@@ -132,7 +113,7 @@ func (_u *EventstorieUpdate) SetNillableBannerGameCharacterUnitID(v *int64) *Eve
 }
 
 // AddBannerGameCharacterUnitID adds value to the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdate) AddBannerGameCharacterUnitID(v int64) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AddBannerGameCharacterUnitID(v int) *EventstorieUpdate {
 	_u.mutation.AddBannerGameCharacterUnitID(v)
 	return _u
 }
@@ -164,13 +145,13 @@ func (_u *EventstorieUpdate) ClearAssetbundleName() *EventstorieUpdate {
 }
 
 // SetEventStoryEpisodes sets the "event_story_episodes" field.
-func (_u *EventstorieUpdate) SetEventStoryEpisodes(v []interface{}) *EventstorieUpdate {
+func (_u *EventstorieUpdate) SetEventStoryEpisodes(v json.RawMessage) *EventstorieUpdate {
 	_u.mutation.SetEventStoryEpisodes(v)
 	return _u
 }
 
 // AppendEventStoryEpisodes appends value to the "event_story_episodes" field.
-func (_u *EventstorieUpdate) AppendEventStoryEpisodes(v []interface{}) *EventstorieUpdate {
+func (_u *EventstorieUpdate) AppendEventStoryEpisodes(v json.RawMessage) *EventstorieUpdate {
 	_u.mutation.AppendEventStoryEpisodes(v)
 	return _u
 }
@@ -178,6 +159,20 @@ func (_u *EventstorieUpdate) AppendEventStoryEpisodes(v []interface{}) *Eventsto
 // ClearEventStoryEpisodes clears the value of the "event_story_episodes" field.
 func (_u *EventstorieUpdate) ClearEventStoryEpisodes() *EventstorieUpdate {
 	_u.mutation.ClearEventStoryEpisodes()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventstorieUpdate) SetServerRegion(v string) *EventstorieUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventstorieUpdate) SetNillableServerRegion(v *string) *EventstorieUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -222,26 +217,20 @@ func (_u *EventstorieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstorie.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventstorie.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventstorie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventstorie.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventstorie.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Outline(); ok {
 		_spec.SetField(eventstorie.FieldOutline, field.TypeString, value)
@@ -250,13 +239,13 @@ func (_u *EventstorieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(eventstorie.FieldOutline, field.TypeString)
 	}
 	if value, ok := _u.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedBannerGameCharacterUnitID(); ok {
-		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.BannerGameCharacterUnitIDCleared() {
-		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventstorie.FieldAssetbundleName, field.TypeString, value)
@@ -274,6 +263,9 @@ func (_u *EventstorieUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.EventStoryEpisodesCleared() {
 		_spec.ClearField(eventstorie.FieldEventStoryEpisodes, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -295,29 +287,15 @@ type EventstorieUpdateOne struct {
 	mutation *EventstorieMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *EventstorieUpdateOne) SetServerRegion(v string) *EventstorieUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableServerRegion(v *string) *EventstorieUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *EventstorieUpdateOne) SetGameID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetGameID(v int) *EventstorieUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableGameID(v *int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableGameID(v *int) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -325,26 +303,20 @@ func (_u *EventstorieUpdateOne) SetNillableGameID(v *int64) *EventstorieUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *EventstorieUpdateOne) AddGameID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddGameID(v int) *EventstorieUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *EventstorieUpdateOne) ClearGameID() *EventstorieUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetEventID sets the "event_id" field.
-func (_u *EventstorieUpdateOne) SetEventID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetEventID(v int) *EventstorieUpdateOne {
 	_u.mutation.ResetEventID()
 	_u.mutation.SetEventID(v)
 	return _u
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableEventID(v *int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableEventID(v *int) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetEventID(*v)
 	}
@@ -352,7 +324,7 @@ func (_u *EventstorieUpdateOne) SetNillableEventID(v *int64) *EventstorieUpdateO
 }
 
 // AddEventID adds value to the "event_id" field.
-func (_u *EventstorieUpdateOne) AddEventID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddEventID(v int) *EventstorieUpdateOne {
 	_u.mutation.AddEventID(v)
 	return _u
 }
@@ -384,14 +356,14 @@ func (_u *EventstorieUpdateOne) ClearOutline() *EventstorieUpdateOne {
 }
 
 // SetBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdateOne) SetBannerGameCharacterUnitID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetBannerGameCharacterUnitID(v int) *EventstorieUpdateOne {
 	_u.mutation.ResetBannerGameCharacterUnitID()
 	_u.mutation.SetBannerGameCharacterUnitID(v)
 	return _u
 }
 
 // SetNillableBannerGameCharacterUnitID sets the "banner_game_character_unit_id" field if the given value is not nil.
-func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int) *EventstorieUpdateOne {
 	if v != nil {
 		_u.SetBannerGameCharacterUnitID(*v)
 	}
@@ -399,7 +371,7 @@ func (_u *EventstorieUpdateOne) SetNillableBannerGameCharacterUnitID(v *int64) *
 }
 
 // AddBannerGameCharacterUnitID adds value to the "banner_game_character_unit_id" field.
-func (_u *EventstorieUpdateOne) AddBannerGameCharacterUnitID(v int64) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AddBannerGameCharacterUnitID(v int) *EventstorieUpdateOne {
 	_u.mutation.AddBannerGameCharacterUnitID(v)
 	return _u
 }
@@ -431,13 +403,13 @@ func (_u *EventstorieUpdateOne) ClearAssetbundleName() *EventstorieUpdateOne {
 }
 
 // SetEventStoryEpisodes sets the "event_story_episodes" field.
-func (_u *EventstorieUpdateOne) SetEventStoryEpisodes(v []interface{}) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) SetEventStoryEpisodes(v json.RawMessage) *EventstorieUpdateOne {
 	_u.mutation.SetEventStoryEpisodes(v)
 	return _u
 }
 
 // AppendEventStoryEpisodes appends value to the "event_story_episodes" field.
-func (_u *EventstorieUpdateOne) AppendEventStoryEpisodes(v []interface{}) *EventstorieUpdateOne {
+func (_u *EventstorieUpdateOne) AppendEventStoryEpisodes(v json.RawMessage) *EventstorieUpdateOne {
 	_u.mutation.AppendEventStoryEpisodes(v)
 	return _u
 }
@@ -445,6 +417,20 @@ func (_u *EventstorieUpdateOne) AppendEventStoryEpisodes(v []interface{}) *Event
 // ClearEventStoryEpisodes clears the value of the "event_story_episodes" field.
 func (_u *EventstorieUpdateOne) ClearEventStoryEpisodes() *EventstorieUpdateOne {
 	_u.mutation.ClearEventStoryEpisodes()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *EventstorieUpdateOne) SetServerRegion(v string) *EventstorieUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *EventstorieUpdateOne) SetNillableServerRegion(v *string) *EventstorieUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -519,26 +505,20 @@ func (_u *EventstorieUpdateOne) sqlSave(ctx context.Context) (_node *Eventstorie
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(eventstorie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(eventstorie.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(eventstorie.FieldGameID, field.TypeInt64)
+		_spec.AddField(eventstorie.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.EventID(); ok {
-		_spec.SetField(eventstorie.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldEventID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEventID(); ok {
-		_spec.AddField(eventstorie.FieldEventID, field.TypeInt64, value)
+		_spec.AddField(eventstorie.FieldEventID, field.TypeInt, value)
 	}
 	if _u.mutation.EventIDCleared() {
-		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt64)
+		_spec.ClearField(eventstorie.FieldEventID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Outline(); ok {
 		_spec.SetField(eventstorie.FieldOutline, field.TypeString, value)
@@ -547,13 +527,13 @@ func (_u *EventstorieUpdateOne) sqlSave(ctx context.Context) (_node *Eventstorie
 		_spec.ClearField(eventstorie.FieldOutline, field.TypeString)
 	}
 	if value, ok := _u.mutation.BannerGameCharacterUnitID(); ok {
-		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedBannerGameCharacterUnitID(); ok {
-		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64, value)
+		_spec.AddField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt, value)
 	}
 	if _u.mutation.BannerGameCharacterUnitIDCleared() {
-		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt64)
+		_spec.ClearField(eventstorie.FieldBannerGameCharacterUnitID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventstorie.FieldAssetbundleName, field.TypeString, value)
@@ -571,6 +551,9 @@ func (_u *EventstorieUpdateOne) sqlSave(ctx context.Context) (_node *Eventstorie
 	}
 	if _u.mutation.EventStoryEpisodesCleared() {
 		_spec.ClearField(eventstorie.FieldEventStoryEpisodes, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(eventstorie.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Eventstorie{config: _u.config}
 	_spec.Assign = _node.assignValues

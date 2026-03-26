@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/stamp"
@@ -19,48 +20,26 @@ type StampCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *StampCreate) SetServerRegion(v string) *StampCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *StampCreate) SetGameID(v int64) *StampCreate {
+func (_c *StampCreate) SetGameID(v int) *StampCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *StampCreate) SetNillableGameID(v *int64) *StampCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetStampType sets the "stamp_type" field.
-func (_c *StampCreate) SetStampType(v string) *StampCreate {
+func (_c *StampCreate) SetStampType(v json.RawMessage) *StampCreate {
 	_c.mutation.SetStampType(v)
 	return _c
 }
 
-// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
-func (_c *StampCreate) SetNillableStampType(v *string) *StampCreate {
-	if v != nil {
-		_c.SetStampType(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *StampCreate) SetSeq(v int64) *StampCreate {
+func (_c *StampCreate) SetSeq(v int) *StampCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *StampCreate) SetNillableSeq(v *int64) *StampCreate {
+func (_c *StampCreate) SetNillableSeq(v *int) *StampCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -96,27 +75,19 @@ func (_c *StampCreate) SetNillableAssetbundleName(v *string) *StampCreate {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_c *StampCreate) SetBalloonAssetbundleName(v string) *StampCreate {
+func (_c *StampCreate) SetBalloonAssetbundleName(v json.RawMessage) *StampCreate {
 	_c.mutation.SetBalloonAssetbundleName(v)
 	return _c
 }
 
-// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
-func (_c *StampCreate) SetNillableBalloonAssetbundleName(v *string) *StampCreate {
-	if v != nil {
-		_c.SetBalloonAssetbundleName(*v)
-	}
-	return _c
-}
-
 // SetCharacterId1 sets the "character_id1" field.
-func (_c *StampCreate) SetCharacterId1(v int64) *StampCreate {
+func (_c *StampCreate) SetCharacterId1(v int) *StampCreate {
 	_c.mutation.SetCharacterId1(v)
 	return _c
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_c *StampCreate) SetNillableCharacterId1(v *int64) *StampCreate {
+func (_c *StampCreate) SetNillableCharacterId1(v *int) *StampCreate {
 	if v != nil {
 		_c.SetCharacterId1(*v)
 	}
@@ -124,13 +95,13 @@ func (_c *StampCreate) SetNillableCharacterId1(v *int64) *StampCreate {
 }
 
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_c *StampCreate) SetGameCharacterUnitID(v int64) *StampCreate {
+func (_c *StampCreate) SetGameCharacterUnitID(v int) *StampCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_c *StampCreate) SetNillableGameCharacterUnitID(v *int64) *StampCreate {
+func (_c *StampCreate) SetNillableGameCharacterUnitID(v *int) *StampCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitID(*v)
 	}
@@ -138,13 +109,13 @@ func (_c *StampCreate) SetNillableGameCharacterUnitID(v *int64) *StampCreate {
 }
 
 // SetArchivePublishedAt sets the "archive_published_at" field.
-func (_c *StampCreate) SetArchivePublishedAt(v int64) *StampCreate {
+func (_c *StampCreate) SetArchivePublishedAt(v int) *StampCreate {
 	_c.mutation.SetArchivePublishedAt(v)
 	return _c
 }
 
 // SetNillableArchivePublishedAt sets the "archive_published_at" field if the given value is not nil.
-func (_c *StampCreate) SetNillableArchivePublishedAt(v *int64) *StampCreate {
+func (_c *StampCreate) SetNillableArchivePublishedAt(v *int) *StampCreate {
 	if v != nil {
 		_c.SetArchivePublishedAt(*v)
 	}
@@ -166,30 +137,28 @@ func (_c *StampCreate) SetNillableDescription(v *string) *StampCreate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *StampCreate) SetArchiveDisplayType(v string) *StampCreate {
+func (_c *StampCreate) SetArchiveDisplayType(v json.RawMessage) *StampCreate {
 	_c.mutation.SetArchiveDisplayType(v)
 	return _c
 }
 
-// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
-func (_c *StampCreate) SetNillableArchiveDisplayType(v *string) *StampCreate {
-	if v != nil {
-		_c.SetArchiveDisplayType(*v)
-	}
-	return _c
-}
-
 // SetCharacterId2 sets the "character_id2" field.
-func (_c *StampCreate) SetCharacterId2(v int64) *StampCreate {
+func (_c *StampCreate) SetCharacterId2(v int) *StampCreate {
 	_c.mutation.SetCharacterId2(v)
 	return _c
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_c *StampCreate) SetNillableCharacterId2(v *int64) *StampCreate {
+func (_c *StampCreate) SetNillableCharacterId2(v *int) *StampCreate {
 	if v != nil {
 		_c.SetCharacterId2(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *StampCreate) SetServerRegion(v string) *StampCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -227,6 +196,9 @@ func (_c *StampCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *StampCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Stamp.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Stamp.server_region"`)}
 	}
@@ -256,20 +228,16 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node = &Stamp{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(stamp.Table, sqlgraph.NewFieldSpec(stamp.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(stamp.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
+		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
 		_node.StampType = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(stamp.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -281,19 +249,19 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
 		_node.BalloonAssetbundleName = value
 	}
 	if value, ok := _c.mutation.CharacterId1(); ok {
-		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt, value)
 		_node.CharacterId1 = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldGameCharacterUnitID, field.TypeInt, value)
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.ArchivePublishedAt(); ok {
-		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldArchivePublishedAt, field.TypeInt, value)
 		_node.ArchivePublishedAt = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
@@ -301,12 +269,16 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.CharacterId2(); ok {
-		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt64, value)
+		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt, value)
 		_node.CharacterId2 = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(stamp.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

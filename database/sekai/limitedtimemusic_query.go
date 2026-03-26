@@ -262,12 +262,12 @@ func (_q *LimitedtimemusicQuery) Clone() *LimitedtimemusicQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Limitedtimemusic.Query().
-//		GroupBy(limitedtimemusic.FieldServerRegion).
+//		GroupBy(limitedtimemusic.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *LimitedtimemusicQuery) GroupBy(field string, fields ...string) *LimitedtimemusicGroupBy {
@@ -285,11 +285,11 @@ func (_q *LimitedtimemusicQuery) GroupBy(field string, fields ...string) *Limite
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Limitedtimemusic.Query().
-//		Select(limitedtimemusic.FieldServerRegion).
+//		Select(limitedtimemusic.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *LimitedtimemusicQuery) Select(fields ...string) *LimitedtimemusicSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

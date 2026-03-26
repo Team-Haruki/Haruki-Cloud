@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaifixturemaingenre {
+func GameID(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -74,123 +69,53 @@ func AssetbundleName(v string) predicate.Mysekaifixturemaingenre {
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v int64) predicate.Mysekaifixturemaingenre {
+func GroupID(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGroupID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Mysekaifixturemaingenre {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDEQ(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDNEQ(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaifixturemaingenre {
+func GameIDIn(vs ...int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaifixturemaingenre {
+func GameIDNotIn(vs ...int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDGT(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDGTE(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDLT(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaifixturemaingenre {
+func GameIDLTE(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaifixturemaingenre {
-	return predicate.Mysekaifixturemaingenre(sql.FieldNotNull(FieldGameID))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -354,42 +279,42 @@ func AssetbundleNameContainsFold(v string) predicate.Mysekaifixturemaingenre {
 }
 
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDEQ(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldGroupID, v))
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDNEQ(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldGroupID, v))
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...int64) predicate.Mysekaifixturemaingenre {
+func GroupIDIn(vs ...int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldGroupID, vs...))
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...int64) predicate.Mysekaifixturemaingenre {
+func GroupIDNotIn(vs ...int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldGroupID, vs...))
 }
 
 // GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDGT(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldGroupID, v))
 }
 
 // GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDGTE(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldGroupID, v))
 }
 
 // GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDLT(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldGroupID, v))
 }
 
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v int64) predicate.Mysekaifixturemaingenre {
+func GroupIDLTE(v int) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldGroupID, v))
 }
 
@@ -401,6 +326,71 @@ func GroupIDIsNil() predicate.Mysekaifixturemaingenre {
 // GroupIDNotNil applies the NotNil predicate on the "group_id" field.
 func GroupIDNotNil() predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotNull(FieldGroupID))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

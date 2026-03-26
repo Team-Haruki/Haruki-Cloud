@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaiphenomenon {
+func GameID(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -79,7 +74,7 @@ func Description(v string) predicate.Mysekaiphenomenon {
 }
 
 // MysekaiPhenomenaBackgroundColorID applies equality check predicate on the "mysekai_phenomena_background_color_id" field. It's identical to MysekaiPhenomenaBackgroundColorIDEQ.
-func MysekaiPhenomenaBackgroundColorID(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorID(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
@@ -98,119 +93,49 @@ func IconAssetbundleName(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldIconAssetbundleName, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Mysekaiphenomenon {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaiphenomenon {
+func GameIDEQ(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaiphenomenon {
+func GameIDNEQ(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaiphenomenon {
+func GameIDIn(vs ...int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaiphenomenon {
+func GameIDNotIn(vs ...int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaiphenomenon {
+func GameIDGT(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaiphenomenon {
+func GameIDGTE(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaiphenomenon {
+func GameIDLT(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaiphenomenon {
+func GameIDLTE(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaiphenomenon {
-	return predicate.Mysekaiphenomenon(sql.FieldNotNull(FieldGameID))
 }
 
 // MysekaiPhenomenaBrightnessTypeIsNil applies the IsNil predicate on the "mysekai_phenomena_brightness_type" field.
@@ -459,42 +384,42 @@ func MysekaiPhenomenaTimePeriodTypeNotNil() predicate.Mysekaiphenomenon {
 }
 
 // MysekaiPhenomenaBackgroundColorIDEQ applies the EQ predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDEQ(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDEQ(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDNEQ applies the NEQ predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDNEQ(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDNEQ(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDIn applies the In predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDIn(vs ...int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDIn(vs ...int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldMysekaiPhenomenaBackgroundColorID, vs...))
 }
 
 // MysekaiPhenomenaBackgroundColorIDNotIn applies the NotIn predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDNotIn(vs ...int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDNotIn(vs ...int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldMysekaiPhenomenaBackgroundColorID, vs...))
 }
 
 // MysekaiPhenomenaBackgroundColorIDGT applies the GT predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDGT(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDGT(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDGTE applies the GTE predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDGTE(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDGTE(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDLT applies the LT predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDLT(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDLT(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDLTE applies the LTE predicate on the "mysekai_phenomena_background_color_id" field.
-func MysekaiPhenomenaBackgroundColorIDLTE(v int64) predicate.Mysekaiphenomenon {
+func MysekaiPhenomenaBackgroundColorIDLTE(v int) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldMysekaiPhenomenaBackgroundColorID, v))
 }
 
@@ -731,6 +656,71 @@ func IconAssetbundleNameEqualFold(v string) predicate.Mysekaiphenomenon {
 // IconAssetbundleNameContainsFold applies the ContainsFold predicate on the "icon_assetbundle_name" field.
 func IconAssetbundleNameContainsFold(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldIconAssetbundleName, v))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

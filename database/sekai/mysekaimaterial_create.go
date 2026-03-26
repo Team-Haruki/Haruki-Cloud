@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimaterial"
@@ -19,34 +20,20 @@ type MysekaimaterialCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaimaterialCreate) SetServerRegion(v string) *MysekaimaterialCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimaterialCreate) SetGameID(v int64) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetGameID(v int) *MysekaimaterialCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaimaterialCreate) SetNillableGameID(v *int64) *MysekaimaterialCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *MysekaimaterialCreate) SetSeq(v int64) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetSeq(v int) *MysekaimaterialCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaimaterialCreate) SetNillableSeq(v *int64) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetNillableSeq(v *int) *MysekaimaterialCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -54,7 +41,7 @@ func (_c *MysekaimaterialCreate) SetNillableSeq(v *int64) *MysekaimaterialCreate
 }
 
 // SetMysekaiMaterialType sets the "mysekai_material_type" field.
-func (_c *MysekaimaterialCreate) SetMysekaiMaterialType(v map[string]interface{}) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiMaterialType(v json.RawMessage) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiMaterialType(v)
 	return _c
 }
@@ -102,7 +89,7 @@ func (_c *MysekaimaterialCreate) SetNillableDescription(v *string) *Mysekaimater
 }
 
 // SetMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field.
-func (_c *MysekaimaterialCreate) SetMysekaiMaterialRarityType(v map[string]interface{}) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiMaterialRarityType(v)
 	return _c
 }
@@ -136,22 +123,28 @@ func (_c *MysekaimaterialCreate) SetNillableModelAssetbundleName(v *string) *Mys
 }
 
 // SetMysekaiSiteIds sets the "mysekai_site_ids" field.
-func (_c *MysekaimaterialCreate) SetMysekaiSiteIds(v []interface{}) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiSiteIds(v json.RawMessage) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiSiteIds(v)
 	return _c
 }
 
 // SetMysekaiPhenomenaGroupID sets the "mysekai_phenomena_group_id" field.
-func (_c *MysekaimaterialCreate) SetMysekaiPhenomenaGroupID(v int64) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiPhenomenaGroupID(v int) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiPhenomenaGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiPhenomenaGroupID sets the "mysekai_phenomena_group_id" field if the given value is not nil.
-func (_c *MysekaimaterialCreate) SetNillableMysekaiPhenomenaGroupID(v *int64) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetNillableMysekaiPhenomenaGroupID(v *int) *MysekaimaterialCreate {
 	if v != nil {
 		_c.SetMysekaiPhenomenaGroupID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaimaterialCreate) SetServerRegion(v string) *MysekaimaterialCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -189,6 +182,9 @@ func (_c *MysekaimaterialCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaimaterialCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaimaterial.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaimaterial.server_region"`)}
 	}
@@ -218,16 +214,12 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_node = &Mysekaimaterial{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaimaterial.Table, sqlgraph.NewFieldSpec(mysekaimaterial.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimaterial.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimaterial.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterial.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaimaterial.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterial.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialType(); ok {
@@ -263,8 +255,12 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_node.MysekaiSiteIds = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaGroupID(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiPhenomenaGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaimaterial.FieldMysekaiPhenomenaGroupID, field.TypeInt, value)
 		_node.MysekaiPhenomenaGroupID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimaterial.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

@@ -19,34 +19,20 @@ type PlayerframegroupCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *PlayerframegroupCreate) SetServerRegion(v string) *PlayerframegroupCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *PlayerframegroupCreate) SetGameID(v int64) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetGameID(v int) *PlayerframegroupCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *PlayerframegroupCreate) SetNillableGameID(v *int64) *PlayerframegroupCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *PlayerframegroupCreate) SetSeq(v int64) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetSeq(v int) *PlayerframegroupCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *PlayerframegroupCreate) SetNillableSeq(v *int64) *PlayerframegroupCreate {
+func (_c *PlayerframegroupCreate) SetNillableSeq(v *int) *PlayerframegroupCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -78,6 +64,12 @@ func (_c *PlayerframegroupCreate) SetNillableAssetbundleName(v *string) *Playerf
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *PlayerframegroupCreate) SetServerRegion(v string) *PlayerframegroupCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +107,9 @@ func (_c *PlayerframegroupCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PlayerframegroupCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Playerframegroup.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Playerframegroup.server_region"`)}
 	}
@@ -144,16 +139,12 @@ func (_c *PlayerframegroupCreate) createSpec() (*Playerframegroup, *sqlgraph.Cre
 		_node = &Playerframegroup{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(playerframegroup.Table, sqlgraph.NewFieldSpec(playerframegroup.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframegroup.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -163,6 +154,10 @@ func (_c *PlayerframegroupCreate) createSpec() (*Playerframegroup, *sqlgraph.Cre
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(playerframegroup.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

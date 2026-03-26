@@ -262,12 +262,12 @@ func (_q *MysekaiphenomenonQuery) Clone() *MysekaiphenomenonQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaiphenomenon.Query().
-//		GroupBy(mysekaiphenomenon.FieldServerRegion).
+//		GroupBy(mysekaiphenomenon.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaiphenomenonQuery) GroupBy(field string, fields ...string) *MysekaiphenomenonGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaiphenomenonQuery) GroupBy(field string, fields ...string) *Mysek
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaiphenomenon.Query().
-//		Select(mysekaiphenomenon.FieldServerRegion).
+//		Select(mysekaiphenomenon.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaiphenomenonQuery) Select(fields ...string) *MysekaiphenomenonSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

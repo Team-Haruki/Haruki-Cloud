@@ -11,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -25,20 +24,6 @@ type WorldbloomsupportdeckbonuseUpdate struct {
 // Where appends a list predicates to the WorldbloomsupportdeckbonuseUpdate builder.
 func (_u *WorldbloomsupportdeckbonuseUpdate) Where(ps ...predicate.Worldbloomsupportdeckbonuse) *WorldbloomsupportdeckbonuseUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) SetServerRegion(v string) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomsupportdeckbonuseUpdate) SetNillableServerRegion(v *string) *WorldbloomsupportdeckbonuseUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
 	return _u
 }
 
@@ -62,57 +47,17 @@ func (_u *WorldbloomsupportdeckbonuseUpdate) ClearCardRarityType() *Worldbloomsu
 	return _u
 }
 
-// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckCharacterBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.SetWorldBloomSupportDeckCharacterBonuses(v)
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) SetServerRegion(v string) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.SetServerRegion(v)
 	return _u
 }
 
-// AppendWorldBloomSupportDeckCharacterBonuses appends value to the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckCharacterBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.AppendWorldBloomSupportDeckCharacterBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckCharacterBonuses clears the value of the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckCharacterBonuses() *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.ClearWorldBloomSupportDeckCharacterBonuses()
-	return _u
-}
-
-// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckMasterRankBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.SetWorldBloomSupportDeckMasterRankBonuses(v)
-	return _u
-}
-
-// AppendWorldBloomSupportDeckMasterRankBonuses appends value to the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckMasterRankBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.AppendWorldBloomSupportDeckMasterRankBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckMasterRankBonuses clears the value of the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckMasterRankBonuses() *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.ClearWorldBloomSupportDeckMasterRankBonuses()
-	return _u
-}
-
-// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckSkillLevelBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.SetWorldBloomSupportDeckSkillLevelBonuses(v)
-	return _u
-}
-
-// AppendWorldBloomSupportDeckSkillLevelBonuses appends value to the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckSkillLevelBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.AppendWorldBloomSupportDeckSkillLevelBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckSkillLevelBonuses clears the value of the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckSkillLevelBonuses() *WorldbloomsupportdeckbonuseUpdate {
-	_u.mutation.ClearWorldBloomSupportDeckSkillLevelBonuses()
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomsupportdeckbonuseUpdate) SetNillableServerRegion(v *string) *WorldbloomsupportdeckbonuseUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -157,47 +102,14 @@ func (_u *WorldbloomsupportdeckbonuseUpdate) sqlSave(ctx context.Context) (_node
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
 		_spec.ClearField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString)
 	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckCharacterBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckCharacterBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckCharacterBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckMasterRankBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckMasterRankBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckMasterRankBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckSkillLevelBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckSkillLevelBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckSkillLevelBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON)
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -217,20 +129,6 @@ type WorldbloomsupportdeckbonuseUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *WorldbloomsupportdeckbonuseMutation
-}
-
-// SetServerRegion sets the "server_region" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetServerRegion(v string) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetNillableServerRegion(v *string) *WorldbloomsupportdeckbonuseUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
@@ -253,57 +151,17 @@ func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearCardRarityType() *Worldbloo
 	return _u
 }
 
-// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckCharacterBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.SetWorldBloomSupportDeckCharacterBonuses(v)
+// SetServerRegion sets the "server_region" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetServerRegion(v string) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.SetServerRegion(v)
 	return _u
 }
 
-// AppendWorldBloomSupportDeckCharacterBonuses appends value to the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckCharacterBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.AppendWorldBloomSupportDeckCharacterBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckCharacterBonuses clears the value of the "world_bloom_support_deck_character_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckCharacterBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.ClearWorldBloomSupportDeckCharacterBonuses()
-	return _u
-}
-
-// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckMasterRankBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.SetWorldBloomSupportDeckMasterRankBonuses(v)
-	return _u
-}
-
-// AppendWorldBloomSupportDeckMasterRankBonuses appends value to the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckMasterRankBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.AppendWorldBloomSupportDeckMasterRankBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckMasterRankBonuses clears the value of the "world_bloom_support_deck_master_rank_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckMasterRankBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.ClearWorldBloomSupportDeckMasterRankBonuses()
-	return _u
-}
-
-// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckSkillLevelBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.SetWorldBloomSupportDeckSkillLevelBonuses(v)
-	return _u
-}
-
-// AppendWorldBloomSupportDeckSkillLevelBonuses appends value to the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckSkillLevelBonuses(v []interface{}) *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.AppendWorldBloomSupportDeckSkillLevelBonuses(v)
-	return _u
-}
-
-// ClearWorldBloomSupportDeckSkillLevelBonuses clears the value of the "world_bloom_support_deck_skill_level_bonuses" field.
-func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckSkillLevelBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
-	_u.mutation.ClearWorldBloomSupportDeckSkillLevelBonuses()
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetNillableServerRegion(v *string) *WorldbloomsupportdeckbonuseUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -378,47 +236,14 @@ func (_u *WorldbloomsupportdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_n
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
 		_spec.ClearField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString)
 	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckCharacterBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckCharacterBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckCharacterBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckMasterRankBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckMasterRankBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckMasterRankBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.WorldBloomSupportDeckSkillLevelBonuses(); ok {
-		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckSkillLevelBonuses(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, value)
-		})
-	}
-	if _u.mutation.WorldBloomSupportDeckSkillLevelBonusesCleared() {
-		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON)
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Worldbloomsupportdeckbonuse{config: _u.config}
 	_spec.Assign = _node.assignValues

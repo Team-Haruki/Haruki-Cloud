@@ -27,29 +27,15 @@ func (_u *Charactermissionv2ParametergroupUpdate) Where(ps ...predicate.Characte
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetServerRegion(v string) *Charactermissionv2ParametergroupUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableServerRegion(v *string) *Charactermissionv2ParametergroupUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetGameID(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetGameID(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableGameID(v *int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableGameID(v *int) *Charactermissionv2ParametergroupUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *Charactermissionv2ParametergroupUpdate) SetNillableGameID(v *int64) *C
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdate) AddGameID(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) AddGameID(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdate) ClearGameID() *Charactermissionv2ParametergroupUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetSeq(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetSeq(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableSeq(v *int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableSeq(v *int) *Charactermissionv2ParametergroupUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *Charactermissionv2ParametergroupUpdate) SetNillableSeq(v *int64) *Char
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *Charactermissionv2ParametergroupUpdate) AddSeq(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) AddSeq(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *Charactermissionv2ParametergroupUpdate) ClearSeq() *Charactermissionv2
 }
 
 // SetRequirement sets the "requirement" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetRequirement(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetRequirement(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetRequirement()
 	_u.mutation.SetRequirement(v)
 	return _u
 }
 
 // SetNillableRequirement sets the "requirement" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableRequirement(v *int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableRequirement(v *int) *Charactermissionv2ParametergroupUpdate {
 	if v != nil {
 		_u.SetRequirement(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *Charactermissionv2ParametergroupUpdate) SetNillableRequirement(v *int6
 }
 
 // AddRequirement adds value to the "requirement" field.
-func (_u *Charactermissionv2ParametergroupUpdate) AddRequirement(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) AddRequirement(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.AddRequirement(v)
 	return _u
 }
@@ -123,14 +103,14 @@ func (_u *Charactermissionv2ParametergroupUpdate) ClearRequirement() *Characterm
 }
 
 // SetExp sets the "exp" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetExp(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetExp(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetExp()
 	_u.mutation.SetExp(v)
 	return _u
 }
 
 // SetNillableExp sets the "exp" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableExp(v *int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableExp(v *int) *Charactermissionv2ParametergroupUpdate {
 	if v != nil {
 		_u.SetExp(*v)
 	}
@@ -138,7 +118,7 @@ func (_u *Charactermissionv2ParametergroupUpdate) SetNillableExp(v *int64) *Char
 }
 
 // AddExp adds value to the "exp" field.
-func (_u *Charactermissionv2ParametergroupUpdate) AddExp(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) AddExp(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.AddExp(v)
 	return _u
 }
@@ -150,14 +130,14 @@ func (_u *Charactermissionv2ParametergroupUpdate) ClearExp() *Charactermissionv2
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *Charactermissionv2ParametergroupUpdate) SetQuantity(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetQuantity(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdate) SetNillableQuantity(v *int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableQuantity(v *int) *Charactermissionv2ParametergroupUpdate {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -165,7 +145,7 @@ func (_u *Charactermissionv2ParametergroupUpdate) SetNillableQuantity(v *int64) 
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *Charactermissionv2ParametergroupUpdate) AddQuantity(v int64) *Charactermissionv2ParametergroupUpdate {
+func (_u *Charactermissionv2ParametergroupUpdate) AddQuantity(v int) *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -173,6 +153,20 @@ func (_u *Charactermissionv2ParametergroupUpdate) AddQuantity(v int64) *Characte
 // ClearQuantity clears the value of the "quantity" field.
 func (_u *Charactermissionv2ParametergroupUpdate) ClearQuantity() *Charactermissionv2ParametergroupUpdate {
 	_u.mutation.ClearQuantity()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Charactermissionv2ParametergroupUpdate) SetServerRegion(v string) *Charactermissionv2ParametergroupUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Charactermissionv2ParametergroupUpdate) SetNillableServerRegion(v *string) *Charactermissionv2ParametergroupUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -217,53 +211,50 @@ func (_u *Charactermissionv2ParametergroupUpdate) sqlSave(ctx context.Context) (
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Requirement(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRequirement(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt, value)
 	}
 	if _u.mutation.RequirementCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Exp(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedExp(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldExp, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldExp, field.TypeInt, value)
 	}
 	if _u.mutation.ExpCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldExp, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldExp, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(charactermissionv2parametergroup.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -285,29 +276,15 @@ type Charactermissionv2ParametergroupUpdateOne struct {
 	mutation *Charactermissionv2ParametergroupMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetServerRegion(v string) *Charactermissionv2ParametergroupUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableServerRegion(v *string) *Charactermissionv2ParametergroupUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetGameID(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetGameID(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableGameID(v *int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableGameID(v *int) *Charactermissionv2ParametergroupUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -315,26 +292,20 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableGameID(v *int64)
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) AddGameID(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) AddGameID(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) ClearGameID() *Charactermissionv2ParametergroupUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetSeq(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetSeq(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableSeq(v *int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableSeq(v *int) *Charactermissionv2ParametergroupUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -342,7 +313,7 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableSeq(v *int64) *C
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) AddSeq(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) AddSeq(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -354,14 +325,14 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) ClearSeq() *Charactermissio
 }
 
 // SetRequirement sets the "requirement" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetRequirement(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetRequirement(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ResetRequirement()
 	_u.mutation.SetRequirement(v)
 	return _u
 }
 
 // SetNillableRequirement sets the "requirement" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableRequirement(v *int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableRequirement(v *int) *Charactermissionv2ParametergroupUpdateOne {
 	if v != nil {
 		_u.SetRequirement(*v)
 	}
@@ -369,7 +340,7 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableRequirement(v *i
 }
 
 // AddRequirement adds value to the "requirement" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) AddRequirement(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) AddRequirement(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddRequirement(v)
 	return _u
 }
@@ -381,14 +352,14 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) ClearRequirement() *Charact
 }
 
 // SetExp sets the "exp" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetExp(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetExp(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ResetExp()
 	_u.mutation.SetExp(v)
 	return _u
 }
 
 // SetNillableExp sets the "exp" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableExp(v *int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableExp(v *int) *Charactermissionv2ParametergroupUpdateOne {
 	if v != nil {
 		_u.SetExp(*v)
 	}
@@ -396,7 +367,7 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableExp(v *int64) *C
 }
 
 // AddExp adds value to the "exp" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) AddExp(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) AddExp(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddExp(v)
 	return _u
 }
@@ -408,14 +379,14 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) ClearExp() *Charactermissio
 }
 
 // SetQuantity sets the "quantity" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetQuantity(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetQuantity(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ResetQuantity()
 	_u.mutation.SetQuantity(v)
 	return _u
 }
 
 // SetNillableQuantity sets the "quantity" field if the given value is not nil.
-func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableQuantity(v *int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableQuantity(v *int) *Charactermissionv2ParametergroupUpdateOne {
 	if v != nil {
 		_u.SetQuantity(*v)
 	}
@@ -423,7 +394,7 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableQuantity(v *int6
 }
 
 // AddQuantity adds value to the "quantity" field.
-func (_u *Charactermissionv2ParametergroupUpdateOne) AddQuantity(v int64) *Charactermissionv2ParametergroupUpdateOne {
+func (_u *Charactermissionv2ParametergroupUpdateOne) AddQuantity(v int) *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.AddQuantity(v)
 	return _u
 }
@@ -431,6 +402,20 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) AddQuantity(v int64) *Chara
 // ClearQuantity clears the value of the "quantity" field.
 func (_u *Charactermissionv2ParametergroupUpdateOne) ClearQuantity() *Charactermissionv2ParametergroupUpdateOne {
 	_u.mutation.ClearQuantity()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetServerRegion(v string) *Charactermissionv2ParametergroupUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *Charactermissionv2ParametergroupUpdateOne) SetNillableServerRegion(v *string) *Charactermissionv2ParametergroupUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -505,53 +490,50 @@ func (_u *Charactermissionv2ParametergroupUpdateOne) sqlSave(ctx context.Context
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldGameID, field.TypeInt64)
+		_spec.AddField(charactermissionv2parametergroup.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldSeq, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Requirement(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRequirement(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt, value)
 	}
 	if _u.mutation.RequirementCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldRequirement, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Exp(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldExp, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedExp(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldExp, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldExp, field.TypeInt, value)
 	}
 	if _u.mutation.ExpCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldExp, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldExp, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Quantity(); ok {
-		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64, value)
+		_spec.SetField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedQuantity(); ok {
-		_spec.AddField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64, value)
+		_spec.AddField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt, value)
 	}
 	if _u.mutation.QuantityCleared() {
-		_spec.ClearField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt64)
+		_spec.ClearField(charactermissionv2parametergroup.FieldQuantity, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(charactermissionv2parametergroup.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Charactermissionv2Parametergroup{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -53,23 +53,13 @@ func IDLTE(id int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Stamp {
+func GameID(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldGameID, v))
 }
 
-// StampType applies equality check predicate on the "stamp_type" field. It's identical to StampTypeEQ.
-func StampType(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldStampType, v))
-}
-
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Stamp {
+func Seq(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -83,23 +73,18 @@ func AssetbundleName(v string) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
-// BalloonAssetbundleName applies equality check predicate on the "balloon_assetbundle_name" field. It's identical to BalloonAssetbundleNameEQ.
-func BalloonAssetbundleName(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldBalloonAssetbundleName, v))
-}
-
 // CharacterId1 applies equality check predicate on the "character_id1" field. It's identical to CharacterId1EQ.
-func CharacterId1(v int64) predicate.Stamp {
+func CharacterId1(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldCharacterId1, v))
 }
 
 // GameCharacterUnitID applies equality check predicate on the "game_character_unit_id" field. It's identical to GameCharacterUnitIDEQ.
-func GameCharacterUnitID(v int64) predicate.Stamp {
+func GameCharacterUnitID(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
 // ArchivePublishedAt applies equality check predicate on the "archive_published_at" field. It's identical to ArchivePublishedAtEQ.
-func ArchivePublishedAt(v int64) predicate.Stamp {
+func ArchivePublishedAt(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
@@ -108,184 +93,54 @@ func Description(v string) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldDescription, v))
 }
 
-// ArchiveDisplayType applies equality check predicate on the "archive_display_type" field. It's identical to ArchiveDisplayTypeEQ.
-func ArchiveDisplayType(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldArchiveDisplayType, v))
-}
-
 // CharacterId2 applies equality check predicate on the "character_id2" field. It's identical to CharacterId2EQ.
-func CharacterId2(v int64) predicate.Stamp {
+func CharacterId2(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldCharacterId2, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Stamp {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Stamp {
+func GameIDEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Stamp {
+func GameIDNEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Stamp {
+func GameIDIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Stamp {
+func GameIDNotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Stamp {
+func GameIDGT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Stamp {
+func GameIDGTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Stamp {
+func GameIDLT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Stamp {
+func GameIDLTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Stamp {
-	return predicate.Stamp(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Stamp {
-	return predicate.Stamp(sql.FieldNotNull(FieldGameID))
-}
-
-// StampTypeEQ applies the EQ predicate on the "stamp_type" field.
-func StampTypeEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldStampType, v))
-}
-
-// StampTypeNEQ applies the NEQ predicate on the "stamp_type" field.
-func StampTypeNEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNEQ(FieldStampType, v))
-}
-
-// StampTypeIn applies the In predicate on the "stamp_type" field.
-func StampTypeIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldIn(FieldStampType, vs...))
-}
-
-// StampTypeNotIn applies the NotIn predicate on the "stamp_type" field.
-func StampTypeNotIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNotIn(FieldStampType, vs...))
-}
-
-// StampTypeGT applies the GT predicate on the "stamp_type" field.
-func StampTypeGT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGT(FieldStampType, v))
-}
-
-// StampTypeGTE applies the GTE predicate on the "stamp_type" field.
-func StampTypeGTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGTE(FieldStampType, v))
-}
-
-// StampTypeLT applies the LT predicate on the "stamp_type" field.
-func StampTypeLT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLT(FieldStampType, v))
-}
-
-// StampTypeLTE applies the LTE predicate on the "stamp_type" field.
-func StampTypeLTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLTE(FieldStampType, v))
-}
-
-// StampTypeContains applies the Contains predicate on the "stamp_type" field.
-func StampTypeContains(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContains(FieldStampType, v))
-}
-
-// StampTypeHasPrefix applies the HasPrefix predicate on the "stamp_type" field.
-func StampTypeHasPrefix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasPrefix(FieldStampType, v))
-}
-
-// StampTypeHasSuffix applies the HasSuffix predicate on the "stamp_type" field.
-func StampTypeHasSuffix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasSuffix(FieldStampType, v))
 }
 
 // StampTypeIsNil applies the IsNil predicate on the "stamp_type" field.
@@ -298,53 +153,43 @@ func StampTypeNotNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotNull(FieldStampType))
 }
 
-// StampTypeEqualFold applies the EqualFold predicate on the "stamp_type" field.
-func StampTypeEqualFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEqualFold(FieldStampType, v))
-}
-
-// StampTypeContainsFold applies the ContainsFold predicate on the "stamp_type" field.
-func StampTypeContainsFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContainsFold(FieldStampType, v))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Stamp {
+func SeqEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Stamp {
+func SeqNEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Stamp {
+func SeqIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Stamp {
+func SeqNotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Stamp {
+func SeqGT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Stamp {
+func SeqGTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Stamp {
+func SeqLT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Stamp {
+func SeqLTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -508,61 +353,6 @@ func AssetbundleNameContainsFold(v string) predicate.Stamp {
 	return predicate.Stamp(sql.FieldContainsFold(FieldAssetbundleName, v))
 }
 
-// BalloonAssetbundleNameEQ applies the EQ predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameNEQ applies the NEQ predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameNEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNEQ(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameIn applies the In predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldIn(FieldBalloonAssetbundleName, vs...))
-}
-
-// BalloonAssetbundleNameNotIn applies the NotIn predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameNotIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNotIn(FieldBalloonAssetbundleName, vs...))
-}
-
-// BalloonAssetbundleNameGT applies the GT predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameGT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGT(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameGTE applies the GTE predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameGTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGTE(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameLT applies the LT predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameLT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLT(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameLTE applies the LTE predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameLTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLTE(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameContains applies the Contains predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameContains(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContains(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameHasPrefix applies the HasPrefix predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameHasPrefix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasPrefix(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameHasSuffix applies the HasSuffix predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameHasSuffix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasSuffix(FieldBalloonAssetbundleName, v))
-}
-
 // BalloonAssetbundleNameIsNil applies the IsNil predicate on the "balloon_assetbundle_name" field.
 func BalloonAssetbundleNameIsNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldIsNull(FieldBalloonAssetbundleName))
@@ -573,53 +363,43 @@ func BalloonAssetbundleNameNotNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotNull(FieldBalloonAssetbundleName))
 }
 
-// BalloonAssetbundleNameEqualFold applies the EqualFold predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameEqualFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEqualFold(FieldBalloonAssetbundleName, v))
-}
-
-// BalloonAssetbundleNameContainsFold applies the ContainsFold predicate on the "balloon_assetbundle_name" field.
-func BalloonAssetbundleNameContainsFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContainsFold(FieldBalloonAssetbundleName, v))
-}
-
 // CharacterId1EQ applies the EQ predicate on the "character_id1" field.
-func CharacterId1EQ(v int64) predicate.Stamp {
+func CharacterId1EQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldCharacterId1, v))
 }
 
 // CharacterId1NEQ applies the NEQ predicate on the "character_id1" field.
-func CharacterId1NEQ(v int64) predicate.Stamp {
+func CharacterId1NEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldCharacterId1, v))
 }
 
 // CharacterId1In applies the In predicate on the "character_id1" field.
-func CharacterId1In(vs ...int64) predicate.Stamp {
+func CharacterId1In(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldCharacterId1, vs...))
 }
 
 // CharacterId1NotIn applies the NotIn predicate on the "character_id1" field.
-func CharacterId1NotIn(vs ...int64) predicate.Stamp {
+func CharacterId1NotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldCharacterId1, vs...))
 }
 
 // CharacterId1GT applies the GT predicate on the "character_id1" field.
-func CharacterId1GT(v int64) predicate.Stamp {
+func CharacterId1GT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldCharacterId1, v))
 }
 
 // CharacterId1GTE applies the GTE predicate on the "character_id1" field.
-func CharacterId1GTE(v int64) predicate.Stamp {
+func CharacterId1GTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldCharacterId1, v))
 }
 
 // CharacterId1LT applies the LT predicate on the "character_id1" field.
-func CharacterId1LT(v int64) predicate.Stamp {
+func CharacterId1LT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldCharacterId1, v))
 }
 
 // CharacterId1LTE applies the LTE predicate on the "character_id1" field.
-func CharacterId1LTE(v int64) predicate.Stamp {
+func CharacterId1LTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldCharacterId1, v))
 }
 
@@ -634,42 +414,42 @@ func CharacterId1NotNil() predicate.Stamp {
 }
 
 // GameCharacterUnitIDEQ applies the EQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDEQ(v int64) predicate.Stamp {
+func GameCharacterUnitIDEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
 // GameCharacterUnitIDNEQ applies the NEQ predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNEQ(v int64) predicate.Stamp {
+func GameCharacterUnitIDNEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldGameCharacterUnitID, v))
 }
 
 // GameCharacterUnitIDIn applies the In predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDIn(vs ...int64) predicate.Stamp {
+func GameCharacterUnitIDIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldGameCharacterUnitID, vs...))
 }
 
 // GameCharacterUnitIDNotIn applies the NotIn predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDNotIn(vs ...int64) predicate.Stamp {
+func GameCharacterUnitIDNotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldGameCharacterUnitID, vs...))
 }
 
 // GameCharacterUnitIDGT applies the GT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGT(v int64) predicate.Stamp {
+func GameCharacterUnitIDGT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldGameCharacterUnitID, v))
 }
 
 // GameCharacterUnitIDGTE applies the GTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDGTE(v int64) predicate.Stamp {
+func GameCharacterUnitIDGTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldGameCharacterUnitID, v))
 }
 
 // GameCharacterUnitIDLT applies the LT predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLT(v int64) predicate.Stamp {
+func GameCharacterUnitIDLT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldGameCharacterUnitID, v))
 }
 
 // GameCharacterUnitIDLTE applies the LTE predicate on the "game_character_unit_id" field.
-func GameCharacterUnitIDLTE(v int64) predicate.Stamp {
+func GameCharacterUnitIDLTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldGameCharacterUnitID, v))
 }
 
@@ -684,42 +464,42 @@ func GameCharacterUnitIDNotNil() predicate.Stamp {
 }
 
 // ArchivePublishedAtEQ applies the EQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtEQ(v int64) predicate.Stamp {
+func ArchivePublishedAtEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtNEQ applies the NEQ predicate on the "archive_published_at" field.
-func ArchivePublishedAtNEQ(v int64) predicate.Stamp {
+func ArchivePublishedAtNEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtIn applies the In predicate on the "archive_published_at" field.
-func ArchivePublishedAtIn(vs ...int64) predicate.Stamp {
+func ArchivePublishedAtIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtNotIn applies the NotIn predicate on the "archive_published_at" field.
-func ArchivePublishedAtNotIn(vs ...int64) predicate.Stamp {
+func ArchivePublishedAtNotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldArchivePublishedAt, vs...))
 }
 
 // ArchivePublishedAtGT applies the GT predicate on the "archive_published_at" field.
-func ArchivePublishedAtGT(v int64) predicate.Stamp {
+func ArchivePublishedAtGT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtGTE applies the GTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtGTE(v int64) predicate.Stamp {
+func ArchivePublishedAtGTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLT applies the LT predicate on the "archive_published_at" field.
-func ArchivePublishedAtLT(v int64) predicate.Stamp {
+func ArchivePublishedAtLT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldArchivePublishedAt, v))
 }
 
 // ArchivePublishedAtLTE applies the LTE predicate on the "archive_published_at" field.
-func ArchivePublishedAtLTE(v int64) predicate.Stamp {
+func ArchivePublishedAtLTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldArchivePublishedAt, v))
 }
 
@@ -808,61 +588,6 @@ func DescriptionContainsFold(v string) predicate.Stamp {
 	return predicate.Stamp(sql.FieldContainsFold(FieldDescription, v))
 }
 
-// ArchiveDisplayTypeEQ applies the EQ predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEQ(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeNEQ applies the NEQ predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeNEQ(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNEQ(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeIn applies the In predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldIn(FieldArchiveDisplayType, vs...))
-}
-
-// ArchiveDisplayTypeNotIn applies the NotIn predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeNotIn(vs ...string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldNotIn(FieldArchiveDisplayType, vs...))
-}
-
-// ArchiveDisplayTypeGT applies the GT predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeGT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGT(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeGTE applies the GTE predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeGTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldGTE(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeLT applies the LT predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeLT(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLT(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeLTE applies the LTE predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeLTE(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldLTE(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeContains applies the Contains predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeContains(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContains(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeHasPrefix applies the HasPrefix predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeHasPrefix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasPrefix(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeHasSuffix applies the HasSuffix predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeHasSuffix(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldHasSuffix(FieldArchiveDisplayType, v))
-}
-
 // ArchiveDisplayTypeIsNil applies the IsNil predicate on the "archive_display_type" field.
 func ArchiveDisplayTypeIsNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldIsNull(FieldArchiveDisplayType))
@@ -873,53 +598,43 @@ func ArchiveDisplayTypeNotNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotNull(FieldArchiveDisplayType))
 }
 
-// ArchiveDisplayTypeEqualFold applies the EqualFold predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeEqualFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldEqualFold(FieldArchiveDisplayType, v))
-}
-
-// ArchiveDisplayTypeContainsFold applies the ContainsFold predicate on the "archive_display_type" field.
-func ArchiveDisplayTypeContainsFold(v string) predicate.Stamp {
-	return predicate.Stamp(sql.FieldContainsFold(FieldArchiveDisplayType, v))
-}
-
 // CharacterId2EQ applies the EQ predicate on the "character_id2" field.
-func CharacterId2EQ(v int64) predicate.Stamp {
+func CharacterId2EQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldEQ(FieldCharacterId2, v))
 }
 
 // CharacterId2NEQ applies the NEQ predicate on the "character_id2" field.
-func CharacterId2NEQ(v int64) predicate.Stamp {
+func CharacterId2NEQ(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNEQ(FieldCharacterId2, v))
 }
 
 // CharacterId2In applies the In predicate on the "character_id2" field.
-func CharacterId2In(vs ...int64) predicate.Stamp {
+func CharacterId2In(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldIn(FieldCharacterId2, vs...))
 }
 
 // CharacterId2NotIn applies the NotIn predicate on the "character_id2" field.
-func CharacterId2NotIn(vs ...int64) predicate.Stamp {
+func CharacterId2NotIn(vs ...int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotIn(FieldCharacterId2, vs...))
 }
 
 // CharacterId2GT applies the GT predicate on the "character_id2" field.
-func CharacterId2GT(v int64) predicate.Stamp {
+func CharacterId2GT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGT(FieldCharacterId2, v))
 }
 
 // CharacterId2GTE applies the GTE predicate on the "character_id2" field.
-func CharacterId2GTE(v int64) predicate.Stamp {
+func CharacterId2GTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldGTE(FieldCharacterId2, v))
 }
 
 // CharacterId2LT applies the LT predicate on the "character_id2" field.
-func CharacterId2LT(v int64) predicate.Stamp {
+func CharacterId2LT(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLT(FieldCharacterId2, v))
 }
 
 // CharacterId2LTE applies the LTE predicate on the "character_id2" field.
-func CharacterId2LTE(v int64) predicate.Stamp {
+func CharacterId2LTE(v int) predicate.Stamp {
 	return predicate.Stamp(sql.FieldLTE(FieldCharacterId2, v))
 }
 
@@ -931,6 +646,71 @@ func CharacterId2IsNil() predicate.Stamp {
 // CharacterId2NotNil applies the NotNil predicate on the "character_id2" field.
 func CharacterId2NotNil() predicate.Stamp {
 	return predicate.Stamp(sql.FieldNotNull(FieldCharacterId2))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Stamp {
+	return predicate.Stamp(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

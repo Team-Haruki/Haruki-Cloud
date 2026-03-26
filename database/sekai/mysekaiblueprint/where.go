@@ -53,18 +53,13 @@ func IDLTE(id int) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaiblueprint {
+func GameID(v int) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldGameID, v))
 }
 
 // CraftTargetID applies equality check predicate on the "craft_target_id" field. It's identical to CraftTargetIDEQ.
-func CraftTargetID(v int64) predicate.Mysekaiblueprint {
+func CraftTargetID(v int) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftTargetID, v))
 }
 
@@ -79,13 +74,228 @@ func IsObtainedByConvert(v bool) predicate.Mysekaiblueprint {
 }
 
 // CraftCountLimit applies equality check predicate on the "craft_count_limit" field. It's identical to CraftCountLimitEQ.
-func CraftCountLimit(v int64) predicate.Mysekaiblueprint {
+func CraftCountLimit(v int) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftCountLimit, v))
 }
 
 // IsAvailableWithoutPossession applies equality check predicate on the "is_available_without_possession" field. It's identical to IsAvailableWithoutPossessionEQ.
 func IsAvailableWithoutPossession(v bool) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsAvailableWithoutPossession, v))
+}
+
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldGameID, v))
+}
+
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldGameID, v))
+}
+
+// MysekaiCraftTypeIsNil applies the IsNil predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldMysekaiCraftType))
+}
+
+// MysekaiCraftTypeNotNil applies the NotNil predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldMysekaiCraftType))
+}
+
+// CraftTargetIDEQ applies the EQ predicate on the "craft_target_id" field.
+func CraftTargetIDEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDNEQ applies the NEQ predicate on the "craft_target_id" field.
+func CraftTargetIDNEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDIn applies the In predicate on the "craft_target_id" field.
+func CraftTargetIDIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIn(FieldCraftTargetID, vs...))
+}
+
+// CraftTargetIDNotIn applies the NotIn predicate on the "craft_target_id" field.
+func CraftTargetIDNotIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldCraftTargetID, vs...))
+}
+
+// CraftTargetIDGT applies the GT predicate on the "craft_target_id" field.
+func CraftTargetIDGT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGT(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDGTE applies the GTE predicate on the "craft_target_id" field.
+func CraftTargetIDGTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDLT applies the LT predicate on the "craft_target_id" field.
+func CraftTargetIDLT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLT(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDLTE applies the LTE predicate on the "craft_target_id" field.
+func CraftTargetIDLTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldCraftTargetID, v))
+}
+
+// CraftTargetIDIsNil applies the IsNil predicate on the "craft_target_id" field.
+func CraftTargetIDIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldCraftTargetID))
+}
+
+// CraftTargetIDNotNil applies the NotNil predicate on the "craft_target_id" field.
+func CraftTargetIDNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldCraftTargetID))
+}
+
+// IsEnableSketchEQ applies the EQ predicate on the "is_enable_sketch" field.
+func IsEnableSketchEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsEnableSketch, v))
+}
+
+// IsEnableSketchNEQ applies the NEQ predicate on the "is_enable_sketch" field.
+func IsEnableSketchNEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsEnableSketch, v))
+}
+
+// IsEnableSketchIsNil applies the IsNil predicate on the "is_enable_sketch" field.
+func IsEnableSketchIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsEnableSketch))
+}
+
+// IsEnableSketchNotNil applies the NotNil predicate on the "is_enable_sketch" field.
+func IsEnableSketchNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsEnableSketch))
+}
+
+// IsObtainedByConvertEQ applies the EQ predicate on the "is_obtained_by_convert" field.
+func IsObtainedByConvertEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsObtainedByConvert, v))
+}
+
+// IsObtainedByConvertNEQ applies the NEQ predicate on the "is_obtained_by_convert" field.
+func IsObtainedByConvertNEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsObtainedByConvert, v))
+}
+
+// IsObtainedByConvertIsNil applies the IsNil predicate on the "is_obtained_by_convert" field.
+func IsObtainedByConvertIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsObtainedByConvert))
+}
+
+// IsObtainedByConvertNotNil applies the NotNil predicate on the "is_obtained_by_convert" field.
+func IsObtainedByConvertNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsObtainedByConvert))
+}
+
+// CraftCountLimitEQ applies the EQ predicate on the "craft_count_limit" field.
+func CraftCountLimitEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitNEQ applies the NEQ predicate on the "craft_count_limit" field.
+func CraftCountLimitNEQ(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitIn applies the In predicate on the "craft_count_limit" field.
+func CraftCountLimitIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIn(FieldCraftCountLimit, vs...))
+}
+
+// CraftCountLimitNotIn applies the NotIn predicate on the "craft_count_limit" field.
+func CraftCountLimitNotIn(vs ...int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldCraftCountLimit, vs...))
+}
+
+// CraftCountLimitGT applies the GT predicate on the "craft_count_limit" field.
+func CraftCountLimitGT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGT(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitGTE applies the GTE predicate on the "craft_count_limit" field.
+func CraftCountLimitGTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitLT applies the LT predicate on the "craft_count_limit" field.
+func CraftCountLimitLT(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLT(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitLTE applies the LTE predicate on the "craft_count_limit" field.
+func CraftCountLimitLTE(v int) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldCraftCountLimit, v))
+}
+
+// CraftCountLimitIsNil applies the IsNil predicate on the "craft_count_limit" field.
+func CraftCountLimitIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldCraftCountLimit))
+}
+
+// CraftCountLimitNotNil applies the NotNil predicate on the "craft_count_limit" field.
+func CraftCountLimitNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldCraftCountLimit))
+}
+
+// IsAvailableWithoutPossessionEQ applies the EQ predicate on the "is_available_without_possession" field.
+func IsAvailableWithoutPossessionEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsAvailableWithoutPossession, v))
+}
+
+// IsAvailableWithoutPossessionNEQ applies the NEQ predicate on the "is_available_without_possession" field.
+func IsAvailableWithoutPossessionNEQ(v bool) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsAvailableWithoutPossession, v))
+}
+
+// IsAvailableWithoutPossessionIsNil applies the IsNil predicate on the "is_available_without_possession" field.
+func IsAvailableWithoutPossessionIsNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsAvailableWithoutPossession))
+}
+
+// IsAvailableWithoutPossessionNotNil applies the NotNil predicate on the "is_available_without_possession" field.
+func IsAvailableWithoutPossessionNotNil() predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsAvailableWithoutPossession))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -151,226 +361,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaiblueprint {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldGameID))
-}
-
-// MysekaiCraftTypeIsNil applies the IsNil predicate on the "mysekai_craft_type" field.
-func MysekaiCraftTypeIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldMysekaiCraftType))
-}
-
-// MysekaiCraftTypeNotNil applies the NotNil predicate on the "mysekai_craft_type" field.
-func MysekaiCraftTypeNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldMysekaiCraftType))
-}
-
-// CraftTargetIDEQ applies the EQ predicate on the "craft_target_id" field.
-func CraftTargetIDEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDNEQ applies the NEQ predicate on the "craft_target_id" field.
-func CraftTargetIDNEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDIn applies the In predicate on the "craft_target_id" field.
-func CraftTargetIDIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIn(FieldCraftTargetID, vs...))
-}
-
-// CraftTargetIDNotIn applies the NotIn predicate on the "craft_target_id" field.
-func CraftTargetIDNotIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldCraftTargetID, vs...))
-}
-
-// CraftTargetIDGT applies the GT predicate on the "craft_target_id" field.
-func CraftTargetIDGT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGT(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDGTE applies the GTE predicate on the "craft_target_id" field.
-func CraftTargetIDGTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDLT applies the LT predicate on the "craft_target_id" field.
-func CraftTargetIDLT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLT(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDLTE applies the LTE predicate on the "craft_target_id" field.
-func CraftTargetIDLTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldCraftTargetID, v))
-}
-
-// CraftTargetIDIsNil applies the IsNil predicate on the "craft_target_id" field.
-func CraftTargetIDIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldCraftTargetID))
-}
-
-// CraftTargetIDNotNil applies the NotNil predicate on the "craft_target_id" field.
-func CraftTargetIDNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldCraftTargetID))
-}
-
-// IsEnableSketchEQ applies the EQ predicate on the "is_enable_sketch" field.
-func IsEnableSketchEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsEnableSketch, v))
-}
-
-// IsEnableSketchNEQ applies the NEQ predicate on the "is_enable_sketch" field.
-func IsEnableSketchNEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsEnableSketch, v))
-}
-
-// IsEnableSketchIsNil applies the IsNil predicate on the "is_enable_sketch" field.
-func IsEnableSketchIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsEnableSketch))
-}
-
-// IsEnableSketchNotNil applies the NotNil predicate on the "is_enable_sketch" field.
-func IsEnableSketchNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsEnableSketch))
-}
-
-// IsObtainedByConvertEQ applies the EQ predicate on the "is_obtained_by_convert" field.
-func IsObtainedByConvertEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsObtainedByConvert, v))
-}
-
-// IsObtainedByConvertNEQ applies the NEQ predicate on the "is_obtained_by_convert" field.
-func IsObtainedByConvertNEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsObtainedByConvert, v))
-}
-
-// IsObtainedByConvertIsNil applies the IsNil predicate on the "is_obtained_by_convert" field.
-func IsObtainedByConvertIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsObtainedByConvert))
-}
-
-// IsObtainedByConvertNotNil applies the NotNil predicate on the "is_obtained_by_convert" field.
-func IsObtainedByConvertNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsObtainedByConvert))
-}
-
-// CraftCountLimitEQ applies the EQ predicate on the "craft_count_limit" field.
-func CraftCountLimitEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitNEQ applies the NEQ predicate on the "craft_count_limit" field.
-func CraftCountLimitNEQ(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitIn applies the In predicate on the "craft_count_limit" field.
-func CraftCountLimitIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIn(FieldCraftCountLimit, vs...))
-}
-
-// CraftCountLimitNotIn applies the NotIn predicate on the "craft_count_limit" field.
-func CraftCountLimitNotIn(vs ...int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldCraftCountLimit, vs...))
-}
-
-// CraftCountLimitGT applies the GT predicate on the "craft_count_limit" field.
-func CraftCountLimitGT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGT(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitGTE applies the GTE predicate on the "craft_count_limit" field.
-func CraftCountLimitGTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitLT applies the LT predicate on the "craft_count_limit" field.
-func CraftCountLimitLT(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLT(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitLTE applies the LTE predicate on the "craft_count_limit" field.
-func CraftCountLimitLTE(v int64) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldCraftCountLimit, v))
-}
-
-// CraftCountLimitIsNil applies the IsNil predicate on the "craft_count_limit" field.
-func CraftCountLimitIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldCraftCountLimit))
-}
-
-// CraftCountLimitNotNil applies the NotNil predicate on the "craft_count_limit" field.
-func CraftCountLimitNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldCraftCountLimit))
-}
-
-// IsAvailableWithoutPossessionEQ applies the EQ predicate on the "is_available_without_possession" field.
-func IsAvailableWithoutPossessionEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldIsAvailableWithoutPossession, v))
-}
-
-// IsAvailableWithoutPossessionNEQ applies the NEQ predicate on the "is_available_without_possession" field.
-func IsAvailableWithoutPossessionNEQ(v bool) predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldIsAvailableWithoutPossession, v))
-}
-
-// IsAvailableWithoutPossessionIsNil applies the IsNil predicate on the "is_available_without_possession" field.
-func IsAvailableWithoutPossessionIsNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldIsAvailableWithoutPossession))
-}
-
-// IsAvailableWithoutPossessionNotNil applies the NotNil predicate on the "is_available_without_possession" field.
-func IsAvailableWithoutPossessionNotNil() predicate.Mysekaiblueprint {
-	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldIsAvailableWithoutPossession))
 }
 
 // And groups predicates with the AND operator between them.

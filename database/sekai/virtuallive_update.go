@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -28,29 +29,15 @@ func (_u *VirtualliveUpdate) Where(ps ...predicate.Virtuallive) *VirtualliveUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *VirtualliveUpdate) SetServerRegion(v string) *VirtualliveUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableServerRegion(v *string) *VirtualliveUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *VirtualliveUpdate) SetGameID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetGameID(v int) *VirtualliveUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableGameID(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableGameID(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -58,28 +45,20 @@ func (_u *VirtualliveUpdate) SetNillableGameID(v *int64) *VirtualliveUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *VirtualliveUpdate) AddGameID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddGameID(v int) *VirtualliveUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *VirtualliveUpdate) ClearGameID() *VirtualliveUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveType(v string) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveType(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveType(v)
 	return _u
 }
 
-// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableVirtualLiveType(v *string) *VirtualliveUpdate {
-	if v != nil {
-		_u.SetVirtualLiveType(*v)
-	}
+// AppendVirtualLiveType appends value to the "virtual_live_type" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveType(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveType(v)
 	return _u
 }
 
@@ -90,16 +69,14 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveType() *VirtualliveUpdate {
 }
 
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_u *VirtualliveUpdate) SetVirtualLivePlatform(v string) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLivePlatform(v)
 	return _u
 }
 
-// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableVirtualLivePlatform(v *string) *VirtualliveUpdate {
-	if v != nil {
-		_u.SetVirtualLivePlatform(*v)
-	}
+// AppendVirtualLivePlatform appends value to the "virtual_live_platform" field.
+func (_u *VirtualliveUpdate) AppendVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLivePlatform(v)
 	return _u
 }
 
@@ -110,14 +87,14 @@ func (_u *VirtualliveUpdate) ClearVirtualLivePlatform() *VirtualliveUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *VirtualliveUpdate) SetSeq(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetSeq(v int) *VirtualliveUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableSeq(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableSeq(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -125,7 +102,7 @@ func (_u *VirtualliveUpdate) SetNillableSeq(v *int64) *VirtualliveUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *VirtualliveUpdate) AddSeq(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddSeq(v int) *VirtualliveUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -177,14 +154,14 @@ func (_u *VirtualliveUpdate) ClearAssetbundleName() *VirtualliveUpdate {
 }
 
 // SetScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field.
-func (_u *VirtualliveUpdate) SetScreenMvMusicVocalID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetScreenMvMusicVocalID(v int) *VirtualliveUpdate {
 	_u.mutation.ResetScreenMvMusicVocalID()
 	_u.mutation.SetScreenMvMusicVocalID(v)
 	return _u
 }
 
 // SetNillableScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableScreenMvMusicVocalID(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableScreenMvMusicVocalID(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetScreenMvMusicVocalID(*v)
 	}
@@ -192,7 +169,7 @@ func (_u *VirtualliveUpdate) SetNillableScreenMvMusicVocalID(v *int64) *Virtuall
 }
 
 // AddScreenMvMusicVocalID adds value to the "screen_mv_music_vocal_id" field.
-func (_u *VirtualliveUpdate) AddScreenMvMusicVocalID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddScreenMvMusicVocalID(v int) *VirtualliveUpdate {
 	_u.mutation.AddScreenMvMusicVocalID(v)
 	return _u
 }
@@ -204,14 +181,14 @@ func (_u *VirtualliveUpdate) ClearScreenMvMusicVocalID() *VirtualliveUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *VirtualliveUpdate) SetStartAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetStartAt(v int) *VirtualliveUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableStartAt(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableStartAt(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -219,7 +196,7 @@ func (_u *VirtualliveUpdate) SetNillableStartAt(v *int64) *VirtualliveUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *VirtualliveUpdate) AddStartAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddStartAt(v int) *VirtualliveUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -231,14 +208,14 @@ func (_u *VirtualliveUpdate) ClearStartAt() *VirtualliveUpdate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *VirtualliveUpdate) SetEndAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetEndAt(v int) *VirtualliveUpdate {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableEndAt(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableEndAt(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -246,7 +223,7 @@ func (_u *VirtualliveUpdate) SetNillableEndAt(v *int64) *VirtualliveUpdate {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *VirtualliveUpdate) AddEndAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddEndAt(v int) *VirtualliveUpdate {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -258,14 +235,14 @@ func (_u *VirtualliveUpdate) ClearEndAt() *VirtualliveUpdate {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (_u *VirtualliveUpdate) SetRankingAnnounceAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetRankingAnnounceAt(v int) *VirtualliveUpdate {
 	_u.mutation.ResetRankingAnnounceAt()
 	_u.mutation.SetRankingAnnounceAt(v)
 	return _u
 }
 
 // SetNillableRankingAnnounceAt sets the "ranking_announce_at" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableRankingAnnounceAt(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableRankingAnnounceAt(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetRankingAnnounceAt(*v)
 	}
@@ -273,7 +250,7 @@ func (_u *VirtualliveUpdate) SetNillableRankingAnnounceAt(v *int64) *Virtuallive
 }
 
 // AddRankingAnnounceAt adds value to the "ranking_announce_at" field.
-func (_u *VirtualliveUpdate) AddRankingAnnounceAt(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddRankingAnnounceAt(v int) *VirtualliveUpdate {
 	_u.mutation.AddRankingAnnounceAt(v)
 	return _u
 }
@@ -285,13 +262,13 @@ func (_u *VirtualliveUpdate) ClearRankingAnnounceAt() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveSetlists sets the "virtual_live_setlists" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveSetlists(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveSetlists(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveSetlists(v)
 	return _u
 }
 
 // AppendVirtualLiveSetlists appends value to the "virtual_live_setlists" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveSetlists(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveSetlists(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveSetlists(v)
 	return _u
 }
@@ -303,13 +280,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveSetlists() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveBeginnerSchedules sets the "virtual_live_beginner_schedules" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveBeginnerSchedules(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveBeginnerSchedules(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveBeginnerSchedules(v)
 	return _u
 }
 
 // AppendVirtualLiveBeginnerSchedules appends value to the "virtual_live_beginner_schedules" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveBeginnerSchedules(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveBeginnerSchedules(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveBeginnerSchedules(v)
 	return _u
 }
@@ -321,13 +298,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveBeginnerSchedules() *VirtualliveUpd
 }
 
 // SetVirtualLiveSchedules sets the "virtual_live_schedules" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveSchedules(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveSchedules(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveSchedules(v)
 	return _u
 }
 
 // AppendVirtualLiveSchedules appends value to the "virtual_live_schedules" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveSchedules(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveSchedules(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveSchedules(v)
 	return _u
 }
@@ -339,13 +316,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveSchedules() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveCharacters sets the "virtual_live_characters" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveCharacters(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveCharacters(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveCharacters(v)
 	return _u
 }
 
 // AppendVirtualLiveCharacters appends value to the "virtual_live_characters" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveCharacters(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveCharacters(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveCharacters(v)
 	return _u
 }
@@ -357,13 +334,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveCharacters() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveRewards sets the "virtual_live_rewards" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveRewards(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveRewards(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveRewards(v)
 	return _u
 }
 
 // AppendVirtualLiveRewards appends value to the "virtual_live_rewards" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveRewards(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveRewards(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveRewards(v)
 	return _u
 }
@@ -375,13 +352,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveRewards() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveCheerPointRewards sets the "virtual_live_cheer_point_rewards" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveCheerPointRewards(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveCheerPointRewards(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveCheerPointRewards(v)
 	return _u
 }
 
 // AppendVirtualLiveCheerPointRewards appends value to the "virtual_live_cheer_point_rewards" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveCheerPointRewards(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveCheerPointRewards(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveCheerPointRewards(v)
 	return _u
 }
@@ -393,8 +370,14 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveCheerPointRewards() *VirtualliveUpd
 }
 
 // SetVirtualLiveWaitingRoom sets the "virtual_live_waiting_room" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveWaitingRoom(v map[string]interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveWaitingRoom(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveWaitingRoom(v)
+	return _u
+}
+
+// AppendVirtualLiveWaitingRoom appends value to the "virtual_live_waiting_room" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveWaitingRoom(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveWaitingRoom(v)
 	return _u
 }
 
@@ -405,13 +388,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveWaitingRoom() *VirtualliveUpdate {
 }
 
 // SetVirtualItems sets the "virtual_items" field.
-func (_u *VirtualliveUpdate) SetVirtualItems(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualItems(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualItems(v)
 	return _u
 }
 
 // AppendVirtualItems appends value to the "virtual_items" field.
-func (_u *VirtualliveUpdate) AppendVirtualItems(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualItems(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualItems(v)
 	return _u
 }
@@ -423,13 +406,13 @@ func (_u *VirtualliveUpdate) ClearVirtualItems() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveAppeals sets the "virtual_live_appeals" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveAppeals(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveAppeals(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveAppeals(v)
 	return _u
 }
 
 // AppendVirtualLiveAppeals appends value to the "virtual_live_appeals" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveAppeals(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveAppeals(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveAppeals(v)
 	return _u
 }
@@ -441,13 +424,13 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveAppeals() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveBackgroundMusics sets the "virtual_live_background_musics" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveBackgroundMusics(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveBackgroundMusics(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveBackgroundMusics(v)
 	return _u
 }
 
 // AppendVirtualLiveBackgroundMusics appends value to the "virtual_live_background_musics" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveBackgroundMusics(v []interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AppendVirtualLiveBackgroundMusics(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.AppendVirtualLiveBackgroundMusics(v)
 	return _u
 }
@@ -459,8 +442,14 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveBackgroundMusics() *VirtualliveUpda
 }
 
 // SetVirtualLiveInformation sets the "virtual_live_information" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveInformation(v map[string]interface{}) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveInformation(v json.RawMessage) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveInformation(v)
+	return _u
+}
+
+// AppendVirtualLiveInformation appends value to the "virtual_live_information" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveInformation(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveInformation(v)
 	return _u
 }
 
@@ -471,14 +460,14 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveInformation() *VirtualliveUpdate {
 }
 
 // SetArchiveReleaseConditionID sets the "archive_release_condition_id" field.
-func (_u *VirtualliveUpdate) SetArchiveReleaseConditionID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetArchiveReleaseConditionID(v int) *VirtualliveUpdate {
 	_u.mutation.ResetArchiveReleaseConditionID()
 	_u.mutation.SetArchiveReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableArchiveReleaseConditionID sets the "archive_release_condition_id" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableArchiveReleaseConditionID(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableArchiveReleaseConditionID(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetArchiveReleaseConditionID(*v)
 	}
@@ -486,7 +475,7 @@ func (_u *VirtualliveUpdate) SetNillableArchiveReleaseConditionID(v *int64) *Vir
 }
 
 // AddArchiveReleaseConditionID adds value to the "archive_release_condition_id" field.
-func (_u *VirtualliveUpdate) AddArchiveReleaseConditionID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddArchiveReleaseConditionID(v int) *VirtualliveUpdate {
 	_u.mutation.AddArchiveReleaseConditionID(v)
 	return _u
 }
@@ -498,14 +487,14 @@ func (_u *VirtualliveUpdate) ClearArchiveReleaseConditionID() *VirtualliveUpdate
 }
 
 // SetSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field.
-func (_u *VirtualliveUpdate) SetSubGameCharacterPenlightColorGroupID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetSubGameCharacterPenlightColorGroupID(v int) *VirtualliveUpdate {
 	_u.mutation.ResetSubGameCharacterPenlightColorGroupID()
 	_u.mutation.SetSubGameCharacterPenlightColorGroupID(v)
 	return _u
 }
 
 // SetNillableSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableSubGameCharacterPenlightColorGroupID(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableSubGameCharacterPenlightColorGroupID(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetSubGameCharacterPenlightColorGroupID(*v)
 	}
@@ -513,7 +502,7 @@ func (_u *VirtualliveUpdate) SetNillableSubGameCharacterPenlightColorGroupID(v *
 }
 
 // AddSubGameCharacterPenlightColorGroupID adds value to the "sub_game_character_penlight_color_group_id" field.
-func (_u *VirtualliveUpdate) AddSubGameCharacterPenlightColorGroupID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddSubGameCharacterPenlightColorGroupID(v int) *VirtualliveUpdate {
 	_u.mutation.AddSubGameCharacterPenlightColorGroupID(v)
 	return _u
 }
@@ -525,14 +514,14 @@ func (_u *VirtualliveUpdate) ClearSubGameCharacterPenlightColorGroupID() *Virtua
 }
 
 // SetVirtualLiveGroupID sets the "virtual_live_group_id" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveGroupID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveGroupID(v int) *VirtualliveUpdate {
 	_u.mutation.ResetVirtualLiveGroupID()
 	_u.mutation.SetVirtualLiveGroupID(v)
 	return _u
 }
 
 // SetNillableVirtualLiveGroupID sets the "virtual_live_group_id" field if the given value is not nil.
-func (_u *VirtualliveUpdate) SetNillableVirtualLiveGroupID(v *int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetNillableVirtualLiveGroupID(v *int) *VirtualliveUpdate {
 	if v != nil {
 		_u.SetVirtualLiveGroupID(*v)
 	}
@@ -540,7 +529,7 @@ func (_u *VirtualliveUpdate) SetNillableVirtualLiveGroupID(v *int64) *Virtualliv
 }
 
 // AddVirtualLiveGroupID adds value to the "virtual_live_group_id" field.
-func (_u *VirtualliveUpdate) AddVirtualLiveGroupID(v int64) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) AddVirtualLiveGroupID(v int) *VirtualliveUpdate {
 	_u.mutation.AddVirtualLiveGroupID(v)
 	return _u
 }
@@ -548,6 +537,20 @@ func (_u *VirtualliveUpdate) AddVirtualLiveGroupID(v int64) *VirtualliveUpdate {
 // ClearVirtualLiveGroupID clears the value of the "virtual_live_group_id" field.
 func (_u *VirtualliveUpdate) ClearVirtualLiveGroupID() *VirtualliveUpdate {
 	_u.mutation.ClearVirtualLiveGroupID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *VirtualliveUpdate) SetServerRegion(v string) *VirtualliveUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *VirtualliveUpdate) SetNillableServerRegion(v *string) *VirtualliveUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -592,38 +595,42 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(virtuallive.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(virtuallive.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
+		_spec.AddField(virtuallive.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveType, value)
+		})
 	}
 	if _u.mutation.VirtualLiveTypeCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeString)
+		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLivePlatform(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLivePlatform, value)
+		})
 	}
 	if _u.mutation.VirtualLivePlatformCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeString)
+		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(virtuallive.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(virtuallive.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(virtuallive.FieldSeq, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(virtuallive.FieldName, field.TypeString, value)
@@ -638,40 +645,40 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(virtuallive.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ScreenMvMusicVocalID(); ok {
-		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedScreenMvMusicVocalID(); ok {
-		_spec.AddField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt, value)
 	}
 	if _u.mutation.ScreenMvMusicVocalIDCleared() {
-		_spec.ClearField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(virtuallive.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(virtuallive.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(virtuallive.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(virtuallive.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.RankingAnnounceAt(); ok {
-		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRankingAnnounceAt(); ok {
-		_spec.AddField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldRankingAnnounceAt, field.TypeInt, value)
 	}
 	if _u.mutation.RankingAnnounceAtCleared() {
-		_spec.ClearField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldRankingAnnounceAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.VirtualLiveSetlists(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveSetlists, field.TypeJSON, value)
@@ -742,6 +749,11 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.VirtualLiveWaitingRoom(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveWaitingRoom, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedVirtualLiveWaitingRoom(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveWaitingRoom, value)
+		})
+	}
 	if _u.mutation.VirtualLiveWaitingRoomCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveWaitingRoom, field.TypeJSON)
 	}
@@ -781,35 +793,43 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.VirtualLiveInformation(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveInformation, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedVirtualLiveInformation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveInformation, value)
+		})
+	}
 	if _u.mutation.VirtualLiveInformationCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveInformation, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ArchiveReleaseConditionID(); ok {
-		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchiveReleaseConditionID(); ok {
-		_spec.AddField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ArchiveReleaseConditionIDCleared() {
-		_spec.ClearField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SubGameCharacterPenlightColorGroupID(); ok {
-		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSubGameCharacterPenlightColorGroupID(); ok {
-		_spec.AddField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.SubGameCharacterPenlightColorGroupIDCleared() {
-		_spec.ClearField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.VirtualLiveGroupID(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedVirtualLiveGroupID(); ok {
-		_spec.AddField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.VirtualLiveGroupIDCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -831,29 +851,15 @@ type VirtualliveUpdateOne struct {
 	mutation *VirtualliveMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *VirtualliveUpdateOne) SetServerRegion(v string) *VirtualliveUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableServerRegion(v *string) *VirtualliveUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *VirtualliveUpdateOne) SetGameID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetGameID(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableGameID(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableGameID(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -861,28 +867,20 @@ func (_u *VirtualliveUpdateOne) SetNillableGameID(v *int64) *VirtualliveUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *VirtualliveUpdateOne) AddGameID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddGameID(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *VirtualliveUpdateOne) ClearGameID() *VirtualliveUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveType(v string) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveType(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveType(v)
 	return _u
 }
 
-// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableVirtualLiveType(v *string) *VirtualliveUpdateOne {
-	if v != nil {
-		_u.SetVirtualLiveType(*v)
-	}
+// AppendVirtualLiveType appends value to the "virtual_live_type" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveType(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveType(v)
 	return _u
 }
 
@@ -893,16 +891,14 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveType() *VirtualliveUpdateOne {
 }
 
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLivePlatform(v string) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLivePlatform(v)
 	return _u
 }
 
-// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableVirtualLivePlatform(v *string) *VirtualliveUpdateOne {
-	if v != nil {
-		_u.SetVirtualLivePlatform(*v)
-	}
+// AppendVirtualLivePlatform appends value to the "virtual_live_platform" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLivePlatform(v)
 	return _u
 }
 
@@ -913,14 +909,14 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLivePlatform() *VirtualliveUpdateOne
 }
 
 // SetSeq sets the "seq" field.
-func (_u *VirtualliveUpdateOne) SetSeq(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetSeq(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableSeq(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableSeq(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -928,7 +924,7 @@ func (_u *VirtualliveUpdateOne) SetNillableSeq(v *int64) *VirtualliveUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *VirtualliveUpdateOne) AddSeq(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddSeq(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -980,14 +976,14 @@ func (_u *VirtualliveUpdateOne) ClearAssetbundleName() *VirtualliveUpdateOne {
 }
 
 // SetScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field.
-func (_u *VirtualliveUpdateOne) SetScreenMvMusicVocalID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetScreenMvMusicVocalID(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetScreenMvMusicVocalID()
 	_u.mutation.SetScreenMvMusicVocalID(v)
 	return _u
 }
 
 // SetNillableScreenMvMusicVocalID sets the "screen_mv_music_vocal_id" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableScreenMvMusicVocalID(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableScreenMvMusicVocalID(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetScreenMvMusicVocalID(*v)
 	}
@@ -995,7 +991,7 @@ func (_u *VirtualliveUpdateOne) SetNillableScreenMvMusicVocalID(v *int64) *Virtu
 }
 
 // AddScreenMvMusicVocalID adds value to the "screen_mv_music_vocal_id" field.
-func (_u *VirtualliveUpdateOne) AddScreenMvMusicVocalID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddScreenMvMusicVocalID(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddScreenMvMusicVocalID(v)
 	return _u
 }
@@ -1007,14 +1003,14 @@ func (_u *VirtualliveUpdateOne) ClearScreenMvMusicVocalID() *VirtualliveUpdateOn
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *VirtualliveUpdateOne) SetStartAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetStartAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableStartAt(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableStartAt(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -1022,7 +1018,7 @@ func (_u *VirtualliveUpdateOne) SetNillableStartAt(v *int64) *VirtualliveUpdateO
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *VirtualliveUpdateOne) AddStartAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddStartAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -1034,14 +1030,14 @@ func (_u *VirtualliveUpdateOne) ClearStartAt() *VirtualliveUpdateOne {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *VirtualliveUpdateOne) SetEndAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetEndAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableEndAt(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableEndAt(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -1049,7 +1045,7 @@ func (_u *VirtualliveUpdateOne) SetNillableEndAt(v *int64) *VirtualliveUpdateOne
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *VirtualliveUpdateOne) AddEndAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddEndAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -1061,14 +1057,14 @@ func (_u *VirtualliveUpdateOne) ClearEndAt() *VirtualliveUpdateOne {
 }
 
 // SetRankingAnnounceAt sets the "ranking_announce_at" field.
-func (_u *VirtualliveUpdateOne) SetRankingAnnounceAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetRankingAnnounceAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetRankingAnnounceAt()
 	_u.mutation.SetRankingAnnounceAt(v)
 	return _u
 }
 
 // SetNillableRankingAnnounceAt sets the "ranking_announce_at" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableRankingAnnounceAt(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableRankingAnnounceAt(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetRankingAnnounceAt(*v)
 	}
@@ -1076,7 +1072,7 @@ func (_u *VirtualliveUpdateOne) SetNillableRankingAnnounceAt(v *int64) *Virtuall
 }
 
 // AddRankingAnnounceAt adds value to the "ranking_announce_at" field.
-func (_u *VirtualliveUpdateOne) AddRankingAnnounceAt(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddRankingAnnounceAt(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddRankingAnnounceAt(v)
 	return _u
 }
@@ -1088,13 +1084,13 @@ func (_u *VirtualliveUpdateOne) ClearRankingAnnounceAt() *VirtualliveUpdateOne {
 }
 
 // SetVirtualLiveSetlists sets the "virtual_live_setlists" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveSetlists(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveSetlists(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveSetlists(v)
 	return _u
 }
 
 // AppendVirtualLiveSetlists appends value to the "virtual_live_setlists" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveSetlists(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveSetlists(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveSetlists(v)
 	return _u
 }
@@ -1106,13 +1102,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveSetlists() *VirtualliveUpdateOne
 }
 
 // SetVirtualLiveBeginnerSchedules sets the "virtual_live_beginner_schedules" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveBeginnerSchedules(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveBeginnerSchedules(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveBeginnerSchedules(v)
 	return _u
 }
 
 // AppendVirtualLiveBeginnerSchedules appends value to the "virtual_live_beginner_schedules" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveBeginnerSchedules(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveBeginnerSchedules(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveBeginnerSchedules(v)
 	return _u
 }
@@ -1124,13 +1120,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveBeginnerSchedules() *Virtuallive
 }
 
 // SetVirtualLiveSchedules sets the "virtual_live_schedules" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveSchedules(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveSchedules(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveSchedules(v)
 	return _u
 }
 
 // AppendVirtualLiveSchedules appends value to the "virtual_live_schedules" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveSchedules(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveSchedules(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveSchedules(v)
 	return _u
 }
@@ -1142,13 +1138,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveSchedules() *VirtualliveUpdateOn
 }
 
 // SetVirtualLiveCharacters sets the "virtual_live_characters" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveCharacters(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveCharacters(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveCharacters(v)
 	return _u
 }
 
 // AppendVirtualLiveCharacters appends value to the "virtual_live_characters" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveCharacters(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveCharacters(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveCharacters(v)
 	return _u
 }
@@ -1160,13 +1156,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveCharacters() *VirtualliveUpdateO
 }
 
 // SetVirtualLiveRewards sets the "virtual_live_rewards" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveRewards(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveRewards(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveRewards(v)
 	return _u
 }
 
 // AppendVirtualLiveRewards appends value to the "virtual_live_rewards" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveRewards(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveRewards(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveRewards(v)
 	return _u
 }
@@ -1178,13 +1174,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveRewards() *VirtualliveUpdateOne 
 }
 
 // SetVirtualLiveCheerPointRewards sets the "virtual_live_cheer_point_rewards" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveCheerPointRewards(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveCheerPointRewards(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveCheerPointRewards(v)
 	return _u
 }
 
 // AppendVirtualLiveCheerPointRewards appends value to the "virtual_live_cheer_point_rewards" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveCheerPointRewards(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveCheerPointRewards(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveCheerPointRewards(v)
 	return _u
 }
@@ -1196,8 +1192,14 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveCheerPointRewards() *Virtuallive
 }
 
 // SetVirtualLiveWaitingRoom sets the "virtual_live_waiting_room" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveWaitingRoom(v map[string]interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveWaitingRoom(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveWaitingRoom(v)
+	return _u
+}
+
+// AppendVirtualLiveWaitingRoom appends value to the "virtual_live_waiting_room" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveWaitingRoom(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveWaitingRoom(v)
 	return _u
 }
 
@@ -1208,13 +1210,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveWaitingRoom() *VirtualliveUpdate
 }
 
 // SetVirtualItems sets the "virtual_items" field.
-func (_u *VirtualliveUpdateOne) SetVirtualItems(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualItems(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualItems(v)
 	return _u
 }
 
 // AppendVirtualItems appends value to the "virtual_items" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualItems(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualItems(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualItems(v)
 	return _u
 }
@@ -1226,13 +1228,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualItems() *VirtualliveUpdateOne {
 }
 
 // SetVirtualLiveAppeals sets the "virtual_live_appeals" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveAppeals(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveAppeals(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveAppeals(v)
 	return _u
 }
 
 // AppendVirtualLiveAppeals appends value to the "virtual_live_appeals" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveAppeals(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveAppeals(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveAppeals(v)
 	return _u
 }
@@ -1244,13 +1246,13 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveAppeals() *VirtualliveUpdateOne 
 }
 
 // SetVirtualLiveBackgroundMusics sets the "virtual_live_background_musics" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveBackgroundMusics(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveBackgroundMusics(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveBackgroundMusics(v)
 	return _u
 }
 
 // AppendVirtualLiveBackgroundMusics appends value to the "virtual_live_background_musics" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveBackgroundMusics(v []interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveBackgroundMusics(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.AppendVirtualLiveBackgroundMusics(v)
 	return _u
 }
@@ -1262,8 +1264,14 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveBackgroundMusics() *VirtualliveU
 }
 
 // SetVirtualLiveInformation sets the "virtual_live_information" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveInformation(v map[string]interface{}) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveInformation(v json.RawMessage) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveInformation(v)
+	return _u
+}
+
+// AppendVirtualLiveInformation appends value to the "virtual_live_information" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveInformation(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveInformation(v)
 	return _u
 }
 
@@ -1274,14 +1282,14 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveInformation() *VirtualliveUpdate
 }
 
 // SetArchiveReleaseConditionID sets the "archive_release_condition_id" field.
-func (_u *VirtualliveUpdateOne) SetArchiveReleaseConditionID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetArchiveReleaseConditionID(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetArchiveReleaseConditionID()
 	_u.mutation.SetArchiveReleaseConditionID(v)
 	return _u
 }
 
 // SetNillableArchiveReleaseConditionID sets the "archive_release_condition_id" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableArchiveReleaseConditionID(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableArchiveReleaseConditionID(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetArchiveReleaseConditionID(*v)
 	}
@@ -1289,7 +1297,7 @@ func (_u *VirtualliveUpdateOne) SetNillableArchiveReleaseConditionID(v *int64) *
 }
 
 // AddArchiveReleaseConditionID adds value to the "archive_release_condition_id" field.
-func (_u *VirtualliveUpdateOne) AddArchiveReleaseConditionID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddArchiveReleaseConditionID(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddArchiveReleaseConditionID(v)
 	return _u
 }
@@ -1301,14 +1309,14 @@ func (_u *VirtualliveUpdateOne) ClearArchiveReleaseConditionID() *VirtualliveUpd
 }
 
 // SetSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field.
-func (_u *VirtualliveUpdateOne) SetSubGameCharacterPenlightColorGroupID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetSubGameCharacterPenlightColorGroupID(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetSubGameCharacterPenlightColorGroupID()
 	_u.mutation.SetSubGameCharacterPenlightColorGroupID(v)
 	return _u
 }
 
 // SetNillableSubGameCharacterPenlightColorGroupID sets the "sub_game_character_penlight_color_group_id" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableSubGameCharacterPenlightColorGroupID(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableSubGameCharacterPenlightColorGroupID(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetSubGameCharacterPenlightColorGroupID(*v)
 	}
@@ -1316,7 +1324,7 @@ func (_u *VirtualliveUpdateOne) SetNillableSubGameCharacterPenlightColorGroupID(
 }
 
 // AddSubGameCharacterPenlightColorGroupID adds value to the "sub_game_character_penlight_color_group_id" field.
-func (_u *VirtualliveUpdateOne) AddSubGameCharacterPenlightColorGroupID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddSubGameCharacterPenlightColorGroupID(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddSubGameCharacterPenlightColorGroupID(v)
 	return _u
 }
@@ -1328,14 +1336,14 @@ func (_u *VirtualliveUpdateOne) ClearSubGameCharacterPenlightColorGroupID() *Vir
 }
 
 // SetVirtualLiveGroupID sets the "virtual_live_group_id" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveGroupID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveGroupID(v int) *VirtualliveUpdateOne {
 	_u.mutation.ResetVirtualLiveGroupID()
 	_u.mutation.SetVirtualLiveGroupID(v)
 	return _u
 }
 
 // SetNillableVirtualLiveGroupID sets the "virtual_live_group_id" field if the given value is not nil.
-func (_u *VirtualliveUpdateOne) SetNillableVirtualLiveGroupID(v *int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetNillableVirtualLiveGroupID(v *int) *VirtualliveUpdateOne {
 	if v != nil {
 		_u.SetVirtualLiveGroupID(*v)
 	}
@@ -1343,7 +1351,7 @@ func (_u *VirtualliveUpdateOne) SetNillableVirtualLiveGroupID(v *int64) *Virtual
 }
 
 // AddVirtualLiveGroupID adds value to the "virtual_live_group_id" field.
-func (_u *VirtualliveUpdateOne) AddVirtualLiveGroupID(v int64) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) AddVirtualLiveGroupID(v int) *VirtualliveUpdateOne {
 	_u.mutation.AddVirtualLiveGroupID(v)
 	return _u
 }
@@ -1351,6 +1359,20 @@ func (_u *VirtualliveUpdateOne) AddVirtualLiveGroupID(v int64) *VirtualliveUpdat
 // ClearVirtualLiveGroupID clears the value of the "virtual_live_group_id" field.
 func (_u *VirtualliveUpdateOne) ClearVirtualLiveGroupID() *VirtualliveUpdateOne {
 	_u.mutation.ClearVirtualLiveGroupID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *VirtualliveUpdateOne) SetServerRegion(v string) *VirtualliveUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *VirtualliveUpdateOne) SetNillableServerRegion(v *string) *VirtualliveUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -1425,38 +1447,42 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(virtuallive.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(virtuallive.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
+		_spec.AddField(virtuallive.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveType, value)
+		})
 	}
 	if _u.mutation.VirtualLiveTypeCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeString)
+		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLivePlatform(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLivePlatform, value)
+		})
 	}
 	if _u.mutation.VirtualLivePlatformCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeString)
+		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(virtuallive.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(virtuallive.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(virtuallive.FieldSeq, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(virtuallive.FieldName, field.TypeString, value)
@@ -1471,40 +1497,40 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 		_spec.ClearField(virtuallive.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ScreenMvMusicVocalID(); ok {
-		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedScreenMvMusicVocalID(); ok {
-		_spec.AddField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt, value)
 	}
 	if _u.mutation.ScreenMvMusicVocalIDCleared() {
-		_spec.ClearField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldScreenMvMusicVocalID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(virtuallive.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(virtuallive.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(virtuallive.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(virtuallive.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.RankingAnnounceAt(); ok {
-		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldRankingAnnounceAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedRankingAnnounceAt(); ok {
-		_spec.AddField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldRankingAnnounceAt, field.TypeInt, value)
 	}
 	if _u.mutation.RankingAnnounceAtCleared() {
-		_spec.ClearField(virtuallive.FieldRankingAnnounceAt, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldRankingAnnounceAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.VirtualLiveSetlists(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveSetlists, field.TypeJSON, value)
@@ -1575,6 +1601,11 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 	if value, ok := _u.mutation.VirtualLiveWaitingRoom(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveWaitingRoom, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedVirtualLiveWaitingRoom(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveWaitingRoom, value)
+		})
+	}
 	if _u.mutation.VirtualLiveWaitingRoomCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveWaitingRoom, field.TypeJSON)
 	}
@@ -1614,35 +1645,43 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 	if value, ok := _u.mutation.VirtualLiveInformation(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveInformation, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedVirtualLiveInformation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveInformation, value)
+		})
+	}
 	if _u.mutation.VirtualLiveInformationCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveInformation, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ArchiveReleaseConditionID(); ok {
-		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedArchiveReleaseConditionID(); ok {
-		_spec.AddField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt, value)
 	}
 	if _u.mutation.ArchiveReleaseConditionIDCleared() {
-		_spec.ClearField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldArchiveReleaseConditionID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SubGameCharacterPenlightColorGroupID(); ok {
-		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSubGameCharacterPenlightColorGroupID(); ok {
-		_spec.AddField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.SubGameCharacterPenlightColorGroupIDCleared() {
-		_spec.ClearField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldSubGameCharacterPenlightColorGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.VirtualLiveGroupID(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedVirtualLiveGroupID(); ok {
-		_spec.AddField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
+		_spec.AddField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.VirtualLiveGroupIDCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64)
+		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Virtuallive{config: _u.config}
 	_spec.Assign = _node.assignValues

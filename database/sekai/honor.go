@@ -17,28 +17,28 @@ type Honor struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int64 `json:"group_id,omitempty"`
+	GroupID int `json:"group_id,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
-	HonorRarity string `json:"honor_rarity,omitempty"`
+	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// Levels holds the value of the "levels" field.
-	Levels []interface{} `json:"levels,omitempty"`
+	Levels json.RawMessage `json:"levels,omitempty"`
 	// HonorTypeID holds the value of the "honor_type_id" field.
-	HonorTypeID int64 `json:"honor_type_id,omitempty"`
+	HonorTypeID int `json:"honor_type_id,omitempty"`
 	// HonorMissionType holds the value of the "honor_mission_type" field.
 	HonorMissionType string `json:"honor_mission_type,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt      int64 `json:"start_at,omitempty"`
+	StartAt int `json:"start_at,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -47,11 +47,11 @@ func (*Honor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case honor.FieldLevels:
+		case honor.FieldHonorRarity, honor.FieldLevels:
 			values[i] = new([]byte)
 		case honor.FieldID, honor.FieldGameID, honor.FieldSeq, honor.FieldGroupID, honor.FieldHonorTypeID, honor.FieldStartAt:
 			values[i] = new(sql.NullInt64)
-		case honor.FieldServerRegion, honor.FieldHonorRarity, honor.FieldName, honor.FieldAssetbundleName, honor.FieldHonorMissionType:
+		case honor.FieldName, honor.FieldAssetbundleName, honor.FieldHonorMissionType, honor.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -74,35 +74,31 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case honor.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case honor.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case honor.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case honor.FieldGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				_m.GroupID = value.Int64
+				_m.GroupID = int(value.Int64)
 			}
 		case honor.FieldHonorRarity:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_rarity", values[i])
-			} else if value.Valid {
-				_m.HonorRarity = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.HonorRarity); err != nil {
+					return fmt.Errorf("unmarshal field honor_rarity: %w", err)
+				}
 			}
 		case honor.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -128,7 +124,7 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_type_id", values[i])
 			} else if value.Valid {
-				_m.HonorTypeID = value.Int64
+				_m.HonorTypeID = int(value.Int64)
 			}
 		case honor.FieldHonorMissionType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -140,7 +136,13 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
+			}
+		case honor.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -178,9 +180,6 @@ func (_m *Honor) String() string {
 	var builder strings.Builder
 	builder.WriteString("Honor(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -191,7 +190,7 @@ func (_m *Honor) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GroupID))
 	builder.WriteString(", ")
 	builder.WriteString("honor_rarity=")
-	builder.WriteString(_m.HonorRarity)
+	builder.WriteString(fmt.Sprintf("%v", _m.HonorRarity))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -210,6 +209,9 @@ func (_m *Honor) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StartAt))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

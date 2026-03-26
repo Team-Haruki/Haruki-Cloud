@@ -19,34 +19,20 @@ type OutsidecharacterCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *OutsidecharacterCreate) SetServerRegion(v string) *OutsidecharacterCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *OutsidecharacterCreate) SetGameID(v int64) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetGameID(v int) *OutsidecharacterCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *OutsidecharacterCreate) SetNillableGameID(v *int64) *OutsidecharacterCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetSeq sets the "seq" field.
-func (_c *OutsidecharacterCreate) SetSeq(v int64) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetSeq(v int) *OutsidecharacterCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *OutsidecharacterCreate) SetNillableSeq(v *int64) *OutsidecharacterCreate {
+func (_c *OutsidecharacterCreate) SetNillableSeq(v *int) *OutsidecharacterCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -64,6 +50,12 @@ func (_c *OutsidecharacterCreate) SetNillableName(v *string) *OutsidecharacterCr
 	if v != nil {
 		_c.SetName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *OutsidecharacterCreate) SetServerRegion(v string) *OutsidecharacterCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -101,6 +93,9 @@ func (_c *OutsidecharacterCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *OutsidecharacterCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Outsidecharacter.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Outsidecharacter.server_region"`)}
 	}
@@ -130,21 +125,21 @@ func (_c *OutsidecharacterCreate) createSpec() (*Outsidecharacter, *sqlgraph.Cre
 		_node = &Outsidecharacter{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(outsidecharacter.Table, sqlgraph.NewFieldSpec(outsidecharacter.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(outsidecharacter.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(outsidecharacter.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(outsidecharacter.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

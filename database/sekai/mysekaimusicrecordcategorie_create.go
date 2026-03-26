@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
@@ -19,23 +20,9 @@ type MysekaimusicrecordcategorieCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetServerRegion(v string) *MysekaimusicrecordcategorieCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetGameID(v int64) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetGameID(v int) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaimusicrecordcategorieCreate) SetNillableGameID(v *int64) *MysekaimusicrecordcategorieCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -54,13 +41,13 @@ func (_c *MysekaimusicrecordcategorieCreate) SetNillableName(v *string) *Mysekai
 }
 
 // SetSeq sets the "seq" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetSeq(v int64) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetSeq(v int) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int64) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int) *MysekaimusicrecordcategorieCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -68,7 +55,7 @@ func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int64) *Mysekaimu
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetMysekaiMusicTrackType(v map[string]interface{}) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetMysekaiMusicTrackType(v)
 	return _c
 }
@@ -84,6 +71,12 @@ func (_c *MysekaimusicrecordcategorieCreate) SetNillableUnit(v *string) *Mysekai
 	if v != nil {
 		_c.SetUnit(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaimusicrecordcategorieCreate) SetServerRegion(v string) *MysekaimusicrecordcategorieCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -121,6 +114,9 @@ func (_c *MysekaimusicrecordcategorieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaimusicrecordcategorieCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaimusicrecordcategorie.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaimusicrecordcategorie.server_region"`)}
 	}
@@ -150,12 +146,8 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 		_node = &Mysekaimusicrecordcategorie{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaimusicrecordcategorie.Table, sqlgraph.NewFieldSpec(mysekaimusicrecordcategorie.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -163,7 +155,7 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {
@@ -173,6 +165,10 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 	if value, ok := _c.mutation.Unit(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldUnit, field.TypeString, value)
 		_node.Unit = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaimusicrecordcategorie.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

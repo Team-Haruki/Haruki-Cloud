@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gacha"
@@ -28,29 +29,15 @@ func (_u *GachaUpdate) Where(ps ...predicate.Gacha) *GachaUpdate {
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GachaUpdate) SetServerRegion(v string) *GachaUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableServerRegion(v *string) *GachaUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GachaUpdate) SetGameID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGameID(v int) *GachaUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGameID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGameID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -58,28 +45,20 @@ func (_u *GachaUpdate) SetNillableGameID(v *int64) *GachaUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaUpdate) AddGameID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGameID(v int) *GachaUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GachaUpdate) ClearGameID() *GachaUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGachaType sets the "gacha_type" field.
-func (_u *GachaUpdate) SetGachaType(v string) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaType(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaType(v)
 	return _u
 }
 
-// SetNillableGachaType sets the "gacha_type" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaType(v *string) *GachaUpdate {
-	if v != nil {
-		_u.SetGachaType(*v)
-	}
+// AppendGachaType appends value to the "gacha_type" field.
+func (_u *GachaUpdate) AppendGachaType(v json.RawMessage) *GachaUpdate {
+	_u.mutation.AppendGachaType(v)
 	return _u
 }
 
@@ -110,14 +89,14 @@ func (_u *GachaUpdate) ClearName() *GachaUpdate {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *GachaUpdate) SetSeq(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetSeq(v int) *GachaUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableSeq(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableSeq(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -125,7 +104,7 @@ func (_u *GachaUpdate) SetNillableSeq(v *int64) *GachaUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GachaUpdate) AddSeq(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddSeq(v int) *GachaUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -157,14 +136,14 @@ func (_u *GachaUpdate) ClearAssetbundleName() *GachaUpdate {
 }
 
 // SetGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field.
-func (_u *GachaUpdate) SetGachaCardRarityRateGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaCardRarityRateGroupID(v int) *GachaUpdate {
 	_u.mutation.ResetGachaCardRarityRateGroupID()
 	_u.mutation.SetGachaCardRarityRateGroupID(v)
 	return _u
 }
 
 // SetNillableGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaCardRarityRateGroupID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGachaCardRarityRateGroupID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGachaCardRarityRateGroupID(*v)
 	}
@@ -172,7 +151,7 @@ func (_u *GachaUpdate) SetNillableGachaCardRarityRateGroupID(v *int64) *GachaUpd
 }
 
 // AddGachaCardRarityRateGroupID adds value to the "gacha_card_rarity_rate_group_id" field.
-func (_u *GachaUpdate) AddGachaCardRarityRateGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGachaCardRarityRateGroupID(v int) *GachaUpdate {
 	_u.mutation.AddGachaCardRarityRateGroupID(v)
 	return _u
 }
@@ -184,14 +163,14 @@ func (_u *GachaUpdate) ClearGachaCardRarityRateGroupID() *GachaUpdate {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *GachaUpdate) SetStartAt(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetStartAt(v int) *GachaUpdate {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableStartAt(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableStartAt(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -199,7 +178,7 @@ func (_u *GachaUpdate) SetNillableStartAt(v *int64) *GachaUpdate {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *GachaUpdate) AddStartAt(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddStartAt(v int) *GachaUpdate {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -211,14 +190,14 @@ func (_u *GachaUpdate) ClearStartAt() *GachaUpdate {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *GachaUpdate) SetEndAt(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetEndAt(v int) *GachaUpdate {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableEndAt(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableEndAt(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -226,7 +205,7 @@ func (_u *GachaUpdate) SetNillableEndAt(v *int64) *GachaUpdate {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *GachaUpdate) AddEndAt(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddEndAt(v int) *GachaUpdate {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -258,14 +237,14 @@ func (_u *GachaUpdate) ClearIsShowPeriod() *GachaUpdate {
 }
 
 // SetGachaCeilItemID sets the "gacha_ceil_item_id" field.
-func (_u *GachaUpdate) SetGachaCeilItemID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaCeilItemID(v int) *GachaUpdate {
 	_u.mutation.ResetGachaCeilItemID()
 	_u.mutation.SetGachaCeilItemID(v)
 	return _u
 }
 
 // SetNillableGachaCeilItemID sets the "gacha_ceil_item_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaCeilItemID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGachaCeilItemID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGachaCeilItemID(*v)
 	}
@@ -273,7 +252,7 @@ func (_u *GachaUpdate) SetNillableGachaCeilItemID(v *int64) *GachaUpdate {
 }
 
 // AddGachaCeilItemID adds value to the "gacha_ceil_item_id" field.
-func (_u *GachaUpdate) AddGachaCeilItemID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGachaCeilItemID(v int) *GachaUpdate {
 	_u.mutation.AddGachaCeilItemID(v)
 	return _u
 }
@@ -285,14 +264,14 @@ func (_u *GachaUpdate) ClearGachaCeilItemID() *GachaUpdate {
 }
 
 // SetWishSelectCount sets the "wish_select_count" field.
-func (_u *GachaUpdate) SetWishSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetWishSelectCount(v int) *GachaUpdate {
 	_u.mutation.ResetWishSelectCount()
 	_u.mutation.SetWishSelectCount(v)
 	return _u
 }
 
 // SetNillableWishSelectCount sets the "wish_select_count" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableWishSelectCount(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableWishSelectCount(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetWishSelectCount(*v)
 	}
@@ -300,7 +279,7 @@ func (_u *GachaUpdate) SetNillableWishSelectCount(v *int64) *GachaUpdate {
 }
 
 // AddWishSelectCount adds value to the "wish_select_count" field.
-func (_u *GachaUpdate) AddWishSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddWishSelectCount(v int) *GachaUpdate {
 	_u.mutation.AddWishSelectCount(v)
 	return _u
 }
@@ -312,14 +291,14 @@ func (_u *GachaUpdate) ClearWishSelectCount() *GachaUpdate {
 }
 
 // SetWishFixedSelectCount sets the "wish_fixed_select_count" field.
-func (_u *GachaUpdate) SetWishFixedSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetWishFixedSelectCount(v int) *GachaUpdate {
 	_u.mutation.ResetWishFixedSelectCount()
 	_u.mutation.SetWishFixedSelectCount(v)
 	return _u
 }
 
 // SetNillableWishFixedSelectCount sets the "wish_fixed_select_count" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableWishFixedSelectCount(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableWishFixedSelectCount(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetWishFixedSelectCount(*v)
 	}
@@ -327,7 +306,7 @@ func (_u *GachaUpdate) SetNillableWishFixedSelectCount(v *int64) *GachaUpdate {
 }
 
 // AddWishFixedSelectCount adds value to the "wish_fixed_select_count" field.
-func (_u *GachaUpdate) AddWishFixedSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddWishFixedSelectCount(v int) *GachaUpdate {
 	_u.mutation.AddWishFixedSelectCount(v)
 	return _u
 }
@@ -339,14 +318,14 @@ func (_u *GachaUpdate) ClearWishFixedSelectCount() *GachaUpdate {
 }
 
 // SetWishLimitedSelectCount sets the "wish_limited_select_count" field.
-func (_u *GachaUpdate) SetWishLimitedSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetWishLimitedSelectCount(v int) *GachaUpdate {
 	_u.mutation.ResetWishLimitedSelectCount()
 	_u.mutation.SetWishLimitedSelectCount(v)
 	return _u
 }
 
 // SetNillableWishLimitedSelectCount sets the "wish_limited_select_count" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableWishLimitedSelectCount(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableWishLimitedSelectCount(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetWishLimitedSelectCount(*v)
 	}
@@ -354,7 +333,7 @@ func (_u *GachaUpdate) SetNillableWishLimitedSelectCount(v *int64) *GachaUpdate 
 }
 
 // AddWishLimitedSelectCount adds value to the "wish_limited_select_count" field.
-func (_u *GachaUpdate) AddWishLimitedSelectCount(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddWishLimitedSelectCount(v int) *GachaUpdate {
 	_u.mutation.AddWishLimitedSelectCount(v)
 	return _u
 }
@@ -366,13 +345,13 @@ func (_u *GachaUpdate) ClearWishLimitedSelectCount() *GachaUpdate {
 }
 
 // SetGachaCardRarityRates sets the "gacha_card_rarity_rates" field.
-func (_u *GachaUpdate) SetGachaCardRarityRates(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaCardRarityRates(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaCardRarityRates(v)
 	return _u
 }
 
 // AppendGachaCardRarityRates appends value to the "gacha_card_rarity_rates" field.
-func (_u *GachaUpdate) AppendGachaCardRarityRates(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) AppendGachaCardRarityRates(v json.RawMessage) *GachaUpdate {
 	_u.mutation.AppendGachaCardRarityRates(v)
 	return _u
 }
@@ -384,13 +363,13 @@ func (_u *GachaUpdate) ClearGachaCardRarityRates() *GachaUpdate {
 }
 
 // SetGachaDetails sets the "gacha_details" field.
-func (_u *GachaUpdate) SetGachaDetails(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaDetails(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaDetails(v)
 	return _u
 }
 
 // AppendGachaDetails appends value to the "gacha_details" field.
-func (_u *GachaUpdate) AppendGachaDetails(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) AppendGachaDetails(v json.RawMessage) *GachaUpdate {
 	_u.mutation.AppendGachaDetails(v)
 	return _u
 }
@@ -402,13 +381,13 @@ func (_u *GachaUpdate) ClearGachaDetails() *GachaUpdate {
 }
 
 // SetGachaBehaviors sets the "gacha_behaviors" field.
-func (_u *GachaUpdate) SetGachaBehaviors(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaBehaviors(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaBehaviors(v)
 	return _u
 }
 
 // AppendGachaBehaviors appends value to the "gacha_behaviors" field.
-func (_u *GachaUpdate) AppendGachaBehaviors(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) AppendGachaBehaviors(v json.RawMessage) *GachaUpdate {
 	_u.mutation.AppendGachaBehaviors(v)
 	return _u
 }
@@ -420,13 +399,13 @@ func (_u *GachaUpdate) ClearGachaBehaviors() *GachaUpdate {
 }
 
 // SetGachaPickups sets the "gacha_pickups" field.
-func (_u *GachaUpdate) SetGachaPickups(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaPickups(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaPickups(v)
 	return _u
 }
 
 // AppendGachaPickups appends value to the "gacha_pickups" field.
-func (_u *GachaUpdate) AppendGachaPickups(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) AppendGachaPickups(v json.RawMessage) *GachaUpdate {
 	_u.mutation.AppendGachaPickups(v)
 	return _u
 }
@@ -438,13 +417,13 @@ func (_u *GachaUpdate) ClearGachaPickups() *GachaUpdate {
 }
 
 // SetGachaPickupCostumes sets the "gacha_pickup_costumes" field.
-func (_u *GachaUpdate) SetGachaPickupCostumes(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaPickupCostumes(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaPickupCostumes(v)
 	return _u
 }
 
 // AppendGachaPickupCostumes appends value to the "gacha_pickup_costumes" field.
-func (_u *GachaUpdate) AppendGachaPickupCostumes(v []interface{}) *GachaUpdate {
+func (_u *GachaUpdate) AppendGachaPickupCostumes(v json.RawMessage) *GachaUpdate {
 	_u.mutation.AppendGachaPickupCostumes(v)
 	return _u
 }
@@ -456,8 +435,14 @@ func (_u *GachaUpdate) ClearGachaPickupCostumes() *GachaUpdate {
 }
 
 // SetGachaInformation sets the "gacha_information" field.
-func (_u *GachaUpdate) SetGachaInformation(v map[string]interface{}) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaInformation(v json.RawMessage) *GachaUpdate {
 	_u.mutation.SetGachaInformation(v)
+	return _u
+}
+
+// AppendGachaInformation appends value to the "gacha_information" field.
+func (_u *GachaUpdate) AppendGachaInformation(v json.RawMessage) *GachaUpdate {
+	_u.mutation.AppendGachaInformation(v)
 	return _u
 }
 
@@ -468,14 +453,14 @@ func (_u *GachaUpdate) ClearGachaInformation() *GachaUpdate {
 }
 
 // SetDrawableGachaHour sets the "drawable_gacha_hour" field.
-func (_u *GachaUpdate) SetDrawableGachaHour(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetDrawableGachaHour(v int) *GachaUpdate {
 	_u.mutation.ResetDrawableGachaHour()
 	_u.mutation.SetDrawableGachaHour(v)
 	return _u
 }
 
 // SetNillableDrawableGachaHour sets the "drawable_gacha_hour" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableDrawableGachaHour(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableDrawableGachaHour(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetDrawableGachaHour(*v)
 	}
@@ -483,7 +468,7 @@ func (_u *GachaUpdate) SetNillableDrawableGachaHour(v *int64) *GachaUpdate {
 }
 
 // AddDrawableGachaHour adds value to the "drawable_gacha_hour" field.
-func (_u *GachaUpdate) AddDrawableGachaHour(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddDrawableGachaHour(v int) *GachaUpdate {
 	_u.mutation.AddDrawableGachaHour(v)
 	return _u
 }
@@ -495,14 +480,14 @@ func (_u *GachaUpdate) ClearDrawableGachaHour() *GachaUpdate {
 }
 
 // SetGachaBonusID sets the "gacha_bonus_id" field.
-func (_u *GachaUpdate) SetGachaBonusID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaBonusID(v int) *GachaUpdate {
 	_u.mutation.ResetGachaBonusID()
 	_u.mutation.SetGachaBonusID(v)
 	return _u
 }
 
 // SetNillableGachaBonusID sets the "gacha_bonus_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaBonusID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGachaBonusID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGachaBonusID(*v)
 	}
@@ -510,7 +495,7 @@ func (_u *GachaUpdate) SetNillableGachaBonusID(v *int64) *GachaUpdate {
 }
 
 // AddGachaBonusID adds value to the "gacha_bonus_id" field.
-func (_u *GachaUpdate) AddGachaBonusID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGachaBonusID(v int) *GachaUpdate {
 	_u.mutation.AddGachaBonusID(v)
 	return _u
 }
@@ -522,14 +507,14 @@ func (_u *GachaUpdate) ClearGachaBonusID() *GachaUpdate {
 }
 
 // SetSpinLimit sets the "spin_limit" field.
-func (_u *GachaUpdate) SetSpinLimit(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetSpinLimit(v int) *GachaUpdate {
 	_u.mutation.ResetSpinLimit()
 	_u.mutation.SetSpinLimit(v)
 	return _u
 }
 
 // SetNillableSpinLimit sets the "spin_limit" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableSpinLimit(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableSpinLimit(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetSpinLimit(*v)
 	}
@@ -537,7 +522,7 @@ func (_u *GachaUpdate) SetNillableSpinLimit(v *int64) *GachaUpdate {
 }
 
 // AddSpinLimit adds value to the "spin_limit" field.
-func (_u *GachaUpdate) AddSpinLimit(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddSpinLimit(v int) *GachaUpdate {
 	_u.mutation.AddSpinLimit(v)
 	return _u
 }
@@ -549,14 +534,14 @@ func (_u *GachaUpdate) ClearSpinLimit() *GachaUpdate {
 }
 
 // SetGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field.
-func (_u *GachaUpdate) SetGachaBonusItemReceivableRewardGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaBonusItemReceivableRewardGroupID(v int) *GachaUpdate {
 	_u.mutation.ResetGachaBonusItemReceivableRewardGroupID()
 	_u.mutation.SetGachaBonusItemReceivableRewardGroupID(v)
 	return _u
 }
 
 // SetNillableGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGachaBonusItemReceivableRewardGroupID(*v)
 	}
@@ -564,7 +549,7 @@ func (_u *GachaUpdate) SetNillableGachaBonusItemReceivableRewardGroupID(v *int64
 }
 
 // AddGachaBonusItemReceivableRewardGroupID adds value to the "gacha_bonus_item_receivable_reward_group_id" field.
-func (_u *GachaUpdate) AddGachaBonusItemReceivableRewardGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGachaBonusItemReceivableRewardGroupID(v int) *GachaUpdate {
 	_u.mutation.AddGachaBonusItemReceivableRewardGroupID(v)
 	return _u
 }
@@ -576,14 +561,14 @@ func (_u *GachaUpdate) ClearGachaBonusItemReceivableRewardGroupID() *GachaUpdate
 }
 
 // SetGachaFreebieGroupID sets the "gacha_freebie_group_id" field.
-func (_u *GachaUpdate) SetGachaFreebieGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaFreebieGroupID(v int) *GachaUpdate {
 	_u.mutation.ResetGachaFreebieGroupID()
 	_u.mutation.SetGachaFreebieGroupID(v)
 	return _u
 }
 
 // SetNillableGachaFreebieGroupID sets the "gacha_freebie_group_id" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableGachaFreebieGroupID(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableGachaFreebieGroupID(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetGachaFreebieGroupID(*v)
 	}
@@ -591,7 +576,7 @@ func (_u *GachaUpdate) SetNillableGachaFreebieGroupID(v *int64) *GachaUpdate {
 }
 
 // AddGachaFreebieGroupID adds value to the "gacha_freebie_group_id" field.
-func (_u *GachaUpdate) AddGachaFreebieGroupID(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddGachaFreebieGroupID(v int) *GachaUpdate {
 	_u.mutation.AddGachaFreebieGroupID(v)
 	return _u
 }
@@ -603,14 +588,14 @@ func (_u *GachaUpdate) ClearGachaFreebieGroupID() *GachaUpdate {
 }
 
 // SetDailySpinLimit sets the "daily_spin_limit" field.
-func (_u *GachaUpdate) SetDailySpinLimit(v int64) *GachaUpdate {
+func (_u *GachaUpdate) SetDailySpinLimit(v int) *GachaUpdate {
 	_u.mutation.ResetDailySpinLimit()
 	_u.mutation.SetDailySpinLimit(v)
 	return _u
 }
 
 // SetNillableDailySpinLimit sets the "daily_spin_limit" field if the given value is not nil.
-func (_u *GachaUpdate) SetNillableDailySpinLimit(v *int64) *GachaUpdate {
+func (_u *GachaUpdate) SetNillableDailySpinLimit(v *int) *GachaUpdate {
 	if v != nil {
 		_u.SetDailySpinLimit(*v)
 	}
@@ -618,7 +603,7 @@ func (_u *GachaUpdate) SetNillableDailySpinLimit(v *int64) *GachaUpdate {
 }
 
 // AddDailySpinLimit adds value to the "daily_spin_limit" field.
-func (_u *GachaUpdate) AddDailySpinLimit(v int64) *GachaUpdate {
+func (_u *GachaUpdate) AddDailySpinLimit(v int) *GachaUpdate {
 	_u.mutation.AddDailySpinLimit(v)
 	return _u
 }
@@ -626,6 +611,20 @@ func (_u *GachaUpdate) AddDailySpinLimit(v int64) *GachaUpdate {
 // ClearDailySpinLimit clears the value of the "daily_spin_limit" field.
 func (_u *GachaUpdate) ClearDailySpinLimit() *GachaUpdate {
 	_u.mutation.ClearDailySpinLimit()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GachaUpdate) SetServerRegion(v string) *GachaUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GachaUpdate) SetNillableServerRegion(v *string) *GachaUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -670,23 +669,22 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gacha.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gacha.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gacha.FieldGameID, field.TypeInt64)
+		_spec.AddField(gacha.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GachaType(); ok {
-		_spec.SetField(gacha.FieldGachaType, field.TypeString, value)
+		_spec.SetField(gacha.FieldGachaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGachaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gacha.FieldGachaType, value)
+		})
 	}
 	if _u.mutation.GachaTypeCleared() {
-		_spec.ClearField(gacha.FieldGachaType, field.TypeString)
+		_spec.ClearField(gacha.FieldGachaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gacha.FieldName, field.TypeString, value)
@@ -695,13 +693,13 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(gacha.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gacha.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gacha.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gacha.FieldSeq, field.TypeInt64)
+		_spec.ClearField(gacha.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(gacha.FieldAssetbundleName, field.TypeString, value)
@@ -710,31 +708,31 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(gacha.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaCardRarityRateGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaCardRarityRateGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaCardRarityRateGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(gacha.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(gacha.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(gacha.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(gacha.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(gacha.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(gacha.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(gacha.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(gacha.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsShowPeriod(); ok {
 		_spec.SetField(gacha.FieldIsShowPeriod, field.TypeBool, value)
@@ -743,40 +741,40 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(gacha.FieldIsShowPeriod, field.TypeBool)
 	}
 	if value, ok := _u.mutation.GachaCeilItemID(); ok {
-		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaCeilItemID(); ok {
-		_spec.AddField(gacha.FieldGachaCeilItemID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaCeilItemID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaCeilItemIDCleared() {
-		_spec.ClearField(gacha.FieldGachaCeilItemID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaCeilItemID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishFixedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishFixedSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishFixedSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishFixedSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishFixedSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishFixedSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishFixedSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishLimitedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishLimitedSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishLimitedSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishLimitedSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishLimitedSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishLimitedSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishLimitedSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaCardRarityRates(); ok {
 		_spec.SetField(gacha.FieldGachaCardRarityRates, field.TypeJSON, value)
@@ -836,62 +834,70 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.GachaInformation(); ok {
 		_spec.SetField(gacha.FieldGachaInformation, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedGachaInformation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gacha.FieldGachaInformation, value)
+		})
+	}
 	if _u.mutation.GachaInformationCleared() {
 		_spec.ClearField(gacha.FieldGachaInformation, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.DrawableGachaHour(); ok {
-		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedDrawableGachaHour(); ok {
-		_spec.AddField(gacha.FieldDrawableGachaHour, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldDrawableGachaHour, field.TypeInt, value)
 	}
 	if _u.mutation.DrawableGachaHourCleared() {
-		_spec.ClearField(gacha.FieldDrawableGachaHour, field.TypeInt64)
+		_spec.ClearField(gacha.FieldDrawableGachaHour, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaBonusID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaBonusID(); ok {
-		_spec.AddField(gacha.FieldGachaBonusID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaBonusID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaBonusIDCleared() {
-		_spec.ClearField(gacha.FieldGachaBonusID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaBonusID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SpinLimit(); ok {
-		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSpinLimit(); ok {
-		_spec.AddField(gacha.FieldSpinLimit, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldSpinLimit, field.TypeInt, value)
 	}
 	if _u.mutation.SpinLimitCleared() {
-		_spec.ClearField(gacha.FieldSpinLimit, field.TypeInt64)
+		_spec.ClearField(gacha.FieldSpinLimit, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaBonusItemReceivableRewardGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaBonusItemReceivableRewardGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaBonusItemReceivableRewardGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaFreebieGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaFreebieGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaFreebieGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaFreebieGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaFreebieGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaFreebieGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaFreebieGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.DailySpinLimit(); ok {
-		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedDailySpinLimit(); ok {
-		_spec.AddField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldDailySpinLimit, field.TypeInt, value)
 	}
 	if _u.mutation.DailySpinLimitCleared() {
-		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt64)
+		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -913,29 +919,15 @@ type GachaUpdateOne struct {
 	mutation *GachaMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *GachaUpdateOne) SetServerRegion(v string) *GachaUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableServerRegion(v *string) *GachaUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *GachaUpdateOne) SetGameID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGameID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGameID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGameID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -943,28 +935,20 @@ func (_u *GachaUpdateOne) SetNillableGameID(v *int64) *GachaUpdateOne {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *GachaUpdateOne) AddGameID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGameID(v int) *GachaUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *GachaUpdateOne) ClearGameID() *GachaUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetGachaType sets the "gacha_type" field.
-func (_u *GachaUpdateOne) SetGachaType(v string) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaType(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaType(v)
 	return _u
 }
 
-// SetNillableGachaType sets the "gacha_type" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaType(v *string) *GachaUpdateOne {
-	if v != nil {
-		_u.SetGachaType(*v)
-	}
+// AppendGachaType appends value to the "gacha_type" field.
+func (_u *GachaUpdateOne) AppendGachaType(v json.RawMessage) *GachaUpdateOne {
+	_u.mutation.AppendGachaType(v)
 	return _u
 }
 
@@ -995,14 +979,14 @@ func (_u *GachaUpdateOne) ClearName() *GachaUpdateOne {
 }
 
 // SetSeq sets the "seq" field.
-func (_u *GachaUpdateOne) SetSeq(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetSeq(v int) *GachaUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableSeq(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableSeq(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -1010,7 +994,7 @@ func (_u *GachaUpdateOne) SetNillableSeq(v *int64) *GachaUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *GachaUpdateOne) AddSeq(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddSeq(v int) *GachaUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -1042,14 +1026,14 @@ func (_u *GachaUpdateOne) ClearAssetbundleName() *GachaUpdateOne {
 }
 
 // SetGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field.
-func (_u *GachaUpdateOne) SetGachaCardRarityRateGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaCardRarityRateGroupID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGachaCardRarityRateGroupID()
 	_u.mutation.SetGachaCardRarityRateGroupID(v)
 	return _u
 }
 
 // SetNillableGachaCardRarityRateGroupID sets the "gacha_card_rarity_rate_group_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaCardRarityRateGroupID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGachaCardRarityRateGroupID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGachaCardRarityRateGroupID(*v)
 	}
@@ -1057,7 +1041,7 @@ func (_u *GachaUpdateOne) SetNillableGachaCardRarityRateGroupID(v *int64) *Gacha
 }
 
 // AddGachaCardRarityRateGroupID adds value to the "gacha_card_rarity_rate_group_id" field.
-func (_u *GachaUpdateOne) AddGachaCardRarityRateGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGachaCardRarityRateGroupID(v int) *GachaUpdateOne {
 	_u.mutation.AddGachaCardRarityRateGroupID(v)
 	return _u
 }
@@ -1069,14 +1053,14 @@ func (_u *GachaUpdateOne) ClearGachaCardRarityRateGroupID() *GachaUpdateOne {
 }
 
 // SetStartAt sets the "start_at" field.
-func (_u *GachaUpdateOne) SetStartAt(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetStartAt(v int) *GachaUpdateOne {
 	_u.mutation.ResetStartAt()
 	_u.mutation.SetStartAt(v)
 	return _u
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableStartAt(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableStartAt(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetStartAt(*v)
 	}
@@ -1084,7 +1068,7 @@ func (_u *GachaUpdateOne) SetNillableStartAt(v *int64) *GachaUpdateOne {
 }
 
 // AddStartAt adds value to the "start_at" field.
-func (_u *GachaUpdateOne) AddStartAt(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddStartAt(v int) *GachaUpdateOne {
 	_u.mutation.AddStartAt(v)
 	return _u
 }
@@ -1096,14 +1080,14 @@ func (_u *GachaUpdateOne) ClearStartAt() *GachaUpdateOne {
 }
 
 // SetEndAt sets the "end_at" field.
-func (_u *GachaUpdateOne) SetEndAt(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetEndAt(v int) *GachaUpdateOne {
 	_u.mutation.ResetEndAt()
 	_u.mutation.SetEndAt(v)
 	return _u
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableEndAt(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableEndAt(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetEndAt(*v)
 	}
@@ -1111,7 +1095,7 @@ func (_u *GachaUpdateOne) SetNillableEndAt(v *int64) *GachaUpdateOne {
 }
 
 // AddEndAt adds value to the "end_at" field.
-func (_u *GachaUpdateOne) AddEndAt(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddEndAt(v int) *GachaUpdateOne {
 	_u.mutation.AddEndAt(v)
 	return _u
 }
@@ -1143,14 +1127,14 @@ func (_u *GachaUpdateOne) ClearIsShowPeriod() *GachaUpdateOne {
 }
 
 // SetGachaCeilItemID sets the "gacha_ceil_item_id" field.
-func (_u *GachaUpdateOne) SetGachaCeilItemID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaCeilItemID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGachaCeilItemID()
 	_u.mutation.SetGachaCeilItemID(v)
 	return _u
 }
 
 // SetNillableGachaCeilItemID sets the "gacha_ceil_item_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaCeilItemID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGachaCeilItemID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGachaCeilItemID(*v)
 	}
@@ -1158,7 +1142,7 @@ func (_u *GachaUpdateOne) SetNillableGachaCeilItemID(v *int64) *GachaUpdateOne {
 }
 
 // AddGachaCeilItemID adds value to the "gacha_ceil_item_id" field.
-func (_u *GachaUpdateOne) AddGachaCeilItemID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGachaCeilItemID(v int) *GachaUpdateOne {
 	_u.mutation.AddGachaCeilItemID(v)
 	return _u
 }
@@ -1170,14 +1154,14 @@ func (_u *GachaUpdateOne) ClearGachaCeilItemID() *GachaUpdateOne {
 }
 
 // SetWishSelectCount sets the "wish_select_count" field.
-func (_u *GachaUpdateOne) SetWishSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetWishSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.ResetWishSelectCount()
 	_u.mutation.SetWishSelectCount(v)
 	return _u
 }
 
 // SetNillableWishSelectCount sets the "wish_select_count" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableWishSelectCount(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableWishSelectCount(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetWishSelectCount(*v)
 	}
@@ -1185,7 +1169,7 @@ func (_u *GachaUpdateOne) SetNillableWishSelectCount(v *int64) *GachaUpdateOne {
 }
 
 // AddWishSelectCount adds value to the "wish_select_count" field.
-func (_u *GachaUpdateOne) AddWishSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddWishSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.AddWishSelectCount(v)
 	return _u
 }
@@ -1197,14 +1181,14 @@ func (_u *GachaUpdateOne) ClearWishSelectCount() *GachaUpdateOne {
 }
 
 // SetWishFixedSelectCount sets the "wish_fixed_select_count" field.
-func (_u *GachaUpdateOne) SetWishFixedSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetWishFixedSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.ResetWishFixedSelectCount()
 	_u.mutation.SetWishFixedSelectCount(v)
 	return _u
 }
 
 // SetNillableWishFixedSelectCount sets the "wish_fixed_select_count" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableWishFixedSelectCount(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableWishFixedSelectCount(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetWishFixedSelectCount(*v)
 	}
@@ -1212,7 +1196,7 @@ func (_u *GachaUpdateOne) SetNillableWishFixedSelectCount(v *int64) *GachaUpdate
 }
 
 // AddWishFixedSelectCount adds value to the "wish_fixed_select_count" field.
-func (_u *GachaUpdateOne) AddWishFixedSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddWishFixedSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.AddWishFixedSelectCount(v)
 	return _u
 }
@@ -1224,14 +1208,14 @@ func (_u *GachaUpdateOne) ClearWishFixedSelectCount() *GachaUpdateOne {
 }
 
 // SetWishLimitedSelectCount sets the "wish_limited_select_count" field.
-func (_u *GachaUpdateOne) SetWishLimitedSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetWishLimitedSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.ResetWishLimitedSelectCount()
 	_u.mutation.SetWishLimitedSelectCount(v)
 	return _u
 }
 
 // SetNillableWishLimitedSelectCount sets the "wish_limited_select_count" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableWishLimitedSelectCount(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableWishLimitedSelectCount(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetWishLimitedSelectCount(*v)
 	}
@@ -1239,7 +1223,7 @@ func (_u *GachaUpdateOne) SetNillableWishLimitedSelectCount(v *int64) *GachaUpda
 }
 
 // AddWishLimitedSelectCount adds value to the "wish_limited_select_count" field.
-func (_u *GachaUpdateOne) AddWishLimitedSelectCount(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddWishLimitedSelectCount(v int) *GachaUpdateOne {
 	_u.mutation.AddWishLimitedSelectCount(v)
 	return _u
 }
@@ -1251,13 +1235,13 @@ func (_u *GachaUpdateOne) ClearWishLimitedSelectCount() *GachaUpdateOne {
 }
 
 // SetGachaCardRarityRates sets the "gacha_card_rarity_rates" field.
-func (_u *GachaUpdateOne) SetGachaCardRarityRates(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaCardRarityRates(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaCardRarityRates(v)
 	return _u
 }
 
 // AppendGachaCardRarityRates appends value to the "gacha_card_rarity_rates" field.
-func (_u *GachaUpdateOne) AppendGachaCardRarityRates(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AppendGachaCardRarityRates(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.AppendGachaCardRarityRates(v)
 	return _u
 }
@@ -1269,13 +1253,13 @@ func (_u *GachaUpdateOne) ClearGachaCardRarityRates() *GachaUpdateOne {
 }
 
 // SetGachaDetails sets the "gacha_details" field.
-func (_u *GachaUpdateOne) SetGachaDetails(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaDetails(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaDetails(v)
 	return _u
 }
 
 // AppendGachaDetails appends value to the "gacha_details" field.
-func (_u *GachaUpdateOne) AppendGachaDetails(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AppendGachaDetails(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.AppendGachaDetails(v)
 	return _u
 }
@@ -1287,13 +1271,13 @@ func (_u *GachaUpdateOne) ClearGachaDetails() *GachaUpdateOne {
 }
 
 // SetGachaBehaviors sets the "gacha_behaviors" field.
-func (_u *GachaUpdateOne) SetGachaBehaviors(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaBehaviors(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaBehaviors(v)
 	return _u
 }
 
 // AppendGachaBehaviors appends value to the "gacha_behaviors" field.
-func (_u *GachaUpdateOne) AppendGachaBehaviors(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AppendGachaBehaviors(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.AppendGachaBehaviors(v)
 	return _u
 }
@@ -1305,13 +1289,13 @@ func (_u *GachaUpdateOne) ClearGachaBehaviors() *GachaUpdateOne {
 }
 
 // SetGachaPickups sets the "gacha_pickups" field.
-func (_u *GachaUpdateOne) SetGachaPickups(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaPickups(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaPickups(v)
 	return _u
 }
 
 // AppendGachaPickups appends value to the "gacha_pickups" field.
-func (_u *GachaUpdateOne) AppendGachaPickups(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AppendGachaPickups(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.AppendGachaPickups(v)
 	return _u
 }
@@ -1323,13 +1307,13 @@ func (_u *GachaUpdateOne) ClearGachaPickups() *GachaUpdateOne {
 }
 
 // SetGachaPickupCostumes sets the "gacha_pickup_costumes" field.
-func (_u *GachaUpdateOne) SetGachaPickupCostumes(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaPickupCostumes(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaPickupCostumes(v)
 	return _u
 }
 
 // AppendGachaPickupCostumes appends value to the "gacha_pickup_costumes" field.
-func (_u *GachaUpdateOne) AppendGachaPickupCostumes(v []interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AppendGachaPickupCostumes(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.AppendGachaPickupCostumes(v)
 	return _u
 }
@@ -1341,8 +1325,14 @@ func (_u *GachaUpdateOne) ClearGachaPickupCostumes() *GachaUpdateOne {
 }
 
 // SetGachaInformation sets the "gacha_information" field.
-func (_u *GachaUpdateOne) SetGachaInformation(v map[string]interface{}) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaInformation(v json.RawMessage) *GachaUpdateOne {
 	_u.mutation.SetGachaInformation(v)
+	return _u
+}
+
+// AppendGachaInformation appends value to the "gacha_information" field.
+func (_u *GachaUpdateOne) AppendGachaInformation(v json.RawMessage) *GachaUpdateOne {
+	_u.mutation.AppendGachaInformation(v)
 	return _u
 }
 
@@ -1353,14 +1343,14 @@ func (_u *GachaUpdateOne) ClearGachaInformation() *GachaUpdateOne {
 }
 
 // SetDrawableGachaHour sets the "drawable_gacha_hour" field.
-func (_u *GachaUpdateOne) SetDrawableGachaHour(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetDrawableGachaHour(v int) *GachaUpdateOne {
 	_u.mutation.ResetDrawableGachaHour()
 	_u.mutation.SetDrawableGachaHour(v)
 	return _u
 }
 
 // SetNillableDrawableGachaHour sets the "drawable_gacha_hour" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableDrawableGachaHour(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableDrawableGachaHour(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetDrawableGachaHour(*v)
 	}
@@ -1368,7 +1358,7 @@ func (_u *GachaUpdateOne) SetNillableDrawableGachaHour(v *int64) *GachaUpdateOne
 }
 
 // AddDrawableGachaHour adds value to the "drawable_gacha_hour" field.
-func (_u *GachaUpdateOne) AddDrawableGachaHour(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddDrawableGachaHour(v int) *GachaUpdateOne {
 	_u.mutation.AddDrawableGachaHour(v)
 	return _u
 }
@@ -1380,14 +1370,14 @@ func (_u *GachaUpdateOne) ClearDrawableGachaHour() *GachaUpdateOne {
 }
 
 // SetGachaBonusID sets the "gacha_bonus_id" field.
-func (_u *GachaUpdateOne) SetGachaBonusID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaBonusID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGachaBonusID()
 	_u.mutation.SetGachaBonusID(v)
 	return _u
 }
 
 // SetNillableGachaBonusID sets the "gacha_bonus_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaBonusID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGachaBonusID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGachaBonusID(*v)
 	}
@@ -1395,7 +1385,7 @@ func (_u *GachaUpdateOne) SetNillableGachaBonusID(v *int64) *GachaUpdateOne {
 }
 
 // AddGachaBonusID adds value to the "gacha_bonus_id" field.
-func (_u *GachaUpdateOne) AddGachaBonusID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGachaBonusID(v int) *GachaUpdateOne {
 	_u.mutation.AddGachaBonusID(v)
 	return _u
 }
@@ -1407,14 +1397,14 @@ func (_u *GachaUpdateOne) ClearGachaBonusID() *GachaUpdateOne {
 }
 
 // SetSpinLimit sets the "spin_limit" field.
-func (_u *GachaUpdateOne) SetSpinLimit(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetSpinLimit(v int) *GachaUpdateOne {
 	_u.mutation.ResetSpinLimit()
 	_u.mutation.SetSpinLimit(v)
 	return _u
 }
 
 // SetNillableSpinLimit sets the "spin_limit" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableSpinLimit(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableSpinLimit(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetSpinLimit(*v)
 	}
@@ -1422,7 +1412,7 @@ func (_u *GachaUpdateOne) SetNillableSpinLimit(v *int64) *GachaUpdateOne {
 }
 
 // AddSpinLimit adds value to the "spin_limit" field.
-func (_u *GachaUpdateOne) AddSpinLimit(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddSpinLimit(v int) *GachaUpdateOne {
 	_u.mutation.AddSpinLimit(v)
 	return _u
 }
@@ -1434,14 +1424,14 @@ func (_u *GachaUpdateOne) ClearSpinLimit() *GachaUpdateOne {
 }
 
 // SetGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field.
-func (_u *GachaUpdateOne) SetGachaBonusItemReceivableRewardGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaBonusItemReceivableRewardGroupID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGachaBonusItemReceivableRewardGroupID()
 	_u.mutation.SetGachaBonusItemReceivableRewardGroupID(v)
 	return _u
 }
 
 // SetNillableGachaBonusItemReceivableRewardGroupID sets the "gacha_bonus_item_receivable_reward_group_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaBonusItemReceivableRewardGroupID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGachaBonusItemReceivableRewardGroupID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGachaBonusItemReceivableRewardGroupID(*v)
 	}
@@ -1449,7 +1439,7 @@ func (_u *GachaUpdateOne) SetNillableGachaBonusItemReceivableRewardGroupID(v *in
 }
 
 // AddGachaBonusItemReceivableRewardGroupID adds value to the "gacha_bonus_item_receivable_reward_group_id" field.
-func (_u *GachaUpdateOne) AddGachaBonusItemReceivableRewardGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGachaBonusItemReceivableRewardGroupID(v int) *GachaUpdateOne {
 	_u.mutation.AddGachaBonusItemReceivableRewardGroupID(v)
 	return _u
 }
@@ -1461,14 +1451,14 @@ func (_u *GachaUpdateOne) ClearGachaBonusItemReceivableRewardGroupID() *GachaUpd
 }
 
 // SetGachaFreebieGroupID sets the "gacha_freebie_group_id" field.
-func (_u *GachaUpdateOne) SetGachaFreebieGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaFreebieGroupID(v int) *GachaUpdateOne {
 	_u.mutation.ResetGachaFreebieGroupID()
 	_u.mutation.SetGachaFreebieGroupID(v)
 	return _u
 }
 
 // SetNillableGachaFreebieGroupID sets the "gacha_freebie_group_id" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableGachaFreebieGroupID(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableGachaFreebieGroupID(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetGachaFreebieGroupID(*v)
 	}
@@ -1476,7 +1466,7 @@ func (_u *GachaUpdateOne) SetNillableGachaFreebieGroupID(v *int64) *GachaUpdateO
 }
 
 // AddGachaFreebieGroupID adds value to the "gacha_freebie_group_id" field.
-func (_u *GachaUpdateOne) AddGachaFreebieGroupID(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddGachaFreebieGroupID(v int) *GachaUpdateOne {
 	_u.mutation.AddGachaFreebieGroupID(v)
 	return _u
 }
@@ -1488,14 +1478,14 @@ func (_u *GachaUpdateOne) ClearGachaFreebieGroupID() *GachaUpdateOne {
 }
 
 // SetDailySpinLimit sets the "daily_spin_limit" field.
-func (_u *GachaUpdateOne) SetDailySpinLimit(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetDailySpinLimit(v int) *GachaUpdateOne {
 	_u.mutation.ResetDailySpinLimit()
 	_u.mutation.SetDailySpinLimit(v)
 	return _u
 }
 
 // SetNillableDailySpinLimit sets the "daily_spin_limit" field if the given value is not nil.
-func (_u *GachaUpdateOne) SetNillableDailySpinLimit(v *int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetNillableDailySpinLimit(v *int) *GachaUpdateOne {
 	if v != nil {
 		_u.SetDailySpinLimit(*v)
 	}
@@ -1503,7 +1493,7 @@ func (_u *GachaUpdateOne) SetNillableDailySpinLimit(v *int64) *GachaUpdateOne {
 }
 
 // AddDailySpinLimit adds value to the "daily_spin_limit" field.
-func (_u *GachaUpdateOne) AddDailySpinLimit(v int64) *GachaUpdateOne {
+func (_u *GachaUpdateOne) AddDailySpinLimit(v int) *GachaUpdateOne {
 	_u.mutation.AddDailySpinLimit(v)
 	return _u
 }
@@ -1511,6 +1501,20 @@ func (_u *GachaUpdateOne) AddDailySpinLimit(v int64) *GachaUpdateOne {
 // ClearDailySpinLimit clears the value of the "daily_spin_limit" field.
 func (_u *GachaUpdateOne) ClearDailySpinLimit() *GachaUpdateOne {
 	_u.mutation.ClearDailySpinLimit()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *GachaUpdateOne) SetServerRegion(v string) *GachaUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *GachaUpdateOne) SetNillableServerRegion(v *string) *GachaUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -1585,23 +1589,22 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(gacha.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(gacha.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(gacha.FieldGameID, field.TypeInt64)
+		_spec.AddField(gacha.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.GachaType(); ok {
-		_spec.SetField(gacha.FieldGachaType, field.TypeString, value)
+		_spec.SetField(gacha.FieldGachaType, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGachaType(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gacha.FieldGachaType, value)
+		})
 	}
 	if _u.mutation.GachaTypeCleared() {
-		_spec.ClearField(gacha.FieldGachaType, field.TypeString)
+		_spec.ClearField(gacha.FieldGachaType, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gacha.FieldName, field.TypeString, value)
@@ -1610,13 +1613,13 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 		_spec.ClearField(gacha.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(gacha.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(gacha.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(gacha.FieldSeq, field.TypeInt64)
+		_spec.ClearField(gacha.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(gacha.FieldAssetbundleName, field.TypeString, value)
@@ -1625,31 +1628,31 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 		_spec.ClearField(gacha.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaCardRarityRateGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaCardRarityRateGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaCardRarityRateGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaCardRarityRateGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.StartAt(); ok {
-		_spec.SetField(gacha.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldStartAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedStartAt(); ok {
-		_spec.AddField(gacha.FieldStartAt, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldStartAt, field.TypeInt, value)
 	}
 	if _u.mutation.StartAtCleared() {
-		_spec.ClearField(gacha.FieldStartAt, field.TypeInt64)
+		_spec.ClearField(gacha.FieldStartAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.EndAt(); ok {
-		_spec.SetField(gacha.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldEndAt, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedEndAt(); ok {
-		_spec.AddField(gacha.FieldEndAt, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldEndAt, field.TypeInt, value)
 	}
 	if _u.mutation.EndAtCleared() {
-		_spec.ClearField(gacha.FieldEndAt, field.TypeInt64)
+		_spec.ClearField(gacha.FieldEndAt, field.TypeInt)
 	}
 	if value, ok := _u.mutation.IsShowPeriod(); ok {
 		_spec.SetField(gacha.FieldIsShowPeriod, field.TypeBool, value)
@@ -1658,40 +1661,40 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 		_spec.ClearField(gacha.FieldIsShowPeriod, field.TypeBool)
 	}
 	if value, ok := _u.mutation.GachaCeilItemID(); ok {
-		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaCeilItemID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaCeilItemID(); ok {
-		_spec.AddField(gacha.FieldGachaCeilItemID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaCeilItemID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaCeilItemIDCleared() {
-		_spec.ClearField(gacha.FieldGachaCeilItemID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaCeilItemID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishFixedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishFixedSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishFixedSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishFixedSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishFixedSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishFixedSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishFixedSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishFixedSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.WishLimitedSelectCount(); ok {
-		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldWishLimitedSelectCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedWishLimitedSelectCount(); ok {
-		_spec.AddField(gacha.FieldWishLimitedSelectCount, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldWishLimitedSelectCount, field.TypeInt, value)
 	}
 	if _u.mutation.WishLimitedSelectCountCleared() {
-		_spec.ClearField(gacha.FieldWishLimitedSelectCount, field.TypeInt64)
+		_spec.ClearField(gacha.FieldWishLimitedSelectCount, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaCardRarityRates(); ok {
 		_spec.SetField(gacha.FieldGachaCardRarityRates, field.TypeJSON, value)
@@ -1751,62 +1754,70 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 	if value, ok := _u.mutation.GachaInformation(); ok {
 		_spec.SetField(gacha.FieldGachaInformation, field.TypeJSON, value)
 	}
+	if value, ok := _u.mutation.AppendedGachaInformation(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, gacha.FieldGachaInformation, value)
+		})
+	}
 	if _u.mutation.GachaInformationCleared() {
 		_spec.ClearField(gacha.FieldGachaInformation, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.DrawableGachaHour(); ok {
-		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldDrawableGachaHour, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedDrawableGachaHour(); ok {
-		_spec.AddField(gacha.FieldDrawableGachaHour, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldDrawableGachaHour, field.TypeInt, value)
 	}
 	if _u.mutation.DrawableGachaHourCleared() {
-		_spec.ClearField(gacha.FieldDrawableGachaHour, field.TypeInt64)
+		_spec.ClearField(gacha.FieldDrawableGachaHour, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaBonusID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaBonusID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaBonusID(); ok {
-		_spec.AddField(gacha.FieldGachaBonusID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaBonusID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaBonusIDCleared() {
-		_spec.ClearField(gacha.FieldGachaBonusID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaBonusID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.SpinLimit(); ok {
-		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldSpinLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSpinLimit(); ok {
-		_spec.AddField(gacha.FieldSpinLimit, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldSpinLimit, field.TypeInt, value)
 	}
 	if _u.mutation.SpinLimitCleared() {
-		_spec.ClearField(gacha.FieldSpinLimit, field.TypeInt64)
+		_spec.ClearField(gacha.FieldSpinLimit, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaBonusItemReceivableRewardGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaBonusItemReceivableRewardGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaBonusItemReceivableRewardGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaBonusItemReceivableRewardGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.GachaFreebieGroupID(); ok {
-		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldGachaFreebieGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGachaFreebieGroupID(); ok {
-		_spec.AddField(gacha.FieldGachaFreebieGroupID, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldGachaFreebieGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.GachaFreebieGroupIDCleared() {
-		_spec.ClearField(gacha.FieldGachaFreebieGroupID, field.TypeInt64)
+		_spec.ClearField(gacha.FieldGachaFreebieGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.DailySpinLimit(); ok {
-		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
+		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedDailySpinLimit(); ok {
-		_spec.AddField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
+		_spec.AddField(gacha.FieldDailySpinLimit, field.TypeInt, value)
 	}
 	if _u.mutation.DailySpinLimitCleared() {
-		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt64)
+		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Gacha{config: _u.config}
 	_spec.Assign = _node.assignValues

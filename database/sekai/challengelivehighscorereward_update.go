@@ -27,29 +27,15 @@ func (_u *ChallengelivehighscorerewardUpdate) Where(ps ...predicate.Challengeliv
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *ChallengelivehighscorerewardUpdate) SetServerRegion(v string) *ChallengelivehighscorerewardUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdate) SetNillableServerRegion(v *string) *ChallengelivehighscorerewardUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) SetGameID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetGameID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdate) SetNillableGameID(v *int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetNillableGameID(v *int) *ChallengelivehighscorerewardUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *ChallengelivehighscorerewardUpdate) SetNillableGameID(v *int64) *Chall
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) AddGameID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) AddGameID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) ClearGameID() *ChallengelivehighscorerewardUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterID sets the "character_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) SetCharacterID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetCharacterID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdate) SetNillableCharacterID(v *int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetNillableCharacterID(v *int) *ChallengelivehighscorerewardUpdate {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *ChallengelivehighscorerewardUpdate) SetNillableCharacterID(v *int64) *
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) AddCharacterID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) AddCharacterID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *ChallengelivehighscorerewardUpdate) ClearCharacterID() *Challengeliveh
 }
 
 // SetHighScore sets the "high_score" field.
-func (_u *ChallengelivehighscorerewardUpdate) SetHighScore(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetHighScore(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ResetHighScore()
 	_u.mutation.SetHighScore(v)
 	return _u
 }
 
 // SetNillableHighScore sets the "high_score" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdate) SetNillableHighScore(v *int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetNillableHighScore(v *int) *ChallengelivehighscorerewardUpdate {
 	if v != nil {
 		_u.SetHighScore(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *ChallengelivehighscorerewardUpdate) SetNillableHighScore(v *int64) *Ch
 }
 
 // AddHighScore adds value to the "high_score" field.
-func (_u *ChallengelivehighscorerewardUpdate) AddHighScore(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) AddHighScore(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.AddHighScore(v)
 	return _u
 }
@@ -123,14 +103,14 @@ func (_u *ChallengelivehighscorerewardUpdate) ClearHighScore() *Challengelivehig
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) SetResourceBoxID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetResourceBoxID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ResetResourceBoxID()
 	_u.mutation.SetResourceBoxID(v)
 	return _u
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdate) SetNillableResourceBoxID(v *int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) SetNillableResourceBoxID(v *int) *ChallengelivehighscorerewardUpdate {
 	if v != nil {
 		_u.SetResourceBoxID(*v)
 	}
@@ -138,7 +118,7 @@ func (_u *ChallengelivehighscorerewardUpdate) SetNillableResourceBoxID(v *int64)
 }
 
 // AddResourceBoxID adds value to the "resource_box_id" field.
-func (_u *ChallengelivehighscorerewardUpdate) AddResourceBoxID(v int64) *ChallengelivehighscorerewardUpdate {
+func (_u *ChallengelivehighscorerewardUpdate) AddResourceBoxID(v int) *ChallengelivehighscorerewardUpdate {
 	_u.mutation.AddResourceBoxID(v)
 	return _u
 }
@@ -146,6 +126,20 @@ func (_u *ChallengelivehighscorerewardUpdate) AddResourceBoxID(v int64) *Challen
 // ClearResourceBoxID clears the value of the "resource_box_id" field.
 func (_u *ChallengelivehighscorerewardUpdate) ClearResourceBoxID() *ChallengelivehighscorerewardUpdate {
 	_u.mutation.ClearResourceBoxID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *ChallengelivehighscorerewardUpdate) SetServerRegion(v string) *ChallengelivehighscorerewardUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *ChallengelivehighscorerewardUpdate) SetNillableServerRegion(v *string) *ChallengelivehighscorerewardUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -190,44 +184,41 @@ func (_u *ChallengelivehighscorerewardUpdate) sqlSave(ctx context.Context) (_nod
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldGameID, field.TypeInt64)
+		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.HighScore(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldHighScore, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldHighScore, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedHighScore(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldHighScore, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldHighScore, field.TypeInt, value)
 	}
 	if _u.mutation.HighScoreCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldHighScore, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldHighScore, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ResourceBoxID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResourceBoxID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt, value)
 	}
 	if _u.mutation.ResourceBoxIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(challengelivehighscorereward.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -249,29 +240,15 @@ type ChallengelivehighscorerewardUpdateOne struct {
 	mutation *ChallengelivehighscorerewardMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetServerRegion(v string) *ChallengelivehighscorerewardUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableServerRegion(v *string) *ChallengelivehighscorerewardUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetGameID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetGameID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableGameID(v *int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableGameID(v *int) *ChallengelivehighscorerewardUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -279,26 +256,20 @@ func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableGameID(v *int64) *Ch
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) AddGameID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) AddGameID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) ClearGameID() *ChallengelivehighscorerewardUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetCharacterID sets the "character_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetCharacterID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetCharacterID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.ResetCharacterID()
 	_u.mutation.SetCharacterID(v)
 	return _u
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableCharacterID(v *int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableCharacterID(v *int) *ChallengelivehighscorerewardUpdateOne {
 	if v != nil {
 		_u.SetCharacterID(*v)
 	}
@@ -306,7 +277,7 @@ func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableCharacterID(v *int64
 }
 
 // AddCharacterID adds value to the "character_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) AddCharacterID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) AddCharacterID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.AddCharacterID(v)
 	return _u
 }
@@ -318,14 +289,14 @@ func (_u *ChallengelivehighscorerewardUpdateOne) ClearCharacterID() *Challengeli
 }
 
 // SetHighScore sets the "high_score" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetHighScore(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetHighScore(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.ResetHighScore()
 	_u.mutation.SetHighScore(v)
 	return _u
 }
 
 // SetNillableHighScore sets the "high_score" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableHighScore(v *int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableHighScore(v *int) *ChallengelivehighscorerewardUpdateOne {
 	if v != nil {
 		_u.SetHighScore(*v)
 	}
@@ -333,7 +304,7 @@ func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableHighScore(v *int64) 
 }
 
 // AddHighScore adds value to the "high_score" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) AddHighScore(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) AddHighScore(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.AddHighScore(v)
 	return _u
 }
@@ -345,14 +316,14 @@ func (_u *ChallengelivehighscorerewardUpdateOne) ClearHighScore() *Challengelive
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetResourceBoxID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetResourceBoxID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.ResetResourceBoxID()
 	_u.mutation.SetResourceBoxID(v)
 	return _u
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableResourceBoxID(v *int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableResourceBoxID(v *int) *ChallengelivehighscorerewardUpdateOne {
 	if v != nil {
 		_u.SetResourceBoxID(*v)
 	}
@@ -360,7 +331,7 @@ func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableResourceBoxID(v *int
 }
 
 // AddResourceBoxID adds value to the "resource_box_id" field.
-func (_u *ChallengelivehighscorerewardUpdateOne) AddResourceBoxID(v int64) *ChallengelivehighscorerewardUpdateOne {
+func (_u *ChallengelivehighscorerewardUpdateOne) AddResourceBoxID(v int) *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.AddResourceBoxID(v)
 	return _u
 }
@@ -368,6 +339,20 @@ func (_u *ChallengelivehighscorerewardUpdateOne) AddResourceBoxID(v int64) *Chal
 // ClearResourceBoxID clears the value of the "resource_box_id" field.
 func (_u *ChallengelivehighscorerewardUpdateOne) ClearResourceBoxID() *ChallengelivehighscorerewardUpdateOne {
 	_u.mutation.ClearResourceBoxID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *ChallengelivehighscorerewardUpdateOne) SetServerRegion(v string) *ChallengelivehighscorerewardUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *ChallengelivehighscorerewardUpdateOne) SetNillableServerRegion(v *string) *ChallengelivehighscorerewardUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -442,44 +427,41 @@ func (_u *ChallengelivehighscorerewardUpdateOne) sqlSave(ctx context.Context) (_
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldGameID, field.TypeInt64)
+		_spec.AddField(challengelivehighscorereward.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.CharacterID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedCharacterID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.CharacterIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldCharacterID, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldCharacterID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.HighScore(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldHighScore, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldHighScore, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedHighScore(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldHighScore, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldHighScore, field.TypeInt, value)
 	}
 	if _u.mutation.HighScoreCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldHighScore, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldHighScore, field.TypeInt)
 	}
 	if value, ok := _u.mutation.ResourceBoxID(); ok {
-		_spec.SetField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64, value)
+		_spec.SetField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResourceBoxID(); ok {
-		_spec.AddField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64, value)
+		_spec.AddField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt, value)
 	}
 	if _u.mutation.ResourceBoxIDCleared() {
-		_spec.ClearField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt64)
+		_spec.ClearField(challengelivehighscorereward.FieldResourceBoxID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(challengelivehighscorereward.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Challengelivehighscorereward{config: _u.config}
 	_spec.Assign = _node.assignValues

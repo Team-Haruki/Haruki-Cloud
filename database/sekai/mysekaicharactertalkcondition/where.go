@@ -53,19 +53,119 @@ func IDLTE(id int) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldGameID, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValue applies equality check predicate on the "mysekai_character_talk_condition_type_value" field. It's identical to MysekaiCharacterTalkConditionTypeValueEQ.
+func MysekaiCharacterTalkConditionTypeValue(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Mysekaicharactertalkcondition {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldGameID, v))
 }
 
-// MysekaiCharacterTalkConditionTypeValue applies equality check predicate on the "mysekai_character_talk_condition_type_value" field. It's identical to MysekaiCharacterTalkConditionTypeValueEQ.
-func MysekaiCharacterTalkConditionTypeValue(v int64) predicate.Mysekaicharactertalkcondition {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldGameID, v))
+}
+
+// MysekaiCharacterTalkConditionTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeIsNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionType))
+}
+
+// MysekaiCharacterTalkConditionTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeNotNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldMysekaiCharacterTalkConditionType))
+}
+
+// MysekaiCharacterTalkConditionTypeValueEQ applies the EQ predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueEQ(v int) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueNEQ applies the NEQ predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueNEQ(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueIn applies the In predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueIn(vs ...int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIn(FieldMysekaiCharacterTalkConditionTypeValue, vs...))
+}
+
+// MysekaiCharacterTalkConditionTypeValueNotIn applies the NotIn predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueNotIn(vs ...int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotIn(FieldMysekaiCharacterTalkConditionTypeValue, vs...))
+}
+
+// MysekaiCharacterTalkConditionTypeValueGT applies the GT predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueGT(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGT(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueGTE applies the GTE predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueGTE(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGTE(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueLT applies the LT predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueLT(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLT(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueLTE applies the LTE predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueLTE(v int) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldMysekaiCharacterTalkConditionTypeValue, v))
+}
+
+// MysekaiCharacterTalkConditionTypeValueIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueIsNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionTypeValue))
+}
+
+// MysekaiCharacterTalkConditionTypeValueNotNil applies the NotNil predicate on the "mysekai_character_talk_condition_type_value" field.
+func MysekaiCharacterTalkConditionTypeValueNotNil() predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldMysekaiCharacterTalkConditionTypeValue))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -131,116 +231,6 @@ func ServerRegionEqualFold(v string) predicate.Mysekaicharactertalkcondition {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldGameID))
-}
-
-// MysekaiCharacterTalkConditionTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type" field.
-func MysekaiCharacterTalkConditionTypeIsNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionType))
-}
-
-// MysekaiCharacterTalkConditionTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_condition_type" field.
-func MysekaiCharacterTalkConditionTypeNotNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldMysekaiCharacterTalkConditionType))
-}
-
-// MysekaiCharacterTalkConditionTypeValueEQ applies the EQ predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueEQ(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueNEQ applies the NEQ predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueNEQ(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueIn applies the In predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueIn(vs ...int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldIn(FieldMysekaiCharacterTalkConditionTypeValue, vs...))
-}
-
-// MysekaiCharacterTalkConditionTypeValueNotIn applies the NotIn predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueNotIn(vs ...int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNotIn(FieldMysekaiCharacterTalkConditionTypeValue, vs...))
-}
-
-// MysekaiCharacterTalkConditionTypeValueGT applies the GT predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueGT(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldGT(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueGTE applies the GTE predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueGTE(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldGTE(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueLT applies the LT predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueLT(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldLT(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueLTE applies the LTE predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueLTE(v int64) predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldMysekaiCharacterTalkConditionTypeValue, v))
-}
-
-// MysekaiCharacterTalkConditionTypeValueIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueIsNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionTypeValue))
-}
-
-// MysekaiCharacterTalkConditionTypeValueNotNil applies the NotNil predicate on the "mysekai_character_talk_condition_type_value" field.
-func MysekaiCharacterTalkConditionTypeValueNotNil() predicate.Mysekaicharactertalkcondition {
-	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldMysekaiCharacterTalkConditionTypeValue))
 }
 
 // And groups predicates with the AND operator between them.

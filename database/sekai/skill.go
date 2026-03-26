@@ -17,20 +17,20 @@ type Skill struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// ShortDescription holds the value of the "short_description" field.
 	ShortDescription string `json:"short_description,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// DescriptionSpriteName holds the value of the "description_sprite_name" field.
-	DescriptionSpriteName string `json:"description_sprite_name,omitempty"`
+	DescriptionSpriteName json.RawMessage `json:"description_sprite_name,omitempty"`
 	// SkillFilterID holds the value of the "skill_filter_id" field.
-	SkillFilterID int64 `json:"skill_filter_id,omitempty"`
+	SkillFilterID int `json:"skill_filter_id,omitempty"`
 	// SkillEffects holds the value of the "skill_effects" field.
-	SkillEffects []interface{} `json:"skill_effects,omitempty"`
+	SkillEffects json.RawMessage `json:"skill_effects,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -39,11 +39,11 @@ func (*Skill) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case skill.FieldSkillEffects:
+		case skill.FieldDescriptionSpriteName, skill.FieldSkillEffects:
 			values[i] = new([]byte)
 		case skill.FieldID, skill.FieldGameID, skill.FieldSkillFilterID:
 			values[i] = new(sql.NullInt64)
-		case skill.FieldServerRegion, skill.FieldShortDescription, skill.FieldDescription, skill.FieldDescriptionSpriteName:
+		case skill.FieldShortDescription, skill.FieldDescription, skill.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -66,17 +66,11 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case skill.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case skill.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case skill.FieldShortDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -91,16 +85,18 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 				_m.Description = value.String
 			}
 		case skill.FieldDescriptionSpriteName:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field description_sprite_name", values[i])
-			} else if value.Valid {
-				_m.DescriptionSpriteName = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DescriptionSpriteName); err != nil {
+					return fmt.Errorf("unmarshal field description_sprite_name: %w", err)
+				}
 			}
 		case skill.FieldSkillFilterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field skill_filter_id", values[i])
 			} else if value.Valid {
-				_m.SkillFilterID = value.Int64
+				_m.SkillFilterID = int(value.Int64)
 			}
 		case skill.FieldSkillEffects:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -109,6 +105,12 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.SkillEffects); err != nil {
 					return fmt.Errorf("unmarshal field skill_effects: %w", err)
 				}
+			}
+		case skill.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -146,9 +148,6 @@ func (_m *Skill) String() string {
 	var builder strings.Builder
 	builder.WriteString("Skill(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -159,13 +158,16 @@ func (_m *Skill) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("description_sprite_name=")
-	builder.WriteString(_m.DescriptionSpriteName)
+	builder.WriteString(fmt.Sprintf("%v", _m.DescriptionSpriteName))
 	builder.WriteString(", ")
 	builder.WriteString("skill_filter_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SkillFilterID))
 	builder.WriteString(", ")
 	builder.WriteString("skill_effects=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SkillEffects))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

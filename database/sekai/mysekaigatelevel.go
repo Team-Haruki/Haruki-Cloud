@@ -16,21 +16,21 @@ type Mysekaigatelevel struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MysekaiGateID holds the value of the "mysekai_gate_id" field.
-	MysekaiGateID int64 `json:"mysekai_gate_id,omitempty"`
+	MysekaiGateID int `json:"mysekai_gate_id,omitempty"`
 	// Level holds the value of the "level" field.
-	Level int64 `json:"level,omitempty"`
+	Level int `json:"level,omitempty"`
 	// MysekaiGateMaterialGroupID holds the value of the "mysekai_gate_material_group_id" field.
-	MysekaiGateMaterialGroupID int64 `json:"mysekai_gate_material_group_id,omitempty"`
+	MysekaiGateMaterialGroupID int `json:"mysekai_gate_material_group_id,omitempty"`
 	// MysekaiGateCharacterVisitCountRateID holds the value of the "mysekai_gate_character_visit_count_rate_id" field.
-	MysekaiGateCharacterVisitCountRateID int64 `json:"mysekai_gate_character_visit_count_rate_id,omitempty"`
+	MysekaiGateCharacterVisitCountRateID int `json:"mysekai_gate_character_visit_count_rate_id,omitempty"`
 	// PowerBonusRate holds the value of the "power_bonus_rate" field.
 	PowerBonusRate float64 `json:"power_bonus_rate,omitempty"`
-	selectValues   sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -65,47 +65,47 @@ func (_m *Mysekaigatelevel) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaigatelevel.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaigatelevel.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaigatelevel.FieldMysekaiGateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateID = value.Int64
+				_m.MysekaiGateID = int(value.Int64)
 			}
 		case mysekaigatelevel.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = value.Int64
+				_m.Level = int(value.Int64)
 			}
 		case mysekaigatelevel.FieldMysekaiGateMaterialGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_material_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateMaterialGroupID = value.Int64
+				_m.MysekaiGateMaterialGroupID = int(value.Int64)
 			}
 		case mysekaigatelevel.FieldMysekaiGateCharacterVisitCountRateID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_gate_character_visit_count_rate_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGateCharacterVisitCountRateID = value.Int64
+				_m.MysekaiGateCharacterVisitCountRateID = int(value.Int64)
 			}
 		case mysekaigatelevel.FieldPowerBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field power_bonus_rate", values[i])
 			} else if value.Valid {
 				_m.PowerBonusRate = value.Float64
+			}
+		case mysekaigatelevel.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -143,9 +143,6 @@ func (_m *Mysekaigatelevel) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaigatelevel(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -163,6 +160,9 @@ func (_m *Mysekaigatelevel) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("power_bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PowerBonusRate))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

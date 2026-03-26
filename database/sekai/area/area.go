@@ -11,8 +11,6 @@ const (
 	Label = "area"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldAssetbundleName holds the string denoting the assetbundle_name field in the database.
@@ -43,6 +41,8 @@ const (
 	FieldEndAt = "end_at"
 	// FieldReleaseConditionId2 holds the string denoting the release_condition_id2 field in the database.
 	FieldReleaseConditionId2 = "release_condition_id2"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the area in the database.
 	Table = "areas"
 )
@@ -50,7 +50,6 @@ const (
 // Columns holds all SQL columns for area fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldAssetbundleName,
 	FieldGroupID,
@@ -66,6 +65,7 @@ var Columns = []string{
 	FieldStartAt,
 	FieldEndAt,
 	FieldReleaseConditionId2,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -86,11 +86,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -109,26 +104,6 @@ func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
 // ByIsBaseArea orders the results by the is_base_area field.
 func ByIsBaseArea(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsBaseArea, opts...).ToFunc()
-}
-
-// ByAreaType orders the results by the area_type field.
-func ByAreaType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAreaType, opts...).ToFunc()
-}
-
-// ByViewType orders the results by the view_type field.
-func ByViewType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldViewType, opts...).ToFunc()
-}
-
-// ByDisplayTimelineType orders the results by the display_timeline_type field.
-func ByDisplayTimelineType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDisplayTimelineType, opts...).ToFunc()
-}
-
-// ByAdditionalAreaType orders the results by the additional_area_type field.
-func ByAdditionalAreaType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAdditionalAreaType, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -164,4 +139,9 @@ func ByEndAt(opts ...sql.OrderTermOption) OrderOption {
 // ByReleaseConditionId2 orders the results by the release_condition_id2 field.
 func ByReleaseConditionId2(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReleaseConditionId2, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

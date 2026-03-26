@@ -53,29 +53,219 @@ func IDLTE(id int) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldID, id))
 }
 
+// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
+func GameID(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldGameID, v))
+}
+
+// CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
+func CharacterID(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldCharacterID, v))
+}
+
+// HighScore applies equality check predicate on the "high_score" field. It's identical to HighScoreEQ.
+func HighScore(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldHighScore, v))
+}
+
+// ResourceBoxID applies equality check predicate on the "resource_box_id" field. It's identical to ResourceBoxIDEQ.
+func ResourceBoxID(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldResourceBoxID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Challengelivehighscorereward {
+// GameIDEQ applies the EQ predicate on the "game_id" field.
+func GameIDEQ(v int) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldGameID, v))
 }
 
-// CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
-func CharacterID(v int64) predicate.Challengelivehighscorereward {
+// GameIDNEQ applies the NEQ predicate on the "game_id" field.
+func GameIDNEQ(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldGameID, v))
+}
+
+// GameIDIn applies the In predicate on the "game_id" field.
+func GameIDIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldGameID, vs...))
+}
+
+// GameIDNotIn applies the NotIn predicate on the "game_id" field.
+func GameIDNotIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldGameID, vs...))
+}
+
+// GameIDGT applies the GT predicate on the "game_id" field.
+func GameIDGT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldGameID, v))
+}
+
+// GameIDGTE applies the GTE predicate on the "game_id" field.
+func GameIDGTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldGameID, v))
+}
+
+// GameIDLT applies the LT predicate on the "game_id" field.
+func GameIDLT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldGameID, v))
+}
+
+// GameIDLTE applies the LTE predicate on the "game_id" field.
+func GameIDLTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldGameID, v))
+}
+
+// CharacterIDEQ applies the EQ predicate on the "character_id" field.
+func CharacterIDEQ(v int) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldCharacterID, v))
 }
 
-// HighScore applies equality check predicate on the "high_score" field. It's identical to HighScoreEQ.
-func HighScore(v int64) predicate.Challengelivehighscorereward {
+// CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
+func CharacterIDNEQ(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldCharacterID, v))
+}
+
+// CharacterIDIn applies the In predicate on the "character_id" field.
+func CharacterIDIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldCharacterID, vs...))
+}
+
+// CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
+func CharacterIDNotIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldCharacterID, vs...))
+}
+
+// CharacterIDGT applies the GT predicate on the "character_id" field.
+func CharacterIDGT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldCharacterID, v))
+}
+
+// CharacterIDGTE applies the GTE predicate on the "character_id" field.
+func CharacterIDGTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldCharacterID, v))
+}
+
+// CharacterIDLT applies the LT predicate on the "character_id" field.
+func CharacterIDLT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldCharacterID, v))
+}
+
+// CharacterIDLTE applies the LTE predicate on the "character_id" field.
+func CharacterIDLTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldCharacterID, v))
+}
+
+// CharacterIDIsNil applies the IsNil predicate on the "character_id" field.
+func CharacterIDIsNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldCharacterID))
+}
+
+// CharacterIDNotNil applies the NotNil predicate on the "character_id" field.
+func CharacterIDNotNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldCharacterID))
+}
+
+// HighScoreEQ applies the EQ predicate on the "high_score" field.
+func HighScoreEQ(v int) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldHighScore, v))
 }
 
-// ResourceBoxID applies equality check predicate on the "resource_box_id" field. It's identical to ResourceBoxIDEQ.
-func ResourceBoxID(v int64) predicate.Challengelivehighscorereward {
+// HighScoreNEQ applies the NEQ predicate on the "high_score" field.
+func HighScoreNEQ(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldHighScore, v))
+}
+
+// HighScoreIn applies the In predicate on the "high_score" field.
+func HighScoreIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldHighScore, vs...))
+}
+
+// HighScoreNotIn applies the NotIn predicate on the "high_score" field.
+func HighScoreNotIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldHighScore, vs...))
+}
+
+// HighScoreGT applies the GT predicate on the "high_score" field.
+func HighScoreGT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldHighScore, v))
+}
+
+// HighScoreGTE applies the GTE predicate on the "high_score" field.
+func HighScoreGTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldHighScore, v))
+}
+
+// HighScoreLT applies the LT predicate on the "high_score" field.
+func HighScoreLT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldHighScore, v))
+}
+
+// HighScoreLTE applies the LTE predicate on the "high_score" field.
+func HighScoreLTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldHighScore, v))
+}
+
+// HighScoreIsNil applies the IsNil predicate on the "high_score" field.
+func HighScoreIsNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldHighScore))
+}
+
+// HighScoreNotNil applies the NotNil predicate on the "high_score" field.
+func HighScoreNotNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldHighScore))
+}
+
+// ResourceBoxIDEQ applies the EQ predicate on the "resource_box_id" field.
+func ResourceBoxIDEQ(v int) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDNEQ applies the NEQ predicate on the "resource_box_id" field.
+func ResourceBoxIDNEQ(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDIn applies the In predicate on the "resource_box_id" field.
+func ResourceBoxIDIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldResourceBoxID, vs...))
+}
+
+// ResourceBoxIDNotIn applies the NotIn predicate on the "resource_box_id" field.
+func ResourceBoxIDNotIn(vs ...int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldResourceBoxID, vs...))
+}
+
+// ResourceBoxIDGT applies the GT predicate on the "resource_box_id" field.
+func ResourceBoxIDGT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDGTE applies the GTE predicate on the "resource_box_id" field.
+func ResourceBoxIDGTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDLT applies the LT predicate on the "resource_box_id" field.
+func ResourceBoxIDLT(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDLTE applies the LTE predicate on the "resource_box_id" field.
+func ResourceBoxIDLTE(v int) predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldResourceBoxID, v))
+}
+
+// ResourceBoxIDIsNil applies the IsNil predicate on the "resource_box_id" field.
+func ResourceBoxIDIsNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldResourceBoxID))
+}
+
+// ResourceBoxIDNotNil applies the NotNil predicate on the "resource_box_id" field.
+func ResourceBoxIDNotNil() predicate.Challengelivehighscorereward {
+	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldResourceBoxID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
@@ -141,206 +331,6 @@ func ServerRegionEqualFold(v string) predicate.Challengelivehighscorereward {
 // ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
 func ServerRegionContainsFold(v string) predicate.Challengelivehighscorereward {
 	return predicate.Challengelivehighscorereward(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
-// GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldGameID, v))
-}
-
-// GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldGameID, v))
-}
-
-// GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldGameID, vs...))
-}
-
-// GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldGameID, vs...))
-}
-
-// GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldGameID, v))
-}
-
-// GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldGameID, v))
-}
-
-// GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldGameID, v))
-}
-
-// GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldGameID))
-}
-
-// CharacterIDEQ applies the EQ predicate on the "character_id" field.
-func CharacterIDEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldCharacterID, v))
-}
-
-// CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
-func CharacterIDNEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldCharacterID, v))
-}
-
-// CharacterIDIn applies the In predicate on the "character_id" field.
-func CharacterIDIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldCharacterID, vs...))
-}
-
-// CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
-func CharacterIDNotIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldCharacterID, vs...))
-}
-
-// CharacterIDGT applies the GT predicate on the "character_id" field.
-func CharacterIDGT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldCharacterID, v))
-}
-
-// CharacterIDGTE applies the GTE predicate on the "character_id" field.
-func CharacterIDGTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldCharacterID, v))
-}
-
-// CharacterIDLT applies the LT predicate on the "character_id" field.
-func CharacterIDLT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldCharacterID, v))
-}
-
-// CharacterIDLTE applies the LTE predicate on the "character_id" field.
-func CharacterIDLTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldCharacterID, v))
-}
-
-// CharacterIDIsNil applies the IsNil predicate on the "character_id" field.
-func CharacterIDIsNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldCharacterID))
-}
-
-// CharacterIDNotNil applies the NotNil predicate on the "character_id" field.
-func CharacterIDNotNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldCharacterID))
-}
-
-// HighScoreEQ applies the EQ predicate on the "high_score" field.
-func HighScoreEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldHighScore, v))
-}
-
-// HighScoreNEQ applies the NEQ predicate on the "high_score" field.
-func HighScoreNEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldHighScore, v))
-}
-
-// HighScoreIn applies the In predicate on the "high_score" field.
-func HighScoreIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldHighScore, vs...))
-}
-
-// HighScoreNotIn applies the NotIn predicate on the "high_score" field.
-func HighScoreNotIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldHighScore, vs...))
-}
-
-// HighScoreGT applies the GT predicate on the "high_score" field.
-func HighScoreGT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldHighScore, v))
-}
-
-// HighScoreGTE applies the GTE predicate on the "high_score" field.
-func HighScoreGTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldHighScore, v))
-}
-
-// HighScoreLT applies the LT predicate on the "high_score" field.
-func HighScoreLT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldHighScore, v))
-}
-
-// HighScoreLTE applies the LTE predicate on the "high_score" field.
-func HighScoreLTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldHighScore, v))
-}
-
-// HighScoreIsNil applies the IsNil predicate on the "high_score" field.
-func HighScoreIsNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldHighScore))
-}
-
-// HighScoreNotNil applies the NotNil predicate on the "high_score" field.
-func HighScoreNotNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldHighScore))
-}
-
-// ResourceBoxIDEQ applies the EQ predicate on the "resource_box_id" field.
-func ResourceBoxIDEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldEQ(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDNEQ applies the NEQ predicate on the "resource_box_id" field.
-func ResourceBoxIDNEQ(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNEQ(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDIn applies the In predicate on the "resource_box_id" field.
-func ResourceBoxIDIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIn(FieldResourceBoxID, vs...))
-}
-
-// ResourceBoxIDNotIn applies the NotIn predicate on the "resource_box_id" field.
-func ResourceBoxIDNotIn(vs ...int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotIn(FieldResourceBoxID, vs...))
-}
-
-// ResourceBoxIDGT applies the GT predicate on the "resource_box_id" field.
-func ResourceBoxIDGT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGT(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDGTE applies the GTE predicate on the "resource_box_id" field.
-func ResourceBoxIDGTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldGTE(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDLT applies the LT predicate on the "resource_box_id" field.
-func ResourceBoxIDLT(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLT(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDLTE applies the LTE predicate on the "resource_box_id" field.
-func ResourceBoxIDLTE(v int64) predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldLTE(FieldResourceBoxID, v))
-}
-
-// ResourceBoxIDIsNil applies the IsNil predicate on the "resource_box_id" field.
-func ResourceBoxIDIsNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldIsNull(FieldResourceBoxID))
-}
-
-// ResourceBoxIDNotNil applies the NotNil predicate on the "resource_box_id" field.
-func ResourceBoxIDNotNil() predicate.Challengelivehighscorereward {
-	return predicate.Challengelivehighscorereward(sql.FieldNotNull(FieldResourceBoxID))
 }
 
 // And groups predicates with the AND operator between them.

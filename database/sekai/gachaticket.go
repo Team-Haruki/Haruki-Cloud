@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
 	"strings"
@@ -16,17 +17,17 @@ type Gachaticket struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GachaDisplayType holds the value of the "gacha_display_type" field.
-	GachaDisplayType string `json:"gacha_display_type,omitempty"`
-	selectValues     sql.SelectValues
+	GachaDisplayType json.RawMessage `json:"gacha_display_type,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -34,9 +35,11 @@ func (*Gachaticket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case gachaticket.FieldGachaDisplayType:
+			values[i] = new([]byte)
 		case gachaticket.FieldID, gachaticket.FieldGameID:
 			values[i] = new(sql.NullInt64)
-		case gachaticket.FieldServerRegion, gachaticket.FieldName, gachaticket.FieldAssetbundleName, gachaticket.FieldGachaDisplayType:
+		case gachaticket.FieldName, gachaticket.FieldAssetbundleName, gachaticket.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -59,17 +62,11 @@ func (_m *Gachaticket) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case gachaticket.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case gachaticket.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case gachaticket.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -84,10 +81,18 @@ func (_m *Gachaticket) assignValues(columns []string, values []any) error {
 				_m.AssetbundleName = value.String
 			}
 		case gachaticket.FieldGachaDisplayType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_display_type", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.GachaDisplayType); err != nil {
+					return fmt.Errorf("unmarshal field gacha_display_type: %w", err)
+				}
+			}
+		case gachaticket.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
 			} else if value.Valid {
-				_m.GachaDisplayType = value.String
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +130,6 @@ func (_m *Gachaticket) String() string {
 	var builder strings.Builder
 	builder.WriteString("Gachaticket(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -138,7 +140,10 @@ func (_m *Gachaticket) String() string {
 	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("gacha_display_type=")
-	builder.WriteString(_m.GachaDisplayType)
+	builder.WriteString(fmt.Sprintf("%v", _m.GachaDisplayType))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

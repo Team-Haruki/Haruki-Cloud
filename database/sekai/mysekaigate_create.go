@@ -19,23 +19,9 @@ type MysekaigateCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaigateCreate) SetServerRegion(v string) *MysekaigateCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaigateCreate) SetGameID(v int64) *MysekaigateCreate {
+func (_c *MysekaigateCreate) SetGameID(v int) *MysekaigateCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaigateCreate) SetNillableGameID(v *int64) *MysekaigateCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -81,6 +67,12 @@ func (_c *MysekaigateCreate) SetNillableAssetbundleName(v *string) *MysekaigateC
 	return _c
 }
 
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaigateCreate) SetServerRegion(v string) *MysekaigateCreate {
+	_c.mutation.SetServerRegion(v)
+	return _c
+}
+
 // Mutation returns the MysekaigateMutation object of the builder.
 func (_c *MysekaigateCreate) Mutation() *MysekaigateMutation {
 	return _c.mutation
@@ -115,6 +107,9 @@ func (_c *MysekaigateCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaigateCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaigate.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaigate.server_region"`)}
 	}
@@ -144,12 +139,8 @@ func (_c *MysekaigateCreate) createSpec() (*Mysekaigate, *sqlgraph.CreateSpec) {
 		_node = &Mysekaigate{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaigate.Table, sqlgraph.NewFieldSpec(mysekaigate.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaigate.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
@@ -163,6 +154,10 @@ func (_c *MysekaigateCreate) createSpec() (*Mysekaigate, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaigate.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

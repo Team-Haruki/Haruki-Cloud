@@ -53,13 +53,8 @@ func IDLTE(id int) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Skill {
+func GameID(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldGameID, v))
 }
 
@@ -73,129 +68,54 @@ func Description(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldDescription, v))
 }
 
-// DescriptionSpriteName applies equality check predicate on the "description_sprite_name" field. It's identical to DescriptionSpriteNameEQ.
-func DescriptionSpriteName(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldEQ(FieldDescriptionSpriteName, v))
-}
-
 // SkillFilterID applies equality check predicate on the "skill_filter_id" field. It's identical to SkillFilterIDEQ.
-func SkillFilterID(v int64) predicate.Skill {
+func SkillFilterID(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldSkillFilterID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Skill {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Skill {
-	return predicate.Skill(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Skill {
-	return predicate.Skill(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Skill {
+func GameIDEQ(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Skill {
+func GameIDNEQ(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Skill {
+func GameIDIn(vs ...int) predicate.Skill {
 	return predicate.Skill(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Skill {
+func GameIDNotIn(vs ...int) predicate.Skill {
 	return predicate.Skill(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Skill {
+func GameIDGT(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Skill {
+func GameIDGTE(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Skill {
+func GameIDLT(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Skill {
+func GameIDLTE(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldGameID, v))
-}
-
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Skill {
-	return predicate.Skill(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Skill {
-	return predicate.Skill(sql.FieldNotNull(FieldGameID))
 }
 
 // ShortDescriptionEQ applies the EQ predicate on the "short_description" field.
@@ -348,61 +268,6 @@ func DescriptionContainsFold(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldContainsFold(FieldDescription, v))
 }
 
-// DescriptionSpriteNameEQ applies the EQ predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameEQ(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldEQ(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameNEQ applies the NEQ predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameNEQ(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldNEQ(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameIn applies the In predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameIn(vs ...string) predicate.Skill {
-	return predicate.Skill(sql.FieldIn(FieldDescriptionSpriteName, vs...))
-}
-
-// DescriptionSpriteNameNotIn applies the NotIn predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameNotIn(vs ...string) predicate.Skill {
-	return predicate.Skill(sql.FieldNotIn(FieldDescriptionSpriteName, vs...))
-}
-
-// DescriptionSpriteNameGT applies the GT predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameGT(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldGT(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameGTE applies the GTE predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameGTE(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldGTE(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameLT applies the LT predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameLT(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldLT(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameLTE applies the LTE predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameLTE(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldLTE(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameContains applies the Contains predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameContains(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldContains(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameHasPrefix applies the HasPrefix predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameHasPrefix(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldHasPrefix(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameHasSuffix applies the HasSuffix predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameHasSuffix(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldHasSuffix(FieldDescriptionSpriteName, v))
-}
-
 // DescriptionSpriteNameIsNil applies the IsNil predicate on the "description_sprite_name" field.
 func DescriptionSpriteNameIsNil() predicate.Skill {
 	return predicate.Skill(sql.FieldIsNull(FieldDescriptionSpriteName))
@@ -413,53 +278,43 @@ func DescriptionSpriteNameNotNil() predicate.Skill {
 	return predicate.Skill(sql.FieldNotNull(FieldDescriptionSpriteName))
 }
 
-// DescriptionSpriteNameEqualFold applies the EqualFold predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameEqualFold(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldEqualFold(FieldDescriptionSpriteName, v))
-}
-
-// DescriptionSpriteNameContainsFold applies the ContainsFold predicate on the "description_sprite_name" field.
-func DescriptionSpriteNameContainsFold(v string) predicate.Skill {
-	return predicate.Skill(sql.FieldContainsFold(FieldDescriptionSpriteName, v))
-}
-
 // SkillFilterIDEQ applies the EQ predicate on the "skill_filter_id" field.
-func SkillFilterIDEQ(v int64) predicate.Skill {
+func SkillFilterIDEQ(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDNEQ applies the NEQ predicate on the "skill_filter_id" field.
-func SkillFilterIDNEQ(v int64) predicate.Skill {
+func SkillFilterIDNEQ(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldNEQ(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDIn applies the In predicate on the "skill_filter_id" field.
-func SkillFilterIDIn(vs ...int64) predicate.Skill {
+func SkillFilterIDIn(vs ...int) predicate.Skill {
 	return predicate.Skill(sql.FieldIn(FieldSkillFilterID, vs...))
 }
 
 // SkillFilterIDNotIn applies the NotIn predicate on the "skill_filter_id" field.
-func SkillFilterIDNotIn(vs ...int64) predicate.Skill {
+func SkillFilterIDNotIn(vs ...int) predicate.Skill {
 	return predicate.Skill(sql.FieldNotIn(FieldSkillFilterID, vs...))
 }
 
 // SkillFilterIDGT applies the GT predicate on the "skill_filter_id" field.
-func SkillFilterIDGT(v int64) predicate.Skill {
+func SkillFilterIDGT(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldGT(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDGTE applies the GTE predicate on the "skill_filter_id" field.
-func SkillFilterIDGTE(v int64) predicate.Skill {
+func SkillFilterIDGTE(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldGTE(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDLT applies the LT predicate on the "skill_filter_id" field.
-func SkillFilterIDLT(v int64) predicate.Skill {
+func SkillFilterIDLT(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldLT(FieldSkillFilterID, v))
 }
 
 // SkillFilterIDLTE applies the LTE predicate on the "skill_filter_id" field.
-func SkillFilterIDLTE(v int64) predicate.Skill {
+func SkillFilterIDLTE(v int) predicate.Skill {
 	return predicate.Skill(sql.FieldLTE(FieldSkillFilterID, v))
 }
 
@@ -481,6 +336,71 @@ func SkillEffectsIsNil() predicate.Skill {
 // SkillEffectsNotNil applies the NotNil predicate on the "skill_effects" field.
 func SkillEffectsNotNil() predicate.Skill {
 	return predicate.Skill(sql.FieldNotNull(FieldSkillEffects))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Skill {
+	return predicate.Skill(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Skill {
+	return predicate.Skill(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

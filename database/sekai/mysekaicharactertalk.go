@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalk"
 	"strings"
@@ -16,27 +17,27 @@ type Mysekaicharactertalk struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MysekaiGameCharacterUnitGroupID holds the value of the "mysekai_game_character_unit_group_id" field.
-	MysekaiGameCharacterUnitGroupID int64 `json:"mysekai_game_character_unit_group_id,omitempty"`
+	MysekaiGameCharacterUnitGroupID int `json:"mysekai_game_character_unit_group_id,omitempty"`
 	// MysekaiCharacterTalkConditionGroupID holds the value of the "mysekai_character_talk_condition_group_id" field.
-	MysekaiCharacterTalkConditionGroupID int64 `json:"mysekai_character_talk_condition_group_id,omitempty"`
+	MysekaiCharacterTalkConditionGroupID int `json:"mysekai_character_talk_condition_group_id,omitempty"`
 	// MysekaiSiteGroupID holds the value of the "mysekai_site_group_id" field.
-	MysekaiSiteGroupID int64 `json:"mysekai_site_group_id,omitempty"`
+	MysekaiSiteGroupID int `json:"mysekai_site_group_id,omitempty"`
 	// MysekaiCharacterTalkTermID holds the value of the "mysekai_character_talk_term_id" field.
-	MysekaiCharacterTalkTermID int64 `json:"mysekai_character_talk_term_id,omitempty"`
+	MysekaiCharacterTalkTermID int `json:"mysekai_character_talk_term_id,omitempty"`
 	// CharacterArchiveMysekaiCharacterTalkGroupID holds the value of the "character_archive_mysekai_character_talk_group_id" field.
-	CharacterArchiveMysekaiCharacterTalkGroupID int64 `json:"character_archive_mysekai_character_talk_group_id,omitempty"`
+	CharacterArchiveMysekaiCharacterTalkGroupID int `json:"character_archive_mysekai_character_talk_group_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
-	AssetbundleName string `json:"assetbundle_name,omitempty"`
+	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
 	// Lua holds the value of the "lua" field.
 	Lua string `json:"lua,omitempty"`
 	// IsEnabledForMulti holds the value of the "is_enabled_for_multi" field.
 	IsEnabledForMulti bool `json:"is_enabled_for_multi,omitempty"`
-	selectValues      sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -44,11 +45,13 @@ func (*Mysekaicharactertalk) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case mysekaicharactertalk.FieldAssetbundleName:
+			values[i] = new([]byte)
 		case mysekaicharactertalk.FieldIsEnabledForMulti:
 			values[i] = new(sql.NullBool)
 		case mysekaicharactertalk.FieldID, mysekaicharactertalk.FieldGameID, mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID, mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID, mysekaicharactertalk.FieldMysekaiSiteGroupID, mysekaicharactertalk.FieldMysekaiCharacterTalkTermID, mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaicharactertalk.FieldServerRegion, mysekaicharactertalk.FieldAssetbundleName, mysekaicharactertalk.FieldLua:
+		case mysekaicharactertalk.FieldLua, mysekaicharactertalk.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -71,53 +74,49 @@ func (_m *Mysekaicharactertalk) assignValues(columns []string, values []any) err
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaicharactertalk.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaicharactertalk.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_game_character_unit_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiGameCharacterUnitGroupID = value.Int64
+				_m.MysekaiGameCharacterUnitGroupID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkConditionGroupID = value.Int64
+				_m.MysekaiCharacterTalkConditionGroupID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldMysekaiSiteGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_site_group_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiSiteGroupID = value.Int64
+				_m.MysekaiSiteGroupID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldMysekaiCharacterTalkTermID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_term_id", values[i])
 			} else if value.Valid {
-				_m.MysekaiCharacterTalkTermID = value.Int64
+				_m.MysekaiCharacterTalkTermID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_archive_mysekai_character_talk_group_id", values[i])
 			} else if value.Valid {
-				_m.CharacterArchiveMysekaiCharacterTalkGroupID = value.Int64
+				_m.CharacterArchiveMysekaiCharacterTalkGroupID = int(value.Int64)
 			}
 		case mysekaicharactertalk.FieldAssetbundleName:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
-			} else if value.Valid {
-				_m.AssetbundleName = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.AssetbundleName); err != nil {
+					return fmt.Errorf("unmarshal field assetbundle_name: %w", err)
+				}
 			}
 		case mysekaicharactertalk.FieldLua:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -130,6 +129,12 @@ func (_m *Mysekaicharactertalk) assignValues(columns []string, values []any) err
 				return fmt.Errorf("unexpected type %T for field is_enabled_for_multi", values[i])
 			} else if value.Valid {
 				_m.IsEnabledForMulti = value.Bool
+			}
+		case mysekaicharactertalk.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -167,9 +172,6 @@ func (_m *Mysekaicharactertalk) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaicharactertalk(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -189,13 +191,16 @@ func (_m *Mysekaicharactertalk) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterArchiveMysekaiCharacterTalkGroupID))
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
-	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(fmt.Sprintf("%v", _m.AssetbundleName))
 	builder.WriteString(", ")
 	builder.WriteString("lua=")
 	builder.WriteString(_m.Lua)
 	builder.WriteString(", ")
 	builder.WriteString("is_enabled_for_multi=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsEnabledForMulti))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

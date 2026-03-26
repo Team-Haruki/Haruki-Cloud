@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventexchangesummarie"
@@ -19,34 +20,20 @@ type EventexchangesummarieCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *EventexchangesummarieCreate) SetServerRegion(v string) *EventexchangesummarieCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *EventexchangesummarieCreate) SetGameID(v int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetGameID(v int) *EventexchangesummarieCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableGameID(v *int64) *EventexchangesummarieCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *EventexchangesummarieCreate) SetEventID(v int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetEventID(v int) *EventexchangesummarieCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableEventID(v *int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableEventID(v *int) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *EventexchangesummarieCreate) SetNillableAssetbundleName(v *string) *Ev
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *EventexchangesummarieCreate) SetStartAt(v int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetStartAt(v int) *EventexchangesummarieCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
@@ -82,13 +69,13 @@ func (_c *EventexchangesummarieCreate) SetNillableStartAt(v *int64) *Eventexchan
 }
 
 // SetEndAt sets the "end_at" field.
-func (_c *EventexchangesummarieCreate) SetEndAt(v int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetEndAt(v int) *EventexchangesummarieCreate {
 	_c.mutation.SetEndAt(v)
 	return _c
 }
 
 // SetNillableEndAt sets the "end_at" field if the given value is not nil.
-func (_c *EventexchangesummarieCreate) SetNillableEndAt(v *int64) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetNillableEndAt(v *int) *EventexchangesummarieCreate {
 	if v != nil {
 		_c.SetEndAt(*v)
 	}
@@ -96,8 +83,14 @@ func (_c *EventexchangesummarieCreate) SetNillableEndAt(v *int64) *Eventexchange
 }
 
 // SetEventExchanges sets the "event_exchanges" field.
-func (_c *EventexchangesummarieCreate) SetEventExchanges(v []interface{}) *EventexchangesummarieCreate {
+func (_c *EventexchangesummarieCreate) SetEventExchanges(v json.RawMessage) *EventexchangesummarieCreate {
 	_c.mutation.SetEventExchanges(v)
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *EventexchangesummarieCreate) SetServerRegion(v string) *EventexchangesummarieCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -135,6 +128,9 @@ func (_c *EventexchangesummarieCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventexchangesummarieCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Eventexchangesummarie.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Eventexchangesummarie.server_region"`)}
 	}
@@ -164,16 +160,12 @@ func (_c *EventexchangesummarieCreate) createSpec() (*Eventexchangesummarie, *sq
 		_node = &Eventexchangesummarie{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(eventexchangesummarie.Table, sqlgraph.NewFieldSpec(eventexchangesummarie.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(eventexchangesummarie.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(eventexchangesummarie.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(eventexchangesummarie.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(eventexchangesummarie.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
@@ -181,16 +173,20 @@ func (_c *EventexchangesummarieCreate) createSpec() (*Eventexchangesummarie, *sq
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(eventexchangesummarie.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(eventexchangesummarie.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
 	}
 	if value, ok := _c.mutation.EndAt(); ok {
-		_spec.SetField(eventexchangesummarie.FieldEndAt, field.TypeInt64, value)
+		_spec.SetField(eventexchangesummarie.FieldEndAt, field.TypeInt, value)
 		_node.EndAt = value
 	}
 	if value, ok := _c.mutation.EventExchanges(); ok {
 		_spec.SetField(eventexchangesummarie.FieldEventExchanges, field.TypeJSON, value)
 		_node.EventExchanges = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(eventexchangesummarie.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

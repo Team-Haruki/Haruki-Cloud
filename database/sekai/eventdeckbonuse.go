@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
 	"strings"
@@ -16,18 +17,18 @@ type Eventdeckbonuse struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// EventID holds the value of the "event_id" field.
+	EventID int `json:"event_id,omitempty"`
+	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
+	GameCharacterUnitID int `json:"game_character_unit_id,omitempty"`
+	// CardAttr holds the value of the "card_attr" field.
+	CardAttr json.RawMessage `json:"card_attr,omitempty"`
+	// BonusRate holds the value of the "bonus_rate" field.
+	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// EventID holds the value of the "event_id" field.
-	EventID int64 `json:"event_id,omitempty"`
-	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
-	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
-	// CardAttr holds the value of the "card_attr" field.
-	CardAttr string `json:"card_attr,omitempty"`
-	// BonusRate holds the value of the "bonus_rate" field.
-	BonusRate    float64 `json:"bonus_rate,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -36,11 +37,13 @@ func (*Eventdeckbonuse) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case eventdeckbonuse.FieldCardAttr:
+			values[i] = new([]byte)
 		case eventdeckbonuse.FieldBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case eventdeckbonuse.FieldID, eventdeckbonuse.FieldGameID, eventdeckbonuse.FieldEventID, eventdeckbonuse.FieldGameCharacterUnitID:
 			values[i] = new(sql.NullInt64)
-		case eventdeckbonuse.FieldServerRegion, eventdeckbonuse.FieldCardAttr:
+		case eventdeckbonuse.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,41 +66,43 @@ func (_m *Eventdeckbonuse) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case eventdeckbonuse.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case eventdeckbonuse.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case eventdeckbonuse.FieldEventID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_id", values[i])
 			} else if value.Valid {
-				_m.EventID = value.Int64
+				_m.EventID = int(value.Int64)
 			}
 		case eventdeckbonuse.FieldGameCharacterUnitID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitID = value.Int64
+				_m.GameCharacterUnitID = int(value.Int64)
 			}
 		case eventdeckbonuse.FieldCardAttr:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_attr", values[i])
-			} else if value.Valid {
-				_m.CardAttr = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardAttr); err != nil {
+					return fmt.Errorf("unmarshal field card_attr: %w", err)
+				}
 			}
 		case eventdeckbonuse.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field bonus_rate", values[i])
 			} else if value.Valid {
 				_m.BonusRate = value.Float64
+			}
+		case eventdeckbonuse.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -135,9 +140,6 @@ func (_m *Eventdeckbonuse) String() string {
 	var builder strings.Builder
 	builder.WriteString("Eventdeckbonuse(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -148,10 +150,13 @@ func (_m *Eventdeckbonuse) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("card_attr=")
-	builder.WriteString(_m.CardAttr)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardAttr))
 	builder.WriteString(", ")
 	builder.WriteString("bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BonusRate))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

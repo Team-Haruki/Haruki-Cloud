@@ -27,29 +27,15 @@ func (_u *PlayerframeUpdate) Where(ps ...predicate.Playerframe) *PlayerframeUpda
 	return _u
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *PlayerframeUpdate) SetServerRegion(v string) *PlayerframeUpdate {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *PlayerframeUpdate) SetNillableServerRegion(v *string) *PlayerframeUpdate {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *PlayerframeUpdate) SetGameID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetGameID(v int) *PlayerframeUpdate {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *PlayerframeUpdate) SetNillableGameID(v *int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetNillableGameID(v *int) *PlayerframeUpdate {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -57,26 +43,20 @@ func (_u *PlayerframeUpdate) SetNillableGameID(v *int64) *PlayerframeUpdate {
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *PlayerframeUpdate) AddGameID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) AddGameID(v int) *PlayerframeUpdate {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *PlayerframeUpdate) ClearGameID() *PlayerframeUpdate {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *PlayerframeUpdate) SetSeq(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetSeq(v int) *PlayerframeUpdate {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *PlayerframeUpdate) SetNillableSeq(v *int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetNillableSeq(v *int) *PlayerframeUpdate {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -84,7 +64,7 @@ func (_u *PlayerframeUpdate) SetNillableSeq(v *int64) *PlayerframeUpdate {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *PlayerframeUpdate) AddSeq(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) AddSeq(v int) *PlayerframeUpdate {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -96,14 +76,14 @@ func (_u *PlayerframeUpdate) ClearSeq() *PlayerframeUpdate {
 }
 
 // SetPlayerFrameGroupID sets the "player_frame_group_id" field.
-func (_u *PlayerframeUpdate) SetPlayerFrameGroupID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetPlayerFrameGroupID(v int) *PlayerframeUpdate {
 	_u.mutation.ResetPlayerFrameGroupID()
 	_u.mutation.SetPlayerFrameGroupID(v)
 	return _u
 }
 
 // SetNillablePlayerFrameGroupID sets the "player_frame_group_id" field if the given value is not nil.
-func (_u *PlayerframeUpdate) SetNillablePlayerFrameGroupID(v *int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetNillablePlayerFrameGroupID(v *int) *PlayerframeUpdate {
 	if v != nil {
 		_u.SetPlayerFrameGroupID(*v)
 	}
@@ -111,7 +91,7 @@ func (_u *PlayerframeUpdate) SetNillablePlayerFrameGroupID(v *int64) *Playerfram
 }
 
 // AddPlayerFrameGroupID adds value to the "player_frame_group_id" field.
-func (_u *PlayerframeUpdate) AddPlayerFrameGroupID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) AddPlayerFrameGroupID(v int) *PlayerframeUpdate {
 	_u.mutation.AddPlayerFrameGroupID(v)
 	return _u
 }
@@ -143,14 +123,14 @@ func (_u *PlayerframeUpdate) ClearDescription() *PlayerframeUpdate {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *PlayerframeUpdate) SetGameCharacterID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetGameCharacterID(v int) *PlayerframeUpdate {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *PlayerframeUpdate) SetNillableGameCharacterID(v *int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) SetNillableGameCharacterID(v *int) *PlayerframeUpdate {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -158,7 +138,7 @@ func (_u *PlayerframeUpdate) SetNillableGameCharacterID(v *int64) *PlayerframeUp
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *PlayerframeUpdate) AddGameCharacterID(v int64) *PlayerframeUpdate {
+func (_u *PlayerframeUpdate) AddGameCharacterID(v int) *PlayerframeUpdate {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -166,6 +146,20 @@ func (_u *PlayerframeUpdate) AddGameCharacterID(v int64) *PlayerframeUpdate {
 // ClearGameCharacterID clears the value of the "game_character_id" field.
 func (_u *PlayerframeUpdate) ClearGameCharacterID() *PlayerframeUpdate {
 	_u.mutation.ClearGameCharacterID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *PlayerframeUpdate) SetServerRegion(v string) *PlayerframeUpdate {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *PlayerframeUpdate) SetNillableServerRegion(v *string) *PlayerframeUpdate {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -210,35 +204,29 @@ func (_u *PlayerframeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(playerframe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(playerframe.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(playerframe.FieldGameID, field.TypeInt64)
+		_spec.AddField(playerframe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(playerframe.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(playerframe.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(playerframe.FieldSeq, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PlayerFrameGroupID(); ok {
-		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPlayerFrameGroupID(); ok {
-		_spec.AddField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.PlayerFrameGroupIDCleared() {
-		_spec.ClearField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldPlayerFrameGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(playerframe.FieldDescription, field.TypeString, value)
@@ -247,13 +235,16 @@ func (_u *PlayerframeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(playerframe.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -275,29 +266,15 @@ type PlayerframeUpdateOne struct {
 	mutation *PlayerframeMutation
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_u *PlayerframeUpdateOne) SetServerRegion(v string) *PlayerframeUpdateOne {
-	_u.mutation.SetServerRegion(v)
-	return _u
-}
-
-// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
-func (_u *PlayerframeUpdateOne) SetNillableServerRegion(v *string) *PlayerframeUpdateOne {
-	if v != nil {
-		_u.SetServerRegion(*v)
-	}
-	return _u
-}
-
 // SetGameID sets the "game_id" field.
-func (_u *PlayerframeUpdateOne) SetGameID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetGameID(v int) *PlayerframeUpdateOne {
 	_u.mutation.ResetGameID()
 	_u.mutation.SetGameID(v)
 	return _u
 }
 
 // SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_u *PlayerframeUpdateOne) SetNillableGameID(v *int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetNillableGameID(v *int) *PlayerframeUpdateOne {
 	if v != nil {
 		_u.SetGameID(*v)
 	}
@@ -305,26 +282,20 @@ func (_u *PlayerframeUpdateOne) SetNillableGameID(v *int64) *PlayerframeUpdateOn
 }
 
 // AddGameID adds value to the "game_id" field.
-func (_u *PlayerframeUpdateOne) AddGameID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) AddGameID(v int) *PlayerframeUpdateOne {
 	_u.mutation.AddGameID(v)
 	return _u
 }
 
-// ClearGameID clears the value of the "game_id" field.
-func (_u *PlayerframeUpdateOne) ClearGameID() *PlayerframeUpdateOne {
-	_u.mutation.ClearGameID()
-	return _u
-}
-
 // SetSeq sets the "seq" field.
-func (_u *PlayerframeUpdateOne) SetSeq(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetSeq(v int) *PlayerframeUpdateOne {
 	_u.mutation.ResetSeq()
 	_u.mutation.SetSeq(v)
 	return _u
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_u *PlayerframeUpdateOne) SetNillableSeq(v *int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetNillableSeq(v *int) *PlayerframeUpdateOne {
 	if v != nil {
 		_u.SetSeq(*v)
 	}
@@ -332,7 +303,7 @@ func (_u *PlayerframeUpdateOne) SetNillableSeq(v *int64) *PlayerframeUpdateOne {
 }
 
 // AddSeq adds value to the "seq" field.
-func (_u *PlayerframeUpdateOne) AddSeq(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) AddSeq(v int) *PlayerframeUpdateOne {
 	_u.mutation.AddSeq(v)
 	return _u
 }
@@ -344,14 +315,14 @@ func (_u *PlayerframeUpdateOne) ClearSeq() *PlayerframeUpdateOne {
 }
 
 // SetPlayerFrameGroupID sets the "player_frame_group_id" field.
-func (_u *PlayerframeUpdateOne) SetPlayerFrameGroupID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetPlayerFrameGroupID(v int) *PlayerframeUpdateOne {
 	_u.mutation.ResetPlayerFrameGroupID()
 	_u.mutation.SetPlayerFrameGroupID(v)
 	return _u
 }
 
 // SetNillablePlayerFrameGroupID sets the "player_frame_group_id" field if the given value is not nil.
-func (_u *PlayerframeUpdateOne) SetNillablePlayerFrameGroupID(v *int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetNillablePlayerFrameGroupID(v *int) *PlayerframeUpdateOne {
 	if v != nil {
 		_u.SetPlayerFrameGroupID(*v)
 	}
@@ -359,7 +330,7 @@ func (_u *PlayerframeUpdateOne) SetNillablePlayerFrameGroupID(v *int64) *Playerf
 }
 
 // AddPlayerFrameGroupID adds value to the "player_frame_group_id" field.
-func (_u *PlayerframeUpdateOne) AddPlayerFrameGroupID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) AddPlayerFrameGroupID(v int) *PlayerframeUpdateOne {
 	_u.mutation.AddPlayerFrameGroupID(v)
 	return _u
 }
@@ -391,14 +362,14 @@ func (_u *PlayerframeUpdateOne) ClearDescription() *PlayerframeUpdateOne {
 }
 
 // SetGameCharacterID sets the "game_character_id" field.
-func (_u *PlayerframeUpdateOne) SetGameCharacterID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetGameCharacterID(v int) *PlayerframeUpdateOne {
 	_u.mutation.ResetGameCharacterID()
 	_u.mutation.SetGameCharacterID(v)
 	return _u
 }
 
 // SetNillableGameCharacterID sets the "game_character_id" field if the given value is not nil.
-func (_u *PlayerframeUpdateOne) SetNillableGameCharacterID(v *int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) SetNillableGameCharacterID(v *int) *PlayerframeUpdateOne {
 	if v != nil {
 		_u.SetGameCharacterID(*v)
 	}
@@ -406,7 +377,7 @@ func (_u *PlayerframeUpdateOne) SetNillableGameCharacterID(v *int64) *Playerfram
 }
 
 // AddGameCharacterID adds value to the "game_character_id" field.
-func (_u *PlayerframeUpdateOne) AddGameCharacterID(v int64) *PlayerframeUpdateOne {
+func (_u *PlayerframeUpdateOne) AddGameCharacterID(v int) *PlayerframeUpdateOne {
 	_u.mutation.AddGameCharacterID(v)
 	return _u
 }
@@ -414,6 +385,20 @@ func (_u *PlayerframeUpdateOne) AddGameCharacterID(v int64) *PlayerframeUpdateOn
 // ClearGameCharacterID clears the value of the "game_character_id" field.
 func (_u *PlayerframeUpdateOne) ClearGameCharacterID() *PlayerframeUpdateOne {
 	_u.mutation.ClearGameCharacterID()
+	return _u
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_u *PlayerframeUpdateOne) SetServerRegion(v string) *PlayerframeUpdateOne {
+	_u.mutation.SetServerRegion(v)
+	return _u
+}
+
+// SetNillableServerRegion sets the "server_region" field if the given value is not nil.
+func (_u *PlayerframeUpdateOne) SetNillableServerRegion(v *string) *PlayerframeUpdateOne {
+	if v != nil {
+		_u.SetServerRegion(*v)
+	}
 	return _u
 }
 
@@ -488,35 +473,29 @@ func (_u *PlayerframeUpdateOne) sqlSave(ctx context.Context) (_node *Playerframe
 			}
 		}
 	}
-	if value, ok := _u.mutation.ServerRegion(); ok {
-		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.GameID(); ok {
-		_spec.SetField(playerframe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameID(); ok {
-		_spec.AddField(playerframe.FieldGameID, field.TypeInt64, value)
-	}
-	if _u.mutation.GameIDCleared() {
-		_spec.ClearField(playerframe.FieldGameID, field.TypeInt64)
+		_spec.AddField(playerframe.FieldGameID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
-		_spec.SetField(playerframe.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldSeq, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSeq(); ok {
-		_spec.AddField(playerframe.FieldSeq, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldSeq, field.TypeInt, value)
 	}
 	if _u.mutation.SeqCleared() {
-		_spec.ClearField(playerframe.FieldSeq, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldSeq, field.TypeInt)
 	}
 	if value, ok := _u.mutation.PlayerFrameGroupID(); ok {
-		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPlayerFrameGroupID(); ok {
-		_spec.AddField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldPlayerFrameGroupID, field.TypeInt, value)
 	}
 	if _u.mutation.PlayerFrameGroupIDCleared() {
-		_spec.ClearField(playerframe.FieldPlayerFrameGroupID, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldPlayerFrameGroupID, field.TypeInt)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(playerframe.FieldDescription, field.TypeString, value)
@@ -525,13 +504,16 @@ func (_u *PlayerframeUpdateOne) sqlSave(ctx context.Context) (_node *Playerframe
 		_spec.ClearField(playerframe.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameCharacterID(); ok {
-		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedGameCharacterID(); ok {
-		_spec.AddField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
+		_spec.AddField(playerframe.FieldGameCharacterID, field.TypeInt, value)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
-		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt64)
+		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ServerRegion(); ok {
+		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
 	}
 	_node = &Playerframe{config: _u.config}
 	_spec.Assign = _node.assignValues

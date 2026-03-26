@@ -53,18 +53,13 @@ func IDLTE(id int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Boostitem {
+func GameID(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Boostitem {
+func Seq(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldSeq, v))
 }
 
@@ -74,7 +69,7 @@ func Name(v string) predicate.Boostitem {
 }
 
 // RecoveryValue applies equality check predicate on the "recovery_value" field. It's identical to RecoveryValueEQ.
-func RecoveryValue(v int64) predicate.Boostitem {
+func RecoveryValue(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldRecoveryValue, v))
 }
 
@@ -83,163 +78,88 @@ func AssetBundleName(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldAssetBundleName, v))
 }
 
-// FlavorText applies equality check predicate on the "flavor_text" field. It's identical to FlavorTextEQ.
-func FlavorText(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldEQ(FieldFlavorText, v))
-}
-
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Boostitem {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Boostitem {
+func GameIDEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Boostitem {
+func GameIDNEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Boostitem {
+func GameIDIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Boostitem {
+func GameIDNotIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Boostitem {
+func GameIDGT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Boostitem {
+func GameIDGTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Boostitem {
+func GameIDLT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Boostitem {
+func GameIDLTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldNotNull(FieldGameID))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Boostitem {
+func SeqEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Boostitem {
+func SeqNEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Boostitem {
+func SeqIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Boostitem {
+func SeqNotIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Boostitem {
+func SeqGT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Boostitem {
+func SeqGTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Boostitem {
+func SeqLT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Boostitem {
+func SeqLTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -329,42 +249,42 @@ func NameContainsFold(v string) predicate.Boostitem {
 }
 
 // RecoveryValueEQ applies the EQ predicate on the "recovery_value" field.
-func RecoveryValueEQ(v int64) predicate.Boostitem {
+func RecoveryValueEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldRecoveryValue, v))
 }
 
 // RecoveryValueNEQ applies the NEQ predicate on the "recovery_value" field.
-func RecoveryValueNEQ(v int64) predicate.Boostitem {
+func RecoveryValueNEQ(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNEQ(FieldRecoveryValue, v))
 }
 
 // RecoveryValueIn applies the In predicate on the "recovery_value" field.
-func RecoveryValueIn(vs ...int64) predicate.Boostitem {
+func RecoveryValueIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIn(FieldRecoveryValue, vs...))
 }
 
 // RecoveryValueNotIn applies the NotIn predicate on the "recovery_value" field.
-func RecoveryValueNotIn(vs ...int64) predicate.Boostitem {
+func RecoveryValueNotIn(vs ...int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotIn(FieldRecoveryValue, vs...))
 }
 
 // RecoveryValueGT applies the GT predicate on the "recovery_value" field.
-func RecoveryValueGT(v int64) predicate.Boostitem {
+func RecoveryValueGT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGT(FieldRecoveryValue, v))
 }
 
 // RecoveryValueGTE applies the GTE predicate on the "recovery_value" field.
-func RecoveryValueGTE(v int64) predicate.Boostitem {
+func RecoveryValueGTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldGTE(FieldRecoveryValue, v))
 }
 
 // RecoveryValueLT applies the LT predicate on the "recovery_value" field.
-func RecoveryValueLT(v int64) predicate.Boostitem {
+func RecoveryValueLT(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLT(FieldRecoveryValue, v))
 }
 
 // RecoveryValueLTE applies the LTE predicate on the "recovery_value" field.
-func RecoveryValueLTE(v int64) predicate.Boostitem {
+func RecoveryValueLTE(v int) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldLTE(FieldRecoveryValue, v))
 }
 
@@ -453,61 +373,6 @@ func AssetBundleNameContainsFold(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldContainsFold(FieldAssetBundleName, v))
 }
 
-// FlavorTextEQ applies the EQ predicate on the "flavor_text" field.
-func FlavorTextEQ(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldEQ(FieldFlavorText, v))
-}
-
-// FlavorTextNEQ applies the NEQ predicate on the "flavor_text" field.
-func FlavorTextNEQ(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldNEQ(FieldFlavorText, v))
-}
-
-// FlavorTextIn applies the In predicate on the "flavor_text" field.
-func FlavorTextIn(vs ...string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldIn(FieldFlavorText, vs...))
-}
-
-// FlavorTextNotIn applies the NotIn predicate on the "flavor_text" field.
-func FlavorTextNotIn(vs ...string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldNotIn(FieldFlavorText, vs...))
-}
-
-// FlavorTextGT applies the GT predicate on the "flavor_text" field.
-func FlavorTextGT(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldGT(FieldFlavorText, v))
-}
-
-// FlavorTextGTE applies the GTE predicate on the "flavor_text" field.
-func FlavorTextGTE(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldGTE(FieldFlavorText, v))
-}
-
-// FlavorTextLT applies the LT predicate on the "flavor_text" field.
-func FlavorTextLT(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldLT(FieldFlavorText, v))
-}
-
-// FlavorTextLTE applies the LTE predicate on the "flavor_text" field.
-func FlavorTextLTE(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldLTE(FieldFlavorText, v))
-}
-
-// FlavorTextContains applies the Contains predicate on the "flavor_text" field.
-func FlavorTextContains(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldContains(FieldFlavorText, v))
-}
-
-// FlavorTextHasPrefix applies the HasPrefix predicate on the "flavor_text" field.
-func FlavorTextHasPrefix(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldHasPrefix(FieldFlavorText, v))
-}
-
-// FlavorTextHasSuffix applies the HasSuffix predicate on the "flavor_text" field.
-func FlavorTextHasSuffix(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldHasSuffix(FieldFlavorText, v))
-}
-
 // FlavorTextIsNil applies the IsNil predicate on the "flavor_text" field.
 func FlavorTextIsNil() predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIsNull(FieldFlavorText))
@@ -518,14 +383,69 @@ func FlavorTextNotNil() predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotNull(FieldFlavorText))
 }
 
-// FlavorTextEqualFold applies the EqualFold predicate on the "flavor_text" field.
-func FlavorTextEqualFold(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldEqualFold(FieldFlavorText, v))
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// FlavorTextContainsFold applies the ContainsFold predicate on the "flavor_text" field.
-func FlavorTextContainsFold(v string) predicate.Boostitem {
-	return predicate.Boostitem(sql.FieldContainsFold(FieldFlavorText, v))
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

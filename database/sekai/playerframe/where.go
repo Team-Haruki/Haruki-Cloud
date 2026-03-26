@@ -53,23 +53,18 @@ func IDLTE(id int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Playerframe {
+func GameID(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldGameID, v))
 }
 
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v int64) predicate.Playerframe {
+func Seq(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldSeq, v))
 }
 
 // PlayerFrameGroupID applies equality check predicate on the "player_frame_group_id" field. It's identical to PlayerFrameGroupIDEQ.
-func PlayerFrameGroupID(v int64) predicate.Playerframe {
+func PlayerFrameGroupID(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldPlayerFrameGroupID, v))
 }
 
@@ -79,162 +74,92 @@ func Description(v string) predicate.Playerframe {
 }
 
 // GameCharacterID applies equality check predicate on the "game_character_id" field. It's identical to GameCharacterIDEQ.
-func GameCharacterID(v int64) predicate.Playerframe {
+func GameCharacterID(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Playerframe {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Playerframe {
+func GameIDEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Playerframe {
+func GameIDNEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Playerframe {
+func GameIDIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Playerframe {
+func GameIDNotIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Playerframe {
+func GameIDGT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Playerframe {
+func GameIDGTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Playerframe {
+func GameIDLT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Playerframe {
+func GameIDLTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Playerframe {
-	return predicate.Playerframe(sql.FieldNotNull(FieldGameID))
-}
-
 // SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v int64) predicate.Playerframe {
+func SeqEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldSeq, v))
 }
 
 // SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v int64) predicate.Playerframe {
+func SeqNEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNEQ(FieldSeq, v))
 }
 
 // SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...int64) predicate.Playerframe {
+func SeqIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldIn(FieldSeq, vs...))
 }
 
 // SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...int64) predicate.Playerframe {
+func SeqNotIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotIn(FieldSeq, vs...))
 }
 
 // SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v int64) predicate.Playerframe {
+func SeqGT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGT(FieldSeq, v))
 }
 
 // SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v int64) predicate.Playerframe {
+func SeqGTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGTE(FieldSeq, v))
 }
 
 // SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v int64) predicate.Playerframe {
+func SeqLT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLT(FieldSeq, v))
 }
 
 // SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v int64) predicate.Playerframe {
+func SeqLTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLTE(FieldSeq, v))
 }
 
@@ -249,42 +174,42 @@ func SeqNotNil() predicate.Playerframe {
 }
 
 // PlayerFrameGroupIDEQ applies the EQ predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDEQ(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldPlayerFrameGroupID, v))
 }
 
 // PlayerFrameGroupIDNEQ applies the NEQ predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDNEQ(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDNEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNEQ(FieldPlayerFrameGroupID, v))
 }
 
 // PlayerFrameGroupIDIn applies the In predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDIn(vs ...int64) predicate.Playerframe {
+func PlayerFrameGroupIDIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldIn(FieldPlayerFrameGroupID, vs...))
 }
 
 // PlayerFrameGroupIDNotIn applies the NotIn predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDNotIn(vs ...int64) predicate.Playerframe {
+func PlayerFrameGroupIDNotIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotIn(FieldPlayerFrameGroupID, vs...))
 }
 
 // PlayerFrameGroupIDGT applies the GT predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDGT(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDGT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGT(FieldPlayerFrameGroupID, v))
 }
 
 // PlayerFrameGroupIDGTE applies the GTE predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDGTE(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDGTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGTE(FieldPlayerFrameGroupID, v))
 }
 
 // PlayerFrameGroupIDLT applies the LT predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDLT(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDLT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLT(FieldPlayerFrameGroupID, v))
 }
 
 // PlayerFrameGroupIDLTE applies the LTE predicate on the "player_frame_group_id" field.
-func PlayerFrameGroupIDLTE(v int64) predicate.Playerframe {
+func PlayerFrameGroupIDLTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLTE(FieldPlayerFrameGroupID, v))
 }
 
@@ -374,42 +299,42 @@ func DescriptionContainsFold(v string) predicate.Playerframe {
 }
 
 // GameCharacterIDEQ applies the EQ predicate on the "game_character_id" field.
-func GameCharacterIDEQ(v int64) predicate.Playerframe {
+func GameCharacterIDEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDNEQ applies the NEQ predicate on the "game_character_id" field.
-func GameCharacterIDNEQ(v int64) predicate.Playerframe {
+func GameCharacterIDNEQ(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNEQ(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDIn applies the In predicate on the "game_character_id" field.
-func GameCharacterIDIn(vs ...int64) predicate.Playerframe {
+func GameCharacterIDIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDNotIn applies the NotIn predicate on the "game_character_id" field.
-func GameCharacterIDNotIn(vs ...int64) predicate.Playerframe {
+func GameCharacterIDNotIn(vs ...int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotIn(FieldGameCharacterID, vs...))
 }
 
 // GameCharacterIDGT applies the GT predicate on the "game_character_id" field.
-func GameCharacterIDGT(v int64) predicate.Playerframe {
+func GameCharacterIDGT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDGTE applies the GTE predicate on the "game_character_id" field.
-func GameCharacterIDGTE(v int64) predicate.Playerframe {
+func GameCharacterIDGTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldGTE(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLT applies the LT predicate on the "game_character_id" field.
-func GameCharacterIDLT(v int64) predicate.Playerframe {
+func GameCharacterIDLT(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLT(FieldGameCharacterID, v))
 }
 
 // GameCharacterIDLTE applies the LTE predicate on the "game_character_id" field.
-func GameCharacterIDLTE(v int64) predicate.Playerframe {
+func GameCharacterIDLTE(v int) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldLTE(FieldGameCharacterID, v))
 }
 
@@ -421,6 +346,71 @@ func GameCharacterIDIsNil() predicate.Playerframe {
 // GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
 func GameCharacterIDNotNil() predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotNull(FieldGameCharacterID))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

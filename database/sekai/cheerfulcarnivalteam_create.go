@@ -19,34 +19,20 @@ type CheerfulcarnivalteamCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *CheerfulcarnivalteamCreate) SetServerRegion(v string) *CheerfulcarnivalteamCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *CheerfulcarnivalteamCreate) SetGameID(v int64) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetGameID(v int) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *CheerfulcarnivalteamCreate) SetNillableGameID(v *int64) *CheerfulcarnivalteamCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetEventID sets the "event_id" field.
-func (_c *CheerfulcarnivalteamCreate) SetEventID(v int64) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetEventID(v int) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetEventID(v)
 	return _c
 }
 
 // SetNillableEventID sets the "event_id" field if the given value is not nil.
-func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int64) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int) *CheerfulcarnivalteamCreate {
 	if v != nil {
 		_c.SetEventID(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *CheerfulcarnivalteamCreate) SetNillableEventID(v *int64) *Cheerfulcarn
 }
 
 // SetSeq sets the "seq" field.
-func (_c *CheerfulcarnivalteamCreate) SetSeq(v int64) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetSeq(v int) *CheerfulcarnivalteamCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *CheerfulcarnivalteamCreate) SetNillableSeq(v *int64) *CheerfulcarnivalteamCreate {
+func (_c *CheerfulcarnivalteamCreate) SetNillableSeq(v *int) *CheerfulcarnivalteamCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -92,6 +78,12 @@ func (_c *CheerfulcarnivalteamCreate) SetNillableAssetbundleName(v *string) *Che
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *CheerfulcarnivalteamCreate) SetServerRegion(v string) *CheerfulcarnivalteamCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -129,6 +121,9 @@ func (_c *CheerfulcarnivalteamCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CheerfulcarnivalteamCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Cheerfulcarnivalteam.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Cheerfulcarnivalteam.server_region"`)}
 	}
@@ -158,20 +153,16 @@ func (_c *CheerfulcarnivalteamCreate) createSpec() (*Cheerfulcarnivalteam, *sqlg
 		_node = &Cheerfulcarnivalteam{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(cheerfulcarnivalteam.Table, sqlgraph.NewFieldSpec(cheerfulcarnivalteam.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventID(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt64, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldEventID, field.TypeInt, value)
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(cheerfulcarnivalteam.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.TeamName(); ok {
@@ -181,6 +172,10 @@ func (_c *CheerfulcarnivalteamCreate) createSpec() (*Cheerfulcarnivalteam, *sqlg
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(cheerfulcarnivalteam.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(cheerfulcarnivalteam.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

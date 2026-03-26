@@ -16,21 +16,21 @@ type Mysekaigamecharacterunitgroup struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// GameCharacterUnitId1 holds the value of the "game_character_unit_id1" field.
+	GameCharacterUnitId1 int `json:"game_character_unit_id1,omitempty"`
+	// GameCharacterUnitId2 holds the value of the "game_character_unit_id2" field.
+	GameCharacterUnitId2 int `json:"game_character_unit_id2,omitempty"`
+	// GameCharacterUnitId3 holds the value of the "game_character_unit_id3" field.
+	GameCharacterUnitId3 int `json:"game_character_unit_id3,omitempty"`
+	// GameCharacterUnitId4 holds the value of the "game_character_unit_id4" field.
+	GameCharacterUnitId4 int `json:"game_character_unit_id4,omitempty"`
+	// GameCharacterUnitId5 holds the value of the "game_character_unit_id5" field.
+	GameCharacterUnitId5 int `json:"game_character_unit_id5,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// GameCharacterUnitId1 holds the value of the "game_character_unit_id1" field.
-	GameCharacterUnitId1 int64 `json:"game_character_unit_id1,omitempty"`
-	// GameCharacterUnitId2 holds the value of the "game_character_unit_id2" field.
-	GameCharacterUnitId2 int64 `json:"game_character_unit_id2,omitempty"`
-	// GameCharacterUnitId3 holds the value of the "game_character_unit_id3" field.
-	GameCharacterUnitId3 int64 `json:"game_character_unit_id3,omitempty"`
-	// GameCharacterUnitId4 holds the value of the "game_character_unit_id4" field.
-	GameCharacterUnitId4 int64 `json:"game_character_unit_id4,omitempty"`
-	// GameCharacterUnitId5 holds the value of the "game_character_unit_id5" field.
-	GameCharacterUnitId5 int64 `json:"game_character_unit_id5,omitempty"`
-	selectValues         sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -63,47 +63,47 @@ func (_m *Mysekaigamecharacterunitgroup) assignValues(columns []string, values [
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaigamecharacterunitgroup.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaigamecharacterunitgroup.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId1:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id1", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId1 = value.Int64
+				_m.GameCharacterUnitId1 = int(value.Int64)
 			}
 		case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id2", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId2 = value.Int64
+				_m.GameCharacterUnitId2 = int(value.Int64)
 			}
 		case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId3:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id3", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId3 = value.Int64
+				_m.GameCharacterUnitId3 = int(value.Int64)
 			}
 		case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId4:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id4", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId4 = value.Int64
+				_m.GameCharacterUnitId4 = int(value.Int64)
 			}
 		case mysekaigamecharacterunitgroup.FieldGameCharacterUnitId5:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_character_unit_id5", values[i])
 			} else if value.Valid {
-				_m.GameCharacterUnitId5 = value.Int64
+				_m.GameCharacterUnitId5 = int(value.Int64)
+			}
+		case mysekaigamecharacterunitgroup.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -141,9 +141,6 @@ func (_m *Mysekaigamecharacterunitgroup) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaigamecharacterunitgroup(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -161,6 +158,9 @@ func (_m *Mysekaigamecharacterunitgroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("game_character_unit_id5=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitId5))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

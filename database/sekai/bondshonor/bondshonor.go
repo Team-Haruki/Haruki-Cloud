@@ -11,8 +11,6 @@ const (
 	Label = "bondshonor"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -35,6 +33,8 @@ const (
 	FieldLevels = "levels"
 	// FieldConfigurableUnitVirtualSinger holds the string denoting the configurable_unit_virtual_singer field in the database.
 	FieldConfigurableUnitVirtualSinger = "configurable_unit_virtual_singer"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the bondshonor in the database.
 	Table = "bondshonors"
 )
@@ -42,7 +42,6 @@ const (
 // Columns holds all SQL columns for bondshonor fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldBondsGroupID,
@@ -54,6 +53,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldLevels,
 	FieldConfigurableUnitVirtualSinger,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -72,11 +72,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -104,11 +99,6 @@ func ByGameCharacterUnitId2(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterUnitId2, opts...).ToFunc()
 }
 
-// ByHonorRarity orders the results by the honor_rarity field.
-func ByHonorRarity(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHonorRarity, opts...).ToFunc()
-}
-
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -127,4 +117,9 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByConfigurableUnitVirtualSinger orders the results by the configurable_unit_virtual_singer field.
 func ByConfigurableUnitVirtualSinger(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldConfigurableUnitVirtualSinger, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

@@ -17,31 +17,31 @@ type Musicvocal struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// MusicID holds the value of the "music_id" field.
-	MusicID int64 `json:"music_id,omitempty"`
+	MusicID int `json:"music_id,omitempty"`
 	// MusicVocalType holds the value of the "music_vocal_type" field.
-	MusicVocalType string `json:"music_vocal_type,omitempty"`
+	MusicVocalType json.RawMessage `json:"music_vocal_type,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
 	// Caption holds the value of the "caption" field.
 	Caption string `json:"caption,omitempty"`
 	// Characters holds the value of the "characters" field.
-	Characters []interface{} `json:"characters,omitempty"`
+	Characters json.RawMessage `json:"characters,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ArchivePublishedAt holds the value of the "archive_published_at" field.
-	ArchivePublishedAt int64 `json:"archive_published_at,omitempty"`
+	ArchivePublishedAt int `json:"archive_published_at,omitempty"`
 	// SpecialSeasonID holds the value of the "special_season_id" field.
-	SpecialSeasonID int64 `json:"special_season_id,omitempty"`
+	SpecialSeasonID int `json:"special_season_id,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
-	ArchiveDisplayType string `json:"archive_display_type,omitempty"`
-	selectValues       sql.SelectValues
+	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -49,11 +49,11 @@ func (*Musicvocal) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case musicvocal.FieldCharacters:
+		case musicvocal.FieldMusicVocalType, musicvocal.FieldCharacters, musicvocal.FieldArchiveDisplayType:
 			values[i] = new([]byte)
 		case musicvocal.FieldID, musicvocal.FieldGameID, musicvocal.FieldMusicID, musicvocal.FieldSeq, musicvocal.FieldReleaseConditionID, musicvocal.FieldArchivePublishedAt, musicvocal.FieldSpecialSeasonID:
 			values[i] = new(sql.NullInt64)
-		case musicvocal.FieldServerRegion, musicvocal.FieldMusicVocalType, musicvocal.FieldCaption, musicvocal.FieldAssetbundleName, musicvocal.FieldArchiveDisplayType:
+		case musicvocal.FieldCaption, musicvocal.FieldAssetbundleName, musicvocal.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -76,41 +76,37 @@ func (_m *Musicvocal) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case musicvocal.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case musicvocal.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case musicvocal.FieldMusicID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_id", values[i])
 			} else if value.Valid {
-				_m.MusicID = value.Int64
+				_m.MusicID = int(value.Int64)
 			}
 		case musicvocal.FieldMusicVocalType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field music_vocal_type", values[i])
-			} else if value.Valid {
-				_m.MusicVocalType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.MusicVocalType); err != nil {
+					return fmt.Errorf("unmarshal field music_vocal_type: %w", err)
+				}
 			}
 		case musicvocal.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case musicvocal.FieldReleaseConditionID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
 			}
 		case musicvocal.FieldCaption:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,19 +132,27 @@ func (_m *Musicvocal) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_published_at", values[i])
 			} else if value.Valid {
-				_m.ArchivePublishedAt = value.Int64
+				_m.ArchivePublishedAt = int(value.Int64)
 			}
 		case musicvocal.FieldSpecialSeasonID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_season_id", values[i])
 			} else if value.Valid {
-				_m.SpecialSeasonID = value.Int64
+				_m.SpecialSeasonID = int(value.Int64)
 			}
 		case musicvocal.FieldArchiveDisplayType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_display_type", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ArchiveDisplayType); err != nil {
+					return fmt.Errorf("unmarshal field archive_display_type: %w", err)
+				}
+			}
+		case musicvocal.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
 			} else if value.Valid {
-				_m.ArchiveDisplayType = value.String
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -186,9 +190,6 @@ func (_m *Musicvocal) String() string {
 	var builder strings.Builder
 	builder.WriteString("Musicvocal(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -196,7 +197,7 @@ func (_m *Musicvocal) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MusicID))
 	builder.WriteString(", ")
 	builder.WriteString("music_vocal_type=")
-	builder.WriteString(_m.MusicVocalType)
+	builder.WriteString(fmt.Sprintf("%v", _m.MusicVocalType))
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
@@ -220,7 +221,10 @@ func (_m *Musicvocal) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialSeasonID))
 	builder.WriteString(", ")
 	builder.WriteString("archive_display_type=")
-	builder.WriteString(_m.ArchiveDisplayType)
+	builder.WriteString(fmt.Sprintf("%v", _m.ArchiveDisplayType))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

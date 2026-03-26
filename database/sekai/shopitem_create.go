@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/shopitem"
@@ -19,34 +20,20 @@ type ShopitemCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *ShopitemCreate) SetServerRegion(v string) *ShopitemCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *ShopitemCreate) SetGameID(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetGameID(v int) *ShopitemCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableGameID(v *int64) *ShopitemCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetShopID sets the "shop_id" field.
-func (_c *ShopitemCreate) SetShopID(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetShopID(v int) *ShopitemCreate {
 	_c.mutation.SetShopID(v)
 	return _c
 }
 
 // SetNillableShopID sets the "shop_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableShopID(v *int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableShopID(v *int) *ShopitemCreate {
 	if v != nil {
 		_c.SetShopID(*v)
 	}
@@ -54,13 +41,13 @@ func (_c *ShopitemCreate) SetNillableShopID(v *int64) *ShopitemCreate {
 }
 
 // SetSeq sets the "seq" field.
-func (_c *ShopitemCreate) SetSeq(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetSeq(v int) *ShopitemCreate {
 	_c.mutation.SetSeq(v)
 	return _c
 }
 
 // SetNillableSeq sets the "seq" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableSeq(v *int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableSeq(v *int) *ShopitemCreate {
 	if v != nil {
 		_c.SetSeq(*v)
 	}
@@ -68,13 +55,13 @@ func (_c *ShopitemCreate) SetNillableSeq(v *int64) *ShopitemCreate {
 }
 
 // SetReleaseConditionID sets the "release_condition_id" field.
-func (_c *ShopitemCreate) SetReleaseConditionID(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetReleaseConditionID(v int) *ShopitemCreate {
 	_c.mutation.SetReleaseConditionID(v)
 	return _c
 }
 
 // SetNillableReleaseConditionID sets the "release_condition_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int) *ShopitemCreate {
 	if v != nil {
 		_c.SetReleaseConditionID(*v)
 	}
@@ -82,13 +69,13 @@ func (_c *ShopitemCreate) SetNillableReleaseConditionID(v *int64) *ShopitemCreat
 }
 
 // SetResourceBoxID sets the "resource_box_id" field.
-func (_c *ShopitemCreate) SetResourceBoxID(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetResourceBoxID(v int) *ShopitemCreate {
 	_c.mutation.SetResourceBoxID(v)
 	return _c
 }
 
 // SetNillableResourceBoxID sets the "resource_box_id" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableResourceBoxID(v *int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableResourceBoxID(v *int) *ShopitemCreate {
 	if v != nil {
 		_c.SetResourceBoxID(*v)
 	}
@@ -96,22 +83,28 @@ func (_c *ShopitemCreate) SetNillableResourceBoxID(v *int64) *ShopitemCreate {
 }
 
 // SetCosts sets the "costs" field.
-func (_c *ShopitemCreate) SetCosts(v []interface{}) *ShopitemCreate {
+func (_c *ShopitemCreate) SetCosts(v json.RawMessage) *ShopitemCreate {
 	_c.mutation.SetCosts(v)
 	return _c
 }
 
 // SetStartAt sets the "start_at" field.
-func (_c *ShopitemCreate) SetStartAt(v int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetStartAt(v int) *ShopitemCreate {
 	_c.mutation.SetStartAt(v)
 	return _c
 }
 
 // SetNillableStartAt sets the "start_at" field if the given value is not nil.
-func (_c *ShopitemCreate) SetNillableStartAt(v *int64) *ShopitemCreate {
+func (_c *ShopitemCreate) SetNillableStartAt(v *int) *ShopitemCreate {
 	if v != nil {
 		_c.SetStartAt(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *ShopitemCreate) SetServerRegion(v string) *ShopitemCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -149,6 +142,9 @@ func (_c *ShopitemCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ShopitemCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Shopitem.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Shopitem.server_region"`)}
 	}
@@ -178,28 +174,24 @@ func (_c *ShopitemCreate) createSpec() (*Shopitem, *sqlgraph.CreateSpec) {
 		_node = &Shopitem{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(shopitem.Table, sqlgraph.NewFieldSpec(shopitem.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(shopitem.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(shopitem.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ShopID(); ok {
-		_spec.SetField(shopitem.FieldShopID, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldShopID, field.TypeInt, value)
 		_node.ShopID = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
-		_spec.SetField(shopitem.FieldSeq, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldSeq, field.TypeInt, value)
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.ReleaseConditionID(); ok {
-		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldReleaseConditionID, field.TypeInt, value)
 		_node.ReleaseConditionID = value
 	}
 	if value, ok := _c.mutation.ResourceBoxID(); ok {
-		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldResourceBoxID, field.TypeInt, value)
 		_node.ResourceBoxID = value
 	}
 	if value, ok := _c.mutation.Costs(); ok {
@@ -207,8 +199,12 @@ func (_c *ShopitemCreate) createSpec() (*Shopitem, *sqlgraph.CreateSpec) {
 		_node.Costs = value
 	}
 	if value, ok := _c.mutation.StartAt(); ok {
-		_spec.SetField(shopitem.FieldStartAt, field.TypeInt64, value)
+		_spec.SetField(shopitem.FieldStartAt, field.TypeInt, value)
 		_node.StartAt = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(shopitem.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

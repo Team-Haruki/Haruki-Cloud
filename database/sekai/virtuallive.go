@@ -17,57 +17,57 @@ type Virtuallive struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// VirtualLiveType holds the value of the "virtual_live_type" field.
-	VirtualLiveType string `json:"virtual_live_type,omitempty"`
+	VirtualLiveType json.RawMessage `json:"virtual_live_type,omitempty"`
 	// VirtualLivePlatform holds the value of the "virtual_live_platform" field.
-	VirtualLivePlatform string `json:"virtual_live_platform,omitempty"`
+	VirtualLivePlatform json.RawMessage `json:"virtual_live_platform,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ScreenMvMusicVocalID holds the value of the "screen_mv_music_vocal_id" field.
-	ScreenMvMusicVocalID int64 `json:"screen_mv_music_vocal_id,omitempty"`
+	ScreenMvMusicVocalID int `json:"screen_mv_music_vocal_id,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int64 `json:"start_at,omitempty"`
+	StartAt int `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
-	EndAt int64 `json:"end_at,omitempty"`
+	EndAt int `json:"end_at,omitempty"`
 	// RankingAnnounceAt holds the value of the "ranking_announce_at" field.
-	RankingAnnounceAt int64 `json:"ranking_announce_at,omitempty"`
+	RankingAnnounceAt int `json:"ranking_announce_at,omitempty"`
 	// VirtualLiveSetlists holds the value of the "virtual_live_setlists" field.
-	VirtualLiveSetlists []interface{} `json:"virtual_live_setlists,omitempty"`
+	VirtualLiveSetlists json.RawMessage `json:"virtual_live_setlists,omitempty"`
 	// VirtualLiveBeginnerSchedules holds the value of the "virtual_live_beginner_schedules" field.
-	VirtualLiveBeginnerSchedules []interface{} `json:"virtual_live_beginner_schedules,omitempty"`
+	VirtualLiveBeginnerSchedules json.RawMessage `json:"virtual_live_beginner_schedules,omitempty"`
 	// VirtualLiveSchedules holds the value of the "virtual_live_schedules" field.
-	VirtualLiveSchedules []interface{} `json:"virtual_live_schedules,omitempty"`
+	VirtualLiveSchedules json.RawMessage `json:"virtual_live_schedules,omitempty"`
 	// VirtualLiveCharacters holds the value of the "virtual_live_characters" field.
-	VirtualLiveCharacters []interface{} `json:"virtual_live_characters,omitempty"`
+	VirtualLiveCharacters json.RawMessage `json:"virtual_live_characters,omitempty"`
 	// VirtualLiveRewards holds the value of the "virtual_live_rewards" field.
-	VirtualLiveRewards []interface{} `json:"virtual_live_rewards,omitempty"`
+	VirtualLiveRewards json.RawMessage `json:"virtual_live_rewards,omitempty"`
 	// VirtualLiveCheerPointRewards holds the value of the "virtual_live_cheer_point_rewards" field.
-	VirtualLiveCheerPointRewards []interface{} `json:"virtual_live_cheer_point_rewards,omitempty"`
+	VirtualLiveCheerPointRewards json.RawMessage `json:"virtual_live_cheer_point_rewards,omitempty"`
 	// VirtualLiveWaitingRoom holds the value of the "virtual_live_waiting_room" field.
-	VirtualLiveWaitingRoom map[string]interface{} `json:"virtual_live_waiting_room,omitempty"`
+	VirtualLiveWaitingRoom json.RawMessage `json:"virtual_live_waiting_room,omitempty"`
 	// VirtualItems holds the value of the "virtual_items" field.
-	VirtualItems []interface{} `json:"virtual_items,omitempty"`
+	VirtualItems json.RawMessage `json:"virtual_items,omitempty"`
 	// VirtualLiveAppeals holds the value of the "virtual_live_appeals" field.
-	VirtualLiveAppeals []interface{} `json:"virtual_live_appeals,omitempty"`
+	VirtualLiveAppeals json.RawMessage `json:"virtual_live_appeals,omitempty"`
 	// VirtualLiveBackgroundMusics holds the value of the "virtual_live_background_musics" field.
-	VirtualLiveBackgroundMusics []interface{} `json:"virtual_live_background_musics,omitempty"`
+	VirtualLiveBackgroundMusics json.RawMessage `json:"virtual_live_background_musics,omitempty"`
 	// VirtualLiveInformation holds the value of the "virtual_live_information" field.
-	VirtualLiveInformation map[string]interface{} `json:"virtual_live_information,omitempty"`
+	VirtualLiveInformation json.RawMessage `json:"virtual_live_information,omitempty"`
 	// ArchiveReleaseConditionID holds the value of the "archive_release_condition_id" field.
-	ArchiveReleaseConditionID int64 `json:"archive_release_condition_id,omitempty"`
+	ArchiveReleaseConditionID int `json:"archive_release_condition_id,omitempty"`
 	// SubGameCharacterPenlightColorGroupID holds the value of the "sub_game_character_penlight_color_group_id" field.
-	SubGameCharacterPenlightColorGroupID int64 `json:"sub_game_character_penlight_color_group_id,omitempty"`
+	SubGameCharacterPenlightColorGroupID int `json:"sub_game_character_penlight_color_group_id,omitempty"`
 	// VirtualLiveGroupID holds the value of the "virtual_live_group_id" field.
-	VirtualLiveGroupID int64 `json:"virtual_live_group_id,omitempty"`
-	selectValues       sql.SelectValues
+	VirtualLiveGroupID int `json:"virtual_live_group_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -75,11 +75,11 @@ func (*Virtuallive) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation:
+		case virtuallive.FieldVirtualLiveType, virtuallive.FieldVirtualLivePlatform, virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation:
 			values[i] = new([]byte)
 		case virtuallive.FieldID, virtuallive.FieldGameID, virtuallive.FieldSeq, virtuallive.FieldScreenMvMusicVocalID, virtuallive.FieldStartAt, virtuallive.FieldEndAt, virtuallive.FieldRankingAnnounceAt, virtuallive.FieldArchiveReleaseConditionID, virtuallive.FieldSubGameCharacterPenlightColorGroupID, virtuallive.FieldVirtualLiveGroupID:
 			values[i] = new(sql.NullInt64)
-		case virtuallive.FieldServerRegion, virtuallive.FieldVirtualLiveType, virtuallive.FieldVirtualLivePlatform, virtuallive.FieldName, virtuallive.FieldAssetbundleName:
+		case virtuallive.FieldName, virtuallive.FieldAssetbundleName, virtuallive.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -102,35 +102,33 @@ func (_m *Virtuallive) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case virtuallive.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case virtuallive.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case virtuallive.FieldVirtualLiveType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_type", values[i])
-			} else if value.Valid {
-				_m.VirtualLiveType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.VirtualLiveType); err != nil {
+					return fmt.Errorf("unmarshal field virtual_live_type: %w", err)
+				}
 			}
 		case virtuallive.FieldVirtualLivePlatform:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_platform", values[i])
-			} else if value.Valid {
-				_m.VirtualLivePlatform = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.VirtualLivePlatform); err != nil {
+					return fmt.Errorf("unmarshal field virtual_live_platform: %w", err)
+				}
 			}
 		case virtuallive.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case virtuallive.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,25 +146,25 @@ func (_m *Virtuallive) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field screen_mv_music_vocal_id", values[i])
 			} else if value.Valid {
-				_m.ScreenMvMusicVocalID = value.Int64
+				_m.ScreenMvMusicVocalID = int(value.Int64)
 			}
 		case virtuallive.FieldStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
 			}
 		case virtuallive.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = value.Int64
+				_m.EndAt = int(value.Int64)
 			}
 		case virtuallive.FieldRankingAnnounceAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field ranking_announce_at", values[i])
 			} else if value.Valid {
-				_m.RankingAnnounceAt = value.Int64
+				_m.RankingAnnounceAt = int(value.Int64)
 			}
 		case virtuallive.FieldVirtualLiveSetlists:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -260,19 +258,25 @@ func (_m *Virtuallive) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ArchiveReleaseConditionID = value.Int64
+				_m.ArchiveReleaseConditionID = int(value.Int64)
 			}
 		case virtuallive.FieldSubGameCharacterPenlightColorGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field sub_game_character_penlight_color_group_id", values[i])
 			} else if value.Valid {
-				_m.SubGameCharacterPenlightColorGroupID = value.Int64
+				_m.SubGameCharacterPenlightColorGroupID = int(value.Int64)
 			}
 		case virtuallive.FieldVirtualLiveGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_group_id", values[i])
 			} else if value.Valid {
-				_m.VirtualLiveGroupID = value.Int64
+				_m.VirtualLiveGroupID = int(value.Int64)
+			}
+		case virtuallive.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -310,17 +314,14 @@ func (_m *Virtuallive) String() string {
 	var builder strings.Builder
 	builder.WriteString("Virtuallive(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_type=")
-	builder.WriteString(_m.VirtualLiveType)
+	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveType))
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_platform=")
-	builder.WriteString(_m.VirtualLivePlatform)
+	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLivePlatform))
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
@@ -384,6 +385,9 @@ func (_m *Virtuallive) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_group_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveGroupID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

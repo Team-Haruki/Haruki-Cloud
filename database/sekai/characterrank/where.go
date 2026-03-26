@@ -53,23 +53,18 @@ func IDLTE(id int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLTE(FieldID, id))
 }
 
-// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
-func ServerRegion(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldEQ(FieldServerRegion, v))
-}
-
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
-func GameID(v int64) predicate.Characterrank {
+func GameID(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldGameID, v))
 }
 
 // CharacterID applies equality check predicate on the "character_id" field. It's identical to CharacterIDEQ.
-func CharacterID(v int64) predicate.Characterrank {
+func CharacterID(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // CharacterRank applies equality check predicate on the "character_rank" field. It's identical to CharacterRankEQ.
-func CharacterRank(v int64) predicate.Characterrank {
+func CharacterRank(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldCharacterRank, v))
 }
 
@@ -88,158 +83,88 @@ func Power3BonusRate(v float64) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldPower3BonusRate, v))
 }
 
-// ServerRegionEQ applies the EQ predicate on the "server_region" field.
-func ServerRegionEQ(v string) predicate.Characterrank {
+// ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
+func ServerRegion(v string) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldServerRegion, v))
 }
 
-// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
-func ServerRegionNEQ(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldNEQ(FieldServerRegion, v))
-}
-
-// ServerRegionIn applies the In predicate on the "server_region" field.
-func ServerRegionIn(vs ...string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
-func ServerRegionNotIn(vs ...string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldNotIn(FieldServerRegion, vs...))
-}
-
-// ServerRegionGT applies the GT predicate on the "server_region" field.
-func ServerRegionGT(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldGT(FieldServerRegion, v))
-}
-
-// ServerRegionGTE applies the GTE predicate on the "server_region" field.
-func ServerRegionGTE(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldGTE(FieldServerRegion, v))
-}
-
-// ServerRegionLT applies the LT predicate on the "server_region" field.
-func ServerRegionLT(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldLT(FieldServerRegion, v))
-}
-
-// ServerRegionLTE applies the LTE predicate on the "server_region" field.
-func ServerRegionLTE(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldLTE(FieldServerRegion, v))
-}
-
-// ServerRegionContains applies the Contains predicate on the "server_region" field.
-func ServerRegionContains(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldContains(FieldServerRegion, v))
-}
-
-// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
-func ServerRegionHasPrefix(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldHasPrefix(FieldServerRegion, v))
-}
-
-// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
-func ServerRegionHasSuffix(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldHasSuffix(FieldServerRegion, v))
-}
-
-// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
-func ServerRegionEqualFold(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldEqualFold(FieldServerRegion, v))
-}
-
-// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
-func ServerRegionContainsFold(v string) predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldContainsFold(FieldServerRegion, v))
-}
-
 // GameIDEQ applies the EQ predicate on the "game_id" field.
-func GameIDEQ(v int64) predicate.Characterrank {
+func GameIDEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldGameID, v))
 }
 
 // GameIDNEQ applies the NEQ predicate on the "game_id" field.
-func GameIDNEQ(v int64) predicate.Characterrank {
+func GameIDNEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNEQ(FieldGameID, v))
 }
 
 // GameIDIn applies the In predicate on the "game_id" field.
-func GameIDIn(vs ...int64) predicate.Characterrank {
+func GameIDIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldIn(FieldGameID, vs...))
 }
 
 // GameIDNotIn applies the NotIn predicate on the "game_id" field.
-func GameIDNotIn(vs ...int64) predicate.Characterrank {
+func GameIDNotIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNotIn(FieldGameID, vs...))
 }
 
 // GameIDGT applies the GT predicate on the "game_id" field.
-func GameIDGT(v int64) predicate.Characterrank {
+func GameIDGT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGT(FieldGameID, v))
 }
 
 // GameIDGTE applies the GTE predicate on the "game_id" field.
-func GameIDGTE(v int64) predicate.Characterrank {
+func GameIDGTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGTE(FieldGameID, v))
 }
 
 // GameIDLT applies the LT predicate on the "game_id" field.
-func GameIDLT(v int64) predicate.Characterrank {
+func GameIDLT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLT(FieldGameID, v))
 }
 
 // GameIDLTE applies the LTE predicate on the "game_id" field.
-func GameIDLTE(v int64) predicate.Characterrank {
+func GameIDLTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLTE(FieldGameID, v))
 }
 
-// GameIDIsNil applies the IsNil predicate on the "game_id" field.
-func GameIDIsNil() predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldIsNull(FieldGameID))
-}
-
-// GameIDNotNil applies the NotNil predicate on the "game_id" field.
-func GameIDNotNil() predicate.Characterrank {
-	return predicate.Characterrank(sql.FieldNotNull(FieldGameID))
-}
-
 // CharacterIDEQ applies the EQ predicate on the "character_id" field.
-func CharacterIDEQ(v int64) predicate.Characterrank {
+func CharacterIDEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldCharacterID, v))
 }
 
 // CharacterIDNEQ applies the NEQ predicate on the "character_id" field.
-func CharacterIDNEQ(v int64) predicate.Characterrank {
+func CharacterIDNEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNEQ(FieldCharacterID, v))
 }
 
 // CharacterIDIn applies the In predicate on the "character_id" field.
-func CharacterIDIn(vs ...int64) predicate.Characterrank {
+func CharacterIDIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDNotIn applies the NotIn predicate on the "character_id" field.
-func CharacterIDNotIn(vs ...int64) predicate.Characterrank {
+func CharacterIDNotIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNotIn(FieldCharacterID, vs...))
 }
 
 // CharacterIDGT applies the GT predicate on the "character_id" field.
-func CharacterIDGT(v int64) predicate.Characterrank {
+func CharacterIDGT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGT(FieldCharacterID, v))
 }
 
 // CharacterIDGTE applies the GTE predicate on the "character_id" field.
-func CharacterIDGTE(v int64) predicate.Characterrank {
+func CharacterIDGTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGTE(FieldCharacterID, v))
 }
 
 // CharacterIDLT applies the LT predicate on the "character_id" field.
-func CharacterIDLT(v int64) predicate.Characterrank {
+func CharacterIDLT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLT(FieldCharacterID, v))
 }
 
 // CharacterIDLTE applies the LTE predicate on the "character_id" field.
-func CharacterIDLTE(v int64) predicate.Characterrank {
+func CharacterIDLTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLTE(FieldCharacterID, v))
 }
 
@@ -254,42 +179,42 @@ func CharacterIDNotNil() predicate.Characterrank {
 }
 
 // CharacterRankEQ applies the EQ predicate on the "character_rank" field.
-func CharacterRankEQ(v int64) predicate.Characterrank {
+func CharacterRankEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldEQ(FieldCharacterRank, v))
 }
 
 // CharacterRankNEQ applies the NEQ predicate on the "character_rank" field.
-func CharacterRankNEQ(v int64) predicate.Characterrank {
+func CharacterRankNEQ(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNEQ(FieldCharacterRank, v))
 }
 
 // CharacterRankIn applies the In predicate on the "character_rank" field.
-func CharacterRankIn(vs ...int64) predicate.Characterrank {
+func CharacterRankIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldIn(FieldCharacterRank, vs...))
 }
 
 // CharacterRankNotIn applies the NotIn predicate on the "character_rank" field.
-func CharacterRankNotIn(vs ...int64) predicate.Characterrank {
+func CharacterRankNotIn(vs ...int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNotIn(FieldCharacterRank, vs...))
 }
 
 // CharacterRankGT applies the GT predicate on the "character_rank" field.
-func CharacterRankGT(v int64) predicate.Characterrank {
+func CharacterRankGT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGT(FieldCharacterRank, v))
 }
 
 // CharacterRankGTE applies the GTE predicate on the "character_rank" field.
-func CharacterRankGTE(v int64) predicate.Characterrank {
+func CharacterRankGTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldGTE(FieldCharacterRank, v))
 }
 
 // CharacterRankLT applies the LT predicate on the "character_rank" field.
-func CharacterRankLT(v int64) predicate.Characterrank {
+func CharacterRankLT(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLT(FieldCharacterRank, v))
 }
 
 // CharacterRankLTE applies the LTE predicate on the "character_rank" field.
-func CharacterRankLTE(v int64) predicate.Characterrank {
+func CharacterRankLTE(v int) predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldLTE(FieldCharacterRank, v))
 }
 
@@ -471,6 +396,71 @@ func CharacterRankAchieveResourcesIsNil() predicate.Characterrank {
 // CharacterRankAchieveResourcesNotNil applies the NotNil predicate on the "character_rank_achieve_resources" field.
 func CharacterRankAchieveResourcesNotNil() predicate.Characterrank {
 	return predicate.Characterrank(sql.FieldNotNull(FieldCharacterRankAchieveResources))
+}
+
+// ServerRegionEQ applies the EQ predicate on the "server_region" field.
+func ServerRegionEQ(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldEQ(FieldServerRegion, v))
+}
+
+// ServerRegionNEQ applies the NEQ predicate on the "server_region" field.
+func ServerRegionNEQ(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldNEQ(FieldServerRegion, v))
+}
+
+// ServerRegionIn applies the In predicate on the "server_region" field.
+func ServerRegionIn(vs ...string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionNotIn applies the NotIn predicate on the "server_region" field.
+func ServerRegionNotIn(vs ...string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldNotIn(FieldServerRegion, vs...))
+}
+
+// ServerRegionGT applies the GT predicate on the "server_region" field.
+func ServerRegionGT(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldGT(FieldServerRegion, v))
+}
+
+// ServerRegionGTE applies the GTE predicate on the "server_region" field.
+func ServerRegionGTE(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldGTE(FieldServerRegion, v))
+}
+
+// ServerRegionLT applies the LT predicate on the "server_region" field.
+func ServerRegionLT(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldLT(FieldServerRegion, v))
+}
+
+// ServerRegionLTE applies the LTE predicate on the "server_region" field.
+func ServerRegionLTE(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldLTE(FieldServerRegion, v))
+}
+
+// ServerRegionContains applies the Contains predicate on the "server_region" field.
+func ServerRegionContains(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldContains(FieldServerRegion, v))
+}
+
+// ServerRegionHasPrefix applies the HasPrefix predicate on the "server_region" field.
+func ServerRegionHasPrefix(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldHasPrefix(FieldServerRegion, v))
+}
+
+// ServerRegionHasSuffix applies the HasSuffix predicate on the "server_region" field.
+func ServerRegionHasSuffix(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldHasSuffix(FieldServerRegion, v))
+}
+
+// ServerRegionEqualFold applies the EqualFold predicate on the "server_region" field.
+func ServerRegionEqualFold(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldEqualFold(FieldServerRegion, v))
+}
+
+// ServerRegionContainsFold applies the ContainsFold predicate on the "server_region" field.
+func ServerRegionContainsFold(v string) predicate.Characterrank {
+	return predicate.Characterrank(sql.FieldContainsFold(FieldServerRegion, v))
 }
 
 // And groups predicates with the AND operator between them.

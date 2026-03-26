@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/character2d"
@@ -19,37 +20,15 @@ type Character2DCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *Character2DCreate) SetServerRegion(v string) *Character2DCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *Character2DCreate) SetGameID(v int64) *Character2DCreate {
+func (_c *Character2DCreate) SetGameID(v int) *Character2DCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableGameID(v *int64) *Character2DCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetCharacterType sets the "character_type" field.
-func (_c *Character2DCreate) SetCharacterType(v string) *Character2DCreate {
+func (_c *Character2DCreate) SetCharacterType(v json.RawMessage) *Character2DCreate {
 	_c.mutation.SetCharacterType(v)
-	return _c
-}
-
-// SetNillableCharacterType sets the "character_type" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableCharacterType(v *string) *Character2DCreate {
-	if v != nil {
-		_c.SetCharacterType(*v)
-	}
 	return _c
 }
 
@@ -68,13 +47,13 @@ func (_c *Character2DCreate) SetNillableIsNextGrade(v *bool) *Character2DCreate 
 }
 
 // SetCharacterID sets the "character_id" field.
-func (_c *Character2DCreate) SetCharacterID(v int64) *Character2DCreate {
+func (_c *Character2DCreate) SetCharacterID(v int) *Character2DCreate {
 	_c.mutation.SetCharacterID(v)
 	return _c
 }
 
 // SetNillableCharacterID sets the "character_id" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableCharacterID(v *int64) *Character2DCreate {
+func (_c *Character2DCreate) SetNillableCharacterID(v *int) *Character2DCreate {
 	if v != nil {
 		_c.SetCharacterID(*v)
 	}
@@ -82,16 +61,8 @@ func (_c *Character2DCreate) SetNillableCharacterID(v *int64) *Character2DCreate
 }
 
 // SetUnit sets the "unit" field.
-func (_c *Character2DCreate) SetUnit(v string) *Character2DCreate {
+func (_c *Character2DCreate) SetUnit(v json.RawMessage) *Character2DCreate {
 	_c.mutation.SetUnit(v)
-	return _c
-}
-
-// SetNillableUnit sets the "unit" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableUnit(v *string) *Character2DCreate {
-	if v != nil {
-		_c.SetUnit(*v)
-	}
 	return _c
 }
 
@@ -124,16 +95,14 @@ func (_c *Character2DCreate) SetNillableAssetName(v *string) *Character2DCreate 
 }
 
 // SetCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field.
-func (_c *Character2DCreate) SetCharacterIconAssetbundleName(v string) *Character2DCreate {
+func (_c *Character2DCreate) SetCharacterIconAssetbundleName(v json.RawMessage) *Character2DCreate {
 	_c.mutation.SetCharacterIconAssetbundleName(v)
 	return _c
 }
 
-// SetNillableCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field if the given value is not nil.
-func (_c *Character2DCreate) SetNillableCharacterIconAssetbundleName(v *string) *Character2DCreate {
-	if v != nil {
-		_c.SetCharacterIconAssetbundleName(*v)
-	}
+// SetServerRegion sets the "server_region" field.
+func (_c *Character2DCreate) SetServerRegion(v string) *Character2DCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -171,6 +140,9 @@ func (_c *Character2DCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *Character2DCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Character2D.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Character2D.server_region"`)}
 	}
@@ -200,16 +172,12 @@ func (_c *Character2DCreate) createSpec() (*Character2D, *sqlgraph.CreateSpec) {
 		_node = &Character2D{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(character2d.Table, sqlgraph.NewFieldSpec(character2d.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(character2d.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CharacterType(); ok {
-		_spec.SetField(character2d.FieldCharacterType, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterType, field.TypeJSON, value)
 		_node.CharacterType = value
 	}
 	if value, ok := _c.mutation.IsNextGrade(); ok {
@@ -217,11 +185,11 @@ func (_c *Character2DCreate) createSpec() (*Character2D, *sqlgraph.CreateSpec) {
 		_node.IsNextGrade = value
 	}
 	if value, ok := _c.mutation.CharacterID(); ok {
-		_spec.SetField(character2d.FieldCharacterID, field.TypeInt64, value)
+		_spec.SetField(character2d.FieldCharacterID, field.TypeInt, value)
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(character2d.FieldUnit, field.TypeString, value)
+		_spec.SetField(character2d.FieldUnit, field.TypeJSON, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.IsEnabledFlipDisplay(); ok {
@@ -233,8 +201,12 @@ func (_c *Character2DCreate) createSpec() (*Character2D, *sqlgraph.CreateSpec) {
 		_node.AssetName = value
 	}
 	if value, ok := _c.mutation.CharacterIconAssetbundleName(); ok {
-		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeString, value)
+		_spec.SetField(character2d.FieldCharacterIconAssetbundleName, field.TypeJSON, value)
 		_node.CharacterIconAssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(character2d.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

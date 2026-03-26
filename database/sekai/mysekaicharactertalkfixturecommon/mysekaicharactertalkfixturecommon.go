@@ -11,8 +11,6 @@ const (
 	Label = "mysekaicharactertalkfixturecommon"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldGameCharacterUnitID holds the string denoting the game_character_unit_id field in the database.
@@ -23,6 +21,8 @@ const (
 	FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID = "mysekai_character_talk_fixture_common_mysekai_fixture_group_id"
 	// FieldMysekaiCharacterTalkFixtureCommonTweetGroupID holds the string denoting the mysekai_character_talk_fixture_common_tweet_group_id field in the database.
 	FieldMysekaiCharacterTalkFixtureCommonTweetGroupID = "mysekai_character_talk_fixture_common_tweet_group_id"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaicharactertalkfixturecommon in the database.
 	Table = "mysekaicharactertalkfixturecommons"
 )
@@ -30,12 +30,12 @@ const (
 // Columns holds all SQL columns for mysekaicharactertalkfixturecommon fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldGameCharacterUnitID,
 	FieldMysekaiCharacterTalkFixtureCommonType,
 	FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID,
 	FieldMysekaiCharacterTalkFixtureCommonTweetGroupID,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -56,11 +56,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
-}
-
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
@@ -79,4 +74,9 @@ func ByMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(opts ...sql.OrderT
 // ByMysekaiCharacterTalkFixtureCommonTweetGroupID orders the results by the mysekai_character_talk_fixture_common_tweet_group_id field.
 func ByMysekaiCharacterTalkFixtureCommonTweetGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

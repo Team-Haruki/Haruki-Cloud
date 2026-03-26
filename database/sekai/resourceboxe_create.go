@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/resourceboxe"
@@ -19,51 +20,21 @@ type ResourceboxeCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *ResourceboxeCreate) SetServerRegion(v string) *ResourceboxeCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_c *ResourceboxeCreate) SetResourceBoxPurpose(v string) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeCreate {
 	_c.mutation.SetResourceBoxPurpose(v)
 	return _c
 }
 
-// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
-func (_c *ResourceboxeCreate) SetNillableResourceBoxPurpose(v *string) *ResourceboxeCreate {
-	if v != nil {
-		_c.SetResourceBoxPurpose(*v)
-	}
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *ResourceboxeCreate) SetGameID(v int64) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetGameID(v int) *ResourceboxeCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *ResourceboxeCreate) SetNillableGameID(v *int64) *ResourceboxeCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_c *ResourceboxeCreate) SetResourceBoxType(v string) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetResourceBoxType(v json.RawMessage) *ResourceboxeCreate {
 	_c.mutation.SetResourceBoxType(v)
-	return _c
-}
-
-// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
-func (_c *ResourceboxeCreate) SetNillableResourceBoxType(v *string) *ResourceboxeCreate {
-	if v != nil {
-		_c.SetResourceBoxType(*v)
-	}
 	return _c
 }
 
@@ -82,7 +53,7 @@ func (_c *ResourceboxeCreate) SetNillableDescription(v *string) *ResourceboxeCre
 }
 
 // SetDetails sets the "details" field.
-func (_c *ResourceboxeCreate) SetDetails(v []interface{}) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetDetails(v json.RawMessage) *ResourceboxeCreate {
 	_c.mutation.SetDetails(v)
 	return _c
 }
@@ -112,6 +83,12 @@ func (_c *ResourceboxeCreate) SetNillableAssetbundleName(v *string) *Resourcebox
 	if v != nil {
 		_c.SetAssetbundleName(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *ResourceboxeCreate) SetServerRegion(v string) *ResourceboxeCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -149,6 +126,9 @@ func (_c *ResourceboxeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ResourceboxeCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Resourceboxe.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Resourceboxe.server_region"`)}
 	}
@@ -178,20 +158,16 @@ func (_c *ResourceboxeCreate) createSpec() (*Resourceboxe, *sqlgraph.CreateSpec)
 		_node = &Resourceboxe{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(resourceboxe.Table, sqlgraph.NewFieldSpec(resourceboxe.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
 		_node.ResourceBoxPurpose = value
 	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
 		_node.ResourceBoxType = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
@@ -209,6 +185,10 @@ func (_c *ResourceboxeCreate) createSpec() (*Resourceboxe, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(resourceboxe.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(resourceboxe.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

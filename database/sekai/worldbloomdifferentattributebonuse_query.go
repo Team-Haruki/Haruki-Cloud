@@ -262,12 +262,12 @@ func (_q *WorldbloomdifferentattributebonuseQuery) Clone() *Worldbloomdifferenta
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		AttributeCount int `json:"attribute_count,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Worldbloomdifferentattributebonuse.Query().
-//		GroupBy(worldbloomdifferentattributebonuse.FieldServerRegion).
+//		GroupBy(worldbloomdifferentattributebonuse.FieldAttributeCount).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *WorldbloomdifferentattributebonuseQuery) GroupBy(field string, fields ...string) *WorldbloomdifferentattributebonuseGroupBy {
@@ -285,11 +285,11 @@ func (_q *WorldbloomdifferentattributebonuseQuery) GroupBy(field string, fields 
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		AttributeCount int `json:"attribute_count,omitempty"`
 //	}
 //
 //	client.Worldbloomdifferentattributebonuse.Query().
-//		Select(worldbloomdifferentattributebonuse.FieldServerRegion).
+//		Select(worldbloomdifferentattributebonuse.FieldAttributeCount).
 //		Scan(ctx, &v)
 func (_q *WorldbloomdifferentattributebonuseQuery) Select(fields ...string) *WorldbloomdifferentattributebonuseSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

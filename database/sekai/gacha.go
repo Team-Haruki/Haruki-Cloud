@@ -17,59 +17,59 @@ type Gacha struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// GachaType holds the value of the "gacha_type" field.
-	GachaType string `json:"gacha_type,omitempty"`
+	GachaType json.RawMessage `json:"gacha_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GachaCardRarityRateGroupID holds the value of the "gacha_card_rarity_rate_group_id" field.
-	GachaCardRarityRateGroupID int64 `json:"gacha_card_rarity_rate_group_id,omitempty"`
+	GachaCardRarityRateGroupID int `json:"gacha_card_rarity_rate_group_id,omitempty"`
 	// StartAt holds the value of the "start_at" field.
-	StartAt int64 `json:"start_at,omitempty"`
+	StartAt int `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
-	EndAt int64 `json:"end_at,omitempty"`
+	EndAt int `json:"end_at,omitempty"`
 	// IsShowPeriod holds the value of the "is_show_period" field.
 	IsShowPeriod bool `json:"is_show_period,omitempty"`
 	// GachaCeilItemID holds the value of the "gacha_ceil_item_id" field.
-	GachaCeilItemID int64 `json:"gacha_ceil_item_id,omitempty"`
+	GachaCeilItemID int `json:"gacha_ceil_item_id,omitempty"`
 	// WishSelectCount holds the value of the "wish_select_count" field.
-	WishSelectCount int64 `json:"wish_select_count,omitempty"`
+	WishSelectCount int `json:"wish_select_count,omitempty"`
 	// WishFixedSelectCount holds the value of the "wish_fixed_select_count" field.
-	WishFixedSelectCount int64 `json:"wish_fixed_select_count,omitempty"`
+	WishFixedSelectCount int `json:"wish_fixed_select_count,omitempty"`
 	// WishLimitedSelectCount holds the value of the "wish_limited_select_count" field.
-	WishLimitedSelectCount int64 `json:"wish_limited_select_count,omitempty"`
+	WishLimitedSelectCount int `json:"wish_limited_select_count,omitempty"`
 	// GachaCardRarityRates holds the value of the "gacha_card_rarity_rates" field.
-	GachaCardRarityRates []interface{} `json:"gacha_card_rarity_rates,omitempty"`
+	GachaCardRarityRates json.RawMessage `json:"gacha_card_rarity_rates,omitempty"`
 	// GachaDetails holds the value of the "gacha_details" field.
-	GachaDetails []interface{} `json:"gacha_details,omitempty"`
+	GachaDetails json.RawMessage `json:"gacha_details,omitempty"`
 	// GachaBehaviors holds the value of the "gacha_behaviors" field.
-	GachaBehaviors []interface{} `json:"gacha_behaviors,omitempty"`
+	GachaBehaviors json.RawMessage `json:"gacha_behaviors,omitempty"`
 	// GachaPickups holds the value of the "gacha_pickups" field.
-	GachaPickups []interface{} `json:"gacha_pickups,omitempty"`
+	GachaPickups json.RawMessage `json:"gacha_pickups,omitempty"`
 	// GachaPickupCostumes holds the value of the "gacha_pickup_costumes" field.
-	GachaPickupCostumes []interface{} `json:"gacha_pickup_costumes,omitempty"`
+	GachaPickupCostumes json.RawMessage `json:"gacha_pickup_costumes,omitempty"`
 	// GachaInformation holds the value of the "gacha_information" field.
-	GachaInformation map[string]interface{} `json:"gacha_information,omitempty"`
+	GachaInformation json.RawMessage `json:"gacha_information,omitempty"`
 	// DrawableGachaHour holds the value of the "drawable_gacha_hour" field.
-	DrawableGachaHour int64 `json:"drawable_gacha_hour,omitempty"`
+	DrawableGachaHour int `json:"drawable_gacha_hour,omitempty"`
 	// GachaBonusID holds the value of the "gacha_bonus_id" field.
-	GachaBonusID int64 `json:"gacha_bonus_id,omitempty"`
+	GachaBonusID int `json:"gacha_bonus_id,omitempty"`
 	// SpinLimit holds the value of the "spin_limit" field.
-	SpinLimit int64 `json:"spin_limit,omitempty"`
+	SpinLimit int `json:"spin_limit,omitempty"`
 	// GachaBonusItemReceivableRewardGroupID holds the value of the "gacha_bonus_item_receivable_reward_group_id" field.
-	GachaBonusItemReceivableRewardGroupID int64 `json:"gacha_bonus_item_receivable_reward_group_id,omitempty"`
+	GachaBonusItemReceivableRewardGroupID int `json:"gacha_bonus_item_receivable_reward_group_id,omitempty"`
 	// GachaFreebieGroupID holds the value of the "gacha_freebie_group_id" field.
-	GachaFreebieGroupID int64 `json:"gacha_freebie_group_id,omitempty"`
+	GachaFreebieGroupID int `json:"gacha_freebie_group_id,omitempty"`
 	// DailySpinLimit holds the value of the "daily_spin_limit" field.
-	DailySpinLimit int64 `json:"daily_spin_limit,omitempty"`
-	selectValues   sql.SelectValues
+	DailySpinLimit int `json:"daily_spin_limit,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -77,13 +77,13 @@ func (*Gacha) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gacha.FieldGachaCardRarityRates, gacha.FieldGachaDetails, gacha.FieldGachaBehaviors, gacha.FieldGachaPickups, gacha.FieldGachaPickupCostumes, gacha.FieldGachaInformation:
+		case gacha.FieldGachaType, gacha.FieldGachaCardRarityRates, gacha.FieldGachaDetails, gacha.FieldGachaBehaviors, gacha.FieldGachaPickups, gacha.FieldGachaPickupCostumes, gacha.FieldGachaInformation:
 			values[i] = new([]byte)
 		case gacha.FieldIsShowPeriod:
 			values[i] = new(sql.NullBool)
 		case gacha.FieldID, gacha.FieldGameID, gacha.FieldSeq, gacha.FieldGachaCardRarityRateGroupID, gacha.FieldStartAt, gacha.FieldEndAt, gacha.FieldGachaCeilItemID, gacha.FieldWishSelectCount, gacha.FieldWishFixedSelectCount, gacha.FieldWishLimitedSelectCount, gacha.FieldDrawableGachaHour, gacha.FieldGachaBonusID, gacha.FieldSpinLimit, gacha.FieldGachaBonusItemReceivableRewardGroupID, gacha.FieldGachaFreebieGroupID, gacha.FieldDailySpinLimit:
 			values[i] = new(sql.NullInt64)
-		case gacha.FieldServerRegion, gacha.FieldGachaType, gacha.FieldName, gacha.FieldAssetbundleName:
+		case gacha.FieldName, gacha.FieldAssetbundleName, gacha.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -106,23 +106,19 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case gacha.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case gacha.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case gacha.FieldGachaType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_type", values[i])
-			} else if value.Valid {
-				_m.GachaType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.GachaType); err != nil {
+					return fmt.Errorf("unmarshal field gacha_type: %w", err)
+				}
 			}
 		case gacha.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -134,7 +130,7 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case gacha.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -146,19 +142,19 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_card_rarity_rate_group_id", values[i])
 			} else if value.Valid {
-				_m.GachaCardRarityRateGroupID = value.Int64
+				_m.GachaCardRarityRateGroupID = int(value.Int64)
 			}
 		case gacha.FieldStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field start_at", values[i])
 			} else if value.Valid {
-				_m.StartAt = value.Int64
+				_m.StartAt = int(value.Int64)
 			}
 		case gacha.FieldEndAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
-				_m.EndAt = value.Int64
+				_m.EndAt = int(value.Int64)
 			}
 		case gacha.FieldIsShowPeriod:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -170,25 +166,25 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_ceil_item_id", values[i])
 			} else if value.Valid {
-				_m.GachaCeilItemID = value.Int64
+				_m.GachaCeilItemID = int(value.Int64)
 			}
 		case gacha.FieldWishSelectCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field wish_select_count", values[i])
 			} else if value.Valid {
-				_m.WishSelectCount = value.Int64
+				_m.WishSelectCount = int(value.Int64)
 			}
 		case gacha.FieldWishFixedSelectCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field wish_fixed_select_count", values[i])
 			} else if value.Valid {
-				_m.WishFixedSelectCount = value.Int64
+				_m.WishFixedSelectCount = int(value.Int64)
 			}
 		case gacha.FieldWishLimitedSelectCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field wish_limited_select_count", values[i])
 			} else if value.Valid {
-				_m.WishLimitedSelectCount = value.Int64
+				_m.WishLimitedSelectCount = int(value.Int64)
 			}
 		case gacha.FieldGachaCardRarityRates:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -242,37 +238,43 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field drawable_gacha_hour", values[i])
 			} else if value.Valid {
-				_m.DrawableGachaHour = value.Int64
+				_m.DrawableGachaHour = int(value.Int64)
 			}
 		case gacha.FieldGachaBonusID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_bonus_id", values[i])
 			} else if value.Valid {
-				_m.GachaBonusID = value.Int64
+				_m.GachaBonusID = int(value.Int64)
 			}
 		case gacha.FieldSpinLimit:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field spin_limit", values[i])
 			} else if value.Valid {
-				_m.SpinLimit = value.Int64
+				_m.SpinLimit = int(value.Int64)
 			}
 		case gacha.FieldGachaBonusItemReceivableRewardGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_bonus_item_receivable_reward_group_id", values[i])
 			} else if value.Valid {
-				_m.GachaBonusItemReceivableRewardGroupID = value.Int64
+				_m.GachaBonusItemReceivableRewardGroupID = int(value.Int64)
 			}
 		case gacha.FieldGachaFreebieGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_freebie_group_id", values[i])
 			} else if value.Valid {
-				_m.GachaFreebieGroupID = value.Int64
+				_m.GachaFreebieGroupID = int(value.Int64)
 			}
 		case gacha.FieldDailySpinLimit:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field daily_spin_limit", values[i])
 			} else if value.Valid {
-				_m.DailySpinLimit = value.Int64
+				_m.DailySpinLimit = int(value.Int64)
+			}
+		case gacha.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -310,14 +312,11 @@ func (_m *Gacha) String() string {
 	var builder strings.Builder
 	builder.WriteString("Gacha(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("gacha_type=")
-	builder.WriteString(_m.GachaType)
+	builder.WriteString(fmt.Sprintf("%v", _m.GachaType))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -387,6 +386,9 @@ func (_m *Gacha) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("daily_spin_limit=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DailySpinLimit))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

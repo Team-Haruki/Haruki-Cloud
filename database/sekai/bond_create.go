@@ -19,34 +19,20 @@ type BondCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *BondCreate) SetServerRegion(v string) *BondCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *BondCreate) SetGameID(v int64) *BondCreate {
+func (_c *BondCreate) SetGameID(v int) *BondCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *BondCreate) SetNillableGameID(v *int64) *BondCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetGroupID sets the "group_id" field.
-func (_c *BondCreate) SetGroupID(v int64) *BondCreate {
+func (_c *BondCreate) SetGroupID(v int) *BondCreate {
 	_c.mutation.SetGroupID(v)
 	return _c
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (_c *BondCreate) SetNillableGroupID(v *int64) *BondCreate {
+func (_c *BondCreate) SetNillableGroupID(v *int) *BondCreate {
 	if v != nil {
 		_c.SetGroupID(*v)
 	}
@@ -54,13 +40,13 @@ func (_c *BondCreate) SetNillableGroupID(v *int64) *BondCreate {
 }
 
 // SetCharacterId1 sets the "character_id1" field.
-func (_c *BondCreate) SetCharacterId1(v int64) *BondCreate {
+func (_c *BondCreate) SetCharacterId1(v int) *BondCreate {
 	_c.mutation.SetCharacterId1(v)
 	return _c
 }
 
 // SetNillableCharacterId1 sets the "character_id1" field if the given value is not nil.
-func (_c *BondCreate) SetNillableCharacterId1(v *int64) *BondCreate {
+func (_c *BondCreate) SetNillableCharacterId1(v *int) *BondCreate {
 	if v != nil {
 		_c.SetCharacterId1(*v)
 	}
@@ -68,16 +54,22 @@ func (_c *BondCreate) SetNillableCharacterId1(v *int64) *BondCreate {
 }
 
 // SetCharacterId2 sets the "character_id2" field.
-func (_c *BondCreate) SetCharacterId2(v int64) *BondCreate {
+func (_c *BondCreate) SetCharacterId2(v int) *BondCreate {
 	_c.mutation.SetCharacterId2(v)
 	return _c
 }
 
 // SetNillableCharacterId2 sets the "character_id2" field if the given value is not nil.
-func (_c *BondCreate) SetNillableCharacterId2(v *int64) *BondCreate {
+func (_c *BondCreate) SetNillableCharacterId2(v *int) *BondCreate {
 	if v != nil {
 		_c.SetCharacterId2(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *BondCreate) SetServerRegion(v string) *BondCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -115,6 +107,9 @@ func (_c *BondCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BondCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Bond.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Bond.server_region"`)}
 	}
@@ -144,25 +139,25 @@ func (_c *BondCreate) createSpec() (*Bond, *sqlgraph.CreateSpec) {
 		_node = &Bond{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(bond.Table, sqlgraph.NewFieldSpec(bond.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(bond.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(bond.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(bond.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GroupID(); ok {
-		_spec.SetField(bond.FieldGroupID, field.TypeInt64, value)
+		_spec.SetField(bond.FieldGroupID, field.TypeInt, value)
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.CharacterId1(); ok {
-		_spec.SetField(bond.FieldCharacterId1, field.TypeInt64, value)
+		_spec.SetField(bond.FieldCharacterId1, field.TypeInt, value)
 		_node.CharacterId1 = value
 	}
 	if value, ok := _c.mutation.CharacterId2(); ok {
-		_spec.SetField(bond.FieldCharacterId2, field.TypeInt64, value)
+		_spec.SetField(bond.FieldCharacterId2, field.TypeInt, value)
 		_node.CharacterId2 = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(bond.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

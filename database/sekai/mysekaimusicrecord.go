@@ -17,14 +17,14 @@ type Mysekaimusicrecord struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
+	MysekaiMusicTrackType json.RawMessage `json:"mysekai_music_track_type,omitempty"`
+	// ExternalID holds the value of the "external_id" field.
+	ExternalID int `json:"external_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
-	MysekaiMusicTrackType map[string]interface{} `json:"mysekai_music_track_type,omitempty"`
-	// ExternalID holds the value of the "external_id" field.
-	ExternalID   int64 `json:"external_id,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -60,17 +60,11 @@ func (_m *Mysekaimusicrecord) assignValues(columns []string, values []any) error
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case mysekaimusicrecord.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case mysekaimusicrecord.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case mysekaimusicrecord.FieldMysekaiMusicTrackType:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -84,7 +78,13 @@ func (_m *Mysekaimusicrecord) assignValues(columns []string, values []any) error
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
-				_m.ExternalID = value.Int64
+				_m.ExternalID = int(value.Int64)
+			}
+		case mysekaimusicrecord.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -122,9 +122,6 @@ func (_m *Mysekaimusicrecord) String() string {
 	var builder strings.Builder
 	builder.WriteString("Mysekaimusicrecord(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -133,6 +130,9 @@ func (_m *Mysekaimusicrecord) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("external_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ExternalID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

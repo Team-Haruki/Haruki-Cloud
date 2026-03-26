@@ -16,15 +16,15 @@ type Cardcostume3D struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// CardID holds the value of the "card_id" field.
-	CardID int64 `json:"card_id,omitempty"`
+	CardID int `json:"card_id,omitempty"`
 	// Costume3DID holds the value of the "costume3_d_id" field.
-	Costume3DID int64 `json:"costume3_d_id,omitempty"`
+	Costume3DID int `json:"costume3_d_id,omitempty"`
 	// IsInitialObtainHair holds the value of the "is_initial_obtain_hair" field.
 	IsInitialObtainHair bool `json:"is_initial_obtain_hair,omitempty"`
-	selectValues        sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -59,29 +59,29 @@ func (_m *Cardcostume3D) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case cardcostume3d.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case cardcostume3d.FieldCardID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_id", values[i])
 			} else if value.Valid {
-				_m.CardID = value.Int64
+				_m.CardID = int(value.Int64)
 			}
 		case cardcostume3d.FieldCostume3DID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field costume3_d_id", values[i])
 			} else if value.Valid {
-				_m.Costume3DID = value.Int64
+				_m.Costume3DID = int(value.Int64)
 			}
 		case cardcostume3d.FieldIsInitialObtainHair:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_initial_obtain_hair", values[i])
 			} else if value.Valid {
 				_m.IsInitialObtainHair = value.Bool
+			}
+		case cardcostume3d.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -119,9 +119,6 @@ func (_m *Cardcostume3D) String() string {
 	var builder strings.Builder
 	builder.WriteString("Cardcostume3D(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("card_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CardID))
 	builder.WriteString(", ")
@@ -130,6 +127,9 @@ func (_m *Cardcostume3D) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_initial_obtain_hair=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsInitialObtainHair))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

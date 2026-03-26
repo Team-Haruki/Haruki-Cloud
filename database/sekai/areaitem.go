@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
 	"strings"
@@ -16,21 +17,21 @@ type Areaitem struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// AreaID holds the value of the "area_id" field.
-	AreaID int64 `json:"area_id,omitempty"`
+	AreaID int `json:"area_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
 	FlavorText string `json:"flavor_text,omitempty"`
 	// SpawnPoint holds the value of the "spawn_point" field.
-	SpawnPoint string `json:"spawn_point,omitempty"`
+	SpawnPoint json.RawMessage `json:"spawn_point,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
-	selectValues    sql.SelectValues
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,9 +39,11 @@ func (*Areaitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case areaitem.FieldSpawnPoint:
+			values[i] = new([]byte)
 		case areaitem.FieldID, areaitem.FieldGameID, areaitem.FieldAreaID:
 			values[i] = new(sql.NullInt64)
-		case areaitem.FieldServerRegion, areaitem.FieldName, areaitem.FieldFlavorText, areaitem.FieldSpawnPoint, areaitem.FieldAssetbundleName:
+		case areaitem.FieldName, areaitem.FieldFlavorText, areaitem.FieldAssetbundleName, areaitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,23 +66,17 @@ func (_m *Areaitem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case areaitem.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case areaitem.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case areaitem.FieldAreaID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field area_id", values[i])
 			} else if value.Valid {
-				_m.AreaID = value.Int64
+				_m.AreaID = int(value.Int64)
 			}
 		case areaitem.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -94,16 +91,24 @@ func (_m *Areaitem) assignValues(columns []string, values []any) error {
 				_m.FlavorText = value.String
 			}
 		case areaitem.FieldSpawnPoint:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field spawn_point", values[i])
-			} else if value.Valid {
-				_m.SpawnPoint = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.SpawnPoint); err != nil {
+					return fmt.Errorf("unmarshal field spawn_point: %w", err)
+				}
 			}
 		case areaitem.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.AssetbundleName = value.String
+			}
+		case areaitem.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -141,9 +146,6 @@ func (_m *Areaitem) String() string {
 	var builder strings.Builder
 	builder.WriteString("Areaitem(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -157,10 +159,13 @@ func (_m *Areaitem) String() string {
 	builder.WriteString(_m.FlavorText)
 	builder.WriteString(", ")
 	builder.WriteString("spawn_point=")
-	builder.WriteString(_m.SpawnPoint)
+	builder.WriteString(fmt.Sprintf("%v", _m.SpawnPoint))
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

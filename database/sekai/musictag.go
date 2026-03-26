@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/musictag"
 	"strings"
@@ -16,16 +17,16 @@ type Musictag struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MusicID holds the value of the "music_id" field.
+	MusicID int `json:"music_id,omitempty"`
+	// MusicTag holds the value of the "music_tag" field.
+	MusicTag json.RawMessage `json:"music_tag,omitempty"`
+	// Seq holds the value of the "seq" field.
+	Seq int `json:"seq,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MusicID holds the value of the "music_id" field.
-	MusicID int64 `json:"music_id,omitempty"`
-	// MusicTag holds the value of the "music_tag" field.
-	MusicTag string `json:"music_tag,omitempty"`
-	// Seq holds the value of the "seq" field.
-	Seq          int64 `json:"seq,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -34,9 +35,11 @@ func (*Musictag) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case musictag.FieldMusicTag:
+			values[i] = new([]byte)
 		case musictag.FieldID, musictag.FieldGameID, musictag.FieldMusicID, musictag.FieldSeq:
 			values[i] = new(sql.NullInt64)
-		case musictag.FieldServerRegion, musictag.FieldMusicTag:
+		case musictag.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -59,35 +62,37 @@ func (_m *Musictag) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case musictag.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case musictag.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case musictag.FieldMusicID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_id", values[i])
 			} else if value.Valid {
-				_m.MusicID = value.Int64
+				_m.MusicID = int(value.Int64)
 			}
 		case musictag.FieldMusicTag:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field music_tag", values[i])
-			} else if value.Valid {
-				_m.MusicTag = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.MusicTag); err != nil {
+					return fmt.Errorf("unmarshal field music_tag: %w", err)
+				}
 			}
 		case musictag.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
+			}
+		case musictag.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -125,9 +130,6 @@ func (_m *Musictag) String() string {
 	var builder strings.Builder
 	builder.WriteString("Musictag(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -135,10 +137,13 @@ func (_m *Musictag) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MusicID))
 	builder.WriteString(", ")
 	builder.WriteString("music_tag=")
-	builder.WriteString(_m.MusicTag)
+	builder.WriteString(fmt.Sprintf("%v", _m.MusicTag))
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

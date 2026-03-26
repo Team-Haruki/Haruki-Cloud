@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/musicdifficultie"
 	"strings"
@@ -16,21 +17,21 @@ type Musicdifficultie struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// GameID holds the value of the "game_id" field.
+	GameID int `json:"game_id,omitempty"`
+	// MusicID holds the value of the "music_id" field.
+	MusicID int `json:"music_id,omitempty"`
+	// MusicDifficulty holds the value of the "music_difficulty" field.
+	MusicDifficulty json.RawMessage `json:"music_difficulty,omitempty"`
+	// PlayLevel holds the value of the "play_level" field.
+	PlayLevel int `json:"play_level,omitempty"`
+	// TotalNoteCount holds the value of the "total_note_count" field.
+	TotalNoteCount int `json:"total_note_count,omitempty"`
+	// ReleaseConditionID holds the value of the "release_condition_id" field.
+	ReleaseConditionID int `json:"release_condition_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
-	// MusicID holds the value of the "music_id" field.
-	MusicID int64 `json:"music_id,omitempty"`
-	// MusicDifficulty holds the value of the "music_difficulty" field.
-	MusicDifficulty string `json:"music_difficulty,omitempty"`
-	// PlayLevel holds the value of the "play_level" field.
-	PlayLevel int64 `json:"play_level,omitempty"`
-	// TotalNoteCount holds the value of the "total_note_count" field.
-	TotalNoteCount int64 `json:"total_note_count,omitempty"`
-	// ReleaseConditionID holds the value of the "release_condition_id" field.
-	ReleaseConditionID int64 `json:"release_condition_id,omitempty"`
-	selectValues       sql.SelectValues
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,9 +39,11 @@ func (*Musicdifficultie) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case musicdifficultie.FieldMusicDifficulty:
+			values[i] = new([]byte)
 		case musicdifficultie.FieldID, musicdifficultie.FieldGameID, musicdifficultie.FieldMusicID, musicdifficultie.FieldPlayLevel, musicdifficultie.FieldTotalNoteCount, musicdifficultie.FieldReleaseConditionID:
 			values[i] = new(sql.NullInt64)
-		case musicdifficultie.FieldServerRegion, musicdifficultie.FieldMusicDifficulty:
+		case musicdifficultie.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,47 +66,49 @@ func (_m *Musicdifficultie) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case musicdifficultie.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case musicdifficultie.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case musicdifficultie.FieldMusicID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field music_id", values[i])
 			} else if value.Valid {
-				_m.MusicID = value.Int64
+				_m.MusicID = int(value.Int64)
 			}
 		case musicdifficultie.FieldMusicDifficulty:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field music_difficulty", values[i])
-			} else if value.Valid {
-				_m.MusicDifficulty = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.MusicDifficulty); err != nil {
+					return fmt.Errorf("unmarshal field music_difficulty: %w", err)
+				}
 			}
 		case musicdifficultie.FieldPlayLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field play_level", values[i])
 			} else if value.Valid {
-				_m.PlayLevel = value.Int64
+				_m.PlayLevel = int(value.Int64)
 			}
 		case musicdifficultie.FieldTotalNoteCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field total_note_count", values[i])
 			} else if value.Valid {
-				_m.TotalNoteCount = value.Int64
+				_m.TotalNoteCount = int(value.Int64)
 			}
 		case musicdifficultie.FieldReleaseConditionID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_condition_id", values[i])
 			} else if value.Valid {
-				_m.ReleaseConditionID = value.Int64
+				_m.ReleaseConditionID = int(value.Int64)
+			}
+		case musicdifficultie.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -141,9 +146,6 @@ func (_m *Musicdifficultie) String() string {
 	var builder strings.Builder
 	builder.WriteString("Musicdifficultie(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -151,7 +153,7 @@ func (_m *Musicdifficultie) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MusicID))
 	builder.WriteString(", ")
 	builder.WriteString("music_difficulty=")
-	builder.WriteString(_m.MusicDifficulty)
+	builder.WriteString(fmt.Sprintf("%v", _m.MusicDifficulty))
 	builder.WriteString(", ")
 	builder.WriteString("play_level=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PlayLevel))
@@ -161,6 +163,9 @@ func (_m *Musicdifficultie) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("release_condition_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ReleaseConditionID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -19,23 +19,9 @@ type NgwordCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *NgwordCreate) SetServerRegion(v string) *NgwordCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *NgwordCreate) SetGameID(v int64) *NgwordCreate {
+func (_c *NgwordCreate) SetGameID(v int) *NgwordCreate {
 	_c.mutation.SetGameID(v)
-	return _c
-}
-
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *NgwordCreate) SetNillableGameID(v *int64) *NgwordCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
 	return _c
 }
 
@@ -50,6 +36,12 @@ func (_c *NgwordCreate) SetNillableWord(v *string) *NgwordCreate {
 	if v != nil {
 		_c.SetWord(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *NgwordCreate) SetServerRegion(v string) *NgwordCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -87,6 +79,9 @@ func (_c *NgwordCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *NgwordCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Ngword.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Ngword.server_region"`)}
 	}
@@ -116,17 +111,17 @@ func (_c *NgwordCreate) createSpec() (*Ngword, *sqlgraph.CreateSpec) {
 		_node = &Ngword{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ngword.Table, sqlgraph.NewFieldSpec(ngword.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(ngword.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(ngword.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.Word(); ok {
 		_spec.SetField(ngword.FieldWord, field.TypeString, value)
 		_node.Word = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(ngword.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

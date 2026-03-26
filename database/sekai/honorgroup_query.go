@@ -262,12 +262,12 @@ func (_q *HonorgroupQuery) Clone() *HonorgroupQuery {
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Honorgroup.Query().
-//		GroupBy(honorgroup.FieldServerRegion).
+//		GroupBy(honorgroup.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *HonorgroupQuery) GroupBy(field string, fields ...string) *HonorgroupGroupBy {
@@ -285,11 +285,11 @@ func (_q *HonorgroupQuery) GroupBy(field string, fields ...string) *HonorgroupGr
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Honorgroup.Query().
-//		Select(honorgroup.FieldServerRegion).
+//		Select(honorgroup.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *HonorgroupQuery) Select(fields ...string) *HonorgroupSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

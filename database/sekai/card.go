@@ -17,28 +17,26 @@ type Card struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// ServerRegion holds the value of the "server_region" field.
-	ServerRegion string `json:"server_region,omitempty"`
 	// GameID holds the value of the "game_id" field.
-	GameID int64 `json:"game_id,omitempty"`
+	GameID int `json:"game_id,omitempty"`
 	// Seq holds the value of the "seq" field.
-	Seq int64 `json:"seq,omitempty"`
+	Seq int `json:"seq,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
-	CharacterID int64 `json:"character_id,omitempty"`
+	CharacterID int `json:"character_id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
-	CardRarityType string `json:"card_rarity_type,omitempty"`
+	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
 	// SpecialTrainingPower1BonusFixed holds the value of the "special_training_power1_bonus_fixed" field.
-	SpecialTrainingPower1BonusFixed int64 `json:"special_training_power1_bonus_fixed,omitempty"`
+	SpecialTrainingPower1BonusFixed int `json:"special_training_power1_bonus_fixed,omitempty"`
 	// SpecialTrainingPower2BonusFixed holds the value of the "special_training_power2_bonus_fixed" field.
-	SpecialTrainingPower2BonusFixed int64 `json:"special_training_power2_bonus_fixed,omitempty"`
+	SpecialTrainingPower2BonusFixed int `json:"special_training_power2_bonus_fixed,omitempty"`
 	// SpecialTrainingPower3BonusFixed holds the value of the "special_training_power3_bonus_fixed" field.
-	SpecialTrainingPower3BonusFixed int64 `json:"special_training_power3_bonus_fixed,omitempty"`
+	SpecialTrainingPower3BonusFixed int `json:"special_training_power3_bonus_fixed,omitempty"`
 	// Attr holds the value of the "attr" field.
-	Attr string `json:"attr,omitempty"`
+	Attr json.RawMessage `json:"attr,omitempty"`
 	// SupportUnit holds the value of the "support_unit" field.
-	SupportUnit string `json:"support_unit,omitempty"`
+	SupportUnit json.RawMessage `json:"support_unit,omitempty"`
 	// SkillID holds the value of the "skill_id" field.
-	SkillID int64 `json:"skill_id,omitempty"`
+	SkillID int `json:"skill_id,omitempty"`
 	// CardSkillName holds the value of the "card_skill_name" field.
 	CardSkillName string `json:"card_skill_name,omitempty"`
 	// Prefix holds the value of the "prefix" field.
@@ -48,30 +46,32 @@ type Card struct {
 	// GachaPhrase holds the value of the "gacha_phrase" field.
 	GachaPhrase string `json:"gacha_phrase,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
-	FlavorText string `json:"flavor_text,omitempty"`
+	FlavorText json.RawMessage `json:"flavor_text,omitempty"`
 	// ReleaseAt holds the value of the "release_at" field.
-	ReleaseAt int64 `json:"release_at,omitempty"`
+	ReleaseAt int `json:"release_at,omitempty"`
 	// ArchivePublishedAt holds the value of the "archive_published_at" field.
-	ArchivePublishedAt int64 `json:"archive_published_at,omitempty"`
+	ArchivePublishedAt int `json:"archive_published_at,omitempty"`
 	// CardSupplyID holds the value of the "card_supply_id" field.
-	CardSupplyID int64 `json:"card_supply_id,omitempty"`
+	CardSupplyID int `json:"card_supply_id,omitempty"`
 	// CardParameters holds the value of the "card_parameters" field.
-	CardParameters string `json:"card_parameters,omitempty"`
+	CardParameters json.RawMessage `json:"card_parameters,omitempty"`
 	// SpecialTrainingCosts holds the value of the "special_training_costs" field.
-	SpecialTrainingCosts []interface{} `json:"special_training_costs,omitempty"`
+	SpecialTrainingCosts json.RawMessage `json:"special_training_costs,omitempty"`
 	// MasterLessonAchieveResources holds the value of the "master_lesson_achieve_resources" field.
-	MasterLessonAchieveResources []interface{} `json:"master_lesson_achieve_resources,omitempty"`
+	MasterLessonAchieveResources json.RawMessage `json:"master_lesson_achieve_resources,omitempty"`
 	// InitialSpecialTrainingStatus holds the value of the "initial_special_training_status" field.
-	InitialSpecialTrainingStatus string `json:"initial_special_training_status,omitempty"`
+	InitialSpecialTrainingStatus json.RawMessage `json:"initial_special_training_status,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
-	ArchiveDisplayType string `json:"archive_display_type,omitempty"`
+	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
 	// SpecialTrainingSkillID holds the value of the "special_training_skill_id" field.
-	SpecialTrainingSkillID int64 `json:"special_training_skill_id,omitempty"`
+	SpecialTrainingSkillID int `json:"special_training_skill_id,omitempty"`
 	// SpecialTrainingSkillName holds the value of the "special_training_skill_name" field.
 	SpecialTrainingSkillName string `json:"special_training_skill_name,omitempty"`
 	// SpecialTrainingRewardResourceBoxID holds the value of the "special_training_reward_resource_box_id" field.
-	SpecialTrainingRewardResourceBoxID int64 `json:"special_training_reward_resource_box_id,omitempty"`
-	selectValues                       sql.SelectValues
+	SpecialTrainingRewardResourceBoxID int `json:"special_training_reward_resource_box_id,omitempty"`
+	// ServerRegion holds the value of the "server_region" field.
+	ServerRegion string `json:"server_region,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -79,11 +79,11 @@ func (*Card) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case card.FieldSpecialTrainingCosts, card.FieldMasterLessonAchieveResources:
+		case card.FieldCardRarityType, card.FieldAttr, card.FieldSupportUnit, card.FieldFlavorText, card.FieldCardParameters, card.FieldSpecialTrainingCosts, card.FieldMasterLessonAchieveResources, card.FieldInitialSpecialTrainingStatus, card.FieldArchiveDisplayType:
 			values[i] = new([]byte)
 		case card.FieldID, card.FieldGameID, card.FieldSeq, card.FieldCharacterID, card.FieldSpecialTrainingPower1BonusFixed, card.FieldSpecialTrainingPower2BonusFixed, card.FieldSpecialTrainingPower3BonusFixed, card.FieldSkillID, card.FieldReleaseAt, card.FieldArchivePublishedAt, card.FieldCardSupplyID, card.FieldSpecialTrainingSkillID, card.FieldSpecialTrainingRewardResourceBoxID:
 			values[i] = new(sql.NullInt64)
-		case card.FieldServerRegion, card.FieldCardRarityType, card.FieldAttr, card.FieldSupportUnit, card.FieldCardSkillName, card.FieldPrefix, card.FieldAssetbundleName, card.FieldGachaPhrase, card.FieldFlavorText, card.FieldCardParameters, card.FieldInitialSpecialTrainingStatus, card.FieldArchiveDisplayType, card.FieldSpecialTrainingSkillName:
+		case card.FieldCardSkillName, card.FieldPrefix, card.FieldAssetbundleName, card.FieldGachaPhrase, card.FieldSpecialTrainingSkillName, card.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -106,71 +106,71 @@ func (_m *Card) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case card.FieldServerRegion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server_region", values[i])
-			} else if value.Valid {
-				_m.ServerRegion = value.String
-			}
 		case card.FieldGameID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field game_id", values[i])
 			} else if value.Valid {
-				_m.GameID = value.Int64
+				_m.GameID = int(value.Int64)
 			}
 		case card.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field seq", values[i])
 			} else if value.Valid {
-				_m.Seq = value.Int64
+				_m.Seq = int(value.Int64)
 			}
 		case card.FieldCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field character_id", values[i])
 			} else if value.Valid {
-				_m.CharacterID = value.Int64
+				_m.CharacterID = int(value.Int64)
 			}
 		case card.FieldCardRarityType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
-			} else if value.Valid {
-				_m.CardRarityType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardRarityType); err != nil {
+					return fmt.Errorf("unmarshal field card_rarity_type: %w", err)
+				}
 			}
 		case card.FieldSpecialTrainingPower1BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_training_power1_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.SpecialTrainingPower1BonusFixed = value.Int64
+				_m.SpecialTrainingPower1BonusFixed = int(value.Int64)
 			}
 		case card.FieldSpecialTrainingPower2BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_training_power2_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.SpecialTrainingPower2BonusFixed = value.Int64
+				_m.SpecialTrainingPower2BonusFixed = int(value.Int64)
 			}
 		case card.FieldSpecialTrainingPower3BonusFixed:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_training_power3_bonus_fixed", values[i])
 			} else if value.Valid {
-				_m.SpecialTrainingPower3BonusFixed = value.Int64
+				_m.SpecialTrainingPower3BonusFixed = int(value.Int64)
 			}
 		case card.FieldAttr:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field attr", values[i])
-			} else if value.Valid {
-				_m.Attr = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Attr); err != nil {
+					return fmt.Errorf("unmarshal field attr: %w", err)
+				}
 			}
 		case card.FieldSupportUnit:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field support_unit", values[i])
-			} else if value.Valid {
-				_m.SupportUnit = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.SupportUnit); err != nil {
+					return fmt.Errorf("unmarshal field support_unit: %w", err)
+				}
 			}
 		case card.FieldSkillID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field skill_id", values[i])
 			} else if value.Valid {
-				_m.SkillID = value.Int64
+				_m.SkillID = int(value.Int64)
 			}
 		case card.FieldCardSkillName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -197,34 +197,38 @@ func (_m *Card) assignValues(columns []string, values []any) error {
 				_m.GachaPhrase = value.String
 			}
 		case card.FieldFlavorText:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field flavor_text", values[i])
-			} else if value.Valid {
-				_m.FlavorText = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.FlavorText); err != nil {
+					return fmt.Errorf("unmarshal field flavor_text: %w", err)
+				}
 			}
 		case card.FieldReleaseAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field release_at", values[i])
 			} else if value.Valid {
-				_m.ReleaseAt = value.Int64
+				_m.ReleaseAt = int(value.Int64)
 			}
 		case card.FieldArchivePublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_published_at", values[i])
 			} else if value.Valid {
-				_m.ArchivePublishedAt = value.Int64
+				_m.ArchivePublishedAt = int(value.Int64)
 			}
 		case card.FieldCardSupplyID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field card_supply_id", values[i])
 			} else if value.Valid {
-				_m.CardSupplyID = value.Int64
+				_m.CardSupplyID = int(value.Int64)
 			}
 		case card.FieldCardParameters:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field card_parameters", values[i])
-			} else if value.Valid {
-				_m.CardParameters = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CardParameters); err != nil {
+					return fmt.Errorf("unmarshal field card_parameters: %w", err)
+				}
 			}
 		case card.FieldSpecialTrainingCosts:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -243,22 +247,26 @@ func (_m *Card) assignValues(columns []string, values []any) error {
 				}
 			}
 		case card.FieldInitialSpecialTrainingStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field initial_special_training_status", values[i])
-			} else if value.Valid {
-				_m.InitialSpecialTrainingStatus = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.InitialSpecialTrainingStatus); err != nil {
+					return fmt.Errorf("unmarshal field initial_special_training_status: %w", err)
+				}
 			}
 		case card.FieldArchiveDisplayType:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_display_type", values[i])
-			} else if value.Valid {
-				_m.ArchiveDisplayType = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ArchiveDisplayType); err != nil {
+					return fmt.Errorf("unmarshal field archive_display_type: %w", err)
+				}
 			}
 		case card.FieldSpecialTrainingSkillID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_training_skill_id", values[i])
 			} else if value.Valid {
-				_m.SpecialTrainingSkillID = value.Int64
+				_m.SpecialTrainingSkillID = int(value.Int64)
 			}
 		case card.FieldSpecialTrainingSkillName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -270,7 +278,13 @@ func (_m *Card) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field special_training_reward_resource_box_id", values[i])
 			} else if value.Valid {
-				_m.SpecialTrainingRewardResourceBoxID = value.Int64
+				_m.SpecialTrainingRewardResourceBoxID = int(value.Int64)
+			}
+		case card.FieldServerRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server_region", values[i])
+			} else if value.Valid {
+				_m.ServerRegion = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -308,9 +322,6 @@ func (_m *Card) String() string {
 	var builder strings.Builder
 	builder.WriteString("Card(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("server_region=")
-	builder.WriteString(_m.ServerRegion)
-	builder.WriteString(", ")
 	builder.WriteString("game_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
@@ -321,7 +332,7 @@ func (_m *Card) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterID))
 	builder.WriteString(", ")
 	builder.WriteString("card_rarity_type=")
-	builder.WriteString(_m.CardRarityType)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardRarityType))
 	builder.WriteString(", ")
 	builder.WriteString("special_training_power1_bonus_fixed=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialTrainingPower1BonusFixed))
@@ -333,10 +344,10 @@ func (_m *Card) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialTrainingPower3BonusFixed))
 	builder.WriteString(", ")
 	builder.WriteString("attr=")
-	builder.WriteString(_m.Attr)
+	builder.WriteString(fmt.Sprintf("%v", _m.Attr))
 	builder.WriteString(", ")
 	builder.WriteString("support_unit=")
-	builder.WriteString(_m.SupportUnit)
+	builder.WriteString(fmt.Sprintf("%v", _m.SupportUnit))
 	builder.WriteString(", ")
 	builder.WriteString("skill_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SkillID))
@@ -354,7 +365,7 @@ func (_m *Card) String() string {
 	builder.WriteString(_m.GachaPhrase)
 	builder.WriteString(", ")
 	builder.WriteString("flavor_text=")
-	builder.WriteString(_m.FlavorText)
+	builder.WriteString(fmt.Sprintf("%v", _m.FlavorText))
 	builder.WriteString(", ")
 	builder.WriteString("release_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ReleaseAt))
@@ -366,7 +377,7 @@ func (_m *Card) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CardSupplyID))
 	builder.WriteString(", ")
 	builder.WriteString("card_parameters=")
-	builder.WriteString(_m.CardParameters)
+	builder.WriteString(fmt.Sprintf("%v", _m.CardParameters))
 	builder.WriteString(", ")
 	builder.WriteString("special_training_costs=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialTrainingCosts))
@@ -375,10 +386,10 @@ func (_m *Card) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MasterLessonAchieveResources))
 	builder.WriteString(", ")
 	builder.WriteString("initial_special_training_status=")
-	builder.WriteString(_m.InitialSpecialTrainingStatus)
+	builder.WriteString(fmt.Sprintf("%v", _m.InitialSpecialTrainingStatus))
 	builder.WriteString(", ")
 	builder.WriteString("archive_display_type=")
-	builder.WriteString(_m.ArchiveDisplayType)
+	builder.WriteString(fmt.Sprintf("%v", _m.ArchiveDisplayType))
 	builder.WriteString(", ")
 	builder.WriteString("special_training_skill_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialTrainingSkillID))
@@ -388,6 +399,9 @@ func (_m *Card) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("special_training_reward_resource_box_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialTrainingRewardResourceBoxID))
+	builder.WriteString(", ")
+	builder.WriteString("server_region=")
+	builder.WriteString(_m.ServerRegion)
 	builder.WriteByte(')')
 	return builder.String()
 }

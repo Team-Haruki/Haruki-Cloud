@@ -11,8 +11,6 @@ const (
 	Label = "gamecharacter"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldSeq holds the string denoting the seq field in the database.
@@ -47,6 +45,8 @@ const (
 	FieldUnit = "unit"
 	// FieldSupportUnitType holds the string denoting the support_unit_type field in the database.
 	FieldSupportUnitType = "support_unit_type"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the gamecharacter in the database.
 	Table = "gamecharacters"
 )
@@ -54,7 +54,6 @@ const (
 // Columns holds all SQL columns for gamecharacter fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldSeq,
 	FieldResourceID,
@@ -72,6 +71,7 @@ var Columns = []string{
 	FieldModelName,
 	FieldUnit,
 	FieldSupportUnitType,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -90,11 +90,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -142,11 +137,6 @@ func ByGivenNameEnglish(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGivenNameEnglish, opts...).ToFunc()
 }
 
-// ByGender orders the results by the gender field.
-func ByGender(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGender, opts...).ToFunc()
-}
-
 // ByHeight orders the results by the height field.
 func ByHeight(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHeight, opts...).ToFunc()
@@ -157,27 +147,12 @@ func ByLive2DHeightAdjustment(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLive2DHeightAdjustment, opts...).ToFunc()
 }
 
-// ByFigure orders the results by the figure field.
-func ByFigure(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFigure, opts...).ToFunc()
-}
-
-// ByBreastSize orders the results by the breast_size field.
-func ByBreastSize(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBreastSize, opts...).ToFunc()
-}
-
 // ByModelName orders the results by the model_name field.
 func ByModelName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldModelName, opts...).ToFunc()
 }
 
-// ByUnit orders the results by the unit field.
-func ByUnit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnit, opts...).ToFunc()
-}
-
-// BySupportUnitType orders the results by the support_unit_type field.
-func BySupportUnitType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSupportUnitType, opts...).ToFunc()
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

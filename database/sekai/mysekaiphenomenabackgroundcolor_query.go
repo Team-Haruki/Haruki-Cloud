@@ -262,12 +262,12 @@ func (_q *MysekaiphenomenabackgroundcolorQuery) Clone() *Mysekaiphenomenabackgro
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Mysekaiphenomenabackgroundcolor.Query().
-//		GroupBy(mysekaiphenomenabackgroundcolor.FieldServerRegion).
+//		GroupBy(mysekaiphenomenabackgroundcolor.FieldGameID).
 //		Aggregate(sekai.Count()).
 //		Scan(ctx, &v)
 func (_q *MysekaiphenomenabackgroundcolorQuery) GroupBy(field string, fields ...string) *MysekaiphenomenabackgroundcolorGroupBy {
@@ -285,11 +285,11 @@ func (_q *MysekaiphenomenabackgroundcolorQuery) GroupBy(field string, fields ...
 // Example:
 //
 //	var v []struct {
-//		ServerRegion string `json:"server_region,omitempty"`
+//		GameID int `json:"game_id,omitempty"`
 //	}
 //
 //	client.Mysekaiphenomenabackgroundcolor.Query().
-//		Select(mysekaiphenomenabackgroundcolor.FieldServerRegion).
+//		Select(mysekaiphenomenabackgroundcolor.FieldGameID).
 //		Scan(ctx, &v)
 func (_q *MysekaiphenomenabackgroundcolorQuery) Select(fields ...string) *MysekaiphenomenabackgroundcolorSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

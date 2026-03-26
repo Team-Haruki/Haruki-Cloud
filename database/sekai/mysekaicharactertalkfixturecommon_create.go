@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
@@ -19,34 +20,20 @@ type MysekaicharactertalkfixturecommonCreate struct {
 	hooks    []Hook
 }
 
-// SetServerRegion sets the "server_region" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetServerRegion(v string) *MysekaicharactertalkfixturecommonCreate {
-	_c.mutation.SetServerRegion(v)
-	return _c
-}
-
 // SetGameID sets the "game_id" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetGameID(v int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetGameID(v int) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetGameID(v)
 	return _c
 }
 
-// SetNillableGameID sets the "game_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameID(v *int64) *MysekaicharactertalkfixturecommonCreate {
-	if v != nil {
-		_c.SetGameID(*v)
-	}
-	return _c
-}
-
 // SetGameCharacterUnitID sets the "game_character_unit_id" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetGameCharacterUnitID(v int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetGameCharacterUnitID(v int) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetGameCharacterUnitID(v)
 	return _c
 }
 
 // SetNillableGameCharacterUnitID sets the "game_character_unit_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameCharacterUnitID(v *int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameCharacterUnitID(v *int) *MysekaicharactertalkfixturecommonCreate {
 	if v != nil {
 		_c.SetGameCharacterUnitID(*v)
 	}
@@ -54,19 +41,19 @@ func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameCharacterUnitI
 }
 
 // SetMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonType(v map[string]interface{}) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetMysekaiCharacterTalkFixtureCommonType(v)
 	return _c
 }
 
 // SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID sets the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v int) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID sets the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v *int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v *int) *MysekaicharactertalkfixturecommonCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(*v)
 	}
@@ -74,16 +61,22 @@ func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTa
 }
 
 // SetMysekaiCharacterTalkFixtureCommonTweetGroupID sets the "mysekai_character_talk_fixture_common_tweet_group_id" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonTweetGroupID(v int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonTweetGroupID(v int) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetMysekaiCharacterTalkFixtureCommonTweetGroupID(v)
 	return _c
 }
 
 // SetNillableMysekaiCharacterTalkFixtureCommonTweetGroupID sets the "mysekai_character_talk_fixture_common_tweet_group_id" field if the given value is not nil.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTalkFixtureCommonTweetGroupID(v *int64) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTalkFixtureCommonTweetGroupID(v *int) *MysekaicharactertalkfixturecommonCreate {
 	if v != nil {
 		_c.SetMysekaiCharacterTalkFixtureCommonTweetGroupID(*v)
 	}
+	return _c
+}
+
+// SetServerRegion sets the "server_region" field.
+func (_c *MysekaicharactertalkfixturecommonCreate) SetServerRegion(v string) *MysekaicharactertalkfixturecommonCreate {
+	_c.mutation.SetServerRegion(v)
 	return _c
 }
 
@@ -121,6 +114,9 @@ func (_c *MysekaicharactertalkfixturecommonCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MysekaicharactertalkfixturecommonCreate) check() error {
+	if _, ok := _c.mutation.GameID(); !ok {
+		return &ValidationError{Name: "game_id", err: errors.New(`sekai: missing required field "Mysekaicharactertalkfixturecommon.game_id"`)}
+	}
 	if _, ok := _c.mutation.ServerRegion(); !ok {
 		return &ValidationError{Name: "server_region", err: errors.New(`sekai: missing required field "Mysekaicharactertalkfixturecommon.server_region"`)}
 	}
@@ -150,16 +146,12 @@ func (_c *MysekaicharactertalkfixturecommonCreate) createSpec() (*Mysekaicharact
 		_node = &Mysekaicharactertalkfixturecommon{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(mysekaicharactertalkfixturecommon.Table, sqlgraph.NewFieldSpec(mysekaicharactertalkfixturecommon.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.ServerRegion(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldServerRegion, field.TypeString, value)
-		_node.ServerRegion = value
-	}
 	if value, ok := _c.mutation.GameID(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameID, field.TypeInt, value)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GameCharacterUnitID(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt, value)
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkFixtureCommonType(); ok {
@@ -167,12 +159,16 @@ func (_c *MysekaicharactertalkfixturecommonCreate) createSpec() (*Mysekaicharact
 		_node.MysekaiCharacterTalkFixtureCommonType = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, field.TypeInt, value)
 		_node.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkFixtureCommonTweetGroupID(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, field.TypeInt64, value)
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID, field.TypeInt, value)
 		_node.MysekaiCharacterTalkFixtureCommonTweetGroupID = value
+	}
+	if value, ok := _c.mutation.ServerRegion(); ok {
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldServerRegion, field.TypeString, value)
+		_node.ServerRegion = value
 	}
 	return _node, _spec
 }

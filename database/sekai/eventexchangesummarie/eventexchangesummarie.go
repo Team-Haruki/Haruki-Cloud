@@ -11,8 +11,6 @@ const (
 	Label = "eventexchangesummarie"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldServerRegion holds the string denoting the server_region field in the database.
-	FieldServerRegion = "server_region"
 	// FieldGameID holds the string denoting the game_id field in the database.
 	FieldGameID = "game_id"
 	// FieldEventID holds the string denoting the event_id field in the database.
@@ -25,6 +23,8 @@ const (
 	FieldEndAt = "end_at"
 	// FieldEventExchanges holds the string denoting the event_exchanges field in the database.
 	FieldEventExchanges = "event_exchanges"
+	// FieldServerRegion holds the string denoting the server_region field in the database.
+	FieldServerRegion = "server_region"
 	// Table holds the table name of the eventexchangesummarie in the database.
 	Table = "eventexchangesummaries"
 )
@@ -32,13 +32,13 @@ const (
 // Columns holds all SQL columns for eventexchangesummarie fields.
 var Columns = []string{
 	FieldID,
-	FieldServerRegion,
 	FieldGameID,
 	FieldEventID,
 	FieldAssetbundleName,
 	FieldStartAt,
 	FieldEndAt,
 	FieldEventExchanges,
+	FieldServerRegion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,11 +57,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByServerRegion orders the results by the server_region field.
-func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }
 
 // ByGameID orders the results by the game_id field.
@@ -87,4 +82,9 @@ func ByStartAt(opts ...sql.OrderTermOption) OrderOption {
 // ByEndAt orders the results by the end_at field.
 func ByEndAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEndAt, opts...).ToFunc()
+}
+
+// ByServerRegion orders the results by the server_region field.
+func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()
 }

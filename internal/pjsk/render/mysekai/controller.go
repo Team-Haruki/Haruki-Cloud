@@ -891,7 +891,65 @@ func (c *Controller) RenderTalkList(query TalkListQuery) ([]byte, error) {
 	return c.drawing.GenerateMysekaiTalkList(payload)
 }
 
+func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
+	if query.Seq == 0 {
+		return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
+	}
+
+	merged, region, err := c.prepareSnapshotOnly(query.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	photos := nestedList(merged, "userMysekaiPhotos")
+	if len(photos) == 0 {
+		return nil, fmt.Errorf("当前账号没有可用的 MySekai 照片数据")
+	}
+
+	seq := query.Seq
+	if seq < 0 {
+		seq = len(photos) + seq + 1
+	}
+	if seq < 1 {
+		return nil, fmt.Errorf("照片编号超出范围（当前共有%d张）", len(photos))
+	}
+	if seq > len(photos) {
+		return nil, fmt.Errorf("照片编号大于照片数量(%d)", len(photos))
+	}
+
+	photo, ok := photos[seq-1].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("照片数据格式错误")
+	}
+
+	imagePath := stringValue(photo["imagePath"])
+	if imagePath == "" {
+		return nil, fmt.Errorf("该照片缺少 imagePath，无法下载")
+	}
+
+	result := &PhotoResult{
+		Region:    region.String(),
+		Seq:       seq,
+		Total:     len(photos),
+		ImagePath: imagePath,
+	}
+	if obtainedAt := int64Number(photo["obtainedAt"], 0); obtainedAt > 0 {
+		result.ObtainedAt = time.UnixMilli(obtainedAt)
+	}
+	return result, nil
+}
+
 func (c *Controller) ensure() error {
+	if err := c.ensureSnapshot(); err != nil {
+		return err
+	}
+	if c.masterdata == nil || !c.masterdata.Configured() {
+		return fmt.Errorf("local mysekai masterdata is not configured")
+	}
+	return nil
+}
+
+func (c *Controller) ensureSnapshot() error {
 	if c == nil {
 		return fmt.Errorf("mysekai controller is not initialized")
 	}
@@ -900,9 +958,6 @@ func (c *Controller) ensure() error {
 	}
 	if err := c.snapshot.Require(); err != nil {
 		return err
-	}
-	if c.masterdata == nil || !c.masterdata.Configured() {
-		return fmt.Errorf("local mysekai masterdata is not configured")
 	}
 	return nil
 }
@@ -922,6 +977,17 @@ func (c *Controller) prepareSnapshot(region string) (map[string]interface{}, ren
 	if err := c.ensure(); err != nil {
 		return nil, renderregion.Unknown, err
 	}
+	return c.decodeSnapshot(region)
+}
+
+func (c *Controller) prepareSnapshotOnly(region string) (map[string]interface{}, renderregion.Value, error) {
+	if err := c.ensureSnapshot(); err != nil {
+		return nil, renderregion.Unknown, err
+	}
+	return c.decodeSnapshot(region)
+}
+
+func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, renderregion.Value, error) {
 	rawBytes, err := c.snapshot.RawBytes()
 	if err != nil {
 		return nil, renderregion.Unknown, err

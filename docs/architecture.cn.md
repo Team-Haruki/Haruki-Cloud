@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-03-25（v1.5）
+> 最后更新：2026-03-26（v1.6）
 
 ---
 
@@ -255,6 +255,8 @@ X-Haruki-Bot-Matched-Command: /查卡
 
 模块列表：card, deck, event, gacha, honor, profile, misc, mysekai, music, education, sk, score, stamp
 
+说明：`vlive` 当前只提供 Bot 文本执行链路，不暴露 `/internal/pjsk/vlive/*` 的 build/render 路由，因此不在这里的内部渲染模块列表中。
+
 ### 5.4 PJSK 公开端点（无鉴权）
 
 | 方法 | 路径 | 说明 |
@@ -415,7 +417,7 @@ internal/pjsk/handler/
 
 ```
 internal/pjsk/render/
-├── app/app.go            # App 结构体：包含 13 个 Controller 字段
+├── app/app.go            # App 结构体：包含 14 个 Controller 字段
 ├── region/region.go      # Value 类型（JP/CN/TW/EN/KR）
 ├── source/registry.go    # 数据源注册中心
 ├── masterdata/types.go   # Masterdata 类型定义
@@ -423,7 +425,7 @@ internal/pjsk/render/
 ├── common/               # 共享工具（卡图缩略图）
 ├── assets/               # 素材管理
 │
-│   ── 13 个渲染模块 ──
+│   ── 14 个功能模块（其中 vlive 为文本模块） ──
 ├── card/                 # 卡片（detail, list, box）— 11 文件
 ├── music/                # 曲目（detail, list, chart, progress, rewards）— 8 文件
 ├── event/                # 活动（detail, list, record）
@@ -436,7 +438,8 @@ internal/pjsk/render/
 ├── profile/              # 个人名片
 ├── stamp/                # 贴纸
 ├── misc/                 # 杂项（角色生日）
-└── mysekai/              # MySekai（资源, 家具, 大门, 唱片, 对话）
+├── mysekai/              # MySekai（资源, 家具, 大门, 唱片, 对话）
+└── vlive/                # Virtual Live（当前仅文本查询）
 ```
 
 每个模块通常包含：
@@ -556,7 +559,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
-| `render_route.go` | 渲染路由注册（13 模块 × build/render） | `/internal/pjsk/<module>/*` |
+| `render_route.go` | 渲染路由注册（13 个图像/构建模块 × build/render，不含文本型 `vlive`） | `/internal/pjsk/<module>/*` |
 | `render_dispatch.go` | 统一渲染分发 Handler | `/internal/pjsk/render` |
 | `render_struct.go` | 渲染请求/响应结构体 | — |
 | `render_route_test.go` | 渲染路由测试 + `testRenderApp` | — |
@@ -575,6 +578,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `docs/database-schemas.cn.md` | 数据库 Schema 详解（全 7 个 DB 模块） |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
 | `docs/pjsk-profile-binding-implementation.cn.md` | PJSK 账号绑定与执行链路收口说明 |
+| `docs/pjsk-vlive-text-plan.cn.md` | Virtual Live 文本链路实现说明 |
 | `docs/README.cn.md` | 项目 README |
 | `docs/service-test-merge-plan.cn.md` | Service-Test 合并方案 |
 | `docs/service-test-merge-status.cn.md` | Service-Test 合并状态 |
@@ -584,5 +588,5 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.5  
+**文档版本**：v1.6  
 **创建日期**：2026-03-23

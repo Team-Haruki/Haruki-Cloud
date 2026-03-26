@@ -1,0 +1,101 @@
+package card
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+)
+
+type lookupTestSource struct {
+	card *masterdata.Card
+}
+
+func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+
+func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
+	if s.card != nil && s.card.ID == id {
+		copy := *s.card
+		if s.card.CardParameters != nil {
+			copy.CardParameters = append([]masterdata.CardParameter(nil), s.card.CardParameters...)
+		}
+		return &copy, nil
+	}
+	return nil, fmt.Errorf("card %d not found", id)
+}
+
+func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
+	return nil, fmt.Errorf("card not found: %d/%d", characterID, seq)
+}
+
+func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+	return nil, fmt.Errorf("filter not supported: %+v", info)
+}
+
+func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	return nil, fmt.Errorf("character %d not found", id)
+}
+
+func (s *lookupTestSource) GetUnitByCardID(cardID int) (string, error) { return "", nil }
+
+func (s *lookupTestSource) GetCardSupplyType(card *masterdata.Card) string { return "" }
+
+func (s *lookupTestSource) GetSkillByID(id int) (*masterdata.Skill, error) {
+	return nil, fmt.Errorf("skill %d not found", id)
+}
+
+func (s *lookupTestSource) FormatSkillDescription(skill *masterdata.Skill, cardCharacterID int) string {
+	return ""
+}
+
+func (s *lookupTestSource) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
+	return nil, fmt.Errorf("gacha not found: %d", cardID)
+}
+
+func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+	return nil, nil
+}
+
+func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
+	root := t.TempDir()
+	normal := filepath.Join(root, "character", "member", "card_test", "card_normal.png")
+	after := filepath.Join(root, "character", "member", "card_test_rip", "card_after_training.png")
+	for _, path := range []string{normal, after} {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		if err := os.WriteFile(path, []byte("png"), 0o644); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}
+
+	source := &lookupTestSource{
+		card: &masterdata.Card{
+			ID:              1001,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Test Card",
+			AssetBundleName: "card_test",
+		},
+	}
+	controller := NewController(source, nil, nil, assets.NewAssetHelper(root, nil))
+
+	result, err := controller.ResolveCardImages(Query{Query: "1001", Region: "jp"})
+	if err != nil {
+		t.Fatalf("ResolveCardImages() error = %v", err)
+	}
+	if len(result.Paths) != 2 {
+		t.Fatalf("expected 2 images, got %d (%v)", len(result.Paths), result.Paths)
+	}
+	if filepath.Clean(result.Paths[0]) != filepath.Clean(normal) {
+		t.Fatalf("unexpected normal path: %q", result.Paths[0])
+	}
+	if filepath.Clean(result.Paths[1]) != filepath.Clean(after) {
+		t.Fatalf("unexpected after-training path: %q", result.Paths[1])
+	}
+}

@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v16.1）
+> 最后更新：2026-03-26（v16.4）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -45,6 +45,11 @@
 - deck
 - sk
 - mysekai
+
+补充说明：
+
+- `vlive` 已作为文本型执行模块落在 `internal/pjsk/render/vlive/`
+- 但它当前不提供 `/internal/pjsk/<module>/<action>/build|render` 形式的 legacy 图像路由
 
 ### 2.2 解析与处理资源
 
@@ -241,7 +246,7 @@ UID xxxxxx 的注册时间
 
 ### 待完成 / 遗留
 
-- **Music 遗留功能**：目前无新增遗留，歌曲别名系统按既有实现继续维护
+- **Music 遗留功能**：目前无新增遗留；歌曲别名已从 Music 模块独立到 Alias 模块，与角色别名共用审核链路
 
 ## 5.5 Schema 扩展 & Toolbox 路由更新（v15.0 新增）
 
@@ -382,7 +387,7 @@ ban_state              → 全平台禁用
 └── pjsk_ban_state     → 全 PJSK 模块禁用
     ├── pjsk_main_ban_state     → Card/Gacha/Event/Music/Deck/Education/Profile/Arrest/RegTime/CheckData/Stamp/Misc
     ├── pjsk_ranking_ban_state  → SK
-    ├── pjsk_alias_ban_state    → Alias（已实现，覆盖歌曲别名查询与审核）
+    ├── pjsk_alias_ban_state    → Alias（已实现，覆盖歌曲/角色别名查询、审核与删除）
     └── pjsk_mysekai_ban_state  → MySekai
 ```
 
@@ -438,20 +443,21 @@ ban_state              → 全平台禁用
 | **Arrest** | 逮捕（self/at\_user/uid 三模式，含 Visible 检查） | arrest |
 | **RegTime** | 注册时间查询（JP/EN + TW/KR/CN 双算法） | profile/reg-time |
 | **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
-| **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） | card/detail · list · box |
+| **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） / 卡面原图 | card/detail · list · box · image |
 | **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 / 物量统计 / BPM 查询 / 曲绘查询 | music · list · progress · rewards · chart · note-count · bpm · cover |
-| **Alias** | 歌曲别名查询 / 提交审核 / 删除已审核别名 / 待审核列表 / 通过审核 / 拒绝审核 | music/alias · music/alias/add · music/alias/del · music/alias/pending · music/alias/approve · music/alias/reject |
+| **Alias** | 歌曲别名查询 / 角色别名查询 / 提交审核 / 删除已审核别名 / 待审核列表 / 通过审核 / 拒绝审核 | alias/music · alias/music/add · alias/music/del · alias/character · alias/character/add · alias/character/del · alias/pending · alias/approve · alias/reject |
 | **Gacha** | 卡池列表 | gacha |
 | **Deck** | 活动/挑战/长草/加成/烤森 组卡推荐 | deck/event · challenge · no-event · bonus · mysekai |
 | **Event** | 活动列表 / 活动详情 / **活动记录** | event/list · event · event/record |
 | **Education** | 挑战信息 / 加成信息 / 区域道具 / 羁绊 / 队长统计 | education/challenge · power · area · bonds · leader |
 | **Score** | 分数计算 / 自定义房间 / 歌曲 meta / 歌曲排行 | score · custom-room · music-meta · music-board |
 | **SK** | 档线 / 查询 / 时速 / 查房 / 玩家轨迹 / 档线轨迹 / 胜率预测 / 日速 / SK 预测 / 水表 | sk/line · query · speed · check-room · player-trace · rank-trace · winrate · (日速/预测/水表→复用) |
-| **MySekai** | 资源 / 对话列表 / 家具列表 / 家具详情 / 大门升级 / 唱片 / 蓝图 | mysekai/resource · talk-list · fixture-list · fixture-detail · door-upgrade · music-record |
+| **MySekai** | 资源 / 对话列表 / 家具列表 / 家具详情 / 大门升级 / 唱片 / 蓝图 / 照片下载 | mysekai/resource · talk-list · fixture-list · fixture-detail · door-upgrade · music-record · photo |
 | **Stamp** | 贴纸列表 | stamp |
 | **Misc** | 角色生日 | misc/birthday |
+| **Virtual Live** | 近期 Virtual Live 文本查询 | vlive |
 
-> **统计**：约 73 个 handler · 15 个 module · 全部有 bridge case · 所有 enabled handler 均有 Path
+> **统计**：约 75 个 handler · 16 个 module · 全部有 bridge case · 所有 enabled handler 均有 Path
 
 ---
 
@@ -459,23 +465,27 @@ ban_state              → 全平台禁用
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
 
-**Stamp 系统（7 个）**：贴纸制作、随机贴纸、批量刷新、底图管理
+**Stamp 系统（6 个）**：贴纸制作、随机贴纸、刷新底图、批量刷新底图、查看底图、删除底图
 
-**Card 系统（3 个）**：角色别名查询、卡面原图、卡牌剧情（仅 JP）
+**Card 系统（1 个）**：卡牌剧情（仅 JP）
+
+**Deck 系统（1 个）**：实效 / 倍率（`ScoreUpHandle`）
 
 **Event 系统（1 个）**：活动剧情（仅 JP）
 
 **Gacha 系统（1 个）**：抽卡记录
 
-**MySekai 系统（2 个）**：照片下载、抓包数据检查
+**MySekai 系统（1 个）**：抓包数据检查重复入口（`/msd` 已由 `profile/check-data-mysekai` 承接）
 
-**Misc 系统（2 个）**：帮助（HelpHandle，bridge 无实现）、ExtractCard
+**Misc 系统（5 个）**：帮助、更新查询、NG 词检测、抓包帮助、提取卡牌
 
-**Virtual Live（1 个）**：vlive 查询
+> **统计**：约 16 个 handler 仍未实现
 
-> **统计**：约 19 个 handler 仍未实现
+> 备注 1：`BPM 查询` 依赖本地可读的谱面文件（当前实现会优先读取 `music/music_score/...` 本地资源）；如果部署环境只有远程资源而没有本地谱面缓存，会返回明确错误而不是伪造 BPM 数据。
 
-> 备注：`BPM 查询` 依赖本地可读的谱面文件（当前实现会优先读取 `music/music_score/...` 本地资源）；如果部署环境只有远程资源而没有本地谱面缓存，会返回明确错误而不是伪造 BPM 数据。
+> 备注 2：`mysekai/photo` 只依赖本地 snapshot 中的 `userMysekaiPhotos` 和 Sekai API 图片下载接口，不依赖本地 MySekai masterdata；其余 `MySekai` 图像渲染功能仍保留本地 masterdata fallback。
+
+> 备注 3：`Virtual Live` 当前只实现文本版 `/pjsk/vlive`，尚未迁移图片卡片、提醒、奖励展示等扩展能力。
 
 ---
 

@@ -329,9 +329,9 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 补充说明：
 
-1. 当前歌曲别名审核采用“一条别名一条待审记录”的写入方式
-2. `/music alias add` 不会直接写入正式 `alias` 表，而是先写入这里
-3. 当前审核命令只使用 `alias_type = music`
+1. 当前 PJSK 别名审核采用“一条别名一条待审记录”的写入方式
+2. `/music alias add` 与 `/chara alias add` 都不会直接写入正式 `alias` 表，而是先写入这里
+3. 当前审核链路已使用 `alias_type = music | character`
 
 ### 6.8 `rejected_alias` 表（已拒绝别名）
 

@@ -25,6 +25,7 @@ const (
 	ModuleScore
 	ModuleStamp
 	ModuleMisc
+	ModuleVLive
 	ModuleArrest
 	ModuleRegTime
 	ModuleCheckData
@@ -105,6 +106,7 @@ func init() {
 
 		// ── Misc ─────────────────────────────────────────────────────────────────
 		{regexp.MustCompile(`(?i)^/(角色生日|生日贺图|pjsk chara birthday|chara birthday)\s*(.*)`), ModuleMisc, "misc-birthday"},
+		{regexp.MustCompile(`(?i)^/(pjsk live|虚拟live|pjsk vlive|vlive)\s*(.*)`), ModuleVLive, "vlive-list"},
 
 		// ── SK ───────────────────────────────────────────────────────────────────
 		{regexp.MustCompile(`(?i)^/(sk-line|sk线|榜线|pjsk sk line|pjsk board line|skl)\s*(.*)`), ModuleSK, "sk-line"},

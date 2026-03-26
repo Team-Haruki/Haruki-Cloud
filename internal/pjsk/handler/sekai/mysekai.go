@@ -259,19 +259,21 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/photo",
 			Commands: []string{
 				"/pjsk mysekai photo", "/pjsk mysekai picture",
 				"/msp", "/mysekai 照片",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			seq, err := strconv.Atoi(args)
-			if err != nil {
+			if err != nil || seq == 0 {
 				return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
 			}
-			return nil, fmt.Errorf("TODO: mysekai照片下载未实现，seq=%d", seq)
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-photo", map[string]any{
+				"seq": seq,
+			}), nil
 		},
 	}
 }

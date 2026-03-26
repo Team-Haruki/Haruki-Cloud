@@ -15,7 +15,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/detail",
 			Commands: []string{
-				"/card-detail", "/卡面", "/详情", "/查卡",
+				"/card-detail", "/详情", "/查卡",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
@@ -103,40 +103,21 @@ func cleanCardBoxArgs(args string) string {
 	return strings.TrimSpace(replacer.Replace(strings.ToLower(args)))
 }
 
-func (sekaiHandlers) CharaAliasHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk chara alias",
-				"/角色别名", "/查角色别名",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if args == "" {
-				return nil, errors.New("请输入要查询的角色名或别名")
-			}
-			return nil, fmt.Errorf("TODO: 角色别名查询未实现，query=%q", args)
-		},
-	}
-}
-
 func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "card/image",
 			Commands: []string{
 				"/pjsk card img",
-				"/查卡面", "/卡面",
+				"/查卡面", "/卡面原图", "/卡面",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, errors.New("请输入要查询的卡牌")
 			}
-			return nil, fmt.Errorf("TODO: 卡面查询未实现，query=%q", args)
+			return makeResolvedCmd(ctx, parser.ModuleCard, "card-image"), nil
 		},
 	}
 }

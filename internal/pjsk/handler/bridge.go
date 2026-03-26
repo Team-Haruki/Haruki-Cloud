@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
-	"haruki-cloud/internal/pjsk/musicalias"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
@@ -25,6 +25,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
+	"haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/query"
@@ -84,6 +85,8 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		message, err = executeStamp(resolved, app)
 	case parser.ModuleMisc:
 		message, err = executeMisc(resolved, app)
+	case parser.ModuleVLive:
+		message, err = executeVLive(resolved, app)
 
 	default:
 		return nil, fmt.Errorf("bridge: unsupported module %v", resolved.Module)
@@ -141,6 +144,25 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	case "card-box":
 		queries := []card.Query{{Query: r.Query, Region: r.Region, DetailedProfile: publicDetailedProfile}}
 		data, err = app.Cards.RenderCardBox(queries)
+	case "card-image":
+		q := card.Query{Query: r.Query, Region: r.Region}
+		mergeParams(r.Params, &q)
+		result, resolveErr := app.Cards.ResolveCardImages(q)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		message = make(onebot11.Message, 0, len(result.Paths))
+		for _, path := range result.Paths {
+			image, imageErr := assetImageMessage(path, app, BotModulePJSK)
+			if imageErr != nil {
+				return nil, imageErr
+			}
+			message = append(message, image...)
+		}
+		if len(message) == 0 {
+			return nil, fmt.Errorf("bridge: card %d did not resolve any images", result.Card.ID)
+		}
+		return message, nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported card mode %q", r.Mode)
 	}
@@ -222,7 +244,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := musicAssetMessage(result.JacketPath, app)
+		image, imageErr := assetImageMessage(result.JacketPath, app, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
@@ -235,7 +257,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := musicAssetMessage(result.JacketPath, app)
+		image, imageErr := assetImageMessage(result.JacketPath, app, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
@@ -257,19 +279,19 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 
 func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	if app == nil || app.Aliases == nil {
-		return nil, fmt.Errorf("歌曲别名服务未就绪，请稍后再试")
+		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
-	data, err := musicalias.ExecuteCommand(ctx, app.Aliases, r.Mode, r.Params)
+	data, err := pjskalias.ExecuteCommand(ctx, app.Aliases, r.Mode, r.Params)
 	if err != nil {
 		return nil, err
 	}
 	return onebot11.Message{onebot11.Text(string(data))}, nil
 }
 
-func musicAssetMessage(path string, app *renderapp.App) (onebot11.Message, error) {
+func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.Message, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
-		return nil, fmt.Errorf("music asset path is empty")
+		return nil, fmt.Errorf("asset path is empty")
 	}
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return onebot11.Message{onebot11.Image(path)}, nil
@@ -278,7 +300,7 @@ func musicAssetMessage(path string, app *renderapp.App) (onebot11.Message, error
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, BotModulePJSK)
+	return imageMessage(data, app, group)
 }
 
 func formatBPMEvents(events []music.BPMEvent) string {
@@ -818,6 +840,26 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
 		data, err = app.MySekai.RenderMusicRecord(q)
+	case "mysekai-photo":
+		q := mysekai.PhotoQuery{Region: r.Region}
+		mergeParams(r.Params, &q)
+		result, resolveErr := app.MySekai.ResolvePhoto(q)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		data, err = sekaiutils.GetSekaiAPIClient().GetMySekaiImage(result.Region, result.ImagePath)
+		if err != nil {
+			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
+		}
+		image, imageErr := imageMessage(data, app, BotModulePJSK)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		photoTime := "未知"
+		if !result.ObtainedAt.IsZero() {
+			photoTime = result.ObtainedAt.Format("2006-01-02 15:04")
+		}
+		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
@@ -866,6 +908,19 @@ func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+func executeVLive(r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
+	if app == nil || app.VLive == nil {
+		return nil, fmt.Errorf("vlive service unavailable: sekai client not configured")
+	}
+	query := vlive.ListQuery{Region: r.Region}
+	mergeParams(r.Params, &query)
+	text, err := app.VLive.RenderText(query)
+	if err != nil {
+		return nil, err
+	}
+	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
 // userQueryParams mirrors sekai.UserQueryParams for bridge-side decoding.

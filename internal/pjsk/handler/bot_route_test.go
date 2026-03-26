@@ -55,6 +55,22 @@ func TestListBotRoutes(t *testing.T) {
 	if !contains(scoreRoute.Commands, "/曲目meta") {
 		t.Fatalf("expected score/music-meta commands to include /曲目meta, got %v", scoreRoute.Commands)
 	}
+
+	musicAliasRoute, ok := byPath["alias/music"]
+	if !ok {
+		t.Fatal("expected alias/music route to exist")
+	}
+	if !contains(musicAliasRoute.Commands, "/歌曲别名") {
+		t.Fatalf("expected alias/music commands to include /歌曲别名, got %v", musicAliasRoute.Commands)
+	}
+
+	characterAliasRoute, ok := byPath["alias/character"]
+	if !ok {
+		t.Fatal("expected alias/character route to exist")
+	}
+	if !contains(characterAliasRoute.Commands, "/角色别名") {
+		t.Fatalf("expected alias/character commands to include /角色别名, got %v", characterAliasRoute.Commands)
+	}
 }
 
 func contains(items []string, target string) bool {

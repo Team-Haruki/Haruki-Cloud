@@ -6,8 +6,8 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/meta"
-	"haruki-cloud/internal/pjsk/musicalias"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -24,6 +24,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/imagecache"
@@ -80,11 +81,12 @@ type App struct {
 	Misc       *misc.Controller
 	MySekai    *mysekai.Controller
 	Music      *music.Controller
-	Aliases    *musicalias.Service
+	Aliases    *pjskalias.Service
 	Profiles   *profile.Controller
 	Score      *score.Controller
 	SK         *sk.Controller
 	Stamps     *stamp.Controller
+	VLive      *vlive.Controller
 	Bindings   *accountdata.BindingService
 	BanChecker *accountdata.BanService
 	ImageCache *imagecache.Client
@@ -126,7 +128,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
 	skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), nil, assetHelper)
-	if snapshotService != nil && cfg.LocalMasterdata.Enabled && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
+	if snapshotService != nil {
 		mysekaiController = mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion)
 	}
 
@@ -136,6 +138,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var honorController *honor.Controller
 	var profileController *profile.Controller
 	var stampController *stamp.Controller
+	var vliveController *vlive.Controller
 	if sekaiClient != nil {
 		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
@@ -149,6 +152,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		musicController = music.NewController(music.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
 		profileController = profile.NewController(profile.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper, snapshotService)
 		stampController = stamp.NewController(stamp.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
+		vliveController = vlive.NewController(vlive.NewCloudSource(sekaiClient, cfg.DefaultRegion), cfg.DefaultRegion)
 	}
 
 	return &App{
@@ -170,6 +174,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Score:      scoreController,
 		SK:         skController,
 		Stamps:     stampController,
+		VLive:      vliveController,
 		ImageCache: imagecache.New(cfg.ImageCacheURI, cfg.ImageCacheDir),
 		Config:     cfg,
 	}

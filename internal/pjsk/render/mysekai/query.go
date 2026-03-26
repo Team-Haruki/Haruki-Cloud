@@ -1,6 +1,10 @@
 package mysekai
 
-import "haruki-cloud/utils/drawing"
+import (
+	"time"
+
+	"haruki-cloud/utils/drawing"
+)
 
 type ResourceQuery struct {
 	Region  string                      `json:"region,omitempty"`
@@ -34,4 +38,17 @@ type TalkListQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	Query   string                      `json:"query"`
 	Profile *drawing.ProfileCardRequest `json:"-"`
+}
+
+type PhotoQuery struct {
+	Region string `json:"region,omitempty"`
+	Seq    int    `json:"seq"`
+}
+
+type PhotoResult struct {
+	Region     string    `json:"region"`
+	Seq        int       `json:"seq"`
+	Total      int       `json:"total"`
+	ImagePath  string    `json:"image_path"`
+	ObtainedAt time.Time `json:"obtained_at"`
 }

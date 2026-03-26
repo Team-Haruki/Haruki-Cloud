@@ -10,10 +10,10 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/identity"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/chardata"
 	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
-	"haruki-cloud/internal/pjsk/musicalias"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
@@ -223,7 +223,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		renderRuntime.BanChecker = userdata.NewBanService(usersClient)
 	}
 
-	renderRuntime.Aliases = musicalias.NewService(renderRuntime.Sekai, pjskClient, resolver)
+	renderRuntime.Aliases = pjskalias.NewService(renderRuntime.Sekai, pjskClient, resolver)
 	mainLogger.Infof("Sekai runtime services configured")
 }
 

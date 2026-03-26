@@ -22,6 +22,10 @@
   - 记录 SK tracker 接入点、参数协议、`@用户` 绑定解析和能力矩阵
   - 适合：联调 `sk/skl` 与排查 tracker 查询链路
 
+- **[PJSK Virtual Live 文本版实现方案](pjsk-vlive-text-plan.cn.md)** ⭐
+  - 记录 `vlive` 文本链路的实现范围、过滤规则、代码落点与测试覆盖
+  - 适合：查看 Virtual Live 当前已实现能力与未实现边界
+
 ## 🎯 Service-Test 合并（已完成）
 
 - **[合并方案](service-test-merge-plan.cn.md)**
@@ -76,7 +80,8 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
-| 2026-03-26 | PJSK 指令系统设计 / 项目进展总结 / 数据库 Schema 文档 | 补充歌曲别名审核指令、命令路径与审核数据表说明 |
+| 2026-03-26 | PJSK Virtual Live 文本版实现方案 / README 索引 / 架构文档 / 项目进展总结 | 同步 `vlive` 文本功能落地、render 模块数量与 disabled stub 清单 |
+| 2026-03-26 | PJSK 指令系统设计 / 项目进展总结 / 数据库 Schema 文档 | 将歌曲别名独立到 Alias 模块，并补充角色别名、审核与删除指令说明 |
 | 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` / `mysekai_visible` 语义、验证现状与背景图存储规则 |
 | 2026-03-25 | 项目进展总结 | 同步 Profile 设置落地状态与当前语义 |
 | 2026-03-25 | PJSK Event Tracker 对接说明 | 新增 tracker 对接专题文档（含 `@用户` 解析方案） |

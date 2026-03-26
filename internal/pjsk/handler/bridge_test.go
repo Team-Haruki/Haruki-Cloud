@@ -44,15 +44,15 @@ func newBridgeTestBindingService(t *testing.T) *accountdata.BindingService {
 	)
 }
 
-func TestExecuteCheckDataMySekaiRequiresVisibleSuiteSnapshot(t *testing.T) {
+func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	ctx := context.Background()
 	service := newBridgeTestBindingService(t)
 
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
-	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", false); err != nil {
-		t.Fatalf("hide suite: %v", err)
+	if _, err := service.SetBindingMySekaiVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide mysekai: %v", err)
 	}
 
 	params, err := json.Marshal(userQueryParams{

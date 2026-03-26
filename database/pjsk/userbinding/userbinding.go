@@ -22,6 +22,8 @@ const (
 	FieldVisible = "visible"
 	// FieldSuiteVisible holds the string denoting the suite_visible field in the database.
 	FieldSuiteVisible = "suite_visible"
+	// FieldMysekaiVisible holds the string denoting the mysekai_visible field in the database.
+	FieldMysekaiVisible = "mysekai_visible"
 	// FieldBg holds the string denoting the bg field in the database.
 	FieldBg = "bg"
 	// FieldVerified holds the string denoting the verified field in the database.
@@ -47,6 +49,7 @@ var Columns = []string{
 	FieldServer,
 	FieldVisible,
 	FieldSuiteVisible,
+	FieldMysekaiVisible,
 	FieldBg,
 	FieldVerified,
 }
@@ -70,6 +73,8 @@ var (
 	DefaultVisible bool
 	// DefaultSuiteVisible holds the default value on creation for the "suite_visible" field.
 	DefaultSuiteVisible bool
+	// DefaultMysekaiVisible holds the default value on creation for the "mysekai_visible" field.
+	DefaultMysekaiVisible bool
 	// DefaultVerified holds the default value on creation for the "verified" field.
 	DefaultVerified bool
 )
@@ -105,6 +110,11 @@ func ByVisible(opts ...sql.OrderTermOption) OrderOption {
 // BySuiteVisible orders the results by the suite_visible field.
 func BySuiteVisible(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSuiteVisible, opts...).ToFunc()
+}
+
+// ByMysekaiVisible orders the results by the mysekai_visible field.
+func ByMysekaiVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiVisible, opts...).ToFunc()
 }
 
 // ByVerified orders the results by the verified field.

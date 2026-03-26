@@ -108,6 +108,7 @@ var (
 		{Name: "server", Type: field.TypeString, Size: 2},
 		{Name: "visible", Type: field.TypeBool, Default: true},
 		{Name: "suite_visible", Type: field.TypeBool, Default: true},
+		{Name: "mysekai_visible", Type: field.TypeBool, Default: true},
 		{Name: "bg", Type: field.TypeJSON, Nullable: true},
 		{Name: "verified", Type: field.TypeBool, Default: false},
 	}

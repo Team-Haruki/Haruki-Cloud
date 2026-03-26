@@ -2747,6 +2747,7 @@ type UserBindingMutation struct {
 	server              *string
 	visible             *bool
 	suite_visible       *bool
+	mysekai_visible     *bool
 	bg                  **drawing.ProfileBgSettings
 	verified            *bool
 	clearedFields       map[string]struct{}
@@ -3040,6 +3041,20 @@ func (m *UserBindingMutation) SuiteVisible() (r bool, exists bool) {
 	return *v, true
 }
 
+// SetMysekaiVisible sets the "mysekai_visible" field.
+func (m *UserBindingMutation) SetMysekaiVisible(b bool) {
+	m.mysekai_visible = &b
+}
+
+// MysekaiVisible returns the value of the "mysekai_visible" field in the mutation.
+func (m *UserBindingMutation) MysekaiVisible() (r bool, exists bool) {
+	v := m.mysekai_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // OldSuiteVisible returns the old "suite_visible" field's value of the UserBinding entity.
 // If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
@@ -3060,6 +3075,26 @@ func (m *UserBindingMutation) OldSuiteVisible(ctx context.Context) (v bool, err 
 // ResetSuiteVisible resets all changes to the "suite_visible" field.
 func (m *UserBindingMutation) ResetSuiteVisible() {
 	m.suite_visible = nil
+}
+
+// OldMysekaiVisible returns the old "mysekai_visible" field's value of the UserBinding entity.
+func (m *UserBindingMutation) OldMysekaiVisible(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiVisible: %w", err)
+	}
+	return oldValue.MysekaiVisible, nil
+}
+
+// ResetMysekaiVisible resets all changes to the "mysekai_visible" field.
+func (m *UserBindingMutation) ResetMysekaiVisible() {
+	m.mysekai_visible = nil
 }
 
 // SetBg sets the "bg" field.
@@ -3251,6 +3286,9 @@ func (m *UserBindingMutation) Fields() []string {
 	if m.suite_visible != nil {
 		fields = append(fields, userbinding.FieldSuiteVisible)
 	}
+	if m.mysekai_visible != nil {
+		fields = append(fields, userbinding.FieldMysekaiVisible)
+	}
 	if m.bg != nil {
 		fields = append(fields, userbinding.FieldBg)
 	}
@@ -3275,6 +3313,8 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.Visible()
 	case userbinding.FieldSuiteVisible:
 		return m.SuiteVisible()
+	case userbinding.FieldMysekaiVisible:
+		return m.MysekaiVisible()
 	case userbinding.FieldBg:
 		return m.Bg()
 	case userbinding.FieldVerified:
@@ -3298,6 +3338,8 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldVisible(ctx)
 	case userbinding.FieldSuiteVisible:
 		return m.OldSuiteVisible(ctx)
+	case userbinding.FieldMysekaiVisible:
+		return m.OldMysekaiVisible(ctx)
 	case userbinding.FieldBg:
 		return m.OldBg(ctx)
 	case userbinding.FieldVerified:
@@ -3345,6 +3387,13 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSuiteVisible(v)
+		return nil
+	case userbinding.FieldMysekaiVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiVisible(v)
 		return nil
 	case userbinding.FieldBg:
 		v, ok := value.(*drawing.ProfileBgSettings)
@@ -3447,6 +3496,9 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldSuiteVisible:
 		m.ResetSuiteVisible()
+		return nil
+	case userbinding.FieldMysekaiVisible:
+		m.ResetMysekaiVisible()
 		return nil
 	case userbinding.FieldBg:
 		m.ResetBg()

@@ -28,6 +28,8 @@ type UserBinding struct {
 	Visible bool `json:"visible,omitempty"`
 	// Controls visibility of suite/capture data
 	SuiteVisible bool `json:"suite_visible,omitempty"`
+	// Controls visibility of mysekai private data
+	MysekaiVisible bool `json:"mysekai_visible,omitempty"`
 	// Profile card background settings stored as JSONB
 	Bg *drawing.ProfileBgSettings `json:"bg,omitempty"`
 	// Whether the game account has been verified
@@ -63,7 +65,7 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userbinding.FieldBg:
 			values[i] = new([]byte)
-		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldVerified:
+		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
 		case userbinding.FieldID, userbinding.FieldHarukiUserID:
 			values[i] = new(sql.NullInt64)
@@ -119,6 +121,12 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field suite_visible", values[i])
 			} else if value.Valid {
 				_m.SuiteVisible = value.Bool
+			}
+		case userbinding.FieldMysekaiVisible:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field mysekai_visible", values[i])
+			} else if value.Valid {
+				_m.MysekaiVisible = value.Bool
 			}
 		case userbinding.FieldBg:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -189,6 +197,9 @@ func (_m *UserBinding) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("suite_visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SuiteVisible))
+	builder.WriteString(", ")
+	builder.WriteString("mysekai_visible=")
+	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiVisible))
 	builder.WriteString(", ")
 	builder.WriteString("bg=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Bg))

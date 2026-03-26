@@ -257,6 +257,42 @@ func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
 	}
 }
 
+func (sekaiHandlers) ProfileHideMySekaiHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
+			},
+			Path: "profile/mysekai/hide",
+		},
+		ParseUIDArg: boolPtr(false),
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("浣跨敤鏂瑰紡:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideMySekai, newProfileSettingsParams(ctx)), nil
+		},
+	}
+}
+
+func (sekaiHandlers) ProfileShowMySekaiHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
+			},
+			Path: "profile/mysekai/show",
+		},
+		ParseUIDArg: boolPtr(false),
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("浣跨敤鏂瑰紡:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowMySekai, newProfileSettingsParams(ctx)), nil
+		},
+	}
+}
+
 func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

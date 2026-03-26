@@ -69,6 +69,7 @@ type BindingListItem struct {
 	UserID          string
 	Visible         bool
 	SuiteVisible    bool
+	MySekaiVisible  bool
 	Verified        bool
 	Bg              *drawing.ProfileBgSettings
 	IsGlobalDefault bool
@@ -490,6 +491,7 @@ func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDef
 			UserID:          binding.UserID,
 			Visible:         binding.Visible,
 			SuiteVisible:    binding.SuiteVisible,
+			MySekaiVisible:  binding.MysekaiVisible,
 			Verified:        binding.Verified,
 			Bg:              cloneProfileBGSettings(binding.Bg),
 			IsGlobalDefault: binding.ID == globalDefaultID,
@@ -685,6 +687,19 @@ func (s *BindingService) SetBindingSuiteVisible(ctx context.Context, platform, p
 	}
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
 		SetSuiteVisible(suiteVisible).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) SetBindingMySekaiVisible(ctx context.Context, platform, platformUserID, server string, mySekaiVisible bool) (*BindingListItem, error) {
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetMysekaiVisible(mySekaiVisible).
 		Save(ctx); err != nil {
 		return nil, err
 	}

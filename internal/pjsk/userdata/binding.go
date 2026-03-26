@@ -18,13 +18,14 @@ var ErrNoBinding = errors.New("pjsk: no binding found for user on this server")
 
 // ResolvedBinding holds the result of a successful binding lookup.
 type ResolvedBinding struct {
-	BindingID    int
-	PJSKUserID   string
-	Server       string
-	Visible      bool
-	SuiteVisible bool
-	Verified     bool
-	Bg           *drawing.ProfileBgSettings
+	BindingID      int
+	PJSKUserID     string
+	Server         string
+	Visible        bool
+	SuiteVisible   bool
+	MySekaiVisible bool
+	Verified       bool
+	Bg             *drawing.ProfileBgSettings
 }
 
 // BindingResolver resolves a (haruki_user_id, server) pair to the user's
@@ -61,13 +62,14 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			return nil, ErrNoBinding
 		}
 		return &ResolvedBinding{
-			BindingID:    b.ID,
-			PJSKUserID:   b.UserID,
-			Server:       b.Server,
-			Visible:      b.Visible,
-			SuiteVisible: b.SuiteVisible,
-			Verified:     b.Verified,
-			Bg:           cloneProfileBGSettings(b.Bg),
+			BindingID:      b.ID,
+			PJSKUserID:     b.UserID,
+			Server:         b.Server,
+			Visible:        b.Visible,
+			SuiteVisible:   b.SuiteVisible,
+			MySekaiVisible: b.MysekaiVisible,
+			Verified:       b.Verified,
+			Bg:             cloneProfileBGSettings(b.Bg),
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -90,13 +92,14 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 	}
 
 	return &ResolvedBinding{
-		BindingID:    b.ID,
-		PJSKUserID:   b.UserID,
-		Server:       b.Server,
-		Visible:      b.Visible,
-		SuiteVisible: b.SuiteVisible,
-		Verified:     b.Verified,
-		Bg:           cloneProfileBGSettings(b.Bg),
+		BindingID:      b.ID,
+		PJSKUserID:     b.UserID,
+		Server:         b.Server,
+		Visible:        b.Visible,
+		SuiteVisible:   b.SuiteVisible,
+		MySekaiVisible: b.MysekaiVisible,
+		Verified:       b.Verified,
+		Bg:             cloneProfileBGSettings(b.Bg),
 	}, nil
 }
 

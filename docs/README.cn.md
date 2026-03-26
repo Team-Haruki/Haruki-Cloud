@@ -76,7 +76,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
-| 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` 语义、验证现状与背景图存储规则 |
+| 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` / `mysekai_visible` 语义、验证现状与背景图存储规则 |
 | 2026-03-25 | 项目进展总结 | 同步 Profile 设置落地状态与当前语义 |
 | 2026-03-25 | PJSK Event Tracker 对接说明 | 新增 tracker 对接专题文档（含 `@用户` 解析方案） |
 | 2026-03-24 | PJSK 账号绑定实现说明 | 新增账号绑定与执行链路收口专题文档 |

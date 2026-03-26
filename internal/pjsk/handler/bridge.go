@@ -237,7 +237,7 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 	}
 
 	var framesJSON []byte
-	if target.Binding != nil && target.Binding.SuiteVisible {
+	if hasUsableSuiteData(target.Binding) {
 		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
 			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
 				region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userPlayerFrames")
@@ -279,7 +279,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 		}
 		target, err := resolveGameTarget(context.Background(), queryParams, region, app)
 		if err == nil && target.Binding != nil {
-			if !target.Binding.SuiteVisible {
+			if !hasUsableSuiteData(target.Binding) {
 				reason = "当前已关闭 Suite 抓包数据，以下为基于公开信息的估算结果。"
 			} else if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
 				raw, toolboxErr := sekaiutils.GetToolboxClient().GetPrivateDataValue(
@@ -645,7 +645,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 
 		// Fetch player frames from the suite snapshot (best-effort; nil = no frame rendered).
 		var framesJSON []byte
-		if p.Mode == "self" && target.Binding != nil && target.Binding.SuiteVisible {
+		if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
 			if platform, platformUserID := platformCredentials(p); platform != "" {
 				if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
 					framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
@@ -679,6 +679,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		return data, CommandResultDataTypeText, nil
 	case accountdata.ProfileModeHideID, accountdata.ProfileModeShowID,
 		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
+		accountdata.ProfileModeHideMySekai, accountdata.ProfileModeShowMySekai,
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if app.Bindings == nil {
@@ -845,6 +846,17 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *
 	return target.HarukiUserID, target.PJSKUserID, target.Visible, nil
 }
 
+func hasUsableSuiteData(binding *accountdata.ResolvedBinding) bool {
+	return binding != nil && binding.SuiteVisible
+}
+
+// MySekai availability is governed by a dedicated binding flag rather than
+// reusing SuiteVisible. This matches the split semantics we want in Cloud and
+// keeps suite/mysekai private-data visibility independently configurable.
+func hasUsableMySekaiData(binding *accountdata.ResolvedBinding) bool {
+	return binding != nil && binding.MySekaiVisible
+}
+
 // platformCredentials returns the (platform, platformUserID) pair for toolbox
 // key queries. Returns empty strings for "uid" mode (no credentials available).
 func platformCredentials(p userQueryParams) (string, string) {
@@ -1003,7 +1015,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		if err != nil {
 			return nil, fmt.Errorf("未找到绑定账号：%w", err)
 		}
-		if !binding.SuiteVisible {
+		if !hasUsableMySekaiData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
@@ -1022,7 +1034,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		if err != nil {
 			return nil, fmt.Errorf("未找到绑定账号：%w", err)
 		}
-		if !binding.SuiteVisible {
+		if !hasUsableSuiteData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)

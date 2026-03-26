@@ -106,6 +106,20 @@ func (_u *UserBindingUpdate) SetNillableSuiteVisible(v *bool) *UserBindingUpdate
 	return _u
 }
 
+// SetMysekaiVisible sets the "mysekai_visible" field.
+func (_u *UserBindingUpdate) SetMysekaiVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetMysekaiVisible(v)
+	return _u
+}
+
+// SetNillableMysekaiVisible sets the "mysekai_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableMysekaiVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetMysekaiVisible(*v)
+	}
+	return _u
+}
+
 // SetBg sets the "bg" field.
 func (_u *UserBindingUpdate) SetBg(v *drawing.ProfileBgSettings) *UserBindingUpdate {
 	_u.mutation.SetBg(v)
@@ -244,6 +258,9 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.MysekaiVisible(); ok {
+		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Bg(); ok {
 		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)
@@ -392,6 +409,20 @@ func (_u *UserBindingUpdateOne) SetSuiteVisible(v bool) *UserBindingUpdateOne {
 func (_u *UserBindingUpdateOne) SetNillableSuiteVisible(v *bool) *UserBindingUpdateOne {
 	if v != nil {
 		_u.SetSuiteVisible(*v)
+	}
+	return _u
+}
+
+// SetMysekaiVisible sets the "mysekai_visible" field.
+func (_u *UserBindingUpdateOne) SetMysekaiVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetMysekaiVisible(v)
+	return _u
+}
+
+// SetNillableMysekaiVisible sets the "mysekai_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableMysekaiVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetMysekaiVisible(*v)
 	}
 	return _u
 }
@@ -564,6 +595,9 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.MysekaiVisible(); ok {
+		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Bg(); ok {
 		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)

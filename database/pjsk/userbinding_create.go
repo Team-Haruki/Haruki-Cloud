@@ -67,6 +67,20 @@ func (_c *UserBindingCreate) SetNillableSuiteVisible(v *bool) *UserBindingCreate
 	return _c
 }
 
+// SetMysekaiVisible sets the "mysekai_visible" field.
+func (_c *UserBindingCreate) SetMysekaiVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetMysekaiVisible(v)
+	return _c
+}
+
+// SetNillableMysekaiVisible sets the "mysekai_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableMysekaiVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetMysekaiVisible(*v)
+	}
+	return _c
+}
+
 // SetBg sets the "bg" field.
 func (_c *UserBindingCreate) SetBg(v *drawing.ProfileBgSettings) *UserBindingCreate {
 	_c.mutation.SetBg(v)
@@ -151,6 +165,10 @@ func (_c *UserBindingCreate) defaults() {
 		v := userbinding.DefaultSuiteVisible
 		_c.mutation.SetSuiteVisible(v)
 	}
+	if _, ok := _c.mutation.MysekaiVisible(); !ok {
+		v := userbinding.DefaultMysekaiVisible
+		_c.mutation.SetMysekaiVisible(v)
+	}
 	if _, ok := _c.mutation.Verified(); !ok {
 		v := userbinding.DefaultVerified
 		_c.mutation.SetVerified(v)
@@ -183,6 +201,9 @@ func (_c *UserBindingCreate) check() error {
 	}
 	if _, ok := _c.mutation.SuiteVisible(); !ok {
 		return &ValidationError{Name: "suite_visible", err: errors.New(`pjsk: missing required field "UserBinding.suite_visible"`)}
+	}
+	if _, ok := _c.mutation.MysekaiVisible(); !ok {
+		return &ValidationError{Name: "mysekai_visible", err: errors.New(`pjsk: missing required field "UserBinding.mysekai_visible"`)}
 	}
 	if _, ok := _c.mutation.Verified(); !ok {
 		return &ValidationError{Name: "verified", err: errors.New(`pjsk: missing required field "UserBinding.verified"`)}
@@ -238,6 +259,10 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
 		_node.SuiteVisible = value
+	}
+	if value, ok := _c.mutation.MysekaiVisible(); ok {
+		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
+		_node.MysekaiVisible = value
 	}
 	if value, ok := _c.mutation.Bg(); ok {
 		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)

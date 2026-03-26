@@ -247,11 +247,12 @@ UID xxxxxx 的注册时间
 
 ### user_bindings 表新增字段
 
-`ent/pjsk/schema/userbinding.go` 新增三个字段（ent codegen 已同步）：
+`ent/pjsk/schema/userbinding.go` 新增四个字段（ent codegen 已同步）：
 
 | 字段 | 类型 | 默认值 | 用途 |
 |------|------|--------|------|
 | `suite_visible` | bool | `true` | 控制当前绑定是否被视为“有可用 Suite 抓包数据” |
+| `mysekai_visible` | bool | `true` | 控制当前绑定是否被视为“有可用 MySekai 私有数据” |
 | `bg` | `*drawing.ProfileBgSettings` (JSONB) | nil | 个人信息名片背景图设置，可为空 |
 | `verified` | bool | `false` | 游戏账号是否已通过 `/pjsk verify` 验证 |
 
@@ -274,6 +275,7 @@ type ProfileBgSettings struct {
 这三个字段现在已经直接支撑以下 handler：
 
 - `suite_visible` → `ProfileHideSuiteHandle` / `ProfileShowSuiteHandle`
+- `mysekai_visible` → `ProfileHideMySekaiHandle` / `ProfileShowMySekaiHandle`
 - `bg` → `ProfileUploadBGHandle` / `ProfileClearBGHandle` / `ProfileAdjustBGHandle`
 - `verified` → `ProfileVerifyHandle` / `ProfileVerifyListHandle`
 
@@ -285,11 +287,36 @@ type ProfileBgSettings struct {
 2. `suite_visible`
    - 不再按“是否允许别人查看”解释
    - 当前语义是：当它为 `false` 时，系统把该绑定视为“没有可用的 Suite 抓包数据”
-   - 当前实际影响点有三处：
+   - 当前实际影响点有两处：
      - `profile/check-data` 的 Suite 分支（`/sud`）
-     - `profile/check-data-mysekai`（`/msd`）
      - `profile` 渲染时的玩家框附加信息（`userPlayerFrames`）读取
    - 不影响公开 Sekai API 数据
+3. `mysekai_visible`
+   - 当前语义是：当它为 `false` 时，系统把该绑定视为“没有可用的 MySekai 私有数据”
+   - 当前直接影响点是：
+     - `profile/check-data-mysekai`（`/msd`）
+   - 该语义已经从 `suite_visible` 中拆出，后续可继续承接 MySekai 私有链的隐藏控制
+
+### 与 lunabot 的隐藏抓包语义差异（2026-03-26 补充）
+
+经对照 `lunabot` 当前实现，可以明确以下几点：
+
+1. `lunabot` 中“隐藏抓包”只直接约束 `suite` 详细数据入口 `get_detailed_profile(...)`。
+2. `mysekai` 使用独立的 `get_mysekai_info(...)` 链路，默认**不复用** `hide_suite` 这一套控制。
+3. `lunabot` 存在少量 `ignore_hide=True` 的特例功能，允许在隐藏抓包后继续读取 suite，用于：
+   - 资料卡增强字段
+   - 部分 education / deck / mysekai 依赖的主体私有数据
+4. `music-rewards` 这类模块在 `lunabot` 中采用的是：
+   - 有 `suite` -> 精确结果
+   - 无 `suite` -> 公开 profile 估算
+
+而 `Haruki-Cloud` 当前实现更严格，也更粗粒度：
+
+- `Haruki-Cloud` 当前已经开始按 `lunabot` 的方向拆分：
+  - `suite_visible` 只控制 suite 私有链
+  - `mysekai_visible` 独立控制 MySekai 私有链
+
+因此，后续如果继续按 `lunabot` 逻辑转译，建议把 `suite` 与 `mysekai` 的隐藏/可用性语义拆开，而不是继续共用同一个开关。
 3. `verified`
    - 当前 `/pjsk verify` 暂时走 Toolbox fast-verification 路径
    - 仅当当前区服当前绑定账号命中 `/api/private/game-binding` 返回列表时，才会写入 `verified=true`
@@ -503,7 +530,7 @@ ban_state              → 全平台禁用
 4. Deck 当前仍是 Go 方案，旧 CGo 引擎未恢复为默认链路
 5. 已存在的 `command_manifests` 若被人工特殊维护，仍需确认新的 handler-source 同步结果是否符合预期
 6. 图片类 bridge 执行器当前强依赖 `ImageCache`；若部署未配置 image cache，会直接影响图片命令可用性
-7. `user_bindings` 表新增的 `suite_visible`、`bg`、`verified` 三个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
+7. `user_bindings` 表新增的 `suite_visible`、`mysekai_visible`、`bg`、`verified` 四个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
 8. `authorize_social_platform_infos` 表新增 `allow_fast_verification` 列同样需要 DB 迁移（Toolbox 侧）
 
 > **已修复**：`app.Cards`、`app.Events`、`app.Gachas`、`app.Stamps` 和 `app.Bindings` 的 nil panic 风险已在 bridge.go 中通过前置 nil guard 解决（v16.0）。

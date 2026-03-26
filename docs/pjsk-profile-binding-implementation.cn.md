@@ -569,7 +569,7 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 
 ### 10.2 已在 2026-03-25 落地的 profile 设置能力
 
-以下四组 profile 设置能力现在已经接入统一的 `ResolvedCommand -> Execute -> userdata` 链路，共 9 个 bot path：
+以下五组 profile 设置能力现在已经接入统一的 `ResolvedCommand -> Execute -> userdata` 链路，共 11 个 bot path：
 
 1. 隐藏 / 显示 ID
    - `profile/visibility/hide`
@@ -577,10 +577,13 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 2. 隐藏 / 显示抓包
    - `profile/suite/hide`
    - `profile/suite/show`
-3. `/pjsk verify` / `/pjsk verify list`
+3. 隐藏 / 显示烤森抓包
+   - `profile/mysekai/hide`
+   - `profile/mysekai/show`
+4. `/pjsk verify` / `/pjsk verify list`
    - `profile/verify`
    - `profile/verify/list`
-4. 个人信息背景上传 / 清除 / 调整
+5. 个人信息背景上传 / 清除 / 调整
    - `profile/bg/upload`
    - `profile/bg/clear`
    - `profile/bg/adjust`
@@ -607,13 +610,22 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 它的实际语义是：
 
 1. 当 `suite_visible=false` 时，该绑定会被视为“没有可用的 Suite 抓包数据”
-2. 当前受影响的功能有三处：
+2. 当前受影响的功能有两处：
    - `profile/check-data` 的 Suite 分支（`/sud`）
-   - `profile/check-data-mysekai`（`/msd`）
    - `profile` 渲染时附加读取的 `userPlayerFrames`
 3. 它不影响公开 Sekai API 数据
 
-### 10.5 背景图保存路径
+### 10.5 `mysekai_visible` 的当前实际语义
+
+它的实际语义是：
+
+1. 当 `mysekai_visible=false` 时，该绑定会被视为“没有可用的 MySekai 私有数据”
+2. 当前直接受影响的功能有一处：
+   - `profile/check-data-mysekai`（`/msd`）
+3. 这个字段的引入目的，是把 `MySekai` 私有链与 `Suite` 私有链拆分治理，避免继续共用 `suite_visible`
+4. 它不影响公开 Sekai API 数据
+
+### 10.6 背景图保存路径
 
 当前背景图采用本地文件存储，规则如下：
 
@@ -628,7 +640,7 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 
 这样做的目的，是让 DB 中只保存稳定的相对路径，而不是部署相关的绝对路径。
 
-### 10.6 多服同 UID 的选择规则仍较保守
+### 10.7 多服同 UID 的选择规则仍较保守
 
 当前规则是：
 

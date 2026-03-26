@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	ProfileModeHideID     = "profile-hide-id"
-	ProfileModeShowID     = "profile-show-id"
-	ProfileModeHideSuite  = "profile-hide-suite"
-	ProfileModeShowSuite  = "profile-show-suite"
-	ProfileModeVerify     = "profile-verify"
-	ProfileModeVerifyList = "profile-verify-list"
-	ProfileModeBGUpload   = "profile-bg-upload"
-	ProfileModeBGClear    = "profile-bg-clear"
-	ProfileModeBGAdjust   = "profile-bg-adjust"
+	ProfileModeHideID      = "profile-hide-id"
+	ProfileModeShowID      = "profile-show-id"
+	ProfileModeHideSuite   = "profile-hide-suite"
+	ProfileModeShowSuite   = "profile-show-suite"
+	ProfileModeHideMySekai = "profile-hide-mysekai"
+	ProfileModeShowMySekai = "profile-show-mysekai"
+	ProfileModeVerify      = "profile-verify"
+	ProfileModeVerifyList  = "profile-verify-list"
+	ProfileModeBGUpload    = "profile-bg-upload"
+	ProfileModeBGClear     = "profile-bg-clear"
+	ProfileModeBGAdjust    = "profile-bg-adjust"
 )
 
 type ProfileSettingsCommandParams struct {
@@ -84,6 +86,18 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, err
 		}
 		return []byte(fmt.Sprintf("已展示%s服抓包信息", strings.ToUpper(item.Server))), nil
+	case ProfileModeHideMySekai:
+		item, err := service.SetBindingMySekaiVisible(ctx, params.Platform, params.PlatformUserID, params.Server, false)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已隐藏%s服烤森抓包信息", strings.ToUpper(item.Server))), nil
+	case ProfileModeShowMySekai:
+		item, err := service.SetBindingMySekaiVisible(ctx, params.Platform, params.PlatformUserID, params.Server, true)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已展示%s服烤森抓包信息", strings.ToUpper(item.Server))), nil
 	case ProfileModeVerify:
 		item, alreadyVerified, err := service.VerifyCurrentBinding(ctx, params.Platform, params.PlatformUserID, params.Server)
 		if err != nil {

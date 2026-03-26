@@ -78,6 +78,14 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 		t.Fatalf("expected suite_visible=false, got %+v", item)
 	}
 
+	item, err = service.SetBindingMySekaiVisible(ctx, "qq", "42", "jp", false)
+	if err != nil {
+		t.Fatalf("hide mysekai: %v", err)
+	}
+	if item.MySekaiVisible {
+		t.Fatalf("expected mysekai_visible=false, got %+v", item)
+	}
+
 	item, alreadyVerified, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp")
 	if err != nil {
 		t.Fatalf("verify: %v", err)

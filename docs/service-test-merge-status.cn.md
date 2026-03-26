@@ -233,6 +233,36 @@
 - 当前这条线已经推进到一个相对安全的阶段。
 - `event` 及更深层私有字段迁移属于**下一阶段单独任务**，不建议为了赶进度在本轮继续硬推。
 
+### 5.6 lunabot 隐藏抓包逻辑对照备忘录
+
+截至 2026-03-26，对 `lunabot` 当前“隐藏抓包 / suite / mysekai”链路的检查结论如下：
+
+- `hide_suite` 的真正拦截点是 `get_detailed_profile(...)`
+- 默认情况下，只要某模块依赖 `get_detailed_profile(...)` 且未显式 `ignore_hide=True`，用户隐藏抓包后该模块就会失败
+- `mysekai` 使用独立的 `get_mysekai_info(...)`，并不直接受 `hide_suite` 控制
+- `lunabot` 内部存在一批特例会显式 `ignore_hide=True`，包括部分：
+  - `profile` 资料卡增强字段
+  - `education`
+  - `deck`
+  - `mysekai` 中借 suite 读取的字段
+- `music-rewards` 是一个较清晰的样板：
+  - 有 suite 时读取 `userMusicAchievements` 做精确计算
+  - 没有 suite 时退化为 `basic profile` + `userMusicDifficultyClearCount` 的公开估算
+
+这说明 `lunabot` 并不是统一的“隐藏抓包后自动进入估算模式”，而是多种策略并存：
+
+- `suite exact`
+- `suite exact but ignore_hide`
+- `public basic`
+- `public inferred`
+- `mysekai private`
+
+对 `Haruki-Cloud` 的直接启发是：
+
+1. `music-rewards` 这类模块适合先落地“精确 / 估算”双分支
+2. `event`、`education` 深层字段、`deck` 算法主体、`mysekai` 主体数据不应仓促照搬
+3. `Haruki-Cloud` 当前已开始把 `suite` 与 `mysekai` 的可用性控制拆成两套语义；后续只需继续沿这条方向补齐剩余文档和边界约束，不应再回退到共用 `suite_visible`
+
 ## 6. 后续开发时的注意事项
 
 - 不要重新把旧 `/api/render` 契约写回 `Haruki-Cloud`。

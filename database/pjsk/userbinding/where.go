@@ -79,6 +79,11 @@ func SuiteVisible(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldSuiteVisible, v))
 }
 
+// MysekaiVisible applies equality check predicate on the "mysekai_visible" field. It's identical to MysekaiVisibleEQ.
+func MysekaiVisible(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldMysekaiVisible, v))
+}
+
 // Verified applies equality check predicate on the "verified" field. It's identical to VerifiedEQ.
 func Verified(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldVerified, v))
@@ -272,6 +277,16 @@ func SuiteVisibleEQ(v bool) predicate.UserBinding {
 // SuiteVisibleNEQ applies the NEQ predicate on the "suite_visible" field.
 func SuiteVisibleNEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNEQ(FieldSuiteVisible, v))
+}
+
+// MysekaiVisibleEQ applies the EQ predicate on the "mysekai_visible" field.
+func MysekaiVisibleEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldMysekaiVisible, v))
+}
+
+// MysekaiVisibleNEQ applies the NEQ predicate on the "mysekai_visible" field.
+func MysekaiVisibleNEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldMysekaiVisible, v))
 }
 
 // BgIsNil applies the IsNil predicate on the "bg" field.

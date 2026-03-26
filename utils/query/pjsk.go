@@ -261,3 +261,65 @@ func (c *Client) GetPJSKSettings(ctx context.Context, harukiUserID int) (*pjsksc
 	}
 	return row.Settings, nil
 }
+
+// UpsertPJSKSettings writes settings for a user, creating the preference row
+// if it does not yet exist.
+func (c *Client) UpsertPJSKSettings(ctx context.Context, harukiUserID int, settings *pjskschema.UserSettings) error {
+	if err := c.requirePJSK(); err != nil {
+		return err
+	}
+	if harukiUserID <= 0 {
+		return ErrInvalidUserID
+	}
+	if settings == nil {
+		return nil
+	}
+
+	existing, err := c.pjsk.UserPreference.
+		Query().
+		Where(userpreference.HarukiUserIDEQ(harukiUserID)).
+		Only(ctx)
+	if err != nil {
+		if !entpjsk.IsNotFound(err) {
+			return err
+		}
+		// Create
+		_, err = c.pjsk.UserPreference.
+			Create().
+			SetHarukiUserID(harukiUserID).
+			SetSettings(settings).
+			Save(ctx)
+		return err
+	}
+	// Update
+	_, err = c.pjsk.UserPreference.
+		UpdateOneID(existing.ID).
+		SetSettings(settings).
+		Save(ctx)
+	return err
+}
+
+// IncrNoncompliantBGCount increments the user-level BG noncompliance counter by 1
+// and returns the new count. Returns an error only on DB failure; missing rows are
+// treated as count=0.
+func (c *Client) IncrNoncompliantBGCount(ctx context.Context, harukiUserID int) (int, error) {
+	if err := c.requirePJSK(); err != nil {
+		return 0, err
+	}
+	if harukiUserID <= 0 {
+		return 0, ErrInvalidUserID
+	}
+
+	settings := &pjskschema.UserSettings{}
+	existing, err := c.GetPJSKSettings(ctx, harukiUserID)
+	if err == nil {
+		settings = existing
+	}
+
+	settings.NoncompliantBGCount++
+	newCount := settings.NoncompliantBGCount
+	if upsertErr := c.UpsertPJSKSettings(ctx, harukiUserID, settings); upsertErr != nil {
+		return newCount, upsertErr
+	}
+	return newCount, nil
+}

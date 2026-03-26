@@ -29,8 +29,10 @@ import (
 	publicChunithm "haruki-cloud/api/public/chunithm"
 	publicPJSK "haruki-cloud/api/public/pjsk"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/censor"
 
 	botDB "haruki-cloud/database/bot"
+	censorDB "haruki-cloud/database/censor"
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
 	pjskDB "haruki-cloud/database/pjsk"
@@ -60,7 +62,8 @@ func main() {
 	pjskClient := initPJSKIfEnabled(mainLogger, app, redisClient)
 	sekaiClient := initSekaiIfEnabled(mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
-	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient)
+	censorService := initCensorIfEnabled(mainLogger, renderRuntime)
+	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, censorService)
 	legacyPJSK.RegisterPJSKRenderRoutes(app, renderRuntime)
 	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
@@ -206,7 +209,7 @@ func initPJSKIfEnabled(mainLogger *harukiLogger.Logger, app *fiber.App, redisCli
 	return pjskClient
 }
 
-func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client) {
+func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client, censorService *censor.Service) {
 	if renderRuntime == nil || pjskClient == nil {
 		return
 	}
@@ -221,7 +224,11 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		)
 		renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
 		if renderRuntime.Assets != nil {
-			renderRuntime.Bindings.SetProfileBGStorage(userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary()))
+			bgStore := userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())
+			renderRuntime.Bindings.SetProfileBGStorage(bgStore)
+		}
+		if censorService != nil {
+			renderRuntime.Bindings.SetCensorService(censorService)
 		}
 		renderRuntime.BanChecker = userdata.NewBanService(usersClient)
 	}
@@ -279,6 +286,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		},
 		ImageCacheURI:   harukiConfig.Cfg.PJSKRender.ImageCache.URI,
 		ImageCacheDir:   harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
+		ImageCachePGURL: harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
 		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
@@ -371,6 +379,40 @@ func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	}
 	mainLogger.Infof("Noise IK transport encryption enabled (pubkey=%x)", kp.Public)
 	return kp
+}
+
+func initCensorIfEnabled(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App) *censor.Service {
+	cfg := harukiConfig.Cfg.Censor
+	if strings.TrimSpace(cfg.CensorDBType) == "" || strings.TrimSpace(cfg.CensorDBURL) == "" {
+		return nil
+	}
+
+	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
+	if err != nil {
+		mainLogger.Errorf("Failed to connect to Censor DB: %v", err)
+		return nil
+	}
+	if err := censorClient.Schema.Create(context.Background()); err != nil {
+		mainLogger.Errorf("Failed to create schema for Censor DB: %v", err)
+		_ = censorClient.Close()
+		return nil
+	}
+
+	svc := censor.NewService(
+		cfg.BaiduAPIKey, cfg.BaiduSecret,
+		cfg.TencentSecretID, cfg.TencentSecretKey, cfg.TencentRegion, cfg.TencentBizType,
+		censorClient,
+	)
+
+	if renderRuntime != nil {
+		renderRuntime.Censor = svc
+		if renderRuntime.Profiles != nil {
+			renderRuntime.Profiles.SetCensor(svc)
+		}
+	}
+
+	mainLogger.Infof("Censor service initialized")
+	return svc
 }
 
 func closeClients(usersClient *usersDB.Client, chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,

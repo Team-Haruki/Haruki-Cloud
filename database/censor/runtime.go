@@ -3,16 +3,60 @@
 package censor
 
 import (
+	"haruki-cloud/database/censor/imagemodcache"
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
 	"haruki-cloud/ent/censor/schema"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	imagemodcacheFields := schema.ImageModCache{}.Fields()
+	_ = imagemodcacheFields
+	// imagemodcacheDescURL is the schema descriptor for url field.
+	imagemodcacheDescURL := imagemodcacheFields[1].Descriptor()
+	// imagemodcache.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	imagemodcache.URLValidator = func() func(string) error {
+		validators := imagemodcacheDescURL.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(url string) error {
+			for _, fn := range fns {
+				if err := fn(url); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// imagemodcacheDescResult is the schema descriptor for result field.
+	imagemodcacheDescResult := imagemodcacheFields[3].Descriptor()
+	// imagemodcache.ResultValidator is a validator for the "result" field. It is called by the builders before save.
+	imagemodcache.ResultValidator = func() func(string) error {
+		validators := imagemodcacheDescResult.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(result string) error {
+			for _, fn := range fns {
+				if err := fn(result); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// imagemodcacheDescCreatedAt is the schema descriptor for created_at field.
+	imagemodcacheDescCreatedAt := imagemodcacheFields[4].Descriptor()
+	// imagemodcache.DefaultCreatedAt holds the default value on creation for the created_at field.
+	imagemodcache.DefaultCreatedAt = imagemodcacheDescCreatedAt.Default.(func() time.Time)
 	namelogFields := schema.NameLog{}.Fields()
 	_ = namelogFields
 	// namelogDescUserID is the schema descriptor for user_id field.

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/imagecache"
 	sekaiutil "haruki-cloud/utils/sekai"
@@ -39,6 +41,8 @@ type Config struct {
 	DrawingCache      drawing.RenderCacheConfig
 	ImageCacheURI     string
 	ImageCacheDir     string
+	ImageCachePGURL   string // PostgreSQL DSN for image cache deduplication (optional)
+	CensorService     *censor.Service
 	AssetPrimaryDir   string
 	AssetLegacyDirs   []string
 	LocalMasterdata   LocalMasterdataConfig
@@ -90,6 +94,7 @@ type App struct {
 	Bindings   *accountdata.BindingService
 	BanChecker *accountdata.BanService
 	ImageCache *imagecache.Client
+	Censor     *censor.Service
 	Config     Config
 }
 
@@ -155,6 +160,21 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		vliveController = vlive.NewController(vlive.NewCloudSource(sekaiClient, cfg.DefaultRegion), cfg.DefaultRegion)
 	}
 
+	var imgStore *imagecache.PGStore
+	if cfg.ImageCachePGURL != "" {
+		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
+			_ = store.Init(context.Background())
+			imgStore = store
+		}
+	}
+
+	if cfg.CensorService != nil {
+		skController.SetCensor(cfg.CensorService)
+		if profileController != nil {
+			profileController.SetCensor(cfg.CensorService)
+		}
+	}
+
 	return &App{
 		Sekai:      sekaiClient,
 		PJSK:       pjskClient,
@@ -175,7 +195,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SK:         skController,
 		Stamps:     stampController,
 		VLive:      vliveController,
-		ImageCache: imagecache.New(cfg.ImageCacheURI, cfg.ImageCacheDir),
+		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
+		Censor:     cfg.CensorService,
 		Config:     cfg,
 	}
 }

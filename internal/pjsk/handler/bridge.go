@@ -756,6 +756,16 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 			return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
 		}
 
+		if app.Censor != nil {
+			harukiID := target.HarukiUserID
+			if !app.Censor.CensorName(ctx, harukiID, target.PJSKUserID, resp.User.Name, region) {
+				resp.User.Name = ""
+			}
+			if !app.Censor.CensorShortBio(ctx, harukiID, target.PJSKUserID, resp.UserProfile.Word, region) {
+				resp.UserProfile.Word = ""
+			}
+		}
+
 		// Fetch player frames from the suite snapshot (best-effort; nil = no frame rendered).
 		var framesJSON []byte
 		if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
@@ -1032,6 +1042,13 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
+	}
+
+	// Censor user-controlled text (name shown in text output).
+	if app.Censor != nil {
+		if !app.Censor.CensorName(ctx, harukiUserID, pjskUserID, resp.User.Name, region) {
+			resp.User.Name = ""
+		}
 	}
 
 	// Load the caller's enabled difficulties for self-mode; default for others.

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/database/censor/imagemodcache"
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
@@ -75,9 +76,10 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			namelog.Table:  namelog.ValidColumn,
-			result.Table:   result.ValidColumn,
-			shortbio.Table: shortbio.ValidColumn,
+			imagemodcache.Table: imagemodcache.ValidColumn,
+			namelog.Table:       namelog.ValidColumn,
+			result.Table:        result.ValidColumn,
+			shortbio.Table:      shortbio.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

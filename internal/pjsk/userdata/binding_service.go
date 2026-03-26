@@ -12,7 +12,9 @@ import (
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/query"
 	sekaiapi "haruki-cloud/utils/sekai"
 )
 
@@ -43,6 +45,7 @@ type BindingService struct {
 	validator    ProfileValidator
 	fastVerifier FastVerificationProvider
 	bgStorage    ProfileBGStorage
+	censor       *censor.Service
 }
 
 type BindResult struct {
@@ -114,6 +117,13 @@ func (s *BindingService) SetProfileBGStorage(store ProfileBGStorage) {
 		return
 	}
 	s.bgStorage = store
+}
+
+func (s *BindingService) SetCensorService(svc *censor.Service) {
+	if s == nil {
+		return
+	}
+	s.censor = svc
 }
 
 func (s *BindingService) IsReady() bool {
@@ -778,13 +788,34 @@ func (s *BindingService) SetCurrentBindingProfileBG(ctx context.Context, platfor
 	if !binding.Verified {
 		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(binding.Server))
 	}
+
+	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
+	queryClient := query.NewClient(nil, nil, s.pjskDB, nil)
+	userSettings, _ := queryClient.GetPJSKSettings(ctx, binding.HarukiUserID)
+	currentCount := 0
+	if userSettings != nil {
+		currentCount = userSettings.NoncompliantBGCount
+	}
+	if currentCount >= 3 {
+		return nil, fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
+	}
+
+	// Image content moderation
+	if s.censor != nil {
+		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
+			newCount, _ := queryClient.IncrNoncompliantBGCount(ctx, binding.HarukiUserID)
+			if newCount >= 3 {
+				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
+			}
+			return nil, fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
+		}
+	}
+
 	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		SetBg(settings).
-		Save(ctx); err != nil {
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).SetBg(settings).Save(ctx); err != nil {
 		return nil, err
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)

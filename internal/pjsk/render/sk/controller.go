@@ -1,6 +1,7 @@
 package sk
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -54,6 +55,12 @@ type Controller struct {
 	tracker TrackerSource
 	events  EventSource
 	assets  *renderassets.AssetHelper
+	censor  CensorService
+}
+
+// CensorService is a minimal interface for name censoring, satisfied by *censor.Service.
+type CensorService interface {
+	CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool
 }
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
@@ -72,6 +79,25 @@ func (c *Controller) SetTrackerIntegration(tracker TrackerSource, events EventSo
 	if assetHelper != nil {
 		c.assets = assetHelper
 	}
+}
+
+func (c *Controller) SetCensor(svc CensorService) {
+	if c == nil {
+		return
+	}
+	c.censor = svc
+}
+
+// censorTrackerName runs the name through CensorService (fire-and-forget logging)
+// and returns an empty string if non-compliant, preserving public tracker context.
+func (c *Controller) censorTrackerName(name, server string) string {
+	if c.censor == nil || strings.TrimSpace(name) == "" {
+		return name
+	}
+	if !c.censor.CensorName(context.Background(), 0, "", name, server) {
+		return ""
+	}
+	return name
 }
 
 func (c *Controller) BuildLineRequest(req LineRequest) (*LineRequest, error) {
@@ -467,7 +493,7 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		score := latest.RankData.Score
 		return drawing.RankInfo{
 			Rank:  rankValue,
-			Name:  pickTrackerDisplayName(latest.UserData.Name, rankValue),
+			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}, nil
@@ -483,7 +509,7 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 	score := latest.RankData.Score
 	return drawing.RankInfo{
 		Rank:  rankValue,
-		Name:  pickTrackerDisplayName(latest.UserData.Name, rankValue),
+		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}, nil
@@ -502,7 +528,7 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 		score := latest.RankData.Score
 		return drawing.RankInfo{
 			Rank:  rankValue,
-			Name:  pickTrackerDisplayName(latest.UserData.Name, rankValue),
+			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}, nil
@@ -518,7 +544,7 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 	score := latest.RankData.Score
 	return drawing.RankInfo{
 		Rank:  rankValue,
-		Name:  pickTrackerDisplayName(latest.UserData.Name, rankValue),
+		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}, nil
@@ -581,7 +607,7 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		if err != nil {
 			return nil, fmt.Errorf("tracker trace rank %d query failed: %w", rank, err)
 		}
-		name := pickTrackerDisplayName(trace.UserData.Name, rank)
+		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
 		for _, point := range trace.RankData {
 			rankValue := rank
 			if point.Rank > 0 {
@@ -600,7 +626,7 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		if err != nil {
 			return nil, fmt.Errorf("tracker trace rank %d query failed: %w", rank, err)
 		}
-		name := pickTrackerDisplayName(trace.UserData.Name, rank)
+		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
 		for _, point := range trace.RankData {
 			rankValue := rank
 			if point.Rank > 0 {

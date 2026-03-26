@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/database/censor/migrate"
 
+	"haruki-cloud/database/censor/imagemodcache"
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
@@ -25,6 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// ImageModCache is the client for interacting with the ImageModCache builders.
+	ImageModCache *ImageModCacheClient
 	// NameLog is the client for interacting with the NameLog builders.
 	NameLog *NameLogClient
 	// Result is the client for interacting with the Result builders.
@@ -42,6 +45,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.ImageModCache = NewImageModCacheClient(c.config)
 	c.NameLog = NewNameLogClient(c.config)
 	c.Result = NewResultClient(c.config)
 	c.ShortBio = NewShortBioClient(c.config)
@@ -135,11 +139,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		NameLog:  NewNameLogClient(cfg),
-		Result:   NewResultClient(cfg),
-		ShortBio: NewShortBioClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		ImageModCache: NewImageModCacheClient(cfg),
+		NameLog:       NewNameLogClient(cfg),
+		Result:        NewResultClient(cfg),
+		ShortBio:      NewShortBioClient(cfg),
 	}, nil
 }
 
@@ -157,18 +162,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		NameLog:  NewNameLogClient(cfg),
-		Result:   NewResultClient(cfg),
-		ShortBio: NewShortBioClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		ImageModCache: NewImageModCacheClient(cfg),
+		NameLog:       NewNameLogClient(cfg),
+		Result:        NewResultClient(cfg),
+		ShortBio:      NewShortBioClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		NameLog.
+//		ImageModCache.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -190,6 +196,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.ImageModCache.Use(hooks...)
 	c.NameLog.Use(hooks...)
 	c.Result.Use(hooks...)
 	c.ShortBio.Use(hooks...)
@@ -198,6 +205,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.ImageModCache.Intercept(interceptors...)
 	c.NameLog.Intercept(interceptors...)
 	c.Result.Intercept(interceptors...)
 	c.ShortBio.Intercept(interceptors...)
@@ -206,6 +214,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ImageModCacheMutation:
+		return c.ImageModCache.mutate(ctx, m)
 	case *NameLogMutation:
 		return c.NameLog.mutate(ctx, m)
 	case *ResultMutation:
@@ -214,6 +224,139 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ShortBio.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("censor: unknown mutation type %T", m)
+	}
+}
+
+// ImageModCacheClient is a client for the ImageModCache schema.
+type ImageModCacheClient struct {
+	config
+}
+
+// NewImageModCacheClient returns a client for the ImageModCache from the given config.
+func NewImageModCacheClient(c config) *ImageModCacheClient {
+	return &ImageModCacheClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `imagemodcache.Hooks(f(g(h())))`.
+func (c *ImageModCacheClient) Use(hooks ...Hook) {
+	c.hooks.ImageModCache = append(c.hooks.ImageModCache, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `imagemodcache.Intercept(f(g(h())))`.
+func (c *ImageModCacheClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ImageModCache = append(c.inters.ImageModCache, interceptors...)
+}
+
+// Create returns a builder for creating a ImageModCache entity.
+func (c *ImageModCacheClient) Create() *ImageModCacheCreate {
+	mutation := newImageModCacheMutation(c.config, OpCreate)
+	return &ImageModCacheCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ImageModCache entities.
+func (c *ImageModCacheClient) CreateBulk(builders ...*ImageModCacheCreate) *ImageModCacheCreateBulk {
+	return &ImageModCacheCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ImageModCacheClient) MapCreateBulk(slice any, setFunc func(*ImageModCacheCreate, int)) *ImageModCacheCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ImageModCacheCreateBulk{err: fmt.Errorf("calling to ImageModCacheClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ImageModCacheCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ImageModCacheCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ImageModCache.
+func (c *ImageModCacheClient) Update() *ImageModCacheUpdate {
+	mutation := newImageModCacheMutation(c.config, OpUpdate)
+	return &ImageModCacheUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ImageModCacheClient) UpdateOne(_m *ImageModCache) *ImageModCacheUpdateOne {
+	mutation := newImageModCacheMutation(c.config, OpUpdateOne, withImageModCache(_m))
+	return &ImageModCacheUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ImageModCacheClient) UpdateOneID(id int) *ImageModCacheUpdateOne {
+	mutation := newImageModCacheMutation(c.config, OpUpdateOne, withImageModCacheID(id))
+	return &ImageModCacheUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ImageModCache.
+func (c *ImageModCacheClient) Delete() *ImageModCacheDelete {
+	mutation := newImageModCacheMutation(c.config, OpDelete)
+	return &ImageModCacheDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ImageModCacheClient) DeleteOne(_m *ImageModCache) *ImageModCacheDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ImageModCacheClient) DeleteOneID(id int) *ImageModCacheDeleteOne {
+	builder := c.Delete().Where(imagemodcache.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ImageModCacheDeleteOne{builder}
+}
+
+// Query returns a query builder for ImageModCache.
+func (c *ImageModCacheClient) Query() *ImageModCacheQuery {
+	return &ImageModCacheQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeImageModCache},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ImageModCache entity by its id.
+func (c *ImageModCacheClient) Get(ctx context.Context, id int) (*ImageModCache, error) {
+	return c.Query().Where(imagemodcache.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ImageModCacheClient) GetX(ctx context.Context, id int) *ImageModCache {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ImageModCacheClient) Hooks() []Hook {
+	return c.hooks.ImageModCache
+}
+
+// Interceptors returns the client interceptors.
+func (c *ImageModCacheClient) Interceptors() []Interceptor {
+	return c.inters.ImageModCache
+}
+
+func (c *ImageModCacheClient) mutate(ctx context.Context, m *ImageModCacheMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ImageModCacheCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ImageModCacheUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ImageModCacheUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ImageModCacheDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("censor: unknown ImageModCache mutation op: %q", m.Op())
 	}
 }
 
@@ -619,9 +762,9 @@ func (c *ShortBioClient) mutate(ctx context.Context, m *ShortBioMutation) (Value
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		NameLog, Result, ShortBio []ent.Hook
+		ImageModCache, NameLog, Result, ShortBio []ent.Hook
 	}
 	inters struct {
-		NameLog, Result, ShortBio []ent.Interceptor
+		ImageModCache, NameLog, Result, ShortBio []ent.Interceptor
 	}
 )

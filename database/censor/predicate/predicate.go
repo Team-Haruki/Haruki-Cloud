@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// ImageModCache is the predicate function for imagemodcache builders.
+type ImageModCache func(*sql.Selector)
+
 // NameLog is the predicate function for namelog builders.
 type NameLog func(*sql.Selector)
 

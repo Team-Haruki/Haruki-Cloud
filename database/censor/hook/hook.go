@@ -8,6 +8,18 @@ import (
 	"haruki-cloud/database/censor"
 )
 
+// The ImageModCacheFunc type is an adapter to allow the use of ordinary
+// function as ImageModCache mutator.
+type ImageModCacheFunc func(context.Context, *censor.ImageModCacheMutation) (censor.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ImageModCacheFunc) Mutate(ctx context.Context, m censor.Mutation) (censor.Value, error) {
+	if mv, ok := m.(*censor.ImageModCacheMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *censor.ImageModCacheMutation", m)
+}
+
 // The NameLogFunc type is an adapter to allow the use of ordinary
 // function as NameLog mutator.
 type NameLogFunc func(context.Context, *censor.NameLogMutation) (censor.Value, error)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	ent "haruki-cloud/database/censor"
+	"haruki-cloud/database/censor/imagemodcache"
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
@@ -21,9 +22,10 @@ const (
 )
 
 type Service struct {
-	Client    *ent.Client
-	CensorAPI *BaiduTextCensorClient
-	Logger    *logger.Logger
+	Client         *ent.Client
+	TextCensorAPI  *BaiduTextCensorClient // text censor (Baidu)
+	ImageCensorAPI *TencentIMSClient      // image censor (Tencent IMS); nil = disabled
+	Logger         *logger.Logger
 }
 
 func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool {
@@ -43,7 +45,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		return false
 	}
 
-	data, err := s.CensorAPI.TextCensor(name)
+	data, err := s.TextCensorAPI.TextCensor(name)
 	if err != nil {
 		s.Logger.Errorf("审核名字失败1: %v", err)
 		return false
@@ -111,7 +113,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		return false
 	}
 
-	data, err := s.CensorAPI.TextCensor(content)
+	data, err := s.TextCensorAPI.TextCensor(content)
 	if err != nil {
 		s.Logger.Errorf("审核短句失败1: %v", err)
 		return false
@@ -136,11 +138,61 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 	return censorResult == ResultCompliant
 }
 
-func NewService(apiKey, secretKey string, client *ent.Client) *Service {
-	censorAPI := NewBaiduTextCensorClient(apiKey, secretKey)
+// CensorImage submits an image CDN URL to Tencent IMS for content moderation.
+// Results are cached in the ent image_mod_cache table to avoid redundant API calls.
+// Returns true if the image passes (or if image censor is not configured).
+func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL string) bool {
+	if s.ImageCensorAPI == nil {
+		return true
+	}
+	// Check ent cache first
+	existing, err := s.Client.ImageModCache.
+		Query().
+		Where(imagemodcache.URLEQ(imageURL)).
+		Only(ctx)
+	if err == nil && existing != nil {
+		return existing.Result == string(IMSSuggestionPass)
+	}
+
+	suggestion, err := s.ImageCensorAPI.ImageModerationURL(ctx, imageURL)
+	if err != nil {
+		s.Logger.Errorf("图片审核失败: %v", err)
+		return false
+	}
+	if suggestion != IMSSuggestionPass {
+		s.Logger.Debugf("图片审核不通过 (suggestion=%s): %s", suggestion, imageURL)
+	}
+
+	// Insert into cache
+	create := s.Client.ImageModCache.Create().
+		SetURL(imageURL).
+		SetResult(string(suggestion)).
+		SetCreatedAt(time.Now())
+	if harukiUserID > 0 {
+		create = create.SetHarukiUserID(harukiUserID)
+	}
+	if _, err := create.Save(ctx); err != nil {
+		s.Logger.Errorf("插入 image_mod_cache 失败: %v", err)
+	}
+
+	return suggestion == IMSSuggestionPass
+}
+
+// NewService creates a censor Service with both text (Baidu) and image (Tencent IMS) censors.
+// Pass empty tencentSecretID / tencentSecretKey to disable image censoring.
+func NewService(
+	baiduAPIKey, baiduSecretKey string,
+	tencentSecretID, tencentSecretKey, tencentRegion, tencentBizType string,
+	client *ent.Client,
+) *Service {
+	var imageCensor *TencentIMSClient
+	if tencentSecretID != "" && tencentSecretKey != "" {
+		imageCensor = NewTencentIMSClient(tencentSecretID, tencentSecretKey, tencentRegion, tencentBizType)
+	}
 	return &Service{
-		Client:    client,
-		CensorAPI: censorAPI,
-		Logger:    logger.NewLoggerFromGlobal("HarukiContentCensorService"),
+		Client:         client,
+		TextCensorAPI:  NewBaiduTextCensorClient(baiduAPIKey, baiduSecretKey),
+		ImageCensorAPI: imageCensor,
+		Logger:         logger.NewLoggerFromGlobal("HarukiContentCensorService"),
 	}
 }

@@ -1,0 +1,190 @@
+# Haruki-Cloud Docker Compose
+# Copy .env.example to .env and fill in your values before running.
+#
+# DSNs for each database are composed from per-DB variables:
+#   PG_HOST, PG_PORT, PG_SSLMODE  (shared)
+#   {DB}_DB_NAME, {DB}_DB_USER, {DB}_DB_PASSWORD  (per database)
+
+networks:
+  haruki-net:
+    name: haruki-net
+    driver: bridge
+
+volumes:
+  haruki-pgdata:
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:18.3-trixie
+    container_name: haruki-postgres
+    restart: unless-stopped
+    networks:
+      - haruki-net
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_superuser}
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/18/docker
+      # Per-DB vars forwarded to the init script
+      PJSK_DB_NAME: ${PJSK_DB_NAME:-haruki_pjsk}
+      PJSK_DB_USER: ${PJSK_DB_USER:-haruki_pjsk}
+      PJSK_DB_PASSWORD: ${PJSK_DB_PASSWORD:-changeme}
+      SEKAI_DB_NAME: ${SEKAI_DB_NAME:-haruki_sekai}
+      SEKAI_DB_USER: ${SEKAI_DB_USER:-haruki_sekai}
+      SEKAI_DB_PASSWORD: ${SEKAI_DB_PASSWORD:-changeme}
+      CHUNITHM_DB_NAME: ${CHUNITHM_DB_NAME:-haruki_chunithm}
+      CHUNITHM_DB_USER: ${CHUNITHM_DB_USER:-haruki_chunithm}
+      CHUNITHM_DB_PASSWORD: ${CHUNITHM_DB_PASSWORD:-changeme}
+      USERS_DB_NAME: ${USERS_DB_NAME:-haruki_users}
+      USERS_DB_USER: ${USERS_DB_USER:-haruki_users}
+      USERS_DB_PASSWORD: ${USERS_DB_PASSWORD:-changeme}
+      BOT_DB_NAME: ${BOT_DB_NAME:-haruki_bot}
+      BOT_DB_USER: ${BOT_DB_USER:-haruki_bot}
+      BOT_DB_PASSWORD: ${BOT_DB_PASSWORD:-changeme}
+      CENSOR_DB_NAME: ${CENSOR_DB_NAME:-haruki_censor}
+      CENSOR_DB_USER: ${CENSOR_DB_USER:-haruki_censor}
+      CENSOR_DB_PASSWORD: ${CENSOR_DB_PASSWORD:-changeme}
+      IMAGECACHE_DB_NAME: ${IMAGECACHE_DB_NAME:-haruki_imagecache}
+      IMAGECACHE_DB_USER: ${IMAGECACHE_DB_USER:-haruki_imagecache}
+      IMAGECACHE_DB_PASSWORD: ${IMAGECACHE_DB_PASSWORD:-changeme}
+    volumes:
+      - haruki-pgdata:/var/lib/postgresql/18/docker
+      - ./Data/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: haruki-redis
+    restart: unless-stopped
+    networks:
+      - haruki-net
+    command: >
+      sh -c '[ -n "${REDIS_PASSWORD}" ]
+             && redis-server --requirepass "${REDIS_PASSWORD}"
+             || redis-server'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Haruki-Cloud ────────────────────────────────────────────────────────────
+  haruki-cloud:
+    build: .
+    container_name: haruki-cloud
+    restart: unless-stopped
+    networks:
+      - haruki-net
+    ports:
+      - "${HARUKI_BACKEND_PORT:-6666}:${HARUKI_BACKEND_PORT:-6666}"
+    volumes:
+      - ./haruki-db-configs.yaml:/app/haruki-db-configs.yaml:ro
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # ── Backend ──────────────────────────────────────────────────────────
+      HARUKI_BACKEND_HOST: ${HARUKI_BACKEND_HOST:-0.0.0.0}
+      HARUKI_BACKEND_PORT: ${HARUKI_BACKEND_PORT:-6666}
+      HARUKI_BACKEND_LOG_LEVEL: ${HARUKI_BACKEND_LOG_LEVEL:-INFO}
+      HARUKI_BACKEND_SSL: ${HARUKI_BACKEND_SSL:-false}
+      HARUKI_BACKEND_SSL_CERT: ${HARUKI_BACKEND_SSL_CERT:-}
+      HARUKI_BACKEND_SSL_KEY: ${HARUKI_BACKEND_SSL_KEY:-}
+
+      # ── Redis ─────────────────────────────────────────────────────────────
+      HARUKI_REDIS_HOST: ${REDIS_HOST:-redis}
+      HARUKI_REDIS_PORT: ${REDIS_PORT:-6379}
+      HARUKI_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # ── Module toggles ────────────────────────────────────────────────────
+      HARUKI_PJSK_ENABLED: ${HARUKI_PJSK_ENABLED:-true}
+      HARUKI_SEKAI_ENABLED: ${HARUKI_SEKAI_ENABLED:-true}
+      HARUKI_CHUNITHM_ENABLED: ${HARUKI_CHUNITHM_ENABLED:-false}
+
+      # ── Database types ────────────────────────────────────────────────────
+      HARUKI_PJSK_DB_TYPE: postgres
+      HARUKI_SEKAI_DB_TYPE: postgres
+      HARUKI_CHUNITHM_MUSIC_DB_TYPE: postgres
+      HARUKI_CHUNITHM_BINDING_DB_TYPE: postgres
+      HARUKI_USERS_DB_TYPE: postgres
+      HARUKI_BOT_DB_TYPE: postgres
+      HARUKI_CENSOR_DB_TYPE: postgres
+
+      # ── Database DSNs (composed from per-DB component vars) ───────────────
+      HARUKI_PJSK_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${PJSK_DB_USER:-haruki_pjsk} password=${PJSK_DB_PASSWORD:-changeme}
+        dbname=${PJSK_DB_NAME:-haruki_pjsk} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_SEKAI_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${SEKAI_DB_USER:-haruki_sekai} password=${SEKAI_DB_PASSWORD:-changeme}
+        dbname=${SEKAI_DB_NAME:-haruki_sekai} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_CHUNITHM_MUSIC_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${CHUNITHM_DB_USER:-haruki_chunithm} password=${CHUNITHM_DB_PASSWORD:-changeme}
+        dbname=${CHUNITHM_DB_NAME:-haruki_chunithm} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_CHUNITHM_BINDING_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${CHUNITHM_DB_USER:-haruki_chunithm} password=${CHUNITHM_DB_PASSWORD:-changeme}
+        dbname=${CHUNITHM_DB_NAME:-haruki_chunithm} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_USERS_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${USERS_DB_USER:-haruki_users} password=${USERS_DB_PASSWORD:-changeme}
+        dbname=${USERS_DB_NAME:-haruki_users} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_BOT_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${BOT_DB_USER:-haruki_bot} password=${BOT_DB_PASSWORD:-changeme}
+        dbname=${BOT_DB_NAME:-haruki_bot} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_CENSOR_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${CENSOR_DB_USER:-haruki_censor} password=${CENSOR_DB_PASSWORD:-changeme}
+        dbname=${CENSOR_DB_NAME:-haruki_censor} sslmode=${PG_SSLMODE:-disable}
+      HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${IMAGECACHE_DB_USER:-haruki_imagecache} password=${IMAGECACHE_DB_PASSWORD:-changeme}
+        dbname=${IMAGECACHE_DB_NAME:-haruki_imagecache} sslmode=${PG_SSLMODE:-disable}
+
+      # ── Bot secrets ───────────────────────────────────────────────────────
+      HARUKI_BOT_TURNSTILE_SECRET: ${HARUKI_BOT_TURNSTILE_SECRET:-}
+      HARUKI_BOT_SMTP_HOST: ${HARUKI_BOT_SMTP_HOST:-}
+      HARUKI_BOT_SMTP_PORT: ${HARUKI_BOT_SMTP_PORT:-587}
+      HARUKI_BOT_SMTP_USERNAME: ${HARUKI_BOT_SMTP_USERNAME:-}
+      HARUKI_BOT_SMTP_PASSWORD: ${HARUKI_BOT_SMTP_PASSWORD:-}
+      HARUKI_BOT_SMTP_FROM: ${HARUKI_BOT_SMTP_FROM:-}
+      HARUKI_BOT_CREDENTIAL_SIGN_TOKEN: ${HARUKI_BOT_CREDENTIAL_SIGN_TOKEN:-}
+      HARUKI_BOT_SESSION_SIGN_TOKEN: ${HARUKI_BOT_SESSION_SIGN_TOKEN:-}
+      HARUKI_BOT_INTERNAL_API_TOKEN: ${HARUKI_BOT_INTERNAL_API_TOKEN:-}
+      HARUKI_BOT_SESSION_TTL_DAYS: ${HARUKI_BOT_SESSION_TTL_DAYS:-7}
+      HARUKI_BOT_NOISE_PRIVATE_KEY: ${HARUKI_BOT_NOISE_PRIVATE_KEY:-}
+
+      # ── External APIs ─────────────────────────────────────────────────────
+      HARUKI_SEKAI_API_BASE_URL: ${HARUKI_SEKAI_API_BASE_URL:-}
+      HARUKI_SEKAI_API_TOKEN: ${HARUKI_SEKAI_API_TOKEN:-}
+      HARUKI_TOOLBOX_BASE_URL: ${HARUKI_TOOLBOX_BASE_URL:-}
+      HARUKI_TOOLBOX_API_TOKEN: ${HARUKI_TOOLBOX_API_TOKEN:-}
+      HARUKI_TRACKER_BASE_URL: ${HARUKI_TRACKER_BASE_URL:-}
+
+      # ── Content censor ────────────────────────────────────────────────────
+      HARUKI_CENSOR_BAIDU_API_KEY: ${HARUKI_CENSOR_BAIDU_API_KEY:-}
+      HARUKI_CENSOR_BAIDU_SECRET: ${HARUKI_CENSOR_BAIDU_SECRET:-}
+      HARUKI_CENSOR_TENCENT_SECRET_ID: ${HARUKI_CENSOR_TENCENT_SECRET_ID:-}
+      HARUKI_CENSOR_TENCENT_SECRET_KEY: ${HARUKI_CENSOR_TENCENT_SECRET_KEY:-}
+      HARUKI_CENSOR_TENCENT_REGION: ${HARUKI_CENSOR_TENCENT_REGION:-ap-guangzhou}
+      HARUKI_CENSOR_TENCENT_BIZ_TYPE: ${HARUKI_CENSOR_TENCENT_BIZ_TYPE:-}
+
+      # ── PJSK Render ───────────────────────────────────────────────────────
+      HARUKI_PJSK_RENDER_ENABLED: ${HARUKI_PJSK_RENDER_ENABLED:-false}
+      HARUKI_PJSK_RENDER_DRAWING_BASE_URL: ${HARUKI_PJSK_RENDER_DRAWING_BASE_URL:-}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

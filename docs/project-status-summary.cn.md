@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v16.7）
+> 最后更新：2026-03-26（v16.9）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -309,6 +309,7 @@ type ProfileBgSettings struct {
 - `mysekai_visible` → `ProfileHideMySekaiHandle` / `ProfileShowMySekaiHandle`
 - `bg` → `ProfileUploadBGHandle` / `ProfileClearBGHandle` / `ProfileAdjustBGHandle`
 - `verified` → `ProfileVerifyHandle` / `ProfileVerifyListHandle`
+- `noncompliant_bg_count` → 3-Strike BG 政策（详见 §5.6）
 
 ### 当前已落地语义（2026-03-25）
 
@@ -428,6 +429,59 @@ ban_state              → 全平台禁用
 | `bridge.Execute()` | 开头检查 ban：返回文本错误而非执行命令 |
 
 > **注意**：ban 检查只针对**发起者**（requester），不影响被查询的目标 UID。
+
+---
+
+## 5.6 内容审核流水线（Content Moderation Pipeline）（v16.8 新增）
+
+### 文本审核（百度 TextCensor）
+
+- **审核时机**：每次 profile 渲染时均触发（`bridge.go` 和 `profile/controller.go`）。
+- **审核对象**：玩家昵称（`User.Name`）+ 个性签名（`UserProfile.Word`）。
+- **命中后行为**：`CensorName` / `CensorShortBio` 返回 `false` 时，对应字段被**置空**，不在渲染结果中展示（之前版本仅记录日志，不做遮盖）。
+- **缓存**：结果写入 `censor_result`（昵称）/ `short_bio`（签名）表，后续相同内容直接命中缓存，不再调 API。
+
+### 图片审核（腾讯 IMS）
+
+- **审核时机**：用户执行 `/pjsk 上传背景图` 时，在实际下载图片前完成（由 `BindingService` 负责，不在 `LocalProfileBGStore` 中执行）。
+- **审核主体**：背景图 CDN URL → Tencent IMS 图片内容安全接口。
+- **缓存**：审核结果写入新增的 `image_mod_cache` ent 表（字段：`url`、`haruki_user_id`、`result`、`created_at`），同一 URL 不重复调用 API。
+- **命中后行为**：IMS 结论不为 `Pass` 时，上传被拒绝，并累计违规次数（见三振出局机制）。
+
+`image_mod_cache` 表结构（ent schema: `ent/censor/schema/imagemodcache.go`）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | int | 主键，自增 |
+| `url` | varchar(2048) | 被审核的图片 URL（唯一索引） |
+| `haruki_user_id` | int (nullable) | 提交图片的 Haruki 用户 ID |
+| `result` | varchar(20) | IMS 建议值：`Pass` / `Review` / `Block` |
+| `created_at` | timestamptz | 审核时间，不可更新 |
+
+### 三振出局机制（3-Strike BG 政策）
+
+- 违规次数 `NoncompliantBGCount` 存储于 `UserPreference.settings`（JSONB，**用户粒度**，跨服务器、跨绑定生效）。
+- 每次 IMS 返回不通过，通过 `IncrNoncompliantBGCount()` 累加该用户的计数。
+- 当 `NoncompliantBGCount >= 3` 时，该 Haruki 用户的背景图上传功能被**永久禁用**，直到人工干预重置。
+- 注意：早期版本曾误将计数存于 `user_bindings.noncompliant_bg_count`（绑定粒度），v16.9 已修正为用户粒度；**`user_bindings` 表不再需要该字段**。
+
+### 审核覆盖范围（v16.9 全量）
+
+所有用户可控文本字段现已全部纳入审核和遮盖逻辑：
+
+| 路径 | 字段 | 审核函数 | 遮盖行为 |
+|------|------|----------|----------|
+| `bridge.go` `executeProfile()` | `resp.User.Name`、`resp.UserProfile.Word` | `CensorName` / `CensorShortBio` | 置空 |
+| `bridge.go` `executeArrest()` | `resp.User.Name` | `CensorName` | 置空后再传入 `formatArrestText` |
+| `profile/controller.go` `BuildProfileRequest()` | snapshot 中的昵称 / word | `CensorName` / `CensorShortBio` | 置空 |
+| `sk/controller.go` 各排名构建函数 | `latest/trace.UserData.Name` | `censorTrackerName()` → `CensorName` | 置空（`pickTrackerDisplayName` 对空值有安全处理）|
+
+### 审核服务责任边界
+|------|------|------|
+| `LocalProfileBGStore` | 持有 `censor` 并在下载图片前调用 `CensorImage` | 不再持有 `censor`，不做审核判断 |
+| `BindingService` | 无审核逻辑 | 持有 `censor`；`SetCurrentBindingProfileBG` 中执行三振逻辑 |
+| `utils/censor.Service.CensorImage` | `(ctx, url)` — 使用独立原始 SQL 连接池缓存 | `(ctx, harukiUserID, url)` — 使用 censor ent client 写入 `image_mod_cache` |
+| `utils/censor/image_mod_cache.go` | 独立 raw-SQL PostgreSQL 实现 | **已删除**，替换为 ent schema |
 
 ---
 
@@ -592,8 +646,10 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 4. Deck 当前仍是 Go 方案，旧 CGo 引擎未恢复为默认链路
 5. 已存在的 `command_manifests` 若被人工特殊维护，仍需确认新的 handler-source 同步结果是否符合预期
 6. 图片类 bridge 执行器当前强依赖 `ImageCache`；若部署未配置 image cache，会直接影响图片命令可用性
-7. `user_bindings` 表新增的 `suite_visible`、`mysekai_visible`、`bg`、`verified` 四个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）
+7. `user_bindings` 表新增的 `suite_visible`、`mysekai_visible`、`bg`、`verified` 四个字段需要 DB 迁移（Ent auto-migration 或手动 ALTER TABLE）；`noncompliant_bg_count` **已从 `user_bindings` 移除**，无需迁移该字段
 8. `authorize_social_platform_infos` 表新增 `allow_fast_verification` 列同样需要 DB 迁移（Toolbox 侧）
+9. `image_mod_cache` 为新增 ent 表，需要在 censor DB 中执行 `Schema.Create()` 迁移（启动时自动运行）
+10. `user_preferences.settings` JSONB 新增 `noncompliant_bg_count` 字段（新结构，向后兼容，旧行默认为 0，无需 ALTER TABLE）
 
 > **已修复**：`app.Cards`、`app.Events`、`app.Gachas`、`app.Stamps` 和 `app.Bindings` 的 nil panic 风险已在 bridge.go 中通过前置 nil guard 解决（v16.0）。
 
@@ -609,13 +665,16 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | 全量单元测试通过 | ✅ | 21 个 bot 测试 + legacy 测试全部通过 |
 | Noise IK 传输层加密 | ✅ | 已完整接入 pjsk 路由组；`noise_private_key` 为空时自动降级 |
 | MsgPack 编码 | ✅ | Noise 信封内请求/响应使用 MsgPack；明文模式仍用 JSON |
-| DB 迁移（`user_bindings` 4 个新字段） | ⚠️ | 上线前需执行，否则 profile 设置相关命令失败 |
+| 内容审核覆盖完整性 | ✅ | profile / arrest / SK 排名 / suite snapshot 全路径遮盖（v16.9）|
+| BG 违规计数粒度 | ✅ | 用户粒度（UserSettings JSONB），跨绑定生效（v16.9）|
+| DB 迁移（`user_bindings` 4 个字段） | ⚠️ | 上线前需执行，否则 profile 设置相关命令失败 |
 | DB 迁移（`allow_fast_verification`） | ⚠️ | Toolbox 侧，上线前需执行 |
+| DB 迁移（censor `image_mod_cache` 表） | ⚠️ | 上线前需执行（censor DB `Schema.Create()` 已在启动时自动运行）|
 | ImageCache 配置 | ⚠️ | 未配置 `image_cache.uri/dir` 时所有图片命令失败 |
 | 别名管理（add/review/reject）API 归属 | ⏳ | 公开查询已通，新增/审核/拒绝 API 归属待决策 |
 
 **测试前提条件**：
-1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`）
+1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`；censor DB：`image_mod_cache` 表）
 2. 部署配置中设置 `pjsk_render.image_cache.uri` + `image_cache.dir`
 3. 配置 `haruki_bot.noise_private_key`（32 字节 X25519 私钥的 hex 编码；留空则退回明文 JSON 模式）
 4. push 本地 `test` 分支到 `origin/test`

@@ -1,0 +1,100 @@
+backend:
+  host: "0.0.0.0"
+  port: 6666
+  ssl: false
+  ssl_cert: ""
+  ssl_key: ""
+  log_level: "INFO"
+  main_log_file: "main.log"
+  access_log: "[${time}] ${status} - ${latency} ${method} ${path}\n"
+  access_log_path: "access.log"
+  accept_authorization: null
+  accept_user_agent: null
+  api_cache_ttl: "300s"
+  enable_trust_proxy: true
+  trusted_proxies:
+    - "127.0.0.0/8"
+    - "::1/128"
+    - "192.168.0.0/16"
+    - "172.16.0.0/12"
+    - "100.64.0.0/10"
+    - "10.0.0.0/8"
+  proxy_header: "X-Forwarded-For"
+
+chunithm:
+  enabled: true
+  music_db_type: "postgres"
+  music_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+  binding_db_type: "postgres"
+  binding_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+
+pjsk:
+  enabled: true
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_pjsk sslmode=disable"
+  parser:
+    chardata_region: "jp"
+    chardata_refresh_interval: "1h"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+
+censor:
+  # Text censor — Baidu AI Content Censor
+  baidu_api_key: ""
+  baidu_secret: ""
+  # Image censor — Tencent Cloud Image Moderation Service (IMS)
+  tencent_secret_id: ""
+  tencent_secret_key: ""
+  tencent_region: "ap-guangzhou"   # IMS region; ap-guangzhou recommended
+  tencent_biz_type: ""             # optional Biz type tag configured in Tencent console
+  # Censor result database
+  censor_db_type: "postgres"
+  censor_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_censor sslmode=disable"
+
+haruki_bot:
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_bot sslmode=disable"
+  turnstile_secret_key: "0x4AAAAAAxxxxxxxx"
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_username: "noreply@example.com"
+  smtp_password: "your-smtp-password"
+  smtp_from: "Haruki Bot <noreply@example.com>"
+  credential_sign_token: "your-credential-sign-token-32chars"
+  session_sign_token: "your-session-sign-token-32chars"
+  internal_api_token: "your-internal-api-token"
+  session_ttl_days: 7
+  noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+
+users_db:
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
+
+sekai_api:
+  base_url: "https://api.sekai.haruki.example.com"
+  token: "your-haruki-sekai-api-token"
+
+tracker:
+  base_url: "https://tracker.haruki.example.com"
+  user_agent: "HarukiCloud/1.0"
+
+pjsk_render:
+  enabled: false
+  drawing_base_url: "http://localhost:3001"
+  drawing_timeout: "30s"
+  drawing_retry_count: 2
+  music_meta:
+    refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
+  user_snapshot:
+    provider: "local_file"    # future: "internal_cloud"
+    user_json: ""
+    mysekai_json: ""
+    # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
+    music_meta_json: ""
+  image_cache:
+    uri: ""    # CDN base URL, e.g. "https://image-cache.example.com"
+    dir: ""    # local filesystem directory for cached images
+    pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"

@@ -14,6 +14,11 @@ type UserSettings struct {
 	// PJSKEnabledDifficulties controls which music difficulties are shown in
 	// arrest/clear-stats output. Defaults to [expert, master].
 	PJSKEnabledDifficulties []sekai.MusicDifficultyType `json:"pjsk_enabled_difficulties,omitempty"`
+
+	// NoncompliantBGCount tracks how many times image moderation has rejected
+	// a profile background upload for this user. Once it reaches 3, BG upload
+	// is permanently disabled at the user level (across all bindings).
+	NoncompliantBGCount int `json:"noncompliant_bg_count,omitempty"`
 }
 
 type UserPreference struct {

@@ -1,0 +1,23 @@
+# Build artifacts
+server
+haruki-server
+*.log
+
+# Config with real secrets (mount at runtime instead)
+haruki-db-configs.yaml
+
+# Git
+.git
+.gitignore
+
+# Docs / non-code
+docs/
+*.md
+Data/
+
+# IDE
+.idea/
+.vscode/
+
+# Test artifacts
+integration/

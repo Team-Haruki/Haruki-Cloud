@@ -3041,20 +3041,6 @@ func (m *UserBindingMutation) SuiteVisible() (r bool, exists bool) {
 	return *v, true
 }
 
-// SetMysekaiVisible sets the "mysekai_visible" field.
-func (m *UserBindingMutation) SetMysekaiVisible(b bool) {
-	m.mysekai_visible = &b
-}
-
-// MysekaiVisible returns the value of the "mysekai_visible" field in the mutation.
-func (m *UserBindingMutation) MysekaiVisible() (r bool, exists bool) {
-	v := m.mysekai_visible
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // OldSuiteVisible returns the old "suite_visible" field's value of the UserBinding entity.
 // If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
@@ -3077,7 +3063,23 @@ func (m *UserBindingMutation) ResetSuiteVisible() {
 	m.suite_visible = nil
 }
 
+// SetMysekaiVisible sets the "mysekai_visible" field.
+func (m *UserBindingMutation) SetMysekaiVisible(b bool) {
+	m.mysekai_visible = &b
+}
+
+// MysekaiVisible returns the value of the "mysekai_visible" field in the mutation.
+func (m *UserBindingMutation) MysekaiVisible() (r bool, exists bool) {
+	v := m.mysekai_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // OldMysekaiVisible returns the old "mysekai_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserBindingMutation) OldMysekaiVisible(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiVisible is only allowed on UpdateOne operations")
@@ -3270,7 +3272,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}

@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/drawing"
 	sekai "haruki-cloud/utils/sekai"
 )
@@ -25,6 +27,7 @@ type Controller struct {
 	drawing  *drawing.HarukiDrawingClient
 	assets   *assets.AssetHelper
 	snapshot *userdata.Service
+	censor   *censor.Service
 }
 
 func NewController(defaultSource Source, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
@@ -46,6 +49,13 @@ func (c *Controller) RegisterSource(source Source) {
 		return
 	}
 	c.sources.RegisterSource(source)
+}
+
+func (c *Controller) SetCensor(svc *censor.Service) {
+	if c == nil {
+		return
+	}
+	c.censor = svc
 }
 
 func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, error) {
@@ -82,11 +92,24 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 	}
 	updateTime := detail.UpdateTime
 
+	nickname := detail.Nickname
+	if c.censor != nil && nickname != "" {
+		if !c.censor.CensorName(context.Background(), 0, detail.ID, nickname, query.Region) {
+			nickname = ""
+		}
+	}
+	word := cleanWord(raw.UserProfile.Word)
+	if c.censor != nil && word != "" {
+		if !c.censor.CensorShortBio(context.Background(), 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
+			word = ""
+		}
+	}
+
 	return &drawing.ProfileRequest{
 		Profile: drawing.BasicProfile{
 			ID:              detail.ID,
 			Region:          detail.Region,
-			Nickname:        detail.Nickname,
+			Nickname:        nickname,
 			IsHideUID:       detail.IsHideUID,
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        hasFrame,
@@ -94,7 +117,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		},
 		Rank:                 raw.UserGamedata.Rank,
 		TwitterID:            raw.UserProfile.TwitterID,
-		Word:                 cleanWord(raw.UserProfile.Word),
+		Word:                 word,
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
 		BgSettings:           resolveProfileBGSettings(query.BgSettings),
 		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors),

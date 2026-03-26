@@ -125,12 +125,12 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
 		UpdateTime:           &updateTime,
-		LvRankBgPath:         "user/lv_rank_bg.png",
-		XIconPath:            "user/icon_twitter.png",
-		IconClearPath:        "icon_clear.png",
-		IconFcPath:           "icon_fc.png",
-		IconApPath:           "icon_ap.png",
-		CharaRankIconPathMap: buildCharaIconMap(),
+		LvRankBgPath:         assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "lv_rank_bg.png"),
+		XIconPath:            assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "x_icon.png"),
+		IconClearPath:        assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_clear.png"),
+		IconFcPath:           assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_fc.png"),
+		IconApPath:           assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_ap.png"),
+		CharaRankIconPathMap: buildCharaIconMap(c.assets),
 		FramePaths:           framePaths,
 	}, nil
 }
@@ -202,12 +202,12 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
 		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
 		UpdateTime:           nil,
-		LvRankBgPath:         "user/lv_rank_bg.png",
-		XIconPath:            "user/icon_twitter.png",
-		IconClearPath:        "icon_clear.png",
-		IconFcPath:           "icon_fc.png",
-		IconApPath:           "icon_ap.png",
-		CharaRankIconPathMap: buildCharaIconMap(),
+		LvRankBgPath:         assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "lv_rank_bg.png"),
+		XIconPath:            assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "x_icon.png"),
+		IconClearPath:        assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_clear.png"),
+		IconFcPath:           assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_fc.png"),
+		IconApPath:           assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_ap.png"),
+		CharaRankIconPathMap: buildCharaIconMap(c.assets),
 		FramePaths:           framePaths,
 	}, nil
 }
@@ -320,7 +320,7 @@ func buildAPIUserCardEntries(deck sekai.UserDeck) []interface{} {
 // master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
 func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
-	const fallback = "user/leader.png"
+	fallback := assets.ResolveAssetPath(helper, assets.StaticImagesDir, "unknown.jpg")
 	if cardID == 0 || source == nil {
 		return fallback
 	}
@@ -533,10 +533,10 @@ func buildSoloLive(results []userdata.RawChallengeLiveResult, stages []userdata.
 	}
 }
 
-func buildCharaIconMap() map[string]string {
+func buildCharaIconMap(helper *assets.AssetHelper) map[string]string {
 	result := make(map[string]string, len(assets.CharacterIDToNickname))
 	for id, nickname := range assets.CharacterIDToNickname {
-		result[strconv.Itoa(id)] = filepath.ToSlash(filepath.Join("chara_rank_icon", nickname+".png"))
+		result[strconv.Itoa(id)] = assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("chara_rank_icon", nickname+".png"))
 	}
 	return result
 }

@@ -381,7 +381,7 @@ func (b *Builder) buildSkillTypeIconPath(skillType string, region renderregion.V
 	if strings.TrimSpace(skillType) == "" {
 		return nil
 	}
-	path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("skill", fmt.Sprintf("skill_%s.png", skillType)))
+	path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, fmt.Sprintf("skill_%s.png", skillType))
 	return &path
 }
 

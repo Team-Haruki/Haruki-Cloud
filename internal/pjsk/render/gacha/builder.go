@@ -363,7 +363,7 @@ func (b *Builder) buildGachaThumbnail(cardInfo *masterdata.Card, region renderre
 }
 
 func (b *Builder) buildCeilItemIconPath(_ int, region renderregion.Value) string {
-	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "ceil_item.png")
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "shard.png")
 }
 
 func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderregion.Value) []drawing.GachaBehavior {

@@ -467,13 +467,12 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 	}
 }
 
-func (c *Controller) buildPlayResultIconMap(region renderregion.Value) map[string]string {
-	assetDir := assets.RegionAssetDir(renderregion.WithDefault(region).String())
+func (c *Controller) buildPlayResultIconMap(_ renderregion.Value) map[string]string {
 	return map[string]string{
-		"not_clear": assets.ResolveAssetPath(c.assets, assetDir, "icon_not_clear.png"),
-		"clear":     assets.ResolveAssetPath(c.assets, assetDir, "icon_clear.png"),
-		"fc":        assets.ResolveAssetPath(c.assets, assetDir, "icon_fc.png"),
-		"ap":        assets.ResolveAssetPath(c.assets, assetDir, "icon_ap.png"),
+		"not_clear": assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_not_clear.png"),
+		"clear":     assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_clear.png"),
+		"fc":        assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_fc.png"),
+		"ap":        assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_ap.png"),
 	}
 }
 

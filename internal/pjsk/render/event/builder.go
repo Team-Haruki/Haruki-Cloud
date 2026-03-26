@@ -142,7 +142,7 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 		result.EventBanCharaImg = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("event", assetName, "screen", "character.png"))
 	}
 	if info.BonusAttr != "" {
-		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
+		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
 	}
 	if info.BannerCid != 0 {
 		result.BanCharaIconPath = b.characterIconPath(info.BannerCid, region)
@@ -382,12 +382,11 @@ func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]interface{} 
 	return timeline
 }
 
-func (b *Builder) characterIconPath(charID int, region renderregion.Value) string {
-	assetDir := assets.RegionAssetDir(region.String())
+func (b *Builder) characterIconPath(charID int, _ renderregion.Value) string {
 	if nickname, ok := assets.CharacterIDToNickname[charID]; ok {
-		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
 func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value) string {
@@ -399,7 +398,7 @@ func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value)
 	if unitIcon == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("unit", unitIcon+".png"))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("unit", unitIcon+".png"))
 }
 
 func (b *Builder) displayEventType(code string) string {

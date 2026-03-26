@@ -205,12 +205,11 @@ func (b *Builder) BuildMusicJacketPath(assetName string, region renderregion.Val
 	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("music", "jacket", assetName, assetName+".png"))
 }
 
-func (b *Builder) BuildCharacterIconPath(characterID int, region renderregion.Value) string {
-	assetDir := assets.RegionAssetDir(region.String())
+func (b *Builder) BuildCharacterIconPath(characterID int, _ renderregion.Value) string {
 	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
-		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
 }
 
 func (b *Builder) buildDifficultyInfo(musicID int) (*drawing.DifficultyInfo, error) {

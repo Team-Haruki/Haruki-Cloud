@@ -363,12 +363,12 @@ func (b *Builder) buildGachaThumbnail(cardInfo *masterdata.Card, region renderre
 }
 
 func (b *Builder) buildCeilItemIconPath(_ int, region renderregion.Value) string {
-	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), "ceil_item.png")
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "ceil_item.png")
 }
 
 func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderregion.Value) []drawing.GachaBehavior {
 	behaviors := make([]drawing.GachaBehavior, 0, len(gachaInfo.GachaBehaviors))
-	jewelIcon := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), "jewel.png")
+	jewelIcon := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "jewel.png")
 	for _, behavior := range gachaInfo.GachaBehaviors {
 		var costType *string
 		var costQty *int

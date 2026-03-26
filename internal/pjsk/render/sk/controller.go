@@ -722,22 +722,21 @@ func (c *Controller) resolveEventBannerPath(assetBundleName string, region rende
 	)
 }
 
-func (c *Controller) resolveCharacterIconPath(characterID int, region renderregion.Value) string {
+func (c *Controller) resolveCharacterIconPath(characterID int, _ renderregion.Value) string {
 	if c == nil || c.assets == nil || characterID <= 0 {
 		return ""
 	}
-	assetDir := renderassets.RegionAssetDir(renderregion.WithDefault(region).String())
 	if nickname := renderassets.CharacterIDToNickname[characterID]; nickname != "" {
 		return renderassets.ResolveAssetPath(
 			c.assets,
-			assetDir,
+			renderassets.StaticImagesDir,
 			filepath.Join("chara_icon", nickname+".png"),
 			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
 		)
 	}
 	return renderassets.ResolveAssetPath(
 		c.assets,
-		assetDir,
+		renderassets.StaticImagesDir,
 		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
 	)
 }

@@ -2,13 +2,14 @@ package pjsk
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/api"
+	onebot11 "haruki-cloud/api/bot/onebot11"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
+	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/middleware/secure"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
@@ -19,19 +20,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
+	"github.com/shamaton/msgpack/v3"
 	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 const botRouteBase = "/api/v2/bot"
-
-const (
-	botQueryCommandPayload   = "command_payload"
-	botHeaderPlatform        = "X-Haruki-Bot-Platform"
-	botHeaderPlatformUserID  = "X-Haruki-Bot-Platform-User-Id"
-	botHeaderPlatformGroupID = "X-Haruki-Bot-Platform-Group-Id"
-	botHeaderPJSKServer      = "X-Haruki-Bot-Pjsk-Server"
-	botHeaderMatchedCommand  = "X-Haruki-Bot-Matched-Command"
-)
 
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
@@ -41,12 +34,18 @@ const (
 //
 //	GET /api/v2/bot/:botId/command/manifests
 //
-// The canonical PJSK bot protocol is:
+// The canonical PJSK bot protocol is POST + JSON body:
 //
-//	GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(onebot-v11-payload)>
+//	POST /api/v2/bot/:botId/pjsk/<path>
+//	Content-Type: application/json
 //
-// with metadata carried in headers such as X-Haruki-Bot-Matched-Command and
-// X-Haruki-Bot-Pjsk-Server.
+//	{"platform":"qq","platform_user_id":"12345","server":"jp",
+//	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}]}
+//
+// When noiseKeyPair is non-nil, the Noise IK transport encryption middleware is applied
+// to the pjsk route group. Clients must then send Noise IK Message 1 containing a
+// MsgPack-encoded BotCommandRequest as the HTTP body, and will receive Noise IK Message 2
+// containing a MsgPack-encoded response. The manifest endpoint is NOT behind Noise.
 //
 // When redisClient is non-nil, the api.VerifyBotSession middleware is applied to
 // authenticate requests via X-Haruki-Bot-Id and X-Haruki-Bot-Session-Token headers.
@@ -56,7 +55,7 @@ const (
 // registered handler routes on startup and the manifest endpoint returns live
 // data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
-func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client) {
+func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
 	if renderApp == nil {
 		return
 	}
@@ -75,50 +74,48 @@ func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 
 	pjsk := bot.Group("/pjsk")
+	if noiseKeyPair != nil {
+		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
+	}
 	for _, route := range commandhandler.ListBotRoutes() {
 		h := makeBotHandler(renderApp, route.Path, route.Commands)
 		path := "/" + route.Path
-		pjsk.Get(path, h)
+		pjsk.Post(path, h)
 	}
 }
 
-// makeBotHandler returns a GET-only fiber.Handler that validates the matched
-// command header belongs to the current endpoint path, then lets the registered
-// handler parse the original OneBot payload and produce a resolved render command.
+// makeBotHandler returns a POST-only fiber.Handler that validates the matched
+// command field belongs to the current endpoint path, then lets the registered
+// handler parse the OneBot message segments and produce a resolved render command.
 func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
-		if req.CommandPayload == "" {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "command_payload is required")
+		if len(req.Message) == 0 {
+			return botResponse(c, fiber.StatusBadRequest, "message is required")
 		}
 		if req.MatchedCommand == "" {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "X-Haruki-Bot-Matched-Command is required")
+			return botResponse(c, fiber.StatusBadRequest, "matched_command is required")
 		}
 		if !slices.Contains(commands, req.MatchedCommand) {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
+			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
-		message, err := decodeCommand(req.CommandPayload)
-		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to decode command", BotCommandErrorResponse{
-				Error: err.Error(),
-			})
-		}
+		message := toZeroSegments(req.Message)
 
 		resolved, err := resolveBotCommand(message, expectedPath, req)
 		if err != nil {
 			var validationErr *botValidationError
 			if errors.As(err, &validationErr) {
-				return api.JSONResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
+				return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
 					BotCommandErrorResponse{
 						Error:          err.Error(),
 						ExpectedPath:   expectedPath,
 						MatchedCommand: req.MatchedCommand,
 					})
 			}
-			return api.JSONResponse(c, fiber.StatusBadRequest, err.Error(), BotCommandErrorResponse{
+			return botResponse(c, fiber.StatusBadRequest, err.Error(), BotCommandErrorResponse{
 				Error:          err.Error(),
 				ExpectedPath:   expectedPath,
 				MatchedCommand: req.MatchedCommand,
@@ -131,25 +128,41 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 
 		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
+			return botResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
 				Error: err.Error(),
 				Mode:  resolved.Mode,
 			})
 		}
-		return api.JSONResponse(c, fiber.StatusOK, "ok", responseData)
+		return botResponse(c, fiber.StatusOK, "ok", responseData)
 	}
 }
 
-// parseBotRequest reads BotCommandRequest from the canonical GET query + header protocol.
+// parseBotRequest binds BotCommandRequest from the POST body.
+// When the request arrived through the Noise IK middleware, the Content-Type is
+// application/msgpack and the body is decoded with MsgPack.
+// Otherwise the standard JSON binding is used.
 func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
-	return BotCommandRequest{
-		Platform:        strings.TrimSpace(c.Get(botHeaderPlatform)),
-		PlatformUserID:  strings.TrimSpace(c.Get(botHeaderPlatformUserID)),
-		PlatformGroupID: strings.TrimSpace(c.Get(botHeaderPlatformGroupID)),
-		CommandPayload:  c.Query(botQueryCommandPayload),
-		MatchedCommand:  strings.TrimSpace(c.Get(botHeaderMatchedCommand)),
-		Server:          strings.TrimSpace(c.Get(botHeaderPJSKServer)),
-	}, nil
+	var req BotCommandRequest
+	ct := string(c.Request().Header.ContentType())
+	if strings.Contains(ct, "msgpack") {
+		if err := msgpack.Unmarshal(c.Body(), &req); err != nil {
+			return BotCommandRequest{}, err
+		}
+		return req, nil
+	}
+	if err := c.Bind().Body(&req); err != nil {
+		return BotCommandRequest{}, err
+	}
+	return req, nil
+}
+
+// botResponse sends a response using MsgPack when the request came through the
+// Noise IK transport layer, and JSON otherwise.
+func botResponse(c fiber.Ctx, status int, message string, data ...interface{}) error {
+	if c.Locals("secure_noise") != nil {
+		return api.MsgPackResponse(c, status, message, data...)
+	}
+	return api.JSONResponse(c, status, message, data...)
 }
 
 type botValidationError struct {
@@ -212,77 +225,35 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 	return resolved, nil
 }
 
-// ---------------------------------------------------------------------------
-// Base64 + OneBot JSON payload decoding
-// ---------------------------------------------------------------------------
-
-// decodeCommand decodes the command payload parameter.
-// Expected format: Base64-encoded OneBot JSON payload → extract message segments.
-// Falls back to treating the input as a single plain text segment if decoding fails.
-func decodeCommand(raw string) ([]zeromessage.Segment, error) {
-	decoded, ok := tryBase64Decode(raw)
-	if !ok {
-		// Not valid Base64 — treat raw input as plain text
-		return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": raw}}}, nil
-	}
-
-	// Try to extract command text from OneBot JSON
-	text, err := extractOneBotMessage(decoded)
-	if err == nil {
-		return text, nil
-	}
-
-	// Base64 decoded successfully but not valid OneBot JSON — treat as plain text
-	return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": raw}}}, nil
-}
-
-// tryBase64Decode attempts multiple Base64 variants (std/URL-safe, with/without padding).
-func tryBase64Decode(s string) ([]byte, bool) {
-	for _, enc := range []*base64.Encoding{
-		base64.StdEncoding,
-		base64.RawStdEncoding,
-		base64.URLEncoding,
-		base64.RawURLEncoding,
-	} {
-		if decoded, err := enc.DecodeString(s); err == nil {
-			return decoded, true
+// toZeroSegments converts an onebot11.Message to the ZeroBot Segment slice
+// expected by internal command handlers. JSON deserialization produces
+// map[string]interface{} for the Data field; MsgPack produces
+// map[interface{}]interface{}. This normalises all values to string.
+func toZeroSegments(msg onebot11.Message) []zeromessage.Segment {
+	segs := make([]zeromessage.Segment, 0, len(msg))
+	for _, s := range msg {
+		data := make(map[string]string)
+		switch d := s.Data.(type) {
+		case map[string]interface{}:
+			for k, v := range d {
+				if sv, ok := v.(string); ok {
+					data[k] = sv
+				}
+			}
+		case map[interface{}]interface{}:
+			for k, v := range d {
+				ks, _ := k.(string)
+				vs, _ := v.(string)
+				if ks != "" {
+					data[ks] = vs
+				}
+			}
+		case map[string]string:
+			data = d
 		}
+		segs = append(segs, zeromessage.Segment{Type: s.Type, Data: data})
 	}
-	return nil, false
-}
-
-// extractOneBotText parses a OneBot v11 JSON payload and returns a canonical
-// command string. It prefers message segment arrays so "at" segments can be
-// normalized into "@qq", then falls back to raw_message or message strings.
-func extractOneBotMessage(data []byte) ([]zeromessage.Segment, error) {
-	var payload map[string]json.RawMessage
-	if err := json.Unmarshal(data, &payload); err != nil {
-		return nil, err
-	}
-
-	// Prefer message segment arrays because they retain structured mention data.
-	if msgRaw, ok := payload["message"]; ok {
-		var segments []zeromessage.Segment
-		if err := json.Unmarshal(msgRaw, &segments); err == nil && len(segments) > 0 {
-			return segments, nil
-		}
-
-		// message as plain string (some OneBot implementations)
-		var msgStr string
-		if err := json.Unmarshal(msgRaw, &msgStr); err == nil && msgStr != "" {
-			return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": msgStr}}}, nil
-		}
-	}
-
-	// Fallback to raw_message when segment arrays are unavailable.
-	if rawMsg, ok := payload["raw_message"]; ok {
-		var text string
-		if err := json.Unmarshal(rawMsg, &text); err == nil && text != "" {
-			return []zeromessage.Segment{{Type: "text", Data: map[string]string{"text": text}}}, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no command text found in OneBot payload")
+	return segs
 }
 
 func flattenOneBotSegments(segments []zeromessage.Segment) string {

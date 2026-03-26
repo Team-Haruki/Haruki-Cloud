@@ -52,6 +52,8 @@ func New(config Config) fiber.Handler {
 		c.Request().SetBody(plaintext)
 		// Ensure Content-Type is msgpack for binding
 		c.Request().Header.Set("Content-Type", "application/msgpack")
+		// Flag downstream handlers that this request came through Noise IK
+		c.Locals("secure_noise", true)
 
 		// 5. Continue stack
 		if err := c.Next(); err != nil {

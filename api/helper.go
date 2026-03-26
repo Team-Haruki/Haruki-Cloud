@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
+	"github.com/shamaton/msgpack/v3"
 )
 
 func BuildResponseMap(status int, message string, data interface{}) fiber.Map {
@@ -29,6 +30,23 @@ func JSONResponse(c fiber.Ctx, status int, message string, data ...interface{}) 
 		resp = BuildResponseMap(status, message, nil)
 	}
 	return c.Status(status).JSON(resp)
+}
+
+// MsgPackResponse writes a MsgPack-encoded response envelope.
+// Used when the request arrived through the Noise IK transport layer.
+func MsgPackResponse(c fiber.Ctx, status int, message string, data ...interface{}) error {
+	var resp fiber.Map
+	if len(data) > 0 {
+		resp = BuildResponseMap(status, message, data[0])
+	} else {
+		resp = BuildResponseMap(status, message, nil)
+	}
+	encoded, err := msgpack.Marshal(resp)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	c.Set("Content-Type", "application/msgpack")
+	return c.Status(status).Send(encoded)
 }
 
 func ErrorResponse(c fiber.Ctx, status int, message string) error {

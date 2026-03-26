@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v16.5）
+> 最后更新：2026-03-26（v16.7）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -69,13 +69,39 @@
 
 当前 PJSK Bot 协议的目标边界如下：
 
-### 3.1 客户端入口
+### 3.1 客户端入口（Manifest）
 
-- `GET /api/v2/bot/:botId/command/manifests`
+```http
+GET /api/v2/bot/:botId/command/manifests
+X-Haruki-Bot-Id: <bot_id>
+X-Haruki-Bot-Session-Token: <jwt>
+```
+
+返回 JSON（不在 Noise 保护范围内）。
 
 ### 3.2 业务端点
 
-- `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(ob11 pack)>`
+```http
+POST /api/v2/bot/:botId/pjsk/<path>
+X-Haruki-Bot-Id: <bot_id>
+X-Haruki-Bot-Session-Token: <jwt>
+Content-Type: application/octet-stream
+
+Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
+```
+
+响应：`NoiseIK_Message2(MsgPack(HarukiAPIDataResponse))`
+
+当服务端未配置 `noise_private_key` 时，退回明文模式：
+
+```http
+POST /api/v2/bot/:botId/pjsk/<path>
+Content-Type: application/json
+
+Body: JSON(BotCommandRequest)
+```
+
+响应：`JSON(HarukiAPIDataResponse)`
 
 ### 3.3 内部兼容入口
 
@@ -443,7 +469,7 @@ ban_state              → 全平台禁用
 | **Arrest** | 逮捕（self/at\_user/uid 三模式，含 Visible 检查） | arrest |
 | **RegTime** | 注册时间查询（JP/EN + TW/KR/CN 双算法） | profile/reg-time |
 | **CheckData** | 套件抓包时间（/sud）/ MySekai 抓包时间（/msd） | profile/check-data · check-data-mysekai |
-| **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） / 卡面原图 | card/detail · list · box · image |
+| **Card** | 卡面详情 / 卡牌列表 / 卡牌一览（Box） | card/detail · list · box |
 | **Music** | 歌曲详情 / 列表 / 进度 / 奖励 / 谱面预览 / 物量统计 / BPM 查询 / 曲绘查询 | music · list · progress · rewards · chart · note-count · bpm · cover |
 | **Alias** | 歌曲别名查询 / 角色别名查询 / 提交审核 / 删除已审核别名 / 待审核列表 / 通过审核 / 拒绝审核 | alias/music · alias/music/add · alias/music/del · alias/character · alias/character/add · alias/character/del · alias/pending · alias/approve · alias/reject |
 | **Gacha** | 卡池列表 | gacha |
@@ -467,7 +493,7 @@ ban_state              → 全平台禁用
 
 **以下为后续再决定是否接入（保留代码，暂不实现）：**
 
-- Card 系统（1 个）：卡牌剧情（仅 JP）
+- Card 系统（2 个）：卡面原图（`CardImgHandle`，path: `card/image`）、卡牌剧情（仅 JP）
 - Deck 系统（1 个）：实效 / 倍率（`ScoreUpHandle`）
 - Event 系统（1 个）：活动剧情（仅 JP）
 - Gacha 系统（1 个）：抽卡记录
@@ -481,20 +507,54 @@ ban_state              → 全平台禁用
 
 - **合并**：`CheckMysekaiDataHandle`（mysekai.go，disabled 重复入口）已删除；其命令集（`/pjsk烤森抓包` 等）合并入 `MsdHandle`（profile.go，path: `profile/check-data-mysekai`），现已完整接通
 - **删除**：Stamp 系统 6 个不在项目规划内的 disabled handler（`StampMakeHandle`、`RandStampHandle`、`StampRefreshHandle`、`StampRefreshBatchHandle`、`StampBaseHandle`、`StampBaseDeleteHandle`）——stamp.go 仅保留 `StampHandle`（贴纸列表）
-
 - **删除**：`ProfileSwapBindHandle`（交换绑定）、`ProfileCheckServiceHandle`（服务状态检查）、`ProfileDataModeHandle`（抓包模式切换）、`ProfileBindHistoryHandle`（绑定历史）——全部不在项目规划内
 - **删除**：`ProfileInfoHandle`——功能与 `ProfileHandle`（path: `profile`）完全重复，冗余死代码
 - **修复**：`EventRecordHandle` 补充 `Path: "event/record"`，现已进入 bot API 路由表
 - **修复**：`HelpHandle` 改为 `Disabled: true`，防止路由到无实现的 `ModuleHelp`
-- **修复**：`bridge.go` 补充 6 处 nil guard，防止 `sekaiClient` 未配置时 panic：
-  - `executeCard`：`app.Cards == nil` → 返回错误而非 panic
-  - `executeEvent`：`app.Events == nil` → 返回错误而非 panic
-  - `executeGacha`：`app.Gachas == nil` → 返回错误而非 panic
-  - `executeStamp`：`app.Stamps == nil` → 返回错误而非 panic
-  - `executeProfile` binding 分支：`app.Bindings == nil` → 返回"绑定服务未就绪"
-  - `executeProfile` settings 分支：`app.Bindings == nil` → 返回"绑定服务未就绪"
+- **修复**：`bridge.go` 补充 6 处 nil guard，防止 `sekaiClient` 未配置时 panic（`executeCard/Event/Gacha/Stamp` + `executeProfile` 两个分支）
 
-> `app.Music`、`app.MySekai`、`app.Profiles` 各自的 controller 已内置 `if c == nil` nil 接收者守卫，无需 bridge 层额外处理。`app.BanChecker` 同理。
+> `app.Music`、`app.MySekai`、`app.Profiles` 各自的 controller 已内置 nil 接收者守卫，无需 bridge 层额外处理。`app.BanChecker` 同理。
+
+### 6.3 v16.2 测试修复与 `/卡面` 命令路由修正（2026-03-26）
+
+详见 v16.6 变更记录。
+
+### 6.4 v16.3 Noise IK 传输层加密接入（2026-03-26）
+
+Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
+
+**协议变更**：
+
+| 层级 | 之前 | 之后 |
+|------|------|------|
+| 传输 | 明文 POST + JSON body | Noise_IK_25519_AESGCM_SHA256 加密 POST body |
+| 编码 | JSON | MsgPack（加密信封内） |
+| 身份认证 | JWT session header | JWT session header（不变） |
+| manifest 端点 | JSON | JSON（不在 Noise 保护范围内） |
+
+**变更清单**：
+
+- `config/config.go`：`HarukiBotDBConfig` 新增 `NoisePrivateKey string` 字段
+- `haruki-db-configs.example.yaml`：新增 `noise_private_key` 配置项
+- `internal/core/crypto/crypto.go`：新增 `KeyPairFromPrivate([]byte)` 用于从配置文件私钥派生密钥对
+- `internal/middleware/secure/secure.go`：解密后设置 `c.Locals("secure_noise", true)` 标记
+- `api/helper.go`：新增 `MsgPackResponse()` 用于返回 MsgPack 编码的响应信封
+- `api/bot/pjsk/handler.go`：
+  - `RegisterPJSKBotRoutes` 签名新增 `noiseKeyPair *crypto.KeyPair`（nil 时跳过 Noise）
+  - pjsk 路由组应用 `secure.New()` 中间件
+  - `parseBotRequest` 支持 JSON / MsgPack 双格式解码
+  - `botResponse` 根据 `secure_noise` 标记自动选择 JSON / MsgPack 输出
+  - `toZeroSegments` 新增 `map[interface{}]interface{}` 分支（MsgPack 反序列化产物）
+- `cmd/server/main.go`：新增 `initNoiseKeyPair()` 从配置解码密钥对并注入路由
+
+**降级策略**：`noise_private_key` 为空时 Noise 中间件不注册，退回明文 JSON 模式。
+
+**测试**：新增 `TestBotNoiseIKRoundTrip` 端到端加密测试，全部 21 个测试通过。
+
+- **命令路由**：`/卡面` 从已禁用的 `CardImgHandle`（`card/image`）移入 `CardDetailHandle`（`card/detail`）命令集，解除因禁用 handler 造成的命令悬空
+- **测试修复**：`api/legacy/pjsk/render_route_test.go` 补充 `ImageCache` 至 `testRenderApp`；`rendermusic.NewController` 调用补充新增的 `metaLoader` 参数（`nil`）
+- **测试更新**：`TestCommandEndpointReturnsImage` 改为验证 JSON 格式（OneBot11 image segment + image-cache URL），移除旧 raw PNG 断言（与当前 endpoint 返回 `onebot11.Message` 的架构不符）
+- **全量测试**：所有模块测试通过；`integration/` 包自首次合并起即因引用已删除包而 setup failed，与本次变更无关
 
 ### 6.4 特殊 handler（绕过 bridge）
 
@@ -537,7 +597,30 @@ ban_state              → 全平台禁用
 
 > **已修复**：`app.Cards`、`app.Events`、`app.Gachas`、`app.Stamps` 和 `app.Bindings` 的 nil panic 风险已在 bridge.go 中通过前置 nil guard 解决（v16.0）。
 
-## 10. 相关文档
+## 10. 内部测试就绪评估（2026-03-26）
+
+**整体结论：代码层面已就绪，可进入内部测试。**
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| 全部 enabled handler E2E 打通 | ✅ | 约 75 个 handler，全部有 Path + bridge case + executor |
+| Nil panic 风险消除 | ✅ | bridge.go 已补充 6 处 nil guard |
+| 代码无存根（enabled 路径） | ✅ | 无 TODO stub 在活跃链路中 |
+| 全量单元测试通过 | ✅ | 21 个 bot 测试 + legacy 测试全部通过 |
+| Noise IK 传输层加密 | ✅ | 已完整接入 pjsk 路由组；`noise_private_key` 为空时自动降级 |
+| MsgPack 编码 | ✅ | Noise 信封内请求/响应使用 MsgPack；明文模式仍用 JSON |
+| DB 迁移（`user_bindings` 4 个新字段） | ⚠️ | 上线前需执行，否则 profile 设置相关命令失败 |
+| DB 迁移（`allow_fast_verification`） | ⚠️ | Toolbox 侧，上线前需执行 |
+| ImageCache 配置 | ⚠️ | 未配置 `image_cache.uri/dir` 时所有图片命令失败 |
+| 别名管理（add/review/reject）API 归属 | ⏳ | 公开查询已通，新增/审核/拒绝 API 归属待决策 |
+
+**测试前提条件**：
+1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`）
+2. 部署配置中设置 `pjsk_render.image_cache.uri` + `image_cache.dir`
+3. 配置 `haruki_bot.noise_private_key`（32 字节 X25519 私钥的 hex 编码；留空则退回明文 JSON 模式）
+4. push 本地 `test` 分支到 `origin/test`
+
+## 11. 相关文档
 
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)

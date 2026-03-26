@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/flynn/noise"
+	"golang.org/x/crypto/curve25519"
 )
 
 // CipherSuite defines the Noise protocol: Noise_IK_25519_AESGCM_SHA256
@@ -21,6 +22,19 @@ func GenerateKeyPair() (*KeyPair, error) {
 		return nil, err
 	}
 	return &kp, nil
+}
+
+// KeyPairFromPrivate derives the X25519 public key from a 32-byte private key
+// and returns a complete KeyPair suitable for use with the Noise IK handshake.
+func KeyPairFromPrivate(private []byte) (*KeyPair, error) {
+	if len(private) != 32 {
+		return nil, errors.New("private key must be 32 bytes")
+	}
+	public, err := curve25519.X25519(private, curve25519.Basepoint)
+	if err != nil {
+		return nil, err
+	}
+	return &KeyPair{Private: private, Public: public}, nil
 }
 
 // NoiseCipher handles the Noise IK handshake and subsequent encryption/decryption.

@@ -125,6 +125,7 @@ type HarukiBotDBConfig struct {
 	SessionSignToken    string `yaml:"session_sign_token"`
 	InternalAPIToken    string `yaml:"internal_api_token"`
 	SessionTTLDays      int    `yaml:"session_ttl_days"`
+	NoisePrivateKey     string `yaml:"noise_private_key"`
 }
 
 type UsersDBConfig struct {

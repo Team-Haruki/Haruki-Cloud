@@ -33,6 +33,7 @@ import (
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/imagecache"
 	sekaiapi "haruki-cloud/utils/sekai"
 
 	"github.com/gofiber/fiber/v3"
@@ -3189,7 +3190,7 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 			},
 		},
 	}
-	musicController := rendermusic.NewController(musicSource, drawingClient, assets.NewAssetHelper("", nil), nil)
+	musicController := rendermusic.NewController(musicSource, drawingClient, assets.NewAssetHelper("", nil), nil, nil)
 	scoreController := renderscore.NewController(drawingClient)
 	skController := rendersk.NewController(drawingClient)
 
@@ -3202,18 +3203,19 @@ func testRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *re
 	stampController := renderstamp.NewController(stampSource, drawingClient, assets.NewAssetHelper("", nil))
 
 	return &renderapp.App{
-		Drawing: drawingClient,
-		Assets:  assets.NewAssetHelper("", nil),
-		Cards:   cardController,
-		Edu:     educationController,
-		Events:  eventController,
-		Gachas:  gachaController,
-		Honors:  honorController,
-		Misc:    miscController,
-		Music:   musicController,
-		Score:   scoreController,
-		SK:      skController,
-		Stamps:  stampController,
+		Drawing:    drawingClient,
+		Assets:     assets.NewAssetHelper("", nil),
+		Cards:      cardController,
+		Edu:        educationController,
+		Events:     eventController,
+		Gachas:     gachaController,
+		Honors:     honorController,
+		Misc:       miscController,
+		Music:      musicController,
+		Score:      scoreController,
+		SK:         skController,
+		Stamps:     stampController,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 }
 
@@ -3274,7 +3276,7 @@ func musicSnapshotRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingCl
 	return &renderapp.App{
 		Drawing: drawingClient,
 		Assets:  assetHelper,
-		Music:   rendermusic.NewController(musicSource, drawingClient, assetHelper, snapshot),
+		Music:   rendermusic.NewController(musicSource, drawingClient, assetHelper, snapshot, nil),
 	}
 }
 

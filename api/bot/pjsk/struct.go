@@ -1,25 +1,27 @@
 package pjsk
 
-// BotCommandRequest is the canonical request shape for per-feature bot endpoints.
-// The client sends the raw OneBot v11 payload as a Base64-encoded query parameter
-// and carries routing / platform metadata in request headers.
+import onebot11 "haruki-cloud/api/bot/onebot11"
+
+// BotCommandRequest is the unified POST body for per-feature bot endpoints.
+// All fields that were previously split across query params and request headers
+// are now carried in a single JSON (transitioning to MsgPack) body.
 type BotCommandRequest struct {
-	Platform        string
-	PlatformUserID  string
-	PlatformGroupID string
-	CommandPayload  string
-	MatchedCommand  string
-	Server          string
+	Platform        string           `json:"platform" msgpack:"platform"`
+	PlatformUserID  string           `json:"platform_user_id" msgpack:"platform_user_id"`
+	PlatformGroupID string           `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
+	Server          string           `json:"server,omitempty" msgpack:"server,omitempty"`
+	MatchedCommand  string           `json:"matched_command" msgpack:"matched_command"`
+	Message         onebot11.Message `json:"message" msgpack:"message"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.
 type BotCommandErrorResponse struct {
-	Error          string `json:"error"`
-	Mode           string `json:"mode,omitempty"`
-	ExpectedModule string `json:"expected_module,omitempty"`
-	ExpectedMode   string `json:"expected_mode,omitempty"`
-	ExpectedPath   string `json:"expected_path,omitempty"`
-	MatchedCommand string `json:"matched_command,omitempty"`
+	Error          string `json:"error" msgpack:"error"`
+	Mode           string `json:"mode,omitempty" msgpack:"mode,omitempty"`
+	ExpectedModule string `json:"expected_module,omitempty" msgpack:"expected_module,omitempty"`
+	ExpectedMode   string `json:"expected_mode,omitempty" msgpack:"expected_mode,omitempty"`
+	ExpectedPath   string `json:"expected_path,omitempty" msgpack:"expected_path,omitempty"`
+	MatchedCommand string `json:"matched_command,omitempty" msgpack:"matched_command,omitempty"`
 }
 
 // ManifestEntry describes one feature endpoint served by the Bot API.
@@ -28,27 +30,27 @@ type BotCommandErrorResponse struct {
 type ManifestEntry struct {
 	// CommandPrefixes is the list of text prefixes (or patterns) that trigger this endpoint,
 	// e.g. ["/查卡", "/card", "/cards"].
-	CommandPrefixes []string `json:"command_prefixes"`
+	CommandPrefixes []string `json:"command_prefixes" msgpack:"command_prefixes"`
 
 	// CommandPriority controls matching order; higher value is matched first.
-	CommandPriority int `json:"command_priority"`
+	CommandPriority int `json:"command_priority" msgpack:"command_priority"`
 
 	// CommandMode is the accepted HTTP method, e.g. "GET".
-	CommandMode string `json:"command_mode"`
+	CommandMode string `json:"command_mode" msgpack:"command_mode"`
 
 	// CommandModule is the top-level game module, e.g. "pjsk", "chunithm".
-	CommandModule string `json:"command_module"`
+	CommandModule string `json:"command_module" msgpack:"command_module"`
 
 	// CommandPath is the path relative to the module base (no leading slash),
 	// e.g. "card/detail". Full URL: /api/v2/bot/{botId}/{module}/{path}.
-	CommandPath string `json:"command_path"`
+	CommandPath string `json:"command_path" msgpack:"command_path"`
 
 	// CommandAdditionalParams is an optional list of extra query parameter names
 	// the endpoint accepts beyond the standard command payload protocol.
-	CommandAdditionalParams []string `json:"command_additional_params,omitempty"`
+	CommandAdditionalParams []string `json:"command_additional_params,omitempty" msgpack:"command_additional_params,omitempty"`
 }
 
 // ManifestResponse is returned by GET /api/v2/bot/:botId/command/manifests.
 type ManifestResponse struct {
-	Entries []ManifestEntry `json:"entries"`
+	Entries []ManifestEntry `json:"entries" msgpack:"entries"`
 }

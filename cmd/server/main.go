@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/chardata"
@@ -63,7 +65,8 @@ func main() {
 	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
 	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 	botDBClient := initBot(mainLogger, app, redisClient)
-	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient)
+	noiseKeyPair := initNoiseKeyPair(mainLogger)
+	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
 
 	defer closeClients(usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 
@@ -344,6 +347,30 @@ func initBot(mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis
 
 	botAuth.RegisterBotRoutes(app, botDBClient, redisClient)
 	return botDBClient
+}
+
+func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
+	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
+	if keyHex == "" {
+		mainLogger.Warnf("Noise IK private key not configured; bot API transport encryption disabled")
+		return nil
+	}
+	privBytes, err := hex.DecodeString(keyHex)
+	if err != nil {
+		mainLogger.Errorf("Invalid noise_private_key hex: %v", err)
+		os.Exit(1)
+	}
+	if len(privBytes) != 32 {
+		mainLogger.Errorf("noise_private_key must be 32 bytes (got %d)", len(privBytes))
+		os.Exit(1)
+	}
+	kp, err := crypto.KeyPairFromPrivate(privBytes)
+	if err != nil {
+		mainLogger.Errorf("Failed to derive Noise key pair: %v", err)
+		os.Exit(1)
+	}
+	mainLogger.Infof("Noise IK transport encryption enabled (pubkey=%x)", kp.Public)
+	return kp
 }
 
 func closeClients(usersClient *usersDB.Client, chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,

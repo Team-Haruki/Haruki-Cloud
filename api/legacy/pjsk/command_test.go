@@ -52,11 +52,23 @@ func TestCommandEndpointReturnsImage(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, string(respBody))
 	}
-	if resp.Header.Get("Content-Type") != "image/png" {
-		t.Fatalf("expected Content-Type image/png, got %s", resp.Header.Get("Content-Type"))
+
+	// Endpoint returns OneBot11 message JSON; check for image segment in the data array.
+	var envelope renderEnvelope
+	if err := json.Unmarshal(respBody, &envelope); err != nil {
+		t.Fatalf("decode response: %v raw=%s", err, string(respBody))
 	}
-	if string(respBody) != "PNGDATA" {
-		t.Fatalf("unexpected body: %s", string(respBody))
+	var segments []map[string]interface{}
+	if err := json.Unmarshal(envelope.Data, &segments); err != nil {
+		t.Fatalf("decode segments: %v raw=%s", err, string(envelope.Data))
+	}
+	if len(segments) == 0 || segments[0]["type"] != "image" {
+		t.Fatalf("expected at least one image segment, got %+v", segments)
+	}
+	fileData, _ := segments[0]["data"].(map[string]interface{})
+	file, _ := fileData["file"].(string)
+	if !strings.HasPrefix(file, "https://image-cache.test/pjsk/") {
+		t.Fatalf("unexpected image url: %q", file)
 	}
 }
 

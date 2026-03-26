@@ -5,23 +5,23 @@ package onebot11
 // Segment is a single OneBot v11 message segment.
 // The JSON representation is {"type": "<type>", "data": {...}}.
 type Segment struct {
-	Type string `json:"type"`
-	Data any    `json:"data"`
+	Type string `json:"type" msgpack:"type"`
+	Data any    `json:"data" msgpack:"data"`
 }
 
 // TextData is the data payload for a "text" segment.
 type TextData struct {
-	Text string `json:"text"`
+	Text string `json:"text" msgpack:"text"`
 }
 
 // ImageData is the data payload for an "image" segment.
 type ImageData struct {
-	File string `json:"file"`
+	File string `json:"file" msgpack:"file"`
 }
 
 // AtData is the data payload for an "at" segment.
 type AtData struct {
-	QQ string `json:"qq"`
+	QQ string `json:"qq" msgpack:"qq"`
 }
 
 // Text returns a text message segment.

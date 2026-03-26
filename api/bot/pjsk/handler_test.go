@@ -1,19 +1,19 @@
 package pjsk
 
 import (
+	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
 	"haruki-cloud/api/bot/onebot11"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
+	noiseCrypto "haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
@@ -23,7 +23,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
+	noiseMP "github.com/shamaton/msgpack/v3"
 )
 
 const testBotID = "11451419"
@@ -220,7 +220,7 @@ func testBotAppWithBindings(t *testing.T, drawingURL string, bindingService *acc
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
 	runtime.Bindings = bindingService
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 	return app
 }
 
@@ -241,45 +241,16 @@ func testBindingServiceWithValidator(t *testing.T, validator accountdata.Profile
 	)
 }
 
-// encodeOneBotPayload creates a Base64-encoded OneBot v11 JSON payload from command text.
-func encodeOneBotPayload(command string) string {
-	payload := map[string]interface{}{
-		"post_type":    "message",
-		"message_type": "private",
-		"raw_message":  command,
-		"message": []map[string]interface{}{
-			{"type": "text", "data": map[string]string{"text": command}},
-		},
-	}
-	b, _ := json.Marshal(payload)
-	return base64.StdEncoding.EncodeToString(b)
-}
-
 // botPJSKPath returns the full URL for a PJSK bot endpoint.
 func botPJSKPath(path string) string {
 	return "/api/v2/bot/" + testBotID + "/pjsk/" + path
 }
 
-func newBotGETRequest(path, commandPayload, matchedCommand string) *http.Request {
-	params := url.Values{}
-	if commandPayload != "" {
-		params.Set(botQueryCommandPayload, commandPayload)
-	}
-	req, _ := http.NewRequest(http.MethodGet, path+"?"+params.Encode(), nil)
-	req.Header.Set(botHeaderPlatform, "qq")
-	req.Header.Set(botHeaderPlatformUserID, "12345")
-	req.Header.Set(botHeaderPJSKServer, "jp")
-	if matchedCommand != "" {
-		req.Header.Set(botHeaderMatchedCommand, matchedCommand)
-	}
-	return req
-}
-
-func assertSegmentsText(t *testing.T, got []zeromessage.Segment, want string) {
-	t.Helper()
-	if text := flattenOneBotSegments(got); text != want {
-		t.Fatalf("expected %q, got %q", want, text)
-	}
+func newBotPOSTRequest(path string, req BotCommandRequest) *http.Request {
+	body, _ := json.Marshal(req)
+	r, _ := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	r.Header.Set("Content-Type", "application/json")
+	return r
 }
 
 func decodeSuccessMessage(t *testing.T, body []byte) onebot11.Message {
@@ -337,7 +308,10 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 	defer srv.Close()
 	app := testBotApp(t, srv.URL)
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), encodeOneBotPayload("/卡面 1001"), "/卡面")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -355,7 +329,10 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 	app := testBotAppWithBindings(t, "", testBindingService(t))
 
-	req := newBotGETRequest(botPJSKPath("profile/bind"), encodeOneBotPayload("/绑定列表"), "/绑定列表")
+	req := newBotPOSTRequest(botPJSKPath("profile/bind"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/绑定列表",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/绑定列表"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -379,8 +356,11 @@ func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {
 	defer srv.Close()
 	app := testBotApp(t, srv.URL)
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), encodeOneBotPayload("/卡面 1001"), "/卡面")
-	req.Header.Set(botHeaderPlatformGroupID, "67890")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", PlatformGroupID: "67890",
+		Server: "jp", MatchedCommand: "/卡面",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -403,7 +383,10 @@ func TestBotEndpointPlainTextFallback(t *testing.T) {
 	defer srv.Close()
 	app := testBotApp(t, srv.URL)
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), "/卡面 1001", "/卡面")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -426,17 +409,13 @@ func TestBotEndpointOneBotMessageArray(t *testing.T) {
 	defer srv.Close()
 	app := testBotApp(t, srv.URL)
 
-	// OneBot payload with only message array (no raw_message)
-	payload := map[string]interface{}{
-		"message": []map[string]interface{}{
-			{"type": "text", "data": map[string]string{"text": "/卡面 "}},
-			{"type": "text", "data": map[string]string{"text": "1001"}},
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/卡面 "}},
+			{Type: "text", Data: onebot11.TextData{Text: "1001"}},
 		},
-	}
-	b, _ := json.Marshal(payload)
-	encoded := base64.StdEncoding.EncodeToString(b)
-
-	req := newBotGETRequest(botPJSKPath("card/detail"), encoded, "/卡面")
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -475,9 +454,12 @@ func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/query"), encodeOneBotPayload("/sk event101 100 1"), "/sk")
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101 100 1"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -515,9 +497,12 @@ func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/line"), encodeOneBotPayload("/skl event101 100 1"), "/skl")
+	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/skl",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/skl event101 100 1"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -558,9 +543,12 @@ func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/query"), encodeOneBotPayload("/sk event101 1234567890"), "/sk")
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101 1234567890"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -601,9 +589,12 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/line"), encodeOneBotPayload("/skl event101 1234567890"), "/skl")
+	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/skl",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/skl event101 1234567890"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -647,20 +638,15 @@ func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	payload := map[string]interface{}{
-		"post_type":    "message",
-		"message_type": "group",
-		"message": []map[string]interface{}{
-			{"type": "text", "data": map[string]string{"text": "/sk event101 "}},
-			{"type": "at", "data": map[string]string{"qq": "67890"}},
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/sk event101 "}},
+			{Type: "at", Data: onebot11.AtData{QQ: "67890"}},
 		},
-	}
-	b, _ := json.Marshal(payload)
-	encoded := base64.StdEncoding.EncodeToString(b)
-
-	req := newBotGETRequest(botPJSKPath("sk/query"), encoded, "/sk")
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -704,9 +690,12 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/speed"), encodeOneBotPayload("/sks event101 100 1"), "/sks")
+	req := newBotPOSTRequest(botPJSKPath("sk/speed"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sks",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sks event101 100 1"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -747,9 +736,12 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/check-room"), encodeOneBotPayload("/cf event101 100 1"), "/cf")
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cf",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cf event101 100 1"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -790,9 +782,12 @@ func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
-	RegisterPJSKBotRoutes(app, runtime, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
-	req := newBotGETRequest(botPJSKPath("sk/rank-trace"), encodeOneBotPayload("/skt event101 100"), "/skt")
+	req := newBotPOSTRequest(botPJSKPath("sk/rank-trace"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/skt",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/skt event101 100"}}},
+	})
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -810,7 +805,10 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
 	// /卡面 resolves to card-detail, but we send it to card/list
-	req := newBotGETRequest(botPJSKPath("card/list"), encodeOneBotPayload("/卡面 1001"), "/卡面")
+	req := newBotPOSTRequest(botPJSKPath("card/list"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -835,7 +833,10 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 func TestBotEndpointEmptyCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), "", "/卡面")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		// Message is empty
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -851,7 +852,10 @@ func TestBotEndpointEmptyCommandRejects400(t *testing.T) {
 func TestBotEndpointUnknownMatchedCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), encodeOneBotPayload("/卡面 1001"), "/不存在的命令")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/不存在的命令",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -867,7 +871,11 @@ func TestBotEndpointUnknownMatchedCommandRejects400(t *testing.T) {
 func TestBotEndpointMissingMatchedCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotGETRequest(botPJSKPath("card/detail"), encodeOneBotPayload("/卡面 1001"), "")
+	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp",
+		// MatchedCommand is empty
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+	})
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -880,11 +888,10 @@ func TestBotEndpointMissingMatchedCommandRejects400(t *testing.T) {
 	}
 }
 
-func TestBotEndpointPostRejected(t *testing.T) {
+func TestBotEndpointGetRejected(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), strings.NewReader(`{}`))
-	req.Header.Set("Content-Type", "application/json")
+	req, _ := http.NewRequest(http.MethodGet, botPJSKPath("card/detail"), nil)
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -893,7 +900,7 @@ func TestBotEndpointPostRejected(t *testing.T) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusMethodNotAllowed && resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("expected 404/405 for POST, got %d", resp.StatusCode)
+		t.Fatalf("expected 404/405 for GET, got %d", resp.StatusCode)
 	}
 }
 
@@ -924,7 +931,7 @@ func TestBotManifestEndpoint(t *testing.T) {
 
 func TestBotNilRenderAppSkipsRegistration(t *testing.T) {
 	app := fiber.New()
-	RegisterPJSKBotRoutes(app, nil, nil, nil)
+	RegisterPJSKBotRoutes(app, nil, nil, nil, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
 	resp, err := app.Test(req)
@@ -938,56 +945,87 @@ func TestBotNilRenderAppSkipsRegistration(t *testing.T) {
 	}
 }
 
-// ── decodeCommand unit tests ────────────────────────────────────────────────
-
-func TestDecodeCommandOneBotRawMessage(t *testing.T) {
-	payload := `{"raw_message":"/卡面 1001","message_type":"private"}`
-	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
-
-	result, err := decodeCommand(encoded)
+// TestBotNoiseIKRoundTrip verifies the full Noise IK encrypt→decrypt→process→encrypt→decrypt
+// round trip: the client encrypts a MsgPack-encoded BotCommandRequest with Noise IK,
+// the server decrypts, processes, and returns a Noise-encrypted MsgPack response.
+func TestBotNoiseIKRoundTrip(t *testing.T) {
+	serverKP, err := noiseCrypto.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("decode error: %v", err)
+		t.Fatalf("generate server key pair: %v", err)
 	}
-	assertSegmentsText(t, result, "/卡面 1001")
+
+	var client *drawing.HarukiDrawingClient
+	app := fiber.New()
+	runtime := testRenderApp(t, client)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, serverKP)
+
+	// Build request payload
+	cmdReq := BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "999",
+		Server:         "jp",
+		MatchedCommand: "/卡面",
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}},
+		},
+	}
+	plaintext, err := noiseMP.Marshal(cmdReq)
+	if err != nil {
+		t.Fatalf("msgpack marshal: %v", err)
+	}
+
+	// Noise IK: client is initiator, knows server public key
+	clientNC, err := noiseCrypto.NewHandshake(mustGenKP(t), serverKP.Public, true)
+	if err != nil {
+		t.Fatalf("client handshake init: %v", err)
+	}
+	ciphertext, err := clientNC.EncryptPacket(plaintext)
+	if err != nil {
+		t.Fatalf("client encrypt: %v", err)
+	}
+
+	httpReq, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), bytes.NewReader(ciphertext))
+	httpReq.Header.Set("Content-Type", "application/octet-stream")
+
+	resp, err := app.Test(httpReq)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+
+	// The raw HTTP response body is Noise-encrypted
+	if len(respBody) == 0 {
+		t.Fatalf("expected non-empty encrypted response")
+	}
+
+	// Decrypt the response (client reads server's Message 2)
+	decrypted, err := clientNC.DecryptPacket(respBody)
+	if err != nil {
+		t.Fatalf("client decrypt response: %v", err)
+	}
+
+	// Decode MsgPack response
+	var envelope map[string]interface{}
+	if err := noiseMP.Unmarshal(decrypted, &envelope); err != nil {
+		t.Fatalf("msgpack unmarshal response: %v raw_len=%d", err, len(decrypted))
+	}
+
+	// The handler should have processed the card query
+	status, _ := envelope["status"]
+	message, _ := envelope["message"].(string)
+	t.Logf("Noise IK response: status=%v message=%s", status, message)
+
+	if message != "ok" && message != "render failed" {
+		t.Fatalf("unexpected message: %s (full envelope: %+v)", message, envelope)
+	}
 }
 
-func TestDecodeCommandOneBotMessageSegments(t *testing.T) {
-	payload := `{"message":[{"type":"text","data":{"text":"/查卡 "}},{"type":"text","data":{"text":"初音"}}]}`
-	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
-
-	result, err := decodeCommand(encoded)
+func mustGenKP(t *testing.T) *noiseCrypto.KeyPair {
+	t.Helper()
+	kp, err := noiseCrypto.GenerateKeyPair()
 	if err != nil {
-		t.Fatalf("decode error: %v", err)
+		t.Fatalf("generate key pair: %v", err)
 	}
-	assertSegmentsText(t, result, "/查卡 初音")
-}
-
-func TestDecodeCommandOneBotMessageSegmentsWithAt(t *testing.T) {
-	payload := `{"message":[{"type":"text","data":{"text":"/sk "}},{"type":"at","data":{"qq":"12345"}},{"type":"text","data":{"text":" 20"}}]}`
-	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
-
-	result, err := decodeCommand(encoded)
-	if err != nil {
-		t.Fatalf("decode error: %v", err)
-	}
-	assertSegmentsText(t, result, "/sk @12345 20")
-}
-
-func TestDecodeCommandOneBotMessageSegmentsPreferredOverRawMessage(t *testing.T) {
-	payload := `{"raw_message":"/sk @测试用户","message":[{"type":"text","data":{"text":"/sk "}},{"type":"at","data":{"qq":"12345"}}]}`
-	encoded := base64.StdEncoding.EncodeToString([]byte(payload))
-
-	result, err := decodeCommand(encoded)
-	if err != nil {
-		t.Fatalf("decode error: %v", err)
-	}
-	assertSegmentsText(t, result, "/sk @12345")
-}
-
-func TestDecodeCommandPlainTextFallback(t *testing.T) {
-	result, err := decodeCommand("/卡面 1001")
-	if err != nil {
-		t.Fatalf("decode error: %v", err)
-	}
-	assertSegmentsText(t, result, "/卡面 1001")
+	return kp
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const DefaultBotCommandMode = "GET"
+const DefaultBotCommandMode = "POST"
 
 var DefaultBotAdditionalParams = []string{}
 

@@ -15,7 +15,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/detail",
 			Commands: []string{
-				"/card-detail", "/详情", "/查卡",
+				"/card-detail", "/详情", "/查卡", "/卡面",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {

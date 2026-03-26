@@ -5,13 +5,13 @@ import "haruki-cloud/utils"
 // ================= Response Structs =================
 
 type HarukiAPIResponse struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
+	Status  int    `json:"status" msgpack:"status"`
+	Message string `json:"message" msgpack:"message"`
 }
 
 type HarukiAPIDataResponse[T any] struct {
 	HarukiAPIResponse
-	Data T `json:"data,omitempty"`
+	Data T `json:"data,omitempty" msgpack:"data,omitempty"`
 }
 
 // ================= User Info =================

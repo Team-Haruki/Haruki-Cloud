@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -115,7 +116,7 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 			EndAt:     item.EndAt,
 			AssetName: item.AssetBundleName,
 		})
-		logos[item.ID] = b.buildGachaLogoPath(item)
+		logos[item.ID] = b.buildGachaLogoPath(item, region)
 	}
 
 	return &drawing.GachaListRequest{
@@ -268,21 +269,21 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 			ID:               cardInfo.ID,
 			Rarity:           cardInfo.CardRarityType,
 			Rate:             computeCardRate(cardInfo.ID),
-			ThumbnailRequest: b.buildGachaThumbnail(cardInfo),
+			ThumbnailRequest: b.buildGachaThumbnail(cardInfo, region),
 		})
 	}
 
 	var bannerPath *string
-	if path := b.buildGachaBannerPath(gachaInfo); path != "" {
+	if path := b.buildGachaBannerPath(gachaInfo, region); path != "" {
 		bannerPath = &path
 	}
 	var logoPath *string
-	if path := b.buildGachaLogoPath(gachaInfo); path != "" {
+	if path := b.buildGachaLogoPath(gachaInfo, region); path != "" {
 		logoPath = &path
 	}
 	var ceilPath *string
 	if gachaInfo.GachaCeilItemID != nil && *gachaInfo.GachaCeilItemID != 0 {
-		if path := b.buildCeilItemIconPath(*gachaInfo.GachaCeilItemID); path != "" {
+		if path := b.buildCeilItemIconPath(*gachaInfo.GachaCeilItemID, region); path != "" {
 			ceilPath = &path
 		}
 	}
@@ -297,7 +298,7 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 		EndAt:               gachaInfo.EndAt + gachaEndPaddingMillis,
 		AssetName:           gachaInfo.AssetBundleName,
 		CeilItemImgPath:     ceilPath,
-		Behaviors:           b.convertBehaviors(gachaInfo),
+		Behaviors:           b.convertBehaviors(gachaInfo, region),
 		Rarity1Count:        rarityCounts["rarity_1"],
 		Rarity2Count:        rarityCounts["rarity_2"],
 		Rarity3Count:        rarityCounts["rarity_3"],
@@ -316,10 +317,11 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 	}, nil
 }
 
-func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha) string {
+func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha, region renderregion.Value) string {
 	if gachaInfo == nil {
 		return ""
 	}
+	assetDir := assets.RegionAssetDir(region.String())
 	idText := strconv.Itoa(gachaInfo.ID)
 	candidates := []string{}
 
@@ -338,15 +340,16 @@ func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha) string {
 		filepath.Join("logo", fmt.Sprintf("banner_logo%d.png", gachaInfo.Seq)),
 		filepath.Join("logo", "banner_logo"+idText+".png"),
 	)
-	return assets.ResolveAssetPath(b.assets, "", candidates...)
+	return assets.ResolveAssetPath(b.assets, assetDir, candidates...)
 }
 
-func (b *Builder) buildGachaBannerPath(gachaInfo *masterdata.Gacha) string {
+func (b *Builder) buildGachaBannerPath(gachaInfo *masterdata.Gacha, region renderregion.Value) string {
 	if gachaInfo == nil {
 		return ""
 	}
+	assetDir := assets.RegionAssetDir(region.String())
 	idText := strconv.Itoa(gachaInfo.ID)
-	return assets.ResolveAssetPath(b.assets, "",
+	return assets.ResolveAssetPath(b.assets, assetDir,
 		filepath.Join("home", "banner", "banner_gacha"+idText, "banner_gacha"+idText+".png"),
 		filepath.Join("gacha", "ab_gacha_"+idText, "screen", "texture", "bg_gacha"+idText+".png"),
 		filepath.Join("home", "banner", gachaInfo.AssetBundleName, gachaInfo.AssetBundleName+".png"),
@@ -355,17 +358,17 @@ func (b *Builder) buildGachaBannerPath(gachaInfo *masterdata.Gacha) string {
 	)
 }
 
-func (b *Builder) buildGachaThumbnail(cardInfo *masterdata.Card) drawing.CardFullThumbnailRequest {
-	return common.BuildCardThumbnail(b.assets, cardInfo, common.ThumbnailOptions{AfterTraining: false})
+func (b *Builder) buildGachaThumbnail(cardInfo *masterdata.Card, region renderregion.Value) drawing.CardFullThumbnailRequest {
+	return common.BuildCardThumbnail(b.assets, cardInfo, region, common.ThumbnailOptions{AfterTraining: false})
 }
 
-func (b *Builder) buildCeilItemIconPath(_ int) string {
-	return assets.ResolveAssetPath(b.assets, "", "ceil_item.png")
+func (b *Builder) buildCeilItemIconPath(_ int, region renderregion.Value) string {
+	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), "ceil_item.png")
 }
 
-func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha) []drawing.GachaBehavior {
+func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderregion.Value) []drawing.GachaBehavior {
 	behaviors := make([]drawing.GachaBehavior, 0, len(gachaInfo.GachaBehaviors))
-	jewelIcon := assets.ResolveAssetPath(b.assets, "", "jewel.png")
+	jewelIcon := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), "jewel.png")
 	for _, behavior := range gachaInfo.GachaBehaviors {
 		var costType *string
 		var costQty *int

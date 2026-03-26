@@ -137,7 +137,7 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 		return nil, fmt.Errorf("failed to search music: %w", err)
 	}
 
-	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName)
+	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
 		jacketPath = localPath
 	}
@@ -209,7 +209,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		return nil, err
 	}
 
-	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName)
+	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
 		jacketPath = localPath
 	}

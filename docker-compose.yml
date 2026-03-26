@@ -65,10 +65,8 @@ services:
     restart: unless-stopped
     networks:
       - haruki-net
-    command: >
-      sh -c '[ -n "${REDIS_PASSWORD}" ]
-             && redis-server --requirepass "${REDIS_PASSWORD}"
-             || redis-server'
+    command: >-
+      sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-server --requirepass \"$$REDIS_PASSWORD\"; else redis-server; fi"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

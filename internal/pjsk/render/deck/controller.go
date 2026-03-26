@@ -133,7 +133,7 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 		totalPower += pick.power
 		afterTraining := isAfterTraining(pick.userCard)
 		cardData = append(cardData, drawing.DeckCardData{
-			CardThumbnail: common.BuildCardThumbnail(c.assets, pick.card, common.ThumbnailOptions{
+			CardThumbnail: common.BuildCardThumbnail(c.assets, pick.card, region, common.ThumbnailOptions{
 				AfterTraining: afterTraining,
 				TrainedArt:    afterTraining,
 				TrainRank:     drawing.IntPtr(pick.userCard.MasterRank),
@@ -231,7 +231,7 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 			if eventInfo, err := c.events.GetEventByID(finalEventID); err == nil && eventInfo != nil {
 				eventName = eventInfo.Name
 				request.EventName = &eventName
-				if bannerPath := c.resolveEventBannerPath(eventInfo.AssetBundleName); bannerPath != "" {
+				if bannerPath := c.resolveEventBannerPath(eventInfo.AssetBundleName, region); bannerPath != "" {
 					request.EventBannerPath = &bannerPath
 				}
 			}
@@ -312,13 +312,13 @@ func (c *Controller) pickCurrentOrNextEventID() int {
 	return 0
 }
 
-func (c *Controller) resolveEventBannerPath(assetBundleName string) string {
+func (c *Controller) resolveEventBannerPath(assetBundleName string, region renderregion.Value) string {
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
 	return assets.ResolveAssetPath(
 		c.assets,
-		"",
+		assets.RegionAssetDir(region.String()),
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)

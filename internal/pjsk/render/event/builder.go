@@ -46,7 +46,7 @@ func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDeta
 	}
 	cardThumbs := make([]drawing.CardFullThumbnailRequest, 0, len(cards))
 	for _, card := range cards {
-		cardThumbs = append(cardThumbs, common.BuildCardThumbnail(b.assets, card, common.ThumbnailOptions{AfterTraining: false}))
+		cardThumbs = append(cardThumbs, common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{AfterTraining: false}))
 	}
 
 	info, err := b.buildEventInfo(eventInfo)
@@ -57,7 +57,7 @@ func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDeta
 	return &drawing.EventDetailRequest{
 		Region:      region.String(),
 		EventInfo:   info,
-		EventAssets: b.buildEventAssets(eventInfo, info),
+		EventAssets: b.buildEventAssets(eventInfo, info, region),
 		EventCards:  cardThumbs,
 	}, nil
 }
@@ -68,9 +68,14 @@ func (b *Builder) BuildEventListRequest(query ListQuery) (*drawing.EventListRequ
 		return nil, fmt.Errorf("no events matched filters")
 	}
 
+	region := query.Region
+	if region.IsZero() {
+		region = b.source.DefaultRegion()
+	}
+
 	briefs := make([]drawing.EventBrief, 0, len(events))
 	for _, eventInfo := range events {
-		brief, err := b.buildEventBrief(eventInfo)
+		brief, err := b.buildEventBrief(eventInfo, region)
 		if err != nil {
 			return nil, err
 		}
@@ -117,14 +122,15 @@ func (b *Builder) buildEventInfo(eventInfo *masterdata.Event) (drawing.EventInfo
 	return info, nil
 }
 
-func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.EventInfo) drawing.EventAssets {
+func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.EventInfo, region renderregion.Value) drawing.EventAssets {
 	assetName := eventInfo.AssetBundleName
+	assetDir := assets.RegionAssetDir(region.String())
 	result := drawing.EventAssets{
-		EventBgPath: assets.ResolveAssetPath(b.assets, "",
+		EventBgPath: assets.ResolveAssetPath(b.assets, assetDir,
 			filepath.Join("event", assetName, "screen", "bg.png"),
 			filepath.Join("event", assetName, "bg.png"),
 		),
-		EventLogoPath: assets.ResolveAssetPath(b.assets, "",
+		EventLogoPath: assets.ResolveAssetPath(b.assets, assetDir,
 			filepath.Join("event", assetName, "logo", "logo.png"),
 			filepath.Join("event", assetName, "logo.png"),
 		),
@@ -132,33 +138,34 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 	}
 
 	if !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-		result.EventStoryBgPath = assets.ResolveAssetPath(b.assets, "", filepath.Join("event_story", assetName, "screen_image", "story_bg.png"))
-		result.EventBanCharaImg = assets.ResolveAssetPath(b.assets, "", filepath.Join("event", assetName, "screen", "character.png"))
+		result.EventStoryBgPath = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("event_story", assetName, "screen_image", "story_bg.png"))
+		result.EventBanCharaImg = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("event", assetName, "screen", "character.png"))
 	}
 	if info.BonusAttr != "" {
-		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, "", filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
+		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
 	}
 	if info.BannerCid != 0 {
-		result.BanCharaIconPath = b.characterIconPath(info.BannerCid)
+		result.BanCharaIconPath = b.characterIconPath(info.BannerCid, region)
 	}
 	for _, cid := range info.BonusCharaID {
-		result.BonusCharaPath = append(result.BonusCharaPath, b.characterIconPath(cid))
+		result.BonusCharaPath = append(result.BonusCharaPath, b.characterIconPath(cid, region))
 	}
 	if result.BanCharaIconPath == "" && len(info.BonusCharaID) > 0 {
-		result.BanCharaIconPath = b.characterIconPath(info.BonusCharaID[0])
+		result.BanCharaIconPath = b.characterIconPath(info.BonusCharaID[0], region)
 	}
 
 	return result
 }
 
-func (b *Builder) buildEventBrief(eventInfo *masterdata.Event) (drawing.EventBrief, error) {
+func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregion.Value) (drawing.EventBrief, error) {
+	assetDir := assets.RegionAssetDir(region.String())
 	brief := drawing.EventBrief{
 		ID:        eventInfo.ID,
 		EventName: eventInfo.Name,
 		EventType: b.displayEventType(eventInfo.EventType),
 		StartAt:   eventInfo.StartAt,
 		EndAt:     eventInfo.AggregateAt + 1000,
-		EventBannerPath: assets.ResolveAssetPath(b.assets, "",
+		EventBannerPath: assets.ResolveAssetPath(b.assets, assetDir,
 			filepath.Join("home", "banner", eventInfo.AssetBundleName, eventInfo.AssetBundleName+".png"),
 			filepath.Join("event", eventInfo.AssetBundleName, "banner.png"),
 		),
@@ -171,20 +178,20 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event) (drawing.EventBri
 			maxCards = 6
 		}
 		for i := 0; i < maxCards; i++ {
-			brief.EventCards = append(brief.EventCards, common.BuildCardThumbnail(b.assets, cards[i], common.ThumbnailOptions{}))
+			brief.EventCards = append(brief.EventCards, common.BuildCardThumbnail(b.assets, cards[i], region, common.ThumbnailOptions{}))
 		}
 	}
 	if attr, _ := b.extractEventBonuses(eventInfo.ID); attr != "" {
-		path := assets.ResolveAssetPath(b.assets, "", filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr))))
+		path := assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr))))
 		brief.EventAttrPath = &path
 	}
 
 	isWLEvent := strings.EqualFold(eventInfo.EventType, "world_bloom")
 	if !isWLEvent {
 		if bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID); err == nil && bannerCID != 0 {
-			path := b.characterIconPath(bannerCID)
+			path := b.characterIconPath(bannerCID, region)
 			brief.EventCharaPath = &path
-			if unit := b.unitIconPathByCharacter(bannerCID); unit != "" {
+			if unit := b.unitIconPathByCharacter(bannerCID, region); unit != "" {
 				brief.EventUnitPath = &unit
 			}
 		}
@@ -192,7 +199,7 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event) (drawing.EventBri
 	}
 
 	if len(cards) > 0 && len(cards) <= 6 {
-		if unit := b.unitIconPathByCharacter(cards[0].CharacterID); unit != "" {
+		if unit := b.unitIconPathByCharacter(cards[0].CharacterID, region); unit != "" {
 			brief.EventUnitPath = &unit
 		}
 	}
@@ -375,14 +382,15 @@ func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]interface{} 
 	return timeline
 }
 
-func (b *Builder) characterIconPath(charID int) string {
+func (b *Builder) characterIconPath(charID int, region renderregion.Value) string {
+	assetDir := assets.RegionAssetDir(region.String())
 	if nickname, ok := assets.CharacterIDToNickname[charID]; ok {
-		return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
+	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
-func (b *Builder) unitIconPathByCharacter(charID int) string {
+func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value) string {
 	character, err := b.source.GetCharacterByID(charID)
 	if err != nil || character == nil {
 		return ""
@@ -391,7 +399,7 @@ func (b *Builder) unitIconPathByCharacter(charID int) string {
 	if unitIcon == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, "", filepath.Join("unit", unitIcon+".png"))
+	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("unit", unitIcon+".png"))
 }
 
 func (b *Builder) displayEventType(code string) string {

@@ -51,7 +51,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 				EventName:       eventInfoModel.Name,
 				StartAt:         eventInfoModel.StartAt,
 				EndAt:           eventInfoModel.AggregateAt + 1000,
-				EventBannerPath: b.buildEventBannerPath(eventInfoModel.AssetBundleName),
+				EventBannerPath: b.buildEventBannerPath(eventInfoModel.AssetBundleName, region),
 			}
 			if bonuses, err := b.events.GetEventDeckBonuses(eventInfoModel.ID); err == nil {
 				for _, bonus := range bonuses {
@@ -60,7 +60,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					}
 					attr := bonus.CardAttr
 					eventInfo.BonusAttr = &attr
-					path := assets.ResolveAssetPath(b.assets, "", filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr)))
+					path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr)))
 					eventAttrIconPath = &path
 				}
 
@@ -79,13 +79,13 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					for unit := range units {
 						eventInfo.Unit = &unit
 						if iconName := b.getUnitIconName(unit); iconName != "" {
-							path := assets.ResolveAssetPath(b.assets, "", filepath.Join("unit", iconName+".png"))
+							path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("unit", iconName+".png"))
 							eventUnitIconPath = &path
 						}
 					}
 					if bannerCharacterID, err := b.events.GetEventBannerCharacterID(eventInfoModel.ID); err == nil {
 						eventInfo.BannerCid = &bannerCharacterID
-						path := b.BuildCharacterIconPath(bannerCharacterID, stringValue(eventInfo.Unit))
+						path := b.BuildCharacterIconPath(bannerCharacterID, stringValue(eventInfo.Unit), region)
 						if path != "" {
 							eventCharaIconPath = &path
 						}
@@ -102,7 +102,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 			GachaName:       gachaInfoModel.Name,
 			StartAt:         gachaInfoModel.StartAt,
 			EndAt:           (gachaInfoModel.EndAt/1000 + 1) * 1000,
-			GachaBannerPath: b.buildGachaBannerPath(gachaInfoModel.ID),
+			GachaBannerPath: b.buildGachaBannerPath(gachaInfoModel.ID, region),
 		}
 	}
 
@@ -111,10 +111,10 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 		Region:             region.String(),
 		EventInfo:          eventInfo,
 		GachaInfo:          gachaInfo,
-		CardImagesPath:     b.buildCardImagePaths(card),
-		CostumeImagesPath:  b.buildCostumeImagePaths(card),
-		CharacterIconPath:  b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit)),
-		UnitLogoPath:       b.buildUnitLogoPath(stringValue(cardInfo.Unit)),
+		CardImagesPath:     b.buildCardImagePaths(card, region),
+		CostumeImagesPath:  b.buildCostumeImagePaths(card, region),
+		CharacterIconPath:  b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region),
+		UnitLogoPath:       b.buildUnitLogoPath(stringValue(cardInfo.Unit), region),
 		EventAttrIconPath:  eventAttrIconPath,
 		EventUnitIconPath:  eventUnitIconPath,
 		EventCharaIconPath: eventCharaIconPath,
@@ -168,7 +168,7 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 			Card:    cardInfo,
 			HasCard: false,
 		})
-		characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit))
+		characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
 	}
 	if len(items) == 0 {
 		return nil, fmt.Errorf("cards are required")
@@ -200,7 +200,7 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 		AssetBundleName: &assetBundleName,
 		ReleaseAt:       &releaseAt,
 		IsAfterTraining: boolPtr(false),
-		ThumbnailInfo:   b.buildThumbnailInfo(card),
+		ThumbnailInfo:   b.buildThumbnailInfo(card, region),
 		Power:           b.calculatePower(card),
 	}
 
@@ -225,7 +225,7 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 			SkillName:         card.CardSkillName,
 			SkillType:         skill.DescriptionSpriteName,
 			SkillDetail:       b.buildDualSkillDetail(card, skill, region),
-			SkillTypeIconPath: b.buildSkillTypeIconPath(skill.DescriptionSpriteName),
+			SkillTypeIconPath: b.buildSkillTypeIconPath(skill.DescriptionSpriteName, region),
 		}
 	}
 	if card.SpecialTrainingSkillID > 0 {
@@ -235,7 +235,7 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 				SkillName:         card.SpecialTrainingSkillName,
 				SkillType:         skill.DescriptionSpriteName,
 				SkillDetail:       b.buildDualSkillDetail(card, skill, region),
-				SkillTypeIconPath: b.buildSkillTypeIconPath(skill.DescriptionSpriteName),
+				SkillTypeIconPath: b.buildSkillTypeIconPath(skill.DescriptionSpriteName, region),
 			}
 		}
 	}
@@ -243,12 +243,12 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 	return info
 }
 
-func (b *Builder) buildThumbnailInfo(card *masterdata.Card) []drawing.CardFullThumbnailRequest {
+func (b *Builder) buildThumbnailInfo(card *masterdata.Card, region renderregion.Value) []drawing.CardFullThumbnailRequest {
 	items := []drawing.CardFullThumbnailRequest{
-		common.BuildCardThumbnail(b.assets, card, common.ThumbnailOptions{AfterTraining: false}),
+		common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{AfterTraining: false}),
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
-		items = append(items, common.BuildCardThumbnail(b.assets, card, common.ThumbnailOptions{AfterTraining: true, TrainedArt: true}))
+		items = append(items, common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{AfterTraining: true, TrainedArt: true}))
 	}
 	return items
 }
@@ -325,21 +325,22 @@ func combineSkillLines(lines ...string) string {
 	return strings.Join(ordered, "\n")
 }
 
-func (b *Builder) buildCardImagePaths(card *masterdata.Card) []string {
+func (b *Builder) buildCardImagePaths(card *masterdata.Card, region renderregion.Value) []string {
 	if card == nil {
 		return nil
 	}
+	assetDir := assets.RegionAssetDir(region.String())
 	base := filepath.Join("character", "member", card.AssetBundleName)
 	paths := []string{
-		assets.ResolveAssetPath(b.assets, "", filepath.Join(base, "card_normal.png")),
+		assets.ResolveAssetPath(b.assets, assetDir, filepath.Join(base, "card_normal.png")),
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
-		paths = append(paths, assets.ResolveAssetPath(b.assets, "", filepath.Join(base, "card_after_training.png")))
+		paths = append(paths, assets.ResolveAssetPath(b.assets, assetDir, filepath.Join(base, "card_after_training.png")))
 	}
 	return paths
 }
 
-func (b *Builder) buildCostumeImagePaths(card *masterdata.Card) []string {
+func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderregion.Value) []string {
 	if card == nil {
 		return []string{}
 	}
@@ -348,56 +349,60 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card) []string {
 		return []string{}
 	}
 
+	assetDir := assets.RegionAssetDir(region.String())
 	paths := make([]string, 0, len(costumes))
 	for _, costume := range costumes {
 		if costume == nil {
 			continue
 		}
-		paths = append(paths, assets.ResolveAssetPath(b.assets, "", filepath.Join("thumbnail", "costume", costume.AssetBundleName+".png")))
+		paths = append(paths, assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("thumbnail", "costume", costume.AssetBundleName+".png")))
 	}
 	return paths
 }
 
-func (b *Builder) BuildCharacterIconPath(characterID int, unit string) string {
+func (b *Builder) BuildCharacterIconPath(characterID int, unit string, region renderregion.Value) string {
+	assetDir := assets.RegionAssetDir(region.String())
 	if characterID == 21 && unit != "" && unit != "piapro" {
-		return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", fmt.Sprintf("miku_%s.png", unit)))
+		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("miku_%s.png", unit)))
 	}
 	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
-		return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
+	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
 }
 
-func (b *Builder) buildUnitLogoPath(unit string) string {
+func (b *Builder) buildUnitLogoPath(unit string, region renderregion.Value) string {
 	if unit == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, "", fmt.Sprintf("logo_%s.png", unit))
+	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), fmt.Sprintf("logo_%s.png", unit))
 }
 
-func (b *Builder) buildSkillTypeIconPath(skillType string) *string {
+func (b *Builder) buildSkillTypeIconPath(skillType string, region renderregion.Value) *string {
 	if strings.TrimSpace(skillType) == "" {
 		return nil
 	}
-	path := assets.ResolveAssetPath(b.assets, "", filepath.Join("skill", fmt.Sprintf("skill_%s.png", skillType)))
+	path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("skill", fmt.Sprintf("skill_%s.png", skillType)))
 	return &path
 }
 
-func (b *Builder) buildEventBannerPath(assetBundleName string) string {
+func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregion.Value) string {
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, "",
+	assetDir := assets.RegionAssetDir(region.String())
+	return assets.ResolveAssetPath(b.assets, assetDir,
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)
 }
 
-func (b *Builder) buildGachaBannerPath(gachaID int) string {
+func (b *Builder) buildGachaBannerPath(gachaID int, region renderregion.Value) string {
 	if gachaID == 0 {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, "",
+	assetDir := assets.RegionAssetDir(region.String())
+	return assets.ResolveAssetPath(b.assets, assetDir,
 		filepath.Join("home", "banner", fmt.Sprintf("banner_gacha%d", gachaID), fmt.Sprintf("banner_gacha%d.png", gachaID)),
 		filepath.Join("gacha", fmt.Sprintf("banner_gacha%d.png", gachaID)),
 	)

@@ -118,7 +118,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		Rank:                 raw.UserGamedata.Rank,
 		TwitterID:            raw.UserProfile.TwitterID,
 		Word:                 word,
-		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck),
+		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck, region),
 		BgSettings:           resolveProfileBGSettings(query.BgSettings),
 		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors),
 		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
@@ -169,7 +169,7 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 	}
 
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard))
+	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard), region)
 
 	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
@@ -195,7 +195,7 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		Rank:                 resp.User.Rank,
 		TwitterID:            resp.UserProfile.TwitterID,
 		Word:                 cleanWord(resp.UserProfile.Word),
-		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID),
+		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID, region),
 		BgSettings:           resolveProfileBGSettings(query.BgSettings),
 		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
 		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
@@ -227,7 +227,7 @@ func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.Ge
 	}
 
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard))
+	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard), region)
 
 	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
@@ -319,7 +319,7 @@ func buildAPIUserCardEntries(deck sekai.UserDeck) []interface{} {
 // buildLeaderImagePathFromSource resolves the leader card thumbnail path using the Source's
 // master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
-func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, cardID int, afterTraining bool) string {
+func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
 	const fallback = "user/leader.png"
 	if cardID == 0 || source == nil {
 		return fallback
@@ -332,7 +332,7 @@ func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, c
 	if afterTraining {
 		imageType = "after_training"
 	}
-	return assets.ResolveAssetPath(helper, "",
+	return assets.ResolveAssetPath(helper, assets.RegionAssetDir(region.String()),
 		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
 		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
 	)
@@ -370,7 +370,7 @@ func (c *Controller) buildFramePaths(source Source, userFrames []userdata.RawUse
 	}, true
 }
 
-func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int) []drawing.CardFullThumbnailRequest {
+func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
 	activeDeck := findActiveDeck(decks, activeDeckID)
 	memberIDs := []int{activeDeck.Member1, activeDeck.Member2, activeDeck.Member3, activeDeck.Member4, activeDeck.Member5}
 	result := make([]drawing.CardFullThumbnailRequest, 0, len(memberIDs))
@@ -388,7 +388,7 @@ func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard
 			value := userCard.Level
 			level = &value
 		}
-		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, common.ThumbnailOptions{
+		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, region, common.ThumbnailOptions{
 			AfterTraining: userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done"),
 			TrainedArt:    userCard != nil && strings.EqualFold(userCard.DefaultImage, "special_training"),
 			Level:         level,

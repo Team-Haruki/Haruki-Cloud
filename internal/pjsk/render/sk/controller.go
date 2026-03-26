@@ -10,6 +10,7 @@ import (
 
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 	sekaiapi "haruki-cloud/utils/sekai"
 )
@@ -127,7 +128,7 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 	if err != nil {
 		return nil, err
 	}
-	meta := c.resolveEventMeta(normalized.EventID)
+	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	line := LineRequest{
 		SklRequest: drawing.SklRequest{
@@ -144,7 +145,7 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		wl := *normalized.WlCharacterID
 		line.WlCid = &wl
-		if icon := c.resolveCharacterIconPath(wl); icon != "" {
+		if icon := c.resolveCharacterIconPath(wl, renderregion.Normalize(normalized.Region)); icon != "" {
 			line.CharaIconPath = &icon
 		}
 	}
@@ -178,7 +179,7 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 	if err != nil {
 		return nil, err
 	}
-	meta := c.resolveEventMeta(normalized.EventID)
+	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	payload := drawing.SKRequest{
 		ID:          normalized.EventID,
@@ -188,7 +189,7 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 		Ranks:       rankInfos,
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		icon := c.resolveCharacterIconPath(*normalized.WlCharacterID)
+		icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region))
 		if icon != "" {
 			payload.WlCharaIconPath = &icon
 			payload.CharaIconPath = &icon
@@ -216,7 +217,7 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 	if err != nil {
 		return nil, err
 	}
-	meta := c.resolveEventMeta(normalized.EventID)
+	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	payload := drawing.CFRequest{
 		Eid:         normalized.EventID,
@@ -227,7 +228,7 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		UpdateAt:    time.Now().UTC().Format(time.RFC3339),
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID); icon != "" {
+		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
 			payload.WlCharaIconPath = &icon
 		}
 	}
@@ -276,7 +277,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 	if err != nil {
 		return nil, err
 	}
-	meta := c.resolveEventMeta(normalized.EventID)
+	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	payload := drawing.SpeedRequest{
 		EventID:          normalized.EventID,
@@ -294,7 +295,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 		payload.BannerImgPath = &banner
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID); icon != "" {
+		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
 			payload.WlCharaIconPath = &icon
 		}
 	}
@@ -357,7 +358,7 @@ func (c *Controller) BuildRankTraceRequestFromTracker(req TrackerRankQuery) (*dr
 		Ranks:      trace,
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID); icon != "" {
+		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
 			payload.WlCharaIconPath = &icon
 		}
 	}
@@ -678,7 +679,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint) drawing.SpeedInfo
 	}
 }
 
-func (c *Controller) resolveEventMeta(eventID int) eventMeta {
+func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) eventMeta {
 	const defaultWindow = int64(6 * time.Hour / time.Millisecond)
 	now := time.Now().UnixMilli()
 	meta := eventMeta{
@@ -702,39 +703,41 @@ func (c *Controller) resolveEventMeta(eventID int) eventMeta {
 	if eventInfo.AggregateAt > 0 {
 		meta.aggregateAt = eventInfo.AggregateAt
 	}
-	if path := c.resolveEventBannerPath(eventInfo.AssetBundleName); path != "" {
+	if path := c.resolveEventBannerPath(eventInfo.AssetBundleName, region); path != "" {
 		meta.bannerPath = path
 	}
 	return meta
 }
 
-func (c *Controller) resolveEventBannerPath(assetBundleName string) string {
+func (c *Controller) resolveEventBannerPath(assetBundleName string, region renderregion.Value) string {
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
+	assetDir := renderassets.RegionAssetDir(renderregion.WithDefault(region).String())
 	return renderassets.ResolveAssetPath(
 		c.assets,
-		"",
+		assetDir,
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)
 }
 
-func (c *Controller) resolveCharacterIconPath(characterID int) string {
+func (c *Controller) resolveCharacterIconPath(characterID int, region renderregion.Value) string {
 	if c == nil || c.assets == nil || characterID <= 0 {
 		return ""
 	}
+	assetDir := renderassets.RegionAssetDir(renderregion.WithDefault(region).String())
 	if nickname := renderassets.CharacterIDToNickname[characterID]; nickname != "" {
 		return renderassets.ResolveAssetPath(
 			c.assets,
-			"",
+			assetDir,
 			filepath.Join("chara_icon", nickname+".png"),
 			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
 		)
 	}
 	return renderassets.ResolveAssetPath(
 		c.assets,
-		"",
+		assetDir,
 		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
 	)
 }

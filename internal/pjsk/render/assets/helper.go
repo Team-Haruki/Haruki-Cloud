@@ -101,6 +101,12 @@ func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) 
 	return joinAssetPath(base, relPaths[0])
 }
 
+// RegionAssetDir returns the region-specific startapp asset subdirectory prefix
+// used by the Haruki Drawing API, e.g. "asset/jp-assets/startapp" for "jp".
+func RegionAssetDir(region string) string {
+	return "asset/" + region + "-assets/startapp"
+}
+
 var CharacterIDToNickname = map[int]string{
 	1:  "ick",
 	2:  "saki",

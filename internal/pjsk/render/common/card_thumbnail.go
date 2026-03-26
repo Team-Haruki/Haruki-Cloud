@@ -7,6 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -24,7 +25,8 @@ type ThumbnailOptions struct {
 	IsPcard          bool
 }
 
-func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {
+func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {
+	assetDir := assets.RegionAssetDir(region.String())
 	thumbPath := opts.ThumbnailPath
 	if thumbPath == "" {
 		fileSuffix := "_normal.png"
@@ -33,7 +35,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, opts 
 			fileSuffix = "_after_training.png"
 			memberFile = "card_after_training.png"
 		}
-		thumbPath = assets.ResolveAssetPath(helper, "",
+		thumbPath = assets.ResolveAssetPath(helper, assetDir,
 			filepath.Join("thumbnail", "chara", card.AssetBundleName+fileSuffix),
 			filepath.Join("character", "member", card.AssetBundleName, memberFile),
 		)
@@ -47,7 +49,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, opts 
 		if opts.AfterTraining {
 			fileName = "rare_star_after_training.png"
 		}
-		rareImg = assets.ResolveAssetPath(helper, "", filepath.Join("card", fileName))
+		rareImg = assets.ResolveAssetPath(helper, assetDir, filepath.Join("card", fileName))
 	} else {
 		rareImg = filepath.ToSlash(rareImg)
 	}
@@ -55,7 +57,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, opts 
 	isAfter := opts.AfterTraining
 	birthdayIcon := opts.BirthdayIconPath
 	if birthdayIcon == nil && card.CardRarityType == "rarity_birthday" {
-		path := assets.ResolveAssetPath(helper, "", filepath.Join("card", "rare_birthday.png"))
+		path := assets.ResolveAssetPath(helper, assetDir, filepath.Join("card", "rare_birthday.png"))
 		birthdayIcon = &path
 	}
 
@@ -65,12 +67,12 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, opts 
 		defaultRank := 0
 		trainRank = &defaultRank
 	} else if *trainRank > 0 && trainRankImgPath == nil {
-		path := assets.ResolveAssetPath(helper, "", filepath.Join("card", fmt.Sprintf("train_rank_%d.png", *trainRank)))
+		path := assets.ResolveAssetPath(helper, assetDir, filepath.Join("card", fmt.Sprintf("train_rank_%d.png", *trainRank)))
 		trainRankImgPath = &path
 	}
 
-	framePath := assets.ResolveAssetPath(helper, "", filepath.Join("card", fmt.Sprintf("frame_%s.png", card.CardRarityType)))
-	attrPath := assets.ResolveAssetPath(helper, "", filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(card.Attr))))
+	framePath := assets.ResolveAssetPath(helper, assetDir, filepath.Join("card", fmt.Sprintf("frame_%s.png", card.CardRarityType)))
+	attrPath := assets.ResolveAssetPath(helper, assetDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(card.Attr))))
 
 	return drawing.CardFullThumbnailRequest{
 		CardID:            card.ID,

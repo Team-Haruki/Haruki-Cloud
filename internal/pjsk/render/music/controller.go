@@ -149,7 +149,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 			"difficulty": level,
 			"release_at": musicInfo.PublishedAt,
 		})
-		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName)
+		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	}
 
 	if len(list) == 0 {
@@ -178,7 +178,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		TitleShadow:          query.TitleShadow,
 	}
 	if len(userResults) > 0 {
-		req.PlayResultIconPathMap = c.buildPlayResultIconMap()
+		req.PlayResultIconPathMap = c.buildPlayResultIconMap(region)
 	}
 	return req, nil
 }
@@ -419,7 +419,7 @@ func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.
 	mode := "service"
 	leaderPath := assets.ResolveAssetPath(
 		c.assets,
-		"",
+		assets.RegionAssetDir(renderregion.WithDefault(region).String()),
 		filepath.Join("user", "leader.png"),
 		filepath.Join("chara_icon", "miku.png"),
 	)
@@ -467,12 +467,13 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 	}
 }
 
-func (c *Controller) buildPlayResultIconMap() map[string]string {
+func (c *Controller) buildPlayResultIconMap(region renderregion.Value) map[string]string {
+	assetDir := assets.RegionAssetDir(renderregion.WithDefault(region).String())
 	return map[string]string{
-		"not_clear": assets.ResolveAssetPath(c.assets, "", "icon_not_clear.png"),
-		"clear":     assets.ResolveAssetPath(c.assets, "", "icon_clear.png"),
-		"fc":        assets.ResolveAssetPath(c.assets, "", "icon_fc.png"),
-		"ap":        assets.ResolveAssetPath(c.assets, "", "icon_ap.png"),
+		"not_clear": assets.ResolveAssetPath(c.assets, assetDir, "icon_not_clear.png"),
+		"clear":     assets.ResolveAssetPath(c.assets, assetDir, "icon_clear.png"),
+		"fc":        assets.ResolveAssetPath(c.assets, assetDir, "icon_fc.png"),
+		"ap":        assets.ResolveAssetPath(c.assets, assetDir, "icon_ap.png"),
 	}
 }
 

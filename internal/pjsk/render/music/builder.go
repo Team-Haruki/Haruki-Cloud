@@ -60,13 +60,13 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 		},
 		Difficulty:      *diffInfo,
 		Vocal:           *vocalInfo,
-		MusicJacketPath: b.BuildMusicJacketPath(music.AssetBundleName),
+		MusicJacketPath: b.BuildMusicJacketPath(music.AssetBundleName, region),
 		Alias:           b.buildMusicAliases(music),
 	}
 
 	if eventInfo, err := b.source.GetPrimaryEventByMusicID(music.ID); err == nil && eventInfo != nil {
 		req.EventID = &eventInfo.ID
-		if bannerPath := b.buildEventBannerPath(eventInfo.AssetBundleName); bannerPath != "" {
+		if bannerPath := b.buildEventBannerPath(eventInfo.AssetBundleName, region); bannerPath != "" {
 			req.EventBannerPath = &bannerPath
 		}
 	}
@@ -96,7 +96,7 @@ func (b *Builder) BuildMusicBriefListRequest(musicIDs []int, difficulty string, 
 		item := drawing.MusicBriefList{
 			ID:              musicInfo.ID,
 			Level:           level,
-			MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName),
+			MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
 			MusicInfo: drawing.MusicMD{
 				ID:           musicInfo.ID,
 				Title:        b.buildDisplayMusicTitle(musicInfo, region),
@@ -140,9 +140,9 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 		return nil, fmt.Errorf("music %s does not have %s chart", music.Title, diff)
 	}
 
-	jacketPath := b.BuildMusicJacketPath(music.AssetBundleName)
+	jacketPath := b.BuildMusicJacketPath(music.AssetBundleName, region)
 	susRelative := filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", music.ID), diff+".txt")
-	susPath := assets.ResolveAssetPath(b.assets, "", susRelative)
+	susPath := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), susRelative)
 
 	var stylePath *string
 	if trimmed := strings.TrimSpace(query.Style); trimmed != "" {
@@ -198,18 +198,19 @@ func (b *Builder) GetDifficultyLevel(musicID int, difficulty string) int {
 	return 0
 }
 
-func (b *Builder) BuildMusicJacketPath(assetName string) string {
+func (b *Builder) BuildMusicJacketPath(assetName string, region renderregion.Value) string {
 	if strings.TrimSpace(assetName) == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, "", filepath.Join("music", "jacket", assetName, assetName+".png"))
+	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("music", "jacket", assetName, assetName+".png"))
 }
 
-func (b *Builder) BuildCharacterIconPath(characterID int) string {
+func (b *Builder) BuildCharacterIconPath(characterID int, region renderregion.Value) string {
+	assetDir := assets.RegionAssetDir(region.String())
 	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
-		return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, "", filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
+	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
 }
 
 func (b *Builder) buildDifficultyInfo(musicID int) (*drawing.DifficultyInfo, error) {
@@ -291,7 +292,7 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 			}
 			characters = append(characters, map[string]string{"characterName": name})
 			if character.CharacterID != 0 {
-				assetsMap[name] = b.BuildCharacterIconPath(character.CharacterID)
+				assetsMap[name] = b.BuildCharacterIconPath(character.CharacterID, region)
 			}
 		}
 
@@ -405,13 +406,14 @@ func (b *Builder) buildLimitedTimes(musicID int, region renderregion.Value) [][]
 	return result
 }
 
-func (b *Builder) buildEventBannerPath(assetBundleName string) string {
+func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregion.Value) string {
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
+	assetDir := assets.RegionAssetDir(region.String())
 	return assets.ResolveAssetPath(
 		b.assets,
-		"",
+		assetDir,
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)

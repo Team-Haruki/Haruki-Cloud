@@ -115,13 +115,13 @@ func (c *CloudSource) GetResourceBoxByPurpose(purpose string, id int) *ResourceB
 		for _, item := range items {
 			box := &ResourceBox{
 				ID:                 int(item.GameID),
-				ResourceBoxPurpose: item.ResourceBoxPurpose,
-				ResourceBoxType:    item.ResourceBoxType,
+				ResourceBoxPurpose: jsonString(item.ResourceBoxPurpose),
+				ResourceBoxType:    jsonString(item.ResourceBoxType),
 				Description:        item.Description,
 			}
 			if len(item.Details) > 0 {
 				var details []ResourceBoxDetail
-				if err := decodeFlexible(item.Details, &details); err != nil {
+				if err := json.Unmarshal(item.Details, &details); err != nil {
 					continue
 				}
 				box.Details = details
@@ -168,10 +168,13 @@ func cloneResourceBox(source *ResourceBox) *ResourceBox {
 	return &copy
 }
 
-func decodeFlexible(source interface{}, target interface{}) error {
-	raw, err := json.Marshal(source)
-	if err != nil {
-		return err
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
 	}
-	return json.Unmarshal(raw, target)
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
+	}
+	return s
 }

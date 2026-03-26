@@ -1,26 +1,28 @@
 package honor
 
 import (
+	"encoding/json"
 	"testing"
 
 	sekaiDB "haruki-cloud/database/sekai"
 )
 
 func TestConvertCloudHonorDecodesLevels(t *testing.T) {
+	levelsJSON, _ := json.Marshal([]map[string]interface{}{
+		{
+			"level":           5,
+			"honorRarity":     "high",
+			"description":     "desc",
+			"assetbundleName": "honor_top_001_lv5",
+		},
+	})
 	entity := &sekaiDB.Honor{
 		GameID:          101,
 		GroupID:         20,
-		HonorRarity:     "low",
+		HonorRarity:     json.RawMessage(`"low"`),
 		Name:            "Test Honor",
 		AssetbundleName: "honor_top_001",
-		Levels: []interface{}{
-			map[string]interface{}{
-				"level":           5,
-				"honorRarity":     "high",
-				"description":     "desc",
-				"assetbundleName": "honor_top_001_lv5",
-			},
-		},
+		Levels:          json.RawMessage(levelsJSON),
 	}
 
 	model, err := convertCloudHonor(entity)

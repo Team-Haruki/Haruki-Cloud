@@ -266,7 +266,7 @@ func (c *CloudSource) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDiff
 		result = append(result, &masterdata.MusicDifficulty{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicDifficulty: item.MusicDifficulty,
+			MusicDifficulty: jsonString(item.MusicDifficulty),
 			PlayLevel:       int(item.PlayLevel),
 			TotalNoteCount:  int(item.TotalNoteCount),
 		})
@@ -298,7 +298,7 @@ func (c *CloudSource) FindMusicDifficultiesByNoteCount(noteCount int) ([]*master
 		result = append(result, &masterdata.MusicDifficulty{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicDifficulty: item.MusicDifficulty,
+			MusicDifficulty: jsonString(item.MusicDifficulty),
 			PlayLevel:       int(item.PlayLevel),
 			TotalNoteCount:  int(item.TotalNoteCount),
 		})
@@ -326,9 +326,9 @@ func (c *CloudSource) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, err
 		result = append(result, &masterdata.MusicVocal{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicVocalType:  item.MusicVocalType,
+			MusicVocalType:  jsonString(item.MusicVocalType),
 			Caption:         item.Caption,
-			Characters:      parseMusicVocalCharacters(item.Characters, int(item.GameID), int(item.MusicID)),
+			Characters:      parseMusicVocalCharactersFromRaw(item.Characters, int(item.GameID), int(item.MusicID)),
 			AssetBundleName: item.AssetbundleName,
 		})
 	}
@@ -349,7 +349,7 @@ func (c *CloudSource) GetMusicTags(musicID int) ([]string, error) {
 
 	result := make([]string, 0, len(items))
 	for _, item := range items {
-		tag := strings.TrimSpace(item.MusicTag)
+		tag := strings.TrimSpace(jsonString(item.MusicTag))
 		if tag != "" {
 			result = append(result, tag)
 		}
@@ -385,7 +385,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 		ID:        int(entity.GameID),
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
-		Unit:      entity.Unit,
+		Unit:      jsonString(entity.Unit),
 	}
 	c.mu.Lock()
 	c.characterByID[id] = model
@@ -460,7 +460,7 @@ func convertMusicEntity(entity *sekaiDB.Music) *masterdata.Music {
 		ID:                 int(entity.GameID),
 		Seq:                int(entity.Seq),
 		ReleaseConditionID: int(entity.ReleaseConditionID),
-		Categories:         toStringSlice(entity.Categories),
+		Categories:         toStringSliceFromRaw(entity.Categories),
 		Title:              entity.Title,
 		Pronunciation:      entity.Pronunciation,
 		Lyricist:           entity.Lyricist,
@@ -481,46 +481,13 @@ func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 	}
 	return &masterdata.Event{
 		ID:              int(entity.GameID),
-		EventType:       entity.EventType,
+		EventType:       jsonString(entity.EventType),
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
 		StartAt:         entity.StartAt,
 		AggregateAt:     entity.AggregateAt,
 		ClosedAt:        entity.ClosedAt,
 	}
-}
-
-func parseMusicVocalCharacters(raw []interface{}, vocalID int, musicID int) []masterdata.MusicVocalCharacter {
-	result := make([]masterdata.MusicVocalCharacter, 0, len(raw))
-	for index, item := range raw {
-		entry, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		characterType, _ := entry["characterType"].(string)
-		characterID, ok := interfaceToInt(entry["characterId"])
-		if !ok {
-			continue
-		}
-		result = append(result, masterdata.MusicVocalCharacter{
-			ID:            index + 1,
-			MusicID:       musicID,
-			MusicVocalID:  vocalID,
-			CharacterType: characterType,
-			CharacterID:   characterID,
-		})
-	}
-	return result
-}
-
-func toStringSlice(values []interface{}) []string {
-	result := make([]string, 0, len(values))
-	for _, item := range values {
-		if value, ok := item.(string); ok && strings.TrimSpace(value) != "" {
-			result = append(result, value)
-		}
-	}
-	return result
 }
 
 func interfaceToInt(value interface{}) (int, bool) {
@@ -583,4 +550,62 @@ func cloneEvent(item *masterdata.Event) *masterdata.Event {
 	}
 	copy := *item
 	return &copy
+}
+
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
+	}
+	return s
+}
+
+func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID int) []masterdata.MusicVocalCharacter {
+	if len(raw) == 0 {
+		return nil
+	}
+	var items []map[string]interface{}
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return nil
+	}
+	return parseMusicVocalCharacters(items, vocalID, musicID)
+}
+
+func parseMusicVocalCharacters(raw []map[string]interface{}, vocalID int, musicID int) []masterdata.MusicVocalCharacter {
+	result := make([]masterdata.MusicVocalCharacter, 0, len(raw))
+	for index, entry := range raw {
+		characterType, _ := entry["characterType"].(string)
+		characterID, ok := interfaceToInt(entry["characterId"])
+		if !ok {
+			continue
+		}
+		result = append(result, masterdata.MusicVocalCharacter{
+			ID:            index + 1,
+			MusicID:       musicID,
+			MusicVocalID:  vocalID,
+			CharacterType: characterType,
+			CharacterID:   characterID,
+		})
+	}
+	return result
+}
+
+func toStringSliceFromRaw(raw json.RawMessage) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	var items []string
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return nil
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		if strings.TrimSpace(item) != "" {
+			result = append(result, item)
+		}
+	}
+	return result
 }

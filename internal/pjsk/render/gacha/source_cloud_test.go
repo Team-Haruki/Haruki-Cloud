@@ -1,67 +1,43 @@
 package gacha
 
 import (
+	"encoding/json"
 	"testing"
 
 	sekaiDB "haruki-cloud/database/sekai"
 )
 
 func TestConvertGachaEntityDecodesNestedFields(t *testing.T) {
+	rarityRatesJSON, _ := json.Marshal([]map[string]interface{}{
+		{"id": 1, "groupId": 2, "cardRarityType": "rarity_4", "lotteryType": "normal", "rate": 3.0},
+	})
+	detailsJSON, _ := json.Marshal([]map[string]interface{}{
+		{"id": 10, "gachaId": 101, "cardId": 2001, "weight": 50, "isWish": true},
+	})
+	behaviorsJSON, _ := json.Marshal([]map[string]interface{}{
+		{"id": 20, "gachaId": 101, "gachaBehaviorType": "over_rarity_3_once", "costResourceType": "jewel", "costResourceQuantity": 3000, "spinCount": 10, "executeLimit": 1, "groupId": 1, "priority": 1, "resourceCategory": "currency", "gachaSpinnableType": "normal"},
+	})
+	pickupsJSON, _ := json.Marshal([]map[string]interface{}{
+		{"id": 30, "gachaId": 101, "cardId": 2001, "gachaPickupType": "pickup"},
+	})
+	informationJSON, _ := json.Marshal(map[string]interface{}{
+		"gachaId": 101, "summary": "summary", "description": "desc",
+	})
+
 	entity := &sekaiDB.Gacha{
-		GameID:          101,
-		GachaType:       "ceil",
-		Name:            "Test Gacha",
-		Seq:             7,
-		AssetbundleName: "ab_gacha_101",
-		StartAt:         1000,
-		EndAt:           2000,
-		GachaCeilItemID: 88,
-		GachaCardRarityRates: []interface{}{
-			map[string]interface{}{
-				"id":             1,
-				"groupId":        2,
-				"cardRarityType": "rarity_4",
-				"lotteryType":    "normal",
-				"rate":           3.0,
-			},
-		},
-		GachaDetails: []interface{}{
-			map[string]interface{}{
-				"id":      10,
-				"gachaId": 101,
-				"cardId":  2001,
-				"weight":  50,
-				"isWish":  true,
-			},
-		},
-		GachaBehaviors: []interface{}{
-			map[string]interface{}{
-				"id":                   20,
-				"gachaId":              101,
-				"gachaBehaviorType":    "over_rarity_3_once",
-				"costResourceType":     "jewel",
-				"costResourceQuantity": 3000,
-				"spinCount":            10,
-				"executeLimit":         1,
-				"groupId":              1,
-				"priority":             1,
-				"resourceCategory":     "currency",
-				"gachaSpinnableType":   "normal",
-			},
-		},
-		GachaPickups: []interface{}{
-			map[string]interface{}{
-				"id":              30,
-				"gachaId":         101,
-				"cardId":          2001,
-				"gachaPickupType": "pickup",
-			},
-		},
-		GachaInformation: map[string]interface{}{
-			"gachaId":     101,
-			"summary":     "summary",
-			"description": "desc",
-		},
+		GameID:               101,
+		GachaType:            json.RawMessage(`"ceil"`),
+		Name:                 "Test Gacha",
+		Seq:                  7,
+		AssetbundleName:      "ab_gacha_101",
+		StartAt:              1000,
+		EndAt:                2000,
+		GachaCeilItemID:      88,
+		GachaCardRarityRates: json.RawMessage(rarityRatesJSON),
+		GachaDetails:         json.RawMessage(detailsJSON),
+		GachaBehaviors:       json.RawMessage(behaviorsJSON),
+		GachaPickups:         json.RawMessage(pickupsJSON),
+		GachaInformation:     json.RawMessage(informationJSON),
 	}
 
 	model, err := convertGachaEntity(entity)

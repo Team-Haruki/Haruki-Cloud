@@ -2,6 +2,7 @@ package vlive
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -55,14 +56,14 @@ func (c *CloudSource) GetLives(region renderregion.Value) ([]*Live, error) {
 		live := &Live{
 			ID:      int(entity.GameID),
 			Name:    entity.Name,
-			StartAt: entity.StartAt,
-			EndAt:   entity.EndAt,
+			StartAt: int64(entity.StartAt),
+			EndAt:   int64(entity.EndAt),
 		}
-		for _, raw := range entity.VirtualLiveSchedules {
-			item, ok := raw.(map[string]interface{})
-			if !ok {
-				continue
-			}
+		var schedules []map[string]interface{}
+		if len(entity.VirtualLiveSchedules) > 0 {
+			_ = json.Unmarshal(entity.VirtualLiveSchedules, &schedules)
+		}
+		for _, item := range schedules {
 			startAt := int64Number(item["startAt"])
 			endAt := int64Number(item["endAt"])
 			if startAt <= 0 || endAt <= 0 {

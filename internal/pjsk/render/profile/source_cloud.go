@@ -199,7 +199,7 @@ func (c *CloudSource) GetEventIDByHonorID(honorID int) int {
 
 	for _, item := range items {
 		var ranges []rewardRange
-		if err := decodeFlexible(item.EventRankingRewardRanges, &ranges); err != nil {
+		if err := json.Unmarshal(item.EventRankingRewardRanges, &ranges); err != nil {
 			continue
 		}
 		eventID := int(item.GameID)
@@ -216,10 +216,3 @@ func (c *CloudSource) GetEventIDByHonorID(honorID int) int {
 	return c.eventByHonorID[honorID]
 }
 
-func decodeFlexible(src interface{}, target interface{}) error {
-	data, err := json.Marshal(src)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, target)
-}

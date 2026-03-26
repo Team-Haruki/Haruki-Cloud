@@ -60,7 +60,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					}
 					attr := bonus.CardAttr
 					eventInfo.BonusAttr = &attr
-					path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr)))
+					path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr)))
 					eventAttrIconPath = &path
 				}
 
@@ -79,7 +79,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					for unit := range units {
 						eventInfo.Unit = &unit
 						if iconName := b.getUnitIconName(unit); iconName != "" {
-							path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("unit", iconName+".png"))
+							path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("unit", iconName+".png"))
 							eventUnitIconPath = &path
 						}
 					}
@@ -361,28 +361,27 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderreg
 }
 
 func (b *Builder) BuildCharacterIconPath(characterID int, unit string, region renderregion.Value) string {
-	assetDir := assets.RegionAssetDir(region.String())
 	if characterID == 21 && unit != "" && unit != "piapro" {
-		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("miku_%s.png", unit)))
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("miku_%s.png", unit)))
 	}
 	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
-		return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", nickname+".png"))
 	}
-	return assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
 }
 
 func (b *Builder) buildUnitLogoPath(unit string, region renderregion.Value) string {
 	if unit == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), fmt.Sprintf("logo_%s.png", unit))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, fmt.Sprintf("logo_%s.png", unit))
 }
 
 func (b *Builder) buildSkillTypeIconPath(skillType string, region renderregion.Value) *string {
 	if strings.TrimSpace(skillType) == "" {
 		return nil
 	}
-	path := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("skill", fmt.Sprintf("skill_%s.png", skillType)))
+	path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("skill", fmt.Sprintf("skill_%s.png", skillType)))
 	return &path
 }
 

@@ -19,6 +19,7 @@ import (
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/gacha"
 	"haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/database/sekai/predicate"
 	"haruki-cloud/database/sekai/skill"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -153,10 +154,10 @@ func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, erro
 		query = query.Where(card.CharacterIDEQ(int64(info.CharacterID)))
 	}
 	if info.Rarity != "" {
-		query = query.Where(card.CardRarityTypeEQ(info.Rarity))
+		query = query.Where(jsonFieldEQ("card_rarity_type", info.Rarity))
 	}
 	if info.Attr != "" {
-		query = query.Where(card.AttrEQ(info.Attr))
+		query = query.Where(jsonFieldEQ("attr", info.Attr))
 	}
 	if info.Year != 0 {
 		start := time.Date(info.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
@@ -212,7 +213,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 		ID:        id,
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
-		Unit:      entity.Unit,
+		Unit:      jsonString(entity.Unit),
 	}
 	c.charMu.Lock()
 	c.charCache[id] = model
@@ -557,8 +558,8 @@ func convertCardEntity(entity *sekaiDB.Card) (*masterdata.Card, error) {
 	}
 
 	var parameters []masterdata.CardParameter
-	if strings.TrimSpace(entity.CardParameters) != "" {
-		if err := json.Unmarshal([]byte(entity.CardParameters), &parameters); err != nil {
+	if len(entity.CardParameters) > 0 {
+		if err := json.Unmarshal(entity.CardParameters, &parameters); err != nil {
 			return nil, fmt.Errorf("decode card parameters: %w", err)
 		}
 	}
@@ -566,14 +567,14 @@ func convertCardEntity(entity *sekaiDB.Card) (*masterdata.Card, error) {
 	return &masterdata.Card{
 		ID:                              int(entity.GameID),
 		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  entity.CardRarityType,
-		Attr:                            entity.Attr,
+		CardRarityType:                  jsonString(entity.CardRarityType),
+		Attr:                            jsonString(entity.Attr),
 		Prefix:                          entity.Prefix,
 		AssetBundleName:                 entity.AssetbundleName,
 		ReleaseAt:                       entity.ReleaseAt,
 		SkillID:                         int(entity.SkillID),
 		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     entity.SupportUnit,
+		SupportUnit:                     jsonString(entity.SupportUnit),
 		CardParameters:                  parameters,
 		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
 		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
@@ -588,15 +589,17 @@ func convertSkillEntity(entity *sekaiDB.Skill) (*masterdata.Skill, error) {
 	if entity == nil {
 		return nil, fmt.Errorf("skill entity is nil")
 	}
-	effects, err := decodeSlice[masterdata.SkillEffect](entity.SkillEffects)
-	if err != nil {
-		return nil, fmt.Errorf("decode skill effects: %w", err)
+	var effects []masterdata.SkillEffect
+	if len(entity.SkillEffects) > 0 {
+		if err := json.Unmarshal(entity.SkillEffects, &effects); err != nil {
+			return nil, fmt.Errorf("decode skill effects: %w", err)
+		}
 	}
 	return &masterdata.Skill{
 		ID:                    int(entity.GameID),
 		ShortDescription:      entity.ShortDescription,
 		Description:           entity.Description,
-		DescriptionSpriteName: entity.DescriptionSpriteName,
+		DescriptionSpriteName: jsonString(entity.DescriptionSpriteName),
 		SkillEffects:          effects,
 	}, nil
 }
@@ -605,25 +608,35 @@ func convertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 	if entity == nil {
 		return nil, fmt.Errorf("gacha entity is nil")
 	}
-	rates, err := decodeSlice[masterdata.GachaCardRarityRate](entity.GachaCardRarityRates)
-	if err != nil {
-		return nil, fmt.Errorf("decode gacha rarity rates: %w", err)
+	var rates []masterdata.GachaCardRarityRate
+	if len(entity.GachaCardRarityRates) > 0 {
+		if err := json.Unmarshal(entity.GachaCardRarityRates, &rates); err != nil {
+			return nil, fmt.Errorf("decode gacha rarity rates: %w", err)
+		}
 	}
-	pickups, err := decodeSlice[masterdata.GachaPickup](entity.GachaPickups)
-	if err != nil {
-		return nil, fmt.Errorf("decode gacha pickups: %w", err)
+	var pickups []masterdata.GachaPickup
+	if len(entity.GachaPickups) > 0 {
+		if err := json.Unmarshal(entity.GachaPickups, &pickups); err != nil {
+			return nil, fmt.Errorf("decode gacha pickups: %w", err)
+		}
 	}
-	details, err := decodeSlice[masterdata.GachaDetail](entity.GachaDetails)
-	if err != nil {
-		return nil, fmt.Errorf("decode gacha details: %w", err)
+	var details []masterdata.GachaDetail
+	if len(entity.GachaDetails) > 0 {
+		if err := json.Unmarshal(entity.GachaDetails, &details); err != nil {
+			return nil, fmt.Errorf("decode gacha details: %w", err)
+		}
 	}
-	behaviors, err := decodeSlice[masterdata.GachaBehavior](entity.GachaBehaviors)
-	if err != nil {
-		return nil, fmt.Errorf("decode gacha behaviors: %w", err)
+	var behaviors []masterdata.GachaBehavior
+	if len(entity.GachaBehaviors) > 0 {
+		if err := json.Unmarshal(entity.GachaBehaviors, &behaviors); err != nil {
+			return nil, fmt.Errorf("decode gacha behaviors: %w", err)
+		}
 	}
-	information, err := decodeMap[masterdata.GachaInformation](entity.GachaInformation)
-	if err != nil {
-		return nil, fmt.Errorf("decode gacha information: %w", err)
+	var information masterdata.GachaInformation
+	if len(entity.GachaInformation) > 0 {
+		if err := json.Unmarshal(entity.GachaInformation, &information); err != nil {
+			return nil, fmt.Errorf("decode gacha information: %w", err)
+		}
 	}
 
 	var ceilItemID *int
@@ -634,7 +647,7 @@ func convertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 
 	return &masterdata.Gacha{
 		ID:                     int(entity.GameID),
-		GachaType:              entity.GachaType,
+		GachaType:              jsonString(entity.GachaType),
 		Name:                   entity.Name,
 		Seq:                    int(entity.Seq),
 		AssetBundleName:        entity.AssetbundleName,
@@ -653,34 +666,21 @@ func convertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 	}, nil
 }
 
-func decodeSlice[T any](value []interface{}) ([]T, error) {
-	if len(value) == 0 {
-		return nil, nil
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
 	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
 	}
-	var items []T
-	if err := json.Unmarshal(raw, &items); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return s
 }
 
-func decodeMap[T any](value map[string]interface{}) (T, error) {
-	var result T
-	if len(value) == 0 {
-		return result, nil
-	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return result, err
-	}
-	if err := json.Unmarshal(raw, &result); err != nil {
-		return result, err
-	}
-	return result, nil
+// jsonFieldEQ creates a predicate that matches a JSONB text field by its
+// unquoted string value. Works with PostgreSQL's ->> operator.
+func jsonFieldEQ(field, value string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(field, value))
 }
 
 func (c *CloudSource) lookupCharacterName(id int) string {

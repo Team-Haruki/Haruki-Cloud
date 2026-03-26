@@ -201,7 +201,7 @@ func convertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 
 	return &masterdata.Gacha{
 		ID:                     int(entity.GameID),
-		GachaType:              entity.GachaType,
+		GachaType:              jsonString(entity.GachaType),
 		Name:                   entity.Name,
 		Seq:                    int(entity.Seq),
 		AssetBundleName:        entity.AssetbundleName,
@@ -224,14 +224,14 @@ func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
 	return &masterdata.Card{
 		ID:                              int(entity.GameID),
 		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  entity.CardRarityType,
-		Attr:                            entity.Attr,
+		CardRarityType:                  jsonString(entity.CardRarityType),
+		Attr:                            jsonString(entity.Attr),
 		Prefix:                          entity.Prefix,
 		AssetBundleName:                 entity.AssetbundleName,
 		ReleaseAt:                       entity.ReleaseAt,
 		SkillID:                         int(entity.SkillID),
 		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     entity.SupportUnit,
+		SupportUnit:                     jsonString(entity.SupportUnit),
 		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
 		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
 		SpecialTrainingPower3BonusFixed: int(entity.SpecialTrainingPower3BonusFixed),
@@ -241,13 +241,9 @@ func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
 	}
 }
 
-func decodeSlice[T any](value []interface{}) ([]T, error) {
-	if len(value) == 0 {
+func decodeSlice[T any](raw json.RawMessage) ([]T, error) {
+	if len(raw) == 0 {
 		return nil, nil
-	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
 	}
 	var items []T
 	if err := json.Unmarshal(raw, &items); err != nil {
@@ -256,19 +252,26 @@ func decodeSlice[T any](value []interface{}) ([]T, error) {
 	return items, nil
 }
 
-func decodeMap[T any](value map[string]interface{}) (T, error) {
+func decodeMap[T any](raw json.RawMessage) (T, error) {
 	var result T
-	if len(value) == 0 {
+	if len(raw) == 0 {
 		return result, nil
-	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return result, err
 	}
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
+	}
+	return s
 }
 
 func cloneGacha(item *masterdata.Gacha) *masterdata.Gacha {

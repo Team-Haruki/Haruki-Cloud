@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
@@ -170,7 +171,7 @@ func (c *CloudSource) GetEventDeckBonuses(eventID int) ([]*masterdata.EventDeckB
 			ID:                  item.ID,
 			EventID:             int(item.EventID),
 			GameCharacterUnitID: int(item.GameCharacterUnitID),
-			CardAttr:            item.CardAttr,
+			CardAttr:            jsonString(item.CardAttr),
 			BonusRate:           item.BonusRate,
 		})
 	}
@@ -195,7 +196,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 	model := &masterdata.GameCharacterUnit{
 		ID:              entity.ID,
 		GameCharacterID: int(entity.GameCharacterID),
-		Unit:            entity.Unit,
+		Unit:            jsonString(entity.Unit),
 		ColorCode:       entity.ColorCode,
 	}
 	c.gcuMu.Lock()
@@ -206,10 +207,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 
 func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
 	entities, err := c.client.Event.Query().
-		Where(
-			event.ServerRegionEQ(c.queryRegion.String()),
-			event.EventTypeIn("marathon", "cheerful_carnival"),
-		).
+		Where(event.ServerRegionEQ(c.queryRegion.String())).
 		Order(event.ByStartAt()).
 		All(context.Background())
 	if err != nil {
@@ -219,6 +217,9 @@ func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
 	result := make([]*masterdata.Event, 0, len(entities))
 	for _, entity := range entities {
 		eventInfo := convertEventEntity(entity)
+		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
+			continue
+		}
 		bannerCID, err := c.GetEventBannerCharacterID(eventInfo.ID)
 		if err != nil || bannerCID != charID {
 			continue
@@ -253,7 +254,7 @@ func (c *CloudSource) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloo
 			AggregateAt:     item.AggregateAt,
 			ChapterEndAt:    item.ChapterEndAt,
 			IsSupplemental:  item.IsSupplemental,
-			ChapterType:     item.WorldBloomChapterType,
+			ChapterType:     jsonString(item.WorldBloomChapterType),
 		})
 	}
 	return result
@@ -278,7 +279,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 		ID:        entity.ID,
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
-		Unit:      entity.Unit,
+		Unit:      jsonString(entity.Unit),
 	}
 	c.charMu.Lock()
 	c.charCache[id] = model
@@ -363,7 +364,7 @@ func (c *CloudSource) getCardSupplyType(id int) string {
 func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 	return &masterdata.Event{
 		ID:              int(entity.GameID),
-		EventType:       entity.EventType,
+		EventType:       jsonString(entity.EventType),
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
 		StartAt:         entity.StartAt,
@@ -376,14 +377,14 @@ func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
 	return &masterdata.Card{
 		ID:                              int(entity.GameID),
 		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  entity.CardRarityType,
-		Attr:                            entity.Attr,
+		CardRarityType:                  jsonString(entity.CardRarityType),
+		Attr:                            jsonString(entity.Attr),
 		Prefix:                          entity.Prefix,
 		AssetBundleName:                 entity.AssetbundleName,
 		ReleaseAt:                       entity.ReleaseAt,
 		SkillID:                         int(entity.SkillID),
 		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     entity.SupportUnit,
+		SupportUnit:                     jsonString(entity.SupportUnit),
 		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
 		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
 		SpecialTrainingPower3BonusFixed: int(entity.SpecialTrainingPower3BonusFixed),
@@ -437,4 +438,15 @@ func sortUniqueInts(values []int) []int {
 	}
 	sort.Ints(result)
 	return result
+}
+
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
+	}
+	return s
 }

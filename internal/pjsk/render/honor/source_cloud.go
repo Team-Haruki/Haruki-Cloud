@@ -101,7 +101,7 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 
 	model := &masterdata.HonorGroup{
 		ID:          int(entity.GameID),
-		HonorType:   entity.HonorType,
+		HonorType:   jsonString(entity.HonorType),
 		Name:        entity.Name,
 		Description: "",
 	}
@@ -139,7 +139,7 @@ func (c *CloudSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) 
 		ID:                   int(entity.GameID),
 		GameCharacterUnitID1: int(entity.GameCharacterUnitId1),
 		GameCharacterUnitID2: int(entity.GameCharacterUnitId2),
-		HonorRarity:          entity.HonorRarity,
+		HonorRarity:          jsonString(entity.HonorRarity),
 		Name:                 entity.Name,
 		Description:          entity.Description,
 		BondsGroupID:         int(entity.BondsGroupID),
@@ -171,7 +171,7 @@ func (c *CloudSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacte
 	model := &masterdata.GameCharacterUnit{
 		ID:              int(entity.GameID),
 		GameCharacterID: int(entity.GameCharacterID),
-		Unit:            entity.Unit,
+		Unit:            jsonString(entity.Unit),
 		ColorCode:       entity.ColorCode,
 	}
 
@@ -185,17 +185,13 @@ func convertCloudHonor(entity *sekaiDB.Honor) (*masterdata.Honor, error) {
 	model := &masterdata.Honor{
 		ID:              int(entity.GameID),
 		GroupID:         int(entity.GroupID),
-		HonorRarity:     entity.HonorRarity,
+		HonorRarity:     jsonString(entity.HonorRarity),
 		Name:            entity.Name,
 		Description:     "",
 		AssetBundleName: entity.AssetbundleName,
 	}
 	if len(entity.Levels) > 0 {
-		raw, err := json.Marshal(entity.Levels)
-		if err != nil {
-			return nil, fmt.Errorf("marshal honor levels failed: %w", err)
-		}
-		if err := json.Unmarshal(raw, &model.Levels); err != nil {
+		if err := json.Unmarshal(entity.Levels, &model.Levels); err != nil {
 			return nil, fmt.Errorf("unmarshal honor levels failed: %w", err)
 		}
 	}
@@ -235,4 +231,16 @@ func cloneGameCharacterUnit(src *masterdata.GameCharacterUnit) *masterdata.GameC
 	}
 	copy := *src
 	return &copy
+}
+
+// jsonString extracts a plain string from a json.RawMessage value.
+func jsonString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return string(raw)
+	}
+	return s
 }

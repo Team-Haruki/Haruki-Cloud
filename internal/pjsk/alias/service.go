@@ -462,7 +462,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 		return nil
 	case AliasTypeCharacter:
 		rows, err := s.sekai.Gamecharacter.Query().
-			Where(gamecharacter.GameIDNotNil()).
+			Where(gamecharacter.GameIDGT(0)).
 			All(ctx)
 		if err != nil {
 			return err
@@ -658,7 +658,7 @@ func (s *Service) tryResolveCharacterByID(ctx context.Context, token string) (En
 
 func (s *Service) tryResolveCharacterByName(ctx context.Context, token string) (EntityRef, bool, error) {
 	rows, err := s.sekai.Gamecharacter.Query().
-		Where(gamecharacter.GameIDNotNil()).
+		Where(gamecharacter.GameIDGT(0)).
 		All(ctx)
 	if err != nil {
 		return EntityRef{}, true, err

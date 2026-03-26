@@ -2,6 +2,7 @@ package chardata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -72,7 +73,9 @@ func (l *Loader) Load(ctx context.Context) error {
 	// Build unit map: characterGameID -> unit name
 	charUnit := make(map[int64]string)
 	for _, u := range units {
-		charUnit[u.GameCharacterID] = u.Unit
+		var unitStr string
+		_ = json.Unmarshal(u.Unit, &unitStr)
+		charUnit[u.GameCharacterID] = unitStr
 	}
 
 	nicknames := make(map[string]int, len(characters)*3)

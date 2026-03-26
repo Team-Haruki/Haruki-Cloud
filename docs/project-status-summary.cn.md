@@ -316,7 +316,7 @@ type ProfileBgSettings struct {
   - `suite_visible` 只控制 suite 私有链
   - `mysekai_visible` 独立控制 MySekai 私有链
 
-因此，后续如果继续按 `lunabot` 逻辑转译，建议把 `suite` 与 `mysekai` 的隐藏/可用性语义拆开，而不是继续共用同一个开关。
+因此，后续如果继续按 `lunabot` 逻辑转译，应沿当前已经开始落地的拆分方向继续收口，而不是重新回到共用同一个开关。
 3. `verified`
    - 当前 `/pjsk verify` 暂时走 Toolbox fast-verification 路径
    - 仅当当前区服当前绑定账号命中 `/api/private/game-binding` 返回列表时，才会写入 `verified=true`

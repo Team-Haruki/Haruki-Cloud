@@ -277,19 +277,3 @@ func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
 		},
 	}
 }
-
-func (sekaiHandlers) CheckMysekaiDataHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk check mysekai data",
-				"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
-				"/msd",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, fmt.Errorf("TODO: 烤森抓包状态未实现，user_id=%s", ctx.GetUserId())
-		},
-	}
-}

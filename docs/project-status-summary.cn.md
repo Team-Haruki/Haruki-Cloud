@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v16.4）
+> 最后更新：2026-03-26（v16.5）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -465,31 +465,22 @@ ban_state              → 全平台禁用
 
 以下功能 handler 已存在但 `Disabled: true`，executor 为存根，不暴露到 bot API：
 
-**Stamp 系统（6 个）**：贴纸制作、随机贴纸、刷新底图、批量刷新底图、查看底图、删除底图
+**以下为后续再决定是否接入（保留代码，暂不实现）：**
 
-**Card 系统（1 个）**：卡牌剧情（仅 JP）
+- Card 系统（1 个）：卡牌剧情（仅 JP）
+- Deck 系统（1 个）：实效 / 倍率（`ScoreUpHandle`）
+- Event 系统（1 个）：活动剧情（仅 JP）
+- Gacha 系统（1 个）：抽卡记录
+- Misc 系统（5 个）：帮助、更新查询、NG 词检测、抓包帮助、提取卡牌
 
-**Deck 系统（1 个）**：实效 / 倍率（`ScoreUpHandle`）
-
-**Event 系统（1 个）**：活动剧情（仅 JP）
-
-**Gacha 系统（1 个）**：抽卡记录
-
-**MySekai 系统（1 个）**：抓包数据检查重复入口（`/msd` 已由 `profile/check-data-mysekai` 承接）
-
-**Misc 系统（5 个）**：帮助、更新查询、NG 词检测、抓包帮助、提取卡牌
-
-> **统计**：约 16 个 handler 仍未实现
-
-> 备注 1：`BPM 查询` 依赖本地可读的谱面文件（当前实现会优先读取 `music/music_score/...` 本地资源）；如果部署环境只有远程资源而没有本地谱面缓存，会返回明确错误而不是伪造 BPM 数据。
-
-> 备注 2：`mysekai/photo` 只依赖本地 snapshot 中的 `userMysekaiPhotos` 和 Sekai API 图片下载接口，不依赖本地 MySekai masterdata；其余 `MySekai` 图像渲染功能仍保留本地 masterdata fallback。
-
-> 备注 3：`Virtual Live` 当前只实现文本版 `/pjsk/vlive`，尚未迁移图片卡片、提醒、奖励展示等扩展能力。
+> **统计**：9 个 handler 待后续决策
 
 ---
 
-### 6.3 v16.0 本次清理（handler 清理与链路修复）
+### 6.3 v16.1 本次清理（MySekai msd 合并 + Stamp 移除）
+
+- **合并**：`CheckMysekaiDataHandle`（mysekai.go，disabled 重复入口）已删除；其命令集（`/pjsk烤森抓包` 等）合并入 `MsdHandle`（profile.go，path: `profile/check-data-mysekai`），现已完整接通
+- **删除**：Stamp 系统 6 个不在项目规划内的 disabled handler（`StampMakeHandle`、`RandStampHandle`、`StampRefreshHandle`、`StampRefreshBatchHandle`、`StampBaseHandle`、`StampBaseDeleteHandle`）——stamp.go 仅保留 `StampHandle`（贴纸列表）
 
 - **删除**：`ProfileSwapBindHandle`（交换绑定）、`ProfileCheckServiceHandle`（服务状态检查）、`ProfileDataModeHandle`（抓包模式切换）、`ProfileBindHistoryHandle`（绑定历史）——全部不在项目规划内
 - **删除**：`ProfileInfoHandle`——功能与 `ProfileHandle`（path: `profile`）完全重复，冗余死代码

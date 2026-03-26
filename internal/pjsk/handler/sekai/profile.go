@@ -352,8 +352,12 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{"/msd"},
-			Path:     "profile/check-data-mysekai",
+			Commands: []string{
+				"/msd",
+				"/pjsk check mysekai data",
+				"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
+			},
+			Path: "profile/check-data-mysekai",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			p, err := resolveUserQueryParams(ctx)

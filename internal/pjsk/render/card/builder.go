@@ -341,11 +341,11 @@ func (b *Builder) buildCardImagePaths(card *masterdata.Card) []string {
 
 func (b *Builder) buildCostumeImagePaths(card *masterdata.Card) []string {
 	if card == nil {
-		return nil
+		return []string{}
 	}
 	costumes, err := b.source.GetCostume3dsByCardID(card.ID)
 	if err != nil || len(costumes) == 0 {
-		return nil
+		return []string{}
 	}
 
 	paths := make([]string, 0, len(costumes))

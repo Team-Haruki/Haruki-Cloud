@@ -182,7 +182,7 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 		}
 	}
 	if attr, _ := b.extractEventBonuses(eventInfo.ID); attr != "" {
-		path := assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr))))
+		path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr))))
 		brief.EventAttrPath = &path
 	}
 
@@ -398,7 +398,7 @@ func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value)
 	if unitIcon == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("unit", unitIcon+".png"))
+	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, unitIcon+".png")
 }
 
 func (b *Builder) displayEventType(code string) string {

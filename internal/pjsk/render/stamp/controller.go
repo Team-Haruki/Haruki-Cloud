@@ -65,7 +65,7 @@ func (c *Controller) BuildStampListRequest(query ListQuery) (*drawing.StampListR
 				continue
 			}
 		}
-		imagePath, ok := c.resolveStampImage(item)
+		imagePath, ok := c.resolveStampImage(item, query.Region)
 		if !ok {
 			continue
 		}
@@ -105,10 +105,11 @@ func (c *Controller) RenderStampList(query ListQuery) ([]byte, error) {
 	return c.drawing.GenerateStampList(req)
 }
 
-func (c *Controller) resolveStampImage(item masterdata.Stamp) (string, bool) {
+func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {
+	assetDir := assets.RegionAssetDir(region.String())
 	candidates := []string{
-		filepath.ToSlash(filepath.Join("stamp", item.AssetBundleName, item.AssetBundleName+".png")),
-		filepath.ToSlash(filepath.Join("stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png")),
+		filepath.ToSlash(filepath.Join(assetDir, "stamp", item.AssetBundleName, item.AssetBundleName+".png")),
+		filepath.ToSlash(filepath.Join(assetDir, "stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png")),
 	}
 	if c.assets == nil {
 		return candidates[0], true

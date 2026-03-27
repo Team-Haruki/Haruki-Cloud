@@ -79,7 +79,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					for unit := range units {
 						eventInfo.Unit = &unit
 						if iconName := b.getUnitIconName(unit); iconName != "" {
-							path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("unit", iconName+".png"))
+							path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png")
 							eventUnitIconPath = &path
 						}
 					}

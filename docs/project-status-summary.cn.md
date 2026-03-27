@@ -679,7 +679,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 3. 配置 `haruki_bot.noise_private_key`（32 字节 X25519 私钥的 hex 编码；留空则退回明文 JSON 模式）
 4. push 本地 `test` 分支到 `origin/test`
 
-## 10.1 集成测试执行结果（2026-03-27）
+## 10.1 集成测试执行结果（2026-03-27，第一轮）
 
 ### 测试方式
 
@@ -697,7 +697,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | Noise IK 密钥对生成 | ✅ | 客户端 X25519 密钥对就绪 |
 | Manifest 获取 | ✅ | 返回 76 个 command group |
 
-### 指令端点测试（23 项）
+### 指令端点测试（第一轮，12/23 通过）
 
 | 端点 | 结果 | 说明 |
 |------|------|------|
@@ -724,23 +724,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | `education/leader` | ❌ | 依赖本地用户快照（架构限制）|
 | `education/power` | ❌ | 依赖本地用户快照（架构限制）|
 
-### 外部代理 API 测试（3 项）
-
-| 端点 | 结果 | 说明 |
-|------|------|------|
-| Sekai API 公开资料 | ✅ | HTTP 200，18759 bytes |
-| Toolbox MySEKAI | ✅ | HTTP 200，318147 bytes |
-| Event Tracker 活动排名 | ✅ | HTTP 200 |
-
-### 失败项根因分类
-
-| 类别 | 数量 | 根因 |
-|------|------|------|
-| 游戏资源路径（startapp/ondemand） | 2 | `RegionAssetDir` 固定使用 `startapp`，部分资源实际在 `ondemand` 下，需要添加 fallback 逻辑 |
-| Parser handler 接入不完整 | 4 | Handler 只调用 `makeResolvedCmd()` 未提取 args 参数（card/list、event、birthday、music-meta）|
-| 架构限制（本地用户快照） | 5 | education 系列需要本地 snapshot，公开 API 无法提供完整数据 |
-
-### 资源路径修复情况
+### 资源路径修复情况（第一轮）
 
 本轮修复了以下 asset 路径错误（已提交 `test` 分支）：
 
@@ -749,7 +733,122 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 - **card/builder.go**：同上，单位图标路径修正
 - **stamp/controller.go**：stamp 资源路径补充 `RegionAssetDir` 前缀；`resolveStampImage` 接入 `region` 参数
 
-## 11. 相关文档
+## 10.2 集成测试执行结果（2026-03-27，第二轮）
+
+**本轮新增通过：`education/challenge` ✅、`education/bonds` ✅、`education/leader` ✅**
+
+当前通过数：**15/23**
+
+### 本轮修复内容
+
+#### Education Suite 集成打通
+
+核心问题：Toolbox API 返回 `401 "unauthorized user agent"`，原因是 `haruki-db-configs.yaml` 中 `toolbox` 配置缺少 `user_agent` 字段。
+
+修复清单：
+
+| 文件 | 修复内容 |
+|------|---------|
+| `haruki-db-configs.yaml` | 补充 `toolbox.user_agent: "Haruki-Cloud/v2.0.0"` |
+| `education/controller.go` | `lunabot_static_images` → `StaticImagesDir`；`characterIconPath` 改用 `ResolveAssetPath` |
+| `music/controller.go` | `lunabot_static_images` → `StaticImagesDir` |
+| `music/builder.go` | `NoteHost` 前缀改为 `StaticImagesDir` |
+| `handler/bridge.go` | `charaIconPath()` 改用 `ResolveAssetPath + StaticImagesDir`；education-bonds 跳过无图标的角色（ID > 26）|
+| `utils/drawing/models.go` | `BondInfo.Color1/Color2` 加 `omitempty`（避免 `null → tuple` Pydantic 422 错误）|
+| `.gitignore` | 补充 `server`、`test_auth`、`haruki-db-configs.yaml`、`exports/`、`Data/` |
+
+#### Education 端点当前状态
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| `education/challenge` | ✅ | Toolbox suite → snapshot 构建 → Drawing 渲染成功 |
+| `education/bonds` | ✅ | 从 suite 数据构建羁绊请求，渲染成功（跳过 ID > 26 无图标角色）|
+| `education/leader` | ✅ | 从 suite 数据构建领队统计，渲染成功 |
+| `education/area` | ❌ | 未实现（需要区域道具 master 数据 + 材料计算） |
+| `education/power` | ❌ | 未实现（需要加成倍率 master 数据 + 复杂计算） |
+
+### 第二轮完整指令端点测试结果（15/23）
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| `profile/bind` | ✅ | |
+| `card/detail` | ✅ | |
+| `card/box` | ✅ | |
+| `music` | ✅ | |
+| `event/list` | ✅ | |
+| `stamp` | ✅ | |
+| `sk/line` | ✅ | |
+| `sk/query` | ✅ | |
+| `vlive` | ✅ | |
+| `arrest` | ✅ | |
+| `profile/reg-time` | ✅ | |
+| `education/challenge` | ✅ | 新增 |
+| `education/bonds` | ✅ | 新增 |
+| `education/leader` | ✅ | 新增 |
+| `profile` | ❌ | startapp/ondemand honor 资源路径问题 |
+| `gacha` | ❌ | startapp/ondemand gacha 资源路径问题 |
+| `education/area` | ❌ | 未实现 |
+| `education/power` | ❌ | 未实现 |
+| `card/list` | ❌ | Parser handler 接入不完整 |
+| `event` | ❌ | Parser handler 接入不完整 |
+| `score/music-meta` | ❌ | Parser handler 接入不完整 |
+| `misc/birthday` | ❌ | Parser handler 接入不完整 |
+
+### 外部代理 API 测试（3 项，全部通过）
+
+| 端点 | 结果 |
+|------|------|
+| Sekai API 公开资料 | ✅ |
+| Toolbox MySEKAI | ✅ |
+| Event Tracker 活动排名 | ✅ |
+
+## 11. 接下来需要做的事
+
+### 11.1 剩余失败端点修复（优先级高）
+
+#### startapp vs ondemand 资源路径问题（影响 `profile`、`gacha`）
+
+部分游戏资源实际存储在 `ondemand` 目录而非 `startapp`，目前 `RegionAssetDir()` 固定返回 `startapp`。需要为 `honor` 和 `gacha` 添加 fallback 逻辑：
+
+- 在 `honor/builder.go` 的 `buildNormalHonorRequest` 中，`degree_sub.png` 等资源先尝试 `startapp`，再 fallback 到 `ondemand`
+- 在 `gacha/builder.go` 中，gacha logo/banner 路径类似处理
+- 实现方式：`assets.AssetHelper.FirstExisting()` 已支持多路径，直接传 `startapp` 和 `ondemand` 两个候选路径即可
+
+#### Parser handler 接入不完整（影响 `card/list`、`event`、`score/music-meta`、`misc/birthday`）
+
+这 4 个端点的 handler 目前只调用 `makeResolvedCmd()` 而未提取 args 参数，导致请求体为空：
+
+- **`card/list`**：需要从命令文本中提取多个卡牌 ID（如 `/查卡 123 456 789`）
+- **`event`**：需要从 args 中提取 event ID 或通过 query 自动解析当前活动
+- **`score/music-meta`**：需要从 args 中提取歌曲名/ID
+- **`misc/birthday`**：需要从 args 中提取角色名并解析为生日日期
+
+### 11.2 未实现的 Education 端点（优先级中）
+
+`education/area`（区域道具）和 `education/power`（加成信息）需要从 suite 数据中提取并结合 master 数据进行计算：
+
+- **`education/area`**：从 `userAreas.areaItems` 中提取道具等级，结合 `areaItemLevels` master 计算升级所需材料
+- **`education/power`**：从 `userCharacters` 中提取角色等级，结合 `skillCoefficients` 等 master 数据计算加成倍率
+
+这两个功能依赖对 master 数据结构的深度了解，工作量较大。
+
+### 11.3 角色图标扩展（影响 bonds 渲染完整性）
+
+目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色无图标文件，bonds 渲染中直接跳过。需要：
+
+- 确认 Drawing API 服务器 `static_images/chara_icon/` 目录中实际存在的文件列表
+- 将缺失的新角色图标（SEKAI 26 位以后）补充到服务器并更新 `CharacterIDToNickname` 映射
+
+### 11.4 其他待处理事项
+
+| 事项 | 说明 |
+|------|------|
+| `origin/test` 需要 force push | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
+| ondemand fallback 机制完善 | 部分资源用 `ondemand`，应建立通用的双路径 fallback，而非逐个硬编码 |
+| education/area、education/power | master 数据驱动实现，工作量大，视需求排期 |
+| alias 管理 API 归属 | 别名新增/审核/拒绝 API 归属（bot API vs admin API）待设计决策 |
+
+## 12. 相关文档
 
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)

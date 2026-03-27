@@ -222,6 +222,7 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 	}
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID
+	resolved.RequesterGroupID = req.PlatformGroupID
 	return resolved, nil
 }
 

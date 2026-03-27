@@ -44,6 +44,7 @@ type ResolvedCommand struct {
 	IsPreview         bool
 	RequesterPlatform string
 	RequesterUserID   string
+	RequesterGroupID  string
 }
 
 // GlobalCommandResolver provides unified command parsing.

@@ -35,6 +35,11 @@ pjsk:
   parser:
     chardata_region: "jp"
     chardata_refresh_interval: "1h"
+  # MySekai is disabled for CN region by default. Add platform+group_id
+  # entries below to whitelist specific groups.
+  allow_cn_mysekai:
+    # - platform: "qq"
+    #   group_id: "12345678"
 
 redis:
   host: "localhost"

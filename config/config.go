@@ -145,10 +145,11 @@ type PJSKParserConfig struct {
 }
 
 type PJSKConfig struct {
-	Enabled bool             `yaml:"enabled"`
-	DBType  string           `yaml:"db_type"`
-	DBURL   string           `yaml:"db_url"`
-	Parser  PJSKParserConfig `yaml:"parser"`
+	Enabled            bool                      `yaml:"enabled"`
+	DBType             string                    `yaml:"db_type"`
+	DBURL              string                    `yaml:"db_url"`
+	Parser             PJSKParserConfig          `yaml:"parser"`
+	AllowCNMySekai     []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
 }
 
 type SekaiConfig struct {
@@ -195,6 +196,13 @@ type ImageCacheConfig struct {
 
 type MusicMetaConfig struct {
 	RefreshInterval time.Duration `yaml:"refresh_interval"` // default: 30m
+}
+
+// MySekaiCNWhitelistEntry defines a platform+group pair allowed to use
+// MySekai features on the CN region.
+type MySekaiCNWhitelistEntry struct {
+	Platform string `yaml:"platform"`
+	GroupID  string `yaml:"group_id"`
 }
 
 type PJSKRenderConfig struct {

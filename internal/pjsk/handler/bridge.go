@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
+	harukiConfig "haruki-cloud/config"
 	bonddb "haruki-cloud/database/sekai/bond"
 	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
 	leveldb "haruki-cloud/database/sekai/level"
@@ -1597,6 +1598,22 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 }
 
 func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	// MySekai is disabled for CN region unless the requester's
+	// platform+group is on the whitelist.
+	if strings.EqualFold(r.Region, "cn") {
+		allowed := false
+		for _, entry := range harukiConfig.Cfg.PJSK.AllowCNMySekai {
+			if strings.EqualFold(entry.Platform, r.RequesterPlatform) &&
+				entry.GroupID == r.RequesterGroupID {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return onebot11.Message{onebot11.Text("MySekai 功能暂不支持国服区域")}, nil
+		}
+	}
+
 	var data []byte
 	_, publicProfileCard := buildPublicMusicProfiles(r, app)
 

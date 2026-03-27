@@ -231,6 +231,7 @@ func extractMysekaiGateID(args string) (int, string) {
 func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/blueprint",
 			Commands: []string{
 				"/pjsk mysekai blueprint", "/mysekai blueprint",
 				"/msb", "/mysekai 蓝图",
@@ -239,8 +240,8 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAllTalks := strings.Contains(strings.ToLower(args), "all")
-			cid, cleaned := resolveNicknameArg(args)
-			if cid == 0 {
+			cleaned := cleanMysekaiArgs(args)
+			if cleaned == "" {
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
 					"show_id":        true,
 					"only_craftable": true,

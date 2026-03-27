@@ -12,9 +12,10 @@ type ResourceQuery struct {
 }
 
 type FixtureListQuery struct {
-	Region  string                      `json:"region,omitempty"`
-	ShowID  *bool                       `json:"show_id,omitempty"`
-	Profile *drawing.ProfileCardRequest `json:"-"`
+	Region        string                      `json:"region,omitempty"`
+	ShowID        *bool                       `json:"show_id,omitempty"`
+	OnlyCraftable *bool                       `json:"only_craftable,omitempty"`
+	Profile       *drawing.ProfileCardRequest `json:"-"`
 }
 
 type FixtureDetailQuery struct {
@@ -35,9 +36,10 @@ type MusicRecordQuery struct {
 }
 
 type TalkListQuery struct {
-	Region  string                      `json:"region,omitempty"`
-	Query   string                      `json:"query"`
-	Profile *drawing.ProfileCardRequest `json:"-"`
+	Region       string                      `json:"region,omitempty"`
+	Query        string                      `json:"query"`
+	ShowAllTalks *bool                       `json:"show_all_talks,omitempty"`
+	Profile      *drawing.ProfileCardRequest `json:"-"`
 }
 
 type PhotoQuery struct {

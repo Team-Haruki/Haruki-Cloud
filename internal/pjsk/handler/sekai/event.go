@@ -5,6 +5,7 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"strconv"
 	"strings"
 )
 
@@ -31,9 +32,32 @@ func (sekaiHandlers) EventDetailHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleEvent, "event-detail"), nil
+			params, err := buildEventDetailParams(ctx.GetArgs())
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEvent, "event-detail", params), nil
 		},
 	}
+}
+
+func buildEventDetailParams(args string) (map[string]any, error) {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return map[string]any{"use_current": true}, nil
+	}
+
+	lower := strings.ToLower(args)
+	if strings.HasPrefix(lower, "event") {
+		args = strings.TrimSpace(args[len("event"):])
+	}
+
+	eventID, err := strconv.Atoi(strings.TrimSpace(args))
+	if err != nil || eventID <= 0 {
+		return nil, fmt.Errorf("请输入有效的活动ID")
+	}
+
+	return map[string]any{"event_id": eventID}, nil
 }
 
 func (sekaiHandlers) EventStoryHandle() SekaiCommandHandler {

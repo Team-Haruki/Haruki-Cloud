@@ -70,14 +70,41 @@ func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
 }
 
 func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListRequest, error) {
-	if len(query.CardIDs) == 0 {
-		return nil, fmt.Errorf("card ids are required")
-	}
-	region, _, builder, err := c.resolveBuilder(query.Region)
+	region, source, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
 		return nil, err
 	}
-	req, err := builder.BuildCardListRequest(query.CardIDs, region)
+
+	cardIDs := append([]int(nil), query.CardIDs...)
+	if len(cardIDs) == 0 {
+		rawQuery := strings.TrimSpace(query.Query)
+		if rawQuery == "" {
+			return nil, fmt.Errorf("card ids are required")
+		}
+
+		searcher := NewSearchService(source, NewParser(c.nicknames))
+		cards, err := searcher.SearchList(rawQuery)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search card list: %w", err)
+		}
+
+		seen := make(map[int]struct{}, len(cards))
+		for _, item := range cards {
+			if item == nil || item.ID <= 0 {
+				continue
+			}
+			if _, ok := seen[item.ID]; ok {
+				continue
+			}
+			seen[item.ID] = struct{}{}
+			cardIDs = append(cardIDs, item.ID)
+		}
+		if len(cardIDs) == 0 {
+			return nil, fmt.Errorf("card ids are required")
+		}
+	}
+
+	req, err := builder.BuildCardListRequest(cardIDs, region)
 	if err != nil {
 		return nil, err
 	}

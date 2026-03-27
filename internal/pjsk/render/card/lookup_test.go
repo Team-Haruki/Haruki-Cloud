@@ -12,7 +12,8 @@ import (
 )
 
 type lookupTestSource struct {
-	card *masterdata.Card
+	card  *masterdata.Card
+	cards []*masterdata.Card
 }
 
 func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
@@ -25,6 +26,15 @@ func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
 		}
 		return &copy, nil
 	}
+	for _, item := range s.cards {
+		if item != nil && item.ID == id {
+			copy := *item
+			if item.CardParameters != nil {
+				copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+			}
+			return &copy, nil
+		}
+	}
 	return nil, fmt.Errorf("card %d not found", id)
 }
 
@@ -33,7 +43,21 @@ func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 }
 
 func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
-	return nil, fmt.Errorf("filter not supported: %+v", info)
+	if info == nil {
+		return nil, fmt.Errorf("filter not supported: %+v", info)
+	}
+	if info.CharacterID != 5 || info.Rarity != "rarity_4" {
+		return nil, fmt.Errorf("filter not supported: %+v", info)
+	}
+	out := make([]*masterdata.Card, 0, len(s.cards))
+	for _, item := range s.cards {
+		if item == nil {
+			continue
+		}
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out, nil
 }
 
 func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {

@@ -11,6 +11,7 @@ type Query struct {
 }
 
 type ListRequest struct {
+	Query           string                              `json:"query,omitempty"`
 	CardIDs         []int                               `json:"card_ids"`
 	Region          string                              `json:"region"`
 	DetailedProfile *drawing.DetailedProfileCardRequest `json:"-"`

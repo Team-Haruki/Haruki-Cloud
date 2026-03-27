@@ -37,22 +37,26 @@ type Service struct {
 }
 
 type RawUserData struct {
-	Now                                   int64                    `json:"now"`
-	UserGamedata                          RawUserGamedata          `json:"userGamedata"`
-	UserProfile                           RawUserProfile           `json:"userProfile"`
-	UserDecks                             []RawUserDeck            `json:"userDecks"`
-	UserCards                             []RawUserCard            `json:"userCards"`
-	UserMusicStats                        []RawMusicResult         `json:"userMusicResults"`
-	UserChallengeLiveSoloResults          []RawChallengeLiveResult `json:"userChallengeLiveSoloResults"`
-	UserChallengeLiveSoloStages           []RawChallengeLiveStage  `json:"userChallengeLiveSoloStages"`
-	UserChallengeLiveSoloHighScoreRewards []RawChallengeLiveReward `json:"userChallengeLiveSoloHighScoreRewards"`
-	UserCharacters                        []RawUserCharacter       `json:"userCharacters"`
-	UserMusicClear                        []RawMusicClear          `json:"userMusicDifficultyClearCounts"`
-	UserHonors                            []RawUserHonor           `json:"userHonors"`
-	UserProfileHonors                     []RawUserProfileHonor    `json:"userProfileHonors"`
-	UserFrames                            []RawUserFrame           `json:"userPlayerFrames"`
-	UserEvents                            []RawUserEvent           `json:"userEvents"`
-	UserEventResults                      []RawUserEventResult     `json:"userEventResults"`
+	Now                                               int64                    `json:"now"`
+	UserGamedata                                      RawUserGamedata          `json:"userGamedata"`
+	UserProfile                                       RawUserProfile           `json:"userProfile"`
+	UserDecks                                         []RawUserDeck            `json:"userDecks"`
+	UserCards                                         []RawUserCard            `json:"userCards"`
+	UserMusicStats                                    []RawMusicResult         `json:"userMusicResults"`
+	UserChallengeLiveSoloResults                      []RawChallengeLiveResult `json:"userChallengeLiveSoloResults"`
+	UserChallengeLiveSoloStages                       []RawChallengeLiveStage  `json:"userChallengeLiveSoloStages"`
+	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward `json:"userChallengeLiveSoloHighScoreRewards"`
+	UserCharacters                                    []RawUserCharacter       `json:"userCharacters"`
+	UserAreas                                         []RawUserArea            `json:"userAreas"`
+	UserMaterials                                     []RawUserMaterial        `json:"userMaterials"`
+	UserMysekaiGates                                  []RawUserMysekaiGate     `json:"userMysekaiGates"`
+	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus    `json:"userMysekaiFixtureGameCharacterPerformanceBonuses"`
+	UserMusicClear                                    []RawMusicClear          `json:"userMusicDifficultyClearCounts"`
+	UserHonors                                        []RawUserHonor           `json:"userHonors"`
+	UserProfileHonors                                 []RawUserProfileHonor    `json:"userProfileHonors"`
+	UserFrames                                        []RawUserFrame           `json:"userPlayerFrames"`
+	UserEvents                                        []RawUserEvent           `json:"userEvents"`
+	UserEventResults                                  []RawUserEventResult     `json:"userEventResults"`
 }
 
 type RawUserGamedata struct {
@@ -60,6 +64,7 @@ type RawUserGamedata struct {
 	Name   string `json:"name"`
 	Deck   int    `json:"deck"`
 	Rank   int    `json:"rank"`
+	Coin   int    `json:"coin"`
 }
 
 type RawUserProfile struct {
@@ -120,6 +125,30 @@ type RawChallengeLiveReward struct {
 type RawUserCharacter struct {
 	CharacterID   int `json:"characterId"`
 	CharacterRank int `json:"characterRank"`
+}
+
+type RawUserArea struct {
+	AreaItems []RawUserAreaItem `json:"areaItems"`
+}
+
+type RawUserAreaItem struct {
+	AreaItemID int `json:"areaItemId"`
+	Level      int `json:"level"`
+}
+
+type RawUserMaterial struct {
+	MaterialID int `json:"materialId"`
+	Quantity   int `json:"quantity"`
+}
+
+type RawUserMysekaiGate struct {
+	MysekaiGateID    int `json:"mysekaiGateId"`
+	MysekaiGateLevel int `json:"mysekaiGateLevel"`
+}
+
+type RawUserFixtureBonus struct {
+	GameCharacterID int     `json:"gameCharacterId"`
+	TotalBonusRate  float64 `json:"totalBonusRate"`
 }
 
 type RawMusicClear struct {

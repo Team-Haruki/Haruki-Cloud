@@ -11,3 +11,15 @@ type ChallengeLiveQuery struct {
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot *userdata.Service                   `json:"-"` // Optional: overrides controller snapshot
 }
+
+type PowerBonusQuery struct {
+	Region   renderregion.Value                  `json:"region"`
+	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
+	Snapshot *userdata.Service                   `json:"-"`
+}
+
+type AreaItemQuery struct {
+	Region   renderregion.Value                  `json:"region"`
+	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
+	Snapshot *userdata.Service                   `json:"-"`
+}

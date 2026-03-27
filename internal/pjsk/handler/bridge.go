@@ -30,6 +30,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/internal/pjsk/requestbuilder"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/query"
@@ -76,7 +77,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	case parser.ModuleScore:
 		message, err = executeScore(resolved, app)
 	case parser.ModuleProfile:
-		message, err = executeProfileWithCache(ctx, resolved, app)
+		message, err = executeProfile(ctx, resolved, app)
 	case parser.ModuleArrest:
 		message, err = executeArrest(ctx, resolved, app)
 	case parser.ModuleRegTime:
@@ -107,23 +108,6 @@ func imageMessage(img []byte, app *renderapp.App, group string) (onebot11.Messag
 		return nil, err
 	}
 	return onebot11.Message{onebot11.Image(url)}, nil
-}
-
-// executeProfileWithCache wraps executeProfile so image results go through the
-// image cache layer.
-func executeProfileWithCache(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
-	data, dataType, err := executeProfile(ctx, r, app)
-	if err != nil {
-		return nil, err
-	}
-	switch dataType {
-	case CommandResultDataTypeImagePNG:
-		return imageMessage(data, app, BotModulePJSK)
-	case CommandResultDataTypeText:
-		return onebot11.Message{onebot11.Text(string(data))}, nil
-	default:
-		return nil, fmt.Errorf("bridge: unsupported profile result type %q", dataType)
-	}
 }
 
 func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -553,11 +537,27 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(r.Params, &req)
+		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 && suiteUID > 0 {
+			builtReq, buildErr := buildPowerBonusRequestFromSuite(
+				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			req = *builtReq
+		}
 		data, err = app.Edu.RenderPowerBonusDetail(req)
 
 	case "education-area":
 		req := drawing.AreaItemUpgradeMaterialsRequest{}
 		mergeParams(r.Params, &req)
+		if len(req.AreaItems) == 0 && suiteUID > 0 {
+			builtReq, buildErr := buildAreaItemUpgradeMaterialsRequestFromSuite(
+				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			req = *builtReq
+		}
 		data, err = app.Edu.RenderAreaItemUpgradeMaterials(req)
 
 	default:
@@ -572,6 +572,53 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 // buildEducationSnapshot creates a userdata.Service from live Toolbox suite data.
 func buildEducationSnapshot(app *renderapp.App, region renderregion.Value, suiteJSON []byte) (*userdata.Service, error) {
 	return userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, nil, nil)
+}
+
+func buildPowerBonusRequestFromSuite(
+	app *renderapp.App, region renderregion.Value, regionStr string, uid int64, platform, platformUserID string,
+	profile *drawing.DetailedProfileCardRequest,
+) (*drawing.PowerBonusDetailRequest, error) {
+	snapshot, err := buildEducationSnapshotFromSuite(app, region, regionStr, uid, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	return app.Edu.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
+		Region:   region,
+		Profile:  profile,
+		Snapshot: snapshot,
+	})
+}
+
+func buildAreaItemUpgradeMaterialsRequestFromSuite(
+	app *renderapp.App, region renderregion.Value, regionStr string, uid int64, platform, platformUserID string,
+	profile *drawing.DetailedProfileCardRequest,
+) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
+	snapshot, err := buildEducationSnapshotFromSuite(app, region, regionStr, uid, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	return app.Edu.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(education.AreaItemQuery{
+		Region:   region,
+		Profile:  profile,
+		Snapshot: snapshot,
+	})
+}
+
+func buildEducationSnapshotFromSuite(
+	app *renderapp.App, region renderregion.Value, regionStr string, uid int64, platform, platformUserID string,
+) (*userdata.Service, error) {
+	suiteJSON, err := sekaiutils.GetToolboxClient().GetSuiteData(regionStr, uid, platform, platformUserID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch suite data: %w", err)
+	}
+	if len(suiteJSON) == 0 {
+		return nil, fmt.Errorf("suite data is empty")
+	}
+	snapshot, err := buildEducationSnapshot(app, region, suiteJSON)
+	if err != nil {
+		return nil, err
+	}
+	return snapshot, nil
 }
 
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
@@ -937,22 +984,60 @@ func executeScore(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	case "score-control":
 		req := drawing.ScoreControlRequest{}
 		mergeParams(r.Params, &req)
+		if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
+			reqPtr, resolveErr := requestbuilder.BuildScoreControlRequest(r, app)
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			req = *reqPtr
+		}
 		data, err = app.Score.RenderScoreControl(req)
 	case "score-custom-room":
 		req := drawing.CustomRoomScoreRequest{}
 		mergeParams(r.Params, &req)
+		if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
+			reqPtr, resolveErr := requestbuilder.BuildCustomRoomScoreRequest(r, app)
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			req = *reqPtr
+		}
 		data, err = app.Score.RenderCustomRoomScore(req)
 	case "score-music-meta":
-		var req []drawing.MusicMetaRequest
+		var params struct {
+			Queries []string `json:"queries"`
+		}
 		if r.Params != nil {
-			if err := json.Unmarshal(r.Params, &req); err != nil {
+			if err := json.Unmarshal(r.Params, &params); err != nil {
 				return nil, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
 			}
+		}
+		if len(params.Queries) == 0 {
+			params.Queries = splitScoreMusicMetaQueries(r.Query)
+		}
+		req, resolveErr := app.Music.ResolveMusicMetaRequests(r.Region, params.Queries)
+		if resolveErr != nil {
+			return nil, resolveErr
 		}
 		data, err = app.Score.RenderMusicMeta(req)
 	case "score-music-board":
 		req := drawing.MusicBoardRequest{}
 		mergeParams(r.Params, &req)
+		if len(req.Items) == 0 {
+			if app == nil || app.Music == nil {
+				return nil, fmt.Errorf("music board service unavailable: music controller is not configured")
+			}
+			boardQuery := music.BoardQuery{}
+			mergeParams(r.Params, &boardQuery)
+			if len(boardQuery.SpecQueries) == 0 {
+				boardQuery.SpecQueries = splitScoreMusicMetaQueries(r.Query)
+			}
+			reqPtr, resolveErr := app.Music.ResolveMusicBoardRequest(r.Region, boardQuery)
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			req = *reqPtr
+		}
 		data, err = app.Score.RenderMusicBoard(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported score mode %q", r.Mode)
@@ -963,9 +1048,21 @@ func executeScore(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) ([]byte, CommandResultDataType, error) {
+func splitScoreMusicMetaQueries(args string) []string {
+	segments := strings.Split(strings.ReplaceAll(strings.TrimSpace(args), "/", "|"), "|")
+	clean := make([]string, 0, len(segments))
+	for _, seg := range segments {
+		seg = strings.TrimSpace(seg)
+		if seg != "" {
+			clean = append(clean, seg)
+		}
+	}
+	return clean
+}
+
+func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	switch r.Mode {
-	case ProfileModeRender:
+	case accountdata.ProfileModeRender:
 		var p userQueryParams
 		mergeParams(r.Params, &p)
 
@@ -976,12 +1073,12 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 
 		target, err := resolveGameTarget(ctx, p, region, app)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
-			return nil, "", fmt.Errorf("获取玩家信息失败：%w", err)
+			return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 		}
 
 		if app.Censor != nil {
@@ -1012,41 +1109,41 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		}
 		data, err := app.Profiles.RenderProfileFromAPI(q, resp, framesJSON)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-		return data, CommandResultDataTypeImagePNG, nil
+		return imageMessage(data, app, BotModulePJSK)
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if app.Bindings == nil {
-			return nil, "", fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
 		}
 		params, err := accountdata.DecodeProfileBindingParams(r.Params)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		data, err := accountdata.ExecuteProfileBindingCommand(ctx, app.Bindings, r.Mode, params)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-		return data, CommandResultDataTypeText, nil
+		return onebot11.Message{onebot11.Text(string(data))}, nil
 	case accountdata.ProfileModeHideID, accountdata.ProfileModeShowID,
 		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeHideMySekai, accountdata.ProfileModeShowMySekai,
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if app.Bindings == nil {
-			return nil, "", fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
 		}
 		params, err := accountdata.DecodeProfileSettingsParams(r.Params)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		data, err := accountdata.ExecuteProfileSettingsCommand(ctx, app.Bindings, r.Mode, params)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-		return data, CommandResultDataTypeText, nil
+		return onebot11.Message{onebot11.Text(string(data))}, nil
 	default:
-		return nil, "", fmt.Errorf("bridge: unsupported profile mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported profile mode %q", r.Mode)
 	}
 }
 
@@ -1138,6 +1235,13 @@ func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	case "misc-birthday":
 		req := drawing.CharaBirthdayRequest{}
 		mergeParams(r.Params, &req)
+		if req.Cid <= 0 || req.Month <= 0 || req.Day <= 0 || len(req.Cards) == 0 {
+			reqPtr, resolveErr := requestbuilder.BuildMiscBirthdayRequest(r, app)
+			if resolveErr != nil {
+				return nil, resolveErr
+			}
+			req = *reqPtr
+		}
 		data, err = app.Misc.RenderCharaBirthday(req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported misc mode %q", r.Mode)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/pjsk/render/card"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"strconv"
 	"strings"
@@ -15,19 +16,11 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/detail",
 			Commands: []string{
-				"/card-detail", "/详情", "/查卡", "/卡面",
+				"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if isCardBoxQuery(args) {
-				ctx.SetArgs(cleanCardBoxArgs(args))
-				return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args)), nil
-			}
-			if isSingleCardIDQuery(args) {
-				return makeResolvedCmd(ctx, parser.ModuleCard, "card-detail"), nil
-			}
-			return makeResolvedCmd(ctx, parser.ModuleCard, "card-list"), nil
+			return resolveCardDetailOrList(ctx), nil
 		},
 	}
 }
@@ -37,21 +30,25 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/list",
 			Commands: []string{
-				"/查牌", "/查卡牌", "/卡牌列表", "/card", "/cards", "/pjsk card", "/pjsk member",
+				"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if isCardBoxQuery(args) {
-				ctx.SetArgs(cleanCardBoxArgs(args))
-				return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args)), nil
-			}
-			if isSingleCardIDQuery(args) {
-				return makeResolvedCmd(ctx, parser.ModuleCard, "card-detail"), nil
-			}
-			return makeResolvedCmd(ctx, parser.ModuleCard, "card-list"), nil
+			return resolveCardDetailOrList(ctx), nil
 		},
 	}
+}
+
+func resolveCardDetailOrList(ctx SekaiHandlerContext) *parser.ResolvedCommand {
+	args := strings.TrimSpace(ctx.GetArgs())
+	if isCardBoxQuery(args) {
+		ctx.SetArgs(cleanCardBoxArgs(args))
+		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args))
+	}
+	if isSingleCardIDQuery(args) {
+		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-detail", card.Query{Query: args, Region: ctx.Region().String()})
+	}
+	return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-list", card.ListRequest{Query: args, Region: ctx.Region().String()})
 }
 
 func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
@@ -59,7 +56,7 @@ func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/box",
 			Commands: []string{
-				"/查箱", "/查框", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
+				"/查箱", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
@@ -109,7 +106,7 @@ func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
 			Path: "card/image",
 			Commands: []string{
 				"/pjsk card img",
-				"/查卡面", "/卡面原图", "/卡面",
+				"/查卡面", "/卡面原图", "/卡面", "/card", "/卡图",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {

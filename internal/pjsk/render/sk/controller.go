@@ -28,7 +28,9 @@ type TrackerSource interface {
 	GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
 	GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
 	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
+	TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error)
 	TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
 }
 
 type EventSource interface {
@@ -329,6 +331,74 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 		return nil, err
 	}
 	return c.drawing.GenerateSKPlayerTrace(payload)
+}
+
+// BuildPlayerTraceFromTracker builds a player-trace request by fetching trace
+// data from the tracker API for a specific user.
+func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing.PlayerTraceRequest, error) {
+	normalized, err := c.validateTrackerQuery(req)
+	if err != nil {
+		return nil, err
+	}
+	if normalized.UserID == nil {
+		return nil, fmt.Errorf("player-trace requires user_id")
+	}
+	userID := *normalized.UserID
+
+	var ranks []drawing.RankInfo
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		trace, err := c.tracker.TraceWorldBloomRankingByUser(normalized.Region, normalized.EventID, *normalized.WlCharacterID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
+		}
+		name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
+		for _, point := range trace.RankData {
+			rankValue := point.Rank
+			score := point.Score
+			ranks = append(ranks, drawing.RankInfo{
+				Rank:  rankValue,
+				Name:  name,
+				Score: drawing.IntPtr(score),
+				Time:  formatTrackerTimestamp(point.Timestamp),
+			})
+		}
+	} else {
+		trace, err := c.tracker.TraceRankingByUser(normalized.Region, normalized.EventID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
+		}
+		name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
+		for _, point := range trace.RankData {
+			rankValue := point.Rank
+			score := point.Score
+			ranks = append(ranks, drawing.RankInfo{
+				Rank:  rankValue,
+				Name:  name,
+				Score: drawing.IntPtr(score),
+				Time:  formatTrackerTimestamp(point.Timestamp),
+			})
+		}
+	}
+
+	sort.Slice(ranks, func(i, j int) bool {
+		return fmt.Sprintf("%v", ranks[i].Time) < fmt.Sprintf("%v", ranks[j].Time)
+	})
+
+	if len(ranks) == 0 {
+		return nil, fmt.Errorf("no trace data available for user %d", userID)
+	}
+
+	payload := drawing.PlayerTraceRequest{
+		EventID: normalized.EventID,
+		Region:  normalized.Region,
+		Ranks:   ranks,
+	}
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
+			payload.WlCharaIconPath = &icon
+		}
+	}
+	return c.BuildPlayerTraceRequest(payload)
 }
 
 func (c *Controller) BuildRankTraceRequest(req drawing.RankTraceRequest) (*drawing.RankTraceRequest, error) {

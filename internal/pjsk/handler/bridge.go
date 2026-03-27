@@ -193,9 +193,11 @@ func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		mergeParams(r.Params, &q)
 		data, err = app.Events.RenderEventList(q)
 	case "event-record":
-		req := drawing.EventRecordRequest{}
-		mergeParams(r.Params, &req)
-		data, err = app.Events.RenderEventRecord(req)
+		req, buildErr := buildEventRecordFromSnapshot(r, app, region)
+		if buildErr != nil {
+			return nil, buildErr
+		}
+		data, err = app.Events.RenderEventRecord(*req)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported event mode %q", r.Mode)
 	}
@@ -203,6 +205,225 @@ func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+// buildEventRecordFromSnapshot constructs an EventRecordRequest from live
+// Toolbox suite data, cross-referencing with master data for event metadata.
+// Regular events come from userEvents; world bloom events come from userWorldBlooms.
+func buildEventRecordFromSnapshot(r *parser.ResolvedCommand, app *renderapp.App, region renderregion.Value) (*drawing.EventRecordRequest, error) {
+	snapshot := resolveLiveSnapshot(r, app, false)
+	if snapshot == nil {
+		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
+	}
+	rawData := snapshot.RawData()
+	if rawData == nil || (len(rawData.UserEvents) == 0 && len(rawData.UserWorldBlooms) == 0) {
+		return nil, fmt.Errorf("event record requires at least one history entry")
+	}
+
+	// Build rank lookup from UserEventResults (if available)
+	rankByEvent := make(map[int]int, len(rawData.UserEventResults))
+	for _, result := range rawData.UserEventResults {
+		rankByEvent[result.EventID] = result.Rank
+	}
+
+	masterDir := app.Config.LocalMasterdata.Dir
+	eventMaster := loadMasterMapByID(masterDir, "events.json")
+	if len(eventMaster) == 0 {
+		return nil, fmt.Errorf("event master data not available")
+	}
+
+	// Identify world_bloom event IDs from master
+	wlEventIDs := make(map[int]struct{})
+	for _, ev := range eventMaster {
+		if stringVal(ev, "eventType") == "world_bloom" {
+			wlEventIDs[intVal(ev, "id")] = struct{}{}
+		}
+	}
+
+	regionStr := region.String()
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+
+	// --- Build regular event entries from userEvents ---
+	eventInfo := make([]drawing.EventHistory, 0)
+	for _, ue := range rawData.UserEvents {
+		if _, isWL := wlEventIDs[ue.EventID]; isWL {
+			continue // world bloom events handled below
+		}
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, app.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		if rank, ok := rankByEvent[ue.EventID]; ok {
+			hist.Rank = &rank
+		}
+		eventInfo = append(eventInfo, *hist)
+	}
+
+	// --- Build world bloom entries from userWorldBlooms ---
+	// Aggregate by eventId: sum points, pick best rank, collect character IDs
+	type wlAgg struct {
+		totalPoint int
+		bestRank   int
+		charIDs    []int
+	}
+	wlMap := make(map[int]*wlAgg)
+	for _, wb := range rawData.UserWorldBlooms {
+		agg, ok := wlMap[wb.EventID]
+		if !ok {
+			agg = &wlAgg{bestRank: wb.Rank}
+			wlMap[wb.EventID] = agg
+		}
+		agg.totalPoint += wb.WorldBloomChapterPoint
+		if wb.Rank > 0 && (agg.bestRank == 0 || wb.Rank < agg.bestRank) {
+			agg.bestRank = wb.Rank
+		}
+		agg.charIDs = append(agg.charIDs, wb.GameCharacterID)
+	}
+
+	wlEventInfo := make([]drawing.EventHistory, 0)
+	for eventID, agg := range wlMap {
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, agg.totalPoint, app.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		hist.IsWlEvent = true
+		if agg.bestRank > 0 {
+			rank := agg.bestRank
+			hist.Rank = &rank
+		}
+		// Use first character for WL icon
+		if len(agg.charIDs) > 0 && agg.charIDs[0] > 0 {
+			icon := charaIconPath(app.Assets, agg.charIDs[0])
+			hist.WlCharaIconPath = &icon
+		}
+		wlEventInfo = append(wlEventInfo, *hist)
+	}
+
+	// Also add any userEvents entries that are world bloom type
+	for _, ue := range rawData.UserEvents {
+		if _, isWL := wlEventIDs[ue.EventID]; !isWL {
+			continue
+		}
+		if _, exists := wlMap[ue.EventID]; exists {
+			continue
+		}
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, app.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		hist.IsWlEvent = true
+		wlEventInfo = append(wlEventInfo, *hist)
+	}
+
+	if len(eventInfo) == 0 && len(wlEventInfo) == 0 {
+		return nil, fmt.Errorf("event record requires at least one history entry")
+	}
+
+	sortEventHistory(eventInfo)
+	sortEventHistory(wlEventInfo)
+
+	profile := snapshot.DetailedProfile(region)
+	if profile == nil {
+		return nil, fmt.Errorf("event record requires user profile data")
+	}
+
+	return &drawing.EventRecordRequest{
+		EventInfo:   eventInfo,
+		WlEventInfo: wlEventInfo,
+		UserInfo:    *profile,
+	}, nil
+}
+
+// buildEventHistoryFromMaster creates an EventHistory from master data.
+func buildEventHistoryFromMaster(master map[string]interface{}, eventID, eventPoint int, assetHelper *assets.AssetHelper, regionStr string) *drawing.EventHistory {
+	if len(master) == 0 {
+		return nil
+	}
+	assetBundle := stringVal(master, "assetbundleName")
+	bannerPath := assets.ResolveRegionAssetPath(assetHelper, regionStr,
+		filepath.Join("home", "banner", assetBundle, assetBundle+".png"),
+		filepath.Join("event", assetBundle, "banner.png"))
+	return &drawing.EventHistory{
+		ID:         eventID,
+		EventName:  stringVal(master, "name"),
+		StartAt:    master["startAt"],
+		EndAt:      master["closedAt"],
+		EventPoint: eventPoint,
+		BannerPath: bannerPath,
+	}
+}
+
+func sortEventHistory(items []drawing.EventHistory) {
+	sort.SliceStable(items, func(i, j int) bool {
+		si, _ := items[i].StartAt.(float64)
+		sj, _ := items[j].StartAt.(float64)
+		return si > sj
+	})
+}
+
+// loadMasterMapByID loads a JSON array file and indexes by "id" field.
+func loadMasterMapByID(dir, filename string) map[int]map[string]interface{} {
+	if dir == "" {
+		return nil
+	}
+	data, err := os.ReadFile(filepath.Join(dir, filename))
+	if err != nil {
+		return nil
+	}
+	var items []map[string]interface{}
+	if err := json.Unmarshal(data, &items); err != nil {
+		return nil
+	}
+	result := make(map[int]map[string]interface{}, len(items))
+	for _, item := range items {
+		id := intVal(item, "id")
+		if id != 0 {
+			result[id] = item
+		}
+	}
+	return result
+}
+
+// loadMasterList loads a JSON array file.
+func loadMasterList(dir, filename string) []map[string]interface{} {
+	if dir == "" {
+		return nil
+	}
+	data, err := os.ReadFile(filepath.Join(dir, filename))
+	if err != nil {
+		return nil
+	}
+	var items []map[string]interface{}
+	if err := json.Unmarshal(data, &items); err != nil {
+		return nil
+	}
+	return items
+}
+
+func stringVal(m map[string]interface{}, key string) string {
+	if v, ok := m[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func intVal(m map[string]interface{}, key string) int {
+	if v, ok := m[key]; ok {
+		switch n := v.(type) {
+		case float64:
+			return int(n)
+		case int:
+			return n
+		case json.Number:
+			i, _ := n.Int64()
+			return int(i)
+		}
+	}
+	return 0
 }
 
 func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -858,6 +1079,30 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		mergeParams(r.Params, &req)
 		data, err = app.SK.RenderSpeed(req)
 	case "sk-player-trace":
+		trackerReq, ok := trackerRankQueryFromParams(r)
+		if !ok {
+			// No params: build a basic query for the requester's own user
+			trackerReq = sk.TrackerRankQuery{Region: r.Region}
+			if trackerReq.Region == "" {
+				trackerReq.Region = "jp"
+			}
+		}
+		// Resolve user ID if not provided
+		if trackerReq.UserID == nil {
+			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil || trackerReq.UserID == nil {
+				if uid := resolveRequesterGameUID(r, app); uid > 0 {
+					trackerReq.UserID = &uid
+				}
+			}
+		}
+		if trackerReq.UserID != nil {
+			payload, buildErr := app.SK.BuildPlayerTraceFromTracker(trackerReq)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			data, err = app.SK.RenderPlayerTrace(*payload)
+			break
+		}
 		req := drawing.PlayerTraceRequest{}
 		mergeParams(r.Params, &req)
 		data, err = app.SK.RenderPlayerTrace(req)
@@ -904,6 +1149,28 @@ func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery,
 		return sk.TrackerRankQuery{}, false
 	}
 	return req, true
+}
+
+// resolveRequesterGameUID resolves the game user ID from the requester's binding.
+func resolveRequesterGameUID(r *parser.ResolvedCommand, app *renderapp.App) int64 {
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return 0
+	}
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+	_, binding, err := app.Bindings.ResolveUserBinding(context.Background(), platform, platformUserID, regionStr)
+	if err != nil || binding == nil {
+		return 0
+	}
+	uid, parseErr := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)
+	if parseErr != nil || uid <= 0 {
+		return 0
+	}
+	return uid
 }
 
 func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {

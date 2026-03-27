@@ -53,6 +53,7 @@ type RawUserData struct {
 	UserFrames                            []RawUserFrame           `json:"userPlayerFrames"`
 	UserEvents                            []RawUserEvent           `json:"userEvents"`
 	UserEventResults                      []RawUserEventResult     `json:"userEventResults"`
+	UserWorldBlooms                       []RawUserWorldBloom      `json:"userWorldBlooms"`
 }
 
 type RawUserGamedata struct {
@@ -137,6 +138,13 @@ type RawUserEvent struct {
 type RawUserEventResult struct {
 	EventID int `json:"eventId"`
 	Rank    int `json:"rank"`
+}
+
+type RawUserWorldBloom struct {
+	EventID                int `json:"eventId"`
+	GameCharacterID        int `json:"gameCharacterId"`
+	WorldBloomChapterPoint int `json:"worldBloomChapterPoint"`
+	Rank                   int `json:"rank"`
 }
 
 type RawUserHonor struct {
@@ -431,16 +439,11 @@ func resolveLeaderImagePath(sekaiClient *sekaiDB.Client, assetHelper *assets.Ass
 	if afterTraining {
 		imageType = "after_training"
 	}
-	candidates := []string{
-		filepath.ToSlash(filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", assetBundleName, imageType))),
-		filepath.ToSlash(filepath.Join("character", "member", assetBundleName, "card_normal.png")),
-	}
-	if assetHelper != nil {
-		if existing := assetHelper.FirstExisting(candidates...); existing != "" {
-			return makeRelativeAsset(assetHelper, existing)
-		}
-	}
-	return candidates[0]
+
+	regionStr := renderregion.WithDefault(region).String()
+	return assets.ResolveRegionAssetPath(assetHelper, regionStr,
+		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", assetBundleName, imageType)),
+		filepath.Join("character", "member", assetBundleName, "card_normal.png"))
 }
 
 func fallbackLeaderImagePath(assetHelper *assets.AssetHelper) string {

@@ -193,17 +193,11 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 	}
 
 	itemIDs := make([]int, 0, len(userAreaLevels))
-	lowerLevel := 0
-	firstLevel := true
-	for itemID, level := range userAreaLevels {
+	for itemID := range userAreaLevels {
 		if len(ctx.source.GetAreaItemLevels(itemID)) == 0 {
 			continue
 		}
 		itemIDs = append(itemIDs, itemID)
-		if firstLevel || level < lowerLevel {
-			lowerLevel = level
-			firstLevel = false
-		}
 	}
 	sort.Ints(itemIDs)
 	if len(itemIDs) == 0 {
@@ -236,8 +230,8 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 
 		currentLevel := userAreaLevels[itemID]
 		sumMaterials := make(map[int]int)
-		levelInfos := make([]drawing.AreaItemLevel, 0, maxLevel-lowerLevel)
-		for level := lowerLevel + 1; level <= maxLevel; level++ {
+		levelInfos := make([]drawing.AreaItemLevel, 0, maxLevel-currentLevel)
+		for level := currentLevel + 1; level <= maxLevel; level++ {
 			levelMaster := levelMap[level]
 			if levelMaster == nil {
 				levelInfos = append(levelInfos, drawing.AreaItemLevel{Level: level, Materials: []drawing.AreaItemMaterial{}})

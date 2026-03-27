@@ -18,6 +18,7 @@ type Card struct {
 	SpecialTrainingSkillID          int
 	SpecialTrainingSkillName        string
 	CardSupplyID                    int
+	InitialSpecialTrainingStatus    string
 }
 
 type CardParameter struct {

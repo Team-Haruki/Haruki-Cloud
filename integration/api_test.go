@@ -367,7 +367,7 @@ func TestBotCommands(t *testing.T) {
 
 		// Education
 		{"education/challenge", "education/challenge", "/挑战信息", "/挑战信息", true},
-		{"education/area", "education/area", "/区域道具", "/区域道具", true},
+		{"education/area", "education/area", "/区域道具", "/区域道具 树", true},
 		{"education/bonds", "education/bonds", "/羁绊", "/羁绊", true},
 		{"education/leader", "education/leader", "/领队统计", "/领队统计", true},
 		{"education/power", "education/power", "/加成信息", "/加成信息", true},

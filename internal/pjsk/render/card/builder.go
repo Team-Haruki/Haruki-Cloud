@@ -244,6 +244,15 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 }
 
 func (b *Builder) buildThumbnailInfo(card *masterdata.Card, region renderregion.Value) []drawing.CardFullThumbnailRequest {
+	// Cards with initial_special_training_status='done' only have after_training art
+	alreadyTrained := strings.EqualFold(card.InitialSpecialTrainingStatus, "done")
+
+	if alreadyTrained {
+		return []drawing.CardFullThumbnailRequest{
+			common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{AfterTraining: true, TrainedArt: true}),
+		}
+	}
+
 	items := []drawing.CardFullThumbnailRequest{
 		common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{AfterTraining: false}),
 	}

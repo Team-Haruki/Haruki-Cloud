@@ -582,6 +582,7 @@ func convertCardEntity(entity *sekaiDB.Card) (*masterdata.Card, error) {
 		SpecialTrainingSkillID:          int(entity.SpecialTrainingSkillID),
 		SpecialTrainingSkillName:        entity.SpecialTrainingSkillName,
 		CardSupplyID:                    int(entity.CardSupplyID),
+		InitialSpecialTrainingStatus:    entity.InitialSpecialTrainingStatus,
 	}, nil
 }
 

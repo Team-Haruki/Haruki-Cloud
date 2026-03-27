@@ -633,6 +633,12 @@ func buildBondsRequestFromSuite(
 		if !ok {
 			continue
 		}
+		// Skip bonds for characters without known icon files.
+		_, hasIcon1 := assets.CharacterIDToNickname[pair.CharID1]
+		_, hasIcon2 := assets.CharacterIDToNickname[pair.CharID2]
+		if !hasIcon1 || !hasIcon2 {
+			continue
+		}
 		if sb.Rank > maxLevel {
 			maxLevel = sb.Rank
 		}
@@ -727,15 +733,12 @@ func buildLeaderCountRequestFromSuite(
 // charaIconPath resolves a character icon path using the asset helper.
 func charaIconPath(helper *assets.AssetHelper, charID int) string {
 	if nickname, ok := assets.CharacterIDToNickname[charID]; ok {
-		rel := filepath.ToSlash(filepath.Join("chara_icon", nickname+".png"))
-		if helper != nil {
-			if existing := helper.FirstExisting(rel); existing != "" {
-				return rel
-			}
-		}
-		return rel
+		return assets.ResolveAssetPath(helper, assets.StaticImagesDir,
+			filepath.Join("chara_icon", nickname+".png"),
+			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 	}
-	return filepath.ToSlash(filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
+	return assets.ResolveAssetPath(helper, assets.StaticImagesDir,
+		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
 func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {

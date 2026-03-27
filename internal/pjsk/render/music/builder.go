@@ -161,7 +161,7 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 		JacketPath: assets.MakeRelative(assetBase, jacketPath),
 		SusPath:    assets.MakeRelative(assetBase, susPath),
 		StylePath:  stylePath,
-		NoteHost:   "lunabot_static_images/chart_asset/notes",
+		NoteHost:   assets.StaticImagesDir + "/chart_asset/notes",
 	}, nil
 }
 

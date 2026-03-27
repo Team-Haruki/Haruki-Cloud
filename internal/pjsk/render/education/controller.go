@@ -249,28 +249,17 @@ func (c *Controller) estimateChallengeMaxScore(source Source) int {
 }
 
 func (c *Controller) characterIconPath(charID int) string {
-	relative := filepath.ToSlash(filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 	if nickname, ok := assets.CharacterIDToNickname[charID]; ok {
-		relative = filepath.ToSlash(filepath.Join("chara_icon", nickname+".png"))
+		return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir,
+			filepath.Join("chara_icon", nickname+".png"),
+			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 	}
-	if c.assets == nil {
-		return relative
-	}
-	if existing := c.assets.FirstExisting(relative); existing != "" {
-		return makeRelative(c.assets, existing)
-	}
-	return relative
+	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir,
+		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
 func (c *Controller) findStaticIcon(filename string) string {
-	relative := filepath.ToSlash(filepath.Join("lunabot_static_images", filename))
-	if c.assets == nil {
-		return relative
-	}
-	if existing := c.assets.FirstExisting(relative, filename); existing != "" {
-		return makeRelative(c.assets, existing)
-	}
-	return relative
+	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, filename)
 }
 
 func makeRelative(helper *assets.AssetHelper, target string) string {

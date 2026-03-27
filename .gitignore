@@ -35,5 +35,13 @@ go.work.sum
 test.go
 test.py
 haruki-cloud-configs.yaml
-Data/dump.cs
+haruki-db-configs.yaml
 .DS_Store
+
+# Build artifacts
+server
+test_auth
+
+# Database exports and game data
+exports/
+Data/

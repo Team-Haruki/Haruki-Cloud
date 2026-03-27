@@ -1,0 +1,10 @@
+# Local development override — exposes postgres on localhost:5432
+# so the binary can be run directly outside docker.
+# Not for production use.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+  redis:
+    ports:
+      - "6379:6379"

@@ -531,8 +531,8 @@ type BondInfo struct {
 	BondLevel      int    `json:"bond_level"`
 	NeedExp        *int   `json:"need_exp,omitempty"`
 	HasBond        bool   `json:"has_bond"`
-	Color1         []int  `json:"color1"` // tuple in python, []int in go
-	Color2         []int  `json:"color2"`
+	Color1         []int  `json:"color1,omitempty"` // tuple in python, []int in go
+	Color2         []int  `json:"color2,omitempty"`
 }
 
 type BondsRequest struct {

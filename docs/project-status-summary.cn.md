@@ -1554,6 +1554,7 @@ pjsk:
 
 ## 12. 相关文档
 
+- [**Bot 客户端对接指南**](client-integration-guide.cn.md) ← 客户端接入必读
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)

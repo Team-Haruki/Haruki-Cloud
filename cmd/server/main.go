@@ -43,6 +43,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/redis/go-redis/v9"
@@ -70,6 +71,11 @@ func main() {
 	botDBClient := initBot(mainLogger, app, redisClient)
 	noiseKeyPair := initNoiseKeyPair(mainLogger)
 	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
+
+	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
+		app.Get("/ic/*", static.New(dir))
+		mainLogger.Infof("Image cache static serving enabled at /ic -> %s", dir)
+	}
 
 	defer closeClients(usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 

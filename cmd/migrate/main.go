@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	client, err := sekai.Open("postgres", "host=localhost port=5432 user=postgres dbname=haruki_sekai password=postgres sslmode=disable")
+	client, err := sekai.Open("postgres", "host=localhost port=5432 user=haruki_sekai password=sekai_pw_2026 dbname=haruki_sekai sslmode=disable")
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}

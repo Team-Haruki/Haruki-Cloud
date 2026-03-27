@@ -679,6 +679,76 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 3. 配置 `haruki_bot.noise_private_key`（32 字节 X25519 私钥的 hex 编码；留空则退回明文 JSON 模式）
 4. push 本地 `test` 分支到 `origin/test`
 
+## 10.1 集成测试执行结果（2026-03-27）
+
+### 测试方式
+
+采用黑盒 HTTP 集成测试（`integration/api_test.go`），通过真实 HTTP 请求覆盖认证链路、命令分发、图片渲染和外部代理 API 四个维度。
+
+> **关于旧测试文件**：原 `integration/full_integration_test.go` 为白盒测试，直接 import 内部包（`haruki-cloud/api`、`haruki-cloud/database/...` 等）。在 ent schema 迁移和大规模模块重构后，这些导入路径全部失效，编译报错。新的 `api_test.go` 不依赖内部结构，改为通过 HTTP 端到端测试，更稳健。
+
+**测试环境**：本地 Docker（haruki-postgres + haruki-redis）+ Drawing API（SSH 转发至 localhost:28000）
+
+### 认证与协议层
+
+| 测试项 | 结果 | 说明 |
+|--------|------|------|
+| Bot 认证（AES-GCM + JWT credential） | ✅ | Session token 获取成功 |
+| Noise IK 密钥对生成 | ✅ | 客户端 X25519 密钥对就绪 |
+| Manifest 获取 | ✅ | 返回 76 个 command group |
+
+### 指令端点测试（23 项）
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| `profile/bind` | ✅ | 账号绑定成功 |
+| `card/detail` | ✅ | 图片渲染正常 |
+| `card/box` | ✅ | 图片渲染正常（耗时约 21s，含 Drawing API 渲染） |
+| `music` | ✅ | 图片渲染正常 |
+| `event/list` | ✅ | 图片渲染正常 |
+| `stamp` | ✅ | 图片渲染正常（按 ID 查询） |
+| `sk/line` | ✅ | 图片渲染正常 |
+| `sk/query` | ✅ | 图片渲染正常 |
+| `vlive` | ✅ | 文本响应正常 |
+| `arrest` | ✅ | 文本响应正常 |
+| `profile/reg-time` | ✅ | 文本响应正常 |
+| `profile` | ❌ | Drawing API 找不到 honor 游戏资源：`honor/honor_6881/degree_sub.png`（`startapp` vs `ondemand` 路径问题，已知问题，待处理）|
+| `gacha` | ❌ | Drawing API 找不到 gacha logo：`gacha/ab_gacha_392/logo/logo.png`（同上，`startapp` vs `ondemand` 路径问题）|
+| `card/list` | ❌ | Handler 未解析 args 为卡牌 ID（Parser 接入不完整）|
+| `event` | ❌ | Handler 未从 args 提取 event ID（Parser 接入不完整）|
+| `score/music-meta` | ❌ | Handler 未提取歌曲参数（Parser 接入不完整）|
+| `misc/birthday` | ❌ | Handler 未解析角色名为生日数据（Parser 接入不完整）|
+| `education/challenge` | ❌ | 依赖本地用户快照（架构限制）|
+| `education/area` | ❌ | 依赖本地用户快照（架构限制）|
+| `education/bonds` | ❌ | 依赖本地用户快照（架构限制）|
+| `education/leader` | ❌ | 依赖本地用户快照（架构限制）|
+| `education/power` | ❌ | 依赖本地用户快照（架构限制）|
+
+### 外部代理 API 测试（3 项）
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| Sekai API 公开资料 | ✅ | HTTP 200，18759 bytes |
+| Toolbox MySEKAI | ✅ | HTTP 200，318147 bytes |
+| Event Tracker 活动排名 | ✅ | HTTP 200 |
+
+### 失败项根因分类
+
+| 类别 | 数量 | 根因 |
+|------|------|------|
+| 游戏资源路径（startapp/ondemand） | 2 | `RegionAssetDir` 固定使用 `startapp`，部分资源实际在 `ondemand` 下，需要添加 fallback 逻辑 |
+| Parser handler 接入不完整 | 4 | Handler 只调用 `makeResolvedCmd()` 未提取 args 参数（card/list、event、birthday、music-meta）|
+| 架构限制（本地用户快照） | 5 | education 系列需要本地 snapshot，公开 API 无法提供完整数据 |
+
+### 资源路径修复情况
+
+本轮修复了以下 asset 路径错误（已提交 `test` 分支）：
+
+- **honor/builder.go**：全量补充 `gameAssetDir` 前缀（degree/rank/scroll/bonds character/word）；静态 UI（frame/mask/icon_degreeLv/bonds bg）保持 `StaticImagesDir` 前缀；`buildBondsHonorRequest` 接入 `region` 参数
+- **event/builder.go**：attr 图标改为 `StaticImagesDir`；单位图标移除 `unit/` 子目录（图标文件在 `static_images/` 根目录）
+- **card/builder.go**：同上，单位图标路径修正
+- **stamp/controller.go**：stamp 资源路径补充 `RegionAssetDir` 前缀；`resolveStampImage` 接入 `region` 参数
+
 ## 11. 相关文档
 
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)

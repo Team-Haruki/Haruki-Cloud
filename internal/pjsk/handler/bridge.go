@@ -535,7 +535,7 @@ func formatMusicBPM(value float64) string {
 }
 
 func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
-	if r == nil || app == nil || app.Profiles == nil {
+	if r == nil || app == nil || app.Profiles == nil || app.Bindings == nil {
 		return nil, nil
 	}
 	if strings.TrimSpace(r.RequesterPlatform) == "" || strings.TrimSpace(r.RequesterUserID) == "" {
@@ -1756,6 +1756,9 @@ type resolvedGameTarget struct {
 }
 
 func resolveGameTarget(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (resolvedGameTarget, error) {
+	if app == nil || app.Bindings == nil {
+		return resolvedGameTarget{}, fmt.Errorf("绑定服务未就绪")
+	}
 	switch p.Mode {
 	case "self":
 		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)

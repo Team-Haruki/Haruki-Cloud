@@ -296,8 +296,8 @@ encrypted_payload = base64.b64encode(nonce + ciphertext).decode()
 
 - **模式**：Noise IK（客户端已知服务端静态公钥）
 - **密钥交换**：X25519
-- **AEAD**：ChaChaPoly
-- **哈希**：BLAKE2s
+- **AEAD**：AES-GCM
+- **哈希**：SHA256
 
 ### 6.2 请求流程
 

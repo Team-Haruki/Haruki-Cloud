@@ -68,7 +68,7 @@ func (s *testHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameChar
 
 func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	dir := t.TempDir()
-	mustWriteHonorAsset(t, dir, filepath.Join("honor", "honor_bg_001", "degree_main.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
 
 	source := newTestHonorSource(renderregion.JP)
 	bg := "honor_bg_001"
@@ -100,10 +100,11 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	if req.GroupType == nil || *req.GroupType != "wl_event" {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
-	if req.HonorImgPath == nil || *req.HonorImgPath != "honor/honor_bg_001/degree_main.png" {
+	expectedHonorPath := filepath.ToSlash(filepath.Join(dir, "asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
+	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "honor/frame_degree_m_3.png" {
+	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_m_3.png" {
 		t.Fatalf("unexpected frame image path: %#v", req.FrameImgPath)
 	}
 }

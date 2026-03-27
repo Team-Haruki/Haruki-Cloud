@@ -321,7 +321,6 @@ func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha, region renderr
 	if gachaInfo == nil {
 		return ""
 	}
-	assetDir := assets.RegionAssetDir(region.String())
 	idText := strconv.Itoa(gachaInfo.ID)
 	candidates := []string{}
 
@@ -340,16 +339,15 @@ func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha, region renderr
 		filepath.Join("logo", fmt.Sprintf("banner_logo%d.png", gachaInfo.Seq)),
 		filepath.Join("logo", "banner_logo"+idText+".png"),
 	)
-	return assets.ResolveAssetPath(b.assets, assetDir, candidates...)
+	return assets.ResolveRegionAssetPath(b.assets, region.String(), candidates...)
 }
 
 func (b *Builder) buildGachaBannerPath(gachaInfo *masterdata.Gacha, region renderregion.Value) string {
 	if gachaInfo == nil {
 		return ""
 	}
-	assetDir := assets.RegionAssetDir(region.String())
 	idText := strconv.Itoa(gachaInfo.ID)
-	return assets.ResolveAssetPath(b.assets, assetDir,
+	return assets.ResolveRegionAssetPath(b.assets, region.String(),
 		filepath.Join("home", "banner", "banner_gacha"+idText, "banner_gacha"+idText+".png"),
 		filepath.Join("gacha", "ab_gacha_"+idText, "screen", "texture", "bg_gacha"+idText+".png"),
 		filepath.Join("home", "banner", gachaInfo.AssetBundleName, gachaInfo.AssetBundleName+".png"),

@@ -332,7 +332,7 @@ func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, c
 	if afterTraining {
 		imageType = "after_training"
 	}
-	return assets.ResolveAssetPath(helper, assets.RegionAssetDir(region.String()),
+	return assets.ResolveRegionAssetPath(helper, region.String(),
 		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
 		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
 	)

@@ -329,13 +329,12 @@ func (b *Builder) buildCardImagePaths(card *masterdata.Card, region renderregion
 	if card == nil {
 		return nil
 	}
-	assetDir := assets.RegionAssetDir(region.String())
 	base := filepath.Join("character", "member", card.AssetBundleName)
 	paths := []string{
-		assets.ResolveAssetPath(b.assets, assetDir, filepath.Join(base, "card_normal.png")),
+		assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_normal.png")),
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
-		paths = append(paths, assets.ResolveAssetPath(b.assets, assetDir, filepath.Join(base, "card_after_training.png")))
+		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_after_training.png")))
 	}
 	return paths
 }
@@ -349,13 +348,12 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderreg
 		return []string{}
 	}
 
-	assetDir := assets.RegionAssetDir(region.String())
 	paths := make([]string, 0, len(costumes))
 	for _, costume := range costumes {
 		if costume == nil {
 			continue
 		}
-		paths = append(paths, assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("thumbnail", "costume", costume.AssetBundleName+".png")))
+		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("thumbnail", "costume", costume.AssetBundleName+".png")))
 	}
 	return paths
 }
@@ -389,8 +387,7 @@ func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregi
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	assetDir := assets.RegionAssetDir(region.String())
-	return assets.ResolveAssetPath(b.assets, assetDir,
+	return assets.ResolveRegionAssetPath(b.assets, region.String(),
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)
@@ -400,8 +397,7 @@ func (b *Builder) buildGachaBannerPath(gachaID int, region renderregion.Value) s
 	if gachaID == 0 {
 		return ""
 	}
-	assetDir := assets.RegionAssetDir(region.String())
-	return assets.ResolveAssetPath(b.assets, assetDir,
+	return assets.ResolveRegionAssetPath(b.assets, region.String(),
 		filepath.Join("home", "banner", fmt.Sprintf("banner_gacha%d", gachaID), fmt.Sprintf("banner_gacha%d.png", gachaID)),
 		filepath.Join("gacha", fmt.Sprintf("banner_gacha%d.png", gachaID)),
 	)

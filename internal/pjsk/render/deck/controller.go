@@ -316,9 +316,8 @@ func (c *Controller) resolveEventBannerPath(assetBundleName string, region rende
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(
-		c.assets,
-		assets.RegionAssetDir(region.String()),
+	return assets.ResolveRegionAssetPath(
+		c.assets, region.String(),
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)

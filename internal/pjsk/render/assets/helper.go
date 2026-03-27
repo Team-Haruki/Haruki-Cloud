@@ -101,12 +101,78 @@ func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) 
 	return joinAssetPath(base, relPaths[0])
 }
 
+const (
+	RegionAssetStartApp = "startapp"
+	RegionAssetOnDemand = "ondemand"
+)
+
+var onDemandPreferredTopLevel = map[string]struct{}{
+	"event":       {},
+	"event_story": {},
+	"gacha":       {},
+	"music":       {},
+	"mysekai":     {},
+}
+
 // RegionAssetDir returns the region-specific startapp asset subdirectory prefix
 // used by the Haruki Drawing API, e.g. "asset/jp-assets/startapp" for "jp".
-// Note: some assets use "ondemand" instead of "startapp"; that path adjustment
-// is handled separately per asset type as needed.
 func RegionAssetDir(region string) string {
-	return "asset/" + region + "-assets/startapp"
+	return RegionAssetDirByMode(region, RegionAssetStartApp)
+}
+
+func RegionAssetDirByMode(region, mode string) string {
+	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
+	if normalizedRegion == "" {
+		normalizedRegion = "jp"
+	}
+	normalizedMode := strings.ToLower(strings.TrimSpace(mode))
+	if normalizedMode == "" {
+		normalizedMode = RegionAssetStartApp
+	}
+	return "asset/" + normalizedRegion + "-assets/" + normalizedMode
+}
+
+func RegionAssetDirs(region string) []string {
+	return []string{
+		RegionAssetDirByMode(region, RegionAssetStartApp),
+		RegionAssetDirByMode(region, RegionAssetOnDemand),
+	}
+}
+
+func preferredRegionAssetModes(relPath string) []string {
+	parts := strings.Split(strings.Trim(filepath.ToSlash(relPath), "/"), "/")
+	if len(parts) > 0 {
+		if _, ok := onDemandPreferredTopLevel[parts[0]]; ok {
+			return []string{RegionAssetOnDemand, RegionAssetStartApp}
+		}
+	}
+	return []string{RegionAssetStartApp, RegionAssetOnDemand}
+}
+
+// ResolveRegionAssetPath resolves a region game asset by trying startapp first and
+// ondemand second for each relative candidate path.
+// For top-level paths that are primarily delivered from ondemand (for example
+// gacha/event/event_story/music/mysekai), the priority is reversed to
+// ondemand first and startapp second.
+func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...string) string {
+	if len(relPaths) == 0 {
+		return ""
+	}
+	candidates := make([]string, 0, len(relPaths)*2)
+	for _, rel := range relPaths {
+		cleanRel := filepath.ToSlash(strings.TrimSpace(rel))
+		if cleanRel == "" {
+			continue
+		}
+		for _, mode := range preferredRegionAssetModes(cleanRel) {
+			base := RegionAssetDirByMode(region, mode)
+			candidates = append(candidates, filepath.ToSlash(filepath.Join(base, cleanRel)))
+		}
+	}
+	if len(candidates) == 0 {
+		return ""
+	}
+	return ResolveAssetPath(helper, "", candidates...)
 }
 
 // StaticImagesDir is the base directory for Drawing API static UI images

@@ -142,7 +142,7 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 
 	jacketPath := b.BuildMusicJacketPath(music.AssetBundleName, region)
 	susRelative := filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", music.ID), diff+".txt")
-	susPath := assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), susRelative)
+	susPath := assets.ResolveRegionAssetPath(b.assets, region.String(), susRelative)
 
 	var stylePath *string
 	if trimmed := strings.TrimSpace(query.Style); trimmed != "" {
@@ -202,7 +202,7 @@ func (b *Builder) BuildMusicJacketPath(assetName string, region renderregion.Val
 	if strings.TrimSpace(assetName) == "" {
 		return ""
 	}
-	return assets.ResolveAssetPath(b.assets, assets.RegionAssetDir(region.String()), filepath.Join("music", "jacket", assetName, assetName+".png"))
+	return assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("music", "jacket", assetName, assetName+".png"))
 }
 
 func (b *Builder) BuildCharacterIconPath(characterID int, _ renderregion.Value) string {
@@ -409,10 +409,8 @@ func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregi
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	assetDir := assets.RegionAssetDir(region.String())
-	return assets.ResolveAssetPath(
-		b.assets,
-		assetDir,
+	return assets.ResolveRegionAssetPath(
+		b.assets, region.String(),
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)

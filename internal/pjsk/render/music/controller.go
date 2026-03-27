@@ -417,9 +417,8 @@ func (c *Controller) profileCardWithMessage(override *drawing.ProfileCardRequest
 
 func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {
 	mode := "service"
-	leaderPath := assets.ResolveAssetPath(
-		c.assets,
-		assets.RegionAssetDir(renderregion.WithDefault(region).String()),
+	leaderPath := assets.ResolveRegionAssetPath(
+		c.assets, renderregion.WithDefault(region).String(),
 		filepath.Join("user", "leader.png"),
 		filepath.Join("chara_icon", "miku.png"),
 	)

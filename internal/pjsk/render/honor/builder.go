@@ -94,21 +94,22 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		mode = "main"
 	}
 
-	// Game asset paths need the region asset directory prefix
-	gameAssetDir := assets.RegionAssetDir(region.String())
+	resolveGameAsset := func(relPaths ...string) string {
+		return assets.ResolveRegionAssetPath(b.assets, region.String(), relPaths...)
+	}
 
 	var honorImgPath string
 	switch {
 	case group.BackgroundAssetBundleName != nil && *group.BackgroundAssetBundleName != "":
-		honorImgPath = filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/degree_%s.png", *group.BackgroundAssetBundleName, mode))
+		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", *group.BackgroundAssetBundleName, mode))
 	case groupType == "rank_match":
-		honorImgPath = filepath.Join(gameAssetDir, fmt.Sprintf("rank_live/honor/%s/degree_%s.png", bgAssetName, mode))
+		honorImgPath = resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/degree_%s.png", bgAssetName, mode))
 	default:
-		honorImgPath = filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
+		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
 	}
 	if (groupType == "event" || groupType == "wl_event") && !b.assetExists(honorImgPath) {
 		if derived := deriveHonorBackgroundAssetName(assetName); derived != "" {
-			candidate := filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/degree_%s.png", derived, mode))
+			candidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", derived, mode))
 			if b.assetExists(candidate) {
 				honorImgPath = candidate
 			}
@@ -117,9 +118,9 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	if (groupType == "event" || groupType == "wl_event") && !b.assetExists(honorImgPath) {
 		var fallback string
 		if group.BackgroundAssetBundleName != nil && *group.BackgroundAssetBundleName != "" {
-			fallback = filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/rank_%s.png", *group.BackgroundAssetBundleName, mode))
+			fallback = resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", *group.BackgroundAssetBundleName, mode))
 		} else {
-			fallback = filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
+			fallback = resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
 		}
 		if b.assetExists(fallback) {
 			honorImgPath = fallback
@@ -130,11 +131,11 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	if assetName != "" && (groupType == "event" || groupType == "wl_event" || groupType == "rank_match") {
 		switch groupType {
 		case "rank_match":
-			rankImgPath := filepath.Join(gameAssetDir, fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode))
+			rankImgPath := resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode))
 			req.RankImgPath = &rankImgPath
 		case "event", "wl_event":
-			rankCandidate := filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
-			degreeCandidate := filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
+			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
+			degreeCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
 			switch {
 			case rankCandidate != honorImgPath && b.assetExists(rankCandidate):
 				req.RankImgPath = &rankCandidate
@@ -150,7 +151,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 	rarityRank := mapHonorRarity(rarity)
 	if frameName != "" {
-		framePath := filepath.Join(gameAssetDir, fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
+		framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
 		req.FrameImgPath = &framePath
 	} else {
 		framePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
@@ -164,7 +165,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 			req.GroupType = &fcApGroup
 			_ = scoreInfo
 		}
-		scrollPath := filepath.Join(gameAssetDir, fmt.Sprintf("honor/%s/scroll.png", assetName))
+		scrollPath := resolveGameAsset(fmt.Sprintf("honor/%s/scroll.png", assetName))
 		if b.assetExists(scrollPath) {
 			req.ScrollImgPath = &scrollPath
 		}
@@ -213,10 +214,12 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 	req.BondsBgPath = &bgPath1
 	req.BondsBgPath2 = &bgPath2
 
-	gameAssetDir := assets.RegionAssetDir(region.String())
+	resolveGameAsset := func(relPaths ...string) string {
+		return assets.ResolveRegionAssetPath(b.assets, region.String(), relPaths...)
+	}
 
-	charaPath1 := filepath.Join(gameAssetDir, fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", cuid1))
-	charaPath2 := filepath.Join(gameAssetDir, fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", cuid2))
+	charaPath1 := resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", cuid1))
+	charaPath2 := resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", cuid2))
 	req.CharaIconPath = &charaPath1
 	req.CharaIconPath2 = &charaPath2
 
@@ -244,7 +247,7 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		} else {
 			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid2, cuid1)
 		}
-		wordPath := filepath.Join(gameAssetDir, fmt.Sprintf("bonds_honor/word/%s.png", bundleName))
+		wordPath := resolveGameAsset(fmt.Sprintf("bonds_honor/word/%s.png", bundleName))
 		req.WordImgPath = &wordPath
 	}
 

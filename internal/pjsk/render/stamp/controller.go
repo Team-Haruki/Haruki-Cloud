@@ -106,21 +106,26 @@ func (c *Controller) RenderStampList(query ListQuery) ([]byte, error) {
 }
 
 func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {
-	assetDir := assets.RegionAssetDir(region.String())
-	candidates := []string{
-		filepath.ToSlash(filepath.Join(assetDir, "stamp", item.AssetBundleName, item.AssetBundleName+".png")),
-		filepath.ToSlash(filepath.Join(assetDir, "stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png")),
+	relCandidates := []string{
+		filepath.Join("stamp", item.AssetBundleName, item.AssetBundleName+".png"),
+		filepath.Join("stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png"),
 	}
-	if c.assets == nil {
-		return candidates[0], true
+	expanded := make([]string, 0, len(relCandidates)*2)
+	for _, rel := range relCandidates {
+		expanded = append(expanded,
+			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetStartApp), rel)),
+			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetOnDemand), rel)),
+		)
 	}
-	resolved := c.assets.FirstExisting(candidates...)
-	if resolved == "" {
+	if c.assets != nil {
+		if existing := c.assets.FirstExisting(expanded...); existing != "" {
+			return filepath.ToSlash(existing), true
+		}
 		primary := c.assets.Primary()
 		if primary != "" && primary != "." {
 			return "", false
 		}
-		return candidates[0], true
 	}
-	return filepath.ToSlash(resolved), true
+	// Runtime fallback when no local asset root is configured.
+	return expanded[0], true
 }

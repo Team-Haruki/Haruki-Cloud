@@ -713,10 +713,8 @@ func (c *Controller) resolveEventBannerPath(assetBundleName string, region rende
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	assetDir := renderassets.RegionAssetDir(renderregion.WithDefault(region).String())
-	return renderassets.ResolveAssetPath(
-		c.assets,
-		assetDir,
+	return renderassets.ResolveRegionAssetPath(
+		c.assets, renderregion.WithDefault(region).String(),
 		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)

@@ -26,7 +26,6 @@ type ThumbnailOptions struct {
 }
 
 func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {
-	gameDir := assets.RegionAssetDir(region.String())
 	thumbPath := opts.ThumbnailPath
 	if thumbPath == "" {
 		fileSuffix := "_normal.png"
@@ -35,7 +34,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, regio
 			fileSuffix = "_after_training.png"
 			memberFile = "card_after_training.png"
 		}
-		thumbPath = assets.ResolveAssetPath(helper, gameDir,
+		thumbPath = assets.ResolveRegionAssetPath(helper, region.String(),
 			filepath.Join("thumbnail", "chara", card.AssetBundleName+fileSuffix),
 			filepath.Join("character", "member", card.AssetBundleName, memberFile),
 		)

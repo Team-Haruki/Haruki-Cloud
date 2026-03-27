@@ -124,13 +124,12 @@ func (b *Builder) buildEventInfo(eventInfo *masterdata.Event) (drawing.EventInfo
 
 func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.EventInfo, region renderregion.Value) drawing.EventAssets {
 	assetName := eventInfo.AssetBundleName
-	assetDir := assets.RegionAssetDir(region.String())
 	result := drawing.EventAssets{
-		EventBgPath: assets.ResolveAssetPath(b.assets, assetDir,
+		EventBgPath: assets.ResolveRegionAssetPath(b.assets, region.String(),
 			filepath.Join("event", assetName, "screen", "bg.png"),
 			filepath.Join("event", assetName, "bg.png"),
 		),
-		EventLogoPath: assets.ResolveAssetPath(b.assets, assetDir,
+		EventLogoPath: assets.ResolveRegionAssetPath(b.assets, region.String(),
 			filepath.Join("event", assetName, "logo", "logo.png"),
 			filepath.Join("event", assetName, "logo.png"),
 		),
@@ -138,8 +137,8 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 	}
 
 	if !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-		result.EventStoryBgPath = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("event_story", assetName, "screen_image", "story_bg.png"))
-		result.EventBanCharaImg = assets.ResolveAssetPath(b.assets, assetDir, filepath.Join("event", assetName, "screen", "character.png"))
+		result.EventStoryBgPath = assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("event_story", assetName, "screen_image", "story_bg.png"))
+		result.EventBanCharaImg = assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("event", assetName, "screen", "character.png"))
 	}
 	if info.BonusAttr != "" {
 		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
@@ -158,14 +157,13 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 }
 
 func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregion.Value) (drawing.EventBrief, error) {
-	assetDir := assets.RegionAssetDir(region.String())
 	brief := drawing.EventBrief{
 		ID:        eventInfo.ID,
 		EventName: eventInfo.Name,
 		EventType: b.displayEventType(eventInfo.EventType),
 		StartAt:   eventInfo.StartAt,
 		EndAt:     eventInfo.AggregateAt + 1000,
-		EventBannerPath: assets.ResolveAssetPath(b.assets, assetDir,
+		EventBannerPath: assets.ResolveRegionAssetPath(b.assets, region.String(),
 			filepath.Join("home", "banner", eventInfo.AssetBundleName, eventInfo.AssetBundleName+".png"),
 			filepath.Join("event", eventInfo.AssetBundleName, "banner.png"),
 		),

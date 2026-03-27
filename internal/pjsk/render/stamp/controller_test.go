@@ -83,9 +83,9 @@ func mustWriteStampAsset(t *testing.T, root, bundle string) {
 	var rel string
 	switch bundle {
 	case "stamp_a":
-		rel = filepath.Join("stamp", bundle, bundle+".png")
+		rel = filepath.Join("asset", "jp-assets", "startapp", "stamp", bundle, bundle+".png")
 	case "stamp_b_rip":
-		rel = filepath.Join("stamp", bundle, "stamp_b.png")
+		rel = filepath.Join("asset", "jp-assets", "startapp", "stamp", bundle, "stamp_b.png")
 	default:
 		t.Fatalf("unknown bundle: %s", bundle)
 	}

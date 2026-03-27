@@ -327,35 +327,38 @@ func TestBotCommands(t *testing.T) {
 	})
 
 	tests := []cmdTest{
+		// ─── Existing (round 1-4) ───────────────────────────────
+
 		// Card
 		{"card/detail", "card/detail", "/查卡", "/查卡 1", true},
-		{"card/list", "card/list", "/查牌", "/查牌 初音未来", true},       // KNOWN: parser doesn't resolve char name→IDs
+		{"card/list", "card/list", "/查牌", "/查牌 初音未来", true},
 		{"card/box", "card/box", "/查箱", "/查箱", true},
 
-		// Music
+		// Music — basic
 		{"music", "music", "/查曲", "/查曲 Tell Your World", true},
 
 		// Event
-		{"event", "event", "/查活动", "/查活动 1", true},                  // KNOWN: parser doesn't extract event ID
+		{"event", "event", "/查活动", "/查活动 1", true},
 		{"event/list", "event/list", "/活动列表", "/活动列表", true},
 
 		// Gacha
 		{"gacha", "gacha", "/查卡池", "/查卡池 1", true},
 
-		// Education (needs user snapshot — expected to fail)
+		// Education
 		{"education/challenge", "education/challenge", "/挑战信息", "/挑战信息", true},
 		{"education/area", "education/area", "/区域道具", "/区域道具", true},
 		{"education/bonds", "education/bonds", "/羁绊", "/羁绊", true},
 		{"education/leader", "education/leader", "/领队统计", "/领队统计", true},
 		{"education/power", "education/power", "/加成信息", "/加成信息", true},
 
-		// Profile
+		// Profile — basic
 		{"profile", "profile", "/profile", "/profile", true},
+		{"profile/reg-time", "profile/reg-time", "/注册时间", "/注册时间", true},
 
 		// Stamp
 		{"stamp", "stamp", "/查贴纸", "/查贴纸 1 2 3 4 5", true},
 
-		// SK / Tracker
+		// SK — basic
 		{"sk/line", "sk/line", "/榜线", "/榜线 100", true},
 		{"sk/query", "sk/query", "/sk查分", "/sk查分", true},
 
@@ -366,13 +369,75 @@ func TestBotCommands(t *testing.T) {
 		{"vlive", "vlive", "/vlive", "/vlive", true},
 
 		// Misc
-		{"misc/birthday", "misc/birthday", "/生日", "/生日 miku", true},   // KNOWN: parser doesn't resolve char
+		{"misc/birthday", "misc/birthday", "/生日", "/生日 miku", true},
 
 		// Arrest
 		{"arrest", "arrest", "/逮捕", "/逮捕", true},
 
-		// Profile reg-time
-		{"profile/reg-time", "profile/reg-time", "/注册时间", "/注册时间", true},
+		// ─── A: No user data needed ─────────────────────────────
+
+		// Music sub-commands
+		{"music/list", "music/list", "/歌曲列表", "/歌曲列表", true},
+		{"music/bpm", "music/bpm", "/pjsk bpm", "/pjsk bpm Tell Your World", true},
+		{"music/cover", "music/cover", "/pjsk music cover", "/pjsk music cover Tell Your World", true},
+		{"music/note-count", "music/note-count", "/查物量", "/查物量 1000", true},
+		{"music/rewards", "music/rewards", "/曲目奖励", "/曲目奖励 Tell Your World", true},
+
+		// Score — music board (public ranking)
+		{"score/music-board", "score/music-board", "/歌曲排行", "/歌曲排行 Tell Your World", true},
+
+		// Alias — read-only
+		{"alias/pending", "alias/pending", "/待审核别名", "/待审核别名", true},
+
+		// Profile — read-only data checks
+		{"profile/check-data", "profile/check-data", "/抓包数据", "/抓包数据", true},
+		{"profile/check-data-mysekai", "profile/check-data-mysekai", "/msd", "/msd", true},
+		{"profile/verify/list", "profile/verify/list", "/pjsk验证列表", "/pjsk验证列表", true},
+
+		// ─── B: Profile reversible write ops (hide→show pairs) ──
+
+		{"profile/suite/hide", "profile/suite/hide", "/pjsk隐藏抓包", "/pjsk隐藏抓包", true},
+		{"profile/suite/show", "profile/suite/show", "/pjsk显示抓包", "/pjsk显示抓包", true},
+		{"profile/mysekai/hide", "profile/mysekai/hide", "/pjsk隐藏烤森抓包", "/pjsk隐藏烤森抓包", true},
+		{"profile/mysekai/show", "profile/mysekai/show", "/pjsk显示烤森抓包", "/pjsk显示烤森抓包", true},
+		{"profile/visibility/hide", "profile/visibility/hide", "/pjsk hide id", "/pjsk hide id", true},
+		{"profile/visibility/show", "profile/visibility/show", "/pjsk show id", "/pjsk show id", true},
+
+		// ─── C: Needs Toolbox user suite data ───────────────────
+
+		// Music — user progress
+		{"music/progress", "music/progress", "/打歌进度", "/打歌进度", true},
+
+		// Event record
+		{"event/record", "event/record", "/活动记录", "/活动记录", true},
+
+		// Deck
+		{"deck/event", "deck/event", "/活动组卡", "/活动组卡", true},
+		{"deck/challenge", "deck/challenge", "/挑战组卡", "/挑战组卡", true},
+		{"deck/no-event", "deck/no-event", "/长草组卡", "/长草组卡", true},
+		{"deck/bonus", "deck/bonus", "/加成组卡", "/加成组卡", true},
+		{"deck/mysekai", "deck/mysekai", "/烤森组卡", "/烤森组卡", true},
+
+		// Score — user score
+		{"score", "score", "/控分", "/控分 100000 Tell Your World", true},
+		{"score/custom-room", "score/custom-room", "/自定义房间控分", "/自定义房间控分 100000", true},
+
+		// MySEKAI
+		{"mysekai/resource", "mysekai/resource", "/mysekai资源", "/mysekai资源", true},
+		{"mysekai/talk-list", "mysekai/talk-list", "/mysekai对话列表", "/mysekai对话列表", true},
+		{"mysekai/fixture-list", "mysekai/fixture-list", "/mysekai家具列表", "/mysekai家具列表", true},
+		{"mysekai/fixture-detail", "mysekai/fixture-detail", "/msf", "/msf 1", true},
+		{"mysekai/door-upgrade", "mysekai/door-upgrade", "/mysekai大门升级", "/mysekai大门升级", true},
+		{"mysekai/music-record", "mysekai/music-record", "/mysekai唱片", "/mysekai唱片", true},
+		{"mysekai/photo", "mysekai/photo", "/msp", "/msp 1", true},
+
+		// ─── D: SK Tracker realtime ─────────────────────────────
+
+		{"sk/speed", "sk/speed", "/时速", "/时速", true},
+		{"sk/check-room", "sk/check-room", "/sk查房", "/sk查房", true},
+		{"sk/player-trace", "sk/player-trace", "/玩家轨迹", "/玩家轨迹", true},
+		{"sk/rank-trace", "sk/rank-trace", "/档线轨迹", "/档线轨迹 100", true},
+		{"sk/winrate", "sk/winrate", "/胜率预测", "/胜率预测", true},
 	}
 
 	results := make(map[string]string)

@@ -1522,7 +1522,25 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 
 **客户端接入就绪**：client 可使用 `client.json` 中的凭证连接 alpha 环境进行对接开发。
 
-### 11.8 P3：其他待处理事项（当前剩余）
+**Command Manifest**：✅ 77 条指令已通过 `SeedCommandManifests` 写入 `command_manifests` 表，客户端通过 `GET /api/v2/bot/:botId/command/manifests`（需 session token）获取完整指令列表。
+
+### 11.8 MySekai 国服区域限制
+
+MySekai 功能对 `region=cn` 默认关闭。通过配置白名单 `allow_cn_mysekai` 可对特定平台+群组开放：
+
+```yaml
+pjsk:
+  allow_cn_mysekai:
+    - platform: "qq"
+      group_id: "12345678"
+```
+
+- **实现位置**：`internal/pjsk/handler/bridge.go` — `executeMysekai()` 入口检查
+- **配置位置**：`config/config.go` — `PJSKConfig.AllowCNMySekai`
+- **透传字段**：`ResolvedCommand.RequesterGroupID`（由 bot handler 传入）
+- 未命中白名单时返回 "MySekai 功能暂不支持国服区域"
+
+### 11.9 P3：其他待处理事项（当前剩余）
 
 | 事项 | 状态 | 说明 |
 |------|------|------|

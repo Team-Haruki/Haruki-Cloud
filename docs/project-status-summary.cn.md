@@ -1495,15 +1495,44 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 **待实现功能**：
 - `education/area` 过滤参数透传：Handler 已正确提取 `r.Query`（如"树"/"miku"/"25h"），但 Bridge 层未读取、Builder 未过滤。需在 `AreaItemQuery` 增加 Filter 字段，按 `TargetUnit`/`TargetGameCharacterID`/`TargetCardAttr` 过滤后再发送给 Drawing API。
 
-### 11.7 P3：其他待处理事项（当前剩余）
+### 11.7 Alpha 环境部署
+
+**部署时间**：2026-03-28
+
+**部署位置**：远程主机 `INTERNAL_IP_1` — `/data/HarukiServices/alpha/`
+
+**架构**：
+- PostgreSQL 18.3（容器 `haruki-alpha-postgres`，宿主端口 `127.0.0.1:15432`）
+- Redis 7-alpine（容器 `haruki-alpha-redis`，宿主端口 `127.0.0.1:16379`）
+- Haruki-Cloud 后端（宿主机直接运行，端口 `6667`）
+
+**数据库**：7 个库全部创建，其中 `haruki_sekai`、`haruki_pjsk`、`haruki_users`、`haruki_bot` 已从本地迁移数据。
+
+**外部服务端点**：
+| 服务 | 端点 |
+|------|------|
+| Toolbox API | `http://INTERNAL_IP_3:16666` |
+| Event Tracker | `http://INTERNAL_IP_2:8777` |
+| Sekai API | `http://INTERNAL_IP_2:9999` |
+| Drawing API | `http://INTERNAL_IP_1:28000`（同机） |
+
+**Bot 凭证**：已生成并写入本地 `client.json`（已加入 `.gitignore`）。Noise IK 加密传输已启用。
+
+**当前状态**：✅ 服务已启动，API 可访问（`http://INTERNAL_IP_1:6667`），bot 认证接口响应 401（预期行为，需携带凭证）。
+
+**客户端接入就绪**：client 可使用 `client.json` 中的凭证连接 alpha 环境进行对接开发。
+
+### 11.8 P3：其他待处理事项（当前剩余）
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
 | education/area 过滤透传 | ⏸ 待实现 | Go 端需解析过滤参数（团名/角色名/属性/树/花）并在构建请求前过滤 area items |
 | card/box 渲染超时 | ⏸ 待优化 | Drawing API 渲染大量卡牌耗时过长，需优化或分页 |
+| score/custom-room 布局溢出 | ⏸ 待修复 | Drawing API 返回 "Content size too large"，Python 端渲染布局问题 |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
+| alpha 进程管理 | ⏸ 建议 | 建议使用 systemd 或 supervisor 管理 haruki-server 进程，当前为 nohup 启动 |
 
 ## 12. 相关文档
 

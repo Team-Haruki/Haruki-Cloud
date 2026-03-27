@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +16,7 @@ import (
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/education"
@@ -25,6 +28,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
+	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
@@ -481,29 +485,81 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	var data []byte
 	region := renderregion.Value(r.Region)
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
 	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
+
+	// Resolve user binding and fetch suite data from Toolbox.
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	var suiteUID int64
+	var suitePlatform, suitePlatformUserID string
+
+	if platform != "" && platformUserID != "" && app.Bindings != nil {
+		_, binding, resolveErr := app.Bindings.ResolveUserBinding(
+			context.Background(), platform, platformUserID, regionStr)
+		if resolveErr == nil && binding != nil && hasUsableSuiteData(binding) {
+			if uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64); convErr == nil {
+				suiteUID = uid
+				suitePlatform = platform
+				suitePlatformUserID = platformUserID
+			}
+		}
+	}
+
 	switch r.Mode {
 	case "education-challenge":
 		q := education.ChallengeLiveQuery{Region: region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicDetailedProfile
+		if suiteUID > 0 {
+			suiteJSON, suiteErr := sekaiutils.GetToolboxClient().GetSuiteData(
+				regionStr, suiteUID, suitePlatform, suitePlatformUserID)
+			if suiteErr == nil && len(suiteJSON) > 0 {
+				snapshot, buildErr := buildEducationSnapshot(app, region, suiteJSON)
+				if buildErr == nil {
+					q.Snapshot = snapshot
+				}
+			}
+		}
 		data, err = app.Edu.RenderChallengeLiveDetails(q)
+
+	case "education-bonds":
+		req := drawing.BondsRequest{}
+		mergeParams(r.Params, &req)
+		if len(req.Bonds) == 0 && suiteUID > 0 {
+			bondsReq, buildErr := buildBondsRequestFromSuite(
+				app, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+			if buildErr == nil {
+				req = *bondsReq
+			}
+		}
+		data, err = app.Edu.RenderBonds(req)
+
+	case "education-leader":
+		req := drawing.LeaderCountRequest{}
+		mergeParams(r.Params, &req)
+		if len(req.LeaderCounts) == 0 && suiteUID > 0 {
+			leaderReq, buildErr := buildLeaderCountRequestFromSuite(
+				app, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+			if buildErr == nil {
+				req = *leaderReq
+			}
+		}
+		data, err = app.Edu.RenderLeaderCount(req)
+
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(r.Params, &req)
 		data, err = app.Edu.RenderPowerBonusDetail(req)
+
 	case "education-area":
 		req := drawing.AreaItemUpgradeMaterialsRequest{}
 		mergeParams(r.Params, &req)
 		data, err = app.Edu.RenderAreaItemUpgradeMaterials(req)
-	case "education-bonds":
-		req := drawing.BondsRequest{}
-		mergeParams(r.Params, &req)
-		data, err = app.Edu.RenderBonds(req)
-	case "education-leader":
-		req := drawing.LeaderCountRequest{}
-		mergeParams(r.Params, &req)
-		data, err = app.Edu.RenderLeaderCount(req)
+
 	default:
 		return nil, fmt.Errorf("bridge: unsupported education mode %q", r.Mode)
 	}
@@ -511,6 +567,175 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+// buildEducationSnapshot creates a userdata.Service from live Toolbox suite data.
+func buildEducationSnapshot(app *renderapp.App, region renderregion.Value, suiteJSON []byte) (*userdata.Service, error) {
+	return userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, nil, nil)
+}
+
+// buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
+func buildBondsRequestFromSuite(
+	app *renderapp.App, region string, uid int64, platform, platformUserID string,
+	profile *drawing.DetailedProfileCardRequest,
+) (*drawing.BondsRequest, error) {
+	tc := sekaiutils.GetToolboxClient()
+
+	bondsRaw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userBonds")
+	if err != nil {
+		return nil, fmt.Errorf("fetch userBonds: %w", err)
+	}
+	charsRaw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacters")
+	if err != nil {
+		return nil, fmt.Errorf("fetch userCharacters: %w", err)
+	}
+
+	var suiteBonds []struct {
+		BondsGroupID int `json:"bondsGroupId"`
+		Rank         int `json:"rank"`
+	}
+	if err := json.Unmarshal(bondsRaw, &suiteBonds); err != nil {
+		return nil, fmt.Errorf("decode userBonds: %w", err)
+	}
+
+	var suiteChars []struct {
+		CharacterID   int `json:"characterId"`
+		CharacterRank int `json:"characterRank"`
+	}
+	if err := json.Unmarshal(charsRaw, &suiteChars); err != nil {
+		return nil, fmt.Errorf("decode userCharacters: %w", err)
+	}
+
+	charRankMap := make(map[int]int, len(suiteChars))
+	for _, c := range suiteChars {
+		charRankMap[c.CharacterID] = c.CharacterRank
+	}
+
+	// Look up bonds master data to map group IDs to character pairs.
+	ctx := context.Background()
+	bondsMaster, err := app.Sekai.Bond.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query bonds master: %w", err)
+	}
+	type bondPair struct {
+		CharID1 int
+		CharID2 int
+	}
+	groupToPair := make(map[int]bondPair, len(bondsMaster))
+	for _, b := range bondsMaster {
+		groupToPair[int(b.GroupID)] = bondPair{CharID1: int(b.CharacterId1), CharID2: int(b.CharacterId2)}
+	}
+
+	bonds := make([]drawing.BondInfo, 0, len(suiteBonds))
+	maxLevel := 0
+	for _, sb := range suiteBonds {
+		pair, ok := groupToPair[sb.BondsGroupID]
+		if !ok {
+			continue
+		}
+		if sb.Rank > maxLevel {
+			maxLevel = sb.Rank
+		}
+		bonds = append(bonds, drawing.BondInfo{
+			CharaID1:       pair.CharID1,
+			CharaID2:       pair.CharID2,
+			CharaIconPath1: charaIconPath(app.Assets, pair.CharID1),
+			CharaIconPath2: charaIconPath(app.Assets, pair.CharID2),
+			CharaRank1:     charRankMap[pair.CharID1],
+			CharaRank2:     charRankMap[pair.CharID2],
+			BondLevel:      sb.Rank,
+			HasBond:        true,
+		})
+	}
+	sort.Slice(bonds, func(i, j int) bool { return bonds[i].BondLevel > bonds[j].BondLevel })
+
+	req := &drawing.BondsRequest{
+		Bonds:    bonds,
+		MaxLevel: maxLevel,
+	}
+	if profile != nil {
+		req.Profile = *profile
+	}
+	return req, nil
+}
+
+// buildLeaderCountRequestFromSuite fetches leader usage data from Toolbox and builds a LeaderCountRequest.
+func buildLeaderCountRequestFromSuite(
+	app *renderapp.App, region string, uid int64, platform, platformUserID string,
+	profile *drawing.DetailedProfileCardRequest,
+) (*drawing.LeaderCountRequest, error) {
+	tc := sekaiutils.GetToolboxClient()
+
+	raw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacterLiveUsageCounts")
+	if err != nil {
+		return nil, fmt.Errorf("fetch userCharacterLiveUsageCounts: %w", err)
+	}
+
+	var usageCounts []struct {
+		CharacterID            int    `json:"characterId"`
+		CharacterLiveUsageType string `json:"characterLiveUsageType"`
+		UsageCount             int    `json:"usageCount"`
+	}
+	if err := json.Unmarshal(raw, &usageCounts); err != nil {
+		return nil, fmt.Errorf("decode userCharacterLiveUsageCounts: %w", err)
+	}
+
+	// Group by character, pick leader counts.
+	type charEntry struct {
+		LeaderCount int
+		MemberCount int
+	}
+	charMap := make(map[int]*charEntry)
+	for _, u := range usageCounts {
+		entry, ok := charMap[u.CharacterID]
+		if !ok {
+			entry = &charEntry{}
+			charMap[u.CharacterID] = entry
+		}
+		switch u.CharacterLiveUsageType {
+		case "leader":
+			entry.LeaderCount = u.UsageCount
+		case "member":
+			entry.MemberCount = u.UsageCount
+		}
+	}
+
+	leaders := make([]drawing.LeaderCountInfo, 0, len(charMap))
+	maxPlay := 0
+	for charID, entry := range charMap {
+		if entry.LeaderCount > maxPlay {
+			maxPlay = entry.LeaderCount
+		}
+		leaders = append(leaders, drawing.LeaderCountInfo{
+			CharaID:       charID,
+			CharaIconPath: charaIconPath(app.Assets, charID),
+			PlayCount:     entry.LeaderCount,
+		})
+	}
+	sort.Slice(leaders, func(i, j int) bool { return leaders[i].PlayCount > leaders[j].PlayCount })
+
+	req := &drawing.LeaderCountRequest{
+		LeaderCounts: leaders,
+		MaxPlayCount: maxPlay,
+	}
+	if profile != nil {
+		req.Profile = *profile
+	}
+	return req, nil
+}
+
+// charaIconPath resolves a character icon path using the asset helper.
+func charaIconPath(helper *assets.AssetHelper, charID int) string {
+	if nickname, ok := assets.CharacterIDToNickname[charID]; ok {
+		rel := filepath.ToSlash(filepath.Join("chara_icon", nickname+".png"))
+		if helper != nil {
+			if existing := helper.FirstExisting(rel); existing != "" {
+				return rel
+			}
+		}
+		return rel
+	}
+	return filepath.ToSlash(filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
 func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {

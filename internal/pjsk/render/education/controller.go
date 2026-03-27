@@ -39,10 +39,15 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("education controller is not initialized")
 	}
-	if c.snapshot == nil {
+
+	snapshot := query.Snapshot
+	if snapshot == nil {
+		snapshot = c.snapshot
+	}
+	if snapshot == nil {
 		return nil, fmt.Errorf("local user snapshot is not configured")
 	}
-	if err := c.snapshot.Require(); err != nil {
+	if err := snapshot.Require(); err != nil {
 		return nil, err
 	}
 
@@ -52,13 +57,13 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 		return nil, fmt.Errorf("education data source is not configured")
 	}
 
-	challenge := c.snapshot.ChallengeLive()
+	challenge := snapshot.ChallengeLive()
 	if challenge == nil {
 		return nil, fmt.Errorf("user snapshot is missing challenge live data")
 	}
 	profile := query.Profile
 	if profile == nil {
-		profile = c.snapshot.DetailedProfile(region)
+		profile = snapshot.DetailedProfile(region)
 	}
 	if profile == nil {
 		return nil, fmt.Errorf("user snapshot is missing profile data")

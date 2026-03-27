@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventitem"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *EventitemUpdate) ClearEventID() *EventitemUpdate {
 }
 
 // SetName sets the "name" field.
-func (_u *EventitemUpdate) SetName(v json.RawMessage) *EventitemUpdate {
+func (_u *EventitemUpdate) SetName(v string) *EventitemUpdate {
 	_u.mutation.SetName(v)
 	return _u
 }
 
-// AppendName appends value to the "name" field.
-func (_u *EventitemUpdate) AppendName(v json.RawMessage) *EventitemUpdate {
-	_u.mutation.AppendName(v)
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *EventitemUpdate) SetNillableName(v *string) *EventitemUpdate {
+	if v != nil {
+		_u.SetName(*v)
+	}
 	return _u
 }
 
@@ -102,14 +102,16 @@ func (_u *EventitemUpdate) ClearName() *EventitemUpdate {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *EventitemUpdate) SetFlavorText(v json.RawMessage) *EventitemUpdate {
+func (_u *EventitemUpdate) SetFlavorText(v string) *EventitemUpdate {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *EventitemUpdate) AppendFlavorText(v json.RawMessage) *EventitemUpdate {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *EventitemUpdate) SetNillableFlavorText(v *string) *EventitemUpdate {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -240,26 +242,16 @@ func (_u *EventitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(eventitem.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventitem.FieldName, value)
-		})
+		_spec.SetField(eventitem.FieldName, field.TypeString, value)
 	}
 	if _u.mutation.NameCleared() {
-		_spec.ClearField(eventitem.FieldName, field.TypeJSON)
+		_spec.ClearField(eventitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(eventitem.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventitem.FieldFlavorText, value)
-		})
+		_spec.SetField(eventitem.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(eventitem.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(eventitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventitem.FieldAssetbundleName, field.TypeString, value)
@@ -354,14 +346,16 @@ func (_u *EventitemUpdateOne) ClearEventID() *EventitemUpdateOne {
 }
 
 // SetName sets the "name" field.
-func (_u *EventitemUpdateOne) SetName(v json.RawMessage) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetName(v string) *EventitemUpdateOne {
 	_u.mutation.SetName(v)
 	return _u
 }
 
-// AppendName appends value to the "name" field.
-func (_u *EventitemUpdateOne) AppendName(v json.RawMessage) *EventitemUpdateOne {
-	_u.mutation.AppendName(v)
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *EventitemUpdateOne) SetNillableName(v *string) *EventitemUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
+	}
 	return _u
 }
 
@@ -372,14 +366,16 @@ func (_u *EventitemUpdateOne) ClearName() *EventitemUpdateOne {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *EventitemUpdateOne) SetFlavorText(v json.RawMessage) *EventitemUpdateOne {
+func (_u *EventitemUpdateOne) SetFlavorText(v string) *EventitemUpdateOne {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *EventitemUpdateOne) AppendFlavorText(v json.RawMessage) *EventitemUpdateOne {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *EventitemUpdateOne) SetNillableFlavorText(v *string) *EventitemUpdateOne {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -540,26 +536,16 @@ func (_u *EventitemUpdateOne) sqlSave(ctx context.Context) (_node *Eventitem, er
 		_spec.ClearField(eventitem.FieldEventID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventitem.FieldName, value)
-		})
+		_spec.SetField(eventitem.FieldName, field.TypeString, value)
 	}
 	if _u.mutation.NameCleared() {
-		_spec.ClearField(eventitem.FieldName, field.TypeJSON)
+		_spec.ClearField(eventitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(eventitem.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventitem.FieldFlavorText, value)
-		})
+		_spec.SetField(eventitem.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(eventitem.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(eventitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(eventitem.FieldAssetbundleName, field.TypeString, value)

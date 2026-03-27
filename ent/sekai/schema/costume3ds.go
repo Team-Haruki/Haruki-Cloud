@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,17 +18,17 @@ func (Costume3D) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("costume3_d_group_id").Optional(),
-		field.JSON("costume3_d_type", json.RawMessage{}).Optional(),
+		field.String("costume3_d_type").Optional(),
 		field.String("name").Optional(),
-		field.JSON("part_type", json.RawMessage{}).Optional(),
+		field.String("part_type").Optional(),
 		field.Int64("color_id").Optional(),
 		field.String("color_name").Optional(),
 		field.Int64("character_id").Optional(),
-		field.JSON("costume3_d_rarity", json.RawMessage{}).Optional(),
+		field.String("costume3_d_rarity").Optional(),
 		field.String("how_to_obtain").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("designer").Optional(),
-		field.JSON("archive_display_type", json.RawMessage{}).Optional(),
+		field.String("archive_display_type").Optional(),
 		field.Int64("archive_published_at").Optional(),
 		field.Int64("published_at").Optional(),
 		field.String("server_region"),

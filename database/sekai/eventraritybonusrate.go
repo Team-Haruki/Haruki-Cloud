@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
 	"strings"
@@ -20,7 +19,7 @@ type Eventraritybonusrate struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
-	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+	CardRarityType string `json:"card_rarity_type,omitempty"`
 	// MasterRank holds the value of the "master_rank" field.
 	MasterRank int64 `json:"master_rank,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
@@ -35,13 +34,11 @@ func (*Eventraritybonusrate) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case eventraritybonusrate.FieldCardRarityType:
-			values[i] = new([]byte)
 		case eventraritybonusrate.FieldBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case eventraritybonusrate.FieldID, eventraritybonusrate.FieldGameID, eventraritybonusrate.FieldMasterRank:
 			values[i] = new(sql.NullInt64)
-		case eventraritybonusrate.FieldServerRegion:
+		case eventraritybonusrate.FieldCardRarityType, eventraritybonusrate.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -71,12 +68,10 @@ func (_m *Eventraritybonusrate) assignValues(columns []string, values []any) err
 				_m.GameID = value.Int64
 			}
 		case eventraritybonusrate.FieldCardRarityType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CardRarityType); err != nil {
-					return fmt.Errorf("unmarshal field card_rarity_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.CardRarityType = value.String
 			}
 		case eventraritybonusrate.FieldMasterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -136,7 +131,7 @@ func (_m *Eventraritybonusrate) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("card_rarity_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CardRarityType))
+	builder.WriteString(_m.CardRarityType)
 	builder.WriteString(", ")
 	builder.WriteString("master_rank=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MasterRank))

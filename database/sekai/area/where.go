@@ -73,6 +73,26 @@ func IsBaseArea(v bool) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldIsBaseArea, v))
 }
 
+// AreaType applies equality check predicate on the "area_type" field. It's identical to AreaTypeEQ.
+func AreaType(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldAreaType, v))
+}
+
+// ViewType applies equality check predicate on the "view_type" field. It's identical to ViewTypeEQ.
+func ViewType(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldViewType, v))
+}
+
+// DisplayTimelineType applies equality check predicate on the "display_timeline_type" field. It's identical to DisplayTimelineTypeEQ.
+func DisplayTimelineType(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldDisplayTimelineType, v))
+}
+
+// AdditionalAreaType applies equality check predicate on the "additional_area_type" field. It's identical to AdditionalAreaTypeEQ.
+func AdditionalAreaType(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldAdditionalAreaType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Area {
 	return predicate.Area(sql.FieldEQ(FieldName, v))
@@ -303,6 +323,61 @@ func IsBaseAreaNotNil() predicate.Area {
 	return predicate.Area(sql.FieldNotNull(FieldIsBaseArea))
 }
 
+// AreaTypeEQ applies the EQ predicate on the "area_type" field.
+func AreaTypeEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldAreaType, v))
+}
+
+// AreaTypeNEQ applies the NEQ predicate on the "area_type" field.
+func AreaTypeNEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldNEQ(FieldAreaType, v))
+}
+
+// AreaTypeIn applies the In predicate on the "area_type" field.
+func AreaTypeIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldIn(FieldAreaType, vs...))
+}
+
+// AreaTypeNotIn applies the NotIn predicate on the "area_type" field.
+func AreaTypeNotIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldNotIn(FieldAreaType, vs...))
+}
+
+// AreaTypeGT applies the GT predicate on the "area_type" field.
+func AreaTypeGT(v string) predicate.Area {
+	return predicate.Area(sql.FieldGT(FieldAreaType, v))
+}
+
+// AreaTypeGTE applies the GTE predicate on the "area_type" field.
+func AreaTypeGTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldGTE(FieldAreaType, v))
+}
+
+// AreaTypeLT applies the LT predicate on the "area_type" field.
+func AreaTypeLT(v string) predicate.Area {
+	return predicate.Area(sql.FieldLT(FieldAreaType, v))
+}
+
+// AreaTypeLTE applies the LTE predicate on the "area_type" field.
+func AreaTypeLTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldLTE(FieldAreaType, v))
+}
+
+// AreaTypeContains applies the Contains predicate on the "area_type" field.
+func AreaTypeContains(v string) predicate.Area {
+	return predicate.Area(sql.FieldContains(FieldAreaType, v))
+}
+
+// AreaTypeHasPrefix applies the HasPrefix predicate on the "area_type" field.
+func AreaTypeHasPrefix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasPrefix(FieldAreaType, v))
+}
+
+// AreaTypeHasSuffix applies the HasSuffix predicate on the "area_type" field.
+func AreaTypeHasSuffix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasSuffix(FieldAreaType, v))
+}
+
 // AreaTypeIsNil applies the IsNil predicate on the "area_type" field.
 func AreaTypeIsNil() predicate.Area {
 	return predicate.Area(sql.FieldIsNull(FieldAreaType))
@@ -311,6 +386,71 @@ func AreaTypeIsNil() predicate.Area {
 // AreaTypeNotNil applies the NotNil predicate on the "area_type" field.
 func AreaTypeNotNil() predicate.Area {
 	return predicate.Area(sql.FieldNotNull(FieldAreaType))
+}
+
+// AreaTypeEqualFold applies the EqualFold predicate on the "area_type" field.
+func AreaTypeEqualFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldEqualFold(FieldAreaType, v))
+}
+
+// AreaTypeContainsFold applies the ContainsFold predicate on the "area_type" field.
+func AreaTypeContainsFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldContainsFold(FieldAreaType, v))
+}
+
+// ViewTypeEQ applies the EQ predicate on the "view_type" field.
+func ViewTypeEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldViewType, v))
+}
+
+// ViewTypeNEQ applies the NEQ predicate on the "view_type" field.
+func ViewTypeNEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldNEQ(FieldViewType, v))
+}
+
+// ViewTypeIn applies the In predicate on the "view_type" field.
+func ViewTypeIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldIn(FieldViewType, vs...))
+}
+
+// ViewTypeNotIn applies the NotIn predicate on the "view_type" field.
+func ViewTypeNotIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldNotIn(FieldViewType, vs...))
+}
+
+// ViewTypeGT applies the GT predicate on the "view_type" field.
+func ViewTypeGT(v string) predicate.Area {
+	return predicate.Area(sql.FieldGT(FieldViewType, v))
+}
+
+// ViewTypeGTE applies the GTE predicate on the "view_type" field.
+func ViewTypeGTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldGTE(FieldViewType, v))
+}
+
+// ViewTypeLT applies the LT predicate on the "view_type" field.
+func ViewTypeLT(v string) predicate.Area {
+	return predicate.Area(sql.FieldLT(FieldViewType, v))
+}
+
+// ViewTypeLTE applies the LTE predicate on the "view_type" field.
+func ViewTypeLTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldLTE(FieldViewType, v))
+}
+
+// ViewTypeContains applies the Contains predicate on the "view_type" field.
+func ViewTypeContains(v string) predicate.Area {
+	return predicate.Area(sql.FieldContains(FieldViewType, v))
+}
+
+// ViewTypeHasPrefix applies the HasPrefix predicate on the "view_type" field.
+func ViewTypeHasPrefix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasPrefix(FieldViewType, v))
+}
+
+// ViewTypeHasSuffix applies the HasSuffix predicate on the "view_type" field.
+func ViewTypeHasSuffix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasSuffix(FieldViewType, v))
 }
 
 // ViewTypeIsNil applies the IsNil predicate on the "view_type" field.
@@ -323,6 +463,71 @@ func ViewTypeNotNil() predicate.Area {
 	return predicate.Area(sql.FieldNotNull(FieldViewType))
 }
 
+// ViewTypeEqualFold applies the EqualFold predicate on the "view_type" field.
+func ViewTypeEqualFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldEqualFold(FieldViewType, v))
+}
+
+// ViewTypeContainsFold applies the ContainsFold predicate on the "view_type" field.
+func ViewTypeContainsFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldContainsFold(FieldViewType, v))
+}
+
+// DisplayTimelineTypeEQ applies the EQ predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeNEQ applies the NEQ predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeNEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldNEQ(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeIn applies the In predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldIn(FieldDisplayTimelineType, vs...))
+}
+
+// DisplayTimelineTypeNotIn applies the NotIn predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeNotIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldNotIn(FieldDisplayTimelineType, vs...))
+}
+
+// DisplayTimelineTypeGT applies the GT predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeGT(v string) predicate.Area {
+	return predicate.Area(sql.FieldGT(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeGTE applies the GTE predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeGTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldGTE(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeLT applies the LT predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeLT(v string) predicate.Area {
+	return predicate.Area(sql.FieldLT(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeLTE applies the LTE predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeLTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldLTE(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeContains applies the Contains predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeContains(v string) predicate.Area {
+	return predicate.Area(sql.FieldContains(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeHasPrefix applies the HasPrefix predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeHasPrefix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasPrefix(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeHasSuffix applies the HasSuffix predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeHasSuffix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasSuffix(FieldDisplayTimelineType, v))
+}
+
 // DisplayTimelineTypeIsNil applies the IsNil predicate on the "display_timeline_type" field.
 func DisplayTimelineTypeIsNil() predicate.Area {
 	return predicate.Area(sql.FieldIsNull(FieldDisplayTimelineType))
@@ -333,6 +538,71 @@ func DisplayTimelineTypeNotNil() predicate.Area {
 	return predicate.Area(sql.FieldNotNull(FieldDisplayTimelineType))
 }
 
+// DisplayTimelineTypeEqualFold applies the EqualFold predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeEqualFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldEqualFold(FieldDisplayTimelineType, v))
+}
+
+// DisplayTimelineTypeContainsFold applies the ContainsFold predicate on the "display_timeline_type" field.
+func DisplayTimelineTypeContainsFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldContainsFold(FieldDisplayTimelineType, v))
+}
+
+// AdditionalAreaTypeEQ applies the EQ predicate on the "additional_area_type" field.
+func AdditionalAreaTypeEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldEQ(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeNEQ applies the NEQ predicate on the "additional_area_type" field.
+func AdditionalAreaTypeNEQ(v string) predicate.Area {
+	return predicate.Area(sql.FieldNEQ(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeIn applies the In predicate on the "additional_area_type" field.
+func AdditionalAreaTypeIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldIn(FieldAdditionalAreaType, vs...))
+}
+
+// AdditionalAreaTypeNotIn applies the NotIn predicate on the "additional_area_type" field.
+func AdditionalAreaTypeNotIn(vs ...string) predicate.Area {
+	return predicate.Area(sql.FieldNotIn(FieldAdditionalAreaType, vs...))
+}
+
+// AdditionalAreaTypeGT applies the GT predicate on the "additional_area_type" field.
+func AdditionalAreaTypeGT(v string) predicate.Area {
+	return predicate.Area(sql.FieldGT(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeGTE applies the GTE predicate on the "additional_area_type" field.
+func AdditionalAreaTypeGTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldGTE(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeLT applies the LT predicate on the "additional_area_type" field.
+func AdditionalAreaTypeLT(v string) predicate.Area {
+	return predicate.Area(sql.FieldLT(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeLTE applies the LTE predicate on the "additional_area_type" field.
+func AdditionalAreaTypeLTE(v string) predicate.Area {
+	return predicate.Area(sql.FieldLTE(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeContains applies the Contains predicate on the "additional_area_type" field.
+func AdditionalAreaTypeContains(v string) predicate.Area {
+	return predicate.Area(sql.FieldContains(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeHasPrefix applies the HasPrefix predicate on the "additional_area_type" field.
+func AdditionalAreaTypeHasPrefix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasPrefix(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeHasSuffix applies the HasSuffix predicate on the "additional_area_type" field.
+func AdditionalAreaTypeHasSuffix(v string) predicate.Area {
+	return predicate.Area(sql.FieldHasSuffix(FieldAdditionalAreaType, v))
+}
+
 // AdditionalAreaTypeIsNil applies the IsNil predicate on the "additional_area_type" field.
 func AdditionalAreaTypeIsNil() predicate.Area {
 	return predicate.Area(sql.FieldIsNull(FieldAdditionalAreaType))
@@ -341,6 +611,16 @@ func AdditionalAreaTypeIsNil() predicate.Area {
 // AdditionalAreaTypeNotNil applies the NotNil predicate on the "additional_area_type" field.
 func AdditionalAreaTypeNotNil() predicate.Area {
 	return predicate.Area(sql.FieldNotNull(FieldAdditionalAreaType))
+}
+
+// AdditionalAreaTypeEqualFold applies the EqualFold predicate on the "additional_area_type" field.
+func AdditionalAreaTypeEqualFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldEqualFold(FieldAdditionalAreaType, v))
+}
+
+// AdditionalAreaTypeContainsFold applies the ContainsFold predicate on the "additional_area_type" field.
+func AdditionalAreaTypeContainsFold(v string) predicate.Area {
+	return predicate.Area(sql.FieldContainsFold(FieldAdditionalAreaType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitemlevel"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *AreaitemlevelUpdate) ClearLevel() *AreaitemlevelUpdate {
 }
 
 // SetTargetUnit sets the "target_unit" field.
-func (_u *AreaitemlevelUpdate) SetTargetUnit(v json.RawMessage) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetTargetUnit(v string) *AreaitemlevelUpdate {
 	_u.mutation.SetTargetUnit(v)
 	return _u
 }
 
-// AppendTargetUnit appends value to the "target_unit" field.
-func (_u *AreaitemlevelUpdate) AppendTargetUnit(v json.RawMessage) *AreaitemlevelUpdate {
-	_u.mutation.AppendTargetUnit(v)
+// SetNillableTargetUnit sets the "target_unit" field if the given value is not nil.
+func (_u *AreaitemlevelUpdate) SetNillableTargetUnit(v *string) *AreaitemlevelUpdate {
+	if v != nil {
+		_u.SetTargetUnit(*v)
+	}
 	return _u
 }
 
@@ -102,14 +102,16 @@ func (_u *AreaitemlevelUpdate) ClearTargetUnit() *AreaitemlevelUpdate {
 }
 
 // SetTargetCardAttr sets the "target_card_attr" field.
-func (_u *AreaitemlevelUpdate) SetTargetCardAttr(v json.RawMessage) *AreaitemlevelUpdate {
+func (_u *AreaitemlevelUpdate) SetTargetCardAttr(v string) *AreaitemlevelUpdate {
 	_u.mutation.SetTargetCardAttr(v)
 	return _u
 }
 
-// AppendTargetCardAttr appends value to the "target_card_attr" field.
-func (_u *AreaitemlevelUpdate) AppendTargetCardAttr(v json.RawMessage) *AreaitemlevelUpdate {
-	_u.mutation.AppendTargetCardAttr(v)
+// SetNillableTargetCardAttr sets the "target_card_attr" field if the given value is not nil.
+func (_u *AreaitemlevelUpdate) SetNillableTargetCardAttr(v *string) *AreaitemlevelUpdate {
+	if v != nil {
+		_u.SetTargetCardAttr(*v)
+	}
 	return _u
 }
 
@@ -402,26 +404,16 @@ func (_u *AreaitemlevelUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TargetUnit(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedTargetUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitemlevel.FieldTargetUnit, value)
-		})
+		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeString, value)
 	}
 	if _u.mutation.TargetUnitCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetUnit, field.TypeJSON)
+		_spec.ClearField(areaitemlevel.FieldTargetUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.TargetCardAttr(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedTargetCardAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitemlevel.FieldTargetCardAttr, value)
-		})
+		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeString, value)
 	}
 	if _u.mutation.TargetCardAttrCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON)
+		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.TargetGameCharacterID(); ok {
 		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)
@@ -570,14 +562,16 @@ func (_u *AreaitemlevelUpdateOne) ClearLevel() *AreaitemlevelUpdateOne {
 }
 
 // SetTargetUnit sets the "target_unit" field.
-func (_u *AreaitemlevelUpdateOne) SetTargetUnit(v json.RawMessage) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetTargetUnit(v string) *AreaitemlevelUpdateOne {
 	_u.mutation.SetTargetUnit(v)
 	return _u
 }
 
-// AppendTargetUnit appends value to the "target_unit" field.
-func (_u *AreaitemlevelUpdateOne) AppendTargetUnit(v json.RawMessage) *AreaitemlevelUpdateOne {
-	_u.mutation.AppendTargetUnit(v)
+// SetNillableTargetUnit sets the "target_unit" field if the given value is not nil.
+func (_u *AreaitemlevelUpdateOne) SetNillableTargetUnit(v *string) *AreaitemlevelUpdateOne {
+	if v != nil {
+		_u.SetTargetUnit(*v)
+	}
 	return _u
 }
 
@@ -588,14 +582,16 @@ func (_u *AreaitemlevelUpdateOne) ClearTargetUnit() *AreaitemlevelUpdateOne {
 }
 
 // SetTargetCardAttr sets the "target_card_attr" field.
-func (_u *AreaitemlevelUpdateOne) SetTargetCardAttr(v json.RawMessage) *AreaitemlevelUpdateOne {
+func (_u *AreaitemlevelUpdateOne) SetTargetCardAttr(v string) *AreaitemlevelUpdateOne {
 	_u.mutation.SetTargetCardAttr(v)
 	return _u
 }
 
-// AppendTargetCardAttr appends value to the "target_card_attr" field.
-func (_u *AreaitemlevelUpdateOne) AppendTargetCardAttr(v json.RawMessage) *AreaitemlevelUpdateOne {
-	_u.mutation.AppendTargetCardAttr(v)
+// SetNillableTargetCardAttr sets the "target_card_attr" field if the given value is not nil.
+func (_u *AreaitemlevelUpdateOne) SetNillableTargetCardAttr(v *string) *AreaitemlevelUpdateOne {
+	if v != nil {
+		_u.SetTargetCardAttr(*v)
+	}
 	return _u
 }
 
@@ -918,26 +914,16 @@ func (_u *AreaitemlevelUpdateOne) sqlSave(ctx context.Context) (_node *Areaiteml
 		_spec.ClearField(areaitemlevel.FieldLevel, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.TargetUnit(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedTargetUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitemlevel.FieldTargetUnit, value)
-		})
+		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeString, value)
 	}
 	if _u.mutation.TargetUnitCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetUnit, field.TypeJSON)
+		_spec.ClearField(areaitemlevel.FieldTargetUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.TargetCardAttr(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedTargetCardAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitemlevel.FieldTargetCardAttr, value)
-		})
+		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeString, value)
 	}
 	if _u.mutation.TargetCardAttrCleared() {
-		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON)
+		_spec.ClearField(areaitemlevel.FieldTargetCardAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.TargetGameCharacterID(); ok {
 		_spec.SetField(areaitemlevel.FieldTargetGameCharacterID, field.TypeInt64, value)

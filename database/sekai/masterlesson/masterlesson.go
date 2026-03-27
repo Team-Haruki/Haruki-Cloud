@@ -65,6 +65,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByCardRarityType orders the results by the card_rarity_type field.
+func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
+}
+
 // ByMasterRank orders the results by the master_rank field.
 func ByMasterRank(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMasterRank, opts...).ToFunc()

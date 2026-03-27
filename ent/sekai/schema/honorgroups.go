@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Honorgroup) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.String("pronunciation").Optional(),
-		field.JSON("honor_type", json.RawMessage{}).Optional(),
+		field.String("honor_type").Optional(),
 		field.String("background_assetbundle_name").Optional(),
 		field.String("frame_name").Optional(),
 		field.String("server_region"),

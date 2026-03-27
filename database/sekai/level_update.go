@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/level"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *LevelUpdate) ClearGameID() *LevelUpdate {
 }
 
 // SetLevelType sets the "level_type" field.
-func (_u *LevelUpdate) SetLevelType(v json.RawMessage) *LevelUpdate {
+func (_u *LevelUpdate) SetLevelType(v string) *LevelUpdate {
 	_u.mutation.SetLevelType(v)
 	return _u
 }
 
-// AppendLevelType appends value to the "level_type" field.
-func (_u *LevelUpdate) AppendLevelType(v json.RawMessage) *LevelUpdate {
-	_u.mutation.AppendLevelType(v)
+// SetNillableLevelType sets the "level_type" field if the given value is not nil.
+func (_u *LevelUpdate) SetNillableLevelType(v *string) *LevelUpdate {
+	if v != nil {
+		_u.SetLevelType(*v)
+	}
 	return _u
 }
 
@@ -193,15 +193,10 @@ func (_u *LevelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(level.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLevelType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, level.FieldLevelType, value)
-		})
+		_spec.SetField(level.FieldLevelType, field.TypeString, value)
 	}
 	if _u.mutation.LevelTypeCleared() {
-		_spec.ClearField(level.FieldLevelType, field.TypeJSON)
+		_spec.ClearField(level.FieldLevelType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Level(); ok {
 		_spec.SetField(level.FieldLevel, field.TypeInt64, value)
@@ -272,14 +267,16 @@ func (_u *LevelUpdateOne) ClearGameID() *LevelUpdateOne {
 }
 
 // SetLevelType sets the "level_type" field.
-func (_u *LevelUpdateOne) SetLevelType(v json.RawMessage) *LevelUpdateOne {
+func (_u *LevelUpdateOne) SetLevelType(v string) *LevelUpdateOne {
 	_u.mutation.SetLevelType(v)
 	return _u
 }
 
-// AppendLevelType appends value to the "level_type" field.
-func (_u *LevelUpdateOne) AppendLevelType(v json.RawMessage) *LevelUpdateOne {
-	_u.mutation.AppendLevelType(v)
+// SetNillableLevelType sets the "level_type" field if the given value is not nil.
+func (_u *LevelUpdateOne) SetNillableLevelType(v *string) *LevelUpdateOne {
+	if v != nil {
+		_u.SetLevelType(*v)
+	}
 	return _u
 }
 
@@ -438,15 +435,10 @@ func (_u *LevelUpdateOne) sqlSave(ctx context.Context) (_node *Level, err error)
 		_spec.ClearField(level.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLevelType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, level.FieldLevelType, value)
-		})
+		_spec.SetField(level.FieldLevelType, field.TypeString, value)
 	}
 	if _u.mutation.LevelTypeCleared() {
-		_spec.ClearField(level.FieldLevelType, field.TypeJSON)
+		_spec.ClearField(level.FieldLevelType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Level(); ok {
 		_spec.SetField(level.FieldLevel, field.TypeInt64, value)

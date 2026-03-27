@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/character2d"
 	"strings"
@@ -20,19 +19,19 @@ type Character2D struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// CharacterType holds the value of the "character_type" field.
-	CharacterType json.RawMessage `json:"character_type,omitempty"`
+	CharacterType string `json:"character_type,omitempty"`
 	// IsNextGrade holds the value of the "is_next_grade" field.
 	IsNextGrade bool `json:"is_next_grade,omitempty"`
 	// CharacterID holds the value of the "character_id" field.
 	CharacterID int64 `json:"character_id,omitempty"`
 	// Unit holds the value of the "unit" field.
-	Unit json.RawMessage `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
 	// IsEnabledFlipDisplay holds the value of the "is_enabled_flip_display" field.
 	IsEnabledFlipDisplay bool `json:"is_enabled_flip_display,omitempty"`
 	// AssetName holds the value of the "asset_name" field.
 	AssetName string `json:"asset_name,omitempty"`
 	// CharacterIconAssetbundleName holds the value of the "character_icon_assetbundle_name" field.
-	CharacterIconAssetbundleName json.RawMessage `json:"character_icon_assetbundle_name,omitempty"`
+	CharacterIconAssetbundleName string `json:"character_icon_assetbundle_name,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -43,13 +42,11 @@ func (*Character2D) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case character2d.FieldCharacterType, character2d.FieldUnit, character2d.FieldCharacterIconAssetbundleName:
-			values[i] = new([]byte)
 		case character2d.FieldIsNextGrade, character2d.FieldIsEnabledFlipDisplay:
 			values[i] = new(sql.NullBool)
 		case character2d.FieldID, character2d.FieldGameID, character2d.FieldCharacterID:
 			values[i] = new(sql.NullInt64)
-		case character2d.FieldAssetName, character2d.FieldServerRegion:
+		case character2d.FieldCharacterType, character2d.FieldUnit, character2d.FieldAssetName, character2d.FieldCharacterIconAssetbundleName, character2d.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -79,12 +76,10 @@ func (_m *Character2D) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case character2d.FieldCharacterType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field character_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CharacterType); err != nil {
-					return fmt.Errorf("unmarshal field character_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.CharacterType = value.String
 			}
 		case character2d.FieldIsNextGrade:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -99,12 +94,10 @@ func (_m *Character2D) assignValues(columns []string, values []any) error {
 				_m.CharacterID = value.Int64
 			}
 		case character2d.FieldUnit:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Unit); err != nil {
-					return fmt.Errorf("unmarshal field unit: %w", err)
-				}
+			} else if value.Valid {
+				_m.Unit = value.String
 			}
 		case character2d.FieldIsEnabledFlipDisplay:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -119,12 +112,10 @@ func (_m *Character2D) assignValues(columns []string, values []any) error {
 				_m.AssetName = value.String
 			}
 		case character2d.FieldCharacterIconAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field character_icon_assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CharacterIconAssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field character_icon_assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.CharacterIconAssetbundleName = value.String
 			}
 		case character2d.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -172,7 +163,7 @@ func (_m *Character2D) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("character_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CharacterType))
+	builder.WriteString(_m.CharacterType)
 	builder.WriteString(", ")
 	builder.WriteString("is_next_grade=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsNextGrade))
@@ -181,7 +172,7 @@ func (_m *Character2D) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterID))
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Unit))
+	builder.WriteString(_m.Unit)
 	builder.WriteString(", ")
 	builder.WriteString("is_enabled_flip_display=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsEnabledFlipDisplay))
@@ -190,7 +181,7 @@ func (_m *Character2D) String() string {
 	builder.WriteString(_m.AssetName)
 	builder.WriteString(", ")
 	builder.WriteString("character_icon_assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CharacterIconAssetbundleName))
+	builder.WriteString(_m.CharacterIconAssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

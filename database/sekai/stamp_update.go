@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *StampUpdate) ClearGameID() *StampUpdate {
 }
 
 // SetStampType sets the "stamp_type" field.
-func (_u *StampUpdate) SetStampType(v json.RawMessage) *StampUpdate {
+func (_u *StampUpdate) SetStampType(v string) *StampUpdate {
 	_u.mutation.SetStampType(v)
 	return _u
 }
 
-// AppendStampType appends value to the "stamp_type" field.
-func (_u *StampUpdate) AppendStampType(v json.RawMessage) *StampUpdate {
-	_u.mutation.AppendStampType(v)
+// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
+func (_u *StampUpdate) SetNillableStampType(v *string) *StampUpdate {
+	if v != nil {
+		_u.SetStampType(*v)
+	}
 	return _u
 }
 
@@ -142,14 +142,16 @@ func (_u *StampUpdate) ClearAssetbundleName() *StampUpdate {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_u *StampUpdate) SetBalloonAssetbundleName(v json.RawMessage) *StampUpdate {
+func (_u *StampUpdate) SetBalloonAssetbundleName(v string) *StampUpdate {
 	_u.mutation.SetBalloonAssetbundleName(v)
 	return _u
 }
 
-// AppendBalloonAssetbundleName appends value to the "balloon_assetbundle_name" field.
-func (_u *StampUpdate) AppendBalloonAssetbundleName(v json.RawMessage) *StampUpdate {
-	_u.mutation.AppendBalloonAssetbundleName(v)
+// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
+func (_u *StampUpdate) SetNillableBalloonAssetbundleName(v *string) *StampUpdate {
+	if v != nil {
+		_u.SetBalloonAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -261,14 +263,16 @@ func (_u *StampUpdate) ClearDescription() *StampUpdate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *StampUpdate) SetArchiveDisplayType(v json.RawMessage) *StampUpdate {
+func (_u *StampUpdate) SetArchiveDisplayType(v string) *StampUpdate {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *StampUpdate) AppendArchiveDisplayType(v json.RawMessage) *StampUpdate {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *StampUpdate) SetNillableArchiveDisplayType(v *string) *StampUpdate {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -370,15 +374,10 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedStampType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldStampType, value)
-		})
+		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
 	}
 	if _u.mutation.StampTypeCleared() {
-		_spec.ClearField(stamp.FieldStampType, field.TypeJSON)
+		_spec.ClearField(stamp.FieldStampType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(stamp.FieldSeq, field.TypeInt64, value)
@@ -402,15 +401,10 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(stamp.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedBalloonAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldBalloonAssetbundleName, value)
-		})
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.BalloonAssetbundleNameCleared() {
-		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeJSON)
+		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
 		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt64, value)
@@ -446,15 +440,10 @@ func (_u *StampUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(stamp.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
 		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt64, value)
@@ -516,14 +505,16 @@ func (_u *StampUpdateOne) ClearGameID() *StampUpdateOne {
 }
 
 // SetStampType sets the "stamp_type" field.
-func (_u *StampUpdateOne) SetStampType(v json.RawMessage) *StampUpdateOne {
+func (_u *StampUpdateOne) SetStampType(v string) *StampUpdateOne {
 	_u.mutation.SetStampType(v)
 	return _u
 }
 
-// AppendStampType appends value to the "stamp_type" field.
-func (_u *StampUpdateOne) AppendStampType(v json.RawMessage) *StampUpdateOne {
-	_u.mutation.AppendStampType(v)
+// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
+func (_u *StampUpdateOne) SetNillableStampType(v *string) *StampUpdateOne {
+	if v != nil {
+		_u.SetStampType(*v)
+	}
 	return _u
 }
 
@@ -601,14 +592,16 @@ func (_u *StampUpdateOne) ClearAssetbundleName() *StampUpdateOne {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_u *StampUpdateOne) SetBalloonAssetbundleName(v json.RawMessage) *StampUpdateOne {
+func (_u *StampUpdateOne) SetBalloonAssetbundleName(v string) *StampUpdateOne {
 	_u.mutation.SetBalloonAssetbundleName(v)
 	return _u
 }
 
-// AppendBalloonAssetbundleName appends value to the "balloon_assetbundle_name" field.
-func (_u *StampUpdateOne) AppendBalloonAssetbundleName(v json.RawMessage) *StampUpdateOne {
-	_u.mutation.AppendBalloonAssetbundleName(v)
+// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
+func (_u *StampUpdateOne) SetNillableBalloonAssetbundleName(v *string) *StampUpdateOne {
+	if v != nil {
+		_u.SetBalloonAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -720,14 +713,16 @@ func (_u *StampUpdateOne) ClearDescription() *StampUpdateOne {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *StampUpdateOne) SetArchiveDisplayType(v json.RawMessage) *StampUpdateOne {
+func (_u *StampUpdateOne) SetArchiveDisplayType(v string) *StampUpdateOne {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *StampUpdateOne) AppendArchiveDisplayType(v json.RawMessage) *StampUpdateOne {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *StampUpdateOne) SetNillableArchiveDisplayType(v *string) *StampUpdateOne {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -859,15 +854,10 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 		_spec.ClearField(stamp.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedStampType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldStampType, value)
-		})
+		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
 	}
 	if _u.mutation.StampTypeCleared() {
-		_spec.ClearField(stamp.FieldStampType, field.TypeJSON)
+		_spec.ClearField(stamp.FieldStampType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(stamp.FieldSeq, field.TypeInt64, value)
@@ -891,15 +881,10 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 		_spec.ClearField(stamp.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedBalloonAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldBalloonAssetbundleName, value)
-		})
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.BalloonAssetbundleNameCleared() {
-		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeJSON)
+		_spec.ClearField(stamp.FieldBalloonAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterId1(); ok {
 		_spec.SetField(stamp.FieldCharacterId1, field.TypeInt64, value)
@@ -935,15 +920,10 @@ func (_u *StampUpdateOne) sqlSave(ctx context.Context) (_node *Stamp, err error)
 		_spec.ClearField(stamp.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, stamp.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(stamp.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.CharacterId2(); ok {
 		_spec.SetField(stamp.FieldCharacterId2, field.TypeInt64, value)

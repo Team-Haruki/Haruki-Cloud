@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
 	"strings"
@@ -26,13 +25,13 @@ type Area struct {
 	// IsBaseArea holds the value of the "is_base_area" field.
 	IsBaseArea bool `json:"is_base_area,omitempty"`
 	// AreaType holds the value of the "area_type" field.
-	AreaType json.RawMessage `json:"area_type,omitempty"`
+	AreaType string `json:"area_type,omitempty"`
 	// ViewType holds the value of the "view_type" field.
-	ViewType json.RawMessage `json:"view_type,omitempty"`
+	ViewType string `json:"view_type,omitempty"`
 	// DisplayTimelineType holds the value of the "display_timeline_type" field.
-	DisplayTimelineType json.RawMessage `json:"display_timeline_type,omitempty"`
+	DisplayTimelineType string `json:"display_timeline_type,omitempty"`
 	// AdditionalAreaType holds the value of the "additional_area_type" field.
-	AdditionalAreaType json.RawMessage `json:"additional_area_type,omitempty"`
+	AdditionalAreaType string `json:"additional_area_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
@@ -57,13 +56,11 @@ func (*Area) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case area.FieldAreaType, area.FieldViewType, area.FieldDisplayTimelineType, area.FieldAdditionalAreaType:
-			values[i] = new([]byte)
 		case area.FieldIsBaseArea:
 			values[i] = new(sql.NullBool)
 		case area.FieldID, area.FieldGameID, area.FieldGroupID, area.FieldReleaseConditionID, area.FieldStartAt, area.FieldEndAt, area.FieldReleaseConditionId2:
 			values[i] = new(sql.NullInt64)
-		case area.FieldAssetbundleName, area.FieldName, area.FieldSubName, area.FieldLabel, area.FieldServerRegion:
+		case area.FieldAssetbundleName, area.FieldAreaType, area.FieldViewType, area.FieldDisplayTimelineType, area.FieldAdditionalAreaType, area.FieldName, area.FieldSubName, area.FieldLabel, area.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -111,36 +108,28 @@ func (_m *Area) assignValues(columns []string, values []any) error {
 				_m.IsBaseArea = value.Bool
 			}
 		case area.FieldAreaType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field area_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.AreaType); err != nil {
-					return fmt.Errorf("unmarshal field area_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.AreaType = value.String
 			}
 		case area.FieldViewType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field view_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.ViewType); err != nil {
-					return fmt.Errorf("unmarshal field view_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.ViewType = value.String
 			}
 		case area.FieldDisplayTimelineType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field display_timeline_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.DisplayTimelineType); err != nil {
-					return fmt.Errorf("unmarshal field display_timeline_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.DisplayTimelineType = value.String
 			}
 		case area.FieldAdditionalAreaType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field additional_area_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.AdditionalAreaType); err != nil {
-					return fmt.Errorf("unmarshal field additional_area_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.AdditionalAreaType = value.String
 			}
 		case area.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -239,16 +228,16 @@ func (_m *Area) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.IsBaseArea))
 	builder.WriteString(", ")
 	builder.WriteString("area_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.AreaType))
+	builder.WriteString(_m.AreaType)
 	builder.WriteString(", ")
 	builder.WriteString("view_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ViewType))
+	builder.WriteString(_m.ViewType)
 	builder.WriteString(", ")
 	builder.WriteString("display_timeline_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.DisplayTimelineType))
+	builder.WriteString(_m.DisplayTimelineType)
 	builder.WriteString(", ")
 	builder.WriteString("additional_area_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.AdditionalAreaType))
+	builder.WriteString(_m.AdditionalAreaType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

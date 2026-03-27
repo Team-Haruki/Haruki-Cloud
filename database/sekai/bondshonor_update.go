@@ -165,14 +165,16 @@ func (_u *BondshonorUpdate) ClearGameCharacterUnitId2() *BondshonorUpdate {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_u *BondshonorUpdate) SetHonorRarity(v json.RawMessage) *BondshonorUpdate {
+func (_u *BondshonorUpdate) SetHonorRarity(v string) *BondshonorUpdate {
 	_u.mutation.SetHonorRarity(v)
 	return _u
 }
 
-// AppendHonorRarity appends value to the "honor_rarity" field.
-func (_u *BondshonorUpdate) AppendHonorRarity(v json.RawMessage) *BondshonorUpdate {
-	_u.mutation.AppendHonorRarity(v)
+// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
+func (_u *BondshonorUpdate) SetNillableHonorRarity(v *string) *BondshonorUpdate {
+	if v != nil {
+		_u.SetHonorRarity(*v)
+	}
 	return _u
 }
 
@@ -381,15 +383,10 @@ func (_u *BondshonorUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
-		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorRarity(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, bondshonor.FieldHonorRarity, value)
-		})
+		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeString, value)
 	}
 	if _u.mutation.HonorRarityCleared() {
-		_spec.ClearField(bondshonor.FieldHonorRarity, field.TypeJSON)
+		_spec.ClearField(bondshonor.FieldHonorRarity, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bondshonor.FieldName, field.TypeString, value)
@@ -585,14 +582,16 @@ func (_u *BondshonorUpdateOne) ClearGameCharacterUnitId2() *BondshonorUpdateOne 
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_u *BondshonorUpdateOne) SetHonorRarity(v json.RawMessage) *BondshonorUpdateOne {
+func (_u *BondshonorUpdateOne) SetHonorRarity(v string) *BondshonorUpdateOne {
 	_u.mutation.SetHonorRarity(v)
 	return _u
 }
 
-// AppendHonorRarity appends value to the "honor_rarity" field.
-func (_u *BondshonorUpdateOne) AppendHonorRarity(v json.RawMessage) *BondshonorUpdateOne {
-	_u.mutation.AppendHonorRarity(v)
+// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
+func (_u *BondshonorUpdateOne) SetNillableHonorRarity(v *string) *BondshonorUpdateOne {
+	if v != nil {
+		_u.SetHonorRarity(*v)
+	}
 	return _u
 }
 
@@ -831,15 +830,10 @@ func (_u *BondshonorUpdateOne) sqlSave(ctx context.Context) (_node *Bondshonor, 
 		_spec.ClearField(bondshonor.FieldGameCharacterUnitId2, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
-		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorRarity(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, bondshonor.FieldHonorRarity, value)
-		})
+		_spec.SetField(bondshonor.FieldHonorRarity, field.TypeString, value)
 	}
 	if _u.mutation.HonorRarityCleared() {
-		_spec.ClearField(bondshonor.FieldHonorRarity, field.TypeJSON)
+		_spec.ClearField(bondshonor.FieldHonorRarity, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bondshonor.FieldName, field.TypeString, value)

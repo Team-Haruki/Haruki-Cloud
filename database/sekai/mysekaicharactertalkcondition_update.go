@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *MysekaicharactertalkconditionUpdate) ClearGameID() *Mysekaicharacterta
 }
 
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
-func (_u *MysekaicharactertalkconditionUpdate) SetMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionUpdate {
+func (_u *MysekaicharactertalkconditionUpdate) SetMysekaiCharacterTalkConditionType(v string) *MysekaicharactertalkconditionUpdate {
 	_u.mutation.SetMysekaiCharacterTalkConditionType(v)
 	return _u
 }
 
-// AppendMysekaiCharacterTalkConditionType appends value to the "mysekai_character_talk_condition_type" field.
-func (_u *MysekaicharactertalkconditionUpdate) AppendMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionUpdate {
-	_u.mutation.AppendMysekaiCharacterTalkConditionType(v)
+// SetNillableMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field if the given value is not nil.
+func (_u *MysekaicharactertalkconditionUpdate) SetNillableMysekaiCharacterTalkConditionType(v *string) *MysekaicharactertalkconditionUpdate {
+	if v != nil {
+		_u.SetMysekaiCharacterTalkConditionType(*v)
+	}
 	return _u
 }
 
@@ -166,15 +166,10 @@ func (_u *MysekaicharactertalkconditionUpdate) sqlSave(ctx context.Context) (_no
 		_spec.ClearField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCharacterTalkConditionType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, value)
-		})
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkConditionTypeCleared() {
-		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)
@@ -236,14 +231,16 @@ func (_u *MysekaicharactertalkconditionUpdateOne) ClearGameID() *Mysekaicharacte
 }
 
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) SetMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionUpdateOne {
+func (_u *MysekaicharactertalkconditionUpdateOne) SetMysekaiCharacterTalkConditionType(v string) *MysekaicharactertalkconditionUpdateOne {
 	_u.mutation.SetMysekaiCharacterTalkConditionType(v)
 	return _u
 }
 
-// AppendMysekaiCharacterTalkConditionType appends value to the "mysekai_character_talk_condition_type" field.
-func (_u *MysekaicharactertalkconditionUpdateOne) AppendMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionUpdateOne {
-	_u.mutation.AppendMysekaiCharacterTalkConditionType(v)
+// SetNillableMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field if the given value is not nil.
+func (_u *MysekaicharactertalkconditionUpdateOne) SetNillableMysekaiCharacterTalkConditionType(v *string) *MysekaicharactertalkconditionUpdateOne {
+	if v != nil {
+		_u.SetMysekaiCharacterTalkConditionType(*v)
+	}
 	return _u
 }
 
@@ -375,15 +372,10 @@ func (_u *MysekaicharactertalkconditionUpdateOne) sqlSave(ctx context.Context) (
 		_spec.ClearField(mysekaicharactertalkcondition.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionType(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCharacterTalkConditionType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, value)
-		})
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkConditionTypeCleared() {
-		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {
 		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue, field.TypeInt64, value)

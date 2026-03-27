@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
@@ -35,8 +34,16 @@ func (_c *MysekaiphenomenonCreate) SetNillableGameID(v *int64) *Mysekaiphenomeno
 }
 
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaBrightnessType(v string) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaBrightnessType(v)
+	return _c
+}
+
+// SetNillableMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field if the given value is not nil.
+func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaBrightnessType(v *string) *MysekaiphenomenonCreate {
+	if v != nil {
+		_c.SetMysekaiPhenomenaBrightnessType(*v)
+	}
 	return _c
 }
 
@@ -83,8 +90,16 @@ func (_c *MysekaiphenomenonCreate) SetNillableDescription(v *string) *Mysekaiphe
 }
 
 // SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
-func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonCreate {
+func (_c *MysekaiphenomenonCreate) SetMysekaiPhenomenaTimePeriodType(v string) *MysekaiphenomenonCreate {
 	_c.mutation.SetMysekaiPhenomenaTimePeriodType(v)
+	return _c
+}
+
+// SetNillableMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field if the given value is not nil.
+func (_c *MysekaiphenomenonCreate) SetNillableMysekaiPhenomenaTimePeriodType(v *string) *MysekaiphenomenonCreate {
+	if v != nil {
+		_c.SetMysekaiPhenomenaTimePeriodType(*v)
+	}
 	return _c
 }
 
@@ -218,7 +233,7 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBrightnessType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeString, value)
 		_node.MysekaiPhenomenaBrightnessType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -234,7 +249,7 @@ func (_c *MysekaiphenomenonCreate) createSpec() (*Mysekaiphenomenon, *sqlgraph.C
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaTimePeriodType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON, value)
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeString, value)
 		_node.MysekaiPhenomenaTimePeriodType = value
 	}
 	if value, ok := _c.mutation.MysekaiPhenomenaBackgroundColorID(); ok {

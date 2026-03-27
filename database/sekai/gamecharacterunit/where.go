@@ -63,9 +63,29 @@ func GameCharacterID(v int64) predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
+// Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
+func Unit(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldUnit, v))
+}
+
 // ColorCode applies equality check predicate on the "color_code" field. It's identical to ColorCodeEQ.
 func ColorCode(v string) predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldEQ(FieldColorCode, v))
+}
+
+// SkinColorCode applies equality check predicate on the "skin_color_code" field. It's identical to SkinColorCodeEQ.
+func SkinColorCode(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinColorCode, v))
+}
+
+// SkinShadowColorCode1 applies equality check predicate on the "skin_shadow_color_code1" field. It's identical to SkinShadowColorCode1EQ.
+func SkinShadowColorCode1(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode2 applies equality check predicate on the "skin_shadow_color_code2" field. It's identical to SkinShadowColorCode2EQ.
+func SkinShadowColorCode2(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinShadowColorCode2, v))
 }
 
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
@@ -173,6 +193,61 @@ func GameCharacterIDNotNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldNotNull(FieldGameCharacterID))
 }
 
+// UnitEQ applies the EQ predicate on the "unit" field.
+func UnitEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldUnit, v))
+}
+
+// UnitNEQ applies the NEQ predicate on the "unit" field.
+func UnitNEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNEQ(FieldUnit, v))
+}
+
+// UnitIn applies the In predicate on the "unit" field.
+func UnitIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldIn(FieldUnit, vs...))
+}
+
+// UnitNotIn applies the NotIn predicate on the "unit" field.
+func UnitNotIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNotIn(FieldUnit, vs...))
+}
+
+// UnitGT applies the GT predicate on the "unit" field.
+func UnitGT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGT(FieldUnit, v))
+}
+
+// UnitGTE applies the GTE predicate on the "unit" field.
+func UnitGTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGTE(FieldUnit, v))
+}
+
+// UnitLT applies the LT predicate on the "unit" field.
+func UnitLT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLT(FieldUnit, v))
+}
+
+// UnitLTE applies the LTE predicate on the "unit" field.
+func UnitLTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLTE(FieldUnit, v))
+}
+
+// UnitContains applies the Contains predicate on the "unit" field.
+func UnitContains(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContains(FieldUnit, v))
+}
+
+// UnitHasPrefix applies the HasPrefix predicate on the "unit" field.
+func UnitHasPrefix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasPrefix(FieldUnit, v))
+}
+
+// UnitHasSuffix applies the HasSuffix predicate on the "unit" field.
+func UnitHasSuffix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasSuffix(FieldUnit, v))
+}
+
 // UnitIsNil applies the IsNil predicate on the "unit" field.
 func UnitIsNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldIsNull(FieldUnit))
@@ -181,6 +256,16 @@ func UnitIsNil() predicate.Gamecharacterunit {
 // UnitNotNil applies the NotNil predicate on the "unit" field.
 func UnitNotNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldNotNull(FieldUnit))
+}
+
+// UnitEqualFold applies the EqualFold predicate on the "unit" field.
+func UnitEqualFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEqualFold(FieldUnit, v))
+}
+
+// UnitContainsFold applies the ContainsFold predicate on the "unit" field.
+func UnitContainsFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContainsFold(FieldUnit, v))
 }
 
 // ColorCodeEQ applies the EQ predicate on the "color_code" field.
@@ -258,6 +343,61 @@ func ColorCodeContainsFold(v string) predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldContainsFold(FieldColorCode, v))
 }
 
+// SkinColorCodeEQ applies the EQ predicate on the "skin_color_code" field.
+func SkinColorCodeEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeNEQ applies the NEQ predicate on the "skin_color_code" field.
+func SkinColorCodeNEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNEQ(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeIn applies the In predicate on the "skin_color_code" field.
+func SkinColorCodeIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldIn(FieldSkinColorCode, vs...))
+}
+
+// SkinColorCodeNotIn applies the NotIn predicate on the "skin_color_code" field.
+func SkinColorCodeNotIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNotIn(FieldSkinColorCode, vs...))
+}
+
+// SkinColorCodeGT applies the GT predicate on the "skin_color_code" field.
+func SkinColorCodeGT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGT(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeGTE applies the GTE predicate on the "skin_color_code" field.
+func SkinColorCodeGTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGTE(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeLT applies the LT predicate on the "skin_color_code" field.
+func SkinColorCodeLT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLT(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeLTE applies the LTE predicate on the "skin_color_code" field.
+func SkinColorCodeLTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLTE(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeContains applies the Contains predicate on the "skin_color_code" field.
+func SkinColorCodeContains(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContains(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeHasPrefix applies the HasPrefix predicate on the "skin_color_code" field.
+func SkinColorCodeHasPrefix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasPrefix(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeHasSuffix applies the HasSuffix predicate on the "skin_color_code" field.
+func SkinColorCodeHasSuffix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasSuffix(FieldSkinColorCode, v))
+}
+
 // SkinColorCodeIsNil applies the IsNil predicate on the "skin_color_code" field.
 func SkinColorCodeIsNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldIsNull(FieldSkinColorCode))
@@ -266,6 +406,71 @@ func SkinColorCodeIsNil() predicate.Gamecharacterunit {
 // SkinColorCodeNotNil applies the NotNil predicate on the "skin_color_code" field.
 func SkinColorCodeNotNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldNotNull(FieldSkinColorCode))
+}
+
+// SkinColorCodeEqualFold applies the EqualFold predicate on the "skin_color_code" field.
+func SkinColorCodeEqualFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEqualFold(FieldSkinColorCode, v))
+}
+
+// SkinColorCodeContainsFold applies the ContainsFold predicate on the "skin_color_code" field.
+func SkinColorCodeContainsFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContainsFold(FieldSkinColorCode, v))
+}
+
+// SkinShadowColorCode1EQ applies the EQ predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1EQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1NEQ applies the NEQ predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1NEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNEQ(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1In applies the In predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1In(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldIn(FieldSkinShadowColorCode1, vs...))
+}
+
+// SkinShadowColorCode1NotIn applies the NotIn predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1NotIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNotIn(FieldSkinShadowColorCode1, vs...))
+}
+
+// SkinShadowColorCode1GT applies the GT predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1GT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGT(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1GTE applies the GTE predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1GTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGTE(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1LT applies the LT predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1LT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLT(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1LTE applies the LTE predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1LTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLTE(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1Contains applies the Contains predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1Contains(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContains(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1HasPrefix applies the HasPrefix predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1HasPrefix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasPrefix(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1HasSuffix applies the HasSuffix predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1HasSuffix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasSuffix(FieldSkinShadowColorCode1, v))
 }
 
 // SkinShadowColorCode1IsNil applies the IsNil predicate on the "skin_shadow_color_code1" field.
@@ -278,6 +483,71 @@ func SkinShadowColorCode1NotNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldNotNull(FieldSkinShadowColorCode1))
 }
 
+// SkinShadowColorCode1EqualFold applies the EqualFold predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1EqualFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEqualFold(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode1ContainsFold applies the ContainsFold predicate on the "skin_shadow_color_code1" field.
+func SkinShadowColorCode1ContainsFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContainsFold(FieldSkinShadowColorCode1, v))
+}
+
+// SkinShadowColorCode2EQ applies the EQ predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2EQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEQ(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2NEQ applies the NEQ predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2NEQ(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNEQ(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2In applies the In predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2In(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldIn(FieldSkinShadowColorCode2, vs...))
+}
+
+// SkinShadowColorCode2NotIn applies the NotIn predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2NotIn(vs ...string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldNotIn(FieldSkinShadowColorCode2, vs...))
+}
+
+// SkinShadowColorCode2GT applies the GT predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2GT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGT(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2GTE applies the GTE predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2GTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldGTE(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2LT applies the LT predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2LT(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLT(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2LTE applies the LTE predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2LTE(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldLTE(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2Contains applies the Contains predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2Contains(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContains(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2HasPrefix applies the HasPrefix predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2HasPrefix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasPrefix(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2HasSuffix applies the HasSuffix predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2HasSuffix(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldHasSuffix(FieldSkinShadowColorCode2, v))
+}
+
 // SkinShadowColorCode2IsNil applies the IsNil predicate on the "skin_shadow_color_code2" field.
 func SkinShadowColorCode2IsNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldIsNull(FieldSkinShadowColorCode2))
@@ -286,6 +556,16 @@ func SkinShadowColorCode2IsNil() predicate.Gamecharacterunit {
 // SkinShadowColorCode2NotNil applies the NotNil predicate on the "skin_shadow_color_code2" field.
 func SkinShadowColorCode2NotNil() predicate.Gamecharacterunit {
 	return predicate.Gamecharacterunit(sql.FieldNotNull(FieldSkinShadowColorCode2))
+}
+
+// SkinShadowColorCode2EqualFold applies the EqualFold predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2EqualFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldEqualFold(FieldSkinShadowColorCode2, v))
+}
+
+// SkinShadowColorCode2ContainsFold applies the ContainsFold predicate on the "skin_shadow_color_code2" field.
+func SkinShadowColorCode2ContainsFold(v string) predicate.Gamecharacterunit {
+	return predicate.Gamecharacterunit(sql.FieldContainsFold(FieldSkinShadowColorCode2, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

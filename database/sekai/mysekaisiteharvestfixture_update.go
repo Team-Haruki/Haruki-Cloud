@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -131,14 +129,16 @@ func (_u *MysekaisiteharvestfixtureUpdate) ClearLastAttackStamina() *Mysekaisite
 }
 
 // SetMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_u *MysekaisiteharvestfixtureUpdate) SetMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureUpdate {
+func (_u *MysekaisiteharvestfixtureUpdate) SetMysekaiSiteHarvestFixtureRarityType(v string) *MysekaisiteharvestfixtureUpdate {
 	_u.mutation.SetMysekaiSiteHarvestFixtureRarityType(v)
 	return _u
 }
 
-// AppendMysekaiSiteHarvestFixtureRarityType appends value to the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_u *MysekaisiteharvestfixtureUpdate) AppendMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureUpdate {
-	_u.mutation.AppendMysekaiSiteHarvestFixtureRarityType(v)
+// SetNillableMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field if the given value is not nil.
+func (_u *MysekaisiteharvestfixtureUpdate) SetNillableMysekaiSiteHarvestFixtureRarityType(v *string) *MysekaisiteharvestfixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiSiteHarvestFixtureRarityType(*v)
+	}
 	return _u
 }
 
@@ -257,15 +257,10 @@ func (_u *MysekaisiteharvestfixtureUpdate) sqlSave(ctx context.Context) (_node i
 		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSiteHarvestFixtureRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, value)
-		})
+		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSiteHarvestFixtureRarityTypeCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldAssetbundleName, field.TypeString, value)
@@ -398,14 +393,16 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) ClearLastAttackStamina() *Mysekais
 }
 
 // SetMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) SetMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureUpdateOne {
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetMysekaiSiteHarvestFixtureRarityType(v string) *MysekaisiteharvestfixtureUpdateOne {
 	_u.mutation.SetMysekaiSiteHarvestFixtureRarityType(v)
 	return _u
 }
 
-// AppendMysekaiSiteHarvestFixtureRarityType appends value to the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_u *MysekaisiteharvestfixtureUpdateOne) AppendMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureUpdateOne {
-	_u.mutation.AppendMysekaiSiteHarvestFixtureRarityType(v)
+// SetNillableMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field if the given value is not nil.
+func (_u *MysekaisiteharvestfixtureUpdateOne) SetNillableMysekaiSiteHarvestFixtureRarityType(v *string) *MysekaisiteharvestfixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiSiteHarvestFixtureRarityType(*v)
+	}
 	return _u
 }
 
@@ -554,15 +551,10 @@ func (_u *MysekaisiteharvestfixtureUpdateOne) sqlSave(ctx context.Context) (_nod
 		_spec.ClearField(mysekaisiteharvestfixture.FieldLastAttackStamina, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSiteHarvestFixtureRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, value)
-		})
+		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSiteHarvestFixtureRarityTypeCleared() {
-		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON)
+		_spec.ClearField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaisiteharvestfixture.FieldAssetbundleName, field.TypeString, value)

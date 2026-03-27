@@ -18,7 +18,7 @@ type Masterlesson struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
-	CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+	CardRarityType string `json:"card_rarity_type,omitempty"`
 	// MasterRank holds the value of the "master_rank" field.
 	MasterRank int64 `json:"master_rank,omitempty"`
 	// Power1BonusFixed holds the value of the "power1_bonus_fixed" field.
@@ -43,11 +43,11 @@ func (*Masterlesson) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case masterlesson.FieldCardRarityType, masterlesson.FieldCosts, masterlesson.FieldRewards:
+		case masterlesson.FieldCosts, masterlesson.FieldRewards:
 			values[i] = new([]byte)
 		case masterlesson.FieldID, masterlesson.FieldMasterRank, masterlesson.FieldPower1BonusFixed, masterlesson.FieldPower2BonusFixed, masterlesson.FieldPower3BonusFixed, masterlesson.FieldCharacterRankExp:
 			values[i] = new(sql.NullInt64)
-		case masterlesson.FieldServerRegion:
+		case masterlesson.FieldCardRarityType, masterlesson.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -71,12 +71,10 @@ func (_m *Masterlesson) assignValues(columns []string, values []any) error {
 			}
 			_m.ID = int(value.Int64)
 		case masterlesson.FieldCardRarityType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CardRarityType); err != nil {
-					return fmt.Errorf("unmarshal field card_rarity_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.CardRarityType = value.String
 			}
 		case masterlesson.FieldMasterRank:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -167,7 +165,7 @@ func (_m *Masterlesson) String() string {
 	builder.WriteString("Masterlesson(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("card_rarity_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CardRarityType))
+	builder.WriteString(_m.CardRarityType)
 	builder.WriteString(", ")
 	builder.WriteString("master_rank=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MasterRank))

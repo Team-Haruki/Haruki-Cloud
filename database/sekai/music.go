@@ -44,7 +44,7 @@ type Music struct {
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// LiveTalkBackgroundAssetbundleName holds the value of the "live_talk_background_assetbundle_name" field.
-	LiveTalkBackgroundAssetbundleName json.RawMessage `json:"live_talk_background_assetbundle_name,omitempty"`
+	LiveTalkBackgroundAssetbundleName string `json:"live_talk_background_assetbundle_name,omitempty"`
 	// PublishedAt holds the value of the "published_at" field.
 	PublishedAt int64 `json:"published_at,omitempty"`
 	// ReleasedAt holds the value of the "released_at" field.
@@ -71,7 +71,7 @@ func (*Music) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case music.FieldCategories, music.FieldLiveTalkBackgroundAssetbundleName, music.FieldInfos:
+		case music.FieldCategories, music.FieldInfos:
 			values[i] = new([]byte)
 		case music.FieldIsNewlyWrittenMusic, music.FieldIsFullLength:
 			values[i] = new(sql.NullBool)
@@ -79,7 +79,7 @@ func (*Music) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case music.FieldID, music.FieldGameID, music.FieldSeq, music.FieldReleaseConditionID, music.FieldCreatorArtistID, music.FieldDancerCount, music.FieldSelfDancerPosition, music.FieldPublishedAt, music.FieldReleasedAt, music.FieldLiveStageID, music.FieldMusicCollaborationID:
 			values[i] = new(sql.NullInt64)
-		case music.FieldTitle, music.FieldPronunciation, music.FieldLyricist, music.FieldComposer, music.FieldArranger, music.FieldAssetbundleName, music.FieldServerRegion:
+		case music.FieldTitle, music.FieldPronunciation, music.FieldLyricist, music.FieldComposer, music.FieldArranger, music.FieldAssetbundleName, music.FieldLiveTalkBackgroundAssetbundleName, music.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -183,12 +183,10 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 				_m.AssetbundleName = value.String
 			}
 		case music.FieldLiveTalkBackgroundAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field live_talk_background_assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.LiveTalkBackgroundAssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field live_talk_background_assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.LiveTalkBackgroundAssetbundleName = value.String
 			}
 		case music.FieldPublishedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -322,7 +320,7 @@ func (_m *Music) String() string {
 	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("live_talk_background_assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.LiveTalkBackgroundAssetbundleName))
+	builder.WriteString(_m.LiveTalkBackgroundAssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("published_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PublishedAt))

@@ -29,7 +29,7 @@ func (Cardepisode) Fields() []ent.Field {
 		field.Int64("power3_bonus_fixed").Optional(),
 		field.JSON("reward_resource_box_ids", json.RawMessage{}).Optional(),
 		field.JSON("costs", json.RawMessage{}).Optional(),
-		field.JSON("card_episode_part_type", json.RawMessage{}).Optional(),
+		field.String("card_episode_part_type").Optional(),
 		field.String("server_region"),
 	}
 }

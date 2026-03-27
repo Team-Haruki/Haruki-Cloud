@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaceilitem"
 	"strings"
@@ -24,7 +23,7 @@ type Gachaceilitem struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
-	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
+	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ConvertStartAt holds the value of the "convert_start_at" field.
 	ConvertStartAt int64 `json:"convert_start_at,omitempty"`
 	// ConvertResourceBoxID holds the value of the "convert_resource_box_id" field.
@@ -39,11 +38,9 @@ func (*Gachaceilitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gachaceilitem.FieldAssetbundleName:
-			values[i] = new([]byte)
 		case gachaceilitem.FieldID, gachaceilitem.FieldGameID, gachaceilitem.FieldGachaID, gachaceilitem.FieldConvertStartAt, gachaceilitem.FieldConvertResourceBoxID:
 			values[i] = new(sql.NullInt64)
-		case gachaceilitem.FieldName, gachaceilitem.FieldServerRegion:
+		case gachaceilitem.FieldName, gachaceilitem.FieldAssetbundleName, gachaceilitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -85,12 +82,10 @@ func (_m *Gachaceilitem) assignValues(columns []string, values []any) error {
 				_m.Name = value.String
 			}
 		case gachaceilitem.FieldAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.AssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.AssetbundleName = value.String
 			}
 		case gachaceilitem.FieldConvertStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -156,7 +151,7 @@ func (_m *Gachaceilitem) String() string {
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.AssetbundleName))
+	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("convert_start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ConvertStartAt))

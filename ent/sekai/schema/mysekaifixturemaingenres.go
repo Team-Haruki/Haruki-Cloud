@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,7 +17,7 @@ func (Mysekaifixturemaingenre) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
-		field.JSON("mysekai_fixture_main_genre_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_fixture_main_genre_type").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.Int64("group_id").Optional(),
 		field.String("server_region"),

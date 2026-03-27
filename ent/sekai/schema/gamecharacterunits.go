@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,11 +17,11 @@ func (Gamecharacterunit) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
 		field.Int64("game_character_id").Optional(),
-		field.JSON("unit", json.RawMessage{}).Optional(),
+		field.String("unit").Optional(),
 		field.String("color_code").Optional(),
-		field.JSON("skin_color_code", json.RawMessage{}).Optional(),
-		field.JSON("skin_shadow_color_code1", json.RawMessage{}).Optional(),
-		field.JSON("skin_shadow_color_code2", json.RawMessage{}).Optional(),
+		field.String("skin_color_code").Optional(),
+		field.String("skin_shadow_color_code1").Optional(),
+		field.String("skin_shadow_color_code2").Optional(),
 		field.String("server_region"),
 	}
 }

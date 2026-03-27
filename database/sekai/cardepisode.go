@@ -42,7 +42,7 @@ type Cardepisode struct {
 	// Costs holds the value of the "costs" field.
 	Costs json.RawMessage `json:"costs,omitempty"`
 	// CardEpisodePartType holds the value of the "card_episode_part_type" field.
-	CardEpisodePartType json.RawMessage `json:"card_episode_part_type,omitempty"`
+	CardEpisodePartType string `json:"card_episode_part_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -53,11 +53,11 @@ func (*Cardepisode) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case cardepisode.FieldRewardResourceBoxIds, cardepisode.FieldCosts, cardepisode.FieldCardEpisodePartType:
+		case cardepisode.FieldRewardResourceBoxIds, cardepisode.FieldCosts:
 			values[i] = new([]byte)
 		case cardepisode.FieldID, cardepisode.FieldGameID, cardepisode.FieldSeq, cardepisode.FieldCardID, cardepisode.FieldReleaseConditionID, cardepisode.FieldPower1BonusFixed, cardepisode.FieldPower2BonusFixed, cardepisode.FieldPower3BonusFixed:
 			values[i] = new(sql.NullInt64)
-		case cardepisode.FieldTitle, cardepisode.FieldScenarioID, cardepisode.FieldAssetbundleName, cardepisode.FieldServerRegion:
+		case cardepisode.FieldTitle, cardepisode.FieldScenarioID, cardepisode.FieldAssetbundleName, cardepisode.FieldCardEpisodePartType, cardepisode.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -157,12 +157,10 @@ func (_m *Cardepisode) assignValues(columns []string, values []any) error {
 				}
 			}
 		case cardepisode.FieldCardEpisodePartType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field card_episode_part_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CardEpisodePartType); err != nil {
-					return fmt.Errorf("unmarshal field card_episode_part_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.CardEpisodePartType = value.String
 			}
 		case cardepisode.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -243,7 +241,7 @@ func (_m *Cardepisode) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Costs))
 	builder.WriteString(", ")
 	builder.WriteString("card_episode_part_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CardEpisodePartType))
+	builder.WriteString(_m.CardEpisodePartType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

@@ -68,6 +68,11 @@ func GameCharacterUnitID(v int64) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
+// CardAttr applies equality check predicate on the "card_attr" field. It's identical to CardAttrEQ.
+func CardAttr(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldCardAttr, v))
+}
+
 // BonusRate applies equality check predicate on the "bonus_rate" field. It's identical to BonusRateEQ.
 func BonusRate(v float64) predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldBonusRate, v))
@@ -228,6 +233,61 @@ func GameCharacterUnitIDNotNil() predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldGameCharacterUnitID))
 }
 
+// CardAttrEQ applies the EQ predicate on the "card_attr" field.
+func CardAttrEQ(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEQ(FieldCardAttr, v))
+}
+
+// CardAttrNEQ applies the NEQ predicate on the "card_attr" field.
+func CardAttrNEQ(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNEQ(FieldCardAttr, v))
+}
+
+// CardAttrIn applies the In predicate on the "card_attr" field.
+func CardAttrIn(vs ...string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldIn(FieldCardAttr, vs...))
+}
+
+// CardAttrNotIn applies the NotIn predicate on the "card_attr" field.
+func CardAttrNotIn(vs ...string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldNotIn(FieldCardAttr, vs...))
+}
+
+// CardAttrGT applies the GT predicate on the "card_attr" field.
+func CardAttrGT(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGT(FieldCardAttr, v))
+}
+
+// CardAttrGTE applies the GTE predicate on the "card_attr" field.
+func CardAttrGTE(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldGTE(FieldCardAttr, v))
+}
+
+// CardAttrLT applies the LT predicate on the "card_attr" field.
+func CardAttrLT(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLT(FieldCardAttr, v))
+}
+
+// CardAttrLTE applies the LTE predicate on the "card_attr" field.
+func CardAttrLTE(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldLTE(FieldCardAttr, v))
+}
+
+// CardAttrContains applies the Contains predicate on the "card_attr" field.
+func CardAttrContains(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldContains(FieldCardAttr, v))
+}
+
+// CardAttrHasPrefix applies the HasPrefix predicate on the "card_attr" field.
+func CardAttrHasPrefix(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldHasPrefix(FieldCardAttr, v))
+}
+
+// CardAttrHasSuffix applies the HasSuffix predicate on the "card_attr" field.
+func CardAttrHasSuffix(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldHasSuffix(FieldCardAttr, v))
+}
+
 // CardAttrIsNil applies the IsNil predicate on the "card_attr" field.
 func CardAttrIsNil() predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldIsNull(FieldCardAttr))
@@ -236,6 +296,16 @@ func CardAttrIsNil() predicate.Eventdeckbonuse {
 // CardAttrNotNil applies the NotNil predicate on the "card_attr" field.
 func CardAttrNotNil() predicate.Eventdeckbonuse {
 	return predicate.Eventdeckbonuse(sql.FieldNotNull(FieldCardAttr))
+}
+
+// CardAttrEqualFold applies the EqualFold predicate on the "card_attr" field.
+func CardAttrEqualFold(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldEqualFold(FieldCardAttr, v))
+}
+
+// CardAttrContainsFold applies the ContainsFold predicate on the "card_attr" field.
+func CardAttrContainsFold(v string) predicate.Eventdeckbonuse {
+	return predicate.Eventdeckbonuse(sql.FieldContainsFold(FieldCardAttr, v))
 }
 
 // BonusRateEQ applies the EQ predicate on the "bonus_rate" field.

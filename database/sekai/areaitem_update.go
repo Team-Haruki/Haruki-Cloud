@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -124,14 +122,16 @@ func (_u *AreaitemUpdate) ClearFlavorText() *AreaitemUpdate {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_u *AreaitemUpdate) SetSpawnPoint(v json.RawMessage) *AreaitemUpdate {
+func (_u *AreaitemUpdate) SetSpawnPoint(v string) *AreaitemUpdate {
 	_u.mutation.SetSpawnPoint(v)
 	return _u
 }
 
-// AppendSpawnPoint appends value to the "spawn_point" field.
-func (_u *AreaitemUpdate) AppendSpawnPoint(v json.RawMessage) *AreaitemUpdate {
-	_u.mutation.AppendSpawnPoint(v)
+// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
+func (_u *AreaitemUpdate) SetNillableSpawnPoint(v *string) *AreaitemUpdate {
+	if v != nil {
+		_u.SetSpawnPoint(*v)
+	}
 	return _u
 }
 
@@ -247,15 +247,10 @@ func (_u *AreaitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(areaitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSpawnPoint(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitem.FieldSpawnPoint, value)
-		})
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
 	}
 	if _u.mutation.SpawnPointCleared() {
-		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeJSON)
+		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(areaitem.FieldAssetbundleName, field.TypeString, value)
@@ -381,14 +376,16 @@ func (_u *AreaitemUpdateOne) ClearFlavorText() *AreaitemUpdateOne {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_u *AreaitemUpdateOne) SetSpawnPoint(v json.RawMessage) *AreaitemUpdateOne {
+func (_u *AreaitemUpdateOne) SetSpawnPoint(v string) *AreaitemUpdateOne {
 	_u.mutation.SetSpawnPoint(v)
 	return _u
 }
 
-// AppendSpawnPoint appends value to the "spawn_point" field.
-func (_u *AreaitemUpdateOne) AppendSpawnPoint(v json.RawMessage) *AreaitemUpdateOne {
-	_u.mutation.AppendSpawnPoint(v)
+// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
+func (_u *AreaitemUpdateOne) SetNillableSpawnPoint(v *string) *AreaitemUpdateOne {
+	if v != nil {
+		_u.SetSpawnPoint(*v)
+	}
 	return _u
 }
 
@@ -534,15 +531,10 @@ func (_u *AreaitemUpdateOne) sqlSave(ctx context.Context) (_node *Areaitem, err 
 		_spec.ClearField(areaitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSpawnPoint(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, areaitem.FieldSpawnPoint, value)
-		})
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
 	}
 	if _u.mutation.SpawnPointCleared() {
-		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeJSON)
+		_spec.ClearField(areaitem.FieldSpawnPoint, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(areaitem.FieldAssetbundleName, field.TypeString, value)

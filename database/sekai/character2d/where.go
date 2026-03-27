@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldGameID, v))
 }
 
+// CharacterType applies equality check predicate on the "character_type" field. It's identical to CharacterTypeEQ.
+func CharacterType(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldCharacterType, v))
+}
+
 // IsNextGrade applies equality check predicate on the "is_next_grade" field. It's identical to IsNextGradeEQ.
 func IsNextGrade(v bool) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldIsNextGrade, v))
@@ -68,6 +73,11 @@ func CharacterID(v int64) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldCharacterID, v))
 }
 
+// Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
+func Unit(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldUnit, v))
+}
+
 // IsEnabledFlipDisplay applies equality check predicate on the "is_enabled_flip_display" field. It's identical to IsEnabledFlipDisplayEQ.
 func IsEnabledFlipDisplay(v bool) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldIsEnabledFlipDisplay, v))
@@ -76,6 +86,11 @@ func IsEnabledFlipDisplay(v bool) predicate.Character2D {
 // AssetName applies equality check predicate on the "asset_name" field. It's identical to AssetNameEQ.
 func AssetName(v string) predicate.Character2D {
 	return predicate.Character2D(sql.FieldEQ(FieldAssetName, v))
+}
+
+// CharacterIconAssetbundleName applies equality check predicate on the "character_icon_assetbundle_name" field. It's identical to CharacterIconAssetbundleNameEQ.
+func CharacterIconAssetbundleName(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldCharacterIconAssetbundleName, v))
 }
 
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
@@ -133,6 +148,61 @@ func GameIDNotNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotNull(FieldGameID))
 }
 
+// CharacterTypeEQ applies the EQ predicate on the "character_type" field.
+func CharacterTypeEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldCharacterType, v))
+}
+
+// CharacterTypeNEQ applies the NEQ predicate on the "character_type" field.
+func CharacterTypeNEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNEQ(FieldCharacterType, v))
+}
+
+// CharacterTypeIn applies the In predicate on the "character_type" field.
+func CharacterTypeIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldIn(FieldCharacterType, vs...))
+}
+
+// CharacterTypeNotIn applies the NotIn predicate on the "character_type" field.
+func CharacterTypeNotIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNotIn(FieldCharacterType, vs...))
+}
+
+// CharacterTypeGT applies the GT predicate on the "character_type" field.
+func CharacterTypeGT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGT(FieldCharacterType, v))
+}
+
+// CharacterTypeGTE applies the GTE predicate on the "character_type" field.
+func CharacterTypeGTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGTE(FieldCharacterType, v))
+}
+
+// CharacterTypeLT applies the LT predicate on the "character_type" field.
+func CharacterTypeLT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLT(FieldCharacterType, v))
+}
+
+// CharacterTypeLTE applies the LTE predicate on the "character_type" field.
+func CharacterTypeLTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLTE(FieldCharacterType, v))
+}
+
+// CharacterTypeContains applies the Contains predicate on the "character_type" field.
+func CharacterTypeContains(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContains(FieldCharacterType, v))
+}
+
+// CharacterTypeHasPrefix applies the HasPrefix predicate on the "character_type" field.
+func CharacterTypeHasPrefix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasPrefix(FieldCharacterType, v))
+}
+
+// CharacterTypeHasSuffix applies the HasSuffix predicate on the "character_type" field.
+func CharacterTypeHasSuffix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasSuffix(FieldCharacterType, v))
+}
+
 // CharacterTypeIsNil applies the IsNil predicate on the "character_type" field.
 func CharacterTypeIsNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldIsNull(FieldCharacterType))
@@ -141,6 +211,16 @@ func CharacterTypeIsNil() predicate.Character2D {
 // CharacterTypeNotNil applies the NotNil predicate on the "character_type" field.
 func CharacterTypeNotNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotNull(FieldCharacterType))
+}
+
+// CharacterTypeEqualFold applies the EqualFold predicate on the "character_type" field.
+func CharacterTypeEqualFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEqualFold(FieldCharacterType, v))
+}
+
+// CharacterTypeContainsFold applies the ContainsFold predicate on the "character_type" field.
+func CharacterTypeContainsFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContainsFold(FieldCharacterType, v))
 }
 
 // IsNextGradeEQ applies the EQ predicate on the "is_next_grade" field.
@@ -213,6 +293,61 @@ func CharacterIDNotNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotNull(FieldCharacterID))
 }
 
+// UnitEQ applies the EQ predicate on the "unit" field.
+func UnitEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldUnit, v))
+}
+
+// UnitNEQ applies the NEQ predicate on the "unit" field.
+func UnitNEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNEQ(FieldUnit, v))
+}
+
+// UnitIn applies the In predicate on the "unit" field.
+func UnitIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldIn(FieldUnit, vs...))
+}
+
+// UnitNotIn applies the NotIn predicate on the "unit" field.
+func UnitNotIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNotIn(FieldUnit, vs...))
+}
+
+// UnitGT applies the GT predicate on the "unit" field.
+func UnitGT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGT(FieldUnit, v))
+}
+
+// UnitGTE applies the GTE predicate on the "unit" field.
+func UnitGTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGTE(FieldUnit, v))
+}
+
+// UnitLT applies the LT predicate on the "unit" field.
+func UnitLT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLT(FieldUnit, v))
+}
+
+// UnitLTE applies the LTE predicate on the "unit" field.
+func UnitLTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLTE(FieldUnit, v))
+}
+
+// UnitContains applies the Contains predicate on the "unit" field.
+func UnitContains(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContains(FieldUnit, v))
+}
+
+// UnitHasPrefix applies the HasPrefix predicate on the "unit" field.
+func UnitHasPrefix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasPrefix(FieldUnit, v))
+}
+
+// UnitHasSuffix applies the HasSuffix predicate on the "unit" field.
+func UnitHasSuffix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasSuffix(FieldUnit, v))
+}
+
 // UnitIsNil applies the IsNil predicate on the "unit" field.
 func UnitIsNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldIsNull(FieldUnit))
@@ -221,6 +356,16 @@ func UnitIsNil() predicate.Character2D {
 // UnitNotNil applies the NotNil predicate on the "unit" field.
 func UnitNotNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotNull(FieldUnit))
+}
+
+// UnitEqualFold applies the EqualFold predicate on the "unit" field.
+func UnitEqualFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEqualFold(FieldUnit, v))
+}
+
+// UnitContainsFold applies the ContainsFold predicate on the "unit" field.
+func UnitContainsFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContainsFold(FieldUnit, v))
 }
 
 // IsEnabledFlipDisplayEQ applies the EQ predicate on the "is_enabled_flip_display" field.
@@ -318,6 +463,61 @@ func AssetNameContainsFold(v string) predicate.Character2D {
 	return predicate.Character2D(sql.FieldContainsFold(FieldAssetName, v))
 }
 
+// CharacterIconAssetbundleNameEQ applies the EQ predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEQ(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameNEQ applies the NEQ predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameNEQ(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNEQ(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameIn applies the In predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldIn(FieldCharacterIconAssetbundleName, vs...))
+}
+
+// CharacterIconAssetbundleNameNotIn applies the NotIn predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameNotIn(vs ...string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldNotIn(FieldCharacterIconAssetbundleName, vs...))
+}
+
+// CharacterIconAssetbundleNameGT applies the GT predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameGT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGT(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameGTE applies the GTE predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameGTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldGTE(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameLT applies the LT predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameLT(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLT(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameLTE applies the LTE predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameLTE(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldLTE(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameContains applies the Contains predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameContains(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContains(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameHasPrefix applies the HasPrefix predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameHasPrefix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasPrefix(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameHasSuffix applies the HasSuffix predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameHasSuffix(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldHasSuffix(FieldCharacterIconAssetbundleName, v))
+}
+
 // CharacterIconAssetbundleNameIsNil applies the IsNil predicate on the "character_icon_assetbundle_name" field.
 func CharacterIconAssetbundleNameIsNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldIsNull(FieldCharacterIconAssetbundleName))
@@ -326,6 +526,16 @@ func CharacterIconAssetbundleNameIsNil() predicate.Character2D {
 // CharacterIconAssetbundleNameNotNil applies the NotNil predicate on the "character_icon_assetbundle_name" field.
 func CharacterIconAssetbundleNameNotNil() predicate.Character2D {
 	return predicate.Character2D(sql.FieldNotNull(FieldCharacterIconAssetbundleName))
+}
+
+// CharacterIconAssetbundleNameEqualFold applies the EqualFold predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameEqualFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldEqualFold(FieldCharacterIconAssetbundleName, v))
+}
+
+// CharacterIconAssetbundleNameContainsFold applies the ContainsFold predicate on the "character_icon_assetbundle_name" field.
+func CharacterIconAssetbundleNameContainsFold(v string) predicate.Character2D {
+	return predicate.Character2D(sql.FieldContainsFold(FieldCharacterIconAssetbundleName, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

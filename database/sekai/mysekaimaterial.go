@@ -22,7 +22,7 @@ type Mysekaimaterial struct {
 	// Seq holds the value of the "seq" field.
 	Seq int64 `json:"seq,omitempty"`
 	// MysekaiMaterialType holds the value of the "mysekai_material_type" field.
-	MysekaiMaterialType json.RawMessage `json:"mysekai_material_type,omitempty"`
+	MysekaiMaterialType string `json:"mysekai_material_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -30,7 +30,7 @@ type Mysekaimaterial struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// MysekaiMaterialRarityType holds the value of the "mysekai_material_rarity_type" field.
-	MysekaiMaterialRarityType json.RawMessage `json:"mysekai_material_rarity_type,omitempty"`
+	MysekaiMaterialRarityType string `json:"mysekai_material_rarity_type,omitempty"`
 	// IconAssetbundleName holds the value of the "icon_assetbundle_name" field.
 	IconAssetbundleName string `json:"icon_assetbundle_name,omitempty"`
 	// ModelAssetbundleName holds the value of the "model_assetbundle_name" field.
@@ -49,11 +49,11 @@ func (*Mysekaimaterial) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaimaterial.FieldMysekaiMaterialType, mysekaimaterial.FieldMysekaiMaterialRarityType, mysekaimaterial.FieldMysekaiSiteIds:
+		case mysekaimaterial.FieldMysekaiSiteIds:
 			values[i] = new([]byte)
 		case mysekaimaterial.FieldID, mysekaimaterial.FieldGameID, mysekaimaterial.FieldSeq, mysekaimaterial.FieldMysekaiPhenomenaGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaimaterial.FieldName, mysekaimaterial.FieldPronunciation, mysekaimaterial.FieldDescription, mysekaimaterial.FieldIconAssetbundleName, mysekaimaterial.FieldModelAssetbundleName, mysekaimaterial.FieldServerRegion:
+		case mysekaimaterial.FieldMysekaiMaterialType, mysekaimaterial.FieldName, mysekaimaterial.FieldPronunciation, mysekaimaterial.FieldDescription, mysekaimaterial.FieldMysekaiMaterialRarityType, mysekaimaterial.FieldIconAssetbundleName, mysekaimaterial.FieldModelAssetbundleName, mysekaimaterial.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -89,12 +89,10 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 				_m.Seq = value.Int64
 			}
 		case mysekaimaterial.FieldMysekaiMaterialType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiMaterialType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_material_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiMaterialType = value.String
 			}
 		case mysekaimaterial.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -115,12 +113,10 @@ func (_m *Mysekaimaterial) assignValues(columns []string, values []any) error {
 				_m.Description = value.String
 			}
 		case mysekaimaterial.FieldMysekaiMaterialRarityType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_material_rarity_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiMaterialRarityType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_material_rarity_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiMaterialRarityType = value.String
 			}
 		case mysekaimaterial.FieldIconAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -197,7 +193,7 @@ func (_m *Mysekaimaterial) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_material_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiMaterialType))
+	builder.WriteString(_m.MysekaiMaterialType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -209,7 +205,7 @@ func (_m *Mysekaimaterial) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_material_rarity_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiMaterialRarityType))
+	builder.WriteString(_m.MysekaiMaterialRarityType)
 	builder.WriteString(", ")
 	builder.WriteString("icon_assetbundle_name=")
 	builder.WriteString(_m.IconAssetbundleName)

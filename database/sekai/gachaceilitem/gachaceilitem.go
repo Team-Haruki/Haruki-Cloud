@@ -74,6 +74,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
+// ByAssetbundleName orders the results by the assetbundle_name field.
+func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
 // ByConvertStartAt orders the results by the convert_start_at field.
 func ByConvertStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldConvertStartAt, opts...).ToFunc()

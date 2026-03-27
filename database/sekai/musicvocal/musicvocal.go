@@ -84,6 +84,11 @@ func ByMusicID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicID, opts...).ToFunc()
 }
 
+// ByMusicVocalType orders the results by the music_vocal_type field.
+func ByMusicVocalType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMusicVocalType, opts...).ToFunc()
+}
+
 // BySeq orders the results by the seq field.
 func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()
@@ -112,6 +117,11 @@ func ByArchivePublishedAt(opts ...sql.OrderTermOption) OrderOption {
 // BySpecialSeasonID orders the results by the special_season_id field.
 func BySpecialSeasonID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialSeasonID, opts...).ToFunc()
+}
+
+// ByArchiveDisplayType orders the results by the archive_display_type field.
+func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

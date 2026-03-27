@@ -87,6 +87,16 @@ func ByLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLevel, opts...).ToFunc()
 }
 
+// ByTargetUnit orders the results by the target_unit field.
+func ByTargetUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTargetUnit, opts...).ToFunc()
+}
+
+// ByTargetCardAttr orders the results by the target_card_attr field.
+func ByTargetCardAttr(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTargetCardAttr, opts...).ToFunc()
+}
+
 // ByTargetGameCharacterID orders the results by the target_game_character_id field.
 func ByTargetGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTargetGameCharacterID, opts...).ToFunc()

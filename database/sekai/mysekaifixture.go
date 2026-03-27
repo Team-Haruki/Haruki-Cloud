@@ -20,7 +20,7 @@ type Mysekaifixture struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiFixtureType holds the value of the "mysekai_fixture_type" field.
-	MysekaiFixtureType json.RawMessage `json:"mysekai_fixture_type,omitempty"`
+	MysekaiFixtureType string `json:"mysekai_fixture_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -36,13 +36,13 @@ type Mysekaifixture struct {
 	// MysekaiFixtureSubGenreID holds the value of the "mysekai_fixture_sub_genre_id" field.
 	MysekaiFixtureSubGenreID int64 `json:"mysekai_fixture_sub_genre_id,omitempty"`
 	// MysekaiFixtureHandleType holds the value of the "mysekai_fixture_handle_type" field.
-	MysekaiFixtureHandleType json.RawMessage `json:"mysekai_fixture_handle_type,omitempty"`
+	MysekaiFixtureHandleType string `json:"mysekai_fixture_handle_type,omitempty"`
 	// MysekaiSettableSiteType holds the value of the "mysekai_settable_site_type" field.
-	MysekaiSettableSiteType json.RawMessage `json:"mysekai_settable_site_type,omitempty"`
+	MysekaiSettableSiteType string `json:"mysekai_settable_site_type,omitempty"`
 	// MysekaiSettableLayoutType holds the value of the "mysekai_settable_layout_type" field.
-	MysekaiSettableLayoutType json.RawMessage `json:"mysekai_settable_layout_type,omitempty"`
+	MysekaiSettableLayoutType string `json:"mysekai_settable_layout_type,omitempty"`
 	// MysekaiFixturePutType holds the value of the "mysekai_fixture_put_type" field.
-	MysekaiFixturePutType json.RawMessage `json:"mysekai_fixture_put_type,omitempty"`
+	MysekaiFixturePutType string `json:"mysekai_fixture_put_type,omitempty"`
 	// MysekaiFixtureAnotherColors holds the value of the "mysekai_fixture_another_colors" field.
 	MysekaiFixtureAnotherColors json.RawMessage `json:"mysekai_fixture_another_colors,omitempty"`
 	// MysekaiFixturePutSoundID holds the value of the "mysekai_fixture_put_sound_id" field.
@@ -56,7 +56,7 @@ type Mysekaifixture struct {
 	// IsDisassembled holds the value of the "is_disassembled" field.
 	IsDisassembled bool `json:"is_disassembled,omitempty"`
 	// MysekaiFixturePlayerActionType holds the value of the "mysekai_fixture_player_action_type" field.
-	MysekaiFixturePlayerActionType json.RawMessage `json:"mysekai_fixture_player_action_type,omitempty"`
+	MysekaiFixturePlayerActionType string `json:"mysekai_fixture_player_action_type,omitempty"`
 	// IsGameCharacterAction holds the value of the "is_game_character_action" field.
 	IsGameCharacterAction bool `json:"is_game_character_action,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -79,13 +79,13 @@ func (*Mysekaifixture) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaifixture.FieldMysekaiFixtureType, mysekaifixture.FieldGridSize, mysekaifixture.FieldMysekaiFixtureHandleType, mysekaifixture.FieldMysekaiSettableSiteType, mysekaifixture.FieldMysekaiSettableLayoutType, mysekaifixture.FieldMysekaiFixturePutType, mysekaifixture.FieldMysekaiFixtureAnotherColors, mysekaifixture.FieldMysekaiFixtureTagGroup, mysekaifixture.FieldMysekaiFixturePlayerActionType:
+		case mysekaifixture.FieldGridSize, mysekaifixture.FieldMysekaiFixtureAnotherColors, mysekaifixture.FieldMysekaiFixtureTagGroup:
 			values[i] = new([]byte)
 		case mysekaifixture.FieldIsAssembled, mysekaifixture.FieldIsDisassembled, mysekaifixture.FieldIsGameCharacterAction:
 			values[i] = new(sql.NullBool)
 		case mysekaifixture.FieldID, mysekaifixture.FieldGameID, mysekaifixture.FieldSeq, mysekaifixture.FieldMysekaiFixtureMainGenreID, mysekaifixture.FieldMysekaiFixtureSubGenreID, mysekaifixture.FieldMysekaiFixturePutSoundID, mysekaifixture.FieldMysekaiFixtureFootstepID, mysekaifixture.FieldFirstPutCost, mysekaifixture.FieldSecondPutCost, mysekaifixture.FieldMysekaiFixtureGameCharacterGroupPerformanceBonusID:
 			values[i] = new(sql.NullInt64)
-		case mysekaifixture.FieldName, mysekaifixture.FieldPronunciation, mysekaifixture.FieldFlavorText, mysekaifixture.FieldAssetbundleName, mysekaifixture.FieldColorCode, mysekaifixture.FieldServerRegion:
+		case mysekaifixture.FieldMysekaiFixtureType, mysekaifixture.FieldName, mysekaifixture.FieldPronunciation, mysekaifixture.FieldFlavorText, mysekaifixture.FieldMysekaiFixtureHandleType, mysekaifixture.FieldMysekaiSettableSiteType, mysekaifixture.FieldMysekaiSettableLayoutType, mysekaifixture.FieldMysekaiFixturePutType, mysekaifixture.FieldMysekaiFixturePlayerActionType, mysekaifixture.FieldAssetbundleName, mysekaifixture.FieldColorCode, mysekaifixture.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -115,12 +115,10 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case mysekaifixture.FieldMysekaiFixtureType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixtureType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixtureType = value.String
 			}
 		case mysekaifixture.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -167,36 +165,28 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 				_m.MysekaiFixtureSubGenreID = value.Int64
 			}
 		case mysekaifixture.FieldMysekaiFixtureHandleType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_handle_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixtureHandleType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_handle_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixtureHandleType = value.String
 			}
 		case mysekaifixture.FieldMysekaiSettableSiteType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_settable_site_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiSettableSiteType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_settable_site_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiSettableSiteType = value.String
 			}
 		case mysekaifixture.FieldMysekaiSettableLayoutType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_settable_layout_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiSettableLayoutType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_settable_layout_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiSettableLayoutType = value.String
 			}
 		case mysekaifixture.FieldMysekaiFixturePutType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_put_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixturePutType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_put_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixturePutType = value.String
 			}
 		case mysekaifixture.FieldMysekaiFixtureAnotherColors:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -239,12 +229,10 @@ func (_m *Mysekaifixture) assignValues(columns []string, values []any) error {
 				_m.IsDisassembled = value.Bool
 			}
 		case mysekaifixture.FieldMysekaiFixturePlayerActionType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_player_action_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixturePlayerActionType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_player_action_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixturePlayerActionType = value.String
 			}
 		case mysekaifixture.FieldIsGameCharacterAction:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -328,7 +316,7 @@ func (_m *Mysekaifixture) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureType))
+	builder.WriteString(_m.MysekaiFixtureType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -352,16 +340,16 @@ func (_m *Mysekaifixture) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureSubGenreID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_handle_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureHandleType))
+	builder.WriteString(_m.MysekaiFixtureHandleType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_settable_site_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiSettableSiteType))
+	builder.WriteString(_m.MysekaiSettableSiteType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_settable_layout_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiSettableLayoutType))
+	builder.WriteString(_m.MysekaiSettableLayoutType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_put_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixturePutType))
+	builder.WriteString(_m.MysekaiFixturePutType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_another_colors=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureAnotherColors))
@@ -382,7 +370,7 @@ func (_m *Mysekaifixture) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.IsDisassembled))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_player_action_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixturePlayerActionType))
+	builder.WriteString(_m.MysekaiFixturePlayerActionType)
 	builder.WriteString(", ")
 	builder.WriteString("is_game_character_action=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsGameCharacterAction))

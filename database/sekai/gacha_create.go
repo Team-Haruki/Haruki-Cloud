@@ -35,8 +35,16 @@ func (_c *GachaCreate) SetNillableGameID(v *int64) *GachaCreate {
 }
 
 // SetGachaType sets the "gacha_type" field.
-func (_c *GachaCreate) SetGachaType(v json.RawMessage) *GachaCreate {
+func (_c *GachaCreate) SetGachaType(v string) *GachaCreate {
 	_c.mutation.SetGachaType(v)
+	return _c
+}
+
+// SetNillableGachaType sets the "gacha_type" field if the given value is not nil.
+func (_c *GachaCreate) SetNillableGachaType(v *string) *GachaCreate {
+	if v != nil {
+		_c.SetGachaType(*v)
+	}
 	return _c
 }
 
@@ -388,7 +396,7 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.GachaType(); ok {
-		_spec.SetField(gacha.FieldGachaType, field.TypeJSON, value)
+		_spec.SetField(gacha.FieldGachaType, field.TypeString, value)
 		_node.GachaType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

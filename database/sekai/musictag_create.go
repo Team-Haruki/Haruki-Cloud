@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musictag"
@@ -49,8 +48,16 @@ func (_c *MusictagCreate) SetNillableMusicID(v *int64) *MusictagCreate {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_c *MusictagCreate) SetMusicTag(v json.RawMessage) *MusictagCreate {
+func (_c *MusictagCreate) SetMusicTag(v string) *MusictagCreate {
 	_c.mutation.SetMusicTag(v)
+	return _c
+}
+
+// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
+func (_c *MusictagCreate) SetNillableMusicTag(v *string) *MusictagCreate {
+	if v != nil {
+		_c.SetMusicTag(*v)
+	}
 	return _c
 }
 
@@ -146,7 +153,7 @@ func (_c *MusictagCreate) createSpec() (*Musictag, *sqlgraph.CreateSpec) {
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
+		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
 		_node.MusicTag = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {

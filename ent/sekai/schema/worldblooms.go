@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Worldbloom) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.Int64("game_character_id").Optional(),
-		field.JSON("world_bloom_chapter_type", json.RawMessage{}).Optional(),
+		field.String("world_bloom_chapter_type").Optional(),
 		field.Int64("chapter_no").Optional(),
 		field.Int64("chapter_start_at").Optional(),
 		field.Int64("aggregate_at").Optional(),

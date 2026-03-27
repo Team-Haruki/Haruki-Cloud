@@ -104,9 +104,19 @@ func ByCostume3DGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCostume3DGroupID, opts...).ToFunc()
 }
 
+// ByCostume3DType orders the results by the costume3_d_type field.
+func ByCostume3DType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCostume3DType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByPartType orders the results by the part_type field.
+func ByPartType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPartType, opts...).ToFunc()
 }
 
 // ByColorID orders the results by the color_id field.
@@ -124,6 +134,11 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
+// ByCostume3DRarity orders the results by the costume3_d_rarity field.
+func ByCostume3DRarity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCostume3DRarity, opts...).ToFunc()
+}
+
 // ByHowToObtain orders the results by the how_to_obtain field.
 func ByHowToObtain(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHowToObtain, opts...).ToFunc()
@@ -137,6 +152,11 @@ func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 // ByDesigner orders the results by the designer field.
 func ByDesigner(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDesigner, opts...).ToFunc()
+}
+
+// ByArchiveDisplayType orders the results by the archive_display_type field.
+func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
 }
 
 // ByArchivePublishedAt orders the results by the archive_published_at field.

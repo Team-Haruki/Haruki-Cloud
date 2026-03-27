@@ -71,6 +71,11 @@ func ByPronunciation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPronunciation, opts...).ToFunc()
 }
 
+// ByMysekaiFixtureTagType orders the results by the mysekai_fixture_tag_type field.
+func ByMysekaiFixtureTagType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixtureTagType, opts...).ToFunc()
+}
+
 // ByExternalID orders the results by the external_id field.
 func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldExternalID, opts...).ToFunc()

@@ -66,6 +66,11 @@ func ByGameCharacterUnitID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterUnitID, opts...).ToFunc()
 }
 
+// ByMysekaiCharacterTalkFixtureCommonType orders the results by the mysekai_character_talk_fixture_common_type field.
+func ByMysekaiCharacterTalkFixtureCommonType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiCharacterTalkFixtureCommonType, opts...).ToFunc()
+}
+
 // ByMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID orders the results by the mysekai_character_talk_fixture_common_mysekai_fixture_group_id field.
 func ByMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, opts...).ToFunc()

@@ -63,6 +63,11 @@ func Seq(v int64) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldSeq, v))
 }
 
+// MysekaiMaterialType applies equality check predicate on the "mysekai_material_type" field. It's identical to MysekaiMaterialTypeEQ.
+func MysekaiMaterialType(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiMaterialType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldName, v))
@@ -76,6 +81,11 @@ func Pronunciation(v string) predicate.Mysekaimaterial {
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldEQ(FieldDescription, v))
+}
+
+// MysekaiMaterialRarityType applies equality check predicate on the "mysekai_material_rarity_type" field. It's identical to MysekaiMaterialRarityTypeEQ.
+func MysekaiMaterialRarityType(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiMaterialRarityType, v))
 }
 
 // IconAssetbundleName applies equality check predicate on the "icon_assetbundle_name" field. It's identical to IconAssetbundleNameEQ.
@@ -198,6 +208,61 @@ func SeqNotNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotNull(FieldSeq))
 }
 
+// MysekaiMaterialTypeEQ applies the EQ predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeNEQ applies the NEQ predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeNEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeIn applies the In predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldIn(FieldMysekaiMaterialType, vs...))
+}
+
+// MysekaiMaterialTypeNotIn applies the NotIn predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeNotIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldMysekaiMaterialType, vs...))
+}
+
+// MysekaiMaterialTypeGT applies the GT predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeGT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGT(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeGTE applies the GTE predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeGTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGTE(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeLT applies the LT predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeLT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLT(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeLTE applies the LTE predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeLTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLTE(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeContains applies the Contains predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeContains(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContains(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeHasPrefix applies the HasPrefix predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeHasPrefix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasPrefix(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeHasSuffix applies the HasSuffix predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeHasSuffix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasSuffix(FieldMysekaiMaterialType, v))
+}
+
 // MysekaiMaterialTypeIsNil applies the IsNil predicate on the "mysekai_material_type" field.
 func MysekaiMaterialTypeIsNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldIsNull(FieldMysekaiMaterialType))
@@ -206,6 +271,16 @@ func MysekaiMaterialTypeIsNil() predicate.Mysekaimaterial {
 // MysekaiMaterialTypeNotNil applies the NotNil predicate on the "mysekai_material_type" field.
 func MysekaiMaterialTypeNotNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotNull(FieldMysekaiMaterialType))
+}
+
+// MysekaiMaterialTypeEqualFold applies the EqualFold predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeEqualFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEqualFold(FieldMysekaiMaterialType, v))
+}
+
+// MysekaiMaterialTypeContainsFold applies the ContainsFold predicate on the "mysekai_material_type" field.
+func MysekaiMaterialTypeContainsFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContainsFold(FieldMysekaiMaterialType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -433,6 +508,61 @@ func DescriptionContainsFold(v string) predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// MysekaiMaterialRarityTypeEQ applies the EQ predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEQ(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeNEQ applies the NEQ predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeNEQ(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNEQ(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeIn applies the In predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldIn(FieldMysekaiMaterialRarityType, vs...))
+}
+
+// MysekaiMaterialRarityTypeNotIn applies the NotIn predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeNotIn(vs ...string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldNotIn(FieldMysekaiMaterialRarityType, vs...))
+}
+
+// MysekaiMaterialRarityTypeGT applies the GT predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeGT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGT(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeGTE applies the GTE predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeGTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldGTE(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeLT applies the LT predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeLT(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLT(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeLTE applies the LTE predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeLTE(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldLTE(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeContains applies the Contains predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeContains(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContains(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeHasPrefix applies the HasPrefix predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeHasPrefix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasPrefix(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeHasSuffix applies the HasSuffix predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeHasSuffix(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldHasSuffix(FieldMysekaiMaterialRarityType, v))
+}
+
 // MysekaiMaterialRarityTypeIsNil applies the IsNil predicate on the "mysekai_material_rarity_type" field.
 func MysekaiMaterialRarityTypeIsNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldIsNull(FieldMysekaiMaterialRarityType))
@@ -441,6 +571,16 @@ func MysekaiMaterialRarityTypeIsNil() predicate.Mysekaimaterial {
 // MysekaiMaterialRarityTypeNotNil applies the NotNil predicate on the "mysekai_material_rarity_type" field.
 func MysekaiMaterialRarityTypeNotNil() predicate.Mysekaimaterial {
 	return predicate.Mysekaimaterial(sql.FieldNotNull(FieldMysekaiMaterialRarityType))
+}
+
+// MysekaiMaterialRarityTypeEqualFold applies the EqualFold predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeEqualFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldEqualFold(FieldMysekaiMaterialRarityType, v))
+}
+
+// MysekaiMaterialRarityTypeContainsFold applies the ContainsFold predicate on the "mysekai_material_rarity_type" field.
+func MysekaiMaterialRarityTypeContainsFold(v string) predicate.Mysekaimaterial {
+	return predicate.Mysekaimaterial(sql.FieldContainsFold(FieldMysekaiMaterialRarityType, v))
 }
 
 // IconAssetbundleNameEQ applies the EQ predicate on the "icon_assetbundle_name" field.

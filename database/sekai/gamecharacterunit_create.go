@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacterunit"
@@ -49,8 +48,16 @@ func (_c *GamecharacterunitCreate) SetNillableGameCharacterID(v *int64) *Gamecha
 }
 
 // SetUnit sets the "unit" field.
-func (_c *GamecharacterunitCreate) SetUnit(v json.RawMessage) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetUnit(v string) *GamecharacterunitCreate {
 	_c.mutation.SetUnit(v)
+	return _c
+}
+
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_c *GamecharacterunitCreate) SetNillableUnit(v *string) *GamecharacterunitCreate {
+	if v != nil {
+		_c.SetUnit(*v)
+	}
 	return _c
 }
 
@@ -69,20 +76,44 @@ func (_c *GamecharacterunitCreate) SetNillableColorCode(v *string) *Gamecharacte
 }
 
 // SetSkinColorCode sets the "skin_color_code" field.
-func (_c *GamecharacterunitCreate) SetSkinColorCode(v json.RawMessage) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetSkinColorCode(v string) *GamecharacterunitCreate {
 	_c.mutation.SetSkinColorCode(v)
 	return _c
 }
 
+// SetNillableSkinColorCode sets the "skin_color_code" field if the given value is not nil.
+func (_c *GamecharacterunitCreate) SetNillableSkinColorCode(v *string) *GamecharacterunitCreate {
+	if v != nil {
+		_c.SetSkinColorCode(*v)
+	}
+	return _c
+}
+
 // SetSkinShadowColorCode1 sets the "skin_shadow_color_code1" field.
-func (_c *GamecharacterunitCreate) SetSkinShadowColorCode1(v json.RawMessage) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetSkinShadowColorCode1(v string) *GamecharacterunitCreate {
 	_c.mutation.SetSkinShadowColorCode1(v)
 	return _c
 }
 
+// SetNillableSkinShadowColorCode1 sets the "skin_shadow_color_code1" field if the given value is not nil.
+func (_c *GamecharacterunitCreate) SetNillableSkinShadowColorCode1(v *string) *GamecharacterunitCreate {
+	if v != nil {
+		_c.SetSkinShadowColorCode1(*v)
+	}
+	return _c
+}
+
 // SetSkinShadowColorCode2 sets the "skin_shadow_color_code2" field.
-func (_c *GamecharacterunitCreate) SetSkinShadowColorCode2(v json.RawMessage) *GamecharacterunitCreate {
+func (_c *GamecharacterunitCreate) SetSkinShadowColorCode2(v string) *GamecharacterunitCreate {
 	_c.mutation.SetSkinShadowColorCode2(v)
+	return _c
+}
+
+// SetNillableSkinShadowColorCode2 sets the "skin_shadow_color_code2" field if the given value is not nil.
+func (_c *GamecharacterunitCreate) SetNillableSkinShadowColorCode2(v *string) *GamecharacterunitCreate {
+	if v != nil {
+		_c.SetSkinShadowColorCode2(*v)
+	}
 	return _c
 }
 
@@ -164,7 +195,7 @@ func (_c *GamecharacterunitCreate) createSpec() (*Gamecharacterunit, *sqlgraph.C
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeJSON, value)
+		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeString, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.ColorCode(); ok {
@@ -172,15 +203,15 @@ func (_c *GamecharacterunitCreate) createSpec() (*Gamecharacterunit, *sqlgraph.C
 		_node.ColorCode = value
 	}
 	if value, ok := _c.mutation.SkinColorCode(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeJSON, value)
+		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeString, value)
 		_node.SkinColorCode = value
 	}
 	if value, ok := _c.mutation.SkinShadowColorCode1(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeJSON, value)
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeString, value)
 		_node.SkinShadowColorCode1 = value
 	}
 	if value, ok := _c.mutation.SkinShadowColorCode2(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeJSON, value)
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeString, value)
 		_node.SkinShadowColorCode2 = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

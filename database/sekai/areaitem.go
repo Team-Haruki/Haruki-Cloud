@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
 	"strings"
@@ -26,7 +25,7 @@ type Areaitem struct {
 	// FlavorText holds the value of the "flavor_text" field.
 	FlavorText string `json:"flavor_text,omitempty"`
 	// SpawnPoint holds the value of the "spawn_point" field.
-	SpawnPoint json.RawMessage `json:"spawn_point,omitempty"`
+	SpawnPoint string `json:"spawn_point,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -39,11 +38,9 @@ func (*Areaitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case areaitem.FieldSpawnPoint:
-			values[i] = new([]byte)
 		case areaitem.FieldID, areaitem.FieldGameID, areaitem.FieldAreaID:
 			values[i] = new(sql.NullInt64)
-		case areaitem.FieldName, areaitem.FieldFlavorText, areaitem.FieldAssetbundleName, areaitem.FieldServerRegion:
+		case areaitem.FieldName, areaitem.FieldFlavorText, areaitem.FieldSpawnPoint, areaitem.FieldAssetbundleName, areaitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -91,12 +88,10 @@ func (_m *Areaitem) assignValues(columns []string, values []any) error {
 				_m.FlavorText = value.String
 			}
 		case areaitem.FieldSpawnPoint:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field spawn_point", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.SpawnPoint); err != nil {
-					return fmt.Errorf("unmarshal field spawn_point: %w", err)
-				}
+			} else if value.Valid {
+				_m.SpawnPoint = value.String
 			}
 		case areaitem.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -159,7 +154,7 @@ func (_m *Areaitem) String() string {
 	builder.WriteString(_m.FlavorText)
 	builder.WriteString(", ")
 	builder.WriteString("spawn_point=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SpawnPoint))
+	builder.WriteString(_m.SpawnPoint)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)

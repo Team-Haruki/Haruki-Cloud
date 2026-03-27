@@ -71,6 +71,16 @@ func ByEventStoryID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEventStoryID, opts...).ToFunc()
 }
 
+// ByUnit orders the results by the unit field.
+func ByUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnit, opts...).ToFunc()
+}
+
+// ByEventStoryUnitRelation orders the results by the event_story_unit_relation field.
+func ByEventStoryUnitRelation(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEventStoryUnitRelation, opts...).ToFunc()
+}
+
 // ByServerRegion orders the results by the server_region field.
 func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()

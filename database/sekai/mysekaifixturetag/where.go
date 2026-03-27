@@ -68,6 +68,11 @@ func Pronunciation(v string) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldPronunciation, v))
 }
 
+// MysekaiFixtureTagType applies equality check predicate on the "mysekai_fixture_tag_type" field. It's identical to MysekaiFixtureTagTypeEQ.
+func MysekaiFixtureTagType(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldMysekaiFixtureTagType, v))
+}
+
 // ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
 func ExternalID(v int64) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldExternalID, v))
@@ -278,6 +283,61 @@ func PronunciationContainsFold(v string) predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldContainsFold(FieldPronunciation, v))
 }
 
+// MysekaiFixtureTagTypeEQ applies the EQ predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeEQ(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldEQ(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeNEQ applies the NEQ predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeNEQ(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldNEQ(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeIn applies the In predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeIn(vs ...string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldIn(FieldMysekaiFixtureTagType, vs...))
+}
+
+// MysekaiFixtureTagTypeNotIn applies the NotIn predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeNotIn(vs ...string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldNotIn(FieldMysekaiFixtureTagType, vs...))
+}
+
+// MysekaiFixtureTagTypeGT applies the GT predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeGT(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldGT(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeGTE applies the GTE predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeGTE(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldGTE(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeLT applies the LT predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeLT(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldLT(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeLTE applies the LTE predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeLTE(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldLTE(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeContains applies the Contains predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeContains(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldContains(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeHasPrefix(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldHasPrefix(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeHasSuffix(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldHasSuffix(FieldMysekaiFixtureTagType, v))
+}
+
 // MysekaiFixtureTagTypeIsNil applies the IsNil predicate on the "mysekai_fixture_tag_type" field.
 func MysekaiFixtureTagTypeIsNil() predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldIsNull(FieldMysekaiFixtureTagType))
@@ -286,6 +346,16 @@ func MysekaiFixtureTagTypeIsNil() predicate.Mysekaifixturetag {
 // MysekaiFixtureTagTypeNotNil applies the NotNil predicate on the "mysekai_fixture_tag_type" field.
 func MysekaiFixtureTagTypeNotNil() predicate.Mysekaifixturetag {
 	return predicate.Mysekaifixturetag(sql.FieldNotNull(FieldMysekaiFixtureTagType))
+}
+
+// MysekaiFixtureTagTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeEqualFold(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldEqualFold(FieldMysekaiFixtureTagType, v))
+}
+
+// MysekaiFixtureTagTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_tag_type" field.
+func MysekaiFixtureTagTypeContainsFold(v string) predicate.Mysekaifixturetag {
+	return predicate.Mysekaifixturetag(sql.FieldContainsFold(FieldMysekaiFixtureTagType, v))
 }
 
 // ExternalIDEQ applies the EQ predicate on the "external_id" field.

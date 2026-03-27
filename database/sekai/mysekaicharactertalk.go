@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalk"
 	"strings"
@@ -30,7 +29,7 @@ type Mysekaicharactertalk struct {
 	// CharacterArchiveMysekaiCharacterTalkGroupID holds the value of the "character_archive_mysekai_character_talk_group_id" field.
 	CharacterArchiveMysekaiCharacterTalkGroupID int64 `json:"character_archive_mysekai_character_talk_group_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
-	AssetbundleName json.RawMessage `json:"assetbundle_name,omitempty"`
+	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// Lua holds the value of the "lua" field.
 	Lua string `json:"lua,omitempty"`
 	// IsEnabledForMulti holds the value of the "is_enabled_for_multi" field.
@@ -45,13 +44,11 @@ func (*Mysekaicharactertalk) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaicharactertalk.FieldAssetbundleName:
-			values[i] = new([]byte)
 		case mysekaicharactertalk.FieldIsEnabledForMulti:
 			values[i] = new(sql.NullBool)
 		case mysekaicharactertalk.FieldID, mysekaicharactertalk.FieldGameID, mysekaicharactertalk.FieldMysekaiGameCharacterUnitGroupID, mysekaicharactertalk.FieldMysekaiCharacterTalkConditionGroupID, mysekaicharactertalk.FieldMysekaiSiteGroupID, mysekaicharactertalk.FieldMysekaiCharacterTalkTermID, mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaicharactertalk.FieldLua, mysekaicharactertalk.FieldServerRegion:
+		case mysekaicharactertalk.FieldAssetbundleName, mysekaicharactertalk.FieldLua, mysekaicharactertalk.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -111,12 +108,10 @@ func (_m *Mysekaicharactertalk) assignValues(columns []string, values []any) err
 				_m.CharacterArchiveMysekaiCharacterTalkGroupID = value.Int64
 			}
 		case mysekaicharactertalk.FieldAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.AssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.AssetbundleName = value.String
 			}
 		case mysekaicharactertalk.FieldLua:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -191,7 +186,7 @@ func (_m *Mysekaicharactertalk) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterArchiveMysekaiCharacterTalkGroupID))
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.AssetbundleName))
+	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("lua=")
 	builder.WriteString(_m.Lua)

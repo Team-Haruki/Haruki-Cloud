@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprint"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *MysekaiblueprintUpdate) ClearGameID() *MysekaiblueprintUpdate {
 }
 
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdate) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdate {
+func (_u *MysekaiblueprintUpdate) SetMysekaiCraftType(v string) *MysekaiblueprintUpdate {
 	_u.mutation.SetMysekaiCraftType(v)
 	return _u
 }
 
-// AppendMysekaiCraftType appends value to the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdate) AppendMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdate {
-	_u.mutation.AppendMysekaiCraftType(v)
+// SetNillableMysekaiCraftType sets the "mysekai_craft_type" field if the given value is not nil.
+func (_u *MysekaiblueprintUpdate) SetNillableMysekaiCraftType(v *string) *MysekaiblueprintUpdate {
+	if v != nil {
+		_u.SetMysekaiCraftType(*v)
+	}
 	return _u
 }
 
@@ -253,15 +253,10 @@ func (_u *MysekaiblueprintUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
-		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCraftType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiblueprint.FieldMysekaiCraftType, value)
-		})
+		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCraftTypeCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
+		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeString)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
 		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)
@@ -350,14 +345,16 @@ func (_u *MysekaiblueprintUpdateOne) ClearGameID() *MysekaiblueprintUpdateOne {
 }
 
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdateOne) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdateOne {
+func (_u *MysekaiblueprintUpdateOne) SetMysekaiCraftType(v string) *MysekaiblueprintUpdateOne {
 	_u.mutation.SetMysekaiCraftType(v)
 	return _u
 }
 
-// AppendMysekaiCraftType appends value to the "mysekai_craft_type" field.
-func (_u *MysekaiblueprintUpdateOne) AppendMysekaiCraftType(v json.RawMessage) *MysekaiblueprintUpdateOne {
-	_u.mutation.AppendMysekaiCraftType(v)
+// SetNillableMysekaiCraftType sets the "mysekai_craft_type" field if the given value is not nil.
+func (_u *MysekaiblueprintUpdateOne) SetNillableMysekaiCraftType(v *string) *MysekaiblueprintUpdateOne {
+	if v != nil {
+		_u.SetMysekaiCraftType(*v)
+	}
 	return _u
 }
 
@@ -576,15 +573,10 @@ func (_u *MysekaiblueprintUpdateOne) sqlSave(ctx context.Context) (_node *Myseka
 		_spec.ClearField(mysekaiblueprint.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCraftType(); ok {
-		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCraftType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiblueprint.FieldMysekaiCraftType, value)
-		})
+		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCraftTypeCleared() {
-		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON)
+		_spec.ClearField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeString)
 	}
 	if value, ok := _u.mutation.CraftTargetID(); ok {
 		_spec.SetField(mysekaiblueprint.FieldCraftTargetID, field.TypeInt64, value)

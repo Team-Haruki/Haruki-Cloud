@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"strings"
@@ -22,15 +21,15 @@ type Gamecharacterunit struct {
 	// GameCharacterID holds the value of the "game_character_id" field.
 	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// Unit holds the value of the "unit" field.
-	Unit json.RawMessage `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
 	// ColorCode holds the value of the "color_code" field.
 	ColorCode string `json:"color_code,omitempty"`
 	// SkinColorCode holds the value of the "skin_color_code" field.
-	SkinColorCode json.RawMessage `json:"skin_color_code,omitempty"`
+	SkinColorCode string `json:"skin_color_code,omitempty"`
 	// SkinShadowColorCode1 holds the value of the "skin_shadow_color_code1" field.
-	SkinShadowColorCode1 json.RawMessage `json:"skin_shadow_color_code1,omitempty"`
+	SkinShadowColorCode1 string `json:"skin_shadow_color_code1,omitempty"`
 	// SkinShadowColorCode2 holds the value of the "skin_shadow_color_code2" field.
-	SkinShadowColorCode2 json.RawMessage `json:"skin_shadow_color_code2,omitempty"`
+	SkinShadowColorCode2 string `json:"skin_shadow_color_code2,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -41,11 +40,9 @@ func (*Gamecharacterunit) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gamecharacterunit.FieldUnit, gamecharacterunit.FieldSkinColorCode, gamecharacterunit.FieldSkinShadowColorCode1, gamecharacterunit.FieldSkinShadowColorCode2:
-			values[i] = new([]byte)
 		case gamecharacterunit.FieldID, gamecharacterunit.FieldGameID, gamecharacterunit.FieldGameCharacterID:
 			values[i] = new(sql.NullInt64)
-		case gamecharacterunit.FieldColorCode, gamecharacterunit.FieldServerRegion:
+		case gamecharacterunit.FieldUnit, gamecharacterunit.FieldColorCode, gamecharacterunit.FieldSkinColorCode, gamecharacterunit.FieldSkinShadowColorCode1, gamecharacterunit.FieldSkinShadowColorCode2, gamecharacterunit.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -81,12 +78,10 @@ func (_m *Gamecharacterunit) assignValues(columns []string, values []any) error 
 				_m.GameCharacterID = value.Int64
 			}
 		case gamecharacterunit.FieldUnit:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Unit); err != nil {
-					return fmt.Errorf("unmarshal field unit: %w", err)
-				}
+			} else if value.Valid {
+				_m.Unit = value.String
 			}
 		case gamecharacterunit.FieldColorCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -95,28 +90,22 @@ func (_m *Gamecharacterunit) assignValues(columns []string, values []any) error 
 				_m.ColorCode = value.String
 			}
 		case gamecharacterunit.FieldSkinColorCode:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field skin_color_code", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.SkinColorCode); err != nil {
-					return fmt.Errorf("unmarshal field skin_color_code: %w", err)
-				}
+			} else if value.Valid {
+				_m.SkinColorCode = value.String
 			}
 		case gamecharacterunit.FieldSkinShadowColorCode1:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field skin_shadow_color_code1", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.SkinShadowColorCode1); err != nil {
-					return fmt.Errorf("unmarshal field skin_shadow_color_code1: %w", err)
-				}
+			} else if value.Valid {
+				_m.SkinShadowColorCode1 = value.String
 			}
 		case gamecharacterunit.FieldSkinShadowColorCode2:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field skin_shadow_color_code2", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.SkinShadowColorCode2); err != nil {
-					return fmt.Errorf("unmarshal field skin_shadow_color_code2: %w", err)
-				}
+			} else if value.Valid {
+				_m.SkinShadowColorCode2 = value.String
 			}
 		case gamecharacterunit.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -167,19 +156,19 @@ func (_m *Gamecharacterunit) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterID))
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Unit))
+	builder.WriteString(_m.Unit)
 	builder.WriteString(", ")
 	builder.WriteString("color_code=")
 	builder.WriteString(_m.ColorCode)
 	builder.WriteString(", ")
 	builder.WriteString("skin_color_code=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SkinColorCode))
+	builder.WriteString(_m.SkinColorCode)
 	builder.WriteString(", ")
 	builder.WriteString("skin_shadow_color_code1=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SkinShadowColorCode1))
+	builder.WriteString(_m.SkinShadowColorCode1)
 	builder.WriteString(", ")
 	builder.WriteString("skin_shadow_color_code2=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SkinShadowColorCode2))
+	builder.WriteString(_m.SkinShadowColorCode2)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

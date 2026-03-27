@@ -63,6 +63,11 @@ func Name(v string) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldName, v))
 }
 
+// MysekaiFixtureMainGenreType applies equality check predicate on the "mysekai_fixture_main_genre_type" field. It's identical to MysekaiFixtureMainGenreTypeEQ.
+func MysekaiFixtureMainGenreType(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldMysekaiFixtureMainGenreType, v))
+}
+
 // AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
 func AssetbundleName(v string) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldAssetbundleName, v))
@@ -203,6 +208,61 @@ func NameContainsFold(v string) predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldContainsFold(FieldName, v))
 }
 
+// MysekaiFixtureMainGenreTypeEQ applies the EQ predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeEQ(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldEQ(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeNEQ applies the NEQ predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeNEQ(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldNEQ(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeIn applies the In predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeIn(vs ...string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldIn(FieldMysekaiFixtureMainGenreType, vs...))
+}
+
+// MysekaiFixtureMainGenreTypeNotIn applies the NotIn predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeNotIn(vs ...string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldNotIn(FieldMysekaiFixtureMainGenreType, vs...))
+}
+
+// MysekaiFixtureMainGenreTypeGT applies the GT predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeGT(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldGT(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeGTE applies the GTE predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeGTE(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldGTE(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeLT applies the LT predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeLT(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldLT(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeLTE applies the LTE predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeLTE(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldLTE(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeContains applies the Contains predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeContains(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldContains(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeHasPrefix(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldHasPrefix(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeHasSuffix(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldHasSuffix(FieldMysekaiFixtureMainGenreType, v))
+}
+
 // MysekaiFixtureMainGenreTypeIsNil applies the IsNil predicate on the "mysekai_fixture_main_genre_type" field.
 func MysekaiFixtureMainGenreTypeIsNil() predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldIsNull(FieldMysekaiFixtureMainGenreType))
@@ -211,6 +271,16 @@ func MysekaiFixtureMainGenreTypeIsNil() predicate.Mysekaifixturemaingenre {
 // MysekaiFixtureMainGenreTypeNotNil applies the NotNil predicate on the "mysekai_fixture_main_genre_type" field.
 func MysekaiFixtureMainGenreTypeNotNil() predicate.Mysekaifixturemaingenre {
 	return predicate.Mysekaifixturemaingenre(sql.FieldNotNull(FieldMysekaiFixtureMainGenreType))
+}
+
+// MysekaiFixtureMainGenreTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeEqualFold(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldEqualFold(FieldMysekaiFixtureMainGenreType, v))
+}
+
+// MysekaiFixtureMainGenreTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_main_genre_type" field.
+func MysekaiFixtureMainGenreTypeContainsFold(v string) predicate.Mysekaifixturemaingenre {
+	return predicate.Mysekaifixturemaingenre(sql.FieldContainsFold(FieldMysekaiFixtureMainGenreType, v))
 }
 
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.

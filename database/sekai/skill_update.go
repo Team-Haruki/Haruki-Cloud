@@ -97,14 +97,16 @@ func (_u *SkillUpdate) ClearDescription() *SkillUpdate {
 }
 
 // SetDescriptionSpriteName sets the "description_sprite_name" field.
-func (_u *SkillUpdate) SetDescriptionSpriteName(v json.RawMessage) *SkillUpdate {
+func (_u *SkillUpdate) SetDescriptionSpriteName(v string) *SkillUpdate {
 	_u.mutation.SetDescriptionSpriteName(v)
 	return _u
 }
 
-// AppendDescriptionSpriteName appends value to the "description_sprite_name" field.
-func (_u *SkillUpdate) AppendDescriptionSpriteName(v json.RawMessage) *SkillUpdate {
-	_u.mutation.AppendDescriptionSpriteName(v)
+// SetNillableDescriptionSpriteName sets the "description_sprite_name" field if the given value is not nil.
+func (_u *SkillUpdate) SetNillableDescriptionSpriteName(v *string) *SkillUpdate {
+	if v != nil {
+		_u.SetDescriptionSpriteName(*v)
+	}
 	return _u
 }
 
@@ -236,15 +238,10 @@ func (_u *SkillUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(skill.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.DescriptionSpriteName(); ok {
-		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDescriptionSpriteName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, skill.FieldDescriptionSpriteName, value)
-		})
+		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeString, value)
 	}
 	if _u.mutation.DescriptionSpriteNameCleared() {
-		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeJSON)
+		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkillFilterID(); ok {
 		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)
@@ -357,14 +354,16 @@ func (_u *SkillUpdateOne) ClearDescription() *SkillUpdateOne {
 }
 
 // SetDescriptionSpriteName sets the "description_sprite_name" field.
-func (_u *SkillUpdateOne) SetDescriptionSpriteName(v json.RawMessage) *SkillUpdateOne {
+func (_u *SkillUpdateOne) SetDescriptionSpriteName(v string) *SkillUpdateOne {
 	_u.mutation.SetDescriptionSpriteName(v)
 	return _u
 }
 
-// AppendDescriptionSpriteName appends value to the "description_sprite_name" field.
-func (_u *SkillUpdateOne) AppendDescriptionSpriteName(v json.RawMessage) *SkillUpdateOne {
-	_u.mutation.AppendDescriptionSpriteName(v)
+// SetNillableDescriptionSpriteName sets the "description_sprite_name" field if the given value is not nil.
+func (_u *SkillUpdateOne) SetNillableDescriptionSpriteName(v *string) *SkillUpdateOne {
+	if v != nil {
+		_u.SetDescriptionSpriteName(*v)
+	}
 	return _u
 }
 
@@ -526,15 +525,10 @@ func (_u *SkillUpdateOne) sqlSave(ctx context.Context) (_node *Skill, err error)
 		_spec.ClearField(skill.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.DescriptionSpriteName(); ok {
-		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDescriptionSpriteName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, skill.FieldDescriptionSpriteName, value)
-		})
+		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeString, value)
 	}
 	if _u.mutation.DescriptionSpriteNameCleared() {
-		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeJSON)
+		_spec.ClearField(skill.FieldDescriptionSpriteName, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkillFilterID(); ok {
 		_spec.SetField(skill.FieldSkillFilterID, field.TypeInt64, value)

@@ -19,7 +19,7 @@ func (Musicvocal) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
 		field.Int64("music_id").Optional(),
-		field.JSON("music_vocal_type", json.RawMessage{}).Optional(),
+		field.String("music_vocal_type").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("release_condition_id").Optional(),
 		field.String("caption").Optional(),
@@ -27,7 +27,7 @@ func (Musicvocal) Fields() []ent.Field {
 		field.String("assetbundle_name").Optional(),
 		field.Int64("archive_published_at").Optional(),
 		field.Int64("special_season_id").Optional(),
-		field.JSON("archive_display_type", json.RawMessage{}).Optional(),
+		field.String("archive_display_type").Optional(),
 		field.String("server_region"),
 	}
 }

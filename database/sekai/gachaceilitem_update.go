@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaceilitem"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -104,14 +102,16 @@ func (_u *GachaceilitemUpdate) ClearName() *GachaceilitemUpdate {
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_u *GachaceilitemUpdate) SetAssetbundleName(v json.RawMessage) *GachaceilitemUpdate {
+func (_u *GachaceilitemUpdate) SetAssetbundleName(v string) *GachaceilitemUpdate {
 	_u.mutation.SetAssetbundleName(v)
 	return _u
 }
 
-// AppendAssetbundleName appends value to the "assetbundle_name" field.
-func (_u *GachaceilitemUpdate) AppendAssetbundleName(v json.RawMessage) *GachaceilitemUpdate {
-	_u.mutation.AppendAssetbundleName(v)
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_u *GachaceilitemUpdate) SetNillableAssetbundleName(v *string) *GachaceilitemUpdate {
+	if v != nil {
+		_u.SetAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -255,15 +255,10 @@ func (_u *GachaceilitemUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gachaceilitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
-		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gachaceilitem.FieldAssetbundleName, value)
-		})
+		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
-		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeJSON)
+		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ConvertStartAt(); ok {
 		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)
@@ -381,14 +376,16 @@ func (_u *GachaceilitemUpdateOne) ClearName() *GachaceilitemUpdateOne {
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_u *GachaceilitemUpdateOne) SetAssetbundleName(v json.RawMessage) *GachaceilitemUpdateOne {
+func (_u *GachaceilitemUpdateOne) SetAssetbundleName(v string) *GachaceilitemUpdateOne {
 	_u.mutation.SetAssetbundleName(v)
 	return _u
 }
 
-// AppendAssetbundleName appends value to the "assetbundle_name" field.
-func (_u *GachaceilitemUpdateOne) AppendAssetbundleName(v json.RawMessage) *GachaceilitemUpdateOne {
-	_u.mutation.AppendAssetbundleName(v)
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_u *GachaceilitemUpdateOne) SetNillableAssetbundleName(v *string) *GachaceilitemUpdateOne {
+	if v != nil {
+		_u.SetAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -562,15 +559,10 @@ func (_u *GachaceilitemUpdateOne) sqlSave(ctx context.Context) (_node *Gachaceil
 		_spec.ClearField(gachaceilitem.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
-		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gachaceilitem.FieldAssetbundleName, value)
-		})
+		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
-		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeJSON)
+		_spec.ClearField(gachaceilitem.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.ConvertStartAt(); ok {
 		_spec.SetField(gachaceilitem.FieldConvertStartAt, field.TypeInt64, value)

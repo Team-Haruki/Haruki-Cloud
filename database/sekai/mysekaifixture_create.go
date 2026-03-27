@@ -35,8 +35,16 @@ func (_c *MysekaifixtureCreate) SetNillableGameID(v *int64) *MysekaifixtureCreat
 }
 
 // SetMysekaiFixtureType sets the "mysekai_fixture_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureType(v)
+	return _c
+}
+
+// SetNillableMysekaiFixtureType sets the "mysekai_fixture_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiFixtureType(*v)
+	}
 	return _c
 }
 
@@ -131,26 +139,58 @@ func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureSubGenreID(v *int64) *M
 }
 
 // SetMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixtureHandleType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixtureHandleType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixtureHandleType(v)
 	return _c
 }
 
+// SetNillableMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixtureHandleType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiFixtureHandleType(*v)
+	}
+	return _c
+}
+
 // SetMysekaiSettableSiteType sets the "mysekai_settable_site_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiSettableSiteType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiSettableSiteType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiSettableSiteType(v)
 	return _c
 }
 
+// SetNillableMysekaiSettableSiteType sets the "mysekai_settable_site_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiSettableSiteType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiSettableSiteType(*v)
+	}
+	return _c
+}
+
 // SetMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiSettableLayoutType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiSettableLayoutType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiSettableLayoutType(v)
 	return _c
 }
 
+// SetNillableMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiSettableLayoutType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiSettableLayoutType(*v)
+	}
+	return _c
+}
+
 // SetMysekaiFixturePutType sets the "mysekai_fixture_put_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixturePutType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixturePutType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixturePutType(v)
+	return _c
+}
+
+// SetNillableMysekaiFixturePutType sets the "mysekai_fixture_put_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixturePutType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiFixturePutType(*v)
+	}
 	return _c
 }
 
@@ -223,8 +263,16 @@ func (_c *MysekaifixtureCreate) SetNillableIsDisassembled(v *bool) *Mysekaifixtu
 }
 
 // SetMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field.
-func (_c *MysekaifixtureCreate) SetMysekaiFixturePlayerActionType(v json.RawMessage) *MysekaifixtureCreate {
+func (_c *MysekaifixtureCreate) SetMysekaiFixturePlayerActionType(v string) *MysekaifixtureCreate {
 	_c.mutation.SetMysekaiFixturePlayerActionType(v)
+	return _c
+}
+
+// SetNillableMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field if the given value is not nil.
+func (_c *MysekaifixtureCreate) SetNillableMysekaiFixturePlayerActionType(v *string) *MysekaifixtureCreate {
+	if v != nil {
+		_c.SetMysekaiFixturePlayerActionType(*v)
+	}
 	return _c
 }
 
@@ -386,7 +434,7 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeString, value)
 		_node.MysekaiFixtureType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -418,19 +466,19 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.MysekaiFixtureSubGenreID = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureHandleType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeString, value)
 		_node.MysekaiFixtureHandleType = value
 	}
 	if value, ok := _c.mutation.MysekaiSettableSiteType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeString, value)
 		_node.MysekaiSettableSiteType = value
 	}
 	if value, ok := _c.mutation.MysekaiSettableLayoutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeString, value)
 		_node.MysekaiSettableLayoutType = value
 	}
 	if value, ok := _c.mutation.MysekaiFixturePutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeString, value)
 		_node.MysekaiFixturePutType = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureAnotherColors(); ok {
@@ -458,7 +506,7 @@ func (_c *MysekaifixtureCreate) createSpec() (*Mysekaifixture, *sqlgraph.CreateS
 		_node.IsDisassembled = value
 	}
 	if value, ok := _c.mutation.MysekaiFixturePlayerActionType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeString, value)
 		_node.MysekaiFixturePlayerActionType = value
 	}
 	if value, ok := _c.mutation.IsGameCharacterAction(); ok {

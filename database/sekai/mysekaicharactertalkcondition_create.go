@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
@@ -35,8 +34,16 @@ func (_c *MysekaicharactertalkconditionCreate) SetNillableGameID(v *int64) *Myse
 }
 
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
-func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionType(v json.RawMessage) *MysekaicharactertalkconditionCreate {
+func (_c *MysekaicharactertalkconditionCreate) SetMysekaiCharacterTalkConditionType(v string) *MysekaicharactertalkconditionCreate {
 	_c.mutation.SetMysekaiCharacterTalkConditionType(v)
+	return _c
+}
+
+// SetNillableMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field if the given value is not nil.
+func (_c *MysekaicharactertalkconditionCreate) SetNillableMysekaiCharacterTalkConditionType(v *string) *MysekaicharactertalkconditionCreate {
+	if v != nil {
+		_c.SetMysekaiCharacterTalkConditionType(*v)
+	}
 	return _c
 }
 
@@ -128,7 +135,7 @@ func (_c *MysekaicharactertalkconditionCreate) createSpec() (*Mysekaicharacterta
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionType(); ok {
-		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeJSON, value)
+		_spec.SetField(mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, field.TypeString, value)
 		_node.MysekaiCharacterTalkConditionType = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkConditionTypeValue(); ok {

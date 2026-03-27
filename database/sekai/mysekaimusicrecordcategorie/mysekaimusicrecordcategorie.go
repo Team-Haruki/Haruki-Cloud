@@ -71,6 +71,11 @@ func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()
 }
 
+// ByMysekaiMusicTrackType orders the results by the mysekai_music_track_type field.
+func ByMysekaiMusicTrackType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiMusicTrackType, opts...).ToFunc()
+}
+
 // ByUnit orders the results by the unit field.
 func ByUnit(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUnit, opts...).ToFunc()

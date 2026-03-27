@@ -195,8 +195,16 @@ func (_c *MusicCreate) SetNillableAssetbundleName(v *string) *MusicCreate {
 }
 
 // SetLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field.
-func (_c *MusicCreate) SetLiveTalkBackgroundAssetbundleName(v json.RawMessage) *MusicCreate {
+func (_c *MusicCreate) SetLiveTalkBackgroundAssetbundleName(v string) *MusicCreate {
 	_c.mutation.SetLiveTalkBackgroundAssetbundleName(v)
+	return _c
+}
+
+// SetNillableLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field if the given value is not nil.
+func (_c *MusicCreate) SetNillableLiveTalkBackgroundAssetbundleName(v *string) *MusicCreate {
+	if v != nil {
+		_c.SetLiveTalkBackgroundAssetbundleName(*v)
+	}
 	return _c
 }
 
@@ -426,7 +434,7 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.LiveTalkBackgroundAssetbundleName(); ok {
-		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeJSON, value)
+		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeString, value)
 		_node.LiveTalkBackgroundAssetbundleName = value
 	}
 	if value, ok := _c.mutation.PublishedAt(); ok {

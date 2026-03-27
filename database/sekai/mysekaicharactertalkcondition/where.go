@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldGameID, v))
 }
 
+// MysekaiCharacterTalkConditionType applies equality check predicate on the "mysekai_character_talk_condition_type" field. It's identical to MysekaiCharacterTalkConditionTypeEQ.
+func MysekaiCharacterTalkConditionType(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionType, v))
+}
+
 // MysekaiCharacterTalkConditionTypeValue applies equality check predicate on the "mysekai_character_talk_condition_type_value" field. It's identical to MysekaiCharacterTalkConditionTypeValueEQ.
 func MysekaiCharacterTalkConditionTypeValue(v int64) predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionTypeValue, v))
@@ -118,6 +123,61 @@ func GameIDNotNil() predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldGameID))
 }
 
+// MysekaiCharacterTalkConditionTypeEQ applies the EQ predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeEQ(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldEQ(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeNEQ applies the NEQ predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeNEQ(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNEQ(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeIn applies the In predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeIn(vs ...string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldIn(FieldMysekaiCharacterTalkConditionType, vs...))
+}
+
+// MysekaiCharacterTalkConditionTypeNotIn applies the NotIn predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeNotIn(vs ...string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldNotIn(FieldMysekaiCharacterTalkConditionType, vs...))
+}
+
+// MysekaiCharacterTalkConditionTypeGT applies the GT predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeGT(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGT(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeGTE applies the GTE predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeGTE(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldGTE(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeLT applies the LT predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeLT(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLT(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeLTE applies the LTE predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeLTE(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldLTE(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeContains applies the Contains predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeContains(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldContains(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeHasPrefix applies the HasPrefix predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeHasPrefix(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldHasPrefix(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeHasSuffix applies the HasSuffix predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeHasSuffix(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldHasSuffix(FieldMysekaiCharacterTalkConditionType, v))
+}
+
 // MysekaiCharacterTalkConditionTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_condition_type" field.
 func MysekaiCharacterTalkConditionTypeIsNil() predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldIsNull(FieldMysekaiCharacterTalkConditionType))
@@ -126,6 +186,16 @@ func MysekaiCharacterTalkConditionTypeIsNil() predicate.Mysekaicharactertalkcond
 // MysekaiCharacterTalkConditionTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_condition_type" field.
 func MysekaiCharacterTalkConditionTypeNotNil() predicate.Mysekaicharactertalkcondition {
 	return predicate.Mysekaicharactertalkcondition(sql.FieldNotNull(FieldMysekaiCharacterTalkConditionType))
+}
+
+// MysekaiCharacterTalkConditionTypeEqualFold applies the EqualFold predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeEqualFold(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldEqualFold(FieldMysekaiCharacterTalkConditionType, v))
+}
+
+// MysekaiCharacterTalkConditionTypeContainsFold applies the ContainsFold predicate on the "mysekai_character_talk_condition_type" field.
+func MysekaiCharacterTalkConditionTypeContainsFold(v string) predicate.Mysekaicharactertalkcondition {
+	return predicate.Mysekaicharactertalkcondition(sql.FieldContainsFold(FieldMysekaiCharacterTalkConditionType, v))
 }
 
 // MysekaiCharacterTalkConditionTypeValueEQ applies the EQ predicate on the "mysekai_character_talk_condition_type_value" field.

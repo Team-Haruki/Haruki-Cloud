@@ -79,6 +79,11 @@ func ByLastAttackStamina(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastAttackStamina, opts...).ToFunc()
 }
 
+// ByMysekaiSiteHarvestFixtureRarityType orders the results by the mysekai_site_harvest_fixture_rarity_type field.
+func ByMysekaiSiteHarvestFixtureRarityType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiSiteHarvestFixtureRarityType, opts...).ToFunc()
+}
+
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()

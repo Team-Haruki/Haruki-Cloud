@@ -63,6 +63,11 @@ func GameCharacterUnitID(v int64) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldGameCharacterUnitID, v))
 }
 
+// MysekaiCharacterTalkFixtureCommonType applies equality check predicate on the "mysekai_character_talk_fixture_common_type" field. It's identical to MysekaiCharacterTalkFixtureCommonTypeEQ.
+func MysekaiCharacterTalkFixtureCommonType(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
 // MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID applies equality check predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field. It's identical to MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ.
 func MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(v int64) predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, v))
@@ -178,6 +183,61 @@ func GameCharacterUnitIDNotNil() predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldGameCharacterUnitID))
 }
 
+// MysekaiCharacterTalkFixtureCommonTypeEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeEQ(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEQ(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeNEQ applies the NEQ predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeNEQ(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNEQ(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeIn applies the In predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeIn(vs ...string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIn(FieldMysekaiCharacterTalkFixtureCommonType, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeNotIn applies the NotIn predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeNotIn(vs ...string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotIn(FieldMysekaiCharacterTalkFixtureCommonType, vs...))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeGT applies the GT predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeGT(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGT(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeGTE applies the GTE predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeGTE(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldGTE(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeLT applies the LT predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeLT(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLT(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeLTE applies the LTE predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeLTE(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldLTE(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeContains applies the Contains predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeContains(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldContains(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeHasPrefix applies the HasPrefix predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeHasPrefix(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldHasPrefix(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeHasSuffix applies the HasSuffix predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeHasSuffix(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldHasSuffix(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
 // MysekaiCharacterTalkFixtureCommonTypeIsNil applies the IsNil predicate on the "mysekai_character_talk_fixture_common_type" field.
 func MysekaiCharacterTalkFixtureCommonTypeIsNil() predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldIsNull(FieldMysekaiCharacterTalkFixtureCommonType))
@@ -186,6 +246,16 @@ func MysekaiCharacterTalkFixtureCommonTypeIsNil() predicate.Mysekaicharactertalk
 // MysekaiCharacterTalkFixtureCommonTypeNotNil applies the NotNil predicate on the "mysekai_character_talk_fixture_common_type" field.
 func MysekaiCharacterTalkFixtureCommonTypeNotNil() predicate.Mysekaicharactertalkfixturecommon {
 	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldNotNull(FieldMysekaiCharacterTalkFixtureCommonType))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeEqualFold applies the EqualFold predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeEqualFold(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldEqualFold(FieldMysekaiCharacterTalkFixtureCommonType, v))
+}
+
+// MysekaiCharacterTalkFixtureCommonTypeContainsFold applies the ContainsFold predicate on the "mysekai_character_talk_fixture_common_type" field.
+func MysekaiCharacterTalkFixtureCommonTypeContainsFold(v string) predicate.Mysekaicharactertalkfixturecommon {
+	return predicate.Mysekaicharactertalkfixturecommon(sql.FieldContainsFold(FieldMysekaiCharacterTalkFixtureCommonType, v))
 }
 
 // MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupIDEQ applies the EQ predicate on the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.

@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalk"
@@ -105,8 +104,16 @@ func (_c *MysekaicharactertalkCreate) SetNillableCharacterArchiveMysekaiCharacte
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_c *MysekaicharactertalkCreate) SetAssetbundleName(v json.RawMessage) *MysekaicharactertalkCreate {
+func (_c *MysekaicharactertalkCreate) SetAssetbundleName(v string) *MysekaicharactertalkCreate {
 	_c.mutation.SetAssetbundleName(v)
+	return _c
+}
+
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_c *MysekaicharactertalkCreate) SetNillableAssetbundleName(v *string) *MysekaicharactertalkCreate {
+	if v != nil {
+		_c.SetAssetbundleName(*v)
+	}
 	return _c
 }
 
@@ -232,7 +239,7 @@ func (_c *MysekaicharactertalkCreate) createSpec() (*Mysekaicharactertalk, *sqlg
 		_node.CharacterArchiveMysekaiCharacterTalkGroupID = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeJSON, value)
+		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.Lua(); ok {

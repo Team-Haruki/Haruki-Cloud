@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -21,10 +19,10 @@ func (Area) Fields() []ent.Field {
 		field.String("assetbundle_name").Optional(),
 		field.Int64("group_id").Optional(),
 		field.Bool("is_base_area").Optional(),
-		field.JSON("area_type", json.RawMessage{}).Optional(),
-		field.JSON("view_type", json.RawMessage{}).Optional(),
-		field.JSON("display_timeline_type", json.RawMessage{}).Optional(),
-		field.JSON("additional_area_type", json.RawMessage{}).Optional(),
+		field.String("area_type").Optional(),
+		field.String("view_type").Optional(),
+		field.String("display_timeline_type").Optional(),
+		field.String("additional_area_type").Optional(),
 		field.String("name").Optional(),
 		field.Int64("release_condition_id").Optional(),
 		field.String("sub_name").Optional(),

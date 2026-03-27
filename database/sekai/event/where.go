@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldGameID, v))
 }
 
+// EventType applies equality check predicate on the "event_type" field. It's identical to EventTypeEQ.
+func EventType(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldName, v))
@@ -118,9 +123,19 @@ func VirtualLiveID(v int64) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldVirtualLiveID, v))
 }
 
+// Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
+func Unit(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldUnit, v))
+}
+
 // IsCountLeaderCharacterPlay applies equality check predicate on the "is_count_leader_character_play" field. It's identical to IsCountLeaderCharacterPlayEQ.
 func IsCountLeaderCharacterPlay(v bool) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldIsCountLeaderCharacterPlay, v))
+}
+
+// EventPointAssetbundleName applies equality check predicate on the "event_point_assetbundle_name" field. It's identical to EventPointAssetbundleNameEQ.
+func EventPointAssetbundleName(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventPointAssetbundleName, v))
 }
 
 // StandbyScreenDisplayStartAt applies equality check predicate on the "standby_screen_display_start_at" field. It's identical to StandbyScreenDisplayStartAtEQ.
@@ -183,6 +198,61 @@ func GameIDNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldGameID))
 }
 
+// EventTypeEQ applies the EQ predicate on the "event_type" field.
+func EventTypeEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventType, v))
+}
+
+// EventTypeNEQ applies the NEQ predicate on the "event_type" field.
+func EventTypeNEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldEventType, v))
+}
+
+// EventTypeIn applies the In predicate on the "event_type" field.
+func EventTypeIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldEventType, vs...))
+}
+
+// EventTypeNotIn applies the NotIn predicate on the "event_type" field.
+func EventTypeNotIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldEventType, vs...))
+}
+
+// EventTypeGT applies the GT predicate on the "event_type" field.
+func EventTypeGT(v string) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldEventType, v))
+}
+
+// EventTypeGTE applies the GTE predicate on the "event_type" field.
+func EventTypeGTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldEventType, v))
+}
+
+// EventTypeLT applies the LT predicate on the "event_type" field.
+func EventTypeLT(v string) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldEventType, v))
+}
+
+// EventTypeLTE applies the LTE predicate on the "event_type" field.
+func EventTypeLTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldEventType, v))
+}
+
+// EventTypeContains applies the Contains predicate on the "event_type" field.
+func EventTypeContains(v string) predicate.Event {
+	return predicate.Event(sql.FieldContains(FieldEventType, v))
+}
+
+// EventTypeHasPrefix applies the HasPrefix predicate on the "event_type" field.
+func EventTypeHasPrefix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasPrefix(FieldEventType, v))
+}
+
+// EventTypeHasSuffix applies the HasSuffix predicate on the "event_type" field.
+func EventTypeHasSuffix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasSuffix(FieldEventType, v))
+}
+
 // EventTypeIsNil applies the IsNil predicate on the "event_type" field.
 func EventTypeIsNil() predicate.Event {
 	return predicate.Event(sql.FieldIsNull(FieldEventType))
@@ -191,6 +261,16 @@ func EventTypeIsNil() predicate.Event {
 // EventTypeNotNil applies the NotNil predicate on the "event_type" field.
 func EventTypeNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldEventType))
+}
+
+// EventTypeEqualFold applies the EqualFold predicate on the "event_type" field.
+func EventTypeEqualFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldEqualFold(FieldEventType, v))
+}
+
+// EventTypeContainsFold applies the ContainsFold predicate on the "event_type" field.
+func EventTypeContainsFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldContainsFold(FieldEventType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -868,6 +948,61 @@ func VirtualLiveIDNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldVirtualLiveID))
 }
 
+// UnitEQ applies the EQ predicate on the "unit" field.
+func UnitEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldUnit, v))
+}
+
+// UnitNEQ applies the NEQ predicate on the "unit" field.
+func UnitNEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldUnit, v))
+}
+
+// UnitIn applies the In predicate on the "unit" field.
+func UnitIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldUnit, vs...))
+}
+
+// UnitNotIn applies the NotIn predicate on the "unit" field.
+func UnitNotIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldUnit, vs...))
+}
+
+// UnitGT applies the GT predicate on the "unit" field.
+func UnitGT(v string) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldUnit, v))
+}
+
+// UnitGTE applies the GTE predicate on the "unit" field.
+func UnitGTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldUnit, v))
+}
+
+// UnitLT applies the LT predicate on the "unit" field.
+func UnitLT(v string) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldUnit, v))
+}
+
+// UnitLTE applies the LTE predicate on the "unit" field.
+func UnitLTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldUnit, v))
+}
+
+// UnitContains applies the Contains predicate on the "unit" field.
+func UnitContains(v string) predicate.Event {
+	return predicate.Event(sql.FieldContains(FieldUnit, v))
+}
+
+// UnitHasPrefix applies the HasPrefix predicate on the "unit" field.
+func UnitHasPrefix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasPrefix(FieldUnit, v))
+}
+
+// UnitHasSuffix applies the HasSuffix predicate on the "unit" field.
+func UnitHasSuffix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasSuffix(FieldUnit, v))
+}
+
 // UnitIsNil applies the IsNil predicate on the "unit" field.
 func UnitIsNil() predicate.Event {
 	return predicate.Event(sql.FieldIsNull(FieldUnit))
@@ -876,6 +1011,16 @@ func UnitIsNil() predicate.Event {
 // UnitNotNil applies the NotNil predicate on the "unit" field.
 func UnitNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldUnit))
+}
+
+// UnitEqualFold applies the EqualFold predicate on the "unit" field.
+func UnitEqualFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldEqualFold(FieldUnit, v))
+}
+
+// UnitContainsFold applies the ContainsFold predicate on the "unit" field.
+func UnitContainsFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldContainsFold(FieldUnit, v))
 }
 
 // IsCountLeaderCharacterPlayEQ applies the EQ predicate on the "is_count_leader_character_play" field.
@@ -908,6 +1053,61 @@ func EventRankingRewardRangesNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldEventRankingRewardRanges))
 }
 
+// EventPointAssetbundleNameEQ applies the EQ predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameNEQ applies the NEQ predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameNEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameIn applies the In predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldEventPointAssetbundleName, vs...))
+}
+
+// EventPointAssetbundleNameNotIn applies the NotIn predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameNotIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldEventPointAssetbundleName, vs...))
+}
+
+// EventPointAssetbundleNameGT applies the GT predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameGT(v string) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameGTE applies the GTE predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameGTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameLT applies the LT predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameLT(v string) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameLTE applies the LTE predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameLTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameContains applies the Contains predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameContains(v string) predicate.Event {
+	return predicate.Event(sql.FieldContains(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameHasPrefix applies the HasPrefix predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameHasPrefix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasPrefix(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameHasSuffix applies the HasSuffix predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameHasSuffix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasSuffix(FieldEventPointAssetbundleName, v))
+}
+
 // EventPointAssetbundleNameIsNil applies the IsNil predicate on the "event_point_assetbundle_name" field.
 func EventPointAssetbundleNameIsNil() predicate.Event {
 	return predicate.Event(sql.FieldIsNull(FieldEventPointAssetbundleName))
@@ -916,6 +1116,16 @@ func EventPointAssetbundleNameIsNil() predicate.Event {
 // EventPointAssetbundleNameNotNil applies the NotNil predicate on the "event_point_assetbundle_name" field.
 func EventPointAssetbundleNameNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldEventPointAssetbundleName))
+}
+
+// EventPointAssetbundleNameEqualFold applies the EqualFold predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameEqualFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldEqualFold(FieldEventPointAssetbundleName, v))
+}
+
+// EventPointAssetbundleNameContainsFold applies the ContainsFold predicate on the "event_point_assetbundle_name" field.
+func EventPointAssetbundleNameContainsFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldContainsFold(FieldEventPointAssetbundleName, v))
 }
 
 // StandbyScreenDisplayStartAtEQ applies the EQ predicate on the "standby_screen_display_start_at" field.

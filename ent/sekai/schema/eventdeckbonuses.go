@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Eventdeckbonuse) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
 		field.Int64("game_character_unit_id").Optional(),
-		field.JSON("card_attr", json.RawMessage{}).Optional(),
+		field.String("card_attr").Optional(),
 		field.Float("bonus_rate").Optional(),
 		field.String("server_region"),
 	}

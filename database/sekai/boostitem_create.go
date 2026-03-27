@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
@@ -91,8 +90,16 @@ func (_c *BoostitemCreate) SetNillableAssetBundleName(v *string) *BoostitemCreat
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_c *BoostitemCreate) SetFlavorText(v json.RawMessage) *BoostitemCreate {
+func (_c *BoostitemCreate) SetFlavorText(v string) *BoostitemCreate {
 	_c.mutation.SetFlavorText(v)
+	return _c
+}
+
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_c *BoostitemCreate) SetNillableFlavorText(v *string) *BoostitemCreate {
+	if v != nil {
+		_c.SetFlavorText(*v)
+	}
 	return _c
 }
 
@@ -186,7 +193,7 @@ func (_c *BoostitemCreate) createSpec() (*Boostitem, *sqlgraph.CreateSpec) {
 		_node.AssetBundleName = value
 	}
 	if value, ok := _c.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

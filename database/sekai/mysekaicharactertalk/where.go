@@ -83,6 +83,11 @@ func CharacterArchiveMysekaiCharacterTalkGroupID(v int64) predicate.Mysekaichara
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldCharacterArchiveMysekaiCharacterTalkGroupID, v))
 }
 
+// AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
+func AssetbundleName(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldAssetbundleName, v))
+}
+
 // Lua applies equality check predicate on the "lua" field. It's identical to LuaEQ.
 func Lua(v string) predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldLua, v))
@@ -398,6 +403,61 @@ func CharacterArchiveMysekaiCharacterTalkGroupIDNotNil() predicate.Mysekaicharac
 	return predicate.Mysekaicharactertalk(sql.FieldNotNull(FieldCharacterArchiveMysekaiCharacterTalkGroupID))
 }
 
+// AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.
+func AssetbundleNameEQ(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldEQ(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameNEQ applies the NEQ predicate on the "assetbundle_name" field.
+func AssetbundleNameNEQ(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldNEQ(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameIn applies the In predicate on the "assetbundle_name" field.
+func AssetbundleNameIn(vs ...string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldIn(FieldAssetbundleName, vs...))
+}
+
+// AssetbundleNameNotIn applies the NotIn predicate on the "assetbundle_name" field.
+func AssetbundleNameNotIn(vs ...string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldNotIn(FieldAssetbundleName, vs...))
+}
+
+// AssetbundleNameGT applies the GT predicate on the "assetbundle_name" field.
+func AssetbundleNameGT(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldGT(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameGTE applies the GTE predicate on the "assetbundle_name" field.
+func AssetbundleNameGTE(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldGTE(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameLT applies the LT predicate on the "assetbundle_name" field.
+func AssetbundleNameLT(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldLT(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameLTE applies the LTE predicate on the "assetbundle_name" field.
+func AssetbundleNameLTE(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldLTE(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameContains applies the Contains predicate on the "assetbundle_name" field.
+func AssetbundleNameContains(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldContains(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameHasPrefix applies the HasPrefix predicate on the "assetbundle_name" field.
+func AssetbundleNameHasPrefix(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldHasPrefix(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameHasSuffix applies the HasSuffix predicate on the "assetbundle_name" field.
+func AssetbundleNameHasSuffix(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldHasSuffix(FieldAssetbundleName, v))
+}
+
 // AssetbundleNameIsNil applies the IsNil predicate on the "assetbundle_name" field.
 func AssetbundleNameIsNil() predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldIsNull(FieldAssetbundleName))
@@ -406,6 +466,16 @@ func AssetbundleNameIsNil() predicate.Mysekaicharactertalk {
 // AssetbundleNameNotNil applies the NotNil predicate on the "assetbundle_name" field.
 func AssetbundleNameNotNil() predicate.Mysekaicharactertalk {
 	return predicate.Mysekaicharactertalk(sql.FieldNotNull(FieldAssetbundleName))
+}
+
+// AssetbundleNameEqualFold applies the EqualFold predicate on the "assetbundle_name" field.
+func AssetbundleNameEqualFold(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldEqualFold(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
+func AssetbundleNameContainsFold(v string) predicate.Mysekaicharactertalk {
+	return predicate.Mysekaicharactertalk(sql.FieldContainsFold(FieldAssetbundleName, v))
 }
 
 // LuaEQ applies the EQ predicate on the "lua" field.

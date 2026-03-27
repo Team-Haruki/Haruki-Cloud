@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -63,8 +62,16 @@ func (_c *EventdeckbonuseCreate) SetNillableGameCharacterUnitID(v *int64) *Event
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_c *EventdeckbonuseCreate) SetCardAttr(v json.RawMessage) *EventdeckbonuseCreate {
+func (_c *EventdeckbonuseCreate) SetCardAttr(v string) *EventdeckbonuseCreate {
 	_c.mutation.SetCardAttr(v)
+	return _c
+}
+
+// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
+func (_c *EventdeckbonuseCreate) SetNillableCardAttr(v *string) *EventdeckbonuseCreate {
+	if v != nil {
+		_c.SetCardAttr(*v)
+	}
 	return _c
 }
 
@@ -164,7 +171,7 @@ func (_c *EventdeckbonuseCreate) createSpec() (*Eventdeckbonuse, *sqlgraph.Creat
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
 		_node.CardAttr = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {

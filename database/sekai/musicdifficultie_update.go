@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *MusicdifficultieUpdate) ClearMusicID() *MusicdifficultieUpdate {
 }
 
 // SetMusicDifficulty sets the "music_difficulty" field.
-func (_u *MusicdifficultieUpdate) SetMusicDifficulty(v json.RawMessage) *MusicdifficultieUpdate {
+func (_u *MusicdifficultieUpdate) SetMusicDifficulty(v string) *MusicdifficultieUpdate {
 	_u.mutation.SetMusicDifficulty(v)
 	return _u
 }
 
-// AppendMusicDifficulty appends value to the "music_difficulty" field.
-func (_u *MusicdifficultieUpdate) AppendMusicDifficulty(v json.RawMessage) *MusicdifficultieUpdate {
-	_u.mutation.AppendMusicDifficulty(v)
+// SetNillableMusicDifficulty sets the "music_difficulty" field if the given value is not nil.
+func (_u *MusicdifficultieUpdate) SetNillableMusicDifficulty(v *string) *MusicdifficultieUpdate {
+	if v != nil {
+		_u.SetMusicDifficulty(*v)
+	}
 	return _u
 }
 
@@ -256,15 +256,10 @@ func (_u *MusicdifficultieUpdate) sqlSave(ctx context.Context) (_node int, err e
 		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicDifficulty(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicDifficulty(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicdifficultie.FieldMusicDifficulty, value)
-		})
+		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeString, value)
 	}
 	if _u.mutation.MusicDifficultyCleared() {
-		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON)
+		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeString)
 	}
 	if value, ok := _u.mutation.PlayLevel(); ok {
 		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)
@@ -371,14 +366,16 @@ func (_u *MusicdifficultieUpdateOne) ClearMusicID() *MusicdifficultieUpdateOne {
 }
 
 // SetMusicDifficulty sets the "music_difficulty" field.
-func (_u *MusicdifficultieUpdateOne) SetMusicDifficulty(v json.RawMessage) *MusicdifficultieUpdateOne {
+func (_u *MusicdifficultieUpdateOne) SetMusicDifficulty(v string) *MusicdifficultieUpdateOne {
 	_u.mutation.SetMusicDifficulty(v)
 	return _u
 }
 
-// AppendMusicDifficulty appends value to the "music_difficulty" field.
-func (_u *MusicdifficultieUpdateOne) AppendMusicDifficulty(v json.RawMessage) *MusicdifficultieUpdateOne {
-	_u.mutation.AppendMusicDifficulty(v)
+// SetNillableMusicDifficulty sets the "music_difficulty" field if the given value is not nil.
+func (_u *MusicdifficultieUpdateOne) SetNillableMusicDifficulty(v *string) *MusicdifficultieUpdateOne {
+	if v != nil {
+		_u.SetMusicDifficulty(*v)
+	}
 	return _u
 }
 
@@ -573,15 +570,10 @@ func (_u *MusicdifficultieUpdateOne) sqlSave(ctx context.Context) (_node *Musicd
 		_spec.ClearField(musicdifficultie.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicDifficulty(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicDifficulty(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicdifficultie.FieldMusicDifficulty, value)
-		})
+		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeString, value)
 	}
 	if _u.mutation.MusicDifficultyCleared() {
-		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON)
+		_spec.ClearField(musicdifficultie.FieldMusicDifficulty, field.TypeString)
 	}
 	if value, ok := _u.mutation.PlayLevel(); ok {
 		_spec.SetField(musicdifficultie.FieldPlayLevel, field.TypeInt64, value)

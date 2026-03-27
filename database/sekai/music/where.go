@@ -113,6 +113,11 @@ func AssetbundleName(v string) predicate.Music {
 	return predicate.Music(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
+// LiveTalkBackgroundAssetbundleName applies equality check predicate on the "live_talk_background_assetbundle_name" field. It's identical to LiveTalkBackgroundAssetbundleNameEQ.
+func LiveTalkBackgroundAssetbundleName(v string) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
 // PublishedAt applies equality check predicate on the "published_at" field. It's identical to PublishedAtEQ.
 func PublishedAt(v int64) predicate.Music {
 	return predicate.Music(sql.FieldEQ(FieldPublishedAt, v))
@@ -913,6 +918,61 @@ func AssetbundleNameContainsFold(v string) predicate.Music {
 	return predicate.Music(sql.FieldContainsFold(FieldAssetbundleName, v))
 }
 
+// LiveTalkBackgroundAssetbundleNameEQ applies the EQ predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameEQ(v string) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameNEQ applies the NEQ predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameNEQ(v string) predicate.Music {
+	return predicate.Music(sql.FieldNEQ(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameIn applies the In predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameIn(vs ...string) predicate.Music {
+	return predicate.Music(sql.FieldIn(FieldLiveTalkBackgroundAssetbundleName, vs...))
+}
+
+// LiveTalkBackgroundAssetbundleNameNotIn applies the NotIn predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameNotIn(vs ...string) predicate.Music {
+	return predicate.Music(sql.FieldNotIn(FieldLiveTalkBackgroundAssetbundleName, vs...))
+}
+
+// LiveTalkBackgroundAssetbundleNameGT applies the GT predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameGT(v string) predicate.Music {
+	return predicate.Music(sql.FieldGT(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameGTE applies the GTE predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameGTE(v string) predicate.Music {
+	return predicate.Music(sql.FieldGTE(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameLT applies the LT predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameLT(v string) predicate.Music {
+	return predicate.Music(sql.FieldLT(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameLTE applies the LTE predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameLTE(v string) predicate.Music {
+	return predicate.Music(sql.FieldLTE(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameContains applies the Contains predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameContains(v string) predicate.Music {
+	return predicate.Music(sql.FieldContains(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameHasPrefix applies the HasPrefix predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameHasPrefix(v string) predicate.Music {
+	return predicate.Music(sql.FieldHasPrefix(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameHasSuffix applies the HasSuffix predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameHasSuffix(v string) predicate.Music {
+	return predicate.Music(sql.FieldHasSuffix(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
 // LiveTalkBackgroundAssetbundleNameIsNil applies the IsNil predicate on the "live_talk_background_assetbundle_name" field.
 func LiveTalkBackgroundAssetbundleNameIsNil() predicate.Music {
 	return predicate.Music(sql.FieldIsNull(FieldLiveTalkBackgroundAssetbundleName))
@@ -921,6 +981,16 @@ func LiveTalkBackgroundAssetbundleNameIsNil() predicate.Music {
 // LiveTalkBackgroundAssetbundleNameNotNil applies the NotNil predicate on the "live_talk_background_assetbundle_name" field.
 func LiveTalkBackgroundAssetbundleNameNotNil() predicate.Music {
 	return predicate.Music(sql.FieldNotNull(FieldLiveTalkBackgroundAssetbundleName))
+}
+
+// LiveTalkBackgroundAssetbundleNameEqualFold applies the EqualFold predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameEqualFold(v string) predicate.Music {
+	return predicate.Music(sql.FieldEqualFold(FieldLiveTalkBackgroundAssetbundleName, v))
+}
+
+// LiveTalkBackgroundAssetbundleNameContainsFold applies the ContainsFold predicate on the "live_talk_background_assetbundle_name" field.
+func LiveTalkBackgroundAssetbundleNameContainsFold(v string) predicate.Music {
+	return predicate.Music(sql.FieldContainsFold(FieldLiveTalkBackgroundAssetbundleName, v))
 }
 
 // PublishedAtEQ applies the EQ predicate on the "published_at" field.

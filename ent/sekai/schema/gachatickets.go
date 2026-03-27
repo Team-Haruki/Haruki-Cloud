@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Gachaticket) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.JSON("gacha_display_type", json.RawMessage{}).Optional(),
+		field.String("gacha_display_type").Optional(),
 		field.String("server_region"),
 	}
 }

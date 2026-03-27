@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -111,14 +109,16 @@ func (_u *EventdeckbonuseUpdate) ClearGameCharacterUnitID() *EventdeckbonuseUpda
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_u *EventdeckbonuseUpdate) SetCardAttr(v json.RawMessage) *EventdeckbonuseUpdate {
+func (_u *EventdeckbonuseUpdate) SetCardAttr(v string) *EventdeckbonuseUpdate {
 	_u.mutation.SetCardAttr(v)
 	return _u
 }
 
-// AppendCardAttr appends value to the "card_attr" field.
-func (_u *EventdeckbonuseUpdate) AppendCardAttr(v json.RawMessage) *EventdeckbonuseUpdate {
-	_u.mutation.AppendCardAttr(v)
+// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
+func (_u *EventdeckbonuseUpdate) SetNillableCardAttr(v *string) *EventdeckbonuseUpdate {
+	if v != nil {
+		_u.SetCardAttr(*v)
+	}
 	return _u
 }
 
@@ -238,15 +238,10 @@ func (_u *EventdeckbonuseUpdate) sqlSave(ctx context.Context) (_node int, err er
 		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventdeckbonuse.FieldCardAttr, value)
-		})
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
 	}
 	if _u.mutation.CardAttrCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeJSON)
+		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64, value)
@@ -362,14 +357,16 @@ func (_u *EventdeckbonuseUpdateOne) ClearGameCharacterUnitID() *EventdeckbonuseU
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (_u *EventdeckbonuseUpdateOne) SetCardAttr(v json.RawMessage) *EventdeckbonuseUpdateOne {
+func (_u *EventdeckbonuseUpdateOne) SetCardAttr(v string) *EventdeckbonuseUpdateOne {
 	_u.mutation.SetCardAttr(v)
 	return _u
 }
 
-// AppendCardAttr appends value to the "card_attr" field.
-func (_u *EventdeckbonuseUpdateOne) AppendCardAttr(v json.RawMessage) *EventdeckbonuseUpdateOne {
-	_u.mutation.AppendCardAttr(v)
+// SetNillableCardAttr sets the "card_attr" field if the given value is not nil.
+func (_u *EventdeckbonuseUpdateOne) SetNillableCardAttr(v *string) *EventdeckbonuseUpdateOne {
+	if v != nil {
+		_u.SetCardAttr(*v)
+	}
 	return _u
 }
 
@@ -519,15 +516,10 @@ func (_u *EventdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_node *Eventde
 		_spec.ClearField(eventdeckbonuse.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardAttr(); ok {
-		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventdeckbonuse.FieldCardAttr, value)
-		})
+		_spec.SetField(eventdeckbonuse.FieldCardAttr, field.TypeString, value)
 	}
 	if _u.mutation.CardAttrCleared() {
-		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeJSON)
+		_spec.ClearField(eventdeckbonuse.FieldCardAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(eventdeckbonuse.FieldBonusRate, field.TypeFloat64, value)

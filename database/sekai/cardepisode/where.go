@@ -103,6 +103,11 @@ func Power3BonusFixed(v int64) predicate.Cardepisode {
 	return predicate.Cardepisode(sql.FieldEQ(FieldPower3BonusFixed, v))
 }
 
+// CardEpisodePartType applies equality check predicate on the "card_episode_part_type" field. It's identical to CardEpisodePartTypeEQ.
+func CardEpisodePartType(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldEQ(FieldCardEpisodePartType, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Cardepisode {
 	return predicate.Cardepisode(sql.FieldEQ(FieldServerRegion, v))
@@ -703,6 +708,61 @@ func CostsNotNil() predicate.Cardepisode {
 	return predicate.Cardepisode(sql.FieldNotNull(FieldCosts))
 }
 
+// CardEpisodePartTypeEQ applies the EQ predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeEQ(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldEQ(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeNEQ applies the NEQ predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeNEQ(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldNEQ(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeIn applies the In predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeIn(vs ...string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldIn(FieldCardEpisodePartType, vs...))
+}
+
+// CardEpisodePartTypeNotIn applies the NotIn predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeNotIn(vs ...string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldNotIn(FieldCardEpisodePartType, vs...))
+}
+
+// CardEpisodePartTypeGT applies the GT predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeGT(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldGT(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeGTE applies the GTE predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeGTE(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldGTE(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeLT applies the LT predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeLT(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldLT(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeLTE applies the LTE predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeLTE(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldLTE(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeContains applies the Contains predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeContains(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldContains(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeHasPrefix applies the HasPrefix predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeHasPrefix(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldHasPrefix(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeHasSuffix applies the HasSuffix predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeHasSuffix(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldHasSuffix(FieldCardEpisodePartType, v))
+}
+
 // CardEpisodePartTypeIsNil applies the IsNil predicate on the "card_episode_part_type" field.
 func CardEpisodePartTypeIsNil() predicate.Cardepisode {
 	return predicate.Cardepisode(sql.FieldIsNull(FieldCardEpisodePartType))
@@ -711,6 +771,16 @@ func CardEpisodePartTypeIsNil() predicate.Cardepisode {
 // CardEpisodePartTypeNotNil applies the NotNil predicate on the "card_episode_part_type" field.
 func CardEpisodePartTypeNotNil() predicate.Cardepisode {
 	return predicate.Cardepisode(sql.FieldNotNull(FieldCardEpisodePartType))
+}
+
+// CardEpisodePartTypeEqualFold applies the EqualFold predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeEqualFold(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldEqualFold(FieldCardEpisodePartType, v))
+}
+
+// CardEpisodePartTypeContainsFold applies the ContainsFold predicate on the "card_episode_part_type" field.
+func CardEpisodePartTypeContainsFold(v string) predicate.Cardepisode {
+	return predicate.Cardepisode(sql.FieldContainsFold(FieldCardEpisodePartType, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

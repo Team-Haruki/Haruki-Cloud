@@ -84,6 +84,11 @@ func ByAssetBundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetBundleName, opts...).ToFunc()
 }
 
+// ByFlavorText orders the results by the flavor_text field.
+func ByFlavorText(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFlavorText, opts...).ToFunc()
+}
+
 // ByServerRegion orders the results by the server_region field.
 func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()

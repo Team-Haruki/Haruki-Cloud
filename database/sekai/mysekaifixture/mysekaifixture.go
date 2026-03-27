@@ -124,6 +124,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByMysekaiFixtureType orders the results by the mysekai_fixture_type field.
+func ByMysekaiFixtureType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixtureType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -154,6 +159,26 @@ func ByMysekaiFixtureSubGenreID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiFixtureSubGenreID, opts...).ToFunc()
 }
 
+// ByMysekaiFixtureHandleType orders the results by the mysekai_fixture_handle_type field.
+func ByMysekaiFixtureHandleType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixtureHandleType, opts...).ToFunc()
+}
+
+// ByMysekaiSettableSiteType orders the results by the mysekai_settable_site_type field.
+func ByMysekaiSettableSiteType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiSettableSiteType, opts...).ToFunc()
+}
+
+// ByMysekaiSettableLayoutType orders the results by the mysekai_settable_layout_type field.
+func ByMysekaiSettableLayoutType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiSettableLayoutType, opts...).ToFunc()
+}
+
+// ByMysekaiFixturePutType orders the results by the mysekai_fixture_put_type field.
+func ByMysekaiFixturePutType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixturePutType, opts...).ToFunc()
+}
+
 // ByMysekaiFixturePutSoundID orders the results by the mysekai_fixture_put_sound_id field.
 func ByMysekaiFixturePutSoundID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiFixturePutSoundID, opts...).ToFunc()
@@ -172,6 +197,11 @@ func ByIsAssembled(opts ...sql.OrderTermOption) OrderOption {
 // ByIsDisassembled orders the results by the is_disassembled field.
 func ByIsDisassembled(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsDisassembled, opts...).ToFunc()
+}
+
+// ByMysekaiFixturePlayerActionType orders the results by the mysekai_fixture_player_action_type field.
+func ByMysekaiFixturePlayerActionType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixturePlayerActionType, opts...).ToFunc()
 }
 
 // ByIsGameCharacterAction orders the results by the is_game_character_action field.

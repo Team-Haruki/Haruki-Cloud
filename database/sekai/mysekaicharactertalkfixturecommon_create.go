@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
@@ -49,8 +48,16 @@ func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableGameCharacterUnitI
 }
 
 // SetMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field.
-func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonCreate {
+func (_c *MysekaicharactertalkfixturecommonCreate) SetMysekaiCharacterTalkFixtureCommonType(v string) *MysekaicharactertalkfixturecommonCreate {
 	_c.mutation.SetMysekaiCharacterTalkFixtureCommonType(v)
+	return _c
+}
+
+// SetNillableMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field if the given value is not nil.
+func (_c *MysekaicharactertalkfixturecommonCreate) SetNillableMysekaiCharacterTalkFixtureCommonType(v *string) *MysekaicharactertalkfixturecommonCreate {
+	if v != nil {
+		_c.SetMysekaiCharacterTalkFixtureCommonType(*v)
+	}
 	return _c
 }
 
@@ -160,7 +167,7 @@ func (_c *MysekaicharactertalkfixturecommonCreate) createSpec() (*Mysekaicharact
 		_node.GameCharacterUnitID = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkFixtureCommonType(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeJSON, value)
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeString, value)
 		_node.MysekaiCharacterTalkFixtureCommonType = value
 	}
 	if value, ok := _c.mutation.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(); ok {

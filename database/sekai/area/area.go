@@ -106,6 +106,26 @@ func ByIsBaseArea(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsBaseArea, opts...).ToFunc()
 }
 
+// ByAreaType orders the results by the area_type field.
+func ByAreaType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAreaType, opts...).ToFunc()
+}
+
+// ByViewType orders the results by the view_type field.
+func ByViewType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldViewType, opts...).ToFunc()
+}
+
+// ByDisplayTimelineType orders the results by the display_timeline_type field.
+func ByDisplayTimelineType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDisplayTimelineType, opts...).ToFunc()
+}
+
+// ByAdditionalAreaType orders the results by the additional_area_type field.
+func ByAdditionalAreaType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdditionalAreaType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()

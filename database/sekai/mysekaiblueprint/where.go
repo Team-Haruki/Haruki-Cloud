@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldGameID, v))
 }
 
+// MysekaiCraftType applies equality check predicate on the "mysekai_craft_type" field. It's identical to MysekaiCraftTypeEQ.
+func MysekaiCraftType(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldMysekaiCraftType, v))
+}
+
 // CraftTargetID applies equality check predicate on the "craft_target_id" field. It's identical to CraftTargetIDEQ.
 func CraftTargetID(v int64) predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldCraftTargetID, v))
@@ -138,6 +143,61 @@ func GameIDNotNil() predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldGameID))
 }
 
+// MysekaiCraftTypeEQ applies the EQ predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeEQ(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEQ(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeNEQ applies the NEQ predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeNEQ(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNEQ(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeIn applies the In predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeIn(vs ...string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldIn(FieldMysekaiCraftType, vs...))
+}
+
+// MysekaiCraftTypeNotIn applies the NotIn predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeNotIn(vs ...string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldNotIn(FieldMysekaiCraftType, vs...))
+}
+
+// MysekaiCraftTypeGT applies the GT predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeGT(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGT(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeGTE applies the GTE predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeGTE(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldGTE(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeLT applies the LT predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeLT(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLT(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeLTE applies the LTE predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeLTE(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldLTE(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeContains applies the Contains predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeContains(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldContains(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeHasPrefix applies the HasPrefix predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeHasPrefix(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldHasPrefix(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeHasSuffix applies the HasSuffix predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeHasSuffix(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldHasSuffix(FieldMysekaiCraftType, v))
+}
+
 // MysekaiCraftTypeIsNil applies the IsNil predicate on the "mysekai_craft_type" field.
 func MysekaiCraftTypeIsNil() predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldIsNull(FieldMysekaiCraftType))
@@ -146,6 +206,16 @@ func MysekaiCraftTypeIsNil() predicate.Mysekaiblueprint {
 // MysekaiCraftTypeNotNil applies the NotNil predicate on the "mysekai_craft_type" field.
 func MysekaiCraftTypeNotNil() predicate.Mysekaiblueprint {
 	return predicate.Mysekaiblueprint(sql.FieldNotNull(FieldMysekaiCraftType))
+}
+
+// MysekaiCraftTypeEqualFold applies the EqualFold predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeEqualFold(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldEqualFold(FieldMysekaiCraftType, v))
+}
+
+// MysekaiCraftTypeContainsFold applies the ContainsFold predicate on the "mysekai_craft_type" field.
+func MysekaiCraftTypeContainsFold(v string) predicate.Mysekaiblueprint {
+	return predicate.Mysekaiblueprint(sql.FieldContainsFold(FieldMysekaiCraftType, v))
 }
 
 // CraftTargetIDEQ applies the EQ predicate on the "craft_target_id" field.

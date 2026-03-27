@@ -63,8 +63,16 @@ func (_c *CardCreate) SetNillableCharacterID(v *int64) *CardCreate {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_c *CardCreate) SetCardRarityType(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetCardRarityType(v string) *CardCreate {
 	_c.mutation.SetCardRarityType(v)
+	return _c
+}
+
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_c *CardCreate) SetNillableCardRarityType(v *string) *CardCreate {
+	if v != nil {
+		_c.SetCardRarityType(*v)
+	}
 	return _c
 }
 
@@ -111,14 +119,30 @@ func (_c *CardCreate) SetNillableSpecialTrainingPower3BonusFixed(v *int64) *Card
 }
 
 // SetAttr sets the "attr" field.
-func (_c *CardCreate) SetAttr(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetAttr(v string) *CardCreate {
 	_c.mutation.SetAttr(v)
 	return _c
 }
 
+// SetNillableAttr sets the "attr" field if the given value is not nil.
+func (_c *CardCreate) SetNillableAttr(v *string) *CardCreate {
+	if v != nil {
+		_c.SetAttr(*v)
+	}
+	return _c
+}
+
 // SetSupportUnit sets the "support_unit" field.
-func (_c *CardCreate) SetSupportUnit(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetSupportUnit(v string) *CardCreate {
 	_c.mutation.SetSupportUnit(v)
+	return _c
+}
+
+// SetNillableSupportUnit sets the "support_unit" field if the given value is not nil.
+func (_c *CardCreate) SetNillableSupportUnit(v *string) *CardCreate {
+	if v != nil {
+		_c.SetSupportUnit(*v)
+	}
 	return _c
 }
 
@@ -193,8 +217,16 @@ func (_c *CardCreate) SetNillableGachaPhrase(v *string) *CardCreate {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_c *CardCreate) SetFlavorText(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetFlavorText(v string) *CardCreate {
 	_c.mutation.SetFlavorText(v)
+	return _c
+}
+
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_c *CardCreate) SetNillableFlavorText(v *string) *CardCreate {
+	if v != nil {
+		_c.SetFlavorText(*v)
+	}
 	return _c
 }
 
@@ -259,14 +291,30 @@ func (_c *CardCreate) SetMasterLessonAchieveResources(v json.RawMessage) *CardCr
 }
 
 // SetInitialSpecialTrainingStatus sets the "initial_special_training_status" field.
-func (_c *CardCreate) SetInitialSpecialTrainingStatus(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetInitialSpecialTrainingStatus(v string) *CardCreate {
 	_c.mutation.SetInitialSpecialTrainingStatus(v)
 	return _c
 }
 
+// SetNillableInitialSpecialTrainingStatus sets the "initial_special_training_status" field if the given value is not nil.
+func (_c *CardCreate) SetNillableInitialSpecialTrainingStatus(v *string) *CardCreate {
+	if v != nil {
+		_c.SetInitialSpecialTrainingStatus(*v)
+	}
+	return _c
+}
+
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *CardCreate) SetArchiveDisplayType(v json.RawMessage) *CardCreate {
+func (_c *CardCreate) SetArchiveDisplayType(v string) *CardCreate {
 	_c.mutation.SetArchiveDisplayType(v)
+	return _c
+}
+
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_c *CardCreate) SetNillableArchiveDisplayType(v *string) *CardCreate {
+	if v != nil {
+		_c.SetArchiveDisplayType(*v)
+	}
 	return _c
 }
 
@@ -394,7 +442,7 @@ func (_c *CardCreate) createSpec() (*Card, *sqlgraph.CreateSpec) {
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.CardRarityType(); ok {
-		_spec.SetField(card.FieldCardRarityType, field.TypeJSON, value)
+		_spec.SetField(card.FieldCardRarityType, field.TypeString, value)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.SpecialTrainingPower1BonusFixed(); ok {
@@ -410,11 +458,11 @@ func (_c *CardCreate) createSpec() (*Card, *sqlgraph.CreateSpec) {
 		_node.SpecialTrainingPower3BonusFixed = value
 	}
 	if value, ok := _c.mutation.Attr(); ok {
-		_spec.SetField(card.FieldAttr, field.TypeJSON, value)
+		_spec.SetField(card.FieldAttr, field.TypeString, value)
 		_node.Attr = value
 	}
 	if value, ok := _c.mutation.SupportUnit(); ok {
-		_spec.SetField(card.FieldSupportUnit, field.TypeJSON, value)
+		_spec.SetField(card.FieldSupportUnit, field.TypeString, value)
 		_node.SupportUnit = value
 	}
 	if value, ok := _c.mutation.SkillID(); ok {
@@ -438,7 +486,7 @@ func (_c *CardCreate) createSpec() (*Card, *sqlgraph.CreateSpec) {
 		_node.GachaPhrase = value
 	}
 	if value, ok := _c.mutation.FlavorText(); ok {
-		_spec.SetField(card.FieldFlavorText, field.TypeJSON, value)
+		_spec.SetField(card.FieldFlavorText, field.TypeString, value)
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.ReleaseAt(); ok {
@@ -466,11 +514,11 @@ func (_c *CardCreate) createSpec() (*Card, *sqlgraph.CreateSpec) {
 		_node.MasterLessonAchieveResources = value
 	}
 	if value, ok := _c.mutation.InitialSpecialTrainingStatus(); ok {
-		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeJSON, value)
+		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeString, value)
 		_node.InitialSpecialTrainingStatus = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(card.FieldArchiveDisplayType, field.TypeJSON, value)
+		_spec.SetField(card.FieldArchiveDisplayType, field.TypeString, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.SpecialTrainingSkillID(); ok {

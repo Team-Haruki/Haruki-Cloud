@@ -98,6 +98,11 @@ func ByCharacterArchiveMysekaiCharacterTalkGroupID(opts ...sql.OrderTermOption) 
 	return sql.OrderByField(FieldCharacterArchiveMysekaiCharacterTalkGroupID, opts...).ToFunc()
 }
 
+// ByAssetbundleName orders the results by the assetbundle_name field.
+func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
 // ByLua orders the results by the lua field.
 func ByLua(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLua, opts...).ToFunc()

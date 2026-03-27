@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,7 +16,7 @@ type Mysekaicharactertalkcondition struct {
 func (Mysekaicharactertalkcondition) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("mysekai_character_talk_condition_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_character_talk_condition_type").Optional(),
 		field.Int64("mysekai_character_talk_condition_type_value").Optional(),
 		field.String("server_region"),
 	}

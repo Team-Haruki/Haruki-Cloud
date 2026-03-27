@@ -186,39 +186,35 @@ const (
 // AreaMutation represents an operation that mutates the Area nodes in the graph.
 type AreaMutation struct {
 	config
-	op                          Op
-	typ                         string
-	id                          *int
-	game_id                     *int64
-	addgame_id                  *int64
-	assetbundle_name            *string
-	group_id                    *int64
-	addgroup_id                 *int64
-	is_base_area                *bool
-	area_type                   *json.RawMessage
-	appendarea_type             json.RawMessage
-	view_type                   *json.RawMessage
-	appendview_type             json.RawMessage
-	display_timeline_type       *json.RawMessage
-	appenddisplay_timeline_type json.RawMessage
-	additional_area_type        *json.RawMessage
-	appendadditional_area_type  json.RawMessage
-	name                        *string
-	release_condition_id        *int64
-	addrelease_condition_id     *int64
-	sub_name                    *string
-	label                       *string
-	start_at                    *int64
-	addstart_at                 *int64
-	end_at                      *int64
-	addend_at                   *int64
-	release_condition_id2       *int64
-	addrelease_condition_id2    *int64
-	server_region               *string
-	clearedFields               map[string]struct{}
-	done                        bool
-	oldValue                    func(context.Context) (*Area, error)
-	predicates                  []predicate.Area
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	assetbundle_name         *string
+	group_id                 *int64
+	addgroup_id              *int64
+	is_base_area             *bool
+	area_type                *string
+	view_type                *string
+	display_timeline_type    *string
+	additional_area_type     *string
+	name                     *string
+	release_condition_id     *int64
+	addrelease_condition_id  *int64
+	sub_name                 *string
+	label                    *string
+	start_at                 *int64
+	addstart_at              *int64
+	end_at                   *int64
+	addend_at                *int64
+	release_condition_id2    *int64
+	addrelease_condition_id2 *int64
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Area, error)
+	predicates               []predicate.Area
 }
 
 var _ ent.Mutation = (*AreaMutation)(nil)
@@ -558,13 +554,12 @@ func (m *AreaMutation) ResetIsBaseArea() {
 }
 
 // SetAreaType sets the "area_type" field.
-func (m *AreaMutation) SetAreaType(jm json.RawMessage) {
-	m.area_type = &jm
-	m.appendarea_type = nil
+func (m *AreaMutation) SetAreaType(s string) {
+	m.area_type = &s
 }
 
 // AreaType returns the value of the "area_type" field in the mutation.
-func (m *AreaMutation) AreaType() (r json.RawMessage, exists bool) {
+func (m *AreaMutation) AreaType() (r string, exists bool) {
 	v := m.area_type
 	if v == nil {
 		return
@@ -575,7 +570,7 @@ func (m *AreaMutation) AreaType() (r json.RawMessage, exists bool) {
 // OldAreaType returns the old "area_type" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldAreaType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaMutation) OldAreaType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAreaType is only allowed on UpdateOne operations")
 	}
@@ -589,23 +584,9 @@ func (m *AreaMutation) OldAreaType(ctx context.Context) (v json.RawMessage, err 
 	return oldValue.AreaType, nil
 }
 
-// AppendAreaType adds jm to the "area_type" field.
-func (m *AreaMutation) AppendAreaType(jm json.RawMessage) {
-	m.appendarea_type = append(m.appendarea_type, jm...)
-}
-
-// AppendedAreaType returns the list of values that were appended to the "area_type" field in this mutation.
-func (m *AreaMutation) AppendedAreaType() (json.RawMessage, bool) {
-	if len(m.appendarea_type) == 0 {
-		return nil, false
-	}
-	return m.appendarea_type, true
-}
-
 // ClearAreaType clears the value of the "area_type" field.
 func (m *AreaMutation) ClearAreaType() {
 	m.area_type = nil
-	m.appendarea_type = nil
 	m.clearedFields[area.FieldAreaType] = struct{}{}
 }
 
@@ -618,18 +599,16 @@ func (m *AreaMutation) AreaTypeCleared() bool {
 // ResetAreaType resets all changes to the "area_type" field.
 func (m *AreaMutation) ResetAreaType() {
 	m.area_type = nil
-	m.appendarea_type = nil
 	delete(m.clearedFields, area.FieldAreaType)
 }
 
 // SetViewType sets the "view_type" field.
-func (m *AreaMutation) SetViewType(jm json.RawMessage) {
-	m.view_type = &jm
-	m.appendview_type = nil
+func (m *AreaMutation) SetViewType(s string) {
+	m.view_type = &s
 }
 
 // ViewType returns the value of the "view_type" field in the mutation.
-func (m *AreaMutation) ViewType() (r json.RawMessage, exists bool) {
+func (m *AreaMutation) ViewType() (r string, exists bool) {
 	v := m.view_type
 	if v == nil {
 		return
@@ -640,7 +619,7 @@ func (m *AreaMutation) ViewType() (r json.RawMessage, exists bool) {
 // OldViewType returns the old "view_type" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldViewType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaMutation) OldViewType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldViewType is only allowed on UpdateOne operations")
 	}
@@ -654,23 +633,9 @@ func (m *AreaMutation) OldViewType(ctx context.Context) (v json.RawMessage, err 
 	return oldValue.ViewType, nil
 }
 
-// AppendViewType adds jm to the "view_type" field.
-func (m *AreaMutation) AppendViewType(jm json.RawMessage) {
-	m.appendview_type = append(m.appendview_type, jm...)
-}
-
-// AppendedViewType returns the list of values that were appended to the "view_type" field in this mutation.
-func (m *AreaMutation) AppendedViewType() (json.RawMessage, bool) {
-	if len(m.appendview_type) == 0 {
-		return nil, false
-	}
-	return m.appendview_type, true
-}
-
 // ClearViewType clears the value of the "view_type" field.
 func (m *AreaMutation) ClearViewType() {
 	m.view_type = nil
-	m.appendview_type = nil
 	m.clearedFields[area.FieldViewType] = struct{}{}
 }
 
@@ -683,18 +648,16 @@ func (m *AreaMutation) ViewTypeCleared() bool {
 // ResetViewType resets all changes to the "view_type" field.
 func (m *AreaMutation) ResetViewType() {
 	m.view_type = nil
-	m.appendview_type = nil
 	delete(m.clearedFields, area.FieldViewType)
 }
 
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (m *AreaMutation) SetDisplayTimelineType(jm json.RawMessage) {
-	m.display_timeline_type = &jm
-	m.appenddisplay_timeline_type = nil
+func (m *AreaMutation) SetDisplayTimelineType(s string) {
+	m.display_timeline_type = &s
 }
 
 // DisplayTimelineType returns the value of the "display_timeline_type" field in the mutation.
-func (m *AreaMutation) DisplayTimelineType() (r json.RawMessage, exists bool) {
+func (m *AreaMutation) DisplayTimelineType() (r string, exists bool) {
 	v := m.display_timeline_type
 	if v == nil {
 		return
@@ -705,7 +668,7 @@ func (m *AreaMutation) DisplayTimelineType() (r json.RawMessage, exists bool) {
 // OldDisplayTimelineType returns the old "display_timeline_type" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldDisplayTimelineType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaMutation) OldDisplayTimelineType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDisplayTimelineType is only allowed on UpdateOne operations")
 	}
@@ -719,23 +682,9 @@ func (m *AreaMutation) OldDisplayTimelineType(ctx context.Context) (v json.RawMe
 	return oldValue.DisplayTimelineType, nil
 }
 
-// AppendDisplayTimelineType adds jm to the "display_timeline_type" field.
-func (m *AreaMutation) AppendDisplayTimelineType(jm json.RawMessage) {
-	m.appenddisplay_timeline_type = append(m.appenddisplay_timeline_type, jm...)
-}
-
-// AppendedDisplayTimelineType returns the list of values that were appended to the "display_timeline_type" field in this mutation.
-func (m *AreaMutation) AppendedDisplayTimelineType() (json.RawMessage, bool) {
-	if len(m.appenddisplay_timeline_type) == 0 {
-		return nil, false
-	}
-	return m.appenddisplay_timeline_type, true
-}
-
 // ClearDisplayTimelineType clears the value of the "display_timeline_type" field.
 func (m *AreaMutation) ClearDisplayTimelineType() {
 	m.display_timeline_type = nil
-	m.appenddisplay_timeline_type = nil
 	m.clearedFields[area.FieldDisplayTimelineType] = struct{}{}
 }
 
@@ -748,18 +697,16 @@ func (m *AreaMutation) DisplayTimelineTypeCleared() bool {
 // ResetDisplayTimelineType resets all changes to the "display_timeline_type" field.
 func (m *AreaMutation) ResetDisplayTimelineType() {
 	m.display_timeline_type = nil
-	m.appenddisplay_timeline_type = nil
 	delete(m.clearedFields, area.FieldDisplayTimelineType)
 }
 
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (m *AreaMutation) SetAdditionalAreaType(jm json.RawMessage) {
-	m.additional_area_type = &jm
-	m.appendadditional_area_type = nil
+func (m *AreaMutation) SetAdditionalAreaType(s string) {
+	m.additional_area_type = &s
 }
 
 // AdditionalAreaType returns the value of the "additional_area_type" field in the mutation.
-func (m *AreaMutation) AdditionalAreaType() (r json.RawMessage, exists bool) {
+func (m *AreaMutation) AdditionalAreaType() (r string, exists bool) {
 	v := m.additional_area_type
 	if v == nil {
 		return
@@ -770,7 +717,7 @@ func (m *AreaMutation) AdditionalAreaType() (r json.RawMessage, exists bool) {
 // OldAdditionalAreaType returns the old "additional_area_type" field's value of the Area entity.
 // If the Area object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaMutation) OldAdditionalAreaType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaMutation) OldAdditionalAreaType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAdditionalAreaType is only allowed on UpdateOne operations")
 	}
@@ -784,23 +731,9 @@ func (m *AreaMutation) OldAdditionalAreaType(ctx context.Context) (v json.RawMes
 	return oldValue.AdditionalAreaType, nil
 }
 
-// AppendAdditionalAreaType adds jm to the "additional_area_type" field.
-func (m *AreaMutation) AppendAdditionalAreaType(jm json.RawMessage) {
-	m.appendadditional_area_type = append(m.appendadditional_area_type, jm...)
-}
-
-// AppendedAdditionalAreaType returns the list of values that were appended to the "additional_area_type" field in this mutation.
-func (m *AreaMutation) AppendedAdditionalAreaType() (json.RawMessage, bool) {
-	if len(m.appendadditional_area_type) == 0 {
-		return nil, false
-	}
-	return m.appendadditional_area_type, true
-}
-
 // ClearAdditionalAreaType clears the value of the "additional_area_type" field.
 func (m *AreaMutation) ClearAdditionalAreaType() {
 	m.additional_area_type = nil
-	m.appendadditional_area_type = nil
 	m.clearedFields[area.FieldAdditionalAreaType] = struct{}{}
 }
 
@@ -813,7 +746,6 @@ func (m *AreaMutation) AdditionalAreaTypeCleared() bool {
 // ResetAdditionalAreaType resets all changes to the "additional_area_type" field.
 func (m *AreaMutation) ResetAdditionalAreaType() {
 	m.additional_area_type = nil
-	m.appendadditional_area_type = nil
 	delete(m.clearedFields, area.FieldAdditionalAreaType)
 }
 
@@ -1482,28 +1414,28 @@ func (m *AreaMutation) SetField(name string, value ent.Value) error {
 		m.SetIsBaseArea(v)
 		return nil
 	case area.FieldAreaType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAreaType(v)
 		return nil
 	case area.FieldViewType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetViewType(v)
 		return nil
 	case area.FieldDisplayTimelineType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDisplayTimelineType(v)
 		return nil
 	case area.FieldAdditionalAreaType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1885,23 +1817,22 @@ func (m *AreaMutation) ResetEdge(name string) error {
 // AreaitemMutation represents an operation that mutates the Areaitem nodes in the graph.
 type AreaitemMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	game_id           *int64
-	addgame_id        *int64
-	area_id           *int64
-	addarea_id        *int64
-	name              *string
-	flavor_text       *string
-	spawn_point       *json.RawMessage
-	appendspawn_point json.RawMessage
-	assetbundle_name  *string
-	server_region     *string
-	clearedFields     map[string]struct{}
-	done              bool
-	oldValue          func(context.Context) (*Areaitem, error)
-	predicates        []predicate.Areaitem
+	op               Op
+	typ              string
+	id               *int
+	game_id          *int64
+	addgame_id       *int64
+	area_id          *int64
+	addarea_id       *int64
+	name             *string
+	flavor_text      *string
+	spawn_point      *string
+	assetbundle_name *string
+	server_region    *string
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Areaitem, error)
+	predicates       []predicate.Areaitem
 }
 
 var _ ent.Mutation = (*AreaitemMutation)(nil)
@@ -2241,13 +2172,12 @@ func (m *AreaitemMutation) ResetFlavorText() {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (m *AreaitemMutation) SetSpawnPoint(jm json.RawMessage) {
-	m.spawn_point = &jm
-	m.appendspawn_point = nil
+func (m *AreaitemMutation) SetSpawnPoint(s string) {
+	m.spawn_point = &s
 }
 
 // SpawnPoint returns the value of the "spawn_point" field in the mutation.
-func (m *AreaitemMutation) SpawnPoint() (r json.RawMessage, exists bool) {
+func (m *AreaitemMutation) SpawnPoint() (r string, exists bool) {
 	v := m.spawn_point
 	if v == nil {
 		return
@@ -2258,7 +2188,7 @@ func (m *AreaitemMutation) SpawnPoint() (r json.RawMessage, exists bool) {
 // OldSpawnPoint returns the old "spawn_point" field's value of the Areaitem entity.
 // If the Areaitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemMutation) OldSpawnPoint(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaitemMutation) OldSpawnPoint(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSpawnPoint is only allowed on UpdateOne operations")
 	}
@@ -2272,23 +2202,9 @@ func (m *AreaitemMutation) OldSpawnPoint(ctx context.Context) (v json.RawMessage
 	return oldValue.SpawnPoint, nil
 }
 
-// AppendSpawnPoint adds jm to the "spawn_point" field.
-func (m *AreaitemMutation) AppendSpawnPoint(jm json.RawMessage) {
-	m.appendspawn_point = append(m.appendspawn_point, jm...)
-}
-
-// AppendedSpawnPoint returns the list of values that were appended to the "spawn_point" field in this mutation.
-func (m *AreaitemMutation) AppendedSpawnPoint() (json.RawMessage, bool) {
-	if len(m.appendspawn_point) == 0 {
-		return nil, false
-	}
-	return m.appendspawn_point, true
-}
-
 // ClearSpawnPoint clears the value of the "spawn_point" field.
 func (m *AreaitemMutation) ClearSpawnPoint() {
 	m.spawn_point = nil
-	m.appendspawn_point = nil
 	m.clearedFields[areaitem.FieldSpawnPoint] = struct{}{}
 }
 
@@ -2301,7 +2217,6 @@ func (m *AreaitemMutation) SpawnPointCleared() bool {
 // ResetSpawnPoint resets all changes to the "spawn_point" field.
 func (m *AreaitemMutation) ResetSpawnPoint() {
 	m.spawn_point = nil
-	m.appendspawn_point = nil
 	delete(m.clearedFields, areaitem.FieldSpawnPoint)
 }
 
@@ -2529,7 +2444,7 @@ func (m *AreaitemMutation) SetField(name string, value ent.Value) error {
 		m.SetFlavorText(v)
 		return nil
 	case areaitem.FieldSpawnPoint:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2747,10 +2662,8 @@ type AreaitemlevelMutation struct {
 	addarea_item_id                *int64
 	level                          *int64
 	addlevel                       *int64
-	target_unit                    *json.RawMessage
-	appendtarget_unit              json.RawMessage
-	target_card_attr               *json.RawMessage
-	appendtarget_card_attr         json.RawMessage
+	target_unit                    *string
+	target_card_attr               *string
 	target_game_character_id       *int64
 	addtarget_game_character_id    *int64
 	power1_bonus_rate              *float64
@@ -3012,13 +2925,12 @@ func (m *AreaitemlevelMutation) ResetLevel() {
 }
 
 // SetTargetUnit sets the "target_unit" field.
-func (m *AreaitemlevelMutation) SetTargetUnit(jm json.RawMessage) {
-	m.target_unit = &jm
-	m.appendtarget_unit = nil
+func (m *AreaitemlevelMutation) SetTargetUnit(s string) {
+	m.target_unit = &s
 }
 
 // TargetUnit returns the value of the "target_unit" field in the mutation.
-func (m *AreaitemlevelMutation) TargetUnit() (r json.RawMessage, exists bool) {
+func (m *AreaitemlevelMutation) TargetUnit() (r string, exists bool) {
 	v := m.target_unit
 	if v == nil {
 		return
@@ -3029,7 +2941,7 @@ func (m *AreaitemlevelMutation) TargetUnit() (r json.RawMessage, exists bool) {
 // OldTargetUnit returns the old "target_unit" field's value of the Areaitemlevel entity.
 // If the Areaitemlevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemlevelMutation) OldTargetUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaitemlevelMutation) OldTargetUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTargetUnit is only allowed on UpdateOne operations")
 	}
@@ -3043,23 +2955,9 @@ func (m *AreaitemlevelMutation) OldTargetUnit(ctx context.Context) (v json.RawMe
 	return oldValue.TargetUnit, nil
 }
 
-// AppendTargetUnit adds jm to the "target_unit" field.
-func (m *AreaitemlevelMutation) AppendTargetUnit(jm json.RawMessage) {
-	m.appendtarget_unit = append(m.appendtarget_unit, jm...)
-}
-
-// AppendedTargetUnit returns the list of values that were appended to the "target_unit" field in this mutation.
-func (m *AreaitemlevelMutation) AppendedTargetUnit() (json.RawMessage, bool) {
-	if len(m.appendtarget_unit) == 0 {
-		return nil, false
-	}
-	return m.appendtarget_unit, true
-}
-
 // ClearTargetUnit clears the value of the "target_unit" field.
 func (m *AreaitemlevelMutation) ClearTargetUnit() {
 	m.target_unit = nil
-	m.appendtarget_unit = nil
 	m.clearedFields[areaitemlevel.FieldTargetUnit] = struct{}{}
 }
 
@@ -3072,18 +2970,16 @@ func (m *AreaitemlevelMutation) TargetUnitCleared() bool {
 // ResetTargetUnit resets all changes to the "target_unit" field.
 func (m *AreaitemlevelMutation) ResetTargetUnit() {
 	m.target_unit = nil
-	m.appendtarget_unit = nil
 	delete(m.clearedFields, areaitemlevel.FieldTargetUnit)
 }
 
 // SetTargetCardAttr sets the "target_card_attr" field.
-func (m *AreaitemlevelMutation) SetTargetCardAttr(jm json.RawMessage) {
-	m.target_card_attr = &jm
-	m.appendtarget_card_attr = nil
+func (m *AreaitemlevelMutation) SetTargetCardAttr(s string) {
+	m.target_card_attr = &s
 }
 
 // TargetCardAttr returns the value of the "target_card_attr" field in the mutation.
-func (m *AreaitemlevelMutation) TargetCardAttr() (r json.RawMessage, exists bool) {
+func (m *AreaitemlevelMutation) TargetCardAttr() (r string, exists bool) {
 	v := m.target_card_attr
 	if v == nil {
 		return
@@ -3094,7 +2990,7 @@ func (m *AreaitemlevelMutation) TargetCardAttr() (r json.RawMessage, exists bool
 // OldTargetCardAttr returns the old "target_card_attr" field's value of the Areaitemlevel entity.
 // If the Areaitemlevel object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AreaitemlevelMutation) OldTargetCardAttr(ctx context.Context) (v json.RawMessage, err error) {
+func (m *AreaitemlevelMutation) OldTargetCardAttr(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTargetCardAttr is only allowed on UpdateOne operations")
 	}
@@ -3108,23 +3004,9 @@ func (m *AreaitemlevelMutation) OldTargetCardAttr(ctx context.Context) (v json.R
 	return oldValue.TargetCardAttr, nil
 }
 
-// AppendTargetCardAttr adds jm to the "target_card_attr" field.
-func (m *AreaitemlevelMutation) AppendTargetCardAttr(jm json.RawMessage) {
-	m.appendtarget_card_attr = append(m.appendtarget_card_attr, jm...)
-}
-
-// AppendedTargetCardAttr returns the list of values that were appended to the "target_card_attr" field in this mutation.
-func (m *AreaitemlevelMutation) AppendedTargetCardAttr() (json.RawMessage, bool) {
-	if len(m.appendtarget_card_attr) == 0 {
-		return nil, false
-	}
-	return m.appendtarget_card_attr, true
-}
-
 // ClearTargetCardAttr clears the value of the "target_card_attr" field.
 func (m *AreaitemlevelMutation) ClearTargetCardAttr() {
 	m.target_card_attr = nil
-	m.appendtarget_card_attr = nil
 	m.clearedFields[areaitemlevel.FieldTargetCardAttr] = struct{}{}
 }
 
@@ -3137,7 +3019,6 @@ func (m *AreaitemlevelMutation) TargetCardAttrCleared() bool {
 // ResetTargetCardAttr resets all changes to the "target_card_attr" field.
 func (m *AreaitemlevelMutation) ResetTargetCardAttr() {
 	m.target_card_attr = nil
-	m.appendtarget_card_attr = nil
 	delete(m.clearedFields, areaitemlevel.FieldTargetCardAttr)
 }
 
@@ -3883,14 +3764,14 @@ func (m *AreaitemlevelMutation) SetField(name string, value ent.Value) error {
 		m.SetLevel(v)
 		return nil
 	case areaitemlevel.FieldTargetUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTargetUnit(v)
 		return nil
 	case areaitemlevel.FieldTargetCardAttr:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -5061,8 +4942,7 @@ type BondshonorMutation struct {
 	addgame_character_unit_id1       *int64
 	game_character_unit_id2          *int64
 	addgame_character_unit_id2       *int64
-	honor_rarity                     *json.RawMessage
-	appendhonor_rarity               json.RawMessage
+	honor_rarity                     *string
 	name                             *string
 	pronunciation                    *string
 	description                      *string
@@ -5525,13 +5405,12 @@ func (m *BondshonorMutation) ResetGameCharacterUnitId2() {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (m *BondshonorMutation) SetHonorRarity(jm json.RawMessage) {
-	m.honor_rarity = &jm
-	m.appendhonor_rarity = nil
+func (m *BondshonorMutation) SetHonorRarity(s string) {
+	m.honor_rarity = &s
 }
 
 // HonorRarity returns the value of the "honor_rarity" field in the mutation.
-func (m *BondshonorMutation) HonorRarity() (r json.RawMessage, exists bool) {
+func (m *BondshonorMutation) HonorRarity() (r string, exists bool) {
 	v := m.honor_rarity
 	if v == nil {
 		return
@@ -5542,7 +5421,7 @@ func (m *BondshonorMutation) HonorRarity() (r json.RawMessage, exists bool) {
 // OldHonorRarity returns the old "honor_rarity" field's value of the Bondshonor entity.
 // If the Bondshonor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BondshonorMutation) OldHonorRarity(ctx context.Context) (v json.RawMessage, err error) {
+func (m *BondshonorMutation) OldHonorRarity(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHonorRarity is only allowed on UpdateOne operations")
 	}
@@ -5556,23 +5435,9 @@ func (m *BondshonorMutation) OldHonorRarity(ctx context.Context) (v json.RawMess
 	return oldValue.HonorRarity, nil
 }
 
-// AppendHonorRarity adds jm to the "honor_rarity" field.
-func (m *BondshonorMutation) AppendHonorRarity(jm json.RawMessage) {
-	m.appendhonor_rarity = append(m.appendhonor_rarity, jm...)
-}
-
-// AppendedHonorRarity returns the list of values that were appended to the "honor_rarity" field in this mutation.
-func (m *BondshonorMutation) AppendedHonorRarity() (json.RawMessage, bool) {
-	if len(m.appendhonor_rarity) == 0 {
-		return nil, false
-	}
-	return m.appendhonor_rarity, true
-}
-
 // ClearHonorRarity clears the value of the "honor_rarity" field.
 func (m *BondshonorMutation) ClearHonorRarity() {
 	m.honor_rarity = nil
-	m.appendhonor_rarity = nil
 	m.clearedFields[bondshonor.FieldHonorRarity] = struct{}{}
 }
 
@@ -5585,7 +5450,6 @@ func (m *BondshonorMutation) HonorRarityCleared() bool {
 // ResetHonorRarity resets all changes to the "honor_rarity" field.
 func (m *BondshonorMutation) ResetHonorRarity() {
 	m.honor_rarity = nil
-	m.appendhonor_rarity = nil
 	delete(m.clearedFields, bondshonor.FieldHonorRarity)
 }
 
@@ -6067,7 +5931,7 @@ func (m *BondshonorMutation) SetField(name string, value ent.Value) error {
 		m.SetGameCharacterUnitId2(v)
 		return nil
 	case bondshonor.FieldHonorRarity:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6398,8 +6262,7 @@ type BoostitemMutation struct {
 	recovery_value    *int64
 	addrecovery_value *int64
 	asset_bundle_name *string
-	flavor_text       *json.RawMessage
-	appendflavor_text json.RawMessage
+	flavor_text       *string
 	server_region     *string
 	clearedFields     map[string]struct{}
 	done              bool
@@ -6814,13 +6677,12 @@ func (m *BoostitemMutation) ResetAssetBundleName() {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (m *BoostitemMutation) SetFlavorText(jm json.RawMessage) {
-	m.flavor_text = &jm
-	m.appendflavor_text = nil
+func (m *BoostitemMutation) SetFlavorText(s string) {
+	m.flavor_text = &s
 }
 
 // FlavorText returns the value of the "flavor_text" field in the mutation.
-func (m *BoostitemMutation) FlavorText() (r json.RawMessage, exists bool) {
+func (m *BoostitemMutation) FlavorText() (r string, exists bool) {
 	v := m.flavor_text
 	if v == nil {
 		return
@@ -6831,7 +6693,7 @@ func (m *BoostitemMutation) FlavorText() (r json.RawMessage, exists bool) {
 // OldFlavorText returns the old "flavor_text" field's value of the Boostitem entity.
 // If the Boostitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BoostitemMutation) OldFlavorText(ctx context.Context) (v json.RawMessage, err error) {
+func (m *BoostitemMutation) OldFlavorText(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFlavorText is only allowed on UpdateOne operations")
 	}
@@ -6845,23 +6707,9 @@ func (m *BoostitemMutation) OldFlavorText(ctx context.Context) (v json.RawMessag
 	return oldValue.FlavorText, nil
 }
 
-// AppendFlavorText adds jm to the "flavor_text" field.
-func (m *BoostitemMutation) AppendFlavorText(jm json.RawMessage) {
-	m.appendflavor_text = append(m.appendflavor_text, jm...)
-}
-
-// AppendedFlavorText returns the list of values that were appended to the "flavor_text" field in this mutation.
-func (m *BoostitemMutation) AppendedFlavorText() (json.RawMessage, bool) {
-	if len(m.appendflavor_text) == 0 {
-		return nil, false
-	}
-	return m.appendflavor_text, true
-}
-
 // ClearFlavorText clears the value of the "flavor_text" field.
 func (m *BoostitemMutation) ClearFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	m.clearedFields[boostitem.FieldFlavorText] = struct{}{}
 }
 
@@ -6874,7 +6722,6 @@ func (m *BoostitemMutation) FlavorTextCleared() bool {
 // ResetFlavorText resets all changes to the "flavor_text" field.
 func (m *BoostitemMutation) ResetFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	delete(m.clearedFields, boostitem.FieldFlavorText)
 }
 
@@ -7060,7 +6907,7 @@ func (m *BoostitemMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetBundleName(v)
 		return nil
 	case boostitem.FieldFlavorText:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7285,26 +7132,22 @@ type CardMutation struct {
 	addseq                                     *int64
 	character_id                               *int64
 	addcharacter_id                            *int64
-	card_rarity_type                           *json.RawMessage
-	appendcard_rarity_type                     json.RawMessage
+	card_rarity_type                           *string
 	special_training_power1_bonus_fixed        *int64
 	addspecial_training_power1_bonus_fixed     *int64
 	special_training_power2_bonus_fixed        *int64
 	addspecial_training_power2_bonus_fixed     *int64
 	special_training_power3_bonus_fixed        *int64
 	addspecial_training_power3_bonus_fixed     *int64
-	attr                                       *json.RawMessage
-	appendattr                                 json.RawMessage
-	support_unit                               *json.RawMessage
-	appendsupport_unit                         json.RawMessage
+	attr                                       *string
+	support_unit                               *string
 	skill_id                                   *int64
 	addskill_id                                *int64
 	card_skill_name                            *string
 	prefix                                     *string
 	assetbundle_name                           *string
 	gacha_phrase                               *string
-	flavor_text                                *json.RawMessage
-	appendflavor_text                          json.RawMessage
+	flavor_text                                *string
 	release_at                                 *int64
 	addrelease_at                              *int64
 	archive_published_at                       *int64
@@ -7317,10 +7160,8 @@ type CardMutation struct {
 	appendspecial_training_costs               json.RawMessage
 	master_lesson_achieve_resources            *json.RawMessage
 	appendmaster_lesson_achieve_resources      json.RawMessage
-	initial_special_training_status            *json.RawMessage
-	appendinitial_special_training_status      json.RawMessage
-	archive_display_type                       *json.RawMessage
-	appendarchive_display_type                 json.RawMessage
+	initial_special_training_status            *string
+	archive_display_type                       *string
 	special_training_skill_id                  *int64
 	addspecial_training_skill_id               *int64
 	special_training_skill_name                *string
@@ -7642,13 +7483,12 @@ func (m *CardMutation) ResetCharacterID() {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (m *CardMutation) SetCardRarityType(jm json.RawMessage) {
-	m.card_rarity_type = &jm
-	m.appendcard_rarity_type = nil
+func (m *CardMutation) SetCardRarityType(s string) {
+	m.card_rarity_type = &s
 }
 
 // CardRarityType returns the value of the "card_rarity_type" field in the mutation.
-func (m *CardMutation) CardRarityType() (r json.RawMessage, exists bool) {
+func (m *CardMutation) CardRarityType() (r string, exists bool) {
 	v := m.card_rarity_type
 	if v == nil {
 		return
@@ -7659,7 +7499,7 @@ func (m *CardMutation) CardRarityType() (r json.RawMessage, exists bool) {
 // OldCardRarityType returns the old "card_rarity_type" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldCardRarityType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldCardRarityType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardRarityType is only allowed on UpdateOne operations")
 	}
@@ -7673,23 +7513,9 @@ func (m *CardMutation) OldCardRarityType(ctx context.Context) (v json.RawMessage
 	return oldValue.CardRarityType, nil
 }
 
-// AppendCardRarityType adds jm to the "card_rarity_type" field.
-func (m *CardMutation) AppendCardRarityType(jm json.RawMessage) {
-	m.appendcard_rarity_type = append(m.appendcard_rarity_type, jm...)
-}
-
-// AppendedCardRarityType returns the list of values that were appended to the "card_rarity_type" field in this mutation.
-func (m *CardMutation) AppendedCardRarityType() (json.RawMessage, bool) {
-	if len(m.appendcard_rarity_type) == 0 {
-		return nil, false
-	}
-	return m.appendcard_rarity_type, true
-}
-
 // ClearCardRarityType clears the value of the "card_rarity_type" field.
 func (m *CardMutation) ClearCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	m.clearedFields[card.FieldCardRarityType] = struct{}{}
 }
 
@@ -7702,7 +7528,6 @@ func (m *CardMutation) CardRarityTypeCleared() bool {
 // ResetCardRarityType resets all changes to the "card_rarity_type" field.
 func (m *CardMutation) ResetCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	delete(m.clearedFields, card.FieldCardRarityType)
 }
 
@@ -7917,13 +7742,12 @@ func (m *CardMutation) ResetSpecialTrainingPower3BonusFixed() {
 }
 
 // SetAttr sets the "attr" field.
-func (m *CardMutation) SetAttr(jm json.RawMessage) {
-	m.attr = &jm
-	m.appendattr = nil
+func (m *CardMutation) SetAttr(s string) {
+	m.attr = &s
 }
 
 // Attr returns the value of the "attr" field in the mutation.
-func (m *CardMutation) Attr() (r json.RawMessage, exists bool) {
+func (m *CardMutation) Attr() (r string, exists bool) {
 	v := m.attr
 	if v == nil {
 		return
@@ -7934,7 +7758,7 @@ func (m *CardMutation) Attr() (r json.RawMessage, exists bool) {
 // OldAttr returns the old "attr" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldAttr(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldAttr(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAttr is only allowed on UpdateOne operations")
 	}
@@ -7948,23 +7772,9 @@ func (m *CardMutation) OldAttr(ctx context.Context) (v json.RawMessage, err erro
 	return oldValue.Attr, nil
 }
 
-// AppendAttr adds jm to the "attr" field.
-func (m *CardMutation) AppendAttr(jm json.RawMessage) {
-	m.appendattr = append(m.appendattr, jm...)
-}
-
-// AppendedAttr returns the list of values that were appended to the "attr" field in this mutation.
-func (m *CardMutation) AppendedAttr() (json.RawMessage, bool) {
-	if len(m.appendattr) == 0 {
-		return nil, false
-	}
-	return m.appendattr, true
-}
-
 // ClearAttr clears the value of the "attr" field.
 func (m *CardMutation) ClearAttr() {
 	m.attr = nil
-	m.appendattr = nil
 	m.clearedFields[card.FieldAttr] = struct{}{}
 }
 
@@ -7977,18 +7787,16 @@ func (m *CardMutation) AttrCleared() bool {
 // ResetAttr resets all changes to the "attr" field.
 func (m *CardMutation) ResetAttr() {
 	m.attr = nil
-	m.appendattr = nil
 	delete(m.clearedFields, card.FieldAttr)
 }
 
 // SetSupportUnit sets the "support_unit" field.
-func (m *CardMutation) SetSupportUnit(jm json.RawMessage) {
-	m.support_unit = &jm
-	m.appendsupport_unit = nil
+func (m *CardMutation) SetSupportUnit(s string) {
+	m.support_unit = &s
 }
 
 // SupportUnit returns the value of the "support_unit" field in the mutation.
-func (m *CardMutation) SupportUnit() (r json.RawMessage, exists bool) {
+func (m *CardMutation) SupportUnit() (r string, exists bool) {
 	v := m.support_unit
 	if v == nil {
 		return
@@ -7999,7 +7807,7 @@ func (m *CardMutation) SupportUnit() (r json.RawMessage, exists bool) {
 // OldSupportUnit returns the old "support_unit" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldSupportUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldSupportUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSupportUnit is only allowed on UpdateOne operations")
 	}
@@ -8013,23 +7821,9 @@ func (m *CardMutation) OldSupportUnit(ctx context.Context) (v json.RawMessage, e
 	return oldValue.SupportUnit, nil
 }
 
-// AppendSupportUnit adds jm to the "support_unit" field.
-func (m *CardMutation) AppendSupportUnit(jm json.RawMessage) {
-	m.appendsupport_unit = append(m.appendsupport_unit, jm...)
-}
-
-// AppendedSupportUnit returns the list of values that were appended to the "support_unit" field in this mutation.
-func (m *CardMutation) AppendedSupportUnit() (json.RawMessage, bool) {
-	if len(m.appendsupport_unit) == 0 {
-		return nil, false
-	}
-	return m.appendsupport_unit, true
-}
-
 // ClearSupportUnit clears the value of the "support_unit" field.
 func (m *CardMutation) ClearSupportUnit() {
 	m.support_unit = nil
-	m.appendsupport_unit = nil
 	m.clearedFields[card.FieldSupportUnit] = struct{}{}
 }
 
@@ -8042,7 +7836,6 @@ func (m *CardMutation) SupportUnitCleared() bool {
 // ResetSupportUnit resets all changes to the "support_unit" field.
 func (m *CardMutation) ResetSupportUnit() {
 	m.support_unit = nil
-	m.appendsupport_unit = nil
 	delete(m.clearedFields, card.FieldSupportUnit)
 }
 
@@ -8313,13 +8106,12 @@ func (m *CardMutation) ResetGachaPhrase() {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (m *CardMutation) SetFlavorText(jm json.RawMessage) {
-	m.flavor_text = &jm
-	m.appendflavor_text = nil
+func (m *CardMutation) SetFlavorText(s string) {
+	m.flavor_text = &s
 }
 
 // FlavorText returns the value of the "flavor_text" field in the mutation.
-func (m *CardMutation) FlavorText() (r json.RawMessage, exists bool) {
+func (m *CardMutation) FlavorText() (r string, exists bool) {
 	v := m.flavor_text
 	if v == nil {
 		return
@@ -8330,7 +8122,7 @@ func (m *CardMutation) FlavorText() (r json.RawMessage, exists bool) {
 // OldFlavorText returns the old "flavor_text" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldFlavorText(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldFlavorText(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFlavorText is only allowed on UpdateOne operations")
 	}
@@ -8344,23 +8136,9 @@ func (m *CardMutation) OldFlavorText(ctx context.Context) (v json.RawMessage, er
 	return oldValue.FlavorText, nil
 }
 
-// AppendFlavorText adds jm to the "flavor_text" field.
-func (m *CardMutation) AppendFlavorText(jm json.RawMessage) {
-	m.appendflavor_text = append(m.appendflavor_text, jm...)
-}
-
-// AppendedFlavorText returns the list of values that were appended to the "flavor_text" field in this mutation.
-func (m *CardMutation) AppendedFlavorText() (json.RawMessage, bool) {
-	if len(m.appendflavor_text) == 0 {
-		return nil, false
-	}
-	return m.appendflavor_text, true
-}
-
 // ClearFlavorText clears the value of the "flavor_text" field.
 func (m *CardMutation) ClearFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	m.clearedFields[card.FieldFlavorText] = struct{}{}
 }
 
@@ -8373,7 +8151,6 @@ func (m *CardMutation) FlavorTextCleared() bool {
 // ResetFlavorText resets all changes to the "flavor_text" field.
 func (m *CardMutation) ResetFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	delete(m.clearedFields, card.FieldFlavorText)
 }
 
@@ -8783,13 +8560,12 @@ func (m *CardMutation) ResetMasterLessonAchieveResources() {
 }
 
 // SetInitialSpecialTrainingStatus sets the "initial_special_training_status" field.
-func (m *CardMutation) SetInitialSpecialTrainingStatus(jm json.RawMessage) {
-	m.initial_special_training_status = &jm
-	m.appendinitial_special_training_status = nil
+func (m *CardMutation) SetInitialSpecialTrainingStatus(s string) {
+	m.initial_special_training_status = &s
 }
 
 // InitialSpecialTrainingStatus returns the value of the "initial_special_training_status" field in the mutation.
-func (m *CardMutation) InitialSpecialTrainingStatus() (r json.RawMessage, exists bool) {
+func (m *CardMutation) InitialSpecialTrainingStatus() (r string, exists bool) {
 	v := m.initial_special_training_status
 	if v == nil {
 		return
@@ -8800,7 +8576,7 @@ func (m *CardMutation) InitialSpecialTrainingStatus() (r json.RawMessage, exists
 // OldInitialSpecialTrainingStatus returns the old "initial_special_training_status" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldInitialSpecialTrainingStatus(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldInitialSpecialTrainingStatus(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldInitialSpecialTrainingStatus is only allowed on UpdateOne operations")
 	}
@@ -8814,23 +8590,9 @@ func (m *CardMutation) OldInitialSpecialTrainingStatus(ctx context.Context) (v j
 	return oldValue.InitialSpecialTrainingStatus, nil
 }
 
-// AppendInitialSpecialTrainingStatus adds jm to the "initial_special_training_status" field.
-func (m *CardMutation) AppendInitialSpecialTrainingStatus(jm json.RawMessage) {
-	m.appendinitial_special_training_status = append(m.appendinitial_special_training_status, jm...)
-}
-
-// AppendedInitialSpecialTrainingStatus returns the list of values that were appended to the "initial_special_training_status" field in this mutation.
-func (m *CardMutation) AppendedInitialSpecialTrainingStatus() (json.RawMessage, bool) {
-	if len(m.appendinitial_special_training_status) == 0 {
-		return nil, false
-	}
-	return m.appendinitial_special_training_status, true
-}
-
 // ClearInitialSpecialTrainingStatus clears the value of the "initial_special_training_status" field.
 func (m *CardMutation) ClearInitialSpecialTrainingStatus() {
 	m.initial_special_training_status = nil
-	m.appendinitial_special_training_status = nil
 	m.clearedFields[card.FieldInitialSpecialTrainingStatus] = struct{}{}
 }
 
@@ -8843,18 +8605,16 @@ func (m *CardMutation) InitialSpecialTrainingStatusCleared() bool {
 // ResetInitialSpecialTrainingStatus resets all changes to the "initial_special_training_status" field.
 func (m *CardMutation) ResetInitialSpecialTrainingStatus() {
 	m.initial_special_training_status = nil
-	m.appendinitial_special_training_status = nil
 	delete(m.clearedFields, card.FieldInitialSpecialTrainingStatus)
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (m *CardMutation) SetArchiveDisplayType(jm json.RawMessage) {
-	m.archive_display_type = &jm
-	m.appendarchive_display_type = nil
+func (m *CardMutation) SetArchiveDisplayType(s string) {
+	m.archive_display_type = &s
 }
 
 // ArchiveDisplayType returns the value of the "archive_display_type" field in the mutation.
-func (m *CardMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
+func (m *CardMutation) ArchiveDisplayType() (r string, exists bool) {
 	v := m.archive_display_type
 	if v == nil {
 		return
@@ -8865,7 +8625,7 @@ func (m *CardMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
 // OldArchiveDisplayType returns the old "archive_display_type" field's value of the Card entity.
 // If the Card object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardMutation) OldArchiveDisplayType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchiveDisplayType is only allowed on UpdateOne operations")
 	}
@@ -8879,23 +8639,9 @@ func (m *CardMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMes
 	return oldValue.ArchiveDisplayType, nil
 }
 
-// AppendArchiveDisplayType adds jm to the "archive_display_type" field.
-func (m *CardMutation) AppendArchiveDisplayType(jm json.RawMessage) {
-	m.appendarchive_display_type = append(m.appendarchive_display_type, jm...)
-}
-
-// AppendedArchiveDisplayType returns the list of values that were appended to the "archive_display_type" field in this mutation.
-func (m *CardMutation) AppendedArchiveDisplayType() (json.RawMessage, bool) {
-	if len(m.appendarchive_display_type) == 0 {
-		return nil, false
-	}
-	return m.appendarchive_display_type, true
-}
-
 // ClearArchiveDisplayType clears the value of the "archive_display_type" field.
 func (m *CardMutation) ClearArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	m.clearedFields[card.FieldArchiveDisplayType] = struct{}{}
 }
 
@@ -8908,7 +8654,6 @@ func (m *CardMutation) ArchiveDisplayTypeCleared() bool {
 // ResetArchiveDisplayType resets all changes to the "archive_display_type" field.
 func (m *CardMutation) ResetArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	delete(m.clearedFields, card.FieldArchiveDisplayType)
 }
 
@@ -9409,7 +9154,7 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetCharacterID(v)
 		return nil
 	case card.FieldCardRarityType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9437,14 +9182,14 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetSpecialTrainingPower3BonusFixed(v)
 		return nil
 	case card.FieldAttr:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAttr(v)
 		return nil
 	case card.FieldSupportUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9486,7 +9231,7 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetGachaPhrase(v)
 		return nil
 	case card.FieldFlavorText:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -9535,14 +9280,14 @@ func (m *CardMutation) SetField(name string, value ent.Value) error {
 		m.SetMasterLessonAchieveResources(v)
 		return nil
 	case card.FieldInitialSpecialTrainingStatus:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetInitialSpecialTrainingStatus(v)
 		return nil
 	case card.FieldArchiveDisplayType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -10710,8 +10455,7 @@ type CardepisodeMutation struct {
 	appendreward_resource_box_ids json.RawMessage
 	costs                         *json.RawMessage
 	appendcosts                   json.RawMessage
-	card_episode_part_type        *json.RawMessage
-	appendcard_episode_part_type  json.RawMessage
+	card_episode_part_type        *string
 	server_region                 *string
 	clearedFields                 map[string]struct{}
 	done                          bool
@@ -11585,13 +11329,12 @@ func (m *CardepisodeMutation) ResetCosts() {
 }
 
 // SetCardEpisodePartType sets the "card_episode_part_type" field.
-func (m *CardepisodeMutation) SetCardEpisodePartType(jm json.RawMessage) {
-	m.card_episode_part_type = &jm
-	m.appendcard_episode_part_type = nil
+func (m *CardepisodeMutation) SetCardEpisodePartType(s string) {
+	m.card_episode_part_type = &s
 }
 
 // CardEpisodePartType returns the value of the "card_episode_part_type" field in the mutation.
-func (m *CardepisodeMutation) CardEpisodePartType() (r json.RawMessage, exists bool) {
+func (m *CardepisodeMutation) CardEpisodePartType() (r string, exists bool) {
 	v := m.card_episode_part_type
 	if v == nil {
 		return
@@ -11602,7 +11345,7 @@ func (m *CardepisodeMutation) CardEpisodePartType() (r json.RawMessage, exists b
 // OldCardEpisodePartType returns the old "card_episode_part_type" field's value of the Cardepisode entity.
 // If the Cardepisode object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CardepisodeMutation) OldCardEpisodePartType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *CardepisodeMutation) OldCardEpisodePartType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardEpisodePartType is only allowed on UpdateOne operations")
 	}
@@ -11616,23 +11359,9 @@ func (m *CardepisodeMutation) OldCardEpisodePartType(ctx context.Context) (v jso
 	return oldValue.CardEpisodePartType, nil
 }
 
-// AppendCardEpisodePartType adds jm to the "card_episode_part_type" field.
-func (m *CardepisodeMutation) AppendCardEpisodePartType(jm json.RawMessage) {
-	m.appendcard_episode_part_type = append(m.appendcard_episode_part_type, jm...)
-}
-
-// AppendedCardEpisodePartType returns the list of values that were appended to the "card_episode_part_type" field in this mutation.
-func (m *CardepisodeMutation) AppendedCardEpisodePartType() (json.RawMessage, bool) {
-	if len(m.appendcard_episode_part_type) == 0 {
-		return nil, false
-	}
-	return m.appendcard_episode_part_type, true
-}
-
 // ClearCardEpisodePartType clears the value of the "card_episode_part_type" field.
 func (m *CardepisodeMutation) ClearCardEpisodePartType() {
 	m.card_episode_part_type = nil
-	m.appendcard_episode_part_type = nil
 	m.clearedFields[cardepisode.FieldCardEpisodePartType] = struct{}{}
 }
 
@@ -11645,7 +11374,6 @@ func (m *CardepisodeMutation) CardEpisodePartTypeCleared() bool {
 // ResetCardEpisodePartType resets all changes to the "card_episode_part_type" field.
 func (m *CardepisodeMutation) ResetCardEpisodePartType() {
 	m.card_episode_part_type = nil
-	m.appendcard_episode_part_type = nil
 	delete(m.clearedFields, cardepisode.FieldCardEpisodePartType)
 }
 
@@ -11929,7 +11657,7 @@ func (m *CardepisodeMutation) SetField(name string, value ent.Value) error {
 		m.SetCosts(v)
 		return nil
 	case cardepisode.FieldCardEpisodePartType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -15267,27 +14995,24 @@ func (m *ChallengelivehighscorerewardMutation) ResetEdge(name string) error {
 // Character2DMutation represents an operation that mutates the Character2D nodes in the graph.
 type Character2DMutation struct {
 	config
-	op                                    Op
-	typ                                   string
-	id                                    *int
-	game_id                               *int64
-	addgame_id                            *int64
-	character_type                        *json.RawMessage
-	appendcharacter_type                  json.RawMessage
-	is_next_grade                         *bool
-	character_id                          *int64
-	addcharacter_id                       *int64
-	unit                                  *json.RawMessage
-	appendunit                            json.RawMessage
-	is_enabled_flip_display               *bool
-	asset_name                            *string
-	character_icon_assetbundle_name       *json.RawMessage
-	appendcharacter_icon_assetbundle_name json.RawMessage
-	server_region                         *string
-	clearedFields                         map[string]struct{}
-	done                                  bool
-	oldValue                              func(context.Context) (*Character2D, error)
-	predicates                            []predicate.Character2D
+	op                              Op
+	typ                             string
+	id                              *int
+	game_id                         *int64
+	addgame_id                      *int64
+	character_type                  *string
+	is_next_grade                   *bool
+	character_id                    *int64
+	addcharacter_id                 *int64
+	unit                            *string
+	is_enabled_flip_display         *bool
+	asset_name                      *string
+	character_icon_assetbundle_name *string
+	server_region                   *string
+	clearedFields                   map[string]struct{}
+	done                            bool
+	oldValue                        func(context.Context) (*Character2D, error)
+	predicates                      []predicate.Character2D
 }
 
 var _ ent.Mutation = (*Character2DMutation)(nil)
@@ -15459,13 +15184,12 @@ func (m *Character2DMutation) ResetGameID() {
 }
 
 // SetCharacterType sets the "character_type" field.
-func (m *Character2DMutation) SetCharacterType(jm json.RawMessage) {
-	m.character_type = &jm
-	m.appendcharacter_type = nil
+func (m *Character2DMutation) SetCharacterType(s string) {
+	m.character_type = &s
 }
 
 // CharacterType returns the value of the "character_type" field in the mutation.
-func (m *Character2DMutation) CharacterType() (r json.RawMessage, exists bool) {
+func (m *Character2DMutation) CharacterType() (r string, exists bool) {
 	v := m.character_type
 	if v == nil {
 		return
@@ -15476,7 +15200,7 @@ func (m *Character2DMutation) CharacterType() (r json.RawMessage, exists bool) {
 // OldCharacterType returns the old "character_type" field's value of the Character2D entity.
 // If the Character2D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Character2DMutation) OldCharacterType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Character2DMutation) OldCharacterType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterType is only allowed on UpdateOne operations")
 	}
@@ -15490,23 +15214,9 @@ func (m *Character2DMutation) OldCharacterType(ctx context.Context) (v json.RawM
 	return oldValue.CharacterType, nil
 }
 
-// AppendCharacterType adds jm to the "character_type" field.
-func (m *Character2DMutation) AppendCharacterType(jm json.RawMessage) {
-	m.appendcharacter_type = append(m.appendcharacter_type, jm...)
-}
-
-// AppendedCharacterType returns the list of values that were appended to the "character_type" field in this mutation.
-func (m *Character2DMutation) AppendedCharacterType() (json.RawMessage, bool) {
-	if len(m.appendcharacter_type) == 0 {
-		return nil, false
-	}
-	return m.appendcharacter_type, true
-}
-
 // ClearCharacterType clears the value of the "character_type" field.
 func (m *Character2DMutation) ClearCharacterType() {
 	m.character_type = nil
-	m.appendcharacter_type = nil
 	m.clearedFields[character2d.FieldCharacterType] = struct{}{}
 }
 
@@ -15519,7 +15229,6 @@ func (m *Character2DMutation) CharacterTypeCleared() bool {
 // ResetCharacterType resets all changes to the "character_type" field.
 func (m *Character2DMutation) ResetCharacterType() {
 	m.character_type = nil
-	m.appendcharacter_type = nil
 	delete(m.clearedFields, character2d.FieldCharacterType)
 }
 
@@ -15643,13 +15352,12 @@ func (m *Character2DMutation) ResetCharacterID() {
 }
 
 // SetUnit sets the "unit" field.
-func (m *Character2DMutation) SetUnit(jm json.RawMessage) {
-	m.unit = &jm
-	m.appendunit = nil
+func (m *Character2DMutation) SetUnit(s string) {
+	m.unit = &s
 }
 
 // Unit returns the value of the "unit" field in the mutation.
-func (m *Character2DMutation) Unit() (r json.RawMessage, exists bool) {
+func (m *Character2DMutation) Unit() (r string, exists bool) {
 	v := m.unit
 	if v == nil {
 		return
@@ -15660,7 +15368,7 @@ func (m *Character2DMutation) Unit() (r json.RawMessage, exists bool) {
 // OldUnit returns the old "unit" field's value of the Character2D entity.
 // If the Character2D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Character2DMutation) OldUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Character2DMutation) OldUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
 	}
@@ -15674,23 +15382,9 @@ func (m *Character2DMutation) OldUnit(ctx context.Context) (v json.RawMessage, e
 	return oldValue.Unit, nil
 }
 
-// AppendUnit adds jm to the "unit" field.
-func (m *Character2DMutation) AppendUnit(jm json.RawMessage) {
-	m.appendunit = append(m.appendunit, jm...)
-}
-
-// AppendedUnit returns the list of values that were appended to the "unit" field in this mutation.
-func (m *Character2DMutation) AppendedUnit() (json.RawMessage, bool) {
-	if len(m.appendunit) == 0 {
-		return nil, false
-	}
-	return m.appendunit, true
-}
-
 // ClearUnit clears the value of the "unit" field.
 func (m *Character2DMutation) ClearUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	m.clearedFields[character2d.FieldUnit] = struct{}{}
 }
 
@@ -15703,7 +15397,6 @@ func (m *Character2DMutation) UnitCleared() bool {
 // ResetUnit resets all changes to the "unit" field.
 func (m *Character2DMutation) ResetUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	delete(m.clearedFields, character2d.FieldUnit)
 }
 
@@ -15806,13 +15499,12 @@ func (m *Character2DMutation) ResetAssetName() {
 }
 
 // SetCharacterIconAssetbundleName sets the "character_icon_assetbundle_name" field.
-func (m *Character2DMutation) SetCharacterIconAssetbundleName(jm json.RawMessage) {
-	m.character_icon_assetbundle_name = &jm
-	m.appendcharacter_icon_assetbundle_name = nil
+func (m *Character2DMutation) SetCharacterIconAssetbundleName(s string) {
+	m.character_icon_assetbundle_name = &s
 }
 
 // CharacterIconAssetbundleName returns the value of the "character_icon_assetbundle_name" field in the mutation.
-func (m *Character2DMutation) CharacterIconAssetbundleName() (r json.RawMessage, exists bool) {
+func (m *Character2DMutation) CharacterIconAssetbundleName() (r string, exists bool) {
 	v := m.character_icon_assetbundle_name
 	if v == nil {
 		return
@@ -15823,7 +15515,7 @@ func (m *Character2DMutation) CharacterIconAssetbundleName() (r json.RawMessage,
 // OldCharacterIconAssetbundleName returns the old "character_icon_assetbundle_name" field's value of the Character2D entity.
 // If the Character2D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Character2DMutation) OldCharacterIconAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Character2DMutation) OldCharacterIconAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCharacterIconAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -15837,23 +15529,9 @@ func (m *Character2DMutation) OldCharacterIconAssetbundleName(ctx context.Contex
 	return oldValue.CharacterIconAssetbundleName, nil
 }
 
-// AppendCharacterIconAssetbundleName adds jm to the "character_icon_assetbundle_name" field.
-func (m *Character2DMutation) AppendCharacterIconAssetbundleName(jm json.RawMessage) {
-	m.appendcharacter_icon_assetbundle_name = append(m.appendcharacter_icon_assetbundle_name, jm...)
-}
-
-// AppendedCharacterIconAssetbundleName returns the list of values that were appended to the "character_icon_assetbundle_name" field in this mutation.
-func (m *Character2DMutation) AppendedCharacterIconAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendcharacter_icon_assetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendcharacter_icon_assetbundle_name, true
-}
-
 // ClearCharacterIconAssetbundleName clears the value of the "character_icon_assetbundle_name" field.
 func (m *Character2DMutation) ClearCharacterIconAssetbundleName() {
 	m.character_icon_assetbundle_name = nil
-	m.appendcharacter_icon_assetbundle_name = nil
 	m.clearedFields[character2d.FieldCharacterIconAssetbundleName] = struct{}{}
 }
 
@@ -15866,7 +15544,6 @@ func (m *Character2DMutation) CharacterIconAssetbundleNameCleared() bool {
 // ResetCharacterIconAssetbundleName resets all changes to the "character_icon_assetbundle_name" field.
 func (m *Character2DMutation) ResetCharacterIconAssetbundleName() {
 	m.character_icon_assetbundle_name = nil
-	m.appendcharacter_icon_assetbundle_name = nil
 	delete(m.clearedFields, character2d.FieldCharacterIconAssetbundleName)
 }
 
@@ -16038,7 +15715,7 @@ func (m *Character2DMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case character2d.FieldCharacterType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -16059,7 +15736,7 @@ func (m *Character2DMutation) SetField(name string, value ent.Value) error {
 		m.SetCharacterID(v)
 		return nil
 	case character2d.FieldUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -16080,7 +15757,7 @@ func (m *Character2DMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetName(v)
 		return nil
 	case character2d.FieldCharacterIconAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -19122,41 +18799,37 @@ func (m *CheerfulcarnivalteamMutation) ResetEdge(name string) error {
 // Costume3DMutation represents an operation that mutates the Costume3D nodes in the graph.
 type Costume3DMutation struct {
 	config
-	op                         Op
-	typ                        string
-	id                         *int
-	game_id                    *int64
-	addgame_id                 *int64
-	seq                        *int64
-	addseq                     *int64
-	costume3_d_group_id        *int64
-	addcostume3_d_group_id     *int64
-	costume3_d_type            *json.RawMessage
-	appendcostume3_d_type      json.RawMessage
-	name                       *string
-	part_type                  *json.RawMessage
-	appendpart_type            json.RawMessage
-	color_id                   *int64
-	addcolor_id                *int64
-	color_name                 *string
-	character_id               *int64
-	addcharacter_id            *int64
-	costume3_d_rarity          *json.RawMessage
-	appendcostume3_d_rarity    json.RawMessage
-	how_to_obtain              *string
-	assetbundle_name           *string
-	designer                   *string
-	archive_display_type       *json.RawMessage
-	appendarchive_display_type json.RawMessage
-	archive_published_at       *int64
-	addarchive_published_at    *int64
-	published_at               *int64
-	addpublished_at            *int64
-	server_region              *string
-	clearedFields              map[string]struct{}
-	done                       bool
-	oldValue                   func(context.Context) (*Costume3D, error)
-	predicates                 []predicate.Costume3D
+	op                      Op
+	typ                     string
+	id                      *int
+	game_id                 *int64
+	addgame_id              *int64
+	seq                     *int64
+	addseq                  *int64
+	costume3_d_group_id     *int64
+	addcostume3_d_group_id  *int64
+	costume3_d_type         *string
+	name                    *string
+	part_type               *string
+	color_id                *int64
+	addcolor_id             *int64
+	color_name              *string
+	character_id            *int64
+	addcharacter_id         *int64
+	costume3_d_rarity       *string
+	how_to_obtain           *string
+	assetbundle_name        *string
+	designer                *string
+	archive_display_type    *string
+	archive_published_at    *int64
+	addarchive_published_at *int64
+	published_at            *int64
+	addpublished_at         *int64
+	server_region           *string
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*Costume3D, error)
+	predicates              []predicate.Costume3D
 }
 
 var _ ent.Mutation = (*Costume3DMutation)(nil)
@@ -19468,13 +19141,12 @@ func (m *Costume3DMutation) ResetCostume3DGroupID() {
 }
 
 // SetCostume3DType sets the "costume3_d_type" field.
-func (m *Costume3DMutation) SetCostume3DType(jm json.RawMessage) {
-	m.costume3_d_type = &jm
-	m.appendcostume3_d_type = nil
+func (m *Costume3DMutation) SetCostume3DType(s string) {
+	m.costume3_d_type = &s
 }
 
 // Costume3DType returns the value of the "costume3_d_type" field in the mutation.
-func (m *Costume3DMutation) Costume3DType() (r json.RawMessage, exists bool) {
+func (m *Costume3DMutation) Costume3DType() (r string, exists bool) {
 	v := m.costume3_d_type
 	if v == nil {
 		return
@@ -19485,7 +19157,7 @@ func (m *Costume3DMutation) Costume3DType() (r json.RawMessage, exists bool) {
 // OldCostume3DType returns the old "costume3_d_type" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldCostume3DType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Costume3DMutation) OldCostume3DType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCostume3DType is only allowed on UpdateOne operations")
 	}
@@ -19499,23 +19171,9 @@ func (m *Costume3DMutation) OldCostume3DType(ctx context.Context) (v json.RawMes
 	return oldValue.Costume3DType, nil
 }
 
-// AppendCostume3DType adds jm to the "costume3_d_type" field.
-func (m *Costume3DMutation) AppendCostume3DType(jm json.RawMessage) {
-	m.appendcostume3_d_type = append(m.appendcostume3_d_type, jm...)
-}
-
-// AppendedCostume3DType returns the list of values that were appended to the "costume3_d_type" field in this mutation.
-func (m *Costume3DMutation) AppendedCostume3DType() (json.RawMessage, bool) {
-	if len(m.appendcostume3_d_type) == 0 {
-		return nil, false
-	}
-	return m.appendcostume3_d_type, true
-}
-
 // ClearCostume3DType clears the value of the "costume3_d_type" field.
 func (m *Costume3DMutation) ClearCostume3DType() {
 	m.costume3_d_type = nil
-	m.appendcostume3_d_type = nil
 	m.clearedFields[costume3d.FieldCostume3DType] = struct{}{}
 }
 
@@ -19528,7 +19186,6 @@ func (m *Costume3DMutation) Costume3DTypeCleared() bool {
 // ResetCostume3DType resets all changes to the "costume3_d_type" field.
 func (m *Costume3DMutation) ResetCostume3DType() {
 	m.costume3_d_type = nil
-	m.appendcostume3_d_type = nil
 	delete(m.clearedFields, costume3d.FieldCostume3DType)
 }
 
@@ -19582,13 +19239,12 @@ func (m *Costume3DMutation) ResetName() {
 }
 
 // SetPartType sets the "part_type" field.
-func (m *Costume3DMutation) SetPartType(jm json.RawMessage) {
-	m.part_type = &jm
-	m.appendpart_type = nil
+func (m *Costume3DMutation) SetPartType(s string) {
+	m.part_type = &s
 }
 
 // PartType returns the value of the "part_type" field in the mutation.
-func (m *Costume3DMutation) PartType() (r json.RawMessage, exists bool) {
+func (m *Costume3DMutation) PartType() (r string, exists bool) {
 	v := m.part_type
 	if v == nil {
 		return
@@ -19599,7 +19255,7 @@ func (m *Costume3DMutation) PartType() (r json.RawMessage, exists bool) {
 // OldPartType returns the old "part_type" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldPartType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Costume3DMutation) OldPartType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPartType is only allowed on UpdateOne operations")
 	}
@@ -19613,23 +19269,9 @@ func (m *Costume3DMutation) OldPartType(ctx context.Context) (v json.RawMessage,
 	return oldValue.PartType, nil
 }
 
-// AppendPartType adds jm to the "part_type" field.
-func (m *Costume3DMutation) AppendPartType(jm json.RawMessage) {
-	m.appendpart_type = append(m.appendpart_type, jm...)
-}
-
-// AppendedPartType returns the list of values that were appended to the "part_type" field in this mutation.
-func (m *Costume3DMutation) AppendedPartType() (json.RawMessage, bool) {
-	if len(m.appendpart_type) == 0 {
-		return nil, false
-	}
-	return m.appendpart_type, true
-}
-
 // ClearPartType clears the value of the "part_type" field.
 func (m *Costume3DMutation) ClearPartType() {
 	m.part_type = nil
-	m.appendpart_type = nil
 	m.clearedFields[costume3d.FieldPartType] = struct{}{}
 }
 
@@ -19642,7 +19284,6 @@ func (m *Costume3DMutation) PartTypeCleared() bool {
 // ResetPartType resets all changes to the "part_type" field.
 func (m *Costume3DMutation) ResetPartType() {
 	m.part_type = nil
-	m.appendpart_type = nil
 	delete(m.clearedFields, costume3d.FieldPartType)
 }
 
@@ -19836,13 +19477,12 @@ func (m *Costume3DMutation) ResetCharacterID() {
 }
 
 // SetCostume3DRarity sets the "costume3_d_rarity" field.
-func (m *Costume3DMutation) SetCostume3DRarity(jm json.RawMessage) {
-	m.costume3_d_rarity = &jm
-	m.appendcostume3_d_rarity = nil
+func (m *Costume3DMutation) SetCostume3DRarity(s string) {
+	m.costume3_d_rarity = &s
 }
 
 // Costume3DRarity returns the value of the "costume3_d_rarity" field in the mutation.
-func (m *Costume3DMutation) Costume3DRarity() (r json.RawMessage, exists bool) {
+func (m *Costume3DMutation) Costume3DRarity() (r string, exists bool) {
 	v := m.costume3_d_rarity
 	if v == nil {
 		return
@@ -19853,7 +19493,7 @@ func (m *Costume3DMutation) Costume3DRarity() (r json.RawMessage, exists bool) {
 // OldCostume3DRarity returns the old "costume3_d_rarity" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldCostume3DRarity(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Costume3DMutation) OldCostume3DRarity(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCostume3DRarity is only allowed on UpdateOne operations")
 	}
@@ -19867,23 +19507,9 @@ func (m *Costume3DMutation) OldCostume3DRarity(ctx context.Context) (v json.RawM
 	return oldValue.Costume3DRarity, nil
 }
 
-// AppendCostume3DRarity adds jm to the "costume3_d_rarity" field.
-func (m *Costume3DMutation) AppendCostume3DRarity(jm json.RawMessage) {
-	m.appendcostume3_d_rarity = append(m.appendcostume3_d_rarity, jm...)
-}
-
-// AppendedCostume3DRarity returns the list of values that were appended to the "costume3_d_rarity" field in this mutation.
-func (m *Costume3DMutation) AppendedCostume3DRarity() (json.RawMessage, bool) {
-	if len(m.appendcostume3_d_rarity) == 0 {
-		return nil, false
-	}
-	return m.appendcostume3_d_rarity, true
-}
-
 // ClearCostume3DRarity clears the value of the "costume3_d_rarity" field.
 func (m *Costume3DMutation) ClearCostume3DRarity() {
 	m.costume3_d_rarity = nil
-	m.appendcostume3_d_rarity = nil
 	m.clearedFields[costume3d.FieldCostume3DRarity] = struct{}{}
 }
 
@@ -19896,7 +19522,6 @@ func (m *Costume3DMutation) Costume3DRarityCleared() bool {
 // ResetCostume3DRarity resets all changes to the "costume3_d_rarity" field.
 func (m *Costume3DMutation) ResetCostume3DRarity() {
 	m.costume3_d_rarity = nil
-	m.appendcostume3_d_rarity = nil
 	delete(m.clearedFields, costume3d.FieldCostume3DRarity)
 }
 
@@ -20048,13 +19673,12 @@ func (m *Costume3DMutation) ResetDesigner() {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (m *Costume3DMutation) SetArchiveDisplayType(jm json.RawMessage) {
-	m.archive_display_type = &jm
-	m.appendarchive_display_type = nil
+func (m *Costume3DMutation) SetArchiveDisplayType(s string) {
+	m.archive_display_type = &s
 }
 
 // ArchiveDisplayType returns the value of the "archive_display_type" field in the mutation.
-func (m *Costume3DMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
+func (m *Costume3DMutation) ArchiveDisplayType() (r string, exists bool) {
 	v := m.archive_display_type
 	if v == nil {
 		return
@@ -20065,7 +19689,7 @@ func (m *Costume3DMutation) ArchiveDisplayType() (r json.RawMessage, exists bool
 // OldArchiveDisplayType returns the old "archive_display_type" field's value of the Costume3D entity.
 // If the Costume3D object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *Costume3DMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *Costume3DMutation) OldArchiveDisplayType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchiveDisplayType is only allowed on UpdateOne operations")
 	}
@@ -20079,23 +19703,9 @@ func (m *Costume3DMutation) OldArchiveDisplayType(ctx context.Context) (v json.R
 	return oldValue.ArchiveDisplayType, nil
 }
 
-// AppendArchiveDisplayType adds jm to the "archive_display_type" field.
-func (m *Costume3DMutation) AppendArchiveDisplayType(jm json.RawMessage) {
-	m.appendarchive_display_type = append(m.appendarchive_display_type, jm...)
-}
-
-// AppendedArchiveDisplayType returns the list of values that were appended to the "archive_display_type" field in this mutation.
-func (m *Costume3DMutation) AppendedArchiveDisplayType() (json.RawMessage, bool) {
-	if len(m.appendarchive_display_type) == 0 {
-		return nil, false
-	}
-	return m.appendarchive_display_type, true
-}
-
 // ClearArchiveDisplayType clears the value of the "archive_display_type" field.
 func (m *Costume3DMutation) ClearArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	m.clearedFields[costume3d.FieldArchiveDisplayType] = struct{}{}
 }
 
@@ -20108,7 +19718,6 @@ func (m *Costume3DMutation) ArchiveDisplayTypeCleared() bool {
 // ResetArchiveDisplayType resets all changes to the "archive_display_type" field.
 func (m *Costume3DMutation) ResetArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	delete(m.clearedFields, costume3d.FieldArchiveDisplayType)
 }
 
@@ -20490,7 +20099,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetCostume3DGroupID(v)
 		return nil
 	case costume3d.FieldCostume3DType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20504,7 +20113,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case costume3d.FieldPartType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20532,7 +20141,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetCharacterID(v)
 		return nil
 	case costume3d.FieldCostume3DRarity:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20560,7 +20169,7 @@ func (m *Costume3DMutation) SetField(name string, value ent.Value) error {
 		m.SetDesigner(v)
 		return nil
 	case costume3d.FieldArchiveDisplayType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -20933,8 +20542,7 @@ type EventMutation struct {
 	id                                       *int
 	game_id                                  *int64
 	addgame_id                               *int64
-	event_type                               *json.RawMessage
-	appendevent_type                         json.RawMessage
+	event_type                               *string
 	name                                     *string
 	assetbundle_name                         *string
 	bgm_assetbundle_name                     *string
@@ -20956,13 +20564,11 @@ type EventMutation struct {
 	adddistribution_end_at                   *int64
 	virtual_live_id                          *int64
 	addvirtual_live_id                       *int64
-	unit                                     *json.RawMessage
-	appendunit                               json.RawMessage
+	unit                                     *string
 	is_count_leader_character_play           *bool
 	event_ranking_reward_ranges              *json.RawMessage
 	appendevent_ranking_reward_ranges        json.RawMessage
-	event_point_assetbundle_name             *json.RawMessage
-	appendevent_point_assetbundle_name       json.RawMessage
+	event_point_assetbundle_name             *string
 	standby_screen_display_start_at          *int64
 	addstandby_screen_display_start_at       *int64
 	server_region                            *string
@@ -21141,13 +20747,12 @@ func (m *EventMutation) ResetGameID() {
 }
 
 // SetEventType sets the "event_type" field.
-func (m *EventMutation) SetEventType(jm json.RawMessage) {
-	m.event_type = &jm
-	m.appendevent_type = nil
+func (m *EventMutation) SetEventType(s string) {
+	m.event_type = &s
 }
 
 // EventType returns the value of the "event_type" field in the mutation.
-func (m *EventMutation) EventType() (r json.RawMessage, exists bool) {
+func (m *EventMutation) EventType() (r string, exists bool) {
 	v := m.event_type
 	if v == nil {
 		return
@@ -21158,7 +20763,7 @@ func (m *EventMutation) EventType() (r json.RawMessage, exists bool) {
 // OldEventType returns the old "event_type" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldEventType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventMutation) OldEventType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventType is only allowed on UpdateOne operations")
 	}
@@ -21172,23 +20777,9 @@ func (m *EventMutation) OldEventType(ctx context.Context) (v json.RawMessage, er
 	return oldValue.EventType, nil
 }
 
-// AppendEventType adds jm to the "event_type" field.
-func (m *EventMutation) AppendEventType(jm json.RawMessage) {
-	m.appendevent_type = append(m.appendevent_type, jm...)
-}
-
-// AppendedEventType returns the list of values that were appended to the "event_type" field in this mutation.
-func (m *EventMutation) AppendedEventType() (json.RawMessage, bool) {
-	if len(m.appendevent_type) == 0 {
-		return nil, false
-	}
-	return m.appendevent_type, true
-}
-
 // ClearEventType clears the value of the "event_type" field.
 func (m *EventMutation) ClearEventType() {
 	m.event_type = nil
-	m.appendevent_type = nil
 	m.clearedFields[event.FieldEventType] = struct{}{}
 }
 
@@ -21201,7 +20792,6 @@ func (m *EventMutation) EventTypeCleared() bool {
 // ResetEventType resets all changes to the "event_type" field.
 func (m *EventMutation) ResetEventType() {
 	m.event_type = nil
-	m.appendevent_type = nil
 	delete(m.clearedFields, event.FieldEventType)
 }
 
@@ -21983,13 +21573,12 @@ func (m *EventMutation) ResetVirtualLiveID() {
 }
 
 // SetUnit sets the "unit" field.
-func (m *EventMutation) SetUnit(jm json.RawMessage) {
-	m.unit = &jm
-	m.appendunit = nil
+func (m *EventMutation) SetUnit(s string) {
+	m.unit = &s
 }
 
 // Unit returns the value of the "unit" field in the mutation.
-func (m *EventMutation) Unit() (r json.RawMessage, exists bool) {
+func (m *EventMutation) Unit() (r string, exists bool) {
 	v := m.unit
 	if v == nil {
 		return
@@ -22000,7 +21589,7 @@ func (m *EventMutation) Unit() (r json.RawMessage, exists bool) {
 // OldUnit returns the old "unit" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventMutation) OldUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
 	}
@@ -22014,23 +21603,9 @@ func (m *EventMutation) OldUnit(ctx context.Context) (v json.RawMessage, err err
 	return oldValue.Unit, nil
 }
 
-// AppendUnit adds jm to the "unit" field.
-func (m *EventMutation) AppendUnit(jm json.RawMessage) {
-	m.appendunit = append(m.appendunit, jm...)
-}
-
-// AppendedUnit returns the list of values that were appended to the "unit" field in this mutation.
-func (m *EventMutation) AppendedUnit() (json.RawMessage, bool) {
-	if len(m.appendunit) == 0 {
-		return nil, false
-	}
-	return m.appendunit, true
-}
-
 // ClearUnit clears the value of the "unit" field.
 func (m *EventMutation) ClearUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	m.clearedFields[event.FieldUnit] = struct{}{}
 }
 
@@ -22043,7 +21618,6 @@ func (m *EventMutation) UnitCleared() bool {
 // ResetUnit resets all changes to the "unit" field.
 func (m *EventMutation) ResetUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	delete(m.clearedFields, event.FieldUnit)
 }
 
@@ -22162,13 +21736,12 @@ func (m *EventMutation) ResetEventRankingRewardRanges() {
 }
 
 // SetEventPointAssetbundleName sets the "event_point_assetbundle_name" field.
-func (m *EventMutation) SetEventPointAssetbundleName(jm json.RawMessage) {
-	m.event_point_assetbundle_name = &jm
-	m.appendevent_point_assetbundle_name = nil
+func (m *EventMutation) SetEventPointAssetbundleName(s string) {
+	m.event_point_assetbundle_name = &s
 }
 
 // EventPointAssetbundleName returns the value of the "event_point_assetbundle_name" field in the mutation.
-func (m *EventMutation) EventPointAssetbundleName() (r json.RawMessage, exists bool) {
+func (m *EventMutation) EventPointAssetbundleName() (r string, exists bool) {
 	v := m.event_point_assetbundle_name
 	if v == nil {
 		return
@@ -22179,7 +21752,7 @@ func (m *EventMutation) EventPointAssetbundleName() (r json.RawMessage, exists b
 // OldEventPointAssetbundleName returns the old "event_point_assetbundle_name" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldEventPointAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventMutation) OldEventPointAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventPointAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -22193,23 +21766,9 @@ func (m *EventMutation) OldEventPointAssetbundleName(ctx context.Context) (v jso
 	return oldValue.EventPointAssetbundleName, nil
 }
 
-// AppendEventPointAssetbundleName adds jm to the "event_point_assetbundle_name" field.
-func (m *EventMutation) AppendEventPointAssetbundleName(jm json.RawMessage) {
-	m.appendevent_point_assetbundle_name = append(m.appendevent_point_assetbundle_name, jm...)
-}
-
-// AppendedEventPointAssetbundleName returns the list of values that were appended to the "event_point_assetbundle_name" field in this mutation.
-func (m *EventMutation) AppendedEventPointAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendevent_point_assetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendevent_point_assetbundle_name, true
-}
-
 // ClearEventPointAssetbundleName clears the value of the "event_point_assetbundle_name" field.
 func (m *EventMutation) ClearEventPointAssetbundleName() {
 	m.event_point_assetbundle_name = nil
-	m.appendevent_point_assetbundle_name = nil
 	m.clearedFields[event.FieldEventPointAssetbundleName] = struct{}{}
 }
 
@@ -22222,7 +21781,6 @@ func (m *EventMutation) EventPointAssetbundleNameCleared() bool {
 // ResetEventPointAssetbundleName resets all changes to the "event_point_assetbundle_name" field.
 func (m *EventMutation) ResetEventPointAssetbundleName() {
 	m.event_point_assetbundle_name = nil
-	m.appendevent_point_assetbundle_name = nil
 	delete(m.clearedFields, event.FieldEventPointAssetbundleName)
 }
 
@@ -22541,7 +22099,7 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case event.FieldEventType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22632,7 +22190,7 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		m.SetVirtualLiveID(v)
 		return nil
 	case event.FieldUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -22653,7 +22211,7 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		m.SetEventRankingRewardRanges(v)
 		return nil
 	case event.FieldEventPointAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -24038,8 +23596,7 @@ type EventdeckbonuseMutation struct {
 	addevent_id               *int64
 	game_character_unit_id    *int64
 	addgame_character_unit_id *int64
-	card_attr                 *json.RawMessage
-	appendcard_attr           json.RawMessage
+	card_attr                 *string
 	bonus_rate                *float64
 	addbonus_rate             *float64
 	server_region             *string
@@ -24358,13 +23915,12 @@ func (m *EventdeckbonuseMutation) ResetGameCharacterUnitID() {
 }
 
 // SetCardAttr sets the "card_attr" field.
-func (m *EventdeckbonuseMutation) SetCardAttr(jm json.RawMessage) {
-	m.card_attr = &jm
-	m.appendcard_attr = nil
+func (m *EventdeckbonuseMutation) SetCardAttr(s string) {
+	m.card_attr = &s
 }
 
 // CardAttr returns the value of the "card_attr" field in the mutation.
-func (m *EventdeckbonuseMutation) CardAttr() (r json.RawMessage, exists bool) {
+func (m *EventdeckbonuseMutation) CardAttr() (r string, exists bool) {
 	v := m.card_attr
 	if v == nil {
 		return
@@ -24375,7 +23931,7 @@ func (m *EventdeckbonuseMutation) CardAttr() (r json.RawMessage, exists bool) {
 // OldCardAttr returns the old "card_attr" field's value of the Eventdeckbonuse entity.
 // If the Eventdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventdeckbonuseMutation) OldCardAttr(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventdeckbonuseMutation) OldCardAttr(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardAttr is only allowed on UpdateOne operations")
 	}
@@ -24389,23 +23945,9 @@ func (m *EventdeckbonuseMutation) OldCardAttr(ctx context.Context) (v json.RawMe
 	return oldValue.CardAttr, nil
 }
 
-// AppendCardAttr adds jm to the "card_attr" field.
-func (m *EventdeckbonuseMutation) AppendCardAttr(jm json.RawMessage) {
-	m.appendcard_attr = append(m.appendcard_attr, jm...)
-}
-
-// AppendedCardAttr returns the list of values that were appended to the "card_attr" field in this mutation.
-func (m *EventdeckbonuseMutation) AppendedCardAttr() (json.RawMessage, bool) {
-	if len(m.appendcard_attr) == 0 {
-		return nil, false
-	}
-	return m.appendcard_attr, true
-}
-
 // ClearCardAttr clears the value of the "card_attr" field.
 func (m *EventdeckbonuseMutation) ClearCardAttr() {
 	m.card_attr = nil
-	m.appendcard_attr = nil
 	m.clearedFields[eventdeckbonuse.FieldCardAttr] = struct{}{}
 }
 
@@ -24418,7 +23960,6 @@ func (m *EventdeckbonuseMutation) CardAttrCleared() bool {
 // ResetCardAttr resets all changes to the "card_attr" field.
 func (m *EventdeckbonuseMutation) ResetCardAttr() {
 	m.card_attr = nil
-	m.appendcard_attr = nil
 	delete(m.clearedFields, eventdeckbonuse.FieldCardAttr)
 }
 
@@ -24653,7 +24194,7 @@ func (m *EventdeckbonuseMutation) SetField(name string, value ent.Value) error {
 		m.SetGameCharacterUnitID(v)
 		return nil
 	case eventdeckbonuse.FieldCardAttr:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -25809,10 +25350,8 @@ type EventitemMutation struct {
 	addgame_id           *int64
 	event_id             *int64
 	addevent_id          *int64
-	name                 *json.RawMessage
-	appendname           json.RawMessage
-	flavor_text          *json.RawMessage
-	appendflavor_text    json.RawMessage
+	name                 *string
+	flavor_text          *string
 	assetbundle_name     *string
 	game_character_id    *int64
 	addgame_character_id *int64
@@ -26062,13 +25601,12 @@ func (m *EventitemMutation) ResetEventID() {
 }
 
 // SetName sets the "name" field.
-func (m *EventitemMutation) SetName(jm json.RawMessage) {
-	m.name = &jm
-	m.appendname = nil
+func (m *EventitemMutation) SetName(s string) {
+	m.name = &s
 }
 
 // Name returns the value of the "name" field in the mutation.
-func (m *EventitemMutation) Name() (r json.RawMessage, exists bool) {
+func (m *EventitemMutation) Name() (r string, exists bool) {
 	v := m.name
 	if v == nil {
 		return
@@ -26079,7 +25617,7 @@ func (m *EventitemMutation) Name() (r json.RawMessage, exists bool) {
 // OldName returns the old "name" field's value of the Eventitem entity.
 // If the Eventitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventitemMutation) OldName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventitemMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
@@ -26093,23 +25631,9 @@ func (m *EventitemMutation) OldName(ctx context.Context) (v json.RawMessage, err
 	return oldValue.Name, nil
 }
 
-// AppendName adds jm to the "name" field.
-func (m *EventitemMutation) AppendName(jm json.RawMessage) {
-	m.appendname = append(m.appendname, jm...)
-}
-
-// AppendedName returns the list of values that were appended to the "name" field in this mutation.
-func (m *EventitemMutation) AppendedName() (json.RawMessage, bool) {
-	if len(m.appendname) == 0 {
-		return nil, false
-	}
-	return m.appendname, true
-}
-
 // ClearName clears the value of the "name" field.
 func (m *EventitemMutation) ClearName() {
 	m.name = nil
-	m.appendname = nil
 	m.clearedFields[eventitem.FieldName] = struct{}{}
 }
 
@@ -26122,18 +25646,16 @@ func (m *EventitemMutation) NameCleared() bool {
 // ResetName resets all changes to the "name" field.
 func (m *EventitemMutation) ResetName() {
 	m.name = nil
-	m.appendname = nil
 	delete(m.clearedFields, eventitem.FieldName)
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (m *EventitemMutation) SetFlavorText(jm json.RawMessage) {
-	m.flavor_text = &jm
-	m.appendflavor_text = nil
+func (m *EventitemMutation) SetFlavorText(s string) {
+	m.flavor_text = &s
 }
 
 // FlavorText returns the value of the "flavor_text" field in the mutation.
-func (m *EventitemMutation) FlavorText() (r json.RawMessage, exists bool) {
+func (m *EventitemMutation) FlavorText() (r string, exists bool) {
 	v := m.flavor_text
 	if v == nil {
 		return
@@ -26144,7 +25666,7 @@ func (m *EventitemMutation) FlavorText() (r json.RawMessage, exists bool) {
 // OldFlavorText returns the old "flavor_text" field's value of the Eventitem entity.
 // If the Eventitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventitemMutation) OldFlavorText(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventitemMutation) OldFlavorText(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFlavorText is only allowed on UpdateOne operations")
 	}
@@ -26158,23 +25680,9 @@ func (m *EventitemMutation) OldFlavorText(ctx context.Context) (v json.RawMessag
 	return oldValue.FlavorText, nil
 }
 
-// AppendFlavorText adds jm to the "flavor_text" field.
-func (m *EventitemMutation) AppendFlavorText(jm json.RawMessage) {
-	m.appendflavor_text = append(m.appendflavor_text, jm...)
-}
-
-// AppendedFlavorText returns the list of values that were appended to the "flavor_text" field in this mutation.
-func (m *EventitemMutation) AppendedFlavorText() (json.RawMessage, bool) {
-	if len(m.appendflavor_text) == 0 {
-		return nil, false
-	}
-	return m.appendflavor_text, true
-}
-
 // ClearFlavorText clears the value of the "flavor_text" field.
 func (m *EventitemMutation) ClearFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	m.clearedFields[eventitem.FieldFlavorText] = struct{}{}
 }
 
@@ -26187,7 +25695,6 @@ func (m *EventitemMutation) FlavorTextCleared() bool {
 // ResetFlavorText resets all changes to the "flavor_text" field.
 func (m *EventitemMutation) ResetFlavorText() {
 	m.flavor_text = nil
-	m.appendflavor_text = nil
 	delete(m.clearedFields, eventitem.FieldFlavorText)
 }
 
@@ -26471,14 +25978,14 @@ func (m *EventitemMutation) SetField(name string, value ent.Value) error {
 		m.SetEventID(v)
 		return nil
 	case eventitem.FieldName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
 		return nil
 	case eventitem.FieldFlavorText:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -27468,22 +26975,21 @@ func (m *EventmusicMutation) ResetEdge(name string) error {
 // EventraritybonusrateMutation represents an operation that mutates the Eventraritybonusrate nodes in the graph.
 type EventraritybonusrateMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int
-	game_id                *int64
-	addgame_id             *int64
-	card_rarity_type       *json.RawMessage
-	appendcard_rarity_type json.RawMessage
-	master_rank            *int64
-	addmaster_rank         *int64
-	bonus_rate             *float64
-	addbonus_rate          *float64
-	server_region          *string
-	clearedFields          map[string]struct{}
-	done                   bool
-	oldValue               func(context.Context) (*Eventraritybonusrate, error)
-	predicates             []predicate.Eventraritybonusrate
+	op               Op
+	typ              string
+	id               *int
+	game_id          *int64
+	addgame_id       *int64
+	card_rarity_type *string
+	master_rank      *int64
+	addmaster_rank   *int64
+	bonus_rate       *float64
+	addbonus_rate    *float64
+	server_region    *string
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Eventraritybonusrate, error)
+	predicates       []predicate.Eventraritybonusrate
 }
 
 var _ ent.Mutation = (*EventraritybonusrateMutation)(nil)
@@ -27655,13 +27161,12 @@ func (m *EventraritybonusrateMutation) ResetGameID() {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (m *EventraritybonusrateMutation) SetCardRarityType(jm json.RawMessage) {
-	m.card_rarity_type = &jm
-	m.appendcard_rarity_type = nil
+func (m *EventraritybonusrateMutation) SetCardRarityType(s string) {
+	m.card_rarity_type = &s
 }
 
 // CardRarityType returns the value of the "card_rarity_type" field in the mutation.
-func (m *EventraritybonusrateMutation) CardRarityType() (r json.RawMessage, exists bool) {
+func (m *EventraritybonusrateMutation) CardRarityType() (r string, exists bool) {
 	v := m.card_rarity_type
 	if v == nil {
 		return
@@ -27672,7 +27177,7 @@ func (m *EventraritybonusrateMutation) CardRarityType() (r json.RawMessage, exis
 // OldCardRarityType returns the old "card_rarity_type" field's value of the Eventraritybonusrate entity.
 // If the Eventraritybonusrate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventraritybonusrateMutation) OldCardRarityType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventraritybonusrateMutation) OldCardRarityType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardRarityType is only allowed on UpdateOne operations")
 	}
@@ -27686,23 +27191,9 @@ func (m *EventraritybonusrateMutation) OldCardRarityType(ctx context.Context) (v
 	return oldValue.CardRarityType, nil
 }
 
-// AppendCardRarityType adds jm to the "card_rarity_type" field.
-func (m *EventraritybonusrateMutation) AppendCardRarityType(jm json.RawMessage) {
-	m.appendcard_rarity_type = append(m.appendcard_rarity_type, jm...)
-}
-
-// AppendedCardRarityType returns the list of values that were appended to the "card_rarity_type" field in this mutation.
-func (m *EventraritybonusrateMutation) AppendedCardRarityType() (json.RawMessage, bool) {
-	if len(m.appendcard_rarity_type) == 0 {
-		return nil, false
-	}
-	return m.appendcard_rarity_type, true
-}
-
 // ClearCardRarityType clears the value of the "card_rarity_type" field.
 func (m *EventraritybonusrateMutation) ClearCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	m.clearedFields[eventraritybonusrate.FieldCardRarityType] = struct{}{}
 }
 
@@ -27715,7 +27206,6 @@ func (m *EventraritybonusrateMutation) CardRarityTypeCleared() bool {
 // ResetCardRarityType resets all changes to the "card_rarity_type" field.
 func (m *EventraritybonusrateMutation) ResetCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	delete(m.clearedFields, eventraritybonusrate.FieldCardRarityType)
 }
 
@@ -27999,7 +27489,7 @@ func (m *EventraritybonusrateMutation) SetField(name string, value ent.Value) er
 		m.SetGameID(v)
 		return nil
 	case eventraritybonusrate.FieldCardRarityType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -29100,24 +28590,22 @@ func (m *EventstorieMutation) ResetEdge(name string) error {
 // EventstoryunitMutation represents an operation that mutates the Eventstoryunit nodes in the graph.
 type EventstoryunitMutation struct {
 	config
-	op                              Op
-	typ                             string
-	id                              *int
-	game_id                         *int64
-	addgame_id                      *int64
-	seq                             *int64
-	addseq                          *int64
-	event_story_id                  *int64
-	addevent_story_id               *int64
-	unit                            *json.RawMessage
-	appendunit                      json.RawMessage
-	event_story_unit_relation       *json.RawMessage
-	appendevent_story_unit_relation json.RawMessage
-	server_region                   *string
-	clearedFields                   map[string]struct{}
-	done                            bool
-	oldValue                        func(context.Context) (*Eventstoryunit, error)
-	predicates                      []predicate.Eventstoryunit
+	op                        Op
+	typ                       string
+	id                        *int
+	game_id                   *int64
+	addgame_id                *int64
+	seq                       *int64
+	addseq                    *int64
+	event_story_id            *int64
+	addevent_story_id         *int64
+	unit                      *string
+	event_story_unit_relation *string
+	server_region             *string
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*Eventstoryunit, error)
+	predicates                []predicate.Eventstoryunit
 }
 
 var _ ent.Mutation = (*EventstoryunitMutation)(nil)
@@ -29429,13 +28917,12 @@ func (m *EventstoryunitMutation) ResetEventStoryID() {
 }
 
 // SetUnit sets the "unit" field.
-func (m *EventstoryunitMutation) SetUnit(jm json.RawMessage) {
-	m.unit = &jm
-	m.appendunit = nil
+func (m *EventstoryunitMutation) SetUnit(s string) {
+	m.unit = &s
 }
 
 // Unit returns the value of the "unit" field in the mutation.
-func (m *EventstoryunitMutation) Unit() (r json.RawMessage, exists bool) {
+func (m *EventstoryunitMutation) Unit() (r string, exists bool) {
 	v := m.unit
 	if v == nil {
 		return
@@ -29446,7 +28933,7 @@ func (m *EventstoryunitMutation) Unit() (r json.RawMessage, exists bool) {
 // OldUnit returns the old "unit" field's value of the Eventstoryunit entity.
 // If the Eventstoryunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstoryunitMutation) OldUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventstoryunitMutation) OldUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
 	}
@@ -29460,23 +28947,9 @@ func (m *EventstoryunitMutation) OldUnit(ctx context.Context) (v json.RawMessage
 	return oldValue.Unit, nil
 }
 
-// AppendUnit adds jm to the "unit" field.
-func (m *EventstoryunitMutation) AppendUnit(jm json.RawMessage) {
-	m.appendunit = append(m.appendunit, jm...)
-}
-
-// AppendedUnit returns the list of values that were appended to the "unit" field in this mutation.
-func (m *EventstoryunitMutation) AppendedUnit() (json.RawMessage, bool) {
-	if len(m.appendunit) == 0 {
-		return nil, false
-	}
-	return m.appendunit, true
-}
-
 // ClearUnit clears the value of the "unit" field.
 func (m *EventstoryunitMutation) ClearUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	m.clearedFields[eventstoryunit.FieldUnit] = struct{}{}
 }
 
@@ -29489,18 +28962,16 @@ func (m *EventstoryunitMutation) UnitCleared() bool {
 // ResetUnit resets all changes to the "unit" field.
 func (m *EventstoryunitMutation) ResetUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	delete(m.clearedFields, eventstoryunit.FieldUnit)
 }
 
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (m *EventstoryunitMutation) SetEventStoryUnitRelation(jm json.RawMessage) {
-	m.event_story_unit_relation = &jm
-	m.appendevent_story_unit_relation = nil
+func (m *EventstoryunitMutation) SetEventStoryUnitRelation(s string) {
+	m.event_story_unit_relation = &s
 }
 
 // EventStoryUnitRelation returns the value of the "event_story_unit_relation" field in the mutation.
-func (m *EventstoryunitMutation) EventStoryUnitRelation() (r json.RawMessage, exists bool) {
+func (m *EventstoryunitMutation) EventStoryUnitRelation() (r string, exists bool) {
 	v := m.event_story_unit_relation
 	if v == nil {
 		return
@@ -29511,7 +28982,7 @@ func (m *EventstoryunitMutation) EventStoryUnitRelation() (r json.RawMessage, ex
 // OldEventStoryUnitRelation returns the old "event_story_unit_relation" field's value of the Eventstoryunit entity.
 // If the Eventstoryunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventstoryunitMutation) OldEventStoryUnitRelation(ctx context.Context) (v json.RawMessage, err error) {
+func (m *EventstoryunitMutation) OldEventStoryUnitRelation(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEventStoryUnitRelation is only allowed on UpdateOne operations")
 	}
@@ -29525,23 +28996,9 @@ func (m *EventstoryunitMutation) OldEventStoryUnitRelation(ctx context.Context) 
 	return oldValue.EventStoryUnitRelation, nil
 }
 
-// AppendEventStoryUnitRelation adds jm to the "event_story_unit_relation" field.
-func (m *EventstoryunitMutation) AppendEventStoryUnitRelation(jm json.RawMessage) {
-	m.appendevent_story_unit_relation = append(m.appendevent_story_unit_relation, jm...)
-}
-
-// AppendedEventStoryUnitRelation returns the list of values that were appended to the "event_story_unit_relation" field in this mutation.
-func (m *EventstoryunitMutation) AppendedEventStoryUnitRelation() (json.RawMessage, bool) {
-	if len(m.appendevent_story_unit_relation) == 0 {
-		return nil, false
-	}
-	return m.appendevent_story_unit_relation, true
-}
-
 // ClearEventStoryUnitRelation clears the value of the "event_story_unit_relation" field.
 func (m *EventstoryunitMutation) ClearEventStoryUnitRelation() {
 	m.event_story_unit_relation = nil
-	m.appendevent_story_unit_relation = nil
 	m.clearedFields[eventstoryunit.FieldEventStoryUnitRelation] = struct{}{}
 }
 
@@ -29554,7 +29011,6 @@ func (m *EventstoryunitMutation) EventStoryUnitRelationCleared() bool {
 // ResetEventStoryUnitRelation resets all changes to the "event_story_unit_relation" field.
 func (m *EventstoryunitMutation) ResetEventStoryUnitRelation() {
 	m.event_story_unit_relation = nil
-	m.appendevent_story_unit_relation = nil
 	delete(m.clearedFields, eventstoryunit.FieldEventStoryUnitRelation)
 }
 
@@ -29719,14 +29175,14 @@ func (m *EventstoryunitMutation) SetField(name string, value ent.Value) error {
 		m.SetEventStoryID(v)
 		return nil
 	case eventstoryunit.FieldUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUnit(v)
 		return nil
 	case eventstoryunit.FieldEventStoryUnitRelation:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -29938,8 +29394,7 @@ type GachaMutation struct {
 	id                                             *int
 	game_id                                        *int64
 	addgame_id                                     *int64
-	gacha_type                                     *json.RawMessage
-	appendgacha_type                               json.RawMessage
+	gacha_type                                     *string
 	name                                           *string
 	seq                                            *int64
 	addseq                                         *int64
@@ -30159,13 +29614,12 @@ func (m *GachaMutation) ResetGameID() {
 }
 
 // SetGachaType sets the "gacha_type" field.
-func (m *GachaMutation) SetGachaType(jm json.RawMessage) {
-	m.gacha_type = &jm
-	m.appendgacha_type = nil
+func (m *GachaMutation) SetGachaType(s string) {
+	m.gacha_type = &s
 }
 
 // GachaType returns the value of the "gacha_type" field in the mutation.
-func (m *GachaMutation) GachaType() (r json.RawMessage, exists bool) {
+func (m *GachaMutation) GachaType() (r string, exists bool) {
 	v := m.gacha_type
 	if v == nil {
 		return
@@ -30176,7 +29630,7 @@ func (m *GachaMutation) GachaType() (r json.RawMessage, exists bool) {
 // OldGachaType returns the old "gacha_type" field's value of the Gacha entity.
 // If the Gacha object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaMutation) OldGachaType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GachaMutation) OldGachaType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaType is only allowed on UpdateOne operations")
 	}
@@ -30190,23 +29644,9 @@ func (m *GachaMutation) OldGachaType(ctx context.Context) (v json.RawMessage, er
 	return oldValue.GachaType, nil
 }
 
-// AppendGachaType adds jm to the "gacha_type" field.
-func (m *GachaMutation) AppendGachaType(jm json.RawMessage) {
-	m.appendgacha_type = append(m.appendgacha_type, jm...)
-}
-
-// AppendedGachaType returns the list of values that were appended to the "gacha_type" field in this mutation.
-func (m *GachaMutation) AppendedGachaType() (json.RawMessage, bool) {
-	if len(m.appendgacha_type) == 0 {
-		return nil, false
-	}
-	return m.appendgacha_type, true
-}
-
 // ClearGachaType clears the value of the "gacha_type" field.
 func (m *GachaMutation) ClearGachaType() {
 	m.gacha_type = nil
-	m.appendgacha_type = nil
 	m.clearedFields[gacha.FieldGachaType] = struct{}{}
 }
 
@@ -30219,7 +29659,6 @@ func (m *GachaMutation) GachaTypeCleared() bool {
 // ResetGachaType resets all changes to the "gacha_type" field.
 func (m *GachaMutation) ResetGachaType() {
 	m.gacha_type = nil
-	m.appendgacha_type = nil
 	delete(m.clearedFields, gacha.FieldGachaType)
 }
 
@@ -32027,7 +31466,7 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case gacha.FieldGachaType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -32727,8 +32166,7 @@ type GachaceilitemMutation struct {
 	gacha_id                   *int64
 	addgacha_id                *int64
 	name                       *string
-	assetbundle_name           *json.RawMessage
-	appendassetbundle_name     json.RawMessage
+	assetbundle_name           *string
 	convert_start_at           *int64
 	addconvert_start_at        *int64
 	convert_resource_box_id    *int64
@@ -33028,13 +32466,12 @@ func (m *GachaceilitemMutation) ResetName() {
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (m *GachaceilitemMutation) SetAssetbundleName(jm json.RawMessage) {
-	m.assetbundle_name = &jm
-	m.appendassetbundle_name = nil
+func (m *GachaceilitemMutation) SetAssetbundleName(s string) {
+	m.assetbundle_name = &s
 }
 
 // AssetbundleName returns the value of the "assetbundle_name" field in the mutation.
-func (m *GachaceilitemMutation) AssetbundleName() (r json.RawMessage, exists bool) {
+func (m *GachaceilitemMutation) AssetbundleName() (r string, exists bool) {
 	v := m.assetbundle_name
 	if v == nil {
 		return
@@ -33045,7 +32482,7 @@ func (m *GachaceilitemMutation) AssetbundleName() (r json.RawMessage, exists boo
 // OldAssetbundleName returns the old "assetbundle_name" field's value of the Gachaceilitem entity.
 // If the Gachaceilitem object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaceilitemMutation) OldAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GachaceilitemMutation) OldAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -33059,23 +32496,9 @@ func (m *GachaceilitemMutation) OldAssetbundleName(ctx context.Context) (v json.
 	return oldValue.AssetbundleName, nil
 }
 
-// AppendAssetbundleName adds jm to the "assetbundle_name" field.
-func (m *GachaceilitemMutation) AppendAssetbundleName(jm json.RawMessage) {
-	m.appendassetbundle_name = append(m.appendassetbundle_name, jm...)
-}
-
-// AppendedAssetbundleName returns the list of values that were appended to the "assetbundle_name" field in this mutation.
-func (m *GachaceilitemMutation) AppendedAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendassetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendassetbundle_name, true
-}
-
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (m *GachaceilitemMutation) ClearAssetbundleName() {
 	m.assetbundle_name = nil
-	m.appendassetbundle_name = nil
 	m.clearedFields[gachaceilitem.FieldAssetbundleName] = struct{}{}
 }
 
@@ -33088,7 +32511,6 @@ func (m *GachaceilitemMutation) AssetbundleNameCleared() bool {
 // ResetAssetbundleName resets all changes to the "assetbundle_name" field.
 func (m *GachaceilitemMutation) ResetAssetbundleName() {
 	m.assetbundle_name = nil
-	m.appendassetbundle_name = nil
 	delete(m.clearedFields, gachaceilitem.FieldAssetbundleName)
 }
 
@@ -33400,7 +32822,7 @@ func (m *GachaceilitemMutation) SetField(name string, value ent.Value) error {
 		m.SetName(v)
 		return nil
 	case gachaceilitem.FieldAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -33642,20 +33064,19 @@ func (m *GachaceilitemMutation) ResetEdge(name string) error {
 // GachaticketMutation represents an operation that mutates the Gachaticket nodes in the graph.
 type GachaticketMutation struct {
 	config
-	op                       Op
-	typ                      string
-	id                       *int
-	game_id                  *int64
-	addgame_id               *int64
-	name                     *string
-	assetbundle_name         *string
-	gacha_display_type       *json.RawMessage
-	appendgacha_display_type json.RawMessage
-	server_region            *string
-	clearedFields            map[string]struct{}
-	done                     bool
-	oldValue                 func(context.Context) (*Gachaticket, error)
-	predicates               []predicate.Gachaticket
+	op                 Op
+	typ                string
+	id                 *int
+	game_id            *int64
+	addgame_id         *int64
+	name               *string
+	assetbundle_name   *string
+	gacha_display_type *string
+	server_region      *string
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*Gachaticket, error)
+	predicates         []predicate.Gachaticket
 }
 
 var _ ent.Mutation = (*GachaticketMutation)(nil)
@@ -33925,13 +33346,12 @@ func (m *GachaticketMutation) ResetAssetbundleName() {
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (m *GachaticketMutation) SetGachaDisplayType(jm json.RawMessage) {
-	m.gacha_display_type = &jm
-	m.appendgacha_display_type = nil
+func (m *GachaticketMutation) SetGachaDisplayType(s string) {
+	m.gacha_display_type = &s
 }
 
 // GachaDisplayType returns the value of the "gacha_display_type" field in the mutation.
-func (m *GachaticketMutation) GachaDisplayType() (r json.RawMessage, exists bool) {
+func (m *GachaticketMutation) GachaDisplayType() (r string, exists bool) {
 	v := m.gacha_display_type
 	if v == nil {
 		return
@@ -33942,7 +33362,7 @@ func (m *GachaticketMutation) GachaDisplayType() (r json.RawMessage, exists bool
 // OldGachaDisplayType returns the old "gacha_display_type" field's value of the Gachaticket entity.
 // If the Gachaticket object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GachaticketMutation) OldGachaDisplayType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GachaticketMutation) OldGachaDisplayType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGachaDisplayType is only allowed on UpdateOne operations")
 	}
@@ -33956,23 +33376,9 @@ func (m *GachaticketMutation) OldGachaDisplayType(ctx context.Context) (v json.R
 	return oldValue.GachaDisplayType, nil
 }
 
-// AppendGachaDisplayType adds jm to the "gacha_display_type" field.
-func (m *GachaticketMutation) AppendGachaDisplayType(jm json.RawMessage) {
-	m.appendgacha_display_type = append(m.appendgacha_display_type, jm...)
-}
-
-// AppendedGachaDisplayType returns the list of values that were appended to the "gacha_display_type" field in this mutation.
-func (m *GachaticketMutation) AppendedGachaDisplayType() (json.RawMessage, bool) {
-	if len(m.appendgacha_display_type) == 0 {
-		return nil, false
-	}
-	return m.appendgacha_display_type, true
-}
-
 // ClearGachaDisplayType clears the value of the "gacha_display_type" field.
 func (m *GachaticketMutation) ClearGachaDisplayType() {
 	m.gacha_display_type = nil
-	m.appendgacha_display_type = nil
 	m.clearedFields[gachaticket.FieldGachaDisplayType] = struct{}{}
 }
 
@@ -33985,7 +33391,6 @@ func (m *GachaticketMutation) GachaDisplayTypeCleared() bool {
 // ResetGachaDisplayType resets all changes to the "gacha_display_type" field.
 func (m *GachaticketMutation) ResetGachaDisplayType() {
 	m.gacha_display_type = nil
-	m.appendgacha_display_type = nil
 	delete(m.clearedFields, gachaticket.FieldGachaDisplayType)
 }
 
@@ -34143,7 +33548,7 @@ func (m *GachaticketMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case gachaticket.FieldGachaDisplayType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -34332,21 +33737,16 @@ type GamecharacterMutation struct {
 	given_name_ruby              *string
 	first_name_english           *string
 	given_name_english           *string
-	gender                       *json.RawMessage
-	appendgender                 json.RawMessage
+	gender                       *string
 	height                       *float64
 	addheight                    *float64
 	live2_d_height_adjustment    *float64
 	addlive2_d_height_adjustment *float64
-	figure                       *json.RawMessage
-	appendfigure                 json.RawMessage
-	breast_size                  *json.RawMessage
-	appendbreast_size            json.RawMessage
+	figure                       *string
+	breast_size                  *string
 	model_name                   *string
-	unit                         *json.RawMessage
-	appendunit                   json.RawMessage
-	support_unit_type            *json.RawMessage
-	appendsupport_unit_type      json.RawMessage
+	unit                         *string
+	support_unit_type            *string
 	server_region                *string
 	clearedFields                map[string]struct{}
 	done                         bool
@@ -34957,13 +34357,12 @@ func (m *GamecharacterMutation) ResetGivenNameEnglish() {
 }
 
 // SetGender sets the "gender" field.
-func (m *GamecharacterMutation) SetGender(jm json.RawMessage) {
-	m.gender = &jm
-	m.appendgender = nil
+func (m *GamecharacterMutation) SetGender(s string) {
+	m.gender = &s
 }
 
 // Gender returns the value of the "gender" field in the mutation.
-func (m *GamecharacterMutation) Gender() (r json.RawMessage, exists bool) {
+func (m *GamecharacterMutation) Gender() (r string, exists bool) {
 	v := m.gender
 	if v == nil {
 		return
@@ -34974,7 +34373,7 @@ func (m *GamecharacterMutation) Gender() (r json.RawMessage, exists bool) {
 // OldGender returns the old "gender" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldGender(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterMutation) OldGender(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGender is only allowed on UpdateOne operations")
 	}
@@ -34988,23 +34387,9 @@ func (m *GamecharacterMutation) OldGender(ctx context.Context) (v json.RawMessag
 	return oldValue.Gender, nil
 }
 
-// AppendGender adds jm to the "gender" field.
-func (m *GamecharacterMutation) AppendGender(jm json.RawMessage) {
-	m.appendgender = append(m.appendgender, jm...)
-}
-
-// AppendedGender returns the list of values that were appended to the "gender" field in this mutation.
-func (m *GamecharacterMutation) AppendedGender() (json.RawMessage, bool) {
-	if len(m.appendgender) == 0 {
-		return nil, false
-	}
-	return m.appendgender, true
-}
-
 // ClearGender clears the value of the "gender" field.
 func (m *GamecharacterMutation) ClearGender() {
 	m.gender = nil
-	m.appendgender = nil
 	m.clearedFields[gamecharacter.FieldGender] = struct{}{}
 }
 
@@ -35017,7 +34402,6 @@ func (m *GamecharacterMutation) GenderCleared() bool {
 // ResetGender resets all changes to the "gender" field.
 func (m *GamecharacterMutation) ResetGender() {
 	m.gender = nil
-	m.appendgender = nil
 	delete(m.clearedFields, gamecharacter.FieldGender)
 }
 
@@ -35162,13 +34546,12 @@ func (m *GamecharacterMutation) ResetLive2DHeightAdjustment() {
 }
 
 // SetFigure sets the "figure" field.
-func (m *GamecharacterMutation) SetFigure(jm json.RawMessage) {
-	m.figure = &jm
-	m.appendfigure = nil
+func (m *GamecharacterMutation) SetFigure(s string) {
+	m.figure = &s
 }
 
 // Figure returns the value of the "figure" field in the mutation.
-func (m *GamecharacterMutation) Figure() (r json.RawMessage, exists bool) {
+func (m *GamecharacterMutation) Figure() (r string, exists bool) {
 	v := m.figure
 	if v == nil {
 		return
@@ -35179,7 +34562,7 @@ func (m *GamecharacterMutation) Figure() (r json.RawMessage, exists bool) {
 // OldFigure returns the old "figure" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldFigure(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterMutation) OldFigure(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFigure is only allowed on UpdateOne operations")
 	}
@@ -35193,23 +34576,9 @@ func (m *GamecharacterMutation) OldFigure(ctx context.Context) (v json.RawMessag
 	return oldValue.Figure, nil
 }
 
-// AppendFigure adds jm to the "figure" field.
-func (m *GamecharacterMutation) AppendFigure(jm json.RawMessage) {
-	m.appendfigure = append(m.appendfigure, jm...)
-}
-
-// AppendedFigure returns the list of values that were appended to the "figure" field in this mutation.
-func (m *GamecharacterMutation) AppendedFigure() (json.RawMessage, bool) {
-	if len(m.appendfigure) == 0 {
-		return nil, false
-	}
-	return m.appendfigure, true
-}
-
 // ClearFigure clears the value of the "figure" field.
 func (m *GamecharacterMutation) ClearFigure() {
 	m.figure = nil
-	m.appendfigure = nil
 	m.clearedFields[gamecharacter.FieldFigure] = struct{}{}
 }
 
@@ -35222,18 +34591,16 @@ func (m *GamecharacterMutation) FigureCleared() bool {
 // ResetFigure resets all changes to the "figure" field.
 func (m *GamecharacterMutation) ResetFigure() {
 	m.figure = nil
-	m.appendfigure = nil
 	delete(m.clearedFields, gamecharacter.FieldFigure)
 }
 
 // SetBreastSize sets the "breast_size" field.
-func (m *GamecharacterMutation) SetBreastSize(jm json.RawMessage) {
-	m.breast_size = &jm
-	m.appendbreast_size = nil
+func (m *GamecharacterMutation) SetBreastSize(s string) {
+	m.breast_size = &s
 }
 
 // BreastSize returns the value of the "breast_size" field in the mutation.
-func (m *GamecharacterMutation) BreastSize() (r json.RawMessage, exists bool) {
+func (m *GamecharacterMutation) BreastSize() (r string, exists bool) {
 	v := m.breast_size
 	if v == nil {
 		return
@@ -35244,7 +34611,7 @@ func (m *GamecharacterMutation) BreastSize() (r json.RawMessage, exists bool) {
 // OldBreastSize returns the old "breast_size" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldBreastSize(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterMutation) OldBreastSize(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBreastSize is only allowed on UpdateOne operations")
 	}
@@ -35258,23 +34625,9 @@ func (m *GamecharacterMutation) OldBreastSize(ctx context.Context) (v json.RawMe
 	return oldValue.BreastSize, nil
 }
 
-// AppendBreastSize adds jm to the "breast_size" field.
-func (m *GamecharacterMutation) AppendBreastSize(jm json.RawMessage) {
-	m.appendbreast_size = append(m.appendbreast_size, jm...)
-}
-
-// AppendedBreastSize returns the list of values that were appended to the "breast_size" field in this mutation.
-func (m *GamecharacterMutation) AppendedBreastSize() (json.RawMessage, bool) {
-	if len(m.appendbreast_size) == 0 {
-		return nil, false
-	}
-	return m.appendbreast_size, true
-}
-
 // ClearBreastSize clears the value of the "breast_size" field.
 func (m *GamecharacterMutation) ClearBreastSize() {
 	m.breast_size = nil
-	m.appendbreast_size = nil
 	m.clearedFields[gamecharacter.FieldBreastSize] = struct{}{}
 }
 
@@ -35287,7 +34640,6 @@ func (m *GamecharacterMutation) BreastSizeCleared() bool {
 // ResetBreastSize resets all changes to the "breast_size" field.
 func (m *GamecharacterMutation) ResetBreastSize() {
 	m.breast_size = nil
-	m.appendbreast_size = nil
 	delete(m.clearedFields, gamecharacter.FieldBreastSize)
 }
 
@@ -35341,13 +34693,12 @@ func (m *GamecharacterMutation) ResetModelName() {
 }
 
 // SetUnit sets the "unit" field.
-func (m *GamecharacterMutation) SetUnit(jm json.RawMessage) {
-	m.unit = &jm
-	m.appendunit = nil
+func (m *GamecharacterMutation) SetUnit(s string) {
+	m.unit = &s
 }
 
 // Unit returns the value of the "unit" field in the mutation.
-func (m *GamecharacterMutation) Unit() (r json.RawMessage, exists bool) {
+func (m *GamecharacterMutation) Unit() (r string, exists bool) {
 	v := m.unit
 	if v == nil {
 		return
@@ -35358,7 +34709,7 @@ func (m *GamecharacterMutation) Unit() (r json.RawMessage, exists bool) {
 // OldUnit returns the old "unit" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterMutation) OldUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
 	}
@@ -35372,23 +34723,9 @@ func (m *GamecharacterMutation) OldUnit(ctx context.Context) (v json.RawMessage,
 	return oldValue.Unit, nil
 }
 
-// AppendUnit adds jm to the "unit" field.
-func (m *GamecharacterMutation) AppendUnit(jm json.RawMessage) {
-	m.appendunit = append(m.appendunit, jm...)
-}
-
-// AppendedUnit returns the list of values that were appended to the "unit" field in this mutation.
-func (m *GamecharacterMutation) AppendedUnit() (json.RawMessage, bool) {
-	if len(m.appendunit) == 0 {
-		return nil, false
-	}
-	return m.appendunit, true
-}
-
 // ClearUnit clears the value of the "unit" field.
 func (m *GamecharacterMutation) ClearUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	m.clearedFields[gamecharacter.FieldUnit] = struct{}{}
 }
 
@@ -35401,18 +34738,16 @@ func (m *GamecharacterMutation) UnitCleared() bool {
 // ResetUnit resets all changes to the "unit" field.
 func (m *GamecharacterMutation) ResetUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	delete(m.clearedFields, gamecharacter.FieldUnit)
 }
 
 // SetSupportUnitType sets the "support_unit_type" field.
-func (m *GamecharacterMutation) SetSupportUnitType(jm json.RawMessage) {
-	m.support_unit_type = &jm
-	m.appendsupport_unit_type = nil
+func (m *GamecharacterMutation) SetSupportUnitType(s string) {
+	m.support_unit_type = &s
 }
 
 // SupportUnitType returns the value of the "support_unit_type" field in the mutation.
-func (m *GamecharacterMutation) SupportUnitType() (r json.RawMessage, exists bool) {
+func (m *GamecharacterMutation) SupportUnitType() (r string, exists bool) {
 	v := m.support_unit_type
 	if v == nil {
 		return
@@ -35423,7 +34758,7 @@ func (m *GamecharacterMutation) SupportUnitType() (r json.RawMessage, exists boo
 // OldSupportUnitType returns the old "support_unit_type" field's value of the Gamecharacter entity.
 // If the Gamecharacter object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterMutation) OldSupportUnitType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterMutation) OldSupportUnitType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSupportUnitType is only allowed on UpdateOne operations")
 	}
@@ -35437,23 +34772,9 @@ func (m *GamecharacterMutation) OldSupportUnitType(ctx context.Context) (v json.
 	return oldValue.SupportUnitType, nil
 }
 
-// AppendSupportUnitType adds jm to the "support_unit_type" field.
-func (m *GamecharacterMutation) AppendSupportUnitType(jm json.RawMessage) {
-	m.appendsupport_unit_type = append(m.appendsupport_unit_type, jm...)
-}
-
-// AppendedSupportUnitType returns the list of values that were appended to the "support_unit_type" field in this mutation.
-func (m *GamecharacterMutation) AppendedSupportUnitType() (json.RawMessage, bool) {
-	if len(m.appendsupport_unit_type) == 0 {
-		return nil, false
-	}
-	return m.appendsupport_unit_type, true
-}
-
 // ClearSupportUnitType clears the value of the "support_unit_type" field.
 func (m *GamecharacterMutation) ClearSupportUnitType() {
 	m.support_unit_type = nil
-	m.appendsupport_unit_type = nil
 	m.clearedFields[gamecharacter.FieldSupportUnitType] = struct{}{}
 }
 
@@ -35466,7 +34787,6 @@ func (m *GamecharacterMutation) SupportUnitTypeCleared() bool {
 // ResetSupportUnitType resets all changes to the "support_unit_type" field.
 func (m *GamecharacterMutation) ResetSupportUnitType() {
 	m.support_unit_type = nil
-	m.appendsupport_unit_type = nil
 	delete(m.clearedFields, gamecharacter.FieldSupportUnitType)
 }
 
@@ -35757,7 +35077,7 @@ func (m *GamecharacterMutation) SetField(name string, value ent.Value) error {
 		m.SetGivenNameEnglish(v)
 		return nil
 	case gamecharacter.FieldGender:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -35778,14 +35098,14 @@ func (m *GamecharacterMutation) SetField(name string, value ent.Value) error {
 		m.SetLive2DHeightAdjustment(v)
 		return nil
 	case gamecharacter.FieldFigure:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFigure(v)
 		return nil
 	case gamecharacter.FieldBreastSize:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -35799,14 +35119,14 @@ func (m *GamecharacterMutation) SetField(name string, value ent.Value) error {
 		m.SetModelName(v)
 		return nil
 	case gamecharacter.FieldUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUnit(v)
 		return nil
 	case gamecharacter.FieldSupportUnitType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -36145,27 +35465,23 @@ func (m *GamecharacterMutation) ResetEdge(name string) error {
 // GamecharacterunitMutation represents an operation that mutates the Gamecharacterunit nodes in the graph.
 type GamecharacterunitMutation struct {
 	config
-	op                            Op
-	typ                           string
-	id                            *int
-	game_id                       *int64
-	addgame_id                    *int64
-	game_character_id             *int64
-	addgame_character_id          *int64
-	unit                          *json.RawMessage
-	appendunit                    json.RawMessage
-	color_code                    *string
-	skin_color_code               *json.RawMessage
-	appendskin_color_code         json.RawMessage
-	skin_shadow_color_code1       *json.RawMessage
-	appendskin_shadow_color_code1 json.RawMessage
-	skin_shadow_color_code2       *json.RawMessage
-	appendskin_shadow_color_code2 json.RawMessage
-	server_region                 *string
-	clearedFields                 map[string]struct{}
-	done                          bool
-	oldValue                      func(context.Context) (*Gamecharacterunit, error)
-	predicates                    []predicate.Gamecharacterunit
+	op                      Op
+	typ                     string
+	id                      *int
+	game_id                 *int64
+	addgame_id              *int64
+	game_character_id       *int64
+	addgame_character_id    *int64
+	unit                    *string
+	color_code              *string
+	skin_color_code         *string
+	skin_shadow_color_code1 *string
+	skin_shadow_color_code2 *string
+	server_region           *string
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*Gamecharacterunit, error)
+	predicates              []predicate.Gamecharacterunit
 }
 
 var _ ent.Mutation = (*GamecharacterunitMutation)(nil)
@@ -36407,13 +35723,12 @@ func (m *GamecharacterunitMutation) ResetGameCharacterID() {
 }
 
 // SetUnit sets the "unit" field.
-func (m *GamecharacterunitMutation) SetUnit(jm json.RawMessage) {
-	m.unit = &jm
-	m.appendunit = nil
+func (m *GamecharacterunitMutation) SetUnit(s string) {
+	m.unit = &s
 }
 
 // Unit returns the value of the "unit" field in the mutation.
-func (m *GamecharacterunitMutation) Unit() (r json.RawMessage, exists bool) {
+func (m *GamecharacterunitMutation) Unit() (r string, exists bool) {
 	v := m.unit
 	if v == nil {
 		return
@@ -36424,7 +35739,7 @@ func (m *GamecharacterunitMutation) Unit() (r json.RawMessage, exists bool) {
 // OldUnit returns the old "unit" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldUnit(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterunitMutation) OldUnit(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
 	}
@@ -36438,23 +35753,9 @@ func (m *GamecharacterunitMutation) OldUnit(ctx context.Context) (v json.RawMess
 	return oldValue.Unit, nil
 }
 
-// AppendUnit adds jm to the "unit" field.
-func (m *GamecharacterunitMutation) AppendUnit(jm json.RawMessage) {
-	m.appendunit = append(m.appendunit, jm...)
-}
-
-// AppendedUnit returns the list of values that were appended to the "unit" field in this mutation.
-func (m *GamecharacterunitMutation) AppendedUnit() (json.RawMessage, bool) {
-	if len(m.appendunit) == 0 {
-		return nil, false
-	}
-	return m.appendunit, true
-}
-
 // ClearUnit clears the value of the "unit" field.
 func (m *GamecharacterunitMutation) ClearUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	m.clearedFields[gamecharacterunit.FieldUnit] = struct{}{}
 }
 
@@ -36467,7 +35768,6 @@ func (m *GamecharacterunitMutation) UnitCleared() bool {
 // ResetUnit resets all changes to the "unit" field.
 func (m *GamecharacterunitMutation) ResetUnit() {
 	m.unit = nil
-	m.appendunit = nil
 	delete(m.clearedFields, gamecharacterunit.FieldUnit)
 }
 
@@ -36521,13 +35821,12 @@ func (m *GamecharacterunitMutation) ResetColorCode() {
 }
 
 // SetSkinColorCode sets the "skin_color_code" field.
-func (m *GamecharacterunitMutation) SetSkinColorCode(jm json.RawMessage) {
-	m.skin_color_code = &jm
-	m.appendskin_color_code = nil
+func (m *GamecharacterunitMutation) SetSkinColorCode(s string) {
+	m.skin_color_code = &s
 }
 
 // SkinColorCode returns the value of the "skin_color_code" field in the mutation.
-func (m *GamecharacterunitMutation) SkinColorCode() (r json.RawMessage, exists bool) {
+func (m *GamecharacterunitMutation) SkinColorCode() (r string, exists bool) {
 	v := m.skin_color_code
 	if v == nil {
 		return
@@ -36538,7 +35837,7 @@ func (m *GamecharacterunitMutation) SkinColorCode() (r json.RawMessage, exists b
 // OldSkinColorCode returns the old "skin_color_code" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldSkinColorCode(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterunitMutation) OldSkinColorCode(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSkinColorCode is only allowed on UpdateOne operations")
 	}
@@ -36552,23 +35851,9 @@ func (m *GamecharacterunitMutation) OldSkinColorCode(ctx context.Context) (v jso
 	return oldValue.SkinColorCode, nil
 }
 
-// AppendSkinColorCode adds jm to the "skin_color_code" field.
-func (m *GamecharacterunitMutation) AppendSkinColorCode(jm json.RawMessage) {
-	m.appendskin_color_code = append(m.appendskin_color_code, jm...)
-}
-
-// AppendedSkinColorCode returns the list of values that were appended to the "skin_color_code" field in this mutation.
-func (m *GamecharacterunitMutation) AppendedSkinColorCode() (json.RawMessage, bool) {
-	if len(m.appendskin_color_code) == 0 {
-		return nil, false
-	}
-	return m.appendskin_color_code, true
-}
-
 // ClearSkinColorCode clears the value of the "skin_color_code" field.
 func (m *GamecharacterunitMutation) ClearSkinColorCode() {
 	m.skin_color_code = nil
-	m.appendskin_color_code = nil
 	m.clearedFields[gamecharacterunit.FieldSkinColorCode] = struct{}{}
 }
 
@@ -36581,18 +35866,16 @@ func (m *GamecharacterunitMutation) SkinColorCodeCleared() bool {
 // ResetSkinColorCode resets all changes to the "skin_color_code" field.
 func (m *GamecharacterunitMutation) ResetSkinColorCode() {
 	m.skin_color_code = nil
-	m.appendskin_color_code = nil
 	delete(m.clearedFields, gamecharacterunit.FieldSkinColorCode)
 }
 
 // SetSkinShadowColorCode1 sets the "skin_shadow_color_code1" field.
-func (m *GamecharacterunitMutation) SetSkinShadowColorCode1(jm json.RawMessage) {
-	m.skin_shadow_color_code1 = &jm
-	m.appendskin_shadow_color_code1 = nil
+func (m *GamecharacterunitMutation) SetSkinShadowColorCode1(s string) {
+	m.skin_shadow_color_code1 = &s
 }
 
 // SkinShadowColorCode1 returns the value of the "skin_shadow_color_code1" field in the mutation.
-func (m *GamecharacterunitMutation) SkinShadowColorCode1() (r json.RawMessage, exists bool) {
+func (m *GamecharacterunitMutation) SkinShadowColorCode1() (r string, exists bool) {
 	v := m.skin_shadow_color_code1
 	if v == nil {
 		return
@@ -36603,7 +35886,7 @@ func (m *GamecharacterunitMutation) SkinShadowColorCode1() (r json.RawMessage, e
 // OldSkinShadowColorCode1 returns the old "skin_shadow_color_code1" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldSkinShadowColorCode1(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterunitMutation) OldSkinShadowColorCode1(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSkinShadowColorCode1 is only allowed on UpdateOne operations")
 	}
@@ -36617,23 +35900,9 @@ func (m *GamecharacterunitMutation) OldSkinShadowColorCode1(ctx context.Context)
 	return oldValue.SkinShadowColorCode1, nil
 }
 
-// AppendSkinShadowColorCode1 adds jm to the "skin_shadow_color_code1" field.
-func (m *GamecharacterunitMutation) AppendSkinShadowColorCode1(jm json.RawMessage) {
-	m.appendskin_shadow_color_code1 = append(m.appendskin_shadow_color_code1, jm...)
-}
-
-// AppendedSkinShadowColorCode1 returns the list of values that were appended to the "skin_shadow_color_code1" field in this mutation.
-func (m *GamecharacterunitMutation) AppendedSkinShadowColorCode1() (json.RawMessage, bool) {
-	if len(m.appendskin_shadow_color_code1) == 0 {
-		return nil, false
-	}
-	return m.appendskin_shadow_color_code1, true
-}
-
 // ClearSkinShadowColorCode1 clears the value of the "skin_shadow_color_code1" field.
 func (m *GamecharacterunitMutation) ClearSkinShadowColorCode1() {
 	m.skin_shadow_color_code1 = nil
-	m.appendskin_shadow_color_code1 = nil
 	m.clearedFields[gamecharacterunit.FieldSkinShadowColorCode1] = struct{}{}
 }
 
@@ -36646,18 +35915,16 @@ func (m *GamecharacterunitMutation) SkinShadowColorCode1Cleared() bool {
 // ResetSkinShadowColorCode1 resets all changes to the "skin_shadow_color_code1" field.
 func (m *GamecharacterunitMutation) ResetSkinShadowColorCode1() {
 	m.skin_shadow_color_code1 = nil
-	m.appendskin_shadow_color_code1 = nil
 	delete(m.clearedFields, gamecharacterunit.FieldSkinShadowColorCode1)
 }
 
 // SetSkinShadowColorCode2 sets the "skin_shadow_color_code2" field.
-func (m *GamecharacterunitMutation) SetSkinShadowColorCode2(jm json.RawMessage) {
-	m.skin_shadow_color_code2 = &jm
-	m.appendskin_shadow_color_code2 = nil
+func (m *GamecharacterunitMutation) SetSkinShadowColorCode2(s string) {
+	m.skin_shadow_color_code2 = &s
 }
 
 // SkinShadowColorCode2 returns the value of the "skin_shadow_color_code2" field in the mutation.
-func (m *GamecharacterunitMutation) SkinShadowColorCode2() (r json.RawMessage, exists bool) {
+func (m *GamecharacterunitMutation) SkinShadowColorCode2() (r string, exists bool) {
 	v := m.skin_shadow_color_code2
 	if v == nil {
 		return
@@ -36668,7 +35935,7 @@ func (m *GamecharacterunitMutation) SkinShadowColorCode2() (r json.RawMessage, e
 // OldSkinShadowColorCode2 returns the old "skin_shadow_color_code2" field's value of the Gamecharacterunit entity.
 // If the Gamecharacterunit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GamecharacterunitMutation) OldSkinShadowColorCode2(ctx context.Context) (v json.RawMessage, err error) {
+func (m *GamecharacterunitMutation) OldSkinShadowColorCode2(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSkinShadowColorCode2 is only allowed on UpdateOne operations")
 	}
@@ -36682,23 +35949,9 @@ func (m *GamecharacterunitMutation) OldSkinShadowColorCode2(ctx context.Context)
 	return oldValue.SkinShadowColorCode2, nil
 }
 
-// AppendSkinShadowColorCode2 adds jm to the "skin_shadow_color_code2" field.
-func (m *GamecharacterunitMutation) AppendSkinShadowColorCode2(jm json.RawMessage) {
-	m.appendskin_shadow_color_code2 = append(m.appendskin_shadow_color_code2, jm...)
-}
-
-// AppendedSkinShadowColorCode2 returns the list of values that were appended to the "skin_shadow_color_code2" field in this mutation.
-func (m *GamecharacterunitMutation) AppendedSkinShadowColorCode2() (json.RawMessage, bool) {
-	if len(m.appendskin_shadow_color_code2) == 0 {
-		return nil, false
-	}
-	return m.appendskin_shadow_color_code2, true
-}
-
 // ClearSkinShadowColorCode2 clears the value of the "skin_shadow_color_code2" field.
 func (m *GamecharacterunitMutation) ClearSkinShadowColorCode2() {
 	m.skin_shadow_color_code2 = nil
-	m.appendskin_shadow_color_code2 = nil
 	m.clearedFields[gamecharacterunit.FieldSkinShadowColorCode2] = struct{}{}
 }
 
@@ -36711,7 +35964,6 @@ func (m *GamecharacterunitMutation) SkinShadowColorCode2Cleared() bool {
 // ResetSkinShadowColorCode2 resets all changes to the "skin_shadow_color_code2" field.
 func (m *GamecharacterunitMutation) ResetSkinShadowColorCode2() {
 	m.skin_shadow_color_code2 = nil
-	m.appendskin_shadow_color_code2 = nil
 	delete(m.clearedFields, gamecharacterunit.FieldSkinShadowColorCode2)
 }
 
@@ -36883,7 +36135,7 @@ func (m *GamecharacterunitMutation) SetField(name string, value ent.Value) error
 		m.SetGameCharacterID(v)
 		return nil
 	case gamecharacterunit.FieldUnit:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -36897,21 +36149,21 @@ func (m *GamecharacterunitMutation) SetField(name string, value ent.Value) error
 		m.SetColorCode(v)
 		return nil
 	case gamecharacterunit.FieldSkinColorCode:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSkinColorCode(v)
 		return nil
 	case gamecharacterunit.FieldSkinShadowColorCode1:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSkinShadowColorCode1(v)
 		return nil
 	case gamecharacterunit.FieldSkinShadowColorCode2:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37133,8 +36385,7 @@ type HonorMutation struct {
 	addseq             *int64
 	group_id           *int64
 	addgroup_id        *int64
-	honor_rarity       *json.RawMessage
-	appendhonor_rarity json.RawMessage
+	honor_rarity       *string
 	name               *string
 	assetbundle_name   *string
 	levels             *json.RawMessage
@@ -37460,13 +36711,12 @@ func (m *HonorMutation) ResetGroupID() {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (m *HonorMutation) SetHonorRarity(jm json.RawMessage) {
-	m.honor_rarity = &jm
-	m.appendhonor_rarity = nil
+func (m *HonorMutation) SetHonorRarity(s string) {
+	m.honor_rarity = &s
 }
 
 // HonorRarity returns the value of the "honor_rarity" field in the mutation.
-func (m *HonorMutation) HonorRarity() (r json.RawMessage, exists bool) {
+func (m *HonorMutation) HonorRarity() (r string, exists bool) {
 	v := m.honor_rarity
 	if v == nil {
 		return
@@ -37477,7 +36727,7 @@ func (m *HonorMutation) HonorRarity() (r json.RawMessage, exists bool) {
 // OldHonorRarity returns the old "honor_rarity" field's value of the Honor entity.
 // If the Honor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorMutation) OldHonorRarity(ctx context.Context) (v json.RawMessage, err error) {
+func (m *HonorMutation) OldHonorRarity(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHonorRarity is only allowed on UpdateOne operations")
 	}
@@ -37491,23 +36741,9 @@ func (m *HonorMutation) OldHonorRarity(ctx context.Context) (v json.RawMessage, 
 	return oldValue.HonorRarity, nil
 }
 
-// AppendHonorRarity adds jm to the "honor_rarity" field.
-func (m *HonorMutation) AppendHonorRarity(jm json.RawMessage) {
-	m.appendhonor_rarity = append(m.appendhonor_rarity, jm...)
-}
-
-// AppendedHonorRarity returns the list of values that were appended to the "honor_rarity" field in this mutation.
-func (m *HonorMutation) AppendedHonorRarity() (json.RawMessage, bool) {
-	if len(m.appendhonor_rarity) == 0 {
-		return nil, false
-	}
-	return m.appendhonor_rarity, true
-}
-
 // ClearHonorRarity clears the value of the "honor_rarity" field.
 func (m *HonorMutation) ClearHonorRarity() {
 	m.honor_rarity = nil
-	m.appendhonor_rarity = nil
 	m.clearedFields[honor.FieldHonorRarity] = struct{}{}
 }
 
@@ -37520,7 +36756,6 @@ func (m *HonorMutation) HonorRarityCleared() bool {
 // ResetHonorRarity resets all changes to the "honor_rarity" field.
 func (m *HonorMutation) ResetHonorRarity() {
 	m.honor_rarity = nil
-	m.appendhonor_rarity = nil
 	delete(m.clearedFields, honor.FieldHonorRarity)
 }
 
@@ -38072,7 +37307,7 @@ func (m *HonorMutation) SetField(name string, value ent.Value) error {
 		m.SetGroupID(v)
 		return nil
 	case honor.FieldHonorRarity:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -38397,8 +37632,7 @@ type HonorgroupMutation struct {
 	addgame_id                  *int64
 	name                        *string
 	pronunciation               *string
-	honor_type                  *json.RawMessage
-	appendhonor_type            json.RawMessage
+	honor_type                  *string
 	background_assetbundle_name *string
 	frame_name                  *string
 	server_region               *string
@@ -38675,13 +37909,12 @@ func (m *HonorgroupMutation) ResetPronunciation() {
 }
 
 // SetHonorType sets the "honor_type" field.
-func (m *HonorgroupMutation) SetHonorType(jm json.RawMessage) {
-	m.honor_type = &jm
-	m.appendhonor_type = nil
+func (m *HonorgroupMutation) SetHonorType(s string) {
+	m.honor_type = &s
 }
 
 // HonorType returns the value of the "honor_type" field in the mutation.
-func (m *HonorgroupMutation) HonorType() (r json.RawMessage, exists bool) {
+func (m *HonorgroupMutation) HonorType() (r string, exists bool) {
 	v := m.honor_type
 	if v == nil {
 		return
@@ -38692,7 +37925,7 @@ func (m *HonorgroupMutation) HonorType() (r json.RawMessage, exists bool) {
 // OldHonorType returns the old "honor_type" field's value of the Honorgroup entity.
 // If the Honorgroup object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *HonorgroupMutation) OldHonorType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *HonorgroupMutation) OldHonorType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHonorType is only allowed on UpdateOne operations")
 	}
@@ -38706,23 +37939,9 @@ func (m *HonorgroupMutation) OldHonorType(ctx context.Context) (v json.RawMessag
 	return oldValue.HonorType, nil
 }
 
-// AppendHonorType adds jm to the "honor_type" field.
-func (m *HonorgroupMutation) AppendHonorType(jm json.RawMessage) {
-	m.appendhonor_type = append(m.appendhonor_type, jm...)
-}
-
-// AppendedHonorType returns the list of values that were appended to the "honor_type" field in this mutation.
-func (m *HonorgroupMutation) AppendedHonorType() (json.RawMessage, bool) {
-	if len(m.appendhonor_type) == 0 {
-		return nil, false
-	}
-	return m.appendhonor_type, true
-}
-
 // ClearHonorType clears the value of the "honor_type" field.
 func (m *HonorgroupMutation) ClearHonorType() {
 	m.honor_type = nil
-	m.appendhonor_type = nil
 	m.clearedFields[honorgroup.FieldHonorType] = struct{}{}
 }
 
@@ -38735,7 +37954,6 @@ func (m *HonorgroupMutation) HonorTypeCleared() bool {
 // ResetHonorType resets all changes to the "honor_type" field.
 func (m *HonorgroupMutation) ResetHonorType() {
 	m.honor_type = nil
-	m.appendhonor_type = nil
 	delete(m.clearedFields, honorgroup.FieldHonorType)
 }
 
@@ -39005,7 +38223,7 @@ func (m *HonorgroupMutation) SetField(name string, value ent.Value) error {
 		m.SetPronunciation(v)
 		return nil
 	case honorgroup.FieldHonorType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -39211,22 +38429,21 @@ func (m *HonorgroupMutation) ResetEdge(name string) error {
 // LevelMutation represents an operation that mutates the Level nodes in the graph.
 type LevelMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	game_id          *int64
-	addgame_id       *int64
-	level_type       *json.RawMessage
-	appendlevel_type json.RawMessage
-	level            *int64
-	addlevel         *int64
-	total_exp        *int64
-	addtotal_exp     *int64
-	server_region    *string
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*Level, error)
-	predicates       []predicate.Level
+	op            Op
+	typ           string
+	id            *int
+	game_id       *int64
+	addgame_id    *int64
+	level_type    *string
+	level         *int64
+	addlevel      *int64
+	total_exp     *int64
+	addtotal_exp  *int64
+	server_region *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Level, error)
+	predicates    []predicate.Level
 }
 
 var _ ent.Mutation = (*LevelMutation)(nil)
@@ -39398,13 +38615,12 @@ func (m *LevelMutation) ResetGameID() {
 }
 
 // SetLevelType sets the "level_type" field.
-func (m *LevelMutation) SetLevelType(jm json.RawMessage) {
-	m.level_type = &jm
-	m.appendlevel_type = nil
+func (m *LevelMutation) SetLevelType(s string) {
+	m.level_type = &s
 }
 
 // LevelType returns the value of the "level_type" field in the mutation.
-func (m *LevelMutation) LevelType() (r json.RawMessage, exists bool) {
+func (m *LevelMutation) LevelType() (r string, exists bool) {
 	v := m.level_type
 	if v == nil {
 		return
@@ -39415,7 +38631,7 @@ func (m *LevelMutation) LevelType() (r json.RawMessage, exists bool) {
 // OldLevelType returns the old "level_type" field's value of the Level entity.
 // If the Level object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LevelMutation) OldLevelType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *LevelMutation) OldLevelType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLevelType is only allowed on UpdateOne operations")
 	}
@@ -39429,23 +38645,9 @@ func (m *LevelMutation) OldLevelType(ctx context.Context) (v json.RawMessage, er
 	return oldValue.LevelType, nil
 }
 
-// AppendLevelType adds jm to the "level_type" field.
-func (m *LevelMutation) AppendLevelType(jm json.RawMessage) {
-	m.appendlevel_type = append(m.appendlevel_type, jm...)
-}
-
-// AppendedLevelType returns the list of values that were appended to the "level_type" field in this mutation.
-func (m *LevelMutation) AppendedLevelType() (json.RawMessage, bool) {
-	if len(m.appendlevel_type) == 0 {
-		return nil, false
-	}
-	return m.appendlevel_type, true
-}
-
 // ClearLevelType clears the value of the "level_type" field.
 func (m *LevelMutation) ClearLevelType() {
 	m.level_type = nil
-	m.appendlevel_type = nil
 	m.clearedFields[level.FieldLevelType] = struct{}{}
 }
 
@@ -39458,7 +38660,6 @@ func (m *LevelMutation) LevelTypeCleared() bool {
 // ResetLevelType resets all changes to the "level_type" field.
 func (m *LevelMutation) ResetLevelType() {
 	m.level_type = nil
-	m.appendlevel_type = nil
 	delete(m.clearedFields, level.FieldLevelType)
 }
 
@@ -39742,7 +38943,7 @@ func (m *LevelMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case level.FieldLevelType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -40714,30 +39915,29 @@ func (m *LimitedtimemusicMutation) ResetEdge(name string) error {
 // MasterlessonMutation represents an operation that mutates the Masterlesson nodes in the graph.
 type MasterlessonMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int
-	card_rarity_type       *json.RawMessage
-	appendcard_rarity_type json.RawMessage
-	master_rank            *int64
-	addmaster_rank         *int64
-	power1_bonus_fixed     *int64
-	addpower1_bonus_fixed  *int64
-	power2_bonus_fixed     *int64
-	addpower2_bonus_fixed  *int64
-	power3_bonus_fixed     *int64
-	addpower3_bonus_fixed  *int64
-	character_rank_exp     *int64
-	addcharacter_rank_exp  *int64
-	costs                  *json.RawMessage
-	appendcosts            json.RawMessage
-	rewards                *json.RawMessage
-	appendrewards          json.RawMessage
-	server_region          *string
-	clearedFields          map[string]struct{}
-	done                   bool
-	oldValue               func(context.Context) (*Masterlesson, error)
-	predicates             []predicate.Masterlesson
+	op                    Op
+	typ                   string
+	id                    *int
+	card_rarity_type      *string
+	master_rank           *int64
+	addmaster_rank        *int64
+	power1_bonus_fixed    *int64
+	addpower1_bonus_fixed *int64
+	power2_bonus_fixed    *int64
+	addpower2_bonus_fixed *int64
+	power3_bonus_fixed    *int64
+	addpower3_bonus_fixed *int64
+	character_rank_exp    *int64
+	addcharacter_rank_exp *int64
+	costs                 *json.RawMessage
+	appendcosts           json.RawMessage
+	rewards               *json.RawMessage
+	appendrewards         json.RawMessage
+	server_region         *string
+	clearedFields         map[string]struct{}
+	done                  bool
+	oldValue              func(context.Context) (*Masterlesson, error)
+	predicates            []predicate.Masterlesson
 }
 
 var _ ent.Mutation = (*MasterlessonMutation)(nil)
@@ -40839,13 +40039,12 @@ func (m *MasterlessonMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (m *MasterlessonMutation) SetCardRarityType(jm json.RawMessage) {
-	m.card_rarity_type = &jm
-	m.appendcard_rarity_type = nil
+func (m *MasterlessonMutation) SetCardRarityType(s string) {
+	m.card_rarity_type = &s
 }
 
 // CardRarityType returns the value of the "card_rarity_type" field in the mutation.
-func (m *MasterlessonMutation) CardRarityType() (r json.RawMessage, exists bool) {
+func (m *MasterlessonMutation) CardRarityType() (r string, exists bool) {
 	v := m.card_rarity_type
 	if v == nil {
 		return
@@ -40856,7 +40055,7 @@ func (m *MasterlessonMutation) CardRarityType() (r json.RawMessage, exists bool)
 // OldCardRarityType returns the old "card_rarity_type" field's value of the Masterlesson entity.
 // If the Masterlesson object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MasterlessonMutation) OldCardRarityType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MasterlessonMutation) OldCardRarityType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCardRarityType is only allowed on UpdateOne operations")
 	}
@@ -40870,23 +40069,9 @@ func (m *MasterlessonMutation) OldCardRarityType(ctx context.Context) (v json.Ra
 	return oldValue.CardRarityType, nil
 }
 
-// AppendCardRarityType adds jm to the "card_rarity_type" field.
-func (m *MasterlessonMutation) AppendCardRarityType(jm json.RawMessage) {
-	m.appendcard_rarity_type = append(m.appendcard_rarity_type, jm...)
-}
-
-// AppendedCardRarityType returns the list of values that were appended to the "card_rarity_type" field in this mutation.
-func (m *MasterlessonMutation) AppendedCardRarityType() (json.RawMessage, bool) {
-	if len(m.appendcard_rarity_type) == 0 {
-		return nil, false
-	}
-	return m.appendcard_rarity_type, true
-}
-
 // ClearCardRarityType clears the value of the "card_rarity_type" field.
 func (m *MasterlessonMutation) ClearCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	m.clearedFields[masterlesson.FieldCardRarityType] = struct{}{}
 }
 
@@ -40899,7 +40084,6 @@ func (m *MasterlessonMutation) CardRarityTypeCleared() bool {
 // ResetCardRarityType resets all changes to the "card_rarity_type" field.
 func (m *MasterlessonMutation) ResetCardRarityType() {
 	m.card_rarity_type = nil
-	m.appendcard_rarity_type = nil
 	delete(m.clearedFields, masterlesson.FieldCardRarityType)
 }
 
@@ -41544,7 +40728,7 @@ func (m *MasterlessonMutation) OldField(ctx context.Context, name string) (ent.V
 func (m *MasterlessonMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case masterlesson.FieldCardRarityType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -41851,50 +41035,49 @@ func (m *MasterlessonMutation) ResetEdge(name string) error {
 // MusicMutation represents an operation that mutates the Music nodes in the graph.
 type MusicMutation struct {
 	config
-	op                                          Op
-	typ                                         string
-	id                                          *int
-	game_id                                     *int64
-	addgame_id                                  *int64
-	seq                                         *int64
-	addseq                                      *int64
-	release_condition_id                        *int64
-	addrelease_condition_id                     *int64
-	categories                                  *json.RawMessage
-	appendcategories                            json.RawMessage
-	title                                       *string
-	pronunciation                               *string
-	creator_artist_id                           *int64
-	addcreator_artist_id                        *int64
-	lyricist                                    *string
-	composer                                    *string
-	arranger                                    *string
-	dancer_count                                *int64
-	adddancer_count                             *int64
-	self_dancer_position                        *int64
-	addself_dancer_position                     *int64
-	assetbundle_name                            *string
-	live_talk_background_assetbundle_name       *json.RawMessage
-	appendlive_talk_background_assetbundle_name json.RawMessage
-	published_at                                *int64
-	addpublished_at                             *int64
-	released_at                                 *int64
-	addreleased_at                              *int64
-	live_stage_id                               *int64
-	addlive_stage_id                            *int64
-	filler_sec                                  *float64
-	addfiller_sec                               *float64
-	is_newly_written_music                      *bool
-	is_full_length                              *bool
-	music_collaboration_id                      *int64
-	addmusic_collaboration_id                   *int64
-	infos                                       *json.RawMessage
-	appendinfos                                 json.RawMessage
-	server_region                               *string
-	clearedFields                               map[string]struct{}
-	done                                        bool
-	oldValue                                    func(context.Context) (*Music, error)
-	predicates                                  []predicate.Music
+	op                                    Op
+	typ                                   string
+	id                                    *int
+	game_id                               *int64
+	addgame_id                            *int64
+	seq                                   *int64
+	addseq                                *int64
+	release_condition_id                  *int64
+	addrelease_condition_id               *int64
+	categories                            *json.RawMessage
+	appendcategories                      json.RawMessage
+	title                                 *string
+	pronunciation                         *string
+	creator_artist_id                     *int64
+	addcreator_artist_id                  *int64
+	lyricist                              *string
+	composer                              *string
+	arranger                              *string
+	dancer_count                          *int64
+	adddancer_count                       *int64
+	self_dancer_position                  *int64
+	addself_dancer_position               *int64
+	assetbundle_name                      *string
+	live_talk_background_assetbundle_name *string
+	published_at                          *int64
+	addpublished_at                       *int64
+	released_at                           *int64
+	addreleased_at                        *int64
+	live_stage_id                         *int64
+	addlive_stage_id                      *int64
+	filler_sec                            *float64
+	addfiller_sec                         *float64
+	is_newly_written_music                *bool
+	is_full_length                        *bool
+	music_collaboration_id                *int64
+	addmusic_collaboration_id             *int64
+	infos                                 *json.RawMessage
+	appendinfos                           json.RawMessage
+	server_region                         *string
+	clearedFields                         map[string]struct{}
+	done                                  bool
+	oldValue                              func(context.Context) (*Music, error)
+	predicates                            []predicate.Music
 }
 
 var _ ent.Mutation = (*MusicMutation)(nil)
@@ -42775,13 +41958,12 @@ func (m *MusicMutation) ResetAssetbundleName() {
 }
 
 // SetLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field.
-func (m *MusicMutation) SetLiveTalkBackgroundAssetbundleName(jm json.RawMessage) {
-	m.live_talk_background_assetbundle_name = &jm
-	m.appendlive_talk_background_assetbundle_name = nil
+func (m *MusicMutation) SetLiveTalkBackgroundAssetbundleName(s string) {
+	m.live_talk_background_assetbundle_name = &s
 }
 
 // LiveTalkBackgroundAssetbundleName returns the value of the "live_talk_background_assetbundle_name" field in the mutation.
-func (m *MusicMutation) LiveTalkBackgroundAssetbundleName() (r json.RawMessage, exists bool) {
+func (m *MusicMutation) LiveTalkBackgroundAssetbundleName() (r string, exists bool) {
 	v := m.live_talk_background_assetbundle_name
 	if v == nil {
 		return
@@ -42792,7 +41974,7 @@ func (m *MusicMutation) LiveTalkBackgroundAssetbundleName() (r json.RawMessage, 
 // OldLiveTalkBackgroundAssetbundleName returns the old "live_talk_background_assetbundle_name" field's value of the Music entity.
 // If the Music object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicMutation) OldLiveTalkBackgroundAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MusicMutation) OldLiveTalkBackgroundAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLiveTalkBackgroundAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -42806,23 +41988,9 @@ func (m *MusicMutation) OldLiveTalkBackgroundAssetbundleName(ctx context.Context
 	return oldValue.LiveTalkBackgroundAssetbundleName, nil
 }
 
-// AppendLiveTalkBackgroundAssetbundleName adds jm to the "live_talk_background_assetbundle_name" field.
-func (m *MusicMutation) AppendLiveTalkBackgroundAssetbundleName(jm json.RawMessage) {
-	m.appendlive_talk_background_assetbundle_name = append(m.appendlive_talk_background_assetbundle_name, jm...)
-}
-
-// AppendedLiveTalkBackgroundAssetbundleName returns the list of values that were appended to the "live_talk_background_assetbundle_name" field in this mutation.
-func (m *MusicMutation) AppendedLiveTalkBackgroundAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendlive_talk_background_assetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendlive_talk_background_assetbundle_name, true
-}
-
 // ClearLiveTalkBackgroundAssetbundleName clears the value of the "live_talk_background_assetbundle_name" field.
 func (m *MusicMutation) ClearLiveTalkBackgroundAssetbundleName() {
 	m.live_talk_background_assetbundle_name = nil
-	m.appendlive_talk_background_assetbundle_name = nil
 	m.clearedFields[music.FieldLiveTalkBackgroundAssetbundleName] = struct{}{}
 }
 
@@ -42835,7 +42003,6 @@ func (m *MusicMutation) LiveTalkBackgroundAssetbundleNameCleared() bool {
 // ResetLiveTalkBackgroundAssetbundleName resets all changes to the "live_talk_background_assetbundle_name" field.
 func (m *MusicMutation) ResetLiveTalkBackgroundAssetbundleName() {
 	m.live_talk_background_assetbundle_name = nil
-	m.appendlive_talk_background_assetbundle_name = nil
 	delete(m.clearedFields, music.FieldLiveTalkBackgroundAssetbundleName)
 }
 
@@ -43702,7 +42869,7 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case music.FieldLiveTalkBackgroundAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -44806,8 +43973,7 @@ type MusicdifficultieMutation struct {
 	addgame_id              *int64
 	music_id                *int64
 	addmusic_id             *int64
-	music_difficulty        *json.RawMessage
-	appendmusic_difficulty  json.RawMessage
+	music_difficulty        *string
 	play_level              *int64
 	addplay_level           *int64
 	total_note_count        *int64
@@ -45060,13 +44226,12 @@ func (m *MusicdifficultieMutation) ResetMusicID() {
 }
 
 // SetMusicDifficulty sets the "music_difficulty" field.
-func (m *MusicdifficultieMutation) SetMusicDifficulty(jm json.RawMessage) {
-	m.music_difficulty = &jm
-	m.appendmusic_difficulty = nil
+func (m *MusicdifficultieMutation) SetMusicDifficulty(s string) {
+	m.music_difficulty = &s
 }
 
 // MusicDifficulty returns the value of the "music_difficulty" field in the mutation.
-func (m *MusicdifficultieMutation) MusicDifficulty() (r json.RawMessage, exists bool) {
+func (m *MusicdifficultieMutation) MusicDifficulty() (r string, exists bool) {
 	v := m.music_difficulty
 	if v == nil {
 		return
@@ -45077,7 +44242,7 @@ func (m *MusicdifficultieMutation) MusicDifficulty() (r json.RawMessage, exists 
 // OldMusicDifficulty returns the old "music_difficulty" field's value of the Musicdifficultie entity.
 // If the Musicdifficultie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicdifficultieMutation) OldMusicDifficulty(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MusicdifficultieMutation) OldMusicDifficulty(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicDifficulty is only allowed on UpdateOne operations")
 	}
@@ -45091,23 +44256,9 @@ func (m *MusicdifficultieMutation) OldMusicDifficulty(ctx context.Context) (v js
 	return oldValue.MusicDifficulty, nil
 }
 
-// AppendMusicDifficulty adds jm to the "music_difficulty" field.
-func (m *MusicdifficultieMutation) AppendMusicDifficulty(jm json.RawMessage) {
-	m.appendmusic_difficulty = append(m.appendmusic_difficulty, jm...)
-}
-
-// AppendedMusicDifficulty returns the list of values that were appended to the "music_difficulty" field in this mutation.
-func (m *MusicdifficultieMutation) AppendedMusicDifficulty() (json.RawMessage, bool) {
-	if len(m.appendmusic_difficulty) == 0 {
-		return nil, false
-	}
-	return m.appendmusic_difficulty, true
-}
-
 // ClearMusicDifficulty clears the value of the "music_difficulty" field.
 func (m *MusicdifficultieMutation) ClearMusicDifficulty() {
 	m.music_difficulty = nil
-	m.appendmusic_difficulty = nil
 	m.clearedFields[musicdifficultie.FieldMusicDifficulty] = struct{}{}
 }
 
@@ -45120,7 +44271,6 @@ func (m *MusicdifficultieMutation) MusicDifficultyCleared() bool {
 // ResetMusicDifficulty resets all changes to the "music_difficulty" field.
 func (m *MusicdifficultieMutation) ResetMusicDifficulty() {
 	m.music_difficulty = nil
-	m.appendmusic_difficulty = nil
 	delete(m.clearedFields, musicdifficultie.FieldMusicDifficulty)
 }
 
@@ -45495,7 +44645,7 @@ func (m *MusicdifficultieMutation) SetField(name string, value ent.Value) error 
 		m.SetMusicID(v)
 		return nil
 	case musicdifficultie.FieldMusicDifficulty:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -45756,22 +44906,21 @@ func (m *MusicdifficultieMutation) ResetEdge(name string) error {
 // MusictagMutation represents an operation that mutates the Musictag nodes in the graph.
 type MusictagMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int
-	game_id         *int64
-	addgame_id      *int64
-	music_id        *int64
-	addmusic_id     *int64
-	music_tag       *json.RawMessage
-	appendmusic_tag json.RawMessage
-	seq             *int64
-	addseq          *int64
-	server_region   *string
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*Musictag, error)
-	predicates      []predicate.Musictag
+	op            Op
+	typ           string
+	id            *int
+	game_id       *int64
+	addgame_id    *int64
+	music_id      *int64
+	addmusic_id   *int64
+	music_tag     *string
+	seq           *int64
+	addseq        *int64
+	server_region *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Musictag, error)
+	predicates    []predicate.Musictag
 }
 
 var _ ent.Mutation = (*MusictagMutation)(nil)
@@ -46013,13 +45162,12 @@ func (m *MusictagMutation) ResetMusicID() {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (m *MusictagMutation) SetMusicTag(jm json.RawMessage) {
-	m.music_tag = &jm
-	m.appendmusic_tag = nil
+func (m *MusictagMutation) SetMusicTag(s string) {
+	m.music_tag = &s
 }
 
 // MusicTag returns the value of the "music_tag" field in the mutation.
-func (m *MusictagMutation) MusicTag() (r json.RawMessage, exists bool) {
+func (m *MusictagMutation) MusicTag() (r string, exists bool) {
 	v := m.music_tag
 	if v == nil {
 		return
@@ -46030,7 +45178,7 @@ func (m *MusictagMutation) MusicTag() (r json.RawMessage, exists bool) {
 // OldMusicTag returns the old "music_tag" field's value of the Musictag entity.
 // If the Musictag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusictagMutation) OldMusicTag(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MusictagMutation) OldMusicTag(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicTag is only allowed on UpdateOne operations")
 	}
@@ -46044,23 +45192,9 @@ func (m *MusictagMutation) OldMusicTag(ctx context.Context) (v json.RawMessage, 
 	return oldValue.MusicTag, nil
 }
 
-// AppendMusicTag adds jm to the "music_tag" field.
-func (m *MusictagMutation) AppendMusicTag(jm json.RawMessage) {
-	m.appendmusic_tag = append(m.appendmusic_tag, jm...)
-}
-
-// AppendedMusicTag returns the list of values that were appended to the "music_tag" field in this mutation.
-func (m *MusictagMutation) AppendedMusicTag() (json.RawMessage, bool) {
-	if len(m.appendmusic_tag) == 0 {
-		return nil, false
-	}
-	return m.appendmusic_tag, true
-}
-
 // ClearMusicTag clears the value of the "music_tag" field.
 func (m *MusictagMutation) ClearMusicTag() {
 	m.music_tag = nil
-	m.appendmusic_tag = nil
 	m.clearedFields[musictag.FieldMusicTag] = struct{}{}
 }
 
@@ -46073,7 +45207,6 @@ func (m *MusictagMutation) MusicTagCleared() bool {
 // ResetMusicTag resets all changes to the "music_tag" field.
 func (m *MusictagMutation) ResetMusicTag() {
 	m.music_tag = nil
-	m.appendmusic_tag = nil
 	delete(m.clearedFields, musictag.FieldMusicTag)
 }
 
@@ -46294,7 +45427,7 @@ func (m *MusictagMutation) SetField(name string, value ent.Value) error {
 		m.SetMusicID(v)
 		return nil
 	case musictag.FieldMusicTag:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -46499,34 +45632,32 @@ func (m *MusictagMutation) ResetEdge(name string) error {
 // MusicvocalMutation represents an operation that mutates the Musicvocal nodes in the graph.
 type MusicvocalMutation struct {
 	config
-	op                         Op
-	typ                        string
-	id                         *int
-	game_id                    *int64
-	addgame_id                 *int64
-	music_id                   *int64
-	addmusic_id                *int64
-	music_vocal_type           *json.RawMessage
-	appendmusic_vocal_type     json.RawMessage
-	seq                        *int64
-	addseq                     *int64
-	release_condition_id       *int64
-	addrelease_condition_id    *int64
-	caption                    *string
-	characters                 *json.RawMessage
-	appendcharacters           json.RawMessage
-	assetbundle_name           *string
-	archive_published_at       *int64
-	addarchive_published_at    *int64
-	special_season_id          *int64
-	addspecial_season_id       *int64
-	archive_display_type       *json.RawMessage
-	appendarchive_display_type json.RawMessage
-	server_region              *string
-	clearedFields              map[string]struct{}
-	done                       bool
-	oldValue                   func(context.Context) (*Musicvocal, error)
-	predicates                 []predicate.Musicvocal
+	op                      Op
+	typ                     string
+	id                      *int
+	game_id                 *int64
+	addgame_id              *int64
+	music_id                *int64
+	addmusic_id             *int64
+	music_vocal_type        *string
+	seq                     *int64
+	addseq                  *int64
+	release_condition_id    *int64
+	addrelease_condition_id *int64
+	caption                 *string
+	characters              *json.RawMessage
+	appendcharacters        json.RawMessage
+	assetbundle_name        *string
+	archive_published_at    *int64
+	addarchive_published_at *int64
+	special_season_id       *int64
+	addspecial_season_id    *int64
+	archive_display_type    *string
+	server_region           *string
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*Musicvocal, error)
+	predicates              []predicate.Musicvocal
 }
 
 var _ ent.Mutation = (*MusicvocalMutation)(nil)
@@ -46768,13 +45899,12 @@ func (m *MusicvocalMutation) ResetMusicID() {
 }
 
 // SetMusicVocalType sets the "music_vocal_type" field.
-func (m *MusicvocalMutation) SetMusicVocalType(jm json.RawMessage) {
-	m.music_vocal_type = &jm
-	m.appendmusic_vocal_type = nil
+func (m *MusicvocalMutation) SetMusicVocalType(s string) {
+	m.music_vocal_type = &s
 }
 
 // MusicVocalType returns the value of the "music_vocal_type" field in the mutation.
-func (m *MusicvocalMutation) MusicVocalType() (r json.RawMessage, exists bool) {
+func (m *MusicvocalMutation) MusicVocalType() (r string, exists bool) {
 	v := m.music_vocal_type
 	if v == nil {
 		return
@@ -46785,7 +45915,7 @@ func (m *MusicvocalMutation) MusicVocalType() (r json.RawMessage, exists bool) {
 // OldMusicVocalType returns the old "music_vocal_type" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldMusicVocalType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MusicvocalMutation) OldMusicVocalType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMusicVocalType is only allowed on UpdateOne operations")
 	}
@@ -46799,23 +45929,9 @@ func (m *MusicvocalMutation) OldMusicVocalType(ctx context.Context) (v json.RawM
 	return oldValue.MusicVocalType, nil
 }
 
-// AppendMusicVocalType adds jm to the "music_vocal_type" field.
-func (m *MusicvocalMutation) AppendMusicVocalType(jm json.RawMessage) {
-	m.appendmusic_vocal_type = append(m.appendmusic_vocal_type, jm...)
-}
-
-// AppendedMusicVocalType returns the list of values that were appended to the "music_vocal_type" field in this mutation.
-func (m *MusicvocalMutation) AppendedMusicVocalType() (json.RawMessage, bool) {
-	if len(m.appendmusic_vocal_type) == 0 {
-		return nil, false
-	}
-	return m.appendmusic_vocal_type, true
-}
-
 // ClearMusicVocalType clears the value of the "music_vocal_type" field.
 func (m *MusicvocalMutation) ClearMusicVocalType() {
 	m.music_vocal_type = nil
-	m.appendmusic_vocal_type = nil
 	m.clearedFields[musicvocal.FieldMusicVocalType] = struct{}{}
 }
 
@@ -46828,7 +45944,6 @@ func (m *MusicvocalMutation) MusicVocalTypeCleared() bool {
 // ResetMusicVocalType resets all changes to the "music_vocal_type" field.
 func (m *MusicvocalMutation) ResetMusicVocalType() {
 	m.music_vocal_type = nil
-	m.appendmusic_vocal_type = nil
 	delete(m.clearedFields, musicvocal.FieldMusicVocalType)
 }
 
@@ -47276,13 +46391,12 @@ func (m *MusicvocalMutation) ResetSpecialSeasonID() {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (m *MusicvocalMutation) SetArchiveDisplayType(jm json.RawMessage) {
-	m.archive_display_type = &jm
-	m.appendarchive_display_type = nil
+func (m *MusicvocalMutation) SetArchiveDisplayType(s string) {
+	m.archive_display_type = &s
 }
 
 // ArchiveDisplayType returns the value of the "archive_display_type" field in the mutation.
-func (m *MusicvocalMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
+func (m *MusicvocalMutation) ArchiveDisplayType() (r string, exists bool) {
 	v := m.archive_display_type
 	if v == nil {
 		return
@@ -47293,7 +46407,7 @@ func (m *MusicvocalMutation) ArchiveDisplayType() (r json.RawMessage, exists boo
 // OldArchiveDisplayType returns the old "archive_display_type" field's value of the Musicvocal entity.
 // If the Musicvocal object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MusicvocalMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MusicvocalMutation) OldArchiveDisplayType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchiveDisplayType is only allowed on UpdateOne operations")
 	}
@@ -47307,23 +46421,9 @@ func (m *MusicvocalMutation) OldArchiveDisplayType(ctx context.Context) (v json.
 	return oldValue.ArchiveDisplayType, nil
 }
 
-// AppendArchiveDisplayType adds jm to the "archive_display_type" field.
-func (m *MusicvocalMutation) AppendArchiveDisplayType(jm json.RawMessage) {
-	m.appendarchive_display_type = append(m.appendarchive_display_type, jm...)
-}
-
-// AppendedArchiveDisplayType returns the list of values that were appended to the "archive_display_type" field in this mutation.
-func (m *MusicvocalMutation) AppendedArchiveDisplayType() (json.RawMessage, bool) {
-	if len(m.appendarchive_display_type) == 0 {
-		return nil, false
-	}
-	return m.appendarchive_display_type, true
-}
-
 // ClearArchiveDisplayType clears the value of the "archive_display_type" field.
 func (m *MusicvocalMutation) ClearArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	m.clearedFields[musicvocal.FieldArchiveDisplayType] = struct{}{}
 }
 
@@ -47336,7 +46436,6 @@ func (m *MusicvocalMutation) ArchiveDisplayTypeCleared() bool {
 // ResetArchiveDisplayType resets all changes to the "archive_display_type" field.
 func (m *MusicvocalMutation) ResetArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	delete(m.clearedFields, musicvocal.FieldArchiveDisplayType)
 }
 
@@ -47536,7 +46635,7 @@ func (m *MusicvocalMutation) SetField(name string, value ent.Value) error {
 		m.SetMusicID(v)
 		return nil
 	case musicvocal.FieldMusicVocalType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47592,7 +46691,7 @@ func (m *MusicvocalMutation) SetField(name string, value ent.Value) error {
 		m.SetSpecialSeasonID(v)
 		return nil
 	case musicvocal.FieldArchiveDisplayType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -47894,8 +46993,7 @@ type MysekaiblueprintMutation struct {
 	id                              *int
 	game_id                         *int64
 	addgame_id                      *int64
-	mysekai_craft_type              *json.RawMessage
-	appendmysekai_craft_type        json.RawMessage
+	mysekai_craft_type              *string
 	craft_target_id                 *int64
 	addcraft_target_id              *int64
 	is_enable_sketch                *bool
@@ -48079,13 +47177,12 @@ func (m *MysekaiblueprintMutation) ResetGameID() {
 }
 
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (m *MysekaiblueprintMutation) SetMysekaiCraftType(jm json.RawMessage) {
-	m.mysekai_craft_type = &jm
-	m.appendmysekai_craft_type = nil
+func (m *MysekaiblueprintMutation) SetMysekaiCraftType(s string) {
+	m.mysekai_craft_type = &s
 }
 
 // MysekaiCraftType returns the value of the "mysekai_craft_type" field in the mutation.
-func (m *MysekaiblueprintMutation) MysekaiCraftType() (r json.RawMessage, exists bool) {
+func (m *MysekaiblueprintMutation) MysekaiCraftType() (r string, exists bool) {
 	v := m.mysekai_craft_type
 	if v == nil {
 		return
@@ -48096,7 +47193,7 @@ func (m *MysekaiblueprintMutation) MysekaiCraftType() (r json.RawMessage, exists
 // OldMysekaiCraftType returns the old "mysekai_craft_type" field's value of the Mysekaiblueprint entity.
 // If the Mysekaiblueprint object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintMutation) OldMysekaiCraftType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaiblueprintMutation) OldMysekaiCraftType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCraftType is only allowed on UpdateOne operations")
 	}
@@ -48110,23 +47207,9 @@ func (m *MysekaiblueprintMutation) OldMysekaiCraftType(ctx context.Context) (v j
 	return oldValue.MysekaiCraftType, nil
 }
 
-// AppendMysekaiCraftType adds jm to the "mysekai_craft_type" field.
-func (m *MysekaiblueprintMutation) AppendMysekaiCraftType(jm json.RawMessage) {
-	m.appendmysekai_craft_type = append(m.appendmysekai_craft_type, jm...)
-}
-
-// AppendedMysekaiCraftType returns the list of values that were appended to the "mysekai_craft_type" field in this mutation.
-func (m *MysekaiblueprintMutation) AppendedMysekaiCraftType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_craft_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_craft_type, true
-}
-
 // ClearMysekaiCraftType clears the value of the "mysekai_craft_type" field.
 func (m *MysekaiblueprintMutation) ClearMysekaiCraftType() {
 	m.mysekai_craft_type = nil
-	m.appendmysekai_craft_type = nil
 	m.clearedFields[mysekaiblueprint.FieldMysekaiCraftType] = struct{}{}
 }
 
@@ -48139,7 +47222,6 @@ func (m *MysekaiblueprintMutation) MysekaiCraftTypeCleared() bool {
 // ResetMysekaiCraftType resets all changes to the "mysekai_craft_type" field.
 func (m *MysekaiblueprintMutation) ResetMysekaiCraftType() {
 	m.mysekai_craft_type = nil
-	m.appendmysekai_craft_type = nil
 	delete(m.clearedFields, mysekaiblueprint.FieldMysekaiCraftType)
 }
 
@@ -48591,7 +47673,7 @@ func (m *MysekaiblueprintMutation) SetField(name string, value ent.Value) error 
 		m.SetGameID(v)
 		return nil
 	case mysekaiblueprint.FieldMysekaiCraftType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -48851,26 +47933,25 @@ func (m *MysekaiblueprintMutation) ResetEdge(name string) error {
 // MysekaiblueprintmysekaimaterialcostMutation represents an operation that mutates the Mysekaiblueprintmysekaimaterialcost nodes in the graph.
 type MysekaiblueprintmysekaimaterialcostMutation struct {
 	config
-	op                           Op
-	typ                          string
-	id                           *int
-	game_id                      *int64
-	addgame_id                   *int64
-	mysekai_blueprint_id         *int64
-	addmysekai_blueprint_id      *int64
-	mysekai_material_id          *int64
-	addmysekai_material_id       *int64
-	seq                          *int64
-	addseq                       *int64
-	quantity                     *int64
-	addquantity                  *int64
-	mysekai_blueprint_type       *json.RawMessage
-	appendmysekai_blueprint_type json.RawMessage
-	server_region                *string
-	clearedFields                map[string]struct{}
-	done                         bool
-	oldValue                     func(context.Context) (*Mysekaiblueprintmysekaimaterialcost, error)
-	predicates                   []predicate.Mysekaiblueprintmysekaimaterialcost
+	op                      Op
+	typ                     string
+	id                      *int
+	game_id                 *int64
+	addgame_id              *int64
+	mysekai_blueprint_id    *int64
+	addmysekai_blueprint_id *int64
+	mysekai_material_id     *int64
+	addmysekai_material_id  *int64
+	seq                     *int64
+	addseq                  *int64
+	quantity                *int64
+	addquantity             *int64
+	mysekai_blueprint_type  *string
+	server_region           *string
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*Mysekaiblueprintmysekaimaterialcost, error)
+	predicates              []predicate.Mysekaiblueprintmysekaimaterialcost
 }
 
 var _ ent.Mutation = (*MysekaiblueprintmysekaimaterialcostMutation)(nil)
@@ -49322,13 +48403,12 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetQuantity() {
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiBlueprintType(jm json.RawMessage) {
-	m.mysekai_blueprint_type = &jm
-	m.appendmysekai_blueprint_type = nil
+func (m *MysekaiblueprintmysekaimaterialcostMutation) SetMysekaiBlueprintType(s string) {
+	m.mysekai_blueprint_type = &s
 }
 
 // MysekaiBlueprintType returns the value of the "mysekai_blueprint_type" field in the mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintType() (r json.RawMessage, exists bool) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintType() (r string, exists bool) {
 	v := m.mysekai_blueprint_type
 	if v == nil {
 		return
@@ -49339,7 +48419,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintType() (r 
 // OldMysekaiBlueprintType returns the old "mysekai_blueprint_type" field's value of the Mysekaiblueprintmysekaimaterialcost entity.
 // If the Mysekaiblueprintmysekaimaterialcost object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiBlueprintType is only allowed on UpdateOne operations")
 	}
@@ -49353,23 +48433,9 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) OldMysekaiBlueprintType(ct
 	return oldValue.MysekaiBlueprintType, nil
 }
 
-// AppendMysekaiBlueprintType adds jm to the "mysekai_blueprint_type" field.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AppendMysekaiBlueprintType(jm json.RawMessage) {
-	m.appendmysekai_blueprint_type = append(m.appendmysekai_blueprint_type, jm...)
-}
-
-// AppendedMysekaiBlueprintType returns the list of values that were appended to the "mysekai_blueprint_type" field in this mutation.
-func (m *MysekaiblueprintmysekaimaterialcostMutation) AppendedMysekaiBlueprintType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_blueprint_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_blueprint_type, true
-}
-
 // ClearMysekaiBlueprintType clears the value of the "mysekai_blueprint_type" field.
 func (m *MysekaiblueprintmysekaimaterialcostMutation) ClearMysekaiBlueprintType() {
 	m.mysekai_blueprint_type = nil
-	m.appendmysekai_blueprint_type = nil
 	m.clearedFields[mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType] = struct{}{}
 }
 
@@ -49382,7 +48448,6 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) MysekaiBlueprintTypeCleare
 // ResetMysekaiBlueprintType resets all changes to the "mysekai_blueprint_type" field.
 func (m *MysekaiblueprintmysekaimaterialcostMutation) ResetMysekaiBlueprintType() {
 	m.mysekai_blueprint_type = nil
-	m.appendmysekai_blueprint_type = nil
 	delete(m.clearedFields, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType)
 }
 
@@ -49568,7 +48633,7 @@ func (m *MysekaiblueprintmysekaimaterialcostMutation) SetField(name string, valu
 		m.SetQuantity(v)
 		return nil
 	case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -49823,8 +48888,7 @@ type MysekaicharactertalkMutation struct {
 	addmysekai_character_talk_term_id                    *int64
 	character_archive_mysekai_character_talk_group_id    *int64
 	addcharacter_archive_mysekai_character_talk_group_id *int64
-	assetbundle_name                                     *json.RawMessage
-	appendassetbundle_name                               json.RawMessage
+	assetbundle_name                                     *string
 	lua                                                  *string
 	is_enabled_for_multi                                 *bool
 	server_region                                        *string
@@ -50353,13 +49417,12 @@ func (m *MysekaicharactertalkMutation) ResetCharacterArchiveMysekaiCharacterTalk
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (m *MysekaicharactertalkMutation) SetAssetbundleName(jm json.RawMessage) {
-	m.assetbundle_name = &jm
-	m.appendassetbundle_name = nil
+func (m *MysekaicharactertalkMutation) SetAssetbundleName(s string) {
+	m.assetbundle_name = &s
 }
 
 // AssetbundleName returns the value of the "assetbundle_name" field in the mutation.
-func (m *MysekaicharactertalkMutation) AssetbundleName() (r json.RawMessage, exists bool) {
+func (m *MysekaicharactertalkMutation) AssetbundleName() (r string, exists bool) {
 	v := m.assetbundle_name
 	if v == nil {
 		return
@@ -50370,7 +49433,7 @@ func (m *MysekaicharactertalkMutation) AssetbundleName() (r json.RawMessage, exi
 // OldAssetbundleName returns the old "assetbundle_name" field's value of the Mysekaicharactertalk entity.
 // If the Mysekaicharactertalk object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkMutation) OldAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaicharactertalkMutation) OldAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -50384,23 +49447,9 @@ func (m *MysekaicharactertalkMutation) OldAssetbundleName(ctx context.Context) (
 	return oldValue.AssetbundleName, nil
 }
 
-// AppendAssetbundleName adds jm to the "assetbundle_name" field.
-func (m *MysekaicharactertalkMutation) AppendAssetbundleName(jm json.RawMessage) {
-	m.appendassetbundle_name = append(m.appendassetbundle_name, jm...)
-}
-
-// AppendedAssetbundleName returns the list of values that were appended to the "assetbundle_name" field in this mutation.
-func (m *MysekaicharactertalkMutation) AppendedAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendassetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendassetbundle_name, true
-}
-
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (m *MysekaicharactertalkMutation) ClearAssetbundleName() {
 	m.assetbundle_name = nil
-	m.appendassetbundle_name = nil
 	m.clearedFields[mysekaicharactertalk.FieldAssetbundleName] = struct{}{}
 }
 
@@ -50413,7 +49462,6 @@ func (m *MysekaicharactertalkMutation) AssetbundleNameCleared() bool {
 // ResetAssetbundleName resets all changes to the "assetbundle_name" field.
 func (m *MysekaicharactertalkMutation) ResetAssetbundleName() {
 	m.assetbundle_name = nil
-	m.appendassetbundle_name = nil
 	delete(m.clearedFields, mysekaicharactertalk.FieldAssetbundleName)
 }
 
@@ -50725,7 +49773,7 @@ func (m *MysekaicharactertalkMutation) SetField(name string, value ent.Value) er
 		m.SetCharacterArchiveMysekaiCharacterTalkGroupID(v)
 		return nil
 	case mysekaicharactertalk.FieldAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -51023,8 +50071,7 @@ type MysekaicharactertalkconditionMutation struct {
 	id                                             *int
 	game_id                                        *int64
 	addgame_id                                     *int64
-	mysekai_character_talk_condition_type          *json.RawMessage
-	appendmysekai_character_talk_condition_type    json.RawMessage
+	mysekai_character_talk_condition_type          *string
 	mysekai_character_talk_condition_type_value    *int64
 	addmysekai_character_talk_condition_type_value *int64
 	server_region                                  *string
@@ -51203,13 +50250,12 @@ func (m *MysekaicharactertalkconditionMutation) ResetGameID() {
 }
 
 // SetMysekaiCharacterTalkConditionType sets the "mysekai_character_talk_condition_type" field.
-func (m *MysekaicharactertalkconditionMutation) SetMysekaiCharacterTalkConditionType(jm json.RawMessage) {
-	m.mysekai_character_talk_condition_type = &jm
-	m.appendmysekai_character_talk_condition_type = nil
+func (m *MysekaicharactertalkconditionMutation) SetMysekaiCharacterTalkConditionType(s string) {
+	m.mysekai_character_talk_condition_type = &s
 }
 
 // MysekaiCharacterTalkConditionType returns the value of the "mysekai_character_talk_condition_type" field in the mutation.
-func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionType() (r json.RawMessage, exists bool) {
+func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionType() (r string, exists bool) {
 	v := m.mysekai_character_talk_condition_type
 	if v == nil {
 		return
@@ -51220,7 +50266,7 @@ func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionTyp
 // OldMysekaiCharacterTalkConditionType returns the old "mysekai_character_talk_condition_type" field's value of the Mysekaicharactertalkcondition entity.
 // If the Mysekaicharactertalkcondition object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkConditionType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkConditionType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkConditionType is only allowed on UpdateOne operations")
 	}
@@ -51234,23 +50280,9 @@ func (m *MysekaicharactertalkconditionMutation) OldMysekaiCharacterTalkCondition
 	return oldValue.MysekaiCharacterTalkConditionType, nil
 }
 
-// AppendMysekaiCharacterTalkConditionType adds jm to the "mysekai_character_talk_condition_type" field.
-func (m *MysekaicharactertalkconditionMutation) AppendMysekaiCharacterTalkConditionType(jm json.RawMessage) {
-	m.appendmysekai_character_talk_condition_type = append(m.appendmysekai_character_talk_condition_type, jm...)
-}
-
-// AppendedMysekaiCharacterTalkConditionType returns the list of values that were appended to the "mysekai_character_talk_condition_type" field in this mutation.
-func (m *MysekaicharactertalkconditionMutation) AppendedMysekaiCharacterTalkConditionType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_character_talk_condition_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_character_talk_condition_type, true
-}
-
 // ClearMysekaiCharacterTalkConditionType clears the value of the "mysekai_character_talk_condition_type" field.
 func (m *MysekaicharactertalkconditionMutation) ClearMysekaiCharacterTalkConditionType() {
 	m.mysekai_character_talk_condition_type = nil
-	m.appendmysekai_character_talk_condition_type = nil
 	m.clearedFields[mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType] = struct{}{}
 }
 
@@ -51263,7 +50295,6 @@ func (m *MysekaicharactertalkconditionMutation) MysekaiCharacterTalkConditionTyp
 // ResetMysekaiCharacterTalkConditionType resets all changes to the "mysekai_character_talk_condition_type" field.
 func (m *MysekaicharactertalkconditionMutation) ResetMysekaiCharacterTalkConditionType() {
 	m.mysekai_character_talk_condition_type = nil
-	m.appendmysekai_character_talk_condition_type = nil
 	delete(m.clearedFields, mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType)
 }
 
@@ -51470,7 +50501,7 @@ func (m *MysekaicharactertalkconditionMutation) SetField(name string, value ent.
 		m.SetGameID(v)
 		return nil
 	case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -52314,8 +51345,7 @@ type MysekaicharactertalkfixturecommonMutation struct {
 	addgame_id                                                        *int64
 	game_character_unit_id                                            *int64
 	addgame_character_unit_id                                         *int64
-	mysekai_character_talk_fixture_common_type                        *json.RawMessage
-	appendmysekai_character_talk_fixture_common_type                  json.RawMessage
+	mysekai_character_talk_fixture_common_type                        *string
 	mysekai_character_talk_fixture_common_mysekai_fixture_group_id    *int64
 	addmysekai_character_talk_fixture_common_mysekai_fixture_group_id *int64
 	mysekai_character_talk_fixture_common_tweet_group_id              *int64
@@ -52566,13 +51596,12 @@ func (m *MysekaicharactertalkfixturecommonMutation) ResetGameCharacterUnitID() {
 }
 
 // SetMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field.
-func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonType(jm json.RawMessage) {
-	m.mysekai_character_talk_fixture_common_type = &jm
-	m.appendmysekai_character_talk_fixture_common_type = nil
+func (m *MysekaicharactertalkfixturecommonMutation) SetMysekaiCharacterTalkFixtureCommonType(s string) {
+	m.mysekai_character_talk_fixture_common_type = &s
 }
 
 // MysekaiCharacterTalkFixtureCommonType returns the value of the "mysekai_character_talk_fixture_common_type" field in the mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonType() (r json.RawMessage, exists bool) {
+func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureCommonType() (r string, exists bool) {
 	v := m.mysekai_character_talk_fixture_common_type
 	if v == nil {
 		return
@@ -52583,7 +51612,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureC
 // OldMysekaiCharacterTalkFixtureCommonType returns the old "mysekai_character_talk_fixture_common_type" field's value of the Mysekaicharactertalkfixturecommon entity.
 // If the Mysekaicharactertalkfixturecommon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtureCommonType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiCharacterTalkFixtureCommonType is only allowed on UpdateOne operations")
 	}
@@ -52597,23 +51626,9 @@ func (m *MysekaicharactertalkfixturecommonMutation) OldMysekaiCharacterTalkFixtu
 	return oldValue.MysekaiCharacterTalkFixtureCommonType, nil
 }
 
-// AppendMysekaiCharacterTalkFixtureCommonType adds jm to the "mysekai_character_talk_fixture_common_type" field.
-func (m *MysekaicharactertalkfixturecommonMutation) AppendMysekaiCharacterTalkFixtureCommonType(jm json.RawMessage) {
-	m.appendmysekai_character_talk_fixture_common_type = append(m.appendmysekai_character_talk_fixture_common_type, jm...)
-}
-
-// AppendedMysekaiCharacterTalkFixtureCommonType returns the list of values that were appended to the "mysekai_character_talk_fixture_common_type" field in this mutation.
-func (m *MysekaicharactertalkfixturecommonMutation) AppendedMysekaiCharacterTalkFixtureCommonType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_character_talk_fixture_common_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_character_talk_fixture_common_type, true
-}
-
 // ClearMysekaiCharacterTalkFixtureCommonType clears the value of the "mysekai_character_talk_fixture_common_type" field.
 func (m *MysekaicharactertalkfixturecommonMutation) ClearMysekaiCharacterTalkFixtureCommonType() {
 	m.mysekai_character_talk_fixture_common_type = nil
-	m.appendmysekai_character_talk_fixture_common_type = nil
 	m.clearedFields[mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType] = struct{}{}
 }
 
@@ -52626,7 +51641,6 @@ func (m *MysekaicharactertalkfixturecommonMutation) MysekaiCharacterTalkFixtureC
 // ResetMysekaiCharacterTalkFixtureCommonType resets all changes to the "mysekai_character_talk_fixture_common_type" field.
 func (m *MysekaicharactertalkfixturecommonMutation) ResetMysekaiCharacterTalkFixtureCommonType() {
 	m.mysekai_character_talk_fixture_common_type = nil
-	m.appendmysekai_character_talk_fixture_common_type = nil
 	delete(m.clearedFields, mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType)
 }
 
@@ -52924,7 +51938,7 @@ func (m *MysekaicharactertalkfixturecommonMutation) SetField(name string, value 
 		m.SetGameCharacterUnitID(v)
 		return nil
 	case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -53162,8 +52176,7 @@ type MysekaifixtureMutation struct {
 	id                                                           *int
 	game_id                                                      *int64
 	addgame_id                                                   *int64
-	mysekai_fixture_type                                         *json.RawMessage
-	appendmysekai_fixture_type                                   json.RawMessage
+	mysekai_fixture_type                                         *string
 	name                                                         *string
 	pronunciation                                                *string
 	flavor_text                                                  *string
@@ -53175,14 +52188,10 @@ type MysekaifixtureMutation struct {
 	addmysekai_fixture_main_genre_id                             *int64
 	mysekai_fixture_sub_genre_id                                 *int64
 	addmysekai_fixture_sub_genre_id                              *int64
-	mysekai_fixture_handle_type                                  *json.RawMessage
-	appendmysekai_fixture_handle_type                            json.RawMessage
-	mysekai_settable_site_type                                   *json.RawMessage
-	appendmysekai_settable_site_type                             json.RawMessage
-	mysekai_settable_layout_type                                 *json.RawMessage
-	appendmysekai_settable_layout_type                           json.RawMessage
-	mysekai_fixture_put_type                                     *json.RawMessage
-	appendmysekai_fixture_put_type                               json.RawMessage
+	mysekai_fixture_handle_type                                  *string
+	mysekai_settable_site_type                                   *string
+	mysekai_settable_layout_type                                 *string
+	mysekai_fixture_put_type                                     *string
 	mysekai_fixture_another_colors                               *json.RawMessage
 	appendmysekai_fixture_another_colors                         json.RawMessage
 	mysekai_fixture_put_sound_id                                 *int64
@@ -53193,8 +52202,7 @@ type MysekaifixtureMutation struct {
 	appendmysekai_fixture_tag_group                              json.RawMessage
 	is_assembled                                                 *bool
 	is_disassembled                                              *bool
-	mysekai_fixture_player_action_type                           *json.RawMessage
-	appendmysekai_fixture_player_action_type                     json.RawMessage
+	mysekai_fixture_player_action_type                           *string
 	is_game_character_action                                     *bool
 	assetbundle_name                                             *string
 	first_put_cost                                               *int64
@@ -53380,13 +52388,12 @@ func (m *MysekaifixtureMutation) ResetGameID() {
 }
 
 // SetMysekaiFixtureType sets the "mysekai_fixture_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureType(jm json.RawMessage) {
-	m.mysekai_fixture_type = &jm
-	m.appendmysekai_fixture_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiFixtureType(s string) {
+	m.mysekai_fixture_type = &s
 }
 
 // MysekaiFixtureType returns the value of the "mysekai_fixture_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureType() (r string, exists bool) {
 	v := m.mysekai_fixture_type
 	if v == nil {
 		return
@@ -53397,7 +52404,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureType() (r json.RawMessage, exists
 // OldMysekaiFixtureType returns the old "mysekai_fixture_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureType is only allowed on UpdateOne operations")
 	}
@@ -53411,23 +52418,9 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureType(ctx context.Context) (v j
 	return oldValue.MysekaiFixtureType, nil
 }
 
-// AppendMysekaiFixtureType adds jm to the "mysekai_fixture_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiFixtureType(jm json.RawMessage) {
-	m.appendmysekai_fixture_type = append(m.appendmysekai_fixture_type, jm...)
-}
-
-// AppendedMysekaiFixtureType returns the list of values that were appended to the "mysekai_fixture_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiFixtureType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_type, true
-}
-
 // ClearMysekaiFixtureType clears the value of the "mysekai_fixture_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiFixtureType() {
 	m.mysekai_fixture_type = nil
-	m.appendmysekai_fixture_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiFixtureType] = struct{}{}
 }
 
@@ -53440,7 +52433,6 @@ func (m *MysekaifixtureMutation) MysekaiFixtureTypeCleared() bool {
 // ResetMysekaiFixtureType resets all changes to the "mysekai_fixture_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiFixtureType() {
 	m.mysekai_fixture_type = nil
-	m.appendmysekai_fixture_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiFixtureType)
 }
 
@@ -53867,13 +52859,12 @@ func (m *MysekaifixtureMutation) ResetMysekaiFixtureSubGenreID() {
 }
 
 // SetMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixtureHandleType(jm json.RawMessage) {
-	m.mysekai_fixture_handle_type = &jm
-	m.appendmysekai_fixture_handle_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiFixtureHandleType(s string) {
+	m.mysekai_fixture_handle_type = &s
 }
 
 // MysekaiFixtureHandleType returns the value of the "mysekai_fixture_handle_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixtureHandleType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixtureHandleType() (r string, exists bool) {
 	v := m.mysekai_fixture_handle_type
 	if v == nil {
 		return
@@ -53884,7 +52875,7 @@ func (m *MysekaifixtureMutation) MysekaiFixtureHandleType() (r json.RawMessage, 
 // OldMysekaiFixtureHandleType returns the old "mysekai_fixture_handle_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixtureHandleType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixtureHandleType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureHandleType is only allowed on UpdateOne operations")
 	}
@@ -53898,23 +52889,9 @@ func (m *MysekaifixtureMutation) OldMysekaiFixtureHandleType(ctx context.Context
 	return oldValue.MysekaiFixtureHandleType, nil
 }
 
-// AppendMysekaiFixtureHandleType adds jm to the "mysekai_fixture_handle_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiFixtureHandleType(jm json.RawMessage) {
-	m.appendmysekai_fixture_handle_type = append(m.appendmysekai_fixture_handle_type, jm...)
-}
-
-// AppendedMysekaiFixtureHandleType returns the list of values that were appended to the "mysekai_fixture_handle_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiFixtureHandleType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_handle_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_handle_type, true
-}
-
 // ClearMysekaiFixtureHandleType clears the value of the "mysekai_fixture_handle_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiFixtureHandleType() {
 	m.mysekai_fixture_handle_type = nil
-	m.appendmysekai_fixture_handle_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiFixtureHandleType] = struct{}{}
 }
 
@@ -53927,18 +52904,16 @@ func (m *MysekaifixtureMutation) MysekaiFixtureHandleTypeCleared() bool {
 // ResetMysekaiFixtureHandleType resets all changes to the "mysekai_fixture_handle_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiFixtureHandleType() {
 	m.mysekai_fixture_handle_type = nil
-	m.appendmysekai_fixture_handle_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiFixtureHandleType)
 }
 
 // SetMysekaiSettableSiteType sets the "mysekai_settable_site_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiSettableSiteType(jm json.RawMessage) {
-	m.mysekai_settable_site_type = &jm
-	m.appendmysekai_settable_site_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiSettableSiteType(s string) {
+	m.mysekai_settable_site_type = &s
 }
 
 // MysekaiSettableSiteType returns the value of the "mysekai_settable_site_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiSettableSiteType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiSettableSiteType() (r string, exists bool) {
 	v := m.mysekai_settable_site_type
 	if v == nil {
 		return
@@ -53949,7 +52924,7 @@ func (m *MysekaifixtureMutation) MysekaiSettableSiteType() (r json.RawMessage, e
 // OldMysekaiSettableSiteType returns the old "mysekai_settable_site_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiSettableSiteType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiSettableSiteType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiSettableSiteType is only allowed on UpdateOne operations")
 	}
@@ -53963,23 +52938,9 @@ func (m *MysekaifixtureMutation) OldMysekaiSettableSiteType(ctx context.Context)
 	return oldValue.MysekaiSettableSiteType, nil
 }
 
-// AppendMysekaiSettableSiteType adds jm to the "mysekai_settable_site_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiSettableSiteType(jm json.RawMessage) {
-	m.appendmysekai_settable_site_type = append(m.appendmysekai_settable_site_type, jm...)
-}
-
-// AppendedMysekaiSettableSiteType returns the list of values that were appended to the "mysekai_settable_site_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiSettableSiteType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_settable_site_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_settable_site_type, true
-}
-
 // ClearMysekaiSettableSiteType clears the value of the "mysekai_settable_site_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiSettableSiteType() {
 	m.mysekai_settable_site_type = nil
-	m.appendmysekai_settable_site_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiSettableSiteType] = struct{}{}
 }
 
@@ -53992,18 +52953,16 @@ func (m *MysekaifixtureMutation) MysekaiSettableSiteTypeCleared() bool {
 // ResetMysekaiSettableSiteType resets all changes to the "mysekai_settable_site_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiSettableSiteType() {
 	m.mysekai_settable_site_type = nil
-	m.appendmysekai_settable_site_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiSettableSiteType)
 }
 
 // SetMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiSettableLayoutType(jm json.RawMessage) {
-	m.mysekai_settable_layout_type = &jm
-	m.appendmysekai_settable_layout_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiSettableLayoutType(s string) {
+	m.mysekai_settable_layout_type = &s
 }
 
 // MysekaiSettableLayoutType returns the value of the "mysekai_settable_layout_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiSettableLayoutType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiSettableLayoutType() (r string, exists bool) {
 	v := m.mysekai_settable_layout_type
 	if v == nil {
 		return
@@ -54014,7 +52973,7 @@ func (m *MysekaifixtureMutation) MysekaiSettableLayoutType() (r json.RawMessage,
 // OldMysekaiSettableLayoutType returns the old "mysekai_settable_layout_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiSettableLayoutType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiSettableLayoutType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiSettableLayoutType is only allowed on UpdateOne operations")
 	}
@@ -54028,23 +52987,9 @@ func (m *MysekaifixtureMutation) OldMysekaiSettableLayoutType(ctx context.Contex
 	return oldValue.MysekaiSettableLayoutType, nil
 }
 
-// AppendMysekaiSettableLayoutType adds jm to the "mysekai_settable_layout_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiSettableLayoutType(jm json.RawMessage) {
-	m.appendmysekai_settable_layout_type = append(m.appendmysekai_settable_layout_type, jm...)
-}
-
-// AppendedMysekaiSettableLayoutType returns the list of values that were appended to the "mysekai_settable_layout_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiSettableLayoutType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_settable_layout_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_settable_layout_type, true
-}
-
 // ClearMysekaiSettableLayoutType clears the value of the "mysekai_settable_layout_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiSettableLayoutType() {
 	m.mysekai_settable_layout_type = nil
-	m.appendmysekai_settable_layout_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiSettableLayoutType] = struct{}{}
 }
 
@@ -54057,18 +53002,16 @@ func (m *MysekaifixtureMutation) MysekaiSettableLayoutTypeCleared() bool {
 // ResetMysekaiSettableLayoutType resets all changes to the "mysekai_settable_layout_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiSettableLayoutType() {
 	m.mysekai_settable_layout_type = nil
-	m.appendmysekai_settable_layout_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiSettableLayoutType)
 }
 
 // SetMysekaiFixturePutType sets the "mysekai_fixture_put_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixturePutType(jm json.RawMessage) {
-	m.mysekai_fixture_put_type = &jm
-	m.appendmysekai_fixture_put_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiFixturePutType(s string) {
+	m.mysekai_fixture_put_type = &s
 }
 
 // MysekaiFixturePutType returns the value of the "mysekai_fixture_put_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixturePutType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixturePutType() (r string, exists bool) {
 	v := m.mysekai_fixture_put_type
 	if v == nil {
 		return
@@ -54079,7 +53022,7 @@ func (m *MysekaifixtureMutation) MysekaiFixturePutType() (r json.RawMessage, exi
 // OldMysekaiFixturePutType returns the old "mysekai_fixture_put_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixturePutType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixturePutType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixturePutType is only allowed on UpdateOne operations")
 	}
@@ -54093,23 +53036,9 @@ func (m *MysekaifixtureMutation) OldMysekaiFixturePutType(ctx context.Context) (
 	return oldValue.MysekaiFixturePutType, nil
 }
 
-// AppendMysekaiFixturePutType adds jm to the "mysekai_fixture_put_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiFixturePutType(jm json.RawMessage) {
-	m.appendmysekai_fixture_put_type = append(m.appendmysekai_fixture_put_type, jm...)
-}
-
-// AppendedMysekaiFixturePutType returns the list of values that were appended to the "mysekai_fixture_put_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiFixturePutType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_put_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_put_type, true
-}
-
 // ClearMysekaiFixturePutType clears the value of the "mysekai_fixture_put_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiFixturePutType() {
 	m.mysekai_fixture_put_type = nil
-	m.appendmysekai_fixture_put_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiFixturePutType] = struct{}{}
 }
 
@@ -54122,7 +53051,6 @@ func (m *MysekaifixtureMutation) MysekaiFixturePutTypeCleared() bool {
 // ResetMysekaiFixturePutType resets all changes to the "mysekai_fixture_put_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiFixturePutType() {
 	m.mysekai_fixture_put_type = nil
-	m.appendmysekai_fixture_put_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiFixturePutType)
 }
 
@@ -54495,13 +53423,12 @@ func (m *MysekaifixtureMutation) ResetIsDisassembled() {
 }
 
 // SetMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field.
-func (m *MysekaifixtureMutation) SetMysekaiFixturePlayerActionType(jm json.RawMessage) {
-	m.mysekai_fixture_player_action_type = &jm
-	m.appendmysekai_fixture_player_action_type = nil
+func (m *MysekaifixtureMutation) SetMysekaiFixturePlayerActionType(s string) {
+	m.mysekai_fixture_player_action_type = &s
 }
 
 // MysekaiFixturePlayerActionType returns the value of the "mysekai_fixture_player_action_type" field in the mutation.
-func (m *MysekaifixtureMutation) MysekaiFixturePlayerActionType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixtureMutation) MysekaiFixturePlayerActionType() (r string, exists bool) {
 	v := m.mysekai_fixture_player_action_type
 	if v == nil {
 		return
@@ -54512,7 +53439,7 @@ func (m *MysekaifixtureMutation) MysekaiFixturePlayerActionType() (r json.RawMes
 // OldMysekaiFixturePlayerActionType returns the old "mysekai_fixture_player_action_type" field's value of the Mysekaifixture entity.
 // If the Mysekaifixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixtureMutation) OldMysekaiFixturePlayerActionType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixtureMutation) OldMysekaiFixturePlayerActionType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixturePlayerActionType is only allowed on UpdateOne operations")
 	}
@@ -54526,23 +53453,9 @@ func (m *MysekaifixtureMutation) OldMysekaiFixturePlayerActionType(ctx context.C
 	return oldValue.MysekaiFixturePlayerActionType, nil
 }
 
-// AppendMysekaiFixturePlayerActionType adds jm to the "mysekai_fixture_player_action_type" field.
-func (m *MysekaifixtureMutation) AppendMysekaiFixturePlayerActionType(jm json.RawMessage) {
-	m.appendmysekai_fixture_player_action_type = append(m.appendmysekai_fixture_player_action_type, jm...)
-}
-
-// AppendedMysekaiFixturePlayerActionType returns the list of values that were appended to the "mysekai_fixture_player_action_type" field in this mutation.
-func (m *MysekaifixtureMutation) AppendedMysekaiFixturePlayerActionType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_player_action_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_player_action_type, true
-}
-
 // ClearMysekaiFixturePlayerActionType clears the value of the "mysekai_fixture_player_action_type" field.
 func (m *MysekaifixtureMutation) ClearMysekaiFixturePlayerActionType() {
 	m.mysekai_fixture_player_action_type = nil
-	m.appendmysekai_fixture_player_action_type = nil
 	m.clearedFields[mysekaifixture.FieldMysekaiFixturePlayerActionType] = struct{}{}
 }
 
@@ -54555,7 +53468,6 @@ func (m *MysekaifixtureMutation) MysekaiFixturePlayerActionTypeCleared() bool {
 // ResetMysekaiFixturePlayerActionType resets all changes to the "mysekai_fixture_player_action_type" field.
 func (m *MysekaifixtureMutation) ResetMysekaiFixturePlayerActionType() {
 	m.mysekai_fixture_player_action_type = nil
-	m.appendmysekai_fixture_player_action_type = nil
 	delete(m.clearedFields, mysekaifixture.FieldMysekaiFixturePlayerActionType)
 }
 
@@ -55210,7 +54122,7 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -55266,28 +54178,28 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetMysekaiFixtureSubGenreID(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixtureHandleType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiFixtureHandleType(v)
 		return nil
 	case mysekaifixture.FieldMysekaiSettableSiteType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiSettableSiteType(v)
 		return nil
 	case mysekaifixture.FieldMysekaiSettableLayoutType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMysekaiSettableLayoutType(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixturePutType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -55336,7 +54248,7 @@ func (m *MysekaifixtureMutation) SetField(name string, value ent.Value) error {
 		m.SetIsDisassembled(v)
 		return nil
 	case mysekaifixture.FieldMysekaiFixturePlayerActionType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -56499,22 +55411,21 @@ func (m *MysekaifixturegamecharactergroupMutation) ResetEdge(name string) error 
 // MysekaifixturemaingenreMutation represents an operation that mutates the Mysekaifixturemaingenre nodes in the graph.
 type MysekaifixturemaingenreMutation struct {
 	config
-	op                                    Op
-	typ                                   string
-	id                                    *int
-	game_id                               *int64
-	addgame_id                            *int64
-	name                                  *string
-	mysekai_fixture_main_genre_type       *json.RawMessage
-	appendmysekai_fixture_main_genre_type json.RawMessage
-	assetbundle_name                      *string
-	group_id                              *int64
-	addgroup_id                           *int64
-	server_region                         *string
-	clearedFields                         map[string]struct{}
-	done                                  bool
-	oldValue                              func(context.Context) (*Mysekaifixturemaingenre, error)
-	predicates                            []predicate.Mysekaifixturemaingenre
+	op                              Op
+	typ                             string
+	id                              *int
+	game_id                         *int64
+	addgame_id                      *int64
+	name                            *string
+	mysekai_fixture_main_genre_type *string
+	assetbundle_name                *string
+	group_id                        *int64
+	addgroup_id                     *int64
+	server_region                   *string
+	clearedFields                   map[string]struct{}
+	done                            bool
+	oldValue                        func(context.Context) (*Mysekaifixturemaingenre, error)
+	predicates                      []predicate.Mysekaifixturemaingenre
 }
 
 var _ ent.Mutation = (*MysekaifixturemaingenreMutation)(nil)
@@ -56735,13 +55646,12 @@ func (m *MysekaifixturemaingenreMutation) ResetName() {
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (m *MysekaifixturemaingenreMutation) SetMysekaiFixtureMainGenreType(jm json.RawMessage) {
-	m.mysekai_fixture_main_genre_type = &jm
-	m.appendmysekai_fixture_main_genre_type = nil
+func (m *MysekaifixturemaingenreMutation) SetMysekaiFixtureMainGenreType(s string) {
+	m.mysekai_fixture_main_genre_type = &s
 }
 
 // MysekaiFixtureMainGenreType returns the value of the "mysekai_fixture_main_genre_type" field in the mutation.
-func (m *MysekaifixturemaingenreMutation) MysekaiFixtureMainGenreType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixturemaingenreMutation) MysekaiFixtureMainGenreType() (r string, exists bool) {
 	v := m.mysekai_fixture_main_genre_type
 	if v == nil {
 		return
@@ -56752,7 +55662,7 @@ func (m *MysekaifixturemaingenreMutation) MysekaiFixtureMainGenreType() (r json.
 // OldMysekaiFixtureMainGenreType returns the old "mysekai_fixture_main_genre_type" field's value of the Mysekaifixturemaingenre entity.
 // If the Mysekaifixturemaingenre object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturemaingenreMutation) OldMysekaiFixtureMainGenreType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixturemaingenreMutation) OldMysekaiFixtureMainGenreType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureMainGenreType is only allowed on UpdateOne operations")
 	}
@@ -56766,23 +55676,9 @@ func (m *MysekaifixturemaingenreMutation) OldMysekaiFixtureMainGenreType(ctx con
 	return oldValue.MysekaiFixtureMainGenreType, nil
 }
 
-// AppendMysekaiFixtureMainGenreType adds jm to the "mysekai_fixture_main_genre_type" field.
-func (m *MysekaifixturemaingenreMutation) AppendMysekaiFixtureMainGenreType(jm json.RawMessage) {
-	m.appendmysekai_fixture_main_genre_type = append(m.appendmysekai_fixture_main_genre_type, jm...)
-}
-
-// AppendedMysekaiFixtureMainGenreType returns the list of values that were appended to the "mysekai_fixture_main_genre_type" field in this mutation.
-func (m *MysekaifixturemaingenreMutation) AppendedMysekaiFixtureMainGenreType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_main_genre_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_main_genre_type, true
-}
-
 // ClearMysekaiFixtureMainGenreType clears the value of the "mysekai_fixture_main_genre_type" field.
 func (m *MysekaifixturemaingenreMutation) ClearMysekaiFixtureMainGenreType() {
 	m.mysekai_fixture_main_genre_type = nil
-	m.appendmysekai_fixture_main_genre_type = nil
 	m.clearedFields[mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType] = struct{}{}
 }
 
@@ -56795,7 +55691,6 @@ func (m *MysekaifixturemaingenreMutation) MysekaiFixtureMainGenreTypeCleared() b
 // ResetMysekaiFixtureMainGenreType resets all changes to the "mysekai_fixture_main_genre_type" field.
 func (m *MysekaifixturemaingenreMutation) ResetMysekaiFixtureMainGenreType() {
 	m.mysekai_fixture_main_genre_type = nil
-	m.appendmysekai_fixture_main_genre_type = nil
 	delete(m.clearedFields, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType)
 }
 
@@ -57072,7 +55967,7 @@ func (m *MysekaifixturemaingenreMutation) SetField(name string, value ent.Value)
 		m.SetName(v)
 		return nil
 	case mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -58806,22 +57701,21 @@ func (m *MysekaifixturesubgenreMutation) ResetEdge(name string) error {
 // MysekaifixturetagMutation represents an operation that mutates the Mysekaifixturetag nodes in the graph.
 type MysekaifixturetagMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *int
-	game_id                        *int64
-	addgame_id                     *int64
-	name                           *string
-	pronunciation                  *string
-	mysekai_fixture_tag_type       *json.RawMessage
-	appendmysekai_fixture_tag_type json.RawMessage
-	external_id                    *int64
-	addexternal_id                 *int64
-	server_region                  *string
-	clearedFields                  map[string]struct{}
-	done                           bool
-	oldValue                       func(context.Context) (*Mysekaifixturetag, error)
-	predicates                     []predicate.Mysekaifixturetag
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	name                     *string
+	pronunciation            *string
+	mysekai_fixture_tag_type *string
+	external_id              *int64
+	addexternal_id           *int64
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Mysekaifixturetag, error)
+	predicates               []predicate.Mysekaifixturetag
 }
 
 var _ ent.Mutation = (*MysekaifixturetagMutation)(nil)
@@ -59091,13 +57985,12 @@ func (m *MysekaifixturetagMutation) ResetPronunciation() {
 }
 
 // SetMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field.
-func (m *MysekaifixturetagMutation) SetMysekaiFixtureTagType(jm json.RawMessage) {
-	m.mysekai_fixture_tag_type = &jm
-	m.appendmysekai_fixture_tag_type = nil
+func (m *MysekaifixturetagMutation) SetMysekaiFixtureTagType(s string) {
+	m.mysekai_fixture_tag_type = &s
 }
 
 // MysekaiFixtureTagType returns the value of the "mysekai_fixture_tag_type" field in the mutation.
-func (m *MysekaifixturetagMutation) MysekaiFixtureTagType() (r json.RawMessage, exists bool) {
+func (m *MysekaifixturetagMutation) MysekaiFixtureTagType() (r string, exists bool) {
 	v := m.mysekai_fixture_tag_type
 	if v == nil {
 		return
@@ -59108,7 +58001,7 @@ func (m *MysekaifixturetagMutation) MysekaiFixtureTagType() (r json.RawMessage, 
 // OldMysekaiFixtureTagType returns the old "mysekai_fixture_tag_type" field's value of the Mysekaifixturetag entity.
 // If the Mysekaifixturetag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaifixturetagMutation) OldMysekaiFixtureTagType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaifixturetagMutation) OldMysekaiFixtureTagType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiFixtureTagType is only allowed on UpdateOne operations")
 	}
@@ -59122,23 +58015,9 @@ func (m *MysekaifixturetagMutation) OldMysekaiFixtureTagType(ctx context.Context
 	return oldValue.MysekaiFixtureTagType, nil
 }
 
-// AppendMysekaiFixtureTagType adds jm to the "mysekai_fixture_tag_type" field.
-func (m *MysekaifixturetagMutation) AppendMysekaiFixtureTagType(jm json.RawMessage) {
-	m.appendmysekai_fixture_tag_type = append(m.appendmysekai_fixture_tag_type, jm...)
-}
-
-// AppendedMysekaiFixtureTagType returns the list of values that were appended to the "mysekai_fixture_tag_type" field in this mutation.
-func (m *MysekaifixturetagMutation) AppendedMysekaiFixtureTagType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_fixture_tag_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_fixture_tag_type, true
-}
-
 // ClearMysekaiFixtureTagType clears the value of the "mysekai_fixture_tag_type" field.
 func (m *MysekaifixturetagMutation) ClearMysekaiFixtureTagType() {
 	m.mysekai_fixture_tag_type = nil
-	m.appendmysekai_fixture_tag_type = nil
 	m.clearedFields[mysekaifixturetag.FieldMysekaiFixtureTagType] = struct{}{}
 }
 
@@ -59151,7 +58030,6 @@ func (m *MysekaifixturetagMutation) MysekaiFixtureTagTypeCleared() bool {
 // ResetMysekaiFixtureTagType resets all changes to the "mysekai_fixture_tag_type" field.
 func (m *MysekaifixturetagMutation) ResetMysekaiFixtureTagType() {
 	m.mysekai_fixture_tag_type = nil
-	m.appendmysekai_fixture_tag_type = nil
 	delete(m.clearedFields, mysekaifixturetag.FieldMysekaiFixtureTagType)
 }
 
@@ -59386,7 +58264,7 @@ func (m *MysekaifixturetagMutation) SetField(name string, value ent.Value) error
 		m.SetPronunciation(v)
 		return nil
 	case mysekaifixturetag.FieldMysekaiFixtureTagType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -64625,31 +63503,29 @@ func (m *MysekaiitemMutation) ResetEdge(name string) error {
 // MysekaimaterialMutation represents an operation that mutates the Mysekaimaterial nodes in the graph.
 type MysekaimaterialMutation struct {
 	config
-	op                                 Op
-	typ                                string
-	id                                 *int
-	game_id                            *int64
-	addgame_id                         *int64
-	seq                                *int64
-	addseq                             *int64
-	mysekai_material_type              *json.RawMessage
-	appendmysekai_material_type        json.RawMessage
-	name                               *string
-	pronunciation                      *string
-	description                        *string
-	mysekai_material_rarity_type       *json.RawMessage
-	appendmysekai_material_rarity_type json.RawMessage
-	icon_assetbundle_name              *string
-	model_assetbundle_name             *string
-	mysekai_site_ids                   *json.RawMessage
-	appendmysekai_site_ids             json.RawMessage
-	mysekai_phenomena_group_id         *int64
-	addmysekai_phenomena_group_id      *int64
-	server_region                      *string
-	clearedFields                      map[string]struct{}
-	done                               bool
-	oldValue                           func(context.Context) (*Mysekaimaterial, error)
-	predicates                         []predicate.Mysekaimaterial
+	op                            Op
+	typ                           string
+	id                            *int
+	game_id                       *int64
+	addgame_id                    *int64
+	seq                           *int64
+	addseq                        *int64
+	mysekai_material_type         *string
+	name                          *string
+	pronunciation                 *string
+	description                   *string
+	mysekai_material_rarity_type  *string
+	icon_assetbundle_name         *string
+	model_assetbundle_name        *string
+	mysekai_site_ids              *json.RawMessage
+	appendmysekai_site_ids        json.RawMessage
+	mysekai_phenomena_group_id    *int64
+	addmysekai_phenomena_group_id *int64
+	server_region                 *string
+	clearedFields                 map[string]struct{}
+	done                          bool
+	oldValue                      func(context.Context) (*Mysekaimaterial, error)
+	predicates                    []predicate.Mysekaimaterial
 }
 
 var _ ent.Mutation = (*MysekaimaterialMutation)(nil)
@@ -64891,13 +63767,12 @@ func (m *MysekaimaterialMutation) ResetSeq() {
 }
 
 // SetMysekaiMaterialType sets the "mysekai_material_type" field.
-func (m *MysekaimaterialMutation) SetMysekaiMaterialType(jm json.RawMessage) {
-	m.mysekai_material_type = &jm
-	m.appendmysekai_material_type = nil
+func (m *MysekaimaterialMutation) SetMysekaiMaterialType(s string) {
+	m.mysekai_material_type = &s
 }
 
 // MysekaiMaterialType returns the value of the "mysekai_material_type" field in the mutation.
-func (m *MysekaimaterialMutation) MysekaiMaterialType() (r json.RawMessage, exists bool) {
+func (m *MysekaimaterialMutation) MysekaiMaterialType() (r string, exists bool) {
 	v := m.mysekai_material_type
 	if v == nil {
 		return
@@ -64908,7 +63783,7 @@ func (m *MysekaimaterialMutation) MysekaiMaterialType() (r json.RawMessage, exis
 // OldMysekaiMaterialType returns the old "mysekai_material_type" field's value of the Mysekaimaterial entity.
 // If the Mysekaimaterial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialMutation) OldMysekaiMaterialType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaimaterialMutation) OldMysekaiMaterialType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialType is only allowed on UpdateOne operations")
 	}
@@ -64922,23 +63797,9 @@ func (m *MysekaimaterialMutation) OldMysekaiMaterialType(ctx context.Context) (v
 	return oldValue.MysekaiMaterialType, nil
 }
 
-// AppendMysekaiMaterialType adds jm to the "mysekai_material_type" field.
-func (m *MysekaimaterialMutation) AppendMysekaiMaterialType(jm json.RawMessage) {
-	m.appendmysekai_material_type = append(m.appendmysekai_material_type, jm...)
-}
-
-// AppendedMysekaiMaterialType returns the list of values that were appended to the "mysekai_material_type" field in this mutation.
-func (m *MysekaimaterialMutation) AppendedMysekaiMaterialType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_material_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_material_type, true
-}
-
 // ClearMysekaiMaterialType clears the value of the "mysekai_material_type" field.
 func (m *MysekaimaterialMutation) ClearMysekaiMaterialType() {
 	m.mysekai_material_type = nil
-	m.appendmysekai_material_type = nil
 	m.clearedFields[mysekaimaterial.FieldMysekaiMaterialType] = struct{}{}
 }
 
@@ -64951,7 +63812,6 @@ func (m *MysekaimaterialMutation) MysekaiMaterialTypeCleared() bool {
 // ResetMysekaiMaterialType resets all changes to the "mysekai_material_type" field.
 func (m *MysekaimaterialMutation) ResetMysekaiMaterialType() {
 	m.mysekai_material_type = nil
-	m.appendmysekai_material_type = nil
 	delete(m.clearedFields, mysekaimaterial.FieldMysekaiMaterialType)
 }
 
@@ -65103,13 +63963,12 @@ func (m *MysekaimaterialMutation) ResetDescription() {
 }
 
 // SetMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field.
-func (m *MysekaimaterialMutation) SetMysekaiMaterialRarityType(jm json.RawMessage) {
-	m.mysekai_material_rarity_type = &jm
-	m.appendmysekai_material_rarity_type = nil
+func (m *MysekaimaterialMutation) SetMysekaiMaterialRarityType(s string) {
+	m.mysekai_material_rarity_type = &s
 }
 
 // MysekaiMaterialRarityType returns the value of the "mysekai_material_rarity_type" field in the mutation.
-func (m *MysekaimaterialMutation) MysekaiMaterialRarityType() (r json.RawMessage, exists bool) {
+func (m *MysekaimaterialMutation) MysekaiMaterialRarityType() (r string, exists bool) {
 	v := m.mysekai_material_rarity_type
 	if v == nil {
 		return
@@ -65120,7 +63979,7 @@ func (m *MysekaimaterialMutation) MysekaiMaterialRarityType() (r json.RawMessage
 // OldMysekaiMaterialRarityType returns the old "mysekai_material_rarity_type" field's value of the Mysekaimaterial entity.
 // If the Mysekaimaterial object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimaterialMutation) OldMysekaiMaterialRarityType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaimaterialMutation) OldMysekaiMaterialRarityType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMaterialRarityType is only allowed on UpdateOne operations")
 	}
@@ -65134,23 +63993,9 @@ func (m *MysekaimaterialMutation) OldMysekaiMaterialRarityType(ctx context.Conte
 	return oldValue.MysekaiMaterialRarityType, nil
 }
 
-// AppendMysekaiMaterialRarityType adds jm to the "mysekai_material_rarity_type" field.
-func (m *MysekaimaterialMutation) AppendMysekaiMaterialRarityType(jm json.RawMessage) {
-	m.appendmysekai_material_rarity_type = append(m.appendmysekai_material_rarity_type, jm...)
-}
-
-// AppendedMysekaiMaterialRarityType returns the list of values that were appended to the "mysekai_material_rarity_type" field in this mutation.
-func (m *MysekaimaterialMutation) AppendedMysekaiMaterialRarityType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_material_rarity_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_material_rarity_type, true
-}
-
 // ClearMysekaiMaterialRarityType clears the value of the "mysekai_material_rarity_type" field.
 func (m *MysekaimaterialMutation) ClearMysekaiMaterialRarityType() {
 	m.mysekai_material_rarity_type = nil
-	m.appendmysekai_material_rarity_type = nil
 	m.clearedFields[mysekaimaterial.FieldMysekaiMaterialRarityType] = struct{}{}
 }
 
@@ -65163,7 +64008,6 @@ func (m *MysekaimaterialMutation) MysekaiMaterialRarityTypeCleared() bool {
 // ResetMysekaiMaterialRarityType resets all changes to the "mysekai_material_rarity_type" field.
 func (m *MysekaimaterialMutation) ResetMysekaiMaterialRarityType() {
 	m.mysekai_material_rarity_type = nil
-	m.appendmysekai_material_rarity_type = nil
 	delete(m.clearedFields, mysekaimaterial.FieldMysekaiMaterialRarityType)
 }
 
@@ -65596,7 +64440,7 @@ func (m *MysekaimaterialMutation) SetField(name string, value ent.Value) error {
 		m.SetSeq(v)
 		return nil
 	case mysekaimaterial.FieldMysekaiMaterialType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -65624,7 +64468,7 @@ func (m *MysekaimaterialMutation) SetField(name string, value ent.Value) error {
 		m.SetDescription(v)
 		return nil
 	case mysekaimaterial.FieldMysekaiMaterialRarityType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -66673,20 +65517,19 @@ func (m *MysekaimaterialgamecharacterrelationMutation) ResetEdge(name string) er
 // MysekaimusicrecordMutation represents an operation that mutates the Mysekaimusicrecord nodes in the graph.
 type MysekaimusicrecordMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *int
-	game_id                        *int64
-	addgame_id                     *int64
-	mysekai_music_track_type       *json.RawMessage
-	appendmysekai_music_track_type json.RawMessage
-	external_id                    *int64
-	addexternal_id                 *int64
-	server_region                  *string
-	clearedFields                  map[string]struct{}
-	done                           bool
-	oldValue                       func(context.Context) (*Mysekaimusicrecord, error)
-	predicates                     []predicate.Mysekaimusicrecord
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	mysekai_music_track_type *string
+	external_id              *int64
+	addexternal_id           *int64
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Mysekaimusicrecord, error)
+	predicates               []predicate.Mysekaimusicrecord
 }
 
 var _ ent.Mutation = (*MysekaimusicrecordMutation)(nil)
@@ -66858,13 +65701,12 @@ func (m *MysekaimusicrecordMutation) ResetGameID() {
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (m *MysekaimusicrecordMutation) SetMysekaiMusicTrackType(jm json.RawMessage) {
-	m.mysekai_music_track_type = &jm
-	m.appendmysekai_music_track_type = nil
+func (m *MysekaimusicrecordMutation) SetMysekaiMusicTrackType(s string) {
+	m.mysekai_music_track_type = &s
 }
 
 // MysekaiMusicTrackType returns the value of the "mysekai_music_track_type" field in the mutation.
-func (m *MysekaimusicrecordMutation) MysekaiMusicTrackType() (r json.RawMessage, exists bool) {
+func (m *MysekaimusicrecordMutation) MysekaiMusicTrackType() (r string, exists bool) {
 	v := m.mysekai_music_track_type
 	if v == nil {
 		return
@@ -66875,7 +65717,7 @@ func (m *MysekaimusicrecordMutation) MysekaiMusicTrackType() (r json.RawMessage,
 // OldMysekaiMusicTrackType returns the old "mysekai_music_track_type" field's value of the Mysekaimusicrecord entity.
 // If the Mysekaimusicrecord object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordMutation) OldMysekaiMusicTrackType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaimusicrecordMutation) OldMysekaiMusicTrackType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMusicTrackType is only allowed on UpdateOne operations")
 	}
@@ -66889,23 +65731,9 @@ func (m *MysekaimusicrecordMutation) OldMysekaiMusicTrackType(ctx context.Contex
 	return oldValue.MysekaiMusicTrackType, nil
 }
 
-// AppendMysekaiMusicTrackType adds jm to the "mysekai_music_track_type" field.
-func (m *MysekaimusicrecordMutation) AppendMysekaiMusicTrackType(jm json.RawMessage) {
-	m.appendmysekai_music_track_type = append(m.appendmysekai_music_track_type, jm...)
-}
-
-// AppendedMysekaiMusicTrackType returns the list of values that were appended to the "mysekai_music_track_type" field in this mutation.
-func (m *MysekaimusicrecordMutation) AppendedMysekaiMusicTrackType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_music_track_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_music_track_type, true
-}
-
 // ClearMysekaiMusicTrackType clears the value of the "mysekai_music_track_type" field.
 func (m *MysekaimusicrecordMutation) ClearMysekaiMusicTrackType() {
 	m.mysekai_music_track_type = nil
-	m.appendmysekai_music_track_type = nil
 	m.clearedFields[mysekaimusicrecord.FieldMysekaiMusicTrackType] = struct{}{}
 }
 
@@ -66918,7 +65746,6 @@ func (m *MysekaimusicrecordMutation) MysekaiMusicTrackTypeCleared() bool {
 // ResetMysekaiMusicTrackType resets all changes to the "mysekai_music_track_type" field.
 func (m *MysekaimusicrecordMutation) ResetMysekaiMusicTrackType() {
 	m.mysekai_music_track_type = nil
-	m.appendmysekai_music_track_type = nil
 	delete(m.clearedFields, mysekaimusicrecord.FieldMysekaiMusicTrackType)
 }
 
@@ -67125,7 +65952,7 @@ func (m *MysekaimusicrecordMutation) SetField(name string, value ent.Value) erro
 		m.SetGameID(v)
 		return nil
 	case mysekaimusicrecord.FieldMysekaiMusicTrackType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -67309,22 +66136,21 @@ func (m *MysekaimusicrecordMutation) ResetEdge(name string) error {
 // MysekaimusicrecordcategorieMutation represents an operation that mutates the Mysekaimusicrecordcategorie nodes in the graph.
 type MysekaimusicrecordcategorieMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *int
-	game_id                        *int64
-	addgame_id                     *int64
-	name                           *string
-	seq                            *int64
-	addseq                         *int64
-	mysekai_music_track_type       *json.RawMessage
-	appendmysekai_music_track_type json.RawMessage
-	unit                           *string
-	server_region                  *string
-	clearedFields                  map[string]struct{}
-	done                           bool
-	oldValue                       func(context.Context) (*Mysekaimusicrecordcategorie, error)
-	predicates                     []predicate.Mysekaimusicrecordcategorie
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	name                     *string
+	seq                      *int64
+	addseq                   *int64
+	mysekai_music_track_type *string
+	unit                     *string
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Mysekaimusicrecordcategorie, error)
+	predicates               []predicate.Mysekaimusicrecordcategorie
 }
 
 var _ ent.Mutation = (*MysekaimusicrecordcategorieMutation)(nil)
@@ -67615,13 +66441,12 @@ func (m *MysekaimusicrecordcategorieMutation) ResetSeq() {
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (m *MysekaimusicrecordcategorieMutation) SetMysekaiMusicTrackType(jm json.RawMessage) {
-	m.mysekai_music_track_type = &jm
-	m.appendmysekai_music_track_type = nil
+func (m *MysekaimusicrecordcategorieMutation) SetMysekaiMusicTrackType(s string) {
+	m.mysekai_music_track_type = &s
 }
 
 // MysekaiMusicTrackType returns the value of the "mysekai_music_track_type" field in the mutation.
-func (m *MysekaimusicrecordcategorieMutation) MysekaiMusicTrackType() (r json.RawMessage, exists bool) {
+func (m *MysekaimusicrecordcategorieMutation) MysekaiMusicTrackType() (r string, exists bool) {
 	v := m.mysekai_music_track_type
 	if v == nil {
 		return
@@ -67632,7 +66457,7 @@ func (m *MysekaimusicrecordcategorieMutation) MysekaiMusicTrackType() (r json.Ra
 // OldMysekaiMusicTrackType returns the old "mysekai_music_track_type" field's value of the Mysekaimusicrecordcategorie entity.
 // If the Mysekaimusicrecordcategorie object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaimusicrecordcategorieMutation) OldMysekaiMusicTrackType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaimusicrecordcategorieMutation) OldMysekaiMusicTrackType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiMusicTrackType is only allowed on UpdateOne operations")
 	}
@@ -67646,23 +66471,9 @@ func (m *MysekaimusicrecordcategorieMutation) OldMysekaiMusicTrackType(ctx conte
 	return oldValue.MysekaiMusicTrackType, nil
 }
 
-// AppendMysekaiMusicTrackType adds jm to the "mysekai_music_track_type" field.
-func (m *MysekaimusicrecordcategorieMutation) AppendMysekaiMusicTrackType(jm json.RawMessage) {
-	m.appendmysekai_music_track_type = append(m.appendmysekai_music_track_type, jm...)
-}
-
-// AppendedMysekaiMusicTrackType returns the list of values that were appended to the "mysekai_music_track_type" field in this mutation.
-func (m *MysekaimusicrecordcategorieMutation) AppendedMysekaiMusicTrackType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_music_track_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_music_track_type, true
-}
-
 // ClearMysekaiMusicTrackType clears the value of the "mysekai_music_track_type" field.
 func (m *MysekaimusicrecordcategorieMutation) ClearMysekaiMusicTrackType() {
 	m.mysekai_music_track_type = nil
-	m.appendmysekai_music_track_type = nil
 	m.clearedFields[mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType] = struct{}{}
 }
 
@@ -67675,7 +66486,6 @@ func (m *MysekaimusicrecordcategorieMutation) MysekaiMusicTrackTypeCleared() boo
 // ResetMysekaiMusicTrackType resets all changes to the "mysekai_music_track_type" field.
 func (m *MysekaimusicrecordcategorieMutation) ResetMysekaiMusicTrackType() {
 	m.mysekai_music_track_type = nil
-	m.appendmysekai_music_track_type = nil
 	delete(m.clearedFields, mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType)
 }
 
@@ -67889,7 +66699,7 @@ func (m *MysekaimusicrecordcategorieMutation) SetField(name string, value ent.Va
 		m.SetSeq(v)
 		return nil
 	case mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -68900,13 +67710,11 @@ type MysekaiphenomenonMutation struct {
 	id                                       *int
 	game_id                                  *int64
 	addgame_id                               *int64
-	mysekai_phenomena_brightness_type        *json.RawMessage
-	appendmysekai_phenomena_brightness_type  json.RawMessage
+	mysekai_phenomena_brightness_type        *string
 	name                                     *string
 	english_name                             *string
 	description                              *string
-	mysekai_phenomena_time_period_type       *json.RawMessage
-	appendmysekai_phenomena_time_period_type json.RawMessage
+	mysekai_phenomena_time_period_type       *string
 	mysekai_phenomena_background_color_id    *int64
 	addmysekai_phenomena_background_color_id *int64
 	assetbundle_name                         *string
@@ -69088,13 +67896,12 @@ func (m *MysekaiphenomenonMutation) ResetGameID() {
 }
 
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
-func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBrightnessType(jm json.RawMessage) {
-	m.mysekai_phenomena_brightness_type = &jm
-	m.appendmysekai_phenomena_brightness_type = nil
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaBrightnessType(s string) {
+	m.mysekai_phenomena_brightness_type = &s
 }
 
 // MysekaiPhenomenaBrightnessType returns the value of the "mysekai_phenomena_brightness_type" field in the mutation.
-func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessType() (r json.RawMessage, exists bool) {
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessType() (r string, exists bool) {
 	v := m.mysekai_phenomena_brightness_type
 	if v == nil {
 		return
@@ -69105,7 +67912,7 @@ func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessType() (r json.Raw
 // OldMysekaiPhenomenaBrightnessType returns the old "mysekai_phenomena_brightness_type" field's value of the Mysekaiphenomenon entity.
 // If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBrightnessType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBrightnessType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiPhenomenaBrightnessType is only allowed on UpdateOne operations")
 	}
@@ -69119,23 +67926,9 @@ func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaBrightnessType(ctx contex
 	return oldValue.MysekaiPhenomenaBrightnessType, nil
 }
 
-// AppendMysekaiPhenomenaBrightnessType adds jm to the "mysekai_phenomena_brightness_type" field.
-func (m *MysekaiphenomenonMutation) AppendMysekaiPhenomenaBrightnessType(jm json.RawMessage) {
-	m.appendmysekai_phenomena_brightness_type = append(m.appendmysekai_phenomena_brightness_type, jm...)
-}
-
-// AppendedMysekaiPhenomenaBrightnessType returns the list of values that were appended to the "mysekai_phenomena_brightness_type" field in this mutation.
-func (m *MysekaiphenomenonMutation) AppendedMysekaiPhenomenaBrightnessType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_phenomena_brightness_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_phenomena_brightness_type, true
-}
-
 // ClearMysekaiPhenomenaBrightnessType clears the value of the "mysekai_phenomena_brightness_type" field.
 func (m *MysekaiphenomenonMutation) ClearMysekaiPhenomenaBrightnessType() {
 	m.mysekai_phenomena_brightness_type = nil
-	m.appendmysekai_phenomena_brightness_type = nil
 	m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType] = struct{}{}
 }
 
@@ -69148,7 +67941,6 @@ func (m *MysekaiphenomenonMutation) MysekaiPhenomenaBrightnessTypeCleared() bool
 // ResetMysekaiPhenomenaBrightnessType resets all changes to the "mysekai_phenomena_brightness_type" field.
 func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaBrightnessType() {
 	m.mysekai_phenomena_brightness_type = nil
-	m.appendmysekai_phenomena_brightness_type = nil
 	delete(m.clearedFields, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType)
 }
 
@@ -69300,13 +68092,12 @@ func (m *MysekaiphenomenonMutation) ResetDescription() {
 }
 
 // SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
-func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaTimePeriodType(jm json.RawMessage) {
-	m.mysekai_phenomena_time_period_type = &jm
-	m.appendmysekai_phenomena_time_period_type = nil
+func (m *MysekaiphenomenonMutation) SetMysekaiPhenomenaTimePeriodType(s string) {
+	m.mysekai_phenomena_time_period_type = &s
 }
 
 // MysekaiPhenomenaTimePeriodType returns the value of the "mysekai_phenomena_time_period_type" field in the mutation.
-func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodType() (r json.RawMessage, exists bool) {
+func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodType() (r string, exists bool) {
 	v := m.mysekai_phenomena_time_period_type
 	if v == nil {
 		return
@@ -69317,7 +68108,7 @@ func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodType() (r json.Raw
 // OldMysekaiPhenomenaTimePeriodType returns the old "mysekai_phenomena_time_period_type" field's value of the Mysekaiphenomenon entity.
 // If the Mysekaiphenomenon object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaTimePeriodType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaTimePeriodType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiPhenomenaTimePeriodType is only allowed on UpdateOne operations")
 	}
@@ -69331,23 +68122,9 @@ func (m *MysekaiphenomenonMutation) OldMysekaiPhenomenaTimePeriodType(ctx contex
 	return oldValue.MysekaiPhenomenaTimePeriodType, nil
 }
 
-// AppendMysekaiPhenomenaTimePeriodType adds jm to the "mysekai_phenomena_time_period_type" field.
-func (m *MysekaiphenomenonMutation) AppendMysekaiPhenomenaTimePeriodType(jm json.RawMessage) {
-	m.appendmysekai_phenomena_time_period_type = append(m.appendmysekai_phenomena_time_period_type, jm...)
-}
-
-// AppendedMysekaiPhenomenaTimePeriodType returns the list of values that were appended to the "mysekai_phenomena_time_period_type" field in this mutation.
-func (m *MysekaiphenomenonMutation) AppendedMysekaiPhenomenaTimePeriodType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_phenomena_time_period_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_phenomena_time_period_type, true
-}
-
 // ClearMysekaiPhenomenaTimePeriodType clears the value of the "mysekai_phenomena_time_period_type" field.
 func (m *MysekaiphenomenonMutation) ClearMysekaiPhenomenaTimePeriodType() {
 	m.mysekai_phenomena_time_period_type = nil
-	m.appendmysekai_phenomena_time_period_type = nil
 	m.clearedFields[mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType] = struct{}{}
 }
 
@@ -69360,7 +68137,6 @@ func (m *MysekaiphenomenonMutation) MysekaiPhenomenaTimePeriodTypeCleared() bool
 // ResetMysekaiPhenomenaTimePeriodType resets all changes to the "mysekai_phenomena_time_period_type" field.
 func (m *MysekaiphenomenonMutation) ResetMysekaiPhenomenaTimePeriodType() {
 	m.mysekai_phenomena_time_period_type = nil
-	m.appendmysekai_phenomena_time_period_type = nil
 	delete(m.clearedFields, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType)
 }
 
@@ -69763,7 +68539,7 @@ func (m *MysekaiphenomenonMutation) SetField(name string, value ent.Value) error
 		m.SetGameID(v)
 		return nil
 	case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -69791,7 +68567,7 @@ func (m *MysekaiphenomenonMutation) SetField(name string, value ent.Value) error
 		m.SetDescription(v)
 		return nil
 	case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -70059,24 +68835,23 @@ func (m *MysekaiphenomenonMutation) ResetEdge(name string) error {
 // MysekaisiteharvestfixtureMutation represents an operation that mutates the Mysekaisiteharvestfixture nodes in the graph.
 type MysekaisiteharvestfixtureMutation struct {
 	config
-	op                                             Op
-	typ                                            string
-	id                                             *int
-	game_id                                        *int64
-	addgame_id                                     *int64
-	mysekai_site_harvest_fixture_type              *string
-	hp                                             *int64
-	addhp                                          *int64
-	last_attack_stamina                            *int64
-	addlast_attack_stamina                         *int64
-	mysekai_site_harvest_fixture_rarity_type       *json.RawMessage
-	appendmysekai_site_harvest_fixture_rarity_type json.RawMessage
-	assetbundle_name                               *string
-	server_region                                  *string
-	clearedFields                                  map[string]struct{}
-	done                                           bool
-	oldValue                                       func(context.Context) (*Mysekaisiteharvestfixture, error)
-	predicates                                     []predicate.Mysekaisiteharvestfixture
+	op                                       Op
+	typ                                      string
+	id                                       *int
+	game_id                                  *int64
+	addgame_id                               *int64
+	mysekai_site_harvest_fixture_type        *string
+	hp                                       *int64
+	addhp                                    *int64
+	last_attack_stamina                      *int64
+	addlast_attack_stamina                   *int64
+	mysekai_site_harvest_fixture_rarity_type *string
+	assetbundle_name                         *string
+	server_region                            *string
+	clearedFields                            map[string]struct{}
+	done                                     bool
+	oldValue                                 func(context.Context) (*Mysekaisiteharvestfixture, error)
+	predicates                               []predicate.Mysekaisiteharvestfixture
 }
 
 var _ ent.Mutation = (*MysekaisiteharvestfixtureMutation)(nil)
@@ -70437,13 +69212,12 @@ func (m *MysekaisiteharvestfixtureMutation) ResetLastAttackStamina() {
 }
 
 // SetMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field.
-func (m *MysekaisiteharvestfixtureMutation) SetMysekaiSiteHarvestFixtureRarityType(jm json.RawMessage) {
-	m.mysekai_site_harvest_fixture_rarity_type = &jm
-	m.appendmysekai_site_harvest_fixture_rarity_type = nil
+func (m *MysekaisiteharvestfixtureMutation) SetMysekaiSiteHarvestFixtureRarityType(s string) {
+	m.mysekai_site_harvest_fixture_rarity_type = &s
 }
 
 // MysekaiSiteHarvestFixtureRarityType returns the value of the "mysekai_site_harvest_fixture_rarity_type" field in the mutation.
-func (m *MysekaisiteharvestfixtureMutation) MysekaiSiteHarvestFixtureRarityType() (r json.RawMessage, exists bool) {
+func (m *MysekaisiteharvestfixtureMutation) MysekaiSiteHarvestFixtureRarityType() (r string, exists bool) {
 	v := m.mysekai_site_harvest_fixture_rarity_type
 	if v == nil {
 		return
@@ -70454,7 +69228,7 @@ func (m *MysekaisiteharvestfixtureMutation) MysekaiSiteHarvestFixtureRarityType(
 // OldMysekaiSiteHarvestFixtureRarityType returns the old "mysekai_site_harvest_fixture_rarity_type" field's value of the Mysekaisiteharvestfixture entity.
 // If the Mysekaisiteharvestfixture object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MysekaisiteharvestfixtureMutation) OldMysekaiSiteHarvestFixtureRarityType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *MysekaisiteharvestfixtureMutation) OldMysekaiSiteHarvestFixtureRarityType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMysekaiSiteHarvestFixtureRarityType is only allowed on UpdateOne operations")
 	}
@@ -70468,23 +69242,9 @@ func (m *MysekaisiteharvestfixtureMutation) OldMysekaiSiteHarvestFixtureRarityTy
 	return oldValue.MysekaiSiteHarvestFixtureRarityType, nil
 }
 
-// AppendMysekaiSiteHarvestFixtureRarityType adds jm to the "mysekai_site_harvest_fixture_rarity_type" field.
-func (m *MysekaisiteharvestfixtureMutation) AppendMysekaiSiteHarvestFixtureRarityType(jm json.RawMessage) {
-	m.appendmysekai_site_harvest_fixture_rarity_type = append(m.appendmysekai_site_harvest_fixture_rarity_type, jm...)
-}
-
-// AppendedMysekaiSiteHarvestFixtureRarityType returns the list of values that were appended to the "mysekai_site_harvest_fixture_rarity_type" field in this mutation.
-func (m *MysekaisiteharvestfixtureMutation) AppendedMysekaiSiteHarvestFixtureRarityType() (json.RawMessage, bool) {
-	if len(m.appendmysekai_site_harvest_fixture_rarity_type) == 0 {
-		return nil, false
-	}
-	return m.appendmysekai_site_harvest_fixture_rarity_type, true
-}
-
 // ClearMysekaiSiteHarvestFixtureRarityType clears the value of the "mysekai_site_harvest_fixture_rarity_type" field.
 func (m *MysekaisiteharvestfixtureMutation) ClearMysekaiSiteHarvestFixtureRarityType() {
 	m.mysekai_site_harvest_fixture_rarity_type = nil
-	m.appendmysekai_site_harvest_fixture_rarity_type = nil
 	m.clearedFields[mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType] = struct{}{}
 }
 
@@ -70497,7 +69257,6 @@ func (m *MysekaisiteharvestfixtureMutation) MysekaiSiteHarvestFixtureRarityTypeC
 // ResetMysekaiSiteHarvestFixtureRarityType resets all changes to the "mysekai_site_harvest_fixture_rarity_type" field.
 func (m *MysekaisiteharvestfixtureMutation) ResetMysekaiSiteHarvestFixtureRarityType() {
 	m.mysekai_site_harvest_fixture_rarity_type = nil
-	m.appendmysekai_site_harvest_fixture_rarity_type = nil
 	delete(m.clearedFields, mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType)
 }
 
@@ -70725,7 +69484,7 @@ func (m *MysekaisiteharvestfixtureMutation) SetField(name string, value ent.Valu
 		m.SetLastAttackStamina(v)
 		return nil
 	case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -73604,25 +72363,23 @@ func (m *PlayerframegroupMutation) ResetEdge(name string) error {
 // ResourceboxeMutation represents an operation that mutates the Resourceboxe nodes in the graph.
 type ResourceboxeMutation struct {
 	config
-	op                         Op
-	typ                        string
-	id                         *int
-	resource_box_purpose       *json.RawMessage
-	appendresource_box_purpose json.RawMessage
-	game_id                    *int64
-	addgame_id                 *int64
-	resource_box_type          *json.RawMessage
-	appendresource_box_type    json.RawMessage
-	description                *string
-	details                    *json.RawMessage
-	appenddetails              json.RawMessage
-	name                       *string
-	assetbundle_name           *string
-	server_region              *string
-	clearedFields              map[string]struct{}
-	done                       bool
-	oldValue                   func(context.Context) (*Resourceboxe, error)
-	predicates                 []predicate.Resourceboxe
+	op                   Op
+	typ                  string
+	id                   *int
+	resource_box_purpose *string
+	game_id              *int64
+	addgame_id           *int64
+	resource_box_type    *string
+	description          *string
+	details              *json.RawMessage
+	appenddetails        json.RawMessage
+	name                 *string
+	assetbundle_name     *string
+	server_region        *string
+	clearedFields        map[string]struct{}
+	done                 bool
+	oldValue             func(context.Context) (*Resourceboxe, error)
+	predicates           []predicate.Resourceboxe
 }
 
 var _ ent.Mutation = (*ResourceboxeMutation)(nil)
@@ -73724,13 +72481,12 @@ func (m *ResourceboxeMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (m *ResourceboxeMutation) SetResourceBoxPurpose(jm json.RawMessage) {
-	m.resource_box_purpose = &jm
-	m.appendresource_box_purpose = nil
+func (m *ResourceboxeMutation) SetResourceBoxPurpose(s string) {
+	m.resource_box_purpose = &s
 }
 
 // ResourceBoxPurpose returns the value of the "resource_box_purpose" field in the mutation.
-func (m *ResourceboxeMutation) ResourceBoxPurpose() (r json.RawMessage, exists bool) {
+func (m *ResourceboxeMutation) ResourceBoxPurpose() (r string, exists bool) {
 	v := m.resource_box_purpose
 	if v == nil {
 		return
@@ -73741,7 +72497,7 @@ func (m *ResourceboxeMutation) ResourceBoxPurpose() (r json.RawMessage, exists b
 // OldResourceBoxPurpose returns the old "resource_box_purpose" field's value of the Resourceboxe entity.
 // If the Resourceboxe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ResourceboxeMutation) OldResourceBoxPurpose(ctx context.Context) (v json.RawMessage, err error) {
+func (m *ResourceboxeMutation) OldResourceBoxPurpose(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceBoxPurpose is only allowed on UpdateOne operations")
 	}
@@ -73755,23 +72511,9 @@ func (m *ResourceboxeMutation) OldResourceBoxPurpose(ctx context.Context) (v jso
 	return oldValue.ResourceBoxPurpose, nil
 }
 
-// AppendResourceBoxPurpose adds jm to the "resource_box_purpose" field.
-func (m *ResourceboxeMutation) AppendResourceBoxPurpose(jm json.RawMessage) {
-	m.appendresource_box_purpose = append(m.appendresource_box_purpose, jm...)
-}
-
-// AppendedResourceBoxPurpose returns the list of values that were appended to the "resource_box_purpose" field in this mutation.
-func (m *ResourceboxeMutation) AppendedResourceBoxPurpose() (json.RawMessage, bool) {
-	if len(m.appendresource_box_purpose) == 0 {
-		return nil, false
-	}
-	return m.appendresource_box_purpose, true
-}
-
 // ClearResourceBoxPurpose clears the value of the "resource_box_purpose" field.
 func (m *ResourceboxeMutation) ClearResourceBoxPurpose() {
 	m.resource_box_purpose = nil
-	m.appendresource_box_purpose = nil
 	m.clearedFields[resourceboxe.FieldResourceBoxPurpose] = struct{}{}
 }
 
@@ -73784,7 +72526,6 @@ func (m *ResourceboxeMutation) ResourceBoxPurposeCleared() bool {
 // ResetResourceBoxPurpose resets all changes to the "resource_box_purpose" field.
 func (m *ResourceboxeMutation) ResetResourceBoxPurpose() {
 	m.resource_box_purpose = nil
-	m.appendresource_box_purpose = nil
 	delete(m.clearedFields, resourceboxe.FieldResourceBoxPurpose)
 }
 
@@ -73859,13 +72600,12 @@ func (m *ResourceboxeMutation) ResetGameID() {
 }
 
 // SetResourceBoxType sets the "resource_box_type" field.
-func (m *ResourceboxeMutation) SetResourceBoxType(jm json.RawMessage) {
-	m.resource_box_type = &jm
-	m.appendresource_box_type = nil
+func (m *ResourceboxeMutation) SetResourceBoxType(s string) {
+	m.resource_box_type = &s
 }
 
 // ResourceBoxType returns the value of the "resource_box_type" field in the mutation.
-func (m *ResourceboxeMutation) ResourceBoxType() (r json.RawMessage, exists bool) {
+func (m *ResourceboxeMutation) ResourceBoxType() (r string, exists bool) {
 	v := m.resource_box_type
 	if v == nil {
 		return
@@ -73876,7 +72616,7 @@ func (m *ResourceboxeMutation) ResourceBoxType() (r json.RawMessage, exists bool
 // OldResourceBoxType returns the old "resource_box_type" field's value of the Resourceboxe entity.
 // If the Resourceboxe object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ResourceboxeMutation) OldResourceBoxType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *ResourceboxeMutation) OldResourceBoxType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceBoxType is only allowed on UpdateOne operations")
 	}
@@ -73890,23 +72630,9 @@ func (m *ResourceboxeMutation) OldResourceBoxType(ctx context.Context) (v json.R
 	return oldValue.ResourceBoxType, nil
 }
 
-// AppendResourceBoxType adds jm to the "resource_box_type" field.
-func (m *ResourceboxeMutation) AppendResourceBoxType(jm json.RawMessage) {
-	m.appendresource_box_type = append(m.appendresource_box_type, jm...)
-}
-
-// AppendedResourceBoxType returns the list of values that were appended to the "resource_box_type" field in this mutation.
-func (m *ResourceboxeMutation) AppendedResourceBoxType() (json.RawMessage, bool) {
-	if len(m.appendresource_box_type) == 0 {
-		return nil, false
-	}
-	return m.appendresource_box_type, true
-}
-
 // ClearResourceBoxType clears the value of the "resource_box_type" field.
 func (m *ResourceboxeMutation) ClearResourceBoxType() {
 	m.resource_box_type = nil
-	m.appendresource_box_type = nil
 	m.clearedFields[resourceboxe.FieldResourceBoxType] = struct{}{}
 }
 
@@ -73919,7 +72645,6 @@ func (m *ResourceboxeMutation) ResourceBoxTypeCleared() bool {
 // ResetResourceBoxType resets all changes to the "resource_box_type" field.
 func (m *ResourceboxeMutation) ResetResourceBoxType() {
 	m.resource_box_type = nil
-	m.appendresource_box_type = nil
 	delete(m.clearedFields, resourceboxe.FieldResourceBoxType)
 }
 
@@ -74289,7 +73014,7 @@ func (m *ResourceboxeMutation) OldField(ctx context.Context, name string) (ent.V
 func (m *ResourceboxeMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case resourceboxe.FieldResourceBoxPurpose:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -74303,7 +73028,7 @@ func (m *ResourceboxeMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case resourceboxe.FieldResourceBoxType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -75596,24 +74321,23 @@ func (m *ShopitemMutation) ResetEdge(name string) error {
 // SkillMutation represents an operation that mutates the Skill nodes in the graph.
 type SkillMutation struct {
 	config
-	op                            Op
-	typ                           string
-	id                            *int
-	game_id                       *int64
-	addgame_id                    *int64
-	short_description             *string
-	description                   *string
-	description_sprite_name       *json.RawMessage
-	appenddescription_sprite_name json.RawMessage
-	skill_filter_id               *int64
-	addskill_filter_id            *int64
-	skill_effects                 *json.RawMessage
-	appendskill_effects           json.RawMessage
-	server_region                 *string
-	clearedFields                 map[string]struct{}
-	done                          bool
-	oldValue                      func(context.Context) (*Skill, error)
-	predicates                    []predicate.Skill
+	op                      Op
+	typ                     string
+	id                      *int
+	game_id                 *int64
+	addgame_id              *int64
+	short_description       *string
+	description             *string
+	description_sprite_name *string
+	skill_filter_id         *int64
+	addskill_filter_id      *int64
+	skill_effects           *json.RawMessage
+	appendskill_effects     json.RawMessage
+	server_region           *string
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*Skill, error)
+	predicates              []predicate.Skill
 }
 
 var _ ent.Mutation = (*SkillMutation)(nil)
@@ -75883,13 +74607,12 @@ func (m *SkillMutation) ResetDescription() {
 }
 
 // SetDescriptionSpriteName sets the "description_sprite_name" field.
-func (m *SkillMutation) SetDescriptionSpriteName(jm json.RawMessage) {
-	m.description_sprite_name = &jm
-	m.appenddescription_sprite_name = nil
+func (m *SkillMutation) SetDescriptionSpriteName(s string) {
+	m.description_sprite_name = &s
 }
 
 // DescriptionSpriteName returns the value of the "description_sprite_name" field in the mutation.
-func (m *SkillMutation) DescriptionSpriteName() (r json.RawMessage, exists bool) {
+func (m *SkillMutation) DescriptionSpriteName() (r string, exists bool) {
 	v := m.description_sprite_name
 	if v == nil {
 		return
@@ -75900,7 +74623,7 @@ func (m *SkillMutation) DescriptionSpriteName() (r json.RawMessage, exists bool)
 // OldDescriptionSpriteName returns the old "description_sprite_name" field's value of the Skill entity.
 // If the Skill object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkillMutation) OldDescriptionSpriteName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *SkillMutation) OldDescriptionSpriteName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDescriptionSpriteName is only allowed on UpdateOne operations")
 	}
@@ -75914,23 +74637,9 @@ func (m *SkillMutation) OldDescriptionSpriteName(ctx context.Context) (v json.Ra
 	return oldValue.DescriptionSpriteName, nil
 }
 
-// AppendDescriptionSpriteName adds jm to the "description_sprite_name" field.
-func (m *SkillMutation) AppendDescriptionSpriteName(jm json.RawMessage) {
-	m.appenddescription_sprite_name = append(m.appenddescription_sprite_name, jm...)
-}
-
-// AppendedDescriptionSpriteName returns the list of values that were appended to the "description_sprite_name" field in this mutation.
-func (m *SkillMutation) AppendedDescriptionSpriteName() (json.RawMessage, bool) {
-	if len(m.appenddescription_sprite_name) == 0 {
-		return nil, false
-	}
-	return m.appenddescription_sprite_name, true
-}
-
 // ClearDescriptionSpriteName clears the value of the "description_sprite_name" field.
 func (m *SkillMutation) ClearDescriptionSpriteName() {
 	m.description_sprite_name = nil
-	m.appenddescription_sprite_name = nil
 	m.clearedFields[skill.FieldDescriptionSpriteName] = struct{}{}
 }
 
@@ -75943,7 +74652,6 @@ func (m *SkillMutation) DescriptionSpriteNameCleared() bool {
 // ResetDescriptionSpriteName resets all changes to the "description_sprite_name" field.
 func (m *SkillMutation) ResetDescriptionSpriteName() {
 	m.description_sprite_name = nil
-	m.appenddescription_sprite_name = nil
 	delete(m.clearedFields, skill.FieldDescriptionSpriteName)
 }
 
@@ -76250,7 +74958,7 @@ func (m *SkillMutation) SetField(name string, value ent.Value) error {
 		m.SetDescription(v)
 		return nil
 	case skill.FieldDescriptionSpriteName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -76468,35 +75176,32 @@ func (m *SkillMutation) ResetEdge(name string) error {
 // StampMutation represents an operation that mutates the Stamp nodes in the graph.
 type StampMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *int
-	game_id                        *int64
-	addgame_id                     *int64
-	stamp_type                     *json.RawMessage
-	appendstamp_type               json.RawMessage
-	seq                            *int64
-	addseq                         *int64
-	name                           *string
-	assetbundle_name               *string
-	balloon_assetbundle_name       *json.RawMessage
-	appendballoon_assetbundle_name json.RawMessage
-	character_id1                  *int64
-	addcharacter_id1               *int64
-	game_character_unit_id         *int64
-	addgame_character_unit_id      *int64
-	archive_published_at           *int64
-	addarchive_published_at        *int64
-	description                    *string
-	archive_display_type           *json.RawMessage
-	appendarchive_display_type     json.RawMessage
-	character_id2                  *int64
-	addcharacter_id2               *int64
-	server_region                  *string
-	clearedFields                  map[string]struct{}
-	done                           bool
-	oldValue                       func(context.Context) (*Stamp, error)
-	predicates                     []predicate.Stamp
+	op                        Op
+	typ                       string
+	id                        *int
+	game_id                   *int64
+	addgame_id                *int64
+	stamp_type                *string
+	seq                       *int64
+	addseq                    *int64
+	name                      *string
+	assetbundle_name          *string
+	balloon_assetbundle_name  *string
+	character_id1             *int64
+	addcharacter_id1          *int64
+	game_character_unit_id    *int64
+	addgame_character_unit_id *int64
+	archive_published_at      *int64
+	addarchive_published_at   *int64
+	description               *string
+	archive_display_type      *string
+	character_id2             *int64
+	addcharacter_id2          *int64
+	server_region             *string
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*Stamp, error)
+	predicates                []predicate.Stamp
 }
 
 var _ ent.Mutation = (*StampMutation)(nil)
@@ -76668,13 +75373,12 @@ func (m *StampMutation) ResetGameID() {
 }
 
 // SetStampType sets the "stamp_type" field.
-func (m *StampMutation) SetStampType(jm json.RawMessage) {
-	m.stamp_type = &jm
-	m.appendstamp_type = nil
+func (m *StampMutation) SetStampType(s string) {
+	m.stamp_type = &s
 }
 
 // StampType returns the value of the "stamp_type" field in the mutation.
-func (m *StampMutation) StampType() (r json.RawMessage, exists bool) {
+func (m *StampMutation) StampType() (r string, exists bool) {
 	v := m.stamp_type
 	if v == nil {
 		return
@@ -76685,7 +75389,7 @@ func (m *StampMutation) StampType() (r json.RawMessage, exists bool) {
 // OldStampType returns the old "stamp_type" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldStampType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *StampMutation) OldStampType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStampType is only allowed on UpdateOne operations")
 	}
@@ -76699,23 +75403,9 @@ func (m *StampMutation) OldStampType(ctx context.Context) (v json.RawMessage, er
 	return oldValue.StampType, nil
 }
 
-// AppendStampType adds jm to the "stamp_type" field.
-func (m *StampMutation) AppendStampType(jm json.RawMessage) {
-	m.appendstamp_type = append(m.appendstamp_type, jm...)
-}
-
-// AppendedStampType returns the list of values that were appended to the "stamp_type" field in this mutation.
-func (m *StampMutation) AppendedStampType() (json.RawMessage, bool) {
-	if len(m.appendstamp_type) == 0 {
-		return nil, false
-	}
-	return m.appendstamp_type, true
-}
-
 // ClearStampType clears the value of the "stamp_type" field.
 func (m *StampMutation) ClearStampType() {
 	m.stamp_type = nil
-	m.appendstamp_type = nil
 	m.clearedFields[stamp.FieldStampType] = struct{}{}
 }
 
@@ -76728,7 +75418,6 @@ func (m *StampMutation) StampTypeCleared() bool {
 // ResetStampType resets all changes to the "stamp_type" field.
 func (m *StampMutation) ResetStampType() {
 	m.stamp_type = nil
-	m.appendstamp_type = nil
 	delete(m.clearedFields, stamp.FieldStampType)
 }
 
@@ -76901,13 +75590,12 @@ func (m *StampMutation) ResetAssetbundleName() {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (m *StampMutation) SetBalloonAssetbundleName(jm json.RawMessage) {
-	m.balloon_assetbundle_name = &jm
-	m.appendballoon_assetbundle_name = nil
+func (m *StampMutation) SetBalloonAssetbundleName(s string) {
+	m.balloon_assetbundle_name = &s
 }
 
 // BalloonAssetbundleName returns the value of the "balloon_assetbundle_name" field in the mutation.
-func (m *StampMutation) BalloonAssetbundleName() (r json.RawMessage, exists bool) {
+func (m *StampMutation) BalloonAssetbundleName() (r string, exists bool) {
 	v := m.balloon_assetbundle_name
 	if v == nil {
 		return
@@ -76918,7 +75606,7 @@ func (m *StampMutation) BalloonAssetbundleName() (r json.RawMessage, exists bool
 // OldBalloonAssetbundleName returns the old "balloon_assetbundle_name" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldBalloonAssetbundleName(ctx context.Context) (v json.RawMessage, err error) {
+func (m *StampMutation) OldBalloonAssetbundleName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBalloonAssetbundleName is only allowed on UpdateOne operations")
 	}
@@ -76932,23 +75620,9 @@ func (m *StampMutation) OldBalloonAssetbundleName(ctx context.Context) (v json.R
 	return oldValue.BalloonAssetbundleName, nil
 }
 
-// AppendBalloonAssetbundleName adds jm to the "balloon_assetbundle_name" field.
-func (m *StampMutation) AppendBalloonAssetbundleName(jm json.RawMessage) {
-	m.appendballoon_assetbundle_name = append(m.appendballoon_assetbundle_name, jm...)
-}
-
-// AppendedBalloonAssetbundleName returns the list of values that were appended to the "balloon_assetbundle_name" field in this mutation.
-func (m *StampMutation) AppendedBalloonAssetbundleName() (json.RawMessage, bool) {
-	if len(m.appendballoon_assetbundle_name) == 0 {
-		return nil, false
-	}
-	return m.appendballoon_assetbundle_name, true
-}
-
 // ClearBalloonAssetbundleName clears the value of the "balloon_assetbundle_name" field.
 func (m *StampMutation) ClearBalloonAssetbundleName() {
 	m.balloon_assetbundle_name = nil
-	m.appendballoon_assetbundle_name = nil
 	m.clearedFields[stamp.FieldBalloonAssetbundleName] = struct{}{}
 }
 
@@ -76961,7 +75635,6 @@ func (m *StampMutation) BalloonAssetbundleNameCleared() bool {
 // ResetBalloonAssetbundleName resets all changes to the "balloon_assetbundle_name" field.
 func (m *StampMutation) ResetBalloonAssetbundleName() {
 	m.balloon_assetbundle_name = nil
-	m.appendballoon_assetbundle_name = nil
 	delete(m.clearedFields, stamp.FieldBalloonAssetbundleName)
 }
 
@@ -77225,13 +75898,12 @@ func (m *StampMutation) ResetDescription() {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (m *StampMutation) SetArchiveDisplayType(jm json.RawMessage) {
-	m.archive_display_type = &jm
-	m.appendarchive_display_type = nil
+func (m *StampMutation) SetArchiveDisplayType(s string) {
+	m.archive_display_type = &s
 }
 
 // ArchiveDisplayType returns the value of the "archive_display_type" field in the mutation.
-func (m *StampMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
+func (m *StampMutation) ArchiveDisplayType() (r string, exists bool) {
 	v := m.archive_display_type
 	if v == nil {
 		return
@@ -77242,7 +75914,7 @@ func (m *StampMutation) ArchiveDisplayType() (r json.RawMessage, exists bool) {
 // OldArchiveDisplayType returns the old "archive_display_type" field's value of the Stamp entity.
 // If the Stamp object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StampMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *StampMutation) OldArchiveDisplayType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldArchiveDisplayType is only allowed on UpdateOne operations")
 	}
@@ -77256,23 +75928,9 @@ func (m *StampMutation) OldArchiveDisplayType(ctx context.Context) (v json.RawMe
 	return oldValue.ArchiveDisplayType, nil
 }
 
-// AppendArchiveDisplayType adds jm to the "archive_display_type" field.
-func (m *StampMutation) AppendArchiveDisplayType(jm json.RawMessage) {
-	m.appendarchive_display_type = append(m.appendarchive_display_type, jm...)
-}
-
-// AppendedArchiveDisplayType returns the list of values that were appended to the "archive_display_type" field in this mutation.
-func (m *StampMutation) AppendedArchiveDisplayType() (json.RawMessage, bool) {
-	if len(m.appendarchive_display_type) == 0 {
-		return nil, false
-	}
-	return m.appendarchive_display_type, true
-}
-
 // ClearArchiveDisplayType clears the value of the "archive_display_type" field.
 func (m *StampMutation) ClearArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	m.clearedFields[stamp.FieldArchiveDisplayType] = struct{}{}
 }
 
@@ -77285,7 +75943,6 @@ func (m *StampMutation) ArchiveDisplayTypeCleared() bool {
 // ResetArchiveDisplayType resets all changes to the "archive_display_type" field.
 func (m *StampMutation) ResetArchiveDisplayType() {
 	m.archive_display_type = nil
-	m.appendarchive_display_type = nil
 	delete(m.clearedFields, stamp.FieldArchiveDisplayType)
 }
 
@@ -77555,7 +76212,7 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case stamp.FieldStampType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -77583,7 +76240,7 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetAssetbundleName(v)
 		return nil
 	case stamp.FieldBalloonAssetbundleName:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -77618,7 +76275,7 @@ func (m *StampMutation) SetField(name string, value ent.Value) error {
 		m.SetDescription(v)
 		return nil
 	case stamp.FieldArchiveDisplayType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -77936,10 +76593,8 @@ type VirtualliveMutation struct {
 	id                                            *int
 	game_id                                       *int64
 	addgame_id                                    *int64
-	virtual_live_type                             *json.RawMessage
-	appendvirtual_live_type                       json.RawMessage
-	virtual_live_platform                         *json.RawMessage
-	appendvirtual_live_platform                   json.RawMessage
+	virtual_live_type                             *string
+	virtual_live_platform                         *string
 	seq                                           *int64
 	addseq                                        *int64
 	name                                          *string
@@ -78156,13 +76811,12 @@ func (m *VirtualliveMutation) ResetGameID() {
 }
 
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (m *VirtualliveMutation) SetVirtualLiveType(jm json.RawMessage) {
-	m.virtual_live_type = &jm
-	m.appendvirtual_live_type = nil
+func (m *VirtualliveMutation) SetVirtualLiveType(s string) {
+	m.virtual_live_type = &s
 }
 
 // VirtualLiveType returns the value of the "virtual_live_type" field in the mutation.
-func (m *VirtualliveMutation) VirtualLiveType() (r json.RawMessage, exists bool) {
+func (m *VirtualliveMutation) VirtualLiveType() (r string, exists bool) {
 	v := m.virtual_live_type
 	if v == nil {
 		return
@@ -78173,7 +76827,7 @@ func (m *VirtualliveMutation) VirtualLiveType() (r json.RawMessage, exists bool)
 // OldVirtualLiveType returns the old "virtual_live_type" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldVirtualLiveType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *VirtualliveMutation) OldVirtualLiveType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldVirtualLiveType is only allowed on UpdateOne operations")
 	}
@@ -78187,23 +76841,9 @@ func (m *VirtualliveMutation) OldVirtualLiveType(ctx context.Context) (v json.Ra
 	return oldValue.VirtualLiveType, nil
 }
 
-// AppendVirtualLiveType adds jm to the "virtual_live_type" field.
-func (m *VirtualliveMutation) AppendVirtualLiveType(jm json.RawMessage) {
-	m.appendvirtual_live_type = append(m.appendvirtual_live_type, jm...)
-}
-
-// AppendedVirtualLiveType returns the list of values that were appended to the "virtual_live_type" field in this mutation.
-func (m *VirtualliveMutation) AppendedVirtualLiveType() (json.RawMessage, bool) {
-	if len(m.appendvirtual_live_type) == 0 {
-		return nil, false
-	}
-	return m.appendvirtual_live_type, true
-}
-
 // ClearVirtualLiveType clears the value of the "virtual_live_type" field.
 func (m *VirtualliveMutation) ClearVirtualLiveType() {
 	m.virtual_live_type = nil
-	m.appendvirtual_live_type = nil
 	m.clearedFields[virtuallive.FieldVirtualLiveType] = struct{}{}
 }
 
@@ -78216,18 +76856,16 @@ func (m *VirtualliveMutation) VirtualLiveTypeCleared() bool {
 // ResetVirtualLiveType resets all changes to the "virtual_live_type" field.
 func (m *VirtualliveMutation) ResetVirtualLiveType() {
 	m.virtual_live_type = nil
-	m.appendvirtual_live_type = nil
 	delete(m.clearedFields, virtuallive.FieldVirtualLiveType)
 }
 
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (m *VirtualliveMutation) SetVirtualLivePlatform(jm json.RawMessage) {
-	m.virtual_live_platform = &jm
-	m.appendvirtual_live_platform = nil
+func (m *VirtualliveMutation) SetVirtualLivePlatform(s string) {
+	m.virtual_live_platform = &s
 }
 
 // VirtualLivePlatform returns the value of the "virtual_live_platform" field in the mutation.
-func (m *VirtualliveMutation) VirtualLivePlatform() (r json.RawMessage, exists bool) {
+func (m *VirtualliveMutation) VirtualLivePlatform() (r string, exists bool) {
 	v := m.virtual_live_platform
 	if v == nil {
 		return
@@ -78238,7 +76876,7 @@ func (m *VirtualliveMutation) VirtualLivePlatform() (r json.RawMessage, exists b
 // OldVirtualLivePlatform returns the old "virtual_live_platform" field's value of the Virtuallive entity.
 // If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VirtualliveMutation) OldVirtualLivePlatform(ctx context.Context) (v json.RawMessage, err error) {
+func (m *VirtualliveMutation) OldVirtualLivePlatform(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldVirtualLivePlatform is only allowed on UpdateOne operations")
 	}
@@ -78252,23 +76890,9 @@ func (m *VirtualliveMutation) OldVirtualLivePlatform(ctx context.Context) (v jso
 	return oldValue.VirtualLivePlatform, nil
 }
 
-// AppendVirtualLivePlatform adds jm to the "virtual_live_platform" field.
-func (m *VirtualliveMutation) AppendVirtualLivePlatform(jm json.RawMessage) {
-	m.appendvirtual_live_platform = append(m.appendvirtual_live_platform, jm...)
-}
-
-// AppendedVirtualLivePlatform returns the list of values that were appended to the "virtual_live_platform" field in this mutation.
-func (m *VirtualliveMutation) AppendedVirtualLivePlatform() (json.RawMessage, bool) {
-	if len(m.appendvirtual_live_platform) == 0 {
-		return nil, false
-	}
-	return m.appendvirtual_live_platform, true
-}
-
 // ClearVirtualLivePlatform clears the value of the "virtual_live_platform" field.
 func (m *VirtualliveMutation) ClearVirtualLivePlatform() {
 	m.virtual_live_platform = nil
-	m.appendvirtual_live_platform = nil
 	m.clearedFields[virtuallive.FieldVirtualLivePlatform] = struct{}{}
 }
 
@@ -78281,7 +76905,6 @@ func (m *VirtualliveMutation) VirtualLivePlatformCleared() bool {
 // ResetVirtualLivePlatform resets all changes to the "virtual_live_platform" field.
 func (m *VirtualliveMutation) ResetVirtualLivePlatform() {
 	m.virtual_live_platform = nil
-	m.appendvirtual_live_platform = nil
 	delete(m.clearedFields, virtuallive.FieldVirtualLivePlatform)
 }
 
@@ -79938,14 +78561,14 @@ func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 		m.SetGameID(v)
 		return nil
 	case virtuallive.FieldVirtualLiveType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVirtualLiveType(v)
 		return nil
 	case virtuallive.FieldVirtualLivePlatform:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -80542,33 +79165,32 @@ func (m *VirtualliveMutation) ResetEdge(name string) error {
 // WorldbloomMutation represents an operation that mutates the Worldbloom nodes in the graph.
 type WorldbloomMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *int
-	game_id                        *int64
-	addgame_id                     *int64
-	event_id                       *int64
-	addevent_id                    *int64
-	game_character_id              *int64
-	addgame_character_id           *int64
-	world_bloom_chapter_type       *json.RawMessage
-	appendworld_bloom_chapter_type json.RawMessage
-	chapter_no                     *int64
-	addchapter_no                  *int64
-	chapter_start_at               *int64
-	addchapter_start_at            *int64
-	aggregate_at                   *int64
-	addaggregate_at                *int64
-	chapter_end_at                 *int64
-	addchapter_end_at              *int64
-	is_supplemental                *bool
-	costume2_d_id                  *int64
-	addcostume2_d_id               *int64
-	server_region                  *string
-	clearedFields                  map[string]struct{}
-	done                           bool
-	oldValue                       func(context.Context) (*Worldbloom, error)
-	predicates                     []predicate.Worldbloom
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	event_id                 *int64
+	addevent_id              *int64
+	game_character_id        *int64
+	addgame_character_id     *int64
+	world_bloom_chapter_type *string
+	chapter_no               *int64
+	addchapter_no            *int64
+	chapter_start_at         *int64
+	addchapter_start_at      *int64
+	aggregate_at             *int64
+	addaggregate_at          *int64
+	chapter_end_at           *int64
+	addchapter_end_at        *int64
+	is_supplemental          *bool
+	costume2_d_id            *int64
+	addcostume2_d_id         *int64
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Worldbloom, error)
+	predicates               []predicate.Worldbloom
 }
 
 var _ ent.Mutation = (*WorldbloomMutation)(nil)
@@ -80880,13 +79502,12 @@ func (m *WorldbloomMutation) ResetGameCharacterID() {
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (m *WorldbloomMutation) SetWorldBloomChapterType(jm json.RawMessage) {
-	m.world_bloom_chapter_type = &jm
-	m.appendworld_bloom_chapter_type = nil
+func (m *WorldbloomMutation) SetWorldBloomChapterType(s string) {
+	m.world_bloom_chapter_type = &s
 }
 
 // WorldBloomChapterType returns the value of the "world_bloom_chapter_type" field in the mutation.
-func (m *WorldbloomMutation) WorldBloomChapterType() (r json.RawMessage, exists bool) {
+func (m *WorldbloomMutation) WorldBloomChapterType() (r string, exists bool) {
 	v := m.world_bloom_chapter_type
 	if v == nil {
 		return
@@ -80897,7 +79518,7 @@ func (m *WorldbloomMutation) WorldBloomChapterType() (r json.RawMessage, exists 
 // OldWorldBloomChapterType returns the old "world_bloom_chapter_type" field's value of the Worldbloom entity.
 // If the Worldbloom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorldbloomMutation) OldWorldBloomChapterType(ctx context.Context) (v json.RawMessage, err error) {
+func (m *WorldbloomMutation) OldWorldBloomChapterType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWorldBloomChapterType is only allowed on UpdateOne operations")
 	}
@@ -80911,23 +79532,9 @@ func (m *WorldbloomMutation) OldWorldBloomChapterType(ctx context.Context) (v js
 	return oldValue.WorldBloomChapterType, nil
 }
 
-// AppendWorldBloomChapterType adds jm to the "world_bloom_chapter_type" field.
-func (m *WorldbloomMutation) AppendWorldBloomChapterType(jm json.RawMessage) {
-	m.appendworld_bloom_chapter_type = append(m.appendworld_bloom_chapter_type, jm...)
-}
-
-// AppendedWorldBloomChapterType returns the list of values that were appended to the "world_bloom_chapter_type" field in this mutation.
-func (m *WorldbloomMutation) AppendedWorldBloomChapterType() (json.RawMessage, bool) {
-	if len(m.appendworld_bloom_chapter_type) == 0 {
-		return nil, false
-	}
-	return m.appendworld_bloom_chapter_type, true
-}
-
 // ClearWorldBloomChapterType clears the value of the "world_bloom_chapter_type" field.
 func (m *WorldbloomMutation) ClearWorldBloomChapterType() {
 	m.world_bloom_chapter_type = nil
-	m.appendworld_bloom_chapter_type = nil
 	m.clearedFields[worldbloom.FieldWorldBloomChapterType] = struct{}{}
 }
 
@@ -80940,7 +79547,6 @@ func (m *WorldbloomMutation) WorldBloomChapterTypeCleared() bool {
 // ResetWorldBloomChapterType resets all changes to the "world_bloom_chapter_type" field.
 func (m *WorldbloomMutation) ResetWorldBloomChapterType() {
 	m.world_bloom_chapter_type = nil
-	m.appendworld_bloom_chapter_type = nil
 	delete(m.clearedFields, worldbloom.FieldWorldBloomChapterType)
 }
 
@@ -81539,7 +80145,7 @@ func (m *WorldbloomMutation) SetField(name string, value ent.Value) error {
 		m.SetGameCharacterID(v)
 		return nil
 	case worldbloom.FieldWorldBloomChapterType:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

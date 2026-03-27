@@ -58,6 +58,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByLevelType orders the results by the level_type field.
+func ByLevelType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelType, opts...).ToFunc()
+}
+
 // ByLevel orders the results by the level field.
 func ByLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLevel, opts...).ToFunc()

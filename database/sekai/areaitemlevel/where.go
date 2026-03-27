@@ -63,6 +63,16 @@ func Level(v int64) predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldEQ(FieldLevel, v))
 }
 
+// TargetUnit applies equality check predicate on the "target_unit" field. It's identical to TargetUnitEQ.
+func TargetUnit(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEQ(FieldTargetUnit, v))
+}
+
+// TargetCardAttr applies equality check predicate on the "target_card_attr" field. It's identical to TargetCardAttrEQ.
+func TargetCardAttr(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEQ(FieldTargetCardAttr, v))
+}
+
 // TargetGameCharacterID applies equality check predicate on the "target_game_character_id" field. It's identical to TargetGameCharacterIDEQ.
 func TargetGameCharacterID(v int64) predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldEQ(FieldTargetGameCharacterID, v))
@@ -208,6 +218,61 @@ func LevelNotNil() predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldNotNull(FieldLevel))
 }
 
+// TargetUnitEQ applies the EQ predicate on the "target_unit" field.
+func TargetUnitEQ(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEQ(FieldTargetUnit, v))
+}
+
+// TargetUnitNEQ applies the NEQ predicate on the "target_unit" field.
+func TargetUnitNEQ(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldNEQ(FieldTargetUnit, v))
+}
+
+// TargetUnitIn applies the In predicate on the "target_unit" field.
+func TargetUnitIn(vs ...string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldIn(FieldTargetUnit, vs...))
+}
+
+// TargetUnitNotIn applies the NotIn predicate on the "target_unit" field.
+func TargetUnitNotIn(vs ...string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldNotIn(FieldTargetUnit, vs...))
+}
+
+// TargetUnitGT applies the GT predicate on the "target_unit" field.
+func TargetUnitGT(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldGT(FieldTargetUnit, v))
+}
+
+// TargetUnitGTE applies the GTE predicate on the "target_unit" field.
+func TargetUnitGTE(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldGTE(FieldTargetUnit, v))
+}
+
+// TargetUnitLT applies the LT predicate on the "target_unit" field.
+func TargetUnitLT(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldLT(FieldTargetUnit, v))
+}
+
+// TargetUnitLTE applies the LTE predicate on the "target_unit" field.
+func TargetUnitLTE(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldLTE(FieldTargetUnit, v))
+}
+
+// TargetUnitContains applies the Contains predicate on the "target_unit" field.
+func TargetUnitContains(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldContains(FieldTargetUnit, v))
+}
+
+// TargetUnitHasPrefix applies the HasPrefix predicate on the "target_unit" field.
+func TargetUnitHasPrefix(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldHasPrefix(FieldTargetUnit, v))
+}
+
+// TargetUnitHasSuffix applies the HasSuffix predicate on the "target_unit" field.
+func TargetUnitHasSuffix(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldHasSuffix(FieldTargetUnit, v))
+}
+
 // TargetUnitIsNil applies the IsNil predicate on the "target_unit" field.
 func TargetUnitIsNil() predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldIsNull(FieldTargetUnit))
@@ -218,6 +283,71 @@ func TargetUnitNotNil() predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldNotNull(FieldTargetUnit))
 }
 
+// TargetUnitEqualFold applies the EqualFold predicate on the "target_unit" field.
+func TargetUnitEqualFold(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEqualFold(FieldTargetUnit, v))
+}
+
+// TargetUnitContainsFold applies the ContainsFold predicate on the "target_unit" field.
+func TargetUnitContainsFold(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldContainsFold(FieldTargetUnit, v))
+}
+
+// TargetCardAttrEQ applies the EQ predicate on the "target_card_attr" field.
+func TargetCardAttrEQ(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEQ(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrNEQ applies the NEQ predicate on the "target_card_attr" field.
+func TargetCardAttrNEQ(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldNEQ(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrIn applies the In predicate on the "target_card_attr" field.
+func TargetCardAttrIn(vs ...string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldIn(FieldTargetCardAttr, vs...))
+}
+
+// TargetCardAttrNotIn applies the NotIn predicate on the "target_card_attr" field.
+func TargetCardAttrNotIn(vs ...string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldNotIn(FieldTargetCardAttr, vs...))
+}
+
+// TargetCardAttrGT applies the GT predicate on the "target_card_attr" field.
+func TargetCardAttrGT(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldGT(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrGTE applies the GTE predicate on the "target_card_attr" field.
+func TargetCardAttrGTE(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldGTE(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrLT applies the LT predicate on the "target_card_attr" field.
+func TargetCardAttrLT(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldLT(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrLTE applies the LTE predicate on the "target_card_attr" field.
+func TargetCardAttrLTE(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldLTE(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrContains applies the Contains predicate on the "target_card_attr" field.
+func TargetCardAttrContains(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldContains(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrHasPrefix applies the HasPrefix predicate on the "target_card_attr" field.
+func TargetCardAttrHasPrefix(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldHasPrefix(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrHasSuffix applies the HasSuffix predicate on the "target_card_attr" field.
+func TargetCardAttrHasSuffix(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldHasSuffix(FieldTargetCardAttr, v))
+}
+
 // TargetCardAttrIsNil applies the IsNil predicate on the "target_card_attr" field.
 func TargetCardAttrIsNil() predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldIsNull(FieldTargetCardAttr))
@@ -226,6 +356,16 @@ func TargetCardAttrIsNil() predicate.Areaitemlevel {
 // TargetCardAttrNotNil applies the NotNil predicate on the "target_card_attr" field.
 func TargetCardAttrNotNil() predicate.Areaitemlevel {
 	return predicate.Areaitemlevel(sql.FieldNotNull(FieldTargetCardAttr))
+}
+
+// TargetCardAttrEqualFold applies the EqualFold predicate on the "target_card_attr" field.
+func TargetCardAttrEqualFold(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldEqualFold(FieldTargetCardAttr, v))
+}
+
+// TargetCardAttrContainsFold applies the ContainsFold predicate on the "target_card_attr" field.
+func TargetCardAttrContainsFold(v string) predicate.Areaitemlevel {
+	return predicate.Areaitemlevel(sql.FieldContainsFold(FieldTargetCardAttr, v))
 }
 
 // TargetGameCharacterIDEQ applies the EQ predicate on the "target_game_character_id" field.

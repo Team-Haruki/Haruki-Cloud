@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstoryunit"
@@ -63,14 +62,30 @@ func (_c *EventstoryunitCreate) SetNillableEventStoryID(v *int64) *Eventstoryuni
 }
 
 // SetUnit sets the "unit" field.
-func (_c *EventstoryunitCreate) SetUnit(v json.RawMessage) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetUnit(v string) *EventstoryunitCreate {
 	_c.mutation.SetUnit(v)
 	return _c
 }
 
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_c *EventstoryunitCreate) SetNillableUnit(v *string) *EventstoryunitCreate {
+	if v != nil {
+		_c.SetUnit(*v)
+	}
+	return _c
+}
+
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_c *EventstoryunitCreate) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitCreate {
+func (_c *EventstoryunitCreate) SetEventStoryUnitRelation(v string) *EventstoryunitCreate {
 	_c.mutation.SetEventStoryUnitRelation(v)
+	return _c
+}
+
+// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
+func (_c *EventstoryunitCreate) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitCreate {
+	if v != nil {
+		_c.SetEventStoryUnitRelation(*v)
+	}
 	return _c
 }
 
@@ -156,11 +171,11 @@ func (_c *EventstoryunitCreate) createSpec() (*Eventstoryunit, *sqlgraph.CreateS
 		_node.EventStoryID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
 		_node.EventStoryUnitRelation = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

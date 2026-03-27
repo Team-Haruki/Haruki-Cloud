@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturetag"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -97,14 +95,16 @@ func (_u *MysekaifixturetagUpdate) ClearPronunciation() *MysekaifixturetagUpdate
 }
 
 // SetMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field.
-func (_u *MysekaifixturetagUpdate) SetMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagUpdate {
+func (_u *MysekaifixturetagUpdate) SetMysekaiFixtureTagType(v string) *MysekaifixturetagUpdate {
 	_u.mutation.SetMysekaiFixtureTagType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureTagType appends value to the "mysekai_fixture_tag_type" field.
-func (_u *MysekaifixturetagUpdate) AppendMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagUpdate {
-	_u.mutation.AppendMysekaiFixtureTagType(v)
+// SetNillableMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field if the given value is not nil.
+func (_u *MysekaifixturetagUpdate) SetNillableMysekaiFixtureTagType(v *string) *MysekaifixturetagUpdate {
+	if v != nil {
+		_u.SetMysekaiFixtureTagType(*v)
+	}
 	return _u
 }
 
@@ -218,15 +218,10 @@ func (_u *MysekaifixturetagUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(mysekaifixturetag.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureTagType(); ok {
-		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureTagType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixturetag.FieldMysekaiFixtureTagType, value)
-		})
+		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureTagTypeCleared() {
-		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON)
+		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)
@@ -328,14 +323,16 @@ func (_u *MysekaifixturetagUpdateOne) ClearPronunciation() *MysekaifixturetagUpd
 }
 
 // SetMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field.
-func (_u *MysekaifixturetagUpdateOne) SetMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagUpdateOne {
+func (_u *MysekaifixturetagUpdateOne) SetMysekaiFixtureTagType(v string) *MysekaifixturetagUpdateOne {
 	_u.mutation.SetMysekaiFixtureTagType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureTagType appends value to the "mysekai_fixture_tag_type" field.
-func (_u *MysekaifixturetagUpdateOne) AppendMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagUpdateOne {
-	_u.mutation.AppendMysekaiFixtureTagType(v)
+// SetNillableMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field if the given value is not nil.
+func (_u *MysekaifixturetagUpdateOne) SetNillableMysekaiFixtureTagType(v *string) *MysekaifixturetagUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixtureTagType(*v)
+	}
 	return _u
 }
 
@@ -479,15 +476,10 @@ func (_u *MysekaifixturetagUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		_spec.ClearField(mysekaifixturetag.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureTagType(); ok {
-		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureTagType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixturetag.FieldMysekaiFixtureTagType, value)
-		})
+		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureTagTypeCleared() {
-		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON)
+		_spec.ClearField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(mysekaifixturetag.FieldExternalID, field.TypeInt64, value)

@@ -72,9 +72,29 @@ func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
 }
 
+// ByUnit orders the results by the unit field.
+func ByUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnit, opts...).ToFunc()
+}
+
 // ByColorCode orders the results by the color_code field.
 func ByColorCode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldColorCode, opts...).ToFunc()
+}
+
+// BySkinColorCode orders the results by the skin_color_code field.
+func BySkinColorCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSkinColorCode, opts...).ToFunc()
+}
+
+// BySkinShadowColorCode1 orders the results by the skin_shadow_color_code1 field.
+func BySkinShadowColorCode1(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSkinShadowColorCode1, opts...).ToFunc()
+}
+
+// BySkinShadowColorCode2 orders the results by the skin_shadow_color_code2 field.
+func BySkinShadowColorCode2(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSkinShadowColorCode2, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

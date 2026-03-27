@@ -20,7 +20,7 @@ type Event struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// EventType holds the value of the "event_type" field.
-	EventType json.RawMessage `json:"event_type,omitempty"`
+	EventType string `json:"event_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -46,13 +46,13 @@ type Event struct {
 	// VirtualLiveID holds the value of the "virtual_live_id" field.
 	VirtualLiveID int64 `json:"virtual_live_id,omitempty"`
 	// Unit holds the value of the "unit" field.
-	Unit json.RawMessage `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
 	// IsCountLeaderCharacterPlay holds the value of the "is_count_leader_character_play" field.
 	IsCountLeaderCharacterPlay bool `json:"is_count_leader_character_play,omitempty"`
 	// EventRankingRewardRanges holds the value of the "event_ranking_reward_ranges" field.
 	EventRankingRewardRanges json.RawMessage `json:"event_ranking_reward_ranges,omitempty"`
 	// EventPointAssetbundleName holds the value of the "event_point_assetbundle_name" field.
-	EventPointAssetbundleName json.RawMessage `json:"event_point_assetbundle_name,omitempty"`
+	EventPointAssetbundleName string `json:"event_point_assetbundle_name,omitempty"`
 	// StandbyScreenDisplayStartAt holds the value of the "standby_screen_display_start_at" field.
 	StandbyScreenDisplayStartAt int64 `json:"standby_screen_display_start_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -65,13 +65,13 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case event.FieldEventType, event.FieldUnit, event.FieldEventRankingRewardRanges, event.FieldEventPointAssetbundleName:
+		case event.FieldEventRankingRewardRanges:
 			values[i] = new([]byte)
 		case event.FieldIsCountLeaderCharacterPlay:
 			values[i] = new(sql.NullBool)
 		case event.FieldID, event.FieldGameID, event.FieldEventOnlyComponentDisplayStartAt, event.FieldStartAt, event.FieldAggregateAt, event.FieldRankingAnnounceAt, event.FieldDistributionStartAt, event.FieldEventOnlyComponentDisplayEndAt, event.FieldClosedAt, event.FieldDistributionEndAt, event.FieldVirtualLiveID, event.FieldStandbyScreenDisplayStartAt:
 			values[i] = new(sql.NullInt64)
-		case event.FieldName, event.FieldAssetbundleName, event.FieldBgmAssetbundleName, event.FieldServerRegion:
+		case event.FieldEventType, event.FieldName, event.FieldAssetbundleName, event.FieldBgmAssetbundleName, event.FieldUnit, event.FieldEventPointAssetbundleName, event.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -101,12 +101,10 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case event.FieldEventType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field event_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.EventType); err != nil {
-					return fmt.Errorf("unmarshal field event_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.EventType = value.String
 			}
 		case event.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -181,12 +179,10 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				_m.VirtualLiveID = value.Int64
 			}
 		case event.FieldUnit:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Unit); err != nil {
-					return fmt.Errorf("unmarshal field unit: %w", err)
-				}
+			} else if value.Valid {
+				_m.Unit = value.String
 			}
 		case event.FieldIsCountLeaderCharacterPlay:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -203,12 +199,10 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				}
 			}
 		case event.FieldEventPointAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field event_point_assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.EventPointAssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field event_point_assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.EventPointAssetbundleName = value.String
 			}
 		case event.FieldStandbyScreenDisplayStartAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -262,7 +256,7 @@ func (_m *Event) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("event_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.EventType))
+	builder.WriteString(_m.EventType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -301,7 +295,7 @@ func (_m *Event) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveID))
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Unit))
+	builder.WriteString(_m.Unit)
 	builder.WriteString(", ")
 	builder.WriteString("is_count_leader_character_play=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsCountLeaderCharacterPlay))
@@ -310,7 +304,7 @@ func (_m *Event) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.EventRankingRewardRanges))
 	builder.WriteString(", ")
 	builder.WriteString("event_point_assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.EventPointAssetbundleName))
+	builder.WriteString(_m.EventPointAssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("standby_screen_display_start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StandbyScreenDisplayStartAt))

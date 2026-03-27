@@ -173,8 +173,16 @@ func (_c *CardepisodeCreate) SetCosts(v json.RawMessage) *CardepisodeCreate {
 }
 
 // SetCardEpisodePartType sets the "card_episode_part_type" field.
-func (_c *CardepisodeCreate) SetCardEpisodePartType(v json.RawMessage) *CardepisodeCreate {
+func (_c *CardepisodeCreate) SetCardEpisodePartType(v string) *CardepisodeCreate {
 	_c.mutation.SetCardEpisodePartType(v)
+	return _c
+}
+
+// SetNillableCardEpisodePartType sets the "card_episode_part_type" field if the given value is not nil.
+func (_c *CardepisodeCreate) SetNillableCardEpisodePartType(v *string) *CardepisodeCreate {
+	if v != nil {
+		_c.SetCardEpisodePartType(*v)
+	}
 	return _c
 }
 
@@ -296,7 +304,7 @@ func (_c *CardepisodeCreate) createSpec() (*Cardepisode, *sqlgraph.CreateSpec) {
 		_node.Costs = value
 	}
 	if value, ok := _c.mutation.CardEpisodePartType(); ok {
-		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeJSON, value)
+		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeString, value)
 		_node.CardEpisodePartType = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

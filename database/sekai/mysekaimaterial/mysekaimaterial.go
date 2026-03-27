@@ -84,6 +84,11 @@ func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()
 }
 
+// ByMysekaiMaterialType orders the results by the mysekai_material_type field.
+func ByMysekaiMaterialType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiMaterialType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -97,6 +102,11 @@ func ByPronunciation(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByMysekaiMaterialRarityType orders the results by the mysekai_material_rarity_type field.
+func ByMysekaiMaterialRarityType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiMaterialRarityType, opts...).ToFunc()
 }
 
 // ByIconAssetbundleName orders the results by the icon_assetbundle_name field.

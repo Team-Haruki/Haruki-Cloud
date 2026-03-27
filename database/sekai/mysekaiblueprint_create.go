@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprint"
@@ -35,8 +34,16 @@ func (_c *MysekaiblueprintCreate) SetNillableGameID(v *int64) *MysekaiblueprintC
 }
 
 // SetMysekaiCraftType sets the "mysekai_craft_type" field.
-func (_c *MysekaiblueprintCreate) SetMysekaiCraftType(v json.RawMessage) *MysekaiblueprintCreate {
+func (_c *MysekaiblueprintCreate) SetMysekaiCraftType(v string) *MysekaiblueprintCreate {
 	_c.mutation.SetMysekaiCraftType(v)
+	return _c
+}
+
+// SetNillableMysekaiCraftType sets the "mysekai_craft_type" field if the given value is not nil.
+func (_c *MysekaiblueprintCreate) SetNillableMysekaiCraftType(v *string) *MysekaiblueprintCreate {
+	if v != nil {
+		_c.SetMysekaiCraftType(*v)
+	}
 	return _c
 }
 
@@ -184,7 +191,7 @@ func (_c *MysekaiblueprintCreate) createSpec() (*Mysekaiblueprint, *sqlgraph.Cre
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiCraftType(); ok {
-		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeJSON, value)
+		_spec.SetField(mysekaiblueprint.FieldMysekaiCraftType, field.TypeString, value)
 		_node.MysekaiCraftType = value
 	}
 	if value, ok := _c.mutation.CraftTargetID(); ok {

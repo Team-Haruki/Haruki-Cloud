@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -21,7 +19,7 @@ func (Areaitem) Fields() []ent.Field {
 		field.Int64("area_id").Optional(),
 		field.String("name").Optional(),
 		field.String("flavor_text").Optional(),
-		field.JSON("spawn_point", json.RawMessage{}).Optional(),
+		field.String("spawn_point").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("server_region"),
 	}

@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
@@ -35,8 +34,16 @@ func (_c *MysekaimusicrecordCreate) SetNillableGameID(v *int64) *Mysekaimusicrec
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_c *MysekaimusicrecordCreate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordCreate {
+func (_c *MysekaimusicrecordCreate) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordCreate {
 	_c.mutation.SetMysekaiMusicTrackType(v)
+	return _c
+}
+
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_c *MysekaimusicrecordCreate) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordCreate {
+	if v != nil {
+		_c.SetMysekaiMusicTrackType(*v)
+	}
 	return _c
 }
 
@@ -128,7 +135,7 @@ func (_c *MysekaimusicrecordCreate) createSpec() (*Mysekaimusicrecord, *sqlgraph
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
+		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeString, value)
 		_node.MysekaiMusicTrackType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {

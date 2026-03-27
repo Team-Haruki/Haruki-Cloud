@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitemlevel"
 	"strings"
@@ -22,9 +21,9 @@ type Areaitemlevel struct {
 	// Level holds the value of the "level" field.
 	Level int64 `json:"level,omitempty"`
 	// TargetUnit holds the value of the "target_unit" field.
-	TargetUnit json.RawMessage `json:"target_unit,omitempty"`
+	TargetUnit string `json:"target_unit,omitempty"`
 	// TargetCardAttr holds the value of the "target_card_attr" field.
-	TargetCardAttr json.RawMessage `json:"target_card_attr,omitempty"`
+	TargetCardAttr string `json:"target_card_attr,omitempty"`
 	// TargetGameCharacterID holds the value of the "target_game_character_id" field.
 	TargetGameCharacterID int64 `json:"target_game_character_id,omitempty"`
 	// Power1BonusRate holds the value of the "power1_bonus_rate" field.
@@ -51,13 +50,11 @@ func (*Areaitemlevel) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case areaitemlevel.FieldTargetUnit, areaitemlevel.FieldTargetCardAttr:
-			values[i] = new([]byte)
 		case areaitemlevel.FieldPower1BonusRate, areaitemlevel.FieldPower1AllMatchBonusRate, areaitemlevel.FieldPower2BonusRate, areaitemlevel.FieldPower2AllMatchBonusRate, areaitemlevel.FieldPower3BonusRate, areaitemlevel.FieldPower3AllMatchBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case areaitemlevel.FieldID, areaitemlevel.FieldAreaItemID, areaitemlevel.FieldLevel, areaitemlevel.FieldTargetGameCharacterID:
 			values[i] = new(sql.NullInt64)
-		case areaitemlevel.FieldSentence, areaitemlevel.FieldServerRegion:
+		case areaitemlevel.FieldTargetUnit, areaitemlevel.FieldTargetCardAttr, areaitemlevel.FieldSentence, areaitemlevel.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -93,20 +90,16 @@ func (_m *Areaitemlevel) assignValues(columns []string, values []any) error {
 				_m.Level = value.Int64
 			}
 		case areaitemlevel.FieldTargetUnit:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field target_unit", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.TargetUnit); err != nil {
-					return fmt.Errorf("unmarshal field target_unit: %w", err)
-				}
+			} else if value.Valid {
+				_m.TargetUnit = value.String
 			}
 		case areaitemlevel.FieldTargetCardAttr:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field target_card_attr", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.TargetCardAttr); err != nil {
-					return fmt.Errorf("unmarshal field target_card_attr: %w", err)
-				}
+			} else if value.Valid {
+				_m.TargetCardAttr = value.String
 			}
 		case areaitemlevel.FieldTargetGameCharacterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -205,10 +198,10 @@ func (_m *Areaitemlevel) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Level))
 	builder.WriteString(", ")
 	builder.WriteString("target_unit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.TargetUnit))
+	builder.WriteString(_m.TargetUnit)
 	builder.WriteString(", ")
 	builder.WriteString("target_card_attr=")
-	builder.WriteString(fmt.Sprintf("%v", _m.TargetCardAttr))
+	builder.WriteString(_m.TargetCardAttr)
 	builder.WriteString(", ")
 	builder.WriteString("target_game_character_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TargetGameCharacterID))

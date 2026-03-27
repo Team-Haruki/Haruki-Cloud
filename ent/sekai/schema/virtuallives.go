@@ -18,8 +18,8 @@ type Virtuallive struct {
 func (Virtuallive) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("virtual_live_type", json.RawMessage{}).Optional(),
-		field.JSON("virtual_live_platform", json.RawMessage{}).Optional(),
+		field.String("virtual_live_type").Optional(),
+		field.String("virtual_live_platform").Optional(),
 		field.Int64("seq").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),

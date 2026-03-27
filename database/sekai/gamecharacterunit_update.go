@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacterunit"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *GamecharacterunitUpdate) ClearGameCharacterID() *GamecharacterunitUpda
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterunitUpdate) SetUnit(v json.RawMessage) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetUnit(v string) *GamecharacterunitUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *GamecharacterunitUpdate) AppendUnit(v json.RawMessage) *GamecharacterunitUpdate {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *GamecharacterunitUpdate) SetNillableUnit(v *string) *GamecharacterunitUpdate {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -122,14 +122,16 @@ func (_u *GamecharacterunitUpdate) ClearColorCode() *GamecharacterunitUpdate {
 }
 
 // SetSkinColorCode sets the "skin_color_code" field.
-func (_u *GamecharacterunitUpdate) SetSkinColorCode(v json.RawMessage) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetSkinColorCode(v string) *GamecharacterunitUpdate {
 	_u.mutation.SetSkinColorCode(v)
 	return _u
 }
 
-// AppendSkinColorCode appends value to the "skin_color_code" field.
-func (_u *GamecharacterunitUpdate) AppendSkinColorCode(v json.RawMessage) *GamecharacterunitUpdate {
-	_u.mutation.AppendSkinColorCode(v)
+// SetNillableSkinColorCode sets the "skin_color_code" field if the given value is not nil.
+func (_u *GamecharacterunitUpdate) SetNillableSkinColorCode(v *string) *GamecharacterunitUpdate {
+	if v != nil {
+		_u.SetSkinColorCode(*v)
+	}
 	return _u
 }
 
@@ -140,14 +142,16 @@ func (_u *GamecharacterunitUpdate) ClearSkinColorCode() *GamecharacterunitUpdate
 }
 
 // SetSkinShadowColorCode1 sets the "skin_shadow_color_code1" field.
-func (_u *GamecharacterunitUpdate) SetSkinShadowColorCode1(v json.RawMessage) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetSkinShadowColorCode1(v string) *GamecharacterunitUpdate {
 	_u.mutation.SetSkinShadowColorCode1(v)
 	return _u
 }
 
-// AppendSkinShadowColorCode1 appends value to the "skin_shadow_color_code1" field.
-func (_u *GamecharacterunitUpdate) AppendSkinShadowColorCode1(v json.RawMessage) *GamecharacterunitUpdate {
-	_u.mutation.AppendSkinShadowColorCode1(v)
+// SetNillableSkinShadowColorCode1 sets the "skin_shadow_color_code1" field if the given value is not nil.
+func (_u *GamecharacterunitUpdate) SetNillableSkinShadowColorCode1(v *string) *GamecharacterunitUpdate {
+	if v != nil {
+		_u.SetSkinShadowColorCode1(*v)
+	}
 	return _u
 }
 
@@ -158,14 +162,16 @@ func (_u *GamecharacterunitUpdate) ClearSkinShadowColorCode1() *Gamecharacteruni
 }
 
 // SetSkinShadowColorCode2 sets the "skin_shadow_color_code2" field.
-func (_u *GamecharacterunitUpdate) SetSkinShadowColorCode2(v json.RawMessage) *GamecharacterunitUpdate {
+func (_u *GamecharacterunitUpdate) SetSkinShadowColorCode2(v string) *GamecharacterunitUpdate {
 	_u.mutation.SetSkinShadowColorCode2(v)
 	return _u
 }
 
-// AppendSkinShadowColorCode2 appends value to the "skin_shadow_color_code2" field.
-func (_u *GamecharacterunitUpdate) AppendSkinShadowColorCode2(v json.RawMessage) *GamecharacterunitUpdate {
-	_u.mutation.AppendSkinShadowColorCode2(v)
+// SetNillableSkinShadowColorCode2 sets the "skin_shadow_color_code2" field if the given value is not nil.
+func (_u *GamecharacterunitUpdate) SetNillableSkinShadowColorCode2(v *string) *GamecharacterunitUpdate {
+	if v != nil {
+		_u.SetSkinShadowColorCode2(*v)
+	}
 	return _u
 }
 
@@ -249,15 +255,10 @@ func (_u *GamecharacterunitUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldUnit, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacterunit.FieldUnit, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.ColorCode(); ok {
 		_spec.SetField(gamecharacterunit.FieldColorCode, field.TypeString, value)
@@ -266,37 +267,22 @@ func (_u *GamecharacterunitUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(gamecharacterunit.FieldColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinColorCode(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinColorCode(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinColorCode, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeString, value)
 	}
 	if _u.mutation.SkinColorCodeCleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinColorCode, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinShadowColorCode1(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinShadowColorCode1(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinShadowColorCode1, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeString, value)
 	}
 	if _u.mutation.SkinShadowColorCode1Cleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinShadowColorCode2(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinShadowColorCode2(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinShadowColorCode2, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeString, value)
 	}
 	if _u.mutation.SkinShadowColorCode2Cleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gamecharacterunit.FieldServerRegion, field.TypeString, value)
@@ -376,14 +362,16 @@ func (_u *GamecharacterunitUpdateOne) ClearGameCharacterID() *GamecharacterunitU
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterunitUpdateOne) SetUnit(v json.RawMessage) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetUnit(v string) *GamecharacterunitUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *GamecharacterunitUpdateOne) AppendUnit(v json.RawMessage) *GamecharacterunitUpdateOne {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *GamecharacterunitUpdateOne) SetNillableUnit(v *string) *GamecharacterunitUpdateOne {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -414,14 +402,16 @@ func (_u *GamecharacterunitUpdateOne) ClearColorCode() *GamecharacterunitUpdateO
 }
 
 // SetSkinColorCode sets the "skin_color_code" field.
-func (_u *GamecharacterunitUpdateOne) SetSkinColorCode(v json.RawMessage) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetSkinColorCode(v string) *GamecharacterunitUpdateOne {
 	_u.mutation.SetSkinColorCode(v)
 	return _u
 }
 
-// AppendSkinColorCode appends value to the "skin_color_code" field.
-func (_u *GamecharacterunitUpdateOne) AppendSkinColorCode(v json.RawMessage) *GamecharacterunitUpdateOne {
-	_u.mutation.AppendSkinColorCode(v)
+// SetNillableSkinColorCode sets the "skin_color_code" field if the given value is not nil.
+func (_u *GamecharacterunitUpdateOne) SetNillableSkinColorCode(v *string) *GamecharacterunitUpdateOne {
+	if v != nil {
+		_u.SetSkinColorCode(*v)
+	}
 	return _u
 }
 
@@ -432,14 +422,16 @@ func (_u *GamecharacterunitUpdateOne) ClearSkinColorCode() *GamecharacterunitUpd
 }
 
 // SetSkinShadowColorCode1 sets the "skin_shadow_color_code1" field.
-func (_u *GamecharacterunitUpdateOne) SetSkinShadowColorCode1(v json.RawMessage) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetSkinShadowColorCode1(v string) *GamecharacterunitUpdateOne {
 	_u.mutation.SetSkinShadowColorCode1(v)
 	return _u
 }
 
-// AppendSkinShadowColorCode1 appends value to the "skin_shadow_color_code1" field.
-func (_u *GamecharacterunitUpdateOne) AppendSkinShadowColorCode1(v json.RawMessage) *GamecharacterunitUpdateOne {
-	_u.mutation.AppendSkinShadowColorCode1(v)
+// SetNillableSkinShadowColorCode1 sets the "skin_shadow_color_code1" field if the given value is not nil.
+func (_u *GamecharacterunitUpdateOne) SetNillableSkinShadowColorCode1(v *string) *GamecharacterunitUpdateOne {
+	if v != nil {
+		_u.SetSkinShadowColorCode1(*v)
+	}
 	return _u
 }
 
@@ -450,14 +442,16 @@ func (_u *GamecharacterunitUpdateOne) ClearSkinShadowColorCode1() *Gamecharacter
 }
 
 // SetSkinShadowColorCode2 sets the "skin_shadow_color_code2" field.
-func (_u *GamecharacterunitUpdateOne) SetSkinShadowColorCode2(v json.RawMessage) *GamecharacterunitUpdateOne {
+func (_u *GamecharacterunitUpdateOne) SetSkinShadowColorCode2(v string) *GamecharacterunitUpdateOne {
 	_u.mutation.SetSkinShadowColorCode2(v)
 	return _u
 }
 
-// AppendSkinShadowColorCode2 appends value to the "skin_shadow_color_code2" field.
-func (_u *GamecharacterunitUpdateOne) AppendSkinShadowColorCode2(v json.RawMessage) *GamecharacterunitUpdateOne {
-	_u.mutation.AppendSkinShadowColorCode2(v)
+// SetNillableSkinShadowColorCode2 sets the "skin_shadow_color_code2" field if the given value is not nil.
+func (_u *GamecharacterunitUpdateOne) SetNillableSkinShadowColorCode2(v *string) *GamecharacterunitUpdateOne {
+	if v != nil {
+		_u.SetSkinShadowColorCode2(*v)
+	}
 	return _u
 }
 
@@ -571,15 +565,10 @@ func (_u *GamecharacterunitUpdateOne) sqlSave(ctx context.Context) (_node *Gamec
 		_spec.ClearField(gamecharacterunit.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldUnit, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacterunit.FieldUnit, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.ColorCode(); ok {
 		_spec.SetField(gamecharacterunit.FieldColorCode, field.TypeString, value)
@@ -588,37 +577,22 @@ func (_u *GamecharacterunitUpdateOne) sqlSave(ctx context.Context) (_node *Gamec
 		_spec.ClearField(gamecharacterunit.FieldColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinColorCode(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinColorCode(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinColorCode, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinColorCode, field.TypeString, value)
 	}
 	if _u.mutation.SkinColorCodeCleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinColorCode, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinColorCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinShadowColorCode1(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinShadowColorCode1(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinShadowColorCode1, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeString, value)
 	}
 	if _u.mutation.SkinShadowColorCode1Cleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode1, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkinShadowColorCode2(); ok {
-		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSkinShadowColorCode2(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacterunit.FieldSkinShadowColorCode2, value)
-		})
+		_spec.SetField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeString, value)
 	}
 	if _u.mutation.SkinShadowColorCode2Cleared() {
-		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeJSON)
+		_spec.ClearField(gamecharacterunit.FieldSkinShadowColorCode2, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gamecharacterunit.FieldServerRegion, field.TypeString, value)

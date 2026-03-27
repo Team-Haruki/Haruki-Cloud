@@ -68,6 +68,11 @@ func Pronunciation(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldPronunciation, v))
 }
 
+// HonorType applies equality check predicate on the "honor_type" field. It's identical to HonorTypeEQ.
+func HonorType(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEQ(FieldHonorType, v))
+}
+
 // BackgroundAssetbundleName applies equality check predicate on the "background_assetbundle_name" field. It's identical to BackgroundAssetbundleNameEQ.
 func BackgroundAssetbundleName(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldBackgroundAssetbundleName, v))
@@ -283,6 +288,61 @@ func PronunciationContainsFold(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldContainsFold(FieldPronunciation, v))
 }
 
+// HonorTypeEQ applies the EQ predicate on the "honor_type" field.
+func HonorTypeEQ(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEQ(FieldHonorType, v))
+}
+
+// HonorTypeNEQ applies the NEQ predicate on the "honor_type" field.
+func HonorTypeNEQ(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNEQ(FieldHonorType, v))
+}
+
+// HonorTypeIn applies the In predicate on the "honor_type" field.
+func HonorTypeIn(vs ...string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldIn(FieldHonorType, vs...))
+}
+
+// HonorTypeNotIn applies the NotIn predicate on the "honor_type" field.
+func HonorTypeNotIn(vs ...string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNotIn(FieldHonorType, vs...))
+}
+
+// HonorTypeGT applies the GT predicate on the "honor_type" field.
+func HonorTypeGT(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldGT(FieldHonorType, v))
+}
+
+// HonorTypeGTE applies the GTE predicate on the "honor_type" field.
+func HonorTypeGTE(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldGTE(FieldHonorType, v))
+}
+
+// HonorTypeLT applies the LT predicate on the "honor_type" field.
+func HonorTypeLT(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldLT(FieldHonorType, v))
+}
+
+// HonorTypeLTE applies the LTE predicate on the "honor_type" field.
+func HonorTypeLTE(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldLTE(FieldHonorType, v))
+}
+
+// HonorTypeContains applies the Contains predicate on the "honor_type" field.
+func HonorTypeContains(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldContains(FieldHonorType, v))
+}
+
+// HonorTypeHasPrefix applies the HasPrefix predicate on the "honor_type" field.
+func HonorTypeHasPrefix(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldHasPrefix(FieldHonorType, v))
+}
+
+// HonorTypeHasSuffix applies the HasSuffix predicate on the "honor_type" field.
+func HonorTypeHasSuffix(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldHasSuffix(FieldHonorType, v))
+}
+
 // HonorTypeIsNil applies the IsNil predicate on the "honor_type" field.
 func HonorTypeIsNil() predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldIsNull(FieldHonorType))
@@ -291,6 +351,16 @@ func HonorTypeIsNil() predicate.Honorgroup {
 // HonorTypeNotNil applies the NotNil predicate on the "honor_type" field.
 func HonorTypeNotNil() predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldNotNull(FieldHonorType))
+}
+
+// HonorTypeEqualFold applies the EqualFold predicate on the "honor_type" field.
+func HonorTypeEqualFold(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEqualFold(FieldHonorType, v))
+}
+
+// HonorTypeContainsFold applies the ContainsFold predicate on the "honor_type" field.
+func HonorTypeContainsFold(v string) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldContainsFold(FieldHonorType, v))
 }
 
 // BackgroundAssetbundleNameEQ applies the EQ predicate on the "background_assetbundle_name" field.

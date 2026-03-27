@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Mysekaifixturetag) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.String("pronunciation").Optional(),
-		field.JSON("mysekai_fixture_tag_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_fixture_tag_type").Optional(),
 		field.Int64("external_id").Optional(),
 		field.String("server_region"),
 	}

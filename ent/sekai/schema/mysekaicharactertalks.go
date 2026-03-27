@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -23,7 +21,7 @@ func (Mysekaicharactertalk) Fields() []ent.Field {
 		field.Int64("mysekai_site_group_id").Optional(),
 		field.Int64("mysekai_character_talk_term_id").Optional(),
 		field.Int64("character_archive_mysekai_character_talk_group_id").Optional(),
-		field.JSON("assetbundle_name", json.RawMessage{}).Optional(),
+		field.String("assetbundle_name").Optional(),
 		field.String("lua").Optional(),
 		field.Bool("is_enabled_for_multi").Optional(),
 		field.String("server_region"),

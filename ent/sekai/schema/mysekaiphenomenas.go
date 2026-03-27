@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,11 +16,11 @@ type Mysekaiphenomenon struct {
 func (Mysekaiphenomenon) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("mysekai_phenomena_brightness_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_phenomena_brightness_type").Optional(),
 		field.String("name").Optional(),
 		field.String("english_name").Optional(),
 		field.String("description").Optional(),
-		field.JSON("mysekai_phenomena_time_period_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_phenomena_time_period_type").Optional(),
 		field.Int64("mysekai_phenomena_background_color_id").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("ramp_texture_assetbundle_name").Optional(),

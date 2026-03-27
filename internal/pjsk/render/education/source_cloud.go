@@ -115,8 +115,8 @@ func (c *CloudSource) GetResourceBoxByPurpose(purpose string, id int) *ResourceB
 		for _, item := range items {
 			box := &ResourceBox{
 				ID:                 int(item.GameID),
-				ResourceBoxPurpose: jsonString(item.ResourceBoxPurpose),
-				ResourceBoxType:    jsonString(item.ResourceBoxType),
+				ResourceBoxPurpose: item.ResourceBoxPurpose,
+				ResourceBoxType:    item.ResourceBoxType,
 				Description:        item.Description,
 			}
 			if len(item.Details) > 0 {

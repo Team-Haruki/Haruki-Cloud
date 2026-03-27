@@ -137,6 +137,11 @@ func ByGivenNameEnglish(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGivenNameEnglish, opts...).ToFunc()
 }
 
+// ByGender orders the results by the gender field.
+func ByGender(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGender, opts...).ToFunc()
+}
+
 // ByHeight orders the results by the height field.
 func ByHeight(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHeight, opts...).ToFunc()
@@ -147,9 +152,29 @@ func ByLive2DHeightAdjustment(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLive2DHeightAdjustment, opts...).ToFunc()
 }
 
+// ByFigure orders the results by the figure field.
+func ByFigure(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFigure, opts...).ToFunc()
+}
+
+// ByBreastSize orders the results by the breast_size field.
+func ByBreastSize(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBreastSize, opts...).ToFunc()
+}
+
 // ByModelName orders the results by the model_name field.
 func ByModelName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldModelName, opts...).ToFunc()
+}
+
+// ByUnit orders the results by the unit field.
+func ByUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnit, opts...).ToFunc()
+}
+
+// BySupportUnitType orders the results by the support_unit_type field.
+func BySupportUnitType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSupportUnitType, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

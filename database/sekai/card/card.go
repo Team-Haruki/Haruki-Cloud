@@ -134,6 +134,11 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
+// ByCardRarityType orders the results by the card_rarity_type field.
+func ByCardRarityType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardRarityType, opts...).ToFunc()
+}
+
 // BySpecialTrainingPower1BonusFixed orders the results by the special_training_power1_bonus_fixed field.
 func BySpecialTrainingPower1BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingPower1BonusFixed, opts...).ToFunc()
@@ -147,6 +152,16 @@ func BySpecialTrainingPower2BonusFixed(opts ...sql.OrderTermOption) OrderOption 
 // BySpecialTrainingPower3BonusFixed orders the results by the special_training_power3_bonus_fixed field.
 func BySpecialTrainingPower3BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSpecialTrainingPower3BonusFixed, opts...).ToFunc()
+}
+
+// ByAttr orders the results by the attr field.
+func ByAttr(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAttr, opts...).ToFunc()
+}
+
+// BySupportUnit orders the results by the support_unit field.
+func BySupportUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSupportUnit, opts...).ToFunc()
 }
 
 // BySkillID orders the results by the skill_id field.
@@ -174,6 +189,11 @@ func ByGachaPhrase(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGachaPhrase, opts...).ToFunc()
 }
 
+// ByFlavorText orders the results by the flavor_text field.
+func ByFlavorText(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFlavorText, opts...).ToFunc()
+}
+
 // ByReleaseAt orders the results by the release_at field.
 func ByReleaseAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReleaseAt, opts...).ToFunc()
@@ -187,6 +207,16 @@ func ByArchivePublishedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByCardSupplyID orders the results by the card_supply_id field.
 func ByCardSupplyID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCardSupplyID, opts...).ToFunc()
+}
+
+// ByInitialSpecialTrainingStatus orders the results by the initial_special_training_status field.
+func ByInitialSpecialTrainingStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInitialSpecialTrainingStatus, opts...).ToFunc()
+}
+
+// ByArchiveDisplayType orders the results by the archive_display_type field.
+func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
 }
 
 // BySpecialTrainingSkillID orders the results by the special_training_skill_id field.

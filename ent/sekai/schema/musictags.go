@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,7 +17,7 @@ func (Musictag) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
 		field.Int64("music_id").Optional(),
-		field.JSON("music_tag", json.RawMessage{}).Optional(),
+		field.String("music_tag").Optional(),
 		field.Int64("seq").Optional(),
 		field.String("server_region"),
 	}

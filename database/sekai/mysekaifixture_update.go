@@ -57,14 +57,16 @@ func (_u *MysekaifixtureUpdate) ClearGameID() *MysekaifixtureUpdate {
 }
 
 // SetMysekaiFixtureType sets the "mysekai_fixture_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiFixtureType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureType appends value to the "mysekai_fixture_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiFixtureType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiFixtureType(v)
+// SetNillableMysekaiFixtureType sets the "mysekai_fixture_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiFixtureType(*v)
+	}
 	return _u
 }
 
@@ -234,14 +236,16 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiFixtureSubGenreID() *MysekaifixtureU
 }
 
 // SetMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixtureHandleType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixtureHandleType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiFixtureHandleType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureHandleType appends value to the "mysekai_fixture_handle_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiFixtureHandleType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiFixtureHandleType(v)
+// SetNillableMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixtureHandleType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiFixtureHandleType(*v)
+	}
 	return _u
 }
 
@@ -252,14 +256,16 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiFixtureHandleType() *MysekaifixtureU
 }
 
 // SetMysekaiSettableSiteType sets the "mysekai_settable_site_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiSettableSiteType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiSettableSiteType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiSettableSiteType(v)
 	return _u
 }
 
-// AppendMysekaiSettableSiteType appends value to the "mysekai_settable_site_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiSettableSiteType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiSettableSiteType(v)
+// SetNillableMysekaiSettableSiteType sets the "mysekai_settable_site_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiSettableSiteType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiSettableSiteType(*v)
+	}
 	return _u
 }
 
@@ -270,14 +276,16 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiSettableSiteType() *MysekaifixtureUp
 }
 
 // SetMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiSettableLayoutType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiSettableLayoutType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiSettableLayoutType(v)
 	return _u
 }
 
-// AppendMysekaiSettableLayoutType appends value to the "mysekai_settable_layout_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiSettableLayoutType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiSettableLayoutType(v)
+// SetNillableMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiSettableLayoutType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiSettableLayoutType(*v)
+	}
 	return _u
 }
 
@@ -288,14 +296,16 @@ func (_u *MysekaifixtureUpdate) ClearMysekaiSettableLayoutType() *Mysekaifixture
 }
 
 // SetMysekaiFixturePutType sets the "mysekai_fixture_put_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixturePutType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixturePutType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiFixturePutType(v)
 	return _u
 }
 
-// AppendMysekaiFixturePutType appends value to the "mysekai_fixture_put_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiFixturePutType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiFixturePutType(v)
+// SetNillableMysekaiFixturePutType sets the "mysekai_fixture_put_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixturePutType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiFixturePutType(*v)
+	}
 	return _u
 }
 
@@ -436,14 +446,16 @@ func (_u *MysekaifixtureUpdate) ClearIsDisassembled() *MysekaifixtureUpdate {
 }
 
 // SetMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field.
-func (_u *MysekaifixtureUpdate) SetMysekaiFixturePlayerActionType(v json.RawMessage) *MysekaifixtureUpdate {
+func (_u *MysekaifixtureUpdate) SetMysekaiFixturePlayerActionType(v string) *MysekaifixtureUpdate {
 	_u.mutation.SetMysekaiFixturePlayerActionType(v)
 	return _u
 }
 
-// AppendMysekaiFixturePlayerActionType appends value to the "mysekai_fixture_player_action_type" field.
-func (_u *MysekaifixtureUpdate) AppendMysekaiFixturePlayerActionType(v json.RawMessage) *MysekaifixtureUpdate {
-	_u.mutation.AppendMysekaiFixturePlayerActionType(v)
+// SetNillableMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdate) SetNillableMysekaiFixturePlayerActionType(v *string) *MysekaifixtureUpdate {
+	if v != nil {
+		_u.SetMysekaiFixturePlayerActionType(*v)
+	}
 	return _u
 }
 
@@ -659,15 +671,10 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixtureType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixture.FieldName, field.TypeString, value)
@@ -726,48 +733,28 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureHandleType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureHandleType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixtureHandleType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureHandleTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiSettableSiteType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSettableSiteType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiSettableSiteType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSettableSiteTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiSettableLayoutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSettableLayoutType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiSettableLayoutType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSettableLayoutTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixturePutType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixturePutType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixturePutTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureAnotherColors(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureAnotherColors, field.TypeJSON, value)
@@ -822,15 +809,10 @@ func (_u *MysekaifixtureUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(mysekaifixture.FieldIsDisassembled, field.TypeBool)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePlayerActionType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixturePlayerActionType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixturePlayerActionType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixturePlayerActionTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.IsGameCharacterAction(); ok {
 		_spec.SetField(mysekaifixture.FieldIsGameCharacterAction, field.TypeBool, value)
@@ -928,14 +910,16 @@ func (_u *MysekaifixtureUpdateOne) ClearGameID() *MysekaifixtureUpdateOne {
 }
 
 // SetMysekaiFixtureType sets the "mysekai_fixture_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiFixtureType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureType appends value to the "mysekai_fixture_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiFixtureType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiFixtureType(v)
+// SetNillableMysekaiFixtureType sets the "mysekai_fixture_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixtureType(*v)
+	}
 	return _u
 }
 
@@ -1105,14 +1089,16 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiFixtureSubGenreID() *Mysekaifixtu
 }
 
 // SetMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureHandleType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixtureHandleType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiFixtureHandleType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureHandleType appends value to the "mysekai_fixture_handle_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiFixtureHandleType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiFixtureHandleType(v)
+// SetNillableMysekaiFixtureHandleType sets the "mysekai_fixture_handle_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixtureHandleType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixtureHandleType(*v)
+	}
 	return _u
 }
 
@@ -1123,14 +1109,16 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiFixtureHandleType() *Mysekaifixtu
 }
 
 // SetMysekaiSettableSiteType sets the "mysekai_settable_site_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiSettableSiteType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiSettableSiteType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiSettableSiteType(v)
 	return _u
 }
 
-// AppendMysekaiSettableSiteType appends value to the "mysekai_settable_site_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiSettableSiteType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiSettableSiteType(v)
+// SetNillableMysekaiSettableSiteType sets the "mysekai_settable_site_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiSettableSiteType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiSettableSiteType(*v)
+	}
 	return _u
 }
 
@@ -1141,14 +1129,16 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiSettableSiteType() *Mysekaifixtur
 }
 
 // SetMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiSettableLayoutType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiSettableLayoutType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiSettableLayoutType(v)
 	return _u
 }
 
-// AppendMysekaiSettableLayoutType appends value to the "mysekai_settable_layout_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiSettableLayoutType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiSettableLayoutType(v)
+// SetNillableMysekaiSettableLayoutType sets the "mysekai_settable_layout_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiSettableLayoutType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiSettableLayoutType(*v)
+	}
 	return _u
 }
 
@@ -1159,14 +1149,16 @@ func (_u *MysekaifixtureUpdateOne) ClearMysekaiSettableLayoutType() *Mysekaifixt
 }
 
 // SetMysekaiFixturePutType sets the "mysekai_fixture_put_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePutType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePutType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiFixturePutType(v)
 	return _u
 }
 
-// AppendMysekaiFixturePutType appends value to the "mysekai_fixture_put_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiFixturePutType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiFixturePutType(v)
+// SetNillableMysekaiFixturePutType sets the "mysekai_fixture_put_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixturePutType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixturePutType(*v)
+	}
 	return _u
 }
 
@@ -1307,14 +1299,16 @@ func (_u *MysekaifixtureUpdateOne) ClearIsDisassembled() *MysekaifixtureUpdateOn
 }
 
 // SetMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field.
-func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePlayerActionType(v json.RawMessage) *MysekaifixtureUpdateOne {
+func (_u *MysekaifixtureUpdateOne) SetMysekaiFixturePlayerActionType(v string) *MysekaifixtureUpdateOne {
 	_u.mutation.SetMysekaiFixturePlayerActionType(v)
 	return _u
 }
 
-// AppendMysekaiFixturePlayerActionType appends value to the "mysekai_fixture_player_action_type" field.
-func (_u *MysekaifixtureUpdateOne) AppendMysekaiFixturePlayerActionType(v json.RawMessage) *MysekaifixtureUpdateOne {
-	_u.mutation.AppendMysekaiFixturePlayerActionType(v)
+// SetNillableMysekaiFixturePlayerActionType sets the "mysekai_fixture_player_action_type" field if the given value is not nil.
+func (_u *MysekaifixtureUpdateOne) SetNillableMysekaiFixturePlayerActionType(v *string) *MysekaifixtureUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixturePlayerActionType(*v)
+	}
 	return _u
 }
 
@@ -1560,15 +1554,10 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixtureType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaifixture.FieldName, field.TypeString, value)
@@ -1627,48 +1616,28 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureSubGenreID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureHandleType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureHandleType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixtureHandleType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureHandleTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixtureHandleType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiSettableSiteType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSettableSiteType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiSettableSiteType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSettableSiteTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiSettableSiteType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiSettableLayoutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiSettableLayoutType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiSettableLayoutType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiSettableLayoutTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiSettableLayoutType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePutType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixturePutType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixturePutType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixturePutTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePutType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureAnotherColors(); ok {
 		_spec.SetField(mysekaifixture.FieldMysekaiFixtureAnotherColors, field.TypeJSON, value)
@@ -1723,15 +1692,10 @@ func (_u *MysekaifixtureUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaif
 		_spec.ClearField(mysekaifixture.FieldIsDisassembled, field.TypeBool)
 	}
 	if value, ok := _u.mutation.MysekaiFixturePlayerActionType(); ok {
-		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixturePlayerActionType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixture.FieldMysekaiFixturePlayerActionType, value)
-		})
+		_spec.SetField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixturePlayerActionTypeCleared() {
-		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeJSON)
+		_spec.ClearField(mysekaifixture.FieldMysekaiFixturePlayerActionType, field.TypeString)
 	}
 	if value, ok := _u.mutation.IsGameCharacterAction(); ok {
 		_spec.SetField(mysekaifixture.FieldIsGameCharacterAction, field.TypeBool, value)

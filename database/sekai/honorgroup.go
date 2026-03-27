@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/honorgroup"
 	"strings"
@@ -24,7 +23,7 @@ type Honorgroup struct {
 	// Pronunciation holds the value of the "pronunciation" field.
 	Pronunciation string `json:"pronunciation,omitempty"`
 	// HonorType holds the value of the "honor_type" field.
-	HonorType json.RawMessage `json:"honor_type,omitempty"`
+	HonorType string `json:"honor_type,omitempty"`
 	// BackgroundAssetbundleName holds the value of the "background_assetbundle_name" field.
 	BackgroundAssetbundleName string `json:"background_assetbundle_name,omitempty"`
 	// FrameName holds the value of the "frame_name" field.
@@ -39,11 +38,9 @@ func (*Honorgroup) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case honorgroup.FieldHonorType:
-			values[i] = new([]byte)
 		case honorgroup.FieldID, honorgroup.FieldGameID:
 			values[i] = new(sql.NullInt64)
-		case honorgroup.FieldName, honorgroup.FieldPronunciation, honorgroup.FieldBackgroundAssetbundleName, honorgroup.FieldFrameName, honorgroup.FieldServerRegion:
+		case honorgroup.FieldName, honorgroup.FieldPronunciation, honorgroup.FieldHonorType, honorgroup.FieldBackgroundAssetbundleName, honorgroup.FieldFrameName, honorgroup.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -85,12 +82,10 @@ func (_m *Honorgroup) assignValues(columns []string, values []any) error {
 				_m.Pronunciation = value.String
 			}
 		case honorgroup.FieldHonorType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.HonorType); err != nil {
-					return fmt.Errorf("unmarshal field honor_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.HonorType = value.String
 			}
 		case honorgroup.FieldBackgroundAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -156,7 +151,7 @@ func (_m *Honorgroup) String() string {
 	builder.WriteString(_m.Pronunciation)
 	builder.WriteString(", ")
 	builder.WriteString("honor_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.HonorType))
+	builder.WriteString(_m.HonorType)
 	builder.WriteString(", ")
 	builder.WriteString("background_assetbundle_name=")
 	builder.WriteString(_m.BackgroundAssetbundleName)

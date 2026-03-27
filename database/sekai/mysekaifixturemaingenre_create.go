@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
@@ -49,8 +48,16 @@ func (_c *MysekaifixturemaingenreCreate) SetNillableName(v *string) *Mysekaifixt
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_c *MysekaifixturemaingenreCreate) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreCreate {
+func (_c *MysekaifixturemaingenreCreate) SetMysekaiFixtureMainGenreType(v string) *MysekaifixturemaingenreCreate {
 	_c.mutation.SetMysekaiFixtureMainGenreType(v)
+	return _c
+}
+
+// SetNillableMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field if the given value is not nil.
+func (_c *MysekaifixturemaingenreCreate) SetNillableMysekaiFixtureMainGenreType(v *string) *MysekaifixturemaingenreCreate {
+	if v != nil {
+		_c.SetMysekaiFixtureMainGenreType(*v)
+	}
 	return _c
 }
 
@@ -160,7 +167,7 @@ func (_c *MysekaifixturemaingenreCreate) createSpec() (*Mysekaifixturemaingenre,
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureMainGenreType(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeString, value)
 		_node.MysekaiFixtureMainGenreType = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

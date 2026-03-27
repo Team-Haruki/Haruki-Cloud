@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprintmysekaimaterialcost"
 	"strings"
@@ -28,7 +27,7 @@ type Mysekaiblueprintmysekaimaterialcost struct {
 	// Quantity holds the value of the "quantity" field.
 	Quantity int64 `json:"quantity,omitempty"`
 	// MysekaiBlueprintType holds the value of the "mysekai_blueprint_type" field.
-	MysekaiBlueprintType json.RawMessage `json:"mysekai_blueprint_type,omitempty"`
+	MysekaiBlueprintType string `json:"mysekai_blueprint_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -39,11 +38,9 @@ func (*Mysekaiblueprintmysekaimaterialcost) scanValues(columns []string) ([]any,
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType:
-			values[i] = new([]byte)
 		case mysekaiblueprintmysekaimaterialcost.FieldID, mysekaiblueprintmysekaimaterialcost.FieldGameID, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintID, mysekaiblueprintmysekaimaterialcost.FieldMysekaiMaterialID, mysekaiblueprintmysekaimaterialcost.FieldSeq, mysekaiblueprintmysekaimaterialcost.FieldQuantity:
 			values[i] = new(sql.NullInt64)
-		case mysekaiblueprintmysekaimaterialcost.FieldServerRegion:
+		case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, mysekaiblueprintmysekaimaterialcost.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -97,12 +94,10 @@ func (_m *Mysekaiblueprintmysekaimaterialcost) assignValues(columns []string, va
 				_m.Quantity = value.Int64
 			}
 		case mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_blueprint_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiBlueprintType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_blueprint_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiBlueprintType = value.String
 			}
 		case mysekaiblueprintmysekaimaterialcost.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -162,7 +157,7 @@ func (_m *Mysekaiblueprintmysekaimaterialcost) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Quantity))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_blueprint_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiBlueprintType))
+	builder.WriteString(_m.MysekaiBlueprintType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

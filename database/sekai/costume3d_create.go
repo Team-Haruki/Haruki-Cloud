@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/costume3d"
@@ -63,8 +62,16 @@ func (_c *Costume3DCreate) SetNillableCostume3DGroupID(v *int64) *Costume3DCreat
 }
 
 // SetCostume3DType sets the "costume3_d_type" field.
-func (_c *Costume3DCreate) SetCostume3DType(v json.RawMessage) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCostume3DType(v string) *Costume3DCreate {
 	_c.mutation.SetCostume3DType(v)
+	return _c
+}
+
+// SetNillableCostume3DType sets the "costume3_d_type" field if the given value is not nil.
+func (_c *Costume3DCreate) SetNillableCostume3DType(v *string) *Costume3DCreate {
+	if v != nil {
+		_c.SetCostume3DType(*v)
+	}
 	return _c
 }
 
@@ -83,8 +90,16 @@ func (_c *Costume3DCreate) SetNillableName(v *string) *Costume3DCreate {
 }
 
 // SetPartType sets the "part_type" field.
-func (_c *Costume3DCreate) SetPartType(v json.RawMessage) *Costume3DCreate {
+func (_c *Costume3DCreate) SetPartType(v string) *Costume3DCreate {
 	_c.mutation.SetPartType(v)
+	return _c
+}
+
+// SetNillablePartType sets the "part_type" field if the given value is not nil.
+func (_c *Costume3DCreate) SetNillablePartType(v *string) *Costume3DCreate {
+	if v != nil {
+		_c.SetPartType(*v)
+	}
 	return _c
 }
 
@@ -131,8 +146,16 @@ func (_c *Costume3DCreate) SetNillableCharacterID(v *int64) *Costume3DCreate {
 }
 
 // SetCostume3DRarity sets the "costume3_d_rarity" field.
-func (_c *Costume3DCreate) SetCostume3DRarity(v json.RawMessage) *Costume3DCreate {
+func (_c *Costume3DCreate) SetCostume3DRarity(v string) *Costume3DCreate {
 	_c.mutation.SetCostume3DRarity(v)
+	return _c
+}
+
+// SetNillableCostume3DRarity sets the "costume3_d_rarity" field if the given value is not nil.
+func (_c *Costume3DCreate) SetNillableCostume3DRarity(v *string) *Costume3DCreate {
+	if v != nil {
+		_c.SetCostume3DRarity(*v)
+	}
 	return _c
 }
 
@@ -179,8 +202,16 @@ func (_c *Costume3DCreate) SetNillableDesigner(v *string) *Costume3DCreate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *Costume3DCreate) SetArchiveDisplayType(v json.RawMessage) *Costume3DCreate {
+func (_c *Costume3DCreate) SetArchiveDisplayType(v string) *Costume3DCreate {
 	_c.mutation.SetArchiveDisplayType(v)
+	return _c
+}
+
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_c *Costume3DCreate) SetNillableArchiveDisplayType(v *string) *Costume3DCreate {
+	if v != nil {
+		_c.SetArchiveDisplayType(*v)
+	}
 	return _c
 }
 
@@ -294,7 +325,7 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.Costume3DGroupID = value
 	}
 	if value, ok := _c.mutation.Costume3DType(); ok {
-		_spec.SetField(costume3d.FieldCostume3DType, field.TypeJSON, value)
+		_spec.SetField(costume3d.FieldCostume3DType, field.TypeString, value)
 		_node.Costume3DType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -302,7 +333,7 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.PartType(); ok {
-		_spec.SetField(costume3d.FieldPartType, field.TypeJSON, value)
+		_spec.SetField(costume3d.FieldPartType, field.TypeString, value)
 		_node.PartType = value
 	}
 	if value, ok := _c.mutation.ColorID(); ok {
@@ -318,7 +349,7 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.CharacterID = value
 	}
 	if value, ok := _c.mutation.Costume3DRarity(); ok {
-		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeJSON, value)
+		_spec.SetField(costume3d.FieldCostume3DRarity, field.TypeString, value)
 		_node.Costume3DRarity = value
 	}
 	if value, ok := _c.mutation.HowToObtain(); ok {
@@ -334,7 +365,7 @@ func (_c *Costume3DCreate) createSpec() (*Costume3D, *sqlgraph.CreateSpec) {
 		_node.Designer = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeJSON, value)
+		_spec.SetField(costume3d.FieldArchiveDisplayType, field.TypeString, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.ArchivePublishedAt(); ok {

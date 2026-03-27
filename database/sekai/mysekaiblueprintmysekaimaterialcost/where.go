@@ -78,6 +78,11 @@ func Quantity(v int64) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldQuantity, v))
 }
 
+// MysekaiBlueprintType applies equality check predicate on the "mysekai_blueprint_type" field. It's identical to MysekaiBlueprintTypeEQ.
+func MysekaiBlueprintType(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiBlueprintType, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldServerRegion, v))
@@ -333,6 +338,61 @@ func QuantityNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotNull(FieldQuantity))
 }
 
+// MysekaiBlueprintTypeEQ applies the EQ predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeEQ(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEQ(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeNEQ applies the NEQ predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeNEQ(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNEQ(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeIn applies the In predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeIn(vs ...string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIn(FieldMysekaiBlueprintType, vs...))
+}
+
+// MysekaiBlueprintTypeNotIn applies the NotIn predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeNotIn(vs ...string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotIn(FieldMysekaiBlueprintType, vs...))
+}
+
+// MysekaiBlueprintTypeGT applies the GT predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeGT(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGT(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeGTE applies the GTE predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeGTE(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldGTE(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeLT applies the LT predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeLT(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLT(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeLTE applies the LTE predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeLTE(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldLTE(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeContains applies the Contains predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeContains(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldContains(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeHasPrefix applies the HasPrefix predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeHasPrefix(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldHasPrefix(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeHasSuffix applies the HasSuffix predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeHasSuffix(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldHasSuffix(FieldMysekaiBlueprintType, v))
+}
+
 // MysekaiBlueprintTypeIsNil applies the IsNil predicate on the "mysekai_blueprint_type" field.
 func MysekaiBlueprintTypeIsNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldIsNull(FieldMysekaiBlueprintType))
@@ -341,6 +401,16 @@ func MysekaiBlueprintTypeIsNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 // MysekaiBlueprintTypeNotNil applies the NotNil predicate on the "mysekai_blueprint_type" field.
 func MysekaiBlueprintTypeNotNil() predicate.Mysekaiblueprintmysekaimaterialcost {
 	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldNotNull(FieldMysekaiBlueprintType))
+}
+
+// MysekaiBlueprintTypeEqualFold applies the EqualFold predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeEqualFold(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldEqualFold(FieldMysekaiBlueprintType, v))
+}
+
+// MysekaiBlueprintTypeContainsFold applies the ContainsFold predicate on the "mysekai_blueprint_type" field.
+func MysekaiBlueprintTypeContainsFold(v string) predicate.Mysekaiblueprintmysekaimaterialcost {
+	return predicate.Mysekaiblueprintmysekaimaterialcost(sql.FieldContainsFold(FieldMysekaiBlueprintType, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

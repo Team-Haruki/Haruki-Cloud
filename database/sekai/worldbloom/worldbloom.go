@@ -86,6 +86,11 @@ func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
 }
 
+// ByWorldBloomChapterType orders the results by the world_bloom_chapter_type field.
+func ByWorldBloomChapterType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorldBloomChapterType, opts...).ToFunc()
+}
+
 // ByChapterNo orders the results by the chapter_no field.
 func ByChapterNo(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldChapterNo, opts...).ToFunc()

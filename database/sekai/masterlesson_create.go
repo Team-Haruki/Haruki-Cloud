@@ -21,8 +21,16 @@ type MasterlessonCreate struct {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_c *MasterlessonCreate) SetCardRarityType(v json.RawMessage) *MasterlessonCreate {
+func (_c *MasterlessonCreate) SetCardRarityType(v string) *MasterlessonCreate {
 	_c.mutation.SetCardRarityType(v)
+	return _c
+}
+
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_c *MasterlessonCreate) SetNillableCardRarityType(v *string) *MasterlessonCreate {
+	if v != nil {
+		_c.SetCardRarityType(*v)
+	}
 	return _c
 }
 
@@ -178,7 +186,7 @@ func (_c *MasterlessonCreate) createSpec() (*Masterlesson, *sqlgraph.CreateSpec)
 		_spec = sqlgraph.NewCreateSpec(masterlesson.Table, sqlgraph.NewFieldSpec(masterlesson.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.CardRarityType(); ok {
-		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeJSON, value)
+		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeString, value)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {

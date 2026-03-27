@@ -18,7 +18,7 @@ type Gacha struct {
 func (Gacha) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("gacha_type", json.RawMessage{}).Optional(),
+		field.String("gacha_type").Optional(),
 		field.String("name").Optional(),
 		field.Int64("seq").Optional(),
 		field.String("assetbundle_name").Optional(),

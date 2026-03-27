@@ -111,14 +111,16 @@ func (_u *CardUpdate) ClearCharacterID() *CardUpdate {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *CardUpdate) SetCardRarityType(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetCardRarityType(v string) *CardUpdate {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *CardUpdate) AppendCardRarityType(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableCardRarityType(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -210,14 +212,16 @@ func (_u *CardUpdate) ClearSpecialTrainingPower3BonusFixed() *CardUpdate {
 }
 
 // SetAttr sets the "attr" field.
-func (_u *CardUpdate) SetAttr(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetAttr(v string) *CardUpdate {
 	_u.mutation.SetAttr(v)
 	return _u
 }
 
-// AppendAttr appends value to the "attr" field.
-func (_u *CardUpdate) AppendAttr(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendAttr(v)
+// SetNillableAttr sets the "attr" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableAttr(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetAttr(*v)
+	}
 	return _u
 }
 
@@ -228,14 +232,16 @@ func (_u *CardUpdate) ClearAttr() *CardUpdate {
 }
 
 // SetSupportUnit sets the "support_unit" field.
-func (_u *CardUpdate) SetSupportUnit(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetSupportUnit(v string) *CardUpdate {
 	_u.mutation.SetSupportUnit(v)
 	return _u
 }
 
-// AppendSupportUnit appends value to the "support_unit" field.
-func (_u *CardUpdate) AppendSupportUnit(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendSupportUnit(v)
+// SetNillableSupportUnit sets the "support_unit" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableSupportUnit(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetSupportUnit(*v)
+	}
 	return _u
 }
 
@@ -353,14 +359,16 @@ func (_u *CardUpdate) ClearGachaPhrase() *CardUpdate {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *CardUpdate) SetFlavorText(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetFlavorText(v string) *CardUpdate {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *CardUpdate) AppendFlavorText(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableFlavorText(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -506,14 +514,16 @@ func (_u *CardUpdate) ClearMasterLessonAchieveResources() *CardUpdate {
 }
 
 // SetInitialSpecialTrainingStatus sets the "initial_special_training_status" field.
-func (_u *CardUpdate) SetInitialSpecialTrainingStatus(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetInitialSpecialTrainingStatus(v string) *CardUpdate {
 	_u.mutation.SetInitialSpecialTrainingStatus(v)
 	return _u
 }
 
-// AppendInitialSpecialTrainingStatus appends value to the "initial_special_training_status" field.
-func (_u *CardUpdate) AppendInitialSpecialTrainingStatus(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendInitialSpecialTrainingStatus(v)
+// SetNillableInitialSpecialTrainingStatus sets the "initial_special_training_status" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableInitialSpecialTrainingStatus(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetInitialSpecialTrainingStatus(*v)
+	}
 	return _u
 }
 
@@ -524,14 +534,16 @@ func (_u *CardUpdate) ClearInitialSpecialTrainingStatus() *CardUpdate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *CardUpdate) SetArchiveDisplayType(v json.RawMessage) *CardUpdate {
+func (_u *CardUpdate) SetArchiveDisplayType(v string) *CardUpdate {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *CardUpdate) AppendArchiveDisplayType(v json.RawMessage) *CardUpdate {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *CardUpdate) SetNillableArchiveDisplayType(v *string) *CardUpdate {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -698,15 +710,10 @@ func (_u *CardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(card.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(card.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldCardRarityType, value)
-		})
+		_spec.SetField(card.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(card.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(card.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpecialTrainingPower1BonusFixed(); ok {
 		_spec.SetField(card.FieldSpecialTrainingPower1BonusFixed, field.TypeInt64, value)
@@ -736,26 +743,16 @@ func (_u *CardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(card.FieldSpecialTrainingPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Attr(); ok {
-		_spec.SetField(card.FieldAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldAttr, value)
-		})
+		_spec.SetField(card.FieldAttr, field.TypeString, value)
 	}
 	if _u.mutation.AttrCleared() {
-		_spec.ClearField(card.FieldAttr, field.TypeJSON)
+		_spec.ClearField(card.FieldAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.SupportUnit(); ok {
-		_spec.SetField(card.FieldSupportUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSupportUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldSupportUnit, value)
-		})
+		_spec.SetField(card.FieldSupportUnit, field.TypeString, value)
 	}
 	if _u.mutation.SupportUnitCleared() {
-		_spec.ClearField(card.FieldSupportUnit, field.TypeJSON)
+		_spec.ClearField(card.FieldSupportUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkillID(); ok {
 		_spec.SetField(card.FieldSkillID, field.TypeInt64, value)
@@ -791,15 +788,10 @@ func (_u *CardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(card.FieldGachaPhrase, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(card.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldFlavorText, value)
-		})
+		_spec.SetField(card.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(card.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(card.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseAt(); ok {
 		_spec.SetField(card.FieldReleaseAt, field.TypeInt64, value)
@@ -862,26 +854,16 @@ func (_u *CardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(card.FieldMasterLessonAchieveResources, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.InitialSpecialTrainingStatus(); ok {
-		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedInitialSpecialTrainingStatus(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldInitialSpecialTrainingStatus, value)
-		})
+		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeString, value)
 	}
 	if _u.mutation.InitialSpecialTrainingStatusCleared() {
-		_spec.ClearField(card.FieldInitialSpecialTrainingStatus, field.TypeJSON)
+		_spec.ClearField(card.FieldInitialSpecialTrainingStatus, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(card.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(card.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(card.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(card.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpecialTrainingSkillID(); ok {
 		_spec.SetField(card.FieldSpecialTrainingSkillID, field.TypeInt64, value)
@@ -1012,14 +994,16 @@ func (_u *CardUpdateOne) ClearCharacterID() *CardUpdateOne {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *CardUpdateOne) SetCardRarityType(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetCardRarityType(v string) *CardUpdateOne {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *CardUpdateOne) AppendCardRarityType(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableCardRarityType(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -1111,14 +1095,16 @@ func (_u *CardUpdateOne) ClearSpecialTrainingPower3BonusFixed() *CardUpdateOne {
 }
 
 // SetAttr sets the "attr" field.
-func (_u *CardUpdateOne) SetAttr(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetAttr(v string) *CardUpdateOne {
 	_u.mutation.SetAttr(v)
 	return _u
 }
 
-// AppendAttr appends value to the "attr" field.
-func (_u *CardUpdateOne) AppendAttr(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendAttr(v)
+// SetNillableAttr sets the "attr" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableAttr(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetAttr(*v)
+	}
 	return _u
 }
 
@@ -1129,14 +1115,16 @@ func (_u *CardUpdateOne) ClearAttr() *CardUpdateOne {
 }
 
 // SetSupportUnit sets the "support_unit" field.
-func (_u *CardUpdateOne) SetSupportUnit(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetSupportUnit(v string) *CardUpdateOne {
 	_u.mutation.SetSupportUnit(v)
 	return _u
 }
 
-// AppendSupportUnit appends value to the "support_unit" field.
-func (_u *CardUpdateOne) AppendSupportUnit(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendSupportUnit(v)
+// SetNillableSupportUnit sets the "support_unit" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableSupportUnit(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetSupportUnit(*v)
+	}
 	return _u
 }
 
@@ -1254,14 +1242,16 @@ func (_u *CardUpdateOne) ClearGachaPhrase() *CardUpdateOne {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *CardUpdateOne) SetFlavorText(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetFlavorText(v string) *CardUpdateOne {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *CardUpdateOne) AppendFlavorText(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableFlavorText(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -1407,14 +1397,16 @@ func (_u *CardUpdateOne) ClearMasterLessonAchieveResources() *CardUpdateOne {
 }
 
 // SetInitialSpecialTrainingStatus sets the "initial_special_training_status" field.
-func (_u *CardUpdateOne) SetInitialSpecialTrainingStatus(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetInitialSpecialTrainingStatus(v string) *CardUpdateOne {
 	_u.mutation.SetInitialSpecialTrainingStatus(v)
 	return _u
 }
 
-// AppendInitialSpecialTrainingStatus appends value to the "initial_special_training_status" field.
-func (_u *CardUpdateOne) AppendInitialSpecialTrainingStatus(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendInitialSpecialTrainingStatus(v)
+// SetNillableInitialSpecialTrainingStatus sets the "initial_special_training_status" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableInitialSpecialTrainingStatus(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetInitialSpecialTrainingStatus(*v)
+	}
 	return _u
 }
 
@@ -1425,14 +1417,16 @@ func (_u *CardUpdateOne) ClearInitialSpecialTrainingStatus() *CardUpdateOne {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *CardUpdateOne) SetArchiveDisplayType(v json.RawMessage) *CardUpdateOne {
+func (_u *CardUpdateOne) SetArchiveDisplayType(v string) *CardUpdateOne {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *CardUpdateOne) AppendArchiveDisplayType(v json.RawMessage) *CardUpdateOne {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *CardUpdateOne) SetNillableArchiveDisplayType(v *string) *CardUpdateOne {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -1629,15 +1623,10 @@ func (_u *CardUpdateOne) sqlSave(ctx context.Context) (_node *Card, err error) {
 		_spec.ClearField(card.FieldCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(card.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldCardRarityType, value)
-		})
+		_spec.SetField(card.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(card.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(card.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpecialTrainingPower1BonusFixed(); ok {
 		_spec.SetField(card.FieldSpecialTrainingPower1BonusFixed, field.TypeInt64, value)
@@ -1667,26 +1656,16 @@ func (_u *CardUpdateOne) sqlSave(ctx context.Context) (_node *Card, err error) {
 		_spec.ClearField(card.FieldSpecialTrainingPower3BonusFixed, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Attr(); ok {
-		_spec.SetField(card.FieldAttr, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAttr(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldAttr, value)
-		})
+		_spec.SetField(card.FieldAttr, field.TypeString, value)
 	}
 	if _u.mutation.AttrCleared() {
-		_spec.ClearField(card.FieldAttr, field.TypeJSON)
+		_spec.ClearField(card.FieldAttr, field.TypeString)
 	}
 	if value, ok := _u.mutation.SupportUnit(); ok {
-		_spec.SetField(card.FieldSupportUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSupportUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldSupportUnit, value)
-		})
+		_spec.SetField(card.FieldSupportUnit, field.TypeString, value)
 	}
 	if _u.mutation.SupportUnitCleared() {
-		_spec.ClearField(card.FieldSupportUnit, field.TypeJSON)
+		_spec.ClearField(card.FieldSupportUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.SkillID(); ok {
 		_spec.SetField(card.FieldSkillID, field.TypeInt64, value)
@@ -1722,15 +1701,10 @@ func (_u *CardUpdateOne) sqlSave(ctx context.Context) (_node *Card, err error) {
 		_spec.ClearField(card.FieldGachaPhrase, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(card.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldFlavorText, value)
-		})
+		_spec.SetField(card.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(card.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(card.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.ReleaseAt(); ok {
 		_spec.SetField(card.FieldReleaseAt, field.TypeInt64, value)
@@ -1793,26 +1767,16 @@ func (_u *CardUpdateOne) sqlSave(ctx context.Context) (_node *Card, err error) {
 		_spec.ClearField(card.FieldMasterLessonAchieveResources, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.InitialSpecialTrainingStatus(); ok {
-		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedInitialSpecialTrainingStatus(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldInitialSpecialTrainingStatus, value)
-		})
+		_spec.SetField(card.FieldInitialSpecialTrainingStatus, field.TypeString, value)
 	}
 	if _u.mutation.InitialSpecialTrainingStatusCleared() {
-		_spec.ClearField(card.FieldInitialSpecialTrainingStatus, field.TypeJSON)
+		_spec.ClearField(card.FieldInitialSpecialTrainingStatus, field.TypeString)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(card.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, card.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(card.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(card.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(card.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SpecialTrainingSkillID(); ok {
 		_spec.SetField(card.FieldSpecialTrainingSkillID, field.TypeInt64, value)

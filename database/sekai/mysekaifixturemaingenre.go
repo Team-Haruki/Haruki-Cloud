@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
 	"strings"
@@ -22,7 +21,7 @@ type Mysekaifixturemaingenre struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// MysekaiFixtureMainGenreType holds the value of the "mysekai_fixture_main_genre_type" field.
-	MysekaiFixtureMainGenreType json.RawMessage `json:"mysekai_fixture_main_genre_type,omitempty"`
+	MysekaiFixtureMainGenreType string `json:"mysekai_fixture_main_genre_type,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GroupID holds the value of the "group_id" field.
@@ -37,11 +36,9 @@ func (*Mysekaifixturemaingenre) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType:
-			values[i] = new([]byte)
 		case mysekaifixturemaingenre.FieldID, mysekaifixturemaingenre.FieldGameID, mysekaifixturemaingenre.FieldGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaifixturemaingenre.FieldName, mysekaifixturemaingenre.FieldAssetbundleName, mysekaifixturemaingenre.FieldServerRegion:
+		case mysekaifixturemaingenre.FieldName, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, mysekaifixturemaingenre.FieldAssetbundleName, mysekaifixturemaingenre.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -77,12 +74,10 @@ func (_m *Mysekaifixturemaingenre) assignValues(columns []string, values []any) 
 				_m.Name = value.String
 			}
 		case mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_main_genre_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixtureMainGenreType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_main_genre_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixtureMainGenreType = value.String
 			}
 		case mysekaifixturemaingenre.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -145,7 +140,7 @@ func (_m *Mysekaifixturemaingenre) String() string {
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_main_genre_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureMainGenreType))
+	builder.WriteString(_m.MysekaiFixtureMainGenreType)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)

@@ -330,14 +330,16 @@ func (_u *MusicUpdate) ClearAssetbundleName() *MusicUpdate {
 }
 
 // SetLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field.
-func (_u *MusicUpdate) SetLiveTalkBackgroundAssetbundleName(v json.RawMessage) *MusicUpdate {
+func (_u *MusicUpdate) SetLiveTalkBackgroundAssetbundleName(v string) *MusicUpdate {
 	_u.mutation.SetLiveTalkBackgroundAssetbundleName(v)
 	return _u
 }
 
-// AppendLiveTalkBackgroundAssetbundleName appends value to the "live_talk_background_assetbundle_name" field.
-func (_u *MusicUpdate) AppendLiveTalkBackgroundAssetbundleName(v json.RawMessage) *MusicUpdate {
-	_u.mutation.AppendLiveTalkBackgroundAssetbundleName(v)
+// SetNillableLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field if the given value is not nil.
+func (_u *MusicUpdate) SetNillableLiveTalkBackgroundAssetbundleName(v *string) *MusicUpdate {
+	if v != nil {
+		_u.SetLiveTalkBackgroundAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -697,15 +699,10 @@ func (_u *MusicUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(music.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.LiveTalkBackgroundAssetbundleName(); ok {
-		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLiveTalkBackgroundAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, music.FieldLiveTalkBackgroundAssetbundleName, value)
-		})
+		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.LiveTalkBackgroundAssetbundleNameCleared() {
-		_spec.ClearField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeJSON)
+		_spec.ClearField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.PublishedAt(); ok {
 		_spec.SetField(music.FieldPublishedAt, field.TypeInt64, value)
@@ -1099,14 +1096,16 @@ func (_u *MusicUpdateOne) ClearAssetbundleName() *MusicUpdateOne {
 }
 
 // SetLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field.
-func (_u *MusicUpdateOne) SetLiveTalkBackgroundAssetbundleName(v json.RawMessage) *MusicUpdateOne {
+func (_u *MusicUpdateOne) SetLiveTalkBackgroundAssetbundleName(v string) *MusicUpdateOne {
 	_u.mutation.SetLiveTalkBackgroundAssetbundleName(v)
 	return _u
 }
 
-// AppendLiveTalkBackgroundAssetbundleName appends value to the "live_talk_background_assetbundle_name" field.
-func (_u *MusicUpdateOne) AppendLiveTalkBackgroundAssetbundleName(v json.RawMessage) *MusicUpdateOne {
-	_u.mutation.AppendLiveTalkBackgroundAssetbundleName(v)
+// SetNillableLiveTalkBackgroundAssetbundleName sets the "live_talk_background_assetbundle_name" field if the given value is not nil.
+func (_u *MusicUpdateOne) SetNillableLiveTalkBackgroundAssetbundleName(v *string) *MusicUpdateOne {
+	if v != nil {
+		_u.SetLiveTalkBackgroundAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -1496,15 +1495,10 @@ func (_u *MusicUpdateOne) sqlSave(ctx context.Context) (_node *Music, err error)
 		_spec.ClearField(music.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.LiveTalkBackgroundAssetbundleName(); ok {
-		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLiveTalkBackgroundAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, music.FieldLiveTalkBackgroundAssetbundleName, value)
-		})
+		_spec.SetField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.LiveTalkBackgroundAssetbundleNameCleared() {
-		_spec.ClearField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeJSON)
+		_spec.ClearField(music.FieldLiveTalkBackgroundAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.PublishedAt(); ok {
 		_spec.SetField(music.FieldPublishedAt, field.TypeInt64, value)

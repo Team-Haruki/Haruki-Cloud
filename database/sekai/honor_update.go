@@ -111,14 +111,16 @@ func (_u *HonorUpdate) ClearGroupID() *HonorUpdate {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_u *HonorUpdate) SetHonorRarity(v json.RawMessage) *HonorUpdate {
+func (_u *HonorUpdate) SetHonorRarity(v string) *HonorUpdate {
 	_u.mutation.SetHonorRarity(v)
 	return _u
 }
 
-// AppendHonorRarity appends value to the "honor_rarity" field.
-func (_u *HonorUpdate) AppendHonorRarity(v json.RawMessage) *HonorUpdate {
-	_u.mutation.AppendHonorRarity(v)
+// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
+func (_u *HonorUpdate) SetNillableHonorRarity(v *string) *HonorUpdate {
+	if v != nil {
+		_u.SetHonorRarity(*v)
+	}
 	return _u
 }
 
@@ -343,15 +345,10 @@ func (_u *HonorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(honor.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
-		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorRarity(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, honor.FieldHonorRarity, value)
-		})
+		_spec.SetField(honor.FieldHonorRarity, field.TypeString, value)
 	}
 	if _u.mutation.HonorRarityCleared() {
-		_spec.ClearField(honor.FieldHonorRarity, field.TypeJSON)
+		_spec.ClearField(honor.FieldHonorRarity, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honor.FieldName, field.TypeString, value)
@@ -505,14 +502,16 @@ func (_u *HonorUpdateOne) ClearGroupID() *HonorUpdateOne {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_u *HonorUpdateOne) SetHonorRarity(v json.RawMessage) *HonorUpdateOne {
+func (_u *HonorUpdateOne) SetHonorRarity(v string) *HonorUpdateOne {
 	_u.mutation.SetHonorRarity(v)
 	return _u
 }
 
-// AppendHonorRarity appends value to the "honor_rarity" field.
-func (_u *HonorUpdateOne) AppendHonorRarity(v json.RawMessage) *HonorUpdateOne {
-	_u.mutation.AppendHonorRarity(v)
+// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
+func (_u *HonorUpdateOne) SetNillableHonorRarity(v *string) *HonorUpdateOne {
+	if v != nil {
+		_u.SetHonorRarity(*v)
+	}
 	return _u
 }
 
@@ -767,15 +766,10 @@ func (_u *HonorUpdateOne) sqlSave(ctx context.Context) (_node *Honor, err error)
 		_spec.ClearField(honor.FieldGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.HonorRarity(); ok {
-		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorRarity(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, honor.FieldHonorRarity, value)
-		})
+		_spec.SetField(honor.FieldHonorRarity, field.TypeString, value)
 	}
 	if _u.mutation.HonorRarityCleared() {
-		_spec.ClearField(honor.FieldHonorRarity, field.TypeJSON)
+		_spec.ClearField(honor.FieldHonorRarity, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(honor.FieldName, field.TypeString, value)

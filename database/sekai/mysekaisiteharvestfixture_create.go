@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
@@ -77,8 +76,16 @@ func (_c *MysekaisiteharvestfixtureCreate) SetNillableLastAttackStamina(v *int64
 }
 
 // SetMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field.
-func (_c *MysekaisiteharvestfixtureCreate) SetMysekaiSiteHarvestFixtureRarityType(v json.RawMessage) *MysekaisiteharvestfixtureCreate {
+func (_c *MysekaisiteharvestfixtureCreate) SetMysekaiSiteHarvestFixtureRarityType(v string) *MysekaisiteharvestfixtureCreate {
 	_c.mutation.SetMysekaiSiteHarvestFixtureRarityType(v)
+	return _c
+}
+
+// SetNillableMysekaiSiteHarvestFixtureRarityType sets the "mysekai_site_harvest_fixture_rarity_type" field if the given value is not nil.
+func (_c *MysekaisiteharvestfixtureCreate) SetNillableMysekaiSiteHarvestFixtureRarityType(v *string) *MysekaisiteharvestfixtureCreate {
+	if v != nil {
+		_c.SetMysekaiSiteHarvestFixtureRarityType(*v)
+	}
 	return _c
 }
 
@@ -182,7 +189,7 @@ func (_c *MysekaisiteharvestfixtureCreate) createSpec() (*Mysekaisiteharvestfixt
 		_node.LastAttackStamina = value
 	}
 	if value, ok := _c.mutation.MysekaiSiteHarvestFixtureRarityType(); ok {
-		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeJSON, value)
+		_spec.SetField(mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, field.TypeString, value)
 		_node.MysekaiSiteHarvestFixtureRarityType = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

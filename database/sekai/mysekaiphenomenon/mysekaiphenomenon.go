@@ -76,6 +76,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByMysekaiPhenomenaBrightnessType orders the results by the mysekai_phenomena_brightness_type field.
+func ByMysekaiPhenomenaBrightnessType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiPhenomenaBrightnessType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -89,6 +94,11 @@ func ByEnglishName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByMysekaiPhenomenaTimePeriodType orders the results by the mysekai_phenomena_time_period_type field.
+func ByMysekaiPhenomenaTimePeriodType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiPhenomenaTimePeriodType, opts...).ToFunc()
 }
 
 // ByMysekaiPhenomenaBackgroundColorID orders the results by the mysekai_phenomena_background_color_id field.

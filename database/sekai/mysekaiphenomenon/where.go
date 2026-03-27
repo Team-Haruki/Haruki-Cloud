@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldGameID, v))
 }
 
+// MysekaiPhenomenaBrightnessType applies equality check predicate on the "mysekai_phenomena_brightness_type" field. It's identical to MysekaiPhenomenaBrightnessTypeEQ.
+func MysekaiPhenomenaBrightnessType(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldName, v))
@@ -71,6 +76,11 @@ func EnglishName(v string) predicate.Mysekaiphenomenon {
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldDescription, v))
+}
+
+// MysekaiPhenomenaTimePeriodType applies equality check predicate on the "mysekai_phenomena_time_period_type" field. It's identical to MysekaiPhenomenaTimePeriodTypeEQ.
+func MysekaiPhenomenaTimePeriodType(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaTimePeriodType, v))
 }
 
 // MysekaiPhenomenaBackgroundColorID applies equality check predicate on the "mysekai_phenomena_background_color_id" field. It's identical to MysekaiPhenomenaBackgroundColorIDEQ.
@@ -148,6 +158,61 @@ func GameIDNotNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotNull(FieldGameID))
 }
 
+// MysekaiPhenomenaBrightnessTypeEQ applies the EQ predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeNEQ applies the NEQ predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeNEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeIn applies the In predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldMysekaiPhenomenaBrightnessType, vs...))
+}
+
+// MysekaiPhenomenaBrightnessTypeNotIn applies the NotIn predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeNotIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldMysekaiPhenomenaBrightnessType, vs...))
+}
+
+// MysekaiPhenomenaBrightnessTypeGT applies the GT predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeGT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeGTE applies the GTE predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeGTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeLT applies the LT predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeLT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeLTE applies the LTE predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeLTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeContains applies the Contains predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeContains(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContains(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeHasPrefix applies the HasPrefix predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeHasPrefix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasPrefix(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeHasSuffix applies the HasSuffix predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeHasSuffix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasSuffix(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
 // MysekaiPhenomenaBrightnessTypeIsNil applies the IsNil predicate on the "mysekai_phenomena_brightness_type" field.
 func MysekaiPhenomenaBrightnessTypeIsNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIsNull(FieldMysekaiPhenomenaBrightnessType))
@@ -156,6 +221,16 @@ func MysekaiPhenomenaBrightnessTypeIsNil() predicate.Mysekaiphenomenon {
 // MysekaiPhenomenaBrightnessTypeNotNil applies the NotNil predicate on the "mysekai_phenomena_brightness_type" field.
 func MysekaiPhenomenaBrightnessTypeNotNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotNull(FieldMysekaiPhenomenaBrightnessType))
+}
+
+// MysekaiPhenomenaBrightnessTypeEqualFold applies the EqualFold predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeEqualFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEqualFold(FieldMysekaiPhenomenaBrightnessType, v))
+}
+
+// MysekaiPhenomenaBrightnessTypeContainsFold applies the ContainsFold predicate on the "mysekai_phenomena_brightness_type" field.
+func MysekaiPhenomenaBrightnessTypeContainsFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldMysekaiPhenomenaBrightnessType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -383,6 +458,61 @@ func DescriptionContainsFold(v string) predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// MysekaiPhenomenaTimePeriodTypeEQ applies the EQ predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEQ(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeNEQ applies the NEQ predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeNEQ(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNEQ(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeIn applies the In predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldIn(FieldMysekaiPhenomenaTimePeriodType, vs...))
+}
+
+// MysekaiPhenomenaTimePeriodTypeNotIn applies the NotIn predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeNotIn(vs ...string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldNotIn(FieldMysekaiPhenomenaTimePeriodType, vs...))
+}
+
+// MysekaiPhenomenaTimePeriodTypeGT applies the GT predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeGT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGT(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeGTE applies the GTE predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeGTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldGTE(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeLT applies the LT predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeLT(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLT(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeLTE applies the LTE predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeLTE(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldLTE(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeContains applies the Contains predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeContains(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContains(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeHasPrefix applies the HasPrefix predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeHasPrefix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasPrefix(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeHasSuffix applies the HasSuffix predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeHasSuffix(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldHasSuffix(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
 // MysekaiPhenomenaTimePeriodTypeIsNil applies the IsNil predicate on the "mysekai_phenomena_time_period_type" field.
 func MysekaiPhenomenaTimePeriodTypeIsNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldIsNull(FieldMysekaiPhenomenaTimePeriodType))
@@ -391,6 +521,16 @@ func MysekaiPhenomenaTimePeriodTypeIsNil() predicate.Mysekaiphenomenon {
 // MysekaiPhenomenaTimePeriodTypeNotNil applies the NotNil predicate on the "mysekai_phenomena_time_period_type" field.
 func MysekaiPhenomenaTimePeriodTypeNotNil() predicate.Mysekaiphenomenon {
 	return predicate.Mysekaiphenomenon(sql.FieldNotNull(FieldMysekaiPhenomenaTimePeriodType))
+}
+
+// MysekaiPhenomenaTimePeriodTypeEqualFold applies the EqualFold predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeEqualFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldEqualFold(FieldMysekaiPhenomenaTimePeriodType, v))
+}
+
+// MysekaiPhenomenaTimePeriodTypeContainsFold applies the ContainsFold predicate on the "mysekai_phenomena_time_period_type" field.
+func MysekaiPhenomenaTimePeriodTypeContainsFold(v string) predicate.Mysekaiphenomenon {
+	return predicate.Mysekaiphenomenon(sql.FieldContainsFold(FieldMysekaiPhenomenaTimePeriodType, v))
 }
 
 // MysekaiPhenomenaBackgroundColorIDEQ applies the EQ predicate on the "mysekai_phenomena_background_color_id" field.

@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/honorgroup"
@@ -63,8 +62,16 @@ func (_c *HonorgroupCreate) SetNillablePronunciation(v *string) *HonorgroupCreat
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_c *HonorgroupCreate) SetHonorType(v json.RawMessage) *HonorgroupCreate {
+func (_c *HonorgroupCreate) SetHonorType(v string) *HonorgroupCreate {
 	_c.mutation.SetHonorType(v)
+	return _c
+}
+
+// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
+func (_c *HonorgroupCreate) SetNillableHonorType(v *string) *HonorgroupCreate {
+	if v != nil {
+		_c.SetHonorType(*v)
+	}
 	return _c
 }
 
@@ -178,7 +185,7 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 		_node.Pronunciation = value
 	}
 	if value, ok := _c.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
 		_node.HonorType = value
 	}
 	if value, ok := _c.mutation.BackgroundAssetbundleName(); ok {

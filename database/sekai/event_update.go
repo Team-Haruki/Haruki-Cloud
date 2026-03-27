@@ -57,14 +57,16 @@ func (_u *EventUpdate) ClearGameID() *EventUpdate {
 }
 
 // SetEventType sets the "event_type" field.
-func (_u *EventUpdate) SetEventType(v json.RawMessage) *EventUpdate {
+func (_u *EventUpdate) SetEventType(v string) *EventUpdate {
 	_u.mutation.SetEventType(v)
 	return _u
 }
 
-// AppendEventType appends value to the "event_type" field.
-func (_u *EventUpdate) AppendEventType(v json.RawMessage) *EventUpdate {
-	_u.mutation.AppendEventType(v)
+// SetNillableEventType sets the "event_type" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableEventType(v *string) *EventUpdate {
+	if v != nil {
+		_u.SetEventType(*v)
+	}
 	return _u
 }
 
@@ -378,14 +380,16 @@ func (_u *EventUpdate) ClearVirtualLiveID() *EventUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventUpdate) SetUnit(v json.RawMessage) *EventUpdate {
+func (_u *EventUpdate) SetUnit(v string) *EventUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *EventUpdate) AppendUnit(v json.RawMessage) *EventUpdate {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableUnit(v *string) *EventUpdate {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -434,14 +438,16 @@ func (_u *EventUpdate) ClearEventRankingRewardRanges() *EventUpdate {
 }
 
 // SetEventPointAssetbundleName sets the "event_point_assetbundle_name" field.
-func (_u *EventUpdate) SetEventPointAssetbundleName(v json.RawMessage) *EventUpdate {
+func (_u *EventUpdate) SetEventPointAssetbundleName(v string) *EventUpdate {
 	_u.mutation.SetEventPointAssetbundleName(v)
 	return _u
 }
 
-// AppendEventPointAssetbundleName appends value to the "event_point_assetbundle_name" field.
-func (_u *EventUpdate) AppendEventPointAssetbundleName(v json.RawMessage) *EventUpdate {
-	_u.mutation.AppendEventPointAssetbundleName(v)
+// SetNillableEventPointAssetbundleName sets the "event_point_assetbundle_name" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableEventPointAssetbundleName(v *string) *EventUpdate {
+	if v != nil {
+		_u.SetEventPointAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -543,15 +549,10 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(event.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventType(); ok {
-		_spec.SetField(event.FieldEventType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldEventType, value)
-		})
+		_spec.SetField(event.FieldEventType, field.TypeString, value)
 	}
 	if _u.mutation.EventTypeCleared() {
-		_spec.ClearField(event.FieldEventType, field.TypeJSON)
+		_spec.ClearField(event.FieldEventType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(event.FieldName, field.TypeString, value)
@@ -653,15 +654,10 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(event.FieldVirtualLiveID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(event.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldUnit, value)
-		})
+		_spec.SetField(event.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(event.FieldUnit, field.TypeJSON)
+		_spec.ClearField(event.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.IsCountLeaderCharacterPlay(); ok {
 		_spec.SetField(event.FieldIsCountLeaderCharacterPlay, field.TypeBool, value)
@@ -681,15 +677,10 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(event.FieldEventRankingRewardRanges, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.EventPointAssetbundleName(); ok {
-		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventPointAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldEventPointAssetbundleName, value)
-		})
+		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.EventPointAssetbundleNameCleared() {
-		_spec.ClearField(event.FieldEventPointAssetbundleName, field.TypeJSON)
+		_spec.ClearField(event.FieldEventPointAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.StandbyScreenDisplayStartAt(); ok {
 		_spec.SetField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64, value)
@@ -751,14 +742,16 @@ func (_u *EventUpdateOne) ClearGameID() *EventUpdateOne {
 }
 
 // SetEventType sets the "event_type" field.
-func (_u *EventUpdateOne) SetEventType(v json.RawMessage) *EventUpdateOne {
+func (_u *EventUpdateOne) SetEventType(v string) *EventUpdateOne {
 	_u.mutation.SetEventType(v)
 	return _u
 }
 
-// AppendEventType appends value to the "event_type" field.
-func (_u *EventUpdateOne) AppendEventType(v json.RawMessage) *EventUpdateOne {
-	_u.mutation.AppendEventType(v)
+// SetNillableEventType sets the "event_type" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableEventType(v *string) *EventUpdateOne {
+	if v != nil {
+		_u.SetEventType(*v)
+	}
 	return _u
 }
 
@@ -1072,14 +1065,16 @@ func (_u *EventUpdateOne) ClearVirtualLiveID() *EventUpdateOne {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventUpdateOne) SetUnit(v json.RawMessage) *EventUpdateOne {
+func (_u *EventUpdateOne) SetUnit(v string) *EventUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *EventUpdateOne) AppendUnit(v json.RawMessage) *EventUpdateOne {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableUnit(v *string) *EventUpdateOne {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -1128,14 +1123,16 @@ func (_u *EventUpdateOne) ClearEventRankingRewardRanges() *EventUpdateOne {
 }
 
 // SetEventPointAssetbundleName sets the "event_point_assetbundle_name" field.
-func (_u *EventUpdateOne) SetEventPointAssetbundleName(v json.RawMessage) *EventUpdateOne {
+func (_u *EventUpdateOne) SetEventPointAssetbundleName(v string) *EventUpdateOne {
 	_u.mutation.SetEventPointAssetbundleName(v)
 	return _u
 }
 
-// AppendEventPointAssetbundleName appends value to the "event_point_assetbundle_name" field.
-func (_u *EventUpdateOne) AppendEventPointAssetbundleName(v json.RawMessage) *EventUpdateOne {
-	_u.mutation.AppendEventPointAssetbundleName(v)
+// SetNillableEventPointAssetbundleName sets the "event_point_assetbundle_name" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableEventPointAssetbundleName(v *string) *EventUpdateOne {
+	if v != nil {
+		_u.SetEventPointAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -1267,15 +1264,10 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 		_spec.ClearField(event.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.EventType(); ok {
-		_spec.SetField(event.FieldEventType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldEventType, value)
-		})
+		_spec.SetField(event.FieldEventType, field.TypeString, value)
 	}
 	if _u.mutation.EventTypeCleared() {
-		_spec.ClearField(event.FieldEventType, field.TypeJSON)
+		_spec.ClearField(event.FieldEventType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(event.FieldName, field.TypeString, value)
@@ -1377,15 +1369,10 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 		_spec.ClearField(event.FieldVirtualLiveID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(event.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldUnit, value)
-		})
+		_spec.SetField(event.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(event.FieldUnit, field.TypeJSON)
+		_spec.ClearField(event.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.IsCountLeaderCharacterPlay(); ok {
 		_spec.SetField(event.FieldIsCountLeaderCharacterPlay, field.TypeBool, value)
@@ -1405,15 +1392,10 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 		_spec.ClearField(event.FieldEventRankingRewardRanges, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.EventPointAssetbundleName(); ok {
-		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventPointAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, event.FieldEventPointAssetbundleName, value)
-		})
+		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.EventPointAssetbundleNameCleared() {
-		_spec.ClearField(event.FieldEventPointAssetbundleName, field.TypeJSON)
+		_spec.ClearField(event.FieldEventPointAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.StandbyScreenDisplayStartAt(); ok {
 		_spec.SetField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64, value)

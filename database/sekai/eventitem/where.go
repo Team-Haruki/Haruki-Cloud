@@ -63,6 +63,16 @@ func EventID(v int64) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldEventID, v))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEQ(FieldName, v))
+}
+
+// FlavorText applies equality check predicate on the "flavor_text" field. It's identical to FlavorTextEQ.
+func FlavorText(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEQ(FieldFlavorText, v))
+}
+
 // AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
 func AssetbundleName(v string) predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldEQ(FieldAssetbundleName, v))
@@ -178,6 +188,61 @@ func EventIDNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldEventID))
 }
 
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasSuffix(FieldName, v))
+}
+
 // NameIsNil applies the IsNil predicate on the "name" field.
 func NameIsNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIsNull(FieldName))
@@ -188,6 +253,71 @@ func NameNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldName))
 }
 
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContainsFold(FieldName, v))
+}
+
+// FlavorTextEQ applies the EQ predicate on the "flavor_text" field.
+func FlavorTextEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEQ(FieldFlavorText, v))
+}
+
+// FlavorTextNEQ applies the NEQ predicate on the "flavor_text" field.
+func FlavorTextNEQ(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNEQ(FieldFlavorText, v))
+}
+
+// FlavorTextIn applies the In predicate on the "flavor_text" field.
+func FlavorTextIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextNotIn applies the NotIn predicate on the "flavor_text" field.
+func FlavorTextNotIn(vs ...string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldNotIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextGT applies the GT predicate on the "flavor_text" field.
+func FlavorTextGT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGT(FieldFlavorText, v))
+}
+
+// FlavorTextGTE applies the GTE predicate on the "flavor_text" field.
+func FlavorTextGTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldGTE(FieldFlavorText, v))
+}
+
+// FlavorTextLT applies the LT predicate on the "flavor_text" field.
+func FlavorTextLT(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLT(FieldFlavorText, v))
+}
+
+// FlavorTextLTE applies the LTE predicate on the "flavor_text" field.
+func FlavorTextLTE(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldLTE(FieldFlavorText, v))
+}
+
+// FlavorTextContains applies the Contains predicate on the "flavor_text" field.
+func FlavorTextContains(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContains(FieldFlavorText, v))
+}
+
+// FlavorTextHasPrefix applies the HasPrefix predicate on the "flavor_text" field.
+func FlavorTextHasPrefix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasPrefix(FieldFlavorText, v))
+}
+
+// FlavorTextHasSuffix applies the HasSuffix predicate on the "flavor_text" field.
+func FlavorTextHasSuffix(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldHasSuffix(FieldFlavorText, v))
+}
+
 // FlavorTextIsNil applies the IsNil predicate on the "flavor_text" field.
 func FlavorTextIsNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldIsNull(FieldFlavorText))
@@ -196,6 +326,16 @@ func FlavorTextIsNil() predicate.Eventitem {
 // FlavorTextNotNil applies the NotNil predicate on the "flavor_text" field.
 func FlavorTextNotNil() predicate.Eventitem {
 	return predicate.Eventitem(sql.FieldNotNull(FieldFlavorText))
+}
+
+// FlavorTextEqualFold applies the EqualFold predicate on the "flavor_text" field.
+func FlavorTextEqualFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldEqualFold(FieldFlavorText, v))
+}
+
+// FlavorTextContainsFold applies the ContainsFold predicate on the "flavor_text" field.
+func FlavorTextContainsFold(v string) predicate.Eventitem {
+	return predicate.Eventitem(sql.FieldContainsFold(FieldFlavorText, v))
 }
 
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.

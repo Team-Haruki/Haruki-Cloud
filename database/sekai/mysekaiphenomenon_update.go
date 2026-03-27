@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *MysekaiphenomenonUpdate) ClearGameID() *MysekaiphenomenonUpdate {
 }
 
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
-func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaBrightnessType(v string) *MysekaiphenomenonUpdate {
 	_u.mutation.SetMysekaiPhenomenaBrightnessType(v)
 	return _u
 }
 
-// AppendMysekaiPhenomenaBrightnessType appends value to the "mysekai_phenomena_brightness_type" field.
-func (_u *MysekaiphenomenonUpdate) AppendMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonUpdate {
-	_u.mutation.AppendMysekaiPhenomenaBrightnessType(v)
+// SetNillableMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field if the given value is not nil.
+func (_u *MysekaiphenomenonUpdate) SetNillableMysekaiPhenomenaBrightnessType(v *string) *MysekaiphenomenonUpdate {
+	if v != nil {
+		_u.SetMysekaiPhenomenaBrightnessType(*v)
+	}
 	return _u
 }
 
@@ -135,14 +135,16 @@ func (_u *MysekaiphenomenonUpdate) ClearDescription() *MysekaiphenomenonUpdate {
 }
 
 // SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
-func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonUpdate {
+func (_u *MysekaiphenomenonUpdate) SetMysekaiPhenomenaTimePeriodType(v string) *MysekaiphenomenonUpdate {
 	_u.mutation.SetMysekaiPhenomenaTimePeriodType(v)
 	return _u
 }
 
-// AppendMysekaiPhenomenaTimePeriodType appends value to the "mysekai_phenomena_time_period_type" field.
-func (_u *MysekaiphenomenonUpdate) AppendMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonUpdate {
-	_u.mutation.AppendMysekaiPhenomenaTimePeriodType(v)
+// SetNillableMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field if the given value is not nil.
+func (_u *MysekaiphenomenonUpdate) SetNillableMysekaiPhenomenaTimePeriodType(v *string) *MysekaiphenomenonUpdate {
+	if v != nil {
+		_u.SetMysekaiPhenomenaTimePeriodType(*v)
+	}
 	return _u
 }
 
@@ -304,15 +306,10 @@ func (_u *MysekaiphenomenonUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(mysekaiphenomenon.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiPhenomenaBrightnessType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, value)
-		})
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiPhenomenaBrightnessTypeCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldName, field.TypeString, value)
@@ -333,15 +330,10 @@ func (_u *MysekaiphenomenonUpdate) sqlSave(ctx context.Context) (_node int, err 
 		_spec.ClearField(mysekaiphenomenon.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaTimePeriodType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiPhenomenaTimePeriodType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, value)
-		})
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiPhenomenaTimePeriodTypeCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)
@@ -421,14 +413,16 @@ func (_u *MysekaiphenomenonUpdateOne) ClearGameID() *MysekaiphenomenonUpdateOne 
 }
 
 // SetMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field.
-func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaBrightnessType(v string) *MysekaiphenomenonUpdateOne {
 	_u.mutation.SetMysekaiPhenomenaBrightnessType(v)
 	return _u
 }
 
-// AppendMysekaiPhenomenaBrightnessType appends value to the "mysekai_phenomena_brightness_type" field.
-func (_u *MysekaiphenomenonUpdateOne) AppendMysekaiPhenomenaBrightnessType(v json.RawMessage) *MysekaiphenomenonUpdateOne {
-	_u.mutation.AppendMysekaiPhenomenaBrightnessType(v)
+// SetNillableMysekaiPhenomenaBrightnessType sets the "mysekai_phenomena_brightness_type" field if the given value is not nil.
+func (_u *MysekaiphenomenonUpdateOne) SetNillableMysekaiPhenomenaBrightnessType(v *string) *MysekaiphenomenonUpdateOne {
+	if v != nil {
+		_u.SetMysekaiPhenomenaBrightnessType(*v)
+	}
 	return _u
 }
 
@@ -499,14 +493,16 @@ func (_u *MysekaiphenomenonUpdateOne) ClearDescription() *MysekaiphenomenonUpdat
 }
 
 // SetMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field.
-func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonUpdateOne {
+func (_u *MysekaiphenomenonUpdateOne) SetMysekaiPhenomenaTimePeriodType(v string) *MysekaiphenomenonUpdateOne {
 	_u.mutation.SetMysekaiPhenomenaTimePeriodType(v)
 	return _u
 }
 
-// AppendMysekaiPhenomenaTimePeriodType appends value to the "mysekai_phenomena_time_period_type" field.
-func (_u *MysekaiphenomenonUpdateOne) AppendMysekaiPhenomenaTimePeriodType(v json.RawMessage) *MysekaiphenomenonUpdateOne {
-	_u.mutation.AppendMysekaiPhenomenaTimePeriodType(v)
+// SetNillableMysekaiPhenomenaTimePeriodType sets the "mysekai_phenomena_time_period_type" field if the given value is not nil.
+func (_u *MysekaiphenomenonUpdateOne) SetNillableMysekaiPhenomenaTimePeriodType(v *string) *MysekaiphenomenonUpdateOne {
+	if v != nil {
+		_u.SetMysekaiPhenomenaTimePeriodType(*v)
+	}
 	return _u
 }
 
@@ -698,15 +694,10 @@ func (_u *MysekaiphenomenonUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		_spec.ClearField(mysekaiphenomenon.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBrightnessType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiPhenomenaBrightnessType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, value)
-		})
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiPhenomenaBrightnessTypeCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeJSON)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldName, field.TypeString, value)
@@ -727,15 +718,10 @@ func (_u *MysekaiphenomenonUpdateOne) sqlSave(ctx context.Context) (_node *Mysek
 		_spec.ClearField(mysekaiphenomenon.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaTimePeriodType(); ok {
-		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiPhenomenaTimePeriodType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, value)
-		})
+		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiPhenomenaTimePeriodTypeCleared() {
-		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeJSON)
+		_spec.ClearField(mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiPhenomenaBackgroundColorID(); ok {
 		_spec.SetField(mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID, field.TypeInt64, value)

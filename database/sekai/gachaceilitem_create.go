@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaceilitem"
@@ -63,8 +62,16 @@ func (_c *GachaceilitemCreate) SetNillableName(v *string) *GachaceilitemCreate {
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_c *GachaceilitemCreate) SetAssetbundleName(v json.RawMessage) *GachaceilitemCreate {
+func (_c *GachaceilitemCreate) SetAssetbundleName(v string) *GachaceilitemCreate {
 	_c.mutation.SetAssetbundleName(v)
+	return _c
+}
+
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_c *GachaceilitemCreate) SetNillableAssetbundleName(v *string) *GachaceilitemCreate {
+	if v != nil {
+		_c.SetAssetbundleName(*v)
+	}
 	return _c
 }
 
@@ -178,7 +185,7 @@ func (_c *GachaceilitemCreate) createSpec() (*Gachaceilitem, *sqlgraph.CreateSpe
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {
-		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeJSON, value)
+		_spec.SetField(gachaceilitem.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.ConvertStartAt(); ok {

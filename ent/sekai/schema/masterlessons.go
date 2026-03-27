@@ -17,7 +17,7 @@ type Masterlesson struct {
 
 func (Masterlesson) Fields() []ent.Field {
 	return []ent.Field{
-		field.JSON("card_rarity_type", json.RawMessage{}).Optional(),
+		field.String("card_rarity_type").Optional(),
 		field.Int64("master_rank").Optional(),
 		field.Int64("power1_bonus_fixed").Optional(),
 		field.Int64("power2_bonus_fixed").Optional(),

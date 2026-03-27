@@ -68,6 +68,11 @@ func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
 }
 
+// ByGachaDisplayType orders the results by the gacha_display_type field.
+func ByGachaDisplayType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGachaDisplayType, opts...).ToFunc()
+}
+
 // ByServerRegion orders the results by the server_region field.
 func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()

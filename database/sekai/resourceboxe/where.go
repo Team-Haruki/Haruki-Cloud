@@ -53,9 +53,19 @@ func IDLTE(id int) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldLTE(FieldID, id))
 }
 
+// ResourceBoxPurpose applies equality check predicate on the "resource_box_purpose" field. It's identical to ResourceBoxPurposeEQ.
+func ResourceBoxPurpose(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEQ(FieldResourceBoxPurpose, v))
+}
+
 // GameID applies equality check predicate on the "game_id" field. It's identical to GameIDEQ.
 func GameID(v int64) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldEQ(FieldGameID, v))
+}
+
+// ResourceBoxType applies equality check predicate on the "resource_box_type" field. It's identical to ResourceBoxTypeEQ.
+func ResourceBoxType(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEQ(FieldResourceBoxType, v))
 }
 
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
@@ -78,6 +88,61 @@ func ServerRegion(v string) predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldEQ(FieldServerRegion, v))
 }
 
+// ResourceBoxPurposeEQ applies the EQ predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeEQ(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEQ(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeNEQ applies the NEQ predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeNEQ(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldNEQ(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeIn applies the In predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeIn(vs ...string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldIn(FieldResourceBoxPurpose, vs...))
+}
+
+// ResourceBoxPurposeNotIn applies the NotIn predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeNotIn(vs ...string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldNotIn(FieldResourceBoxPurpose, vs...))
+}
+
+// ResourceBoxPurposeGT applies the GT predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeGT(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldGT(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeGTE applies the GTE predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeGTE(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldGTE(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeLT applies the LT predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeLT(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldLT(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeLTE applies the LTE predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeLTE(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldLTE(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeContains applies the Contains predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeContains(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldContains(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeHasPrefix applies the HasPrefix predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeHasPrefix(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldHasPrefix(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeHasSuffix applies the HasSuffix predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeHasSuffix(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldHasSuffix(FieldResourceBoxPurpose, v))
+}
+
 // ResourceBoxPurposeIsNil applies the IsNil predicate on the "resource_box_purpose" field.
 func ResourceBoxPurposeIsNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldIsNull(FieldResourceBoxPurpose))
@@ -86,6 +151,16 @@ func ResourceBoxPurposeIsNil() predicate.Resourceboxe {
 // ResourceBoxPurposeNotNil applies the NotNil predicate on the "resource_box_purpose" field.
 func ResourceBoxPurposeNotNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldNotNull(FieldResourceBoxPurpose))
+}
+
+// ResourceBoxPurposeEqualFold applies the EqualFold predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeEqualFold(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEqualFold(FieldResourceBoxPurpose, v))
+}
+
+// ResourceBoxPurposeContainsFold applies the ContainsFold predicate on the "resource_box_purpose" field.
+func ResourceBoxPurposeContainsFold(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldContainsFold(FieldResourceBoxPurpose, v))
 }
 
 // GameIDEQ applies the EQ predicate on the "game_id" field.
@@ -138,6 +213,61 @@ func GameIDNotNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldNotNull(FieldGameID))
 }
 
+// ResourceBoxTypeEQ applies the EQ predicate on the "resource_box_type" field.
+func ResourceBoxTypeEQ(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEQ(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeNEQ applies the NEQ predicate on the "resource_box_type" field.
+func ResourceBoxTypeNEQ(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldNEQ(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeIn applies the In predicate on the "resource_box_type" field.
+func ResourceBoxTypeIn(vs ...string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldIn(FieldResourceBoxType, vs...))
+}
+
+// ResourceBoxTypeNotIn applies the NotIn predicate on the "resource_box_type" field.
+func ResourceBoxTypeNotIn(vs ...string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldNotIn(FieldResourceBoxType, vs...))
+}
+
+// ResourceBoxTypeGT applies the GT predicate on the "resource_box_type" field.
+func ResourceBoxTypeGT(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldGT(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeGTE applies the GTE predicate on the "resource_box_type" field.
+func ResourceBoxTypeGTE(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldGTE(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeLT applies the LT predicate on the "resource_box_type" field.
+func ResourceBoxTypeLT(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldLT(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeLTE applies the LTE predicate on the "resource_box_type" field.
+func ResourceBoxTypeLTE(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldLTE(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeContains applies the Contains predicate on the "resource_box_type" field.
+func ResourceBoxTypeContains(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldContains(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeHasPrefix applies the HasPrefix predicate on the "resource_box_type" field.
+func ResourceBoxTypeHasPrefix(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldHasPrefix(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeHasSuffix applies the HasSuffix predicate on the "resource_box_type" field.
+func ResourceBoxTypeHasSuffix(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldHasSuffix(FieldResourceBoxType, v))
+}
+
 // ResourceBoxTypeIsNil applies the IsNil predicate on the "resource_box_type" field.
 func ResourceBoxTypeIsNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldIsNull(FieldResourceBoxType))
@@ -146,6 +276,16 @@ func ResourceBoxTypeIsNil() predicate.Resourceboxe {
 // ResourceBoxTypeNotNil applies the NotNil predicate on the "resource_box_type" field.
 func ResourceBoxTypeNotNil() predicate.Resourceboxe {
 	return predicate.Resourceboxe(sql.FieldNotNull(FieldResourceBoxType))
+}
+
+// ResourceBoxTypeEqualFold applies the EqualFold predicate on the "resource_box_type" field.
+func ResourceBoxTypeEqualFold(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldEqualFold(FieldResourceBoxType, v))
+}
+
+// ResourceBoxTypeContainsFold applies the ContainsFold predicate on the "resource_box_type" field.
+func ResourceBoxTypeContainsFold(v string) predicate.Resourceboxe {
+	return predicate.Resourceboxe(sql.FieldContainsFold(FieldResourceBoxType, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

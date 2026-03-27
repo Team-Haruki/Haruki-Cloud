@@ -55,6 +55,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByMysekaiCharacterTalkConditionType orders the results by the mysekai_character_talk_condition_type field.
+func ByMysekaiCharacterTalkConditionType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiCharacterTalkConditionType, opts...).ToFunc()
+}
+
 // ByMysekaiCharacterTalkConditionTypeValue orders the results by the mysekai_character_talk_condition_type_value field.
 func ByMysekaiCharacterTalkConditionTypeValue(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMysekaiCharacterTalkConditionTypeValue, opts...).ToFunc()

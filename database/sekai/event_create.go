@@ -35,8 +35,16 @@ func (_c *EventCreate) SetNillableGameID(v *int64) *EventCreate {
 }
 
 // SetEventType sets the "event_type" field.
-func (_c *EventCreate) SetEventType(v json.RawMessage) *EventCreate {
+func (_c *EventCreate) SetEventType(v string) *EventCreate {
 	_c.mutation.SetEventType(v)
+	return _c
+}
+
+// SetNillableEventType sets the "event_type" field if the given value is not nil.
+func (_c *EventCreate) SetNillableEventType(v *string) *EventCreate {
+	if v != nil {
+		_c.SetEventType(*v)
+	}
 	return _c
 }
 
@@ -209,8 +217,16 @@ func (_c *EventCreate) SetNillableVirtualLiveID(v *int64) *EventCreate {
 }
 
 // SetUnit sets the "unit" field.
-func (_c *EventCreate) SetUnit(v json.RawMessage) *EventCreate {
+func (_c *EventCreate) SetUnit(v string) *EventCreate {
 	_c.mutation.SetUnit(v)
+	return _c
+}
+
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_c *EventCreate) SetNillableUnit(v *string) *EventCreate {
+	if v != nil {
+		_c.SetUnit(*v)
+	}
 	return _c
 }
 
@@ -235,8 +251,16 @@ func (_c *EventCreate) SetEventRankingRewardRanges(v json.RawMessage) *EventCrea
 }
 
 // SetEventPointAssetbundleName sets the "event_point_assetbundle_name" field.
-func (_c *EventCreate) SetEventPointAssetbundleName(v json.RawMessage) *EventCreate {
+func (_c *EventCreate) SetEventPointAssetbundleName(v string) *EventCreate {
 	_c.mutation.SetEventPointAssetbundleName(v)
+	return _c
+}
+
+// SetNillableEventPointAssetbundleName sets the "event_point_assetbundle_name" field if the given value is not nil.
+func (_c *EventCreate) SetNillableEventPointAssetbundleName(v *string) *EventCreate {
+	if v != nil {
+		_c.SetEventPointAssetbundleName(*v)
+	}
 	return _c
 }
 
@@ -328,7 +352,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.EventType(); ok {
-		_spec.SetField(event.FieldEventType, field.TypeJSON, value)
+		_spec.SetField(event.FieldEventType, field.TypeString, value)
 		_node.EventType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -380,7 +404,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.VirtualLiveID = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {
-		_spec.SetField(event.FieldUnit, field.TypeJSON, value)
+		_spec.SetField(event.FieldUnit, field.TypeString, value)
 		_node.Unit = value
 	}
 	if value, ok := _c.mutation.IsCountLeaderCharacterPlay(); ok {
@@ -392,7 +416,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.EventRankingRewardRanges = value
 	}
 	if value, ok := _c.mutation.EventPointAssetbundleName(); ok {
-		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeJSON, value)
+		_spec.SetField(event.FieldEventPointAssetbundleName, field.TypeString, value)
 		_node.EventPointAssetbundleName = value
 	}
 	if value, ok := _c.mutation.StandbyScreenDisplayStartAt(); ok {

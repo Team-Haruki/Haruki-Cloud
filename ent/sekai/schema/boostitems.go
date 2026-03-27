@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -22,7 +20,7 @@ func (Boostitem) Fields() []ent.Field {
 		field.String("name").Optional(),
 		field.Int64("recovery_value").Optional(),
 		field.String("asset_bundle_name").Optional(),
-		field.JSON("flavor_text", json.RawMessage{}).Optional(),
+		field.String("flavor_text").Optional(),
 		field.String("server_region"),
 	}
 }

@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturetag"
@@ -63,8 +62,16 @@ func (_c *MysekaifixturetagCreate) SetNillablePronunciation(v *string) *Mysekaif
 }
 
 // SetMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field.
-func (_c *MysekaifixturetagCreate) SetMysekaiFixtureTagType(v json.RawMessage) *MysekaifixturetagCreate {
+func (_c *MysekaifixturetagCreate) SetMysekaiFixtureTagType(v string) *MysekaifixturetagCreate {
 	_c.mutation.SetMysekaiFixtureTagType(v)
+	return _c
+}
+
+// SetNillableMysekaiFixtureTagType sets the "mysekai_fixture_tag_type" field if the given value is not nil.
+func (_c *MysekaifixturetagCreate) SetNillableMysekaiFixtureTagType(v *string) *MysekaifixturetagCreate {
+	if v != nil {
+		_c.SetMysekaiFixtureTagType(*v)
+	}
 	return _c
 }
 
@@ -164,7 +171,7 @@ func (_c *MysekaifixturetagCreate) createSpec() (*Mysekaifixturetag, *sqlgraph.C
 		_node.Pronunciation = value
 	}
 	if value, ok := _c.mutation.MysekaiFixtureTagType(); ok {
-		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeJSON, value)
+		_spec.SetField(mysekaifixturetag.FieldMysekaiFixtureTagType, field.TypeString, value)
 		_node.MysekaiFixtureTagType = value
 	}
 	if value, ok := _c.mutation.ExternalID(); ok {

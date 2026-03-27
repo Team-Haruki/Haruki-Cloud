@@ -62,9 +62,19 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByResourceBoxPurpose orders the results by the resource_box_purpose field.
+func ByResourceBoxPurpose(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResourceBoxPurpose, opts...).ToFunc()
+}
+
 // ByGameID orders the results by the game_id field.
 func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
+}
+
+// ByResourceBoxType orders the results by the resource_box_type field.
+func ByResourceBoxType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResourceBoxType, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

@@ -86,6 +86,11 @@ func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGroupID, opts...).ToFunc()
 }
 
+// ByHonorRarity orders the results by the honor_rarity field.
+func ByHonorRarity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHonorRarity, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()

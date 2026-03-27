@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprint"
 	"strings"
@@ -20,7 +19,7 @@ type Mysekaiblueprint struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiCraftType holds the value of the "mysekai_craft_type" field.
-	MysekaiCraftType json.RawMessage `json:"mysekai_craft_type,omitempty"`
+	MysekaiCraftType string `json:"mysekai_craft_type,omitempty"`
 	// CraftTargetID holds the value of the "craft_target_id" field.
 	CraftTargetID int64 `json:"craft_target_id,omitempty"`
 	// IsEnableSketch holds the value of the "is_enable_sketch" field.
@@ -41,13 +40,11 @@ func (*Mysekaiblueprint) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaiblueprint.FieldMysekaiCraftType:
-			values[i] = new([]byte)
 		case mysekaiblueprint.FieldIsEnableSketch, mysekaiblueprint.FieldIsObtainedByConvert, mysekaiblueprint.FieldIsAvailableWithoutPossession:
 			values[i] = new(sql.NullBool)
 		case mysekaiblueprint.FieldID, mysekaiblueprint.FieldGameID, mysekaiblueprint.FieldCraftTargetID, mysekaiblueprint.FieldCraftCountLimit:
 			values[i] = new(sql.NullInt64)
-		case mysekaiblueprint.FieldServerRegion:
+		case mysekaiblueprint.FieldMysekaiCraftType, mysekaiblueprint.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -77,12 +74,10 @@ func (_m *Mysekaiblueprint) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case mysekaiblueprint.FieldMysekaiCraftType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_craft_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiCraftType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_craft_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiCraftType = value.String
 			}
 		case mysekaiblueprint.FieldCraftTargetID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -160,7 +155,7 @@ func (_m *Mysekaiblueprint) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_craft_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCraftType))
+	builder.WriteString(_m.MysekaiCraftType)
 	builder.WriteString(", ")
 	builder.WriteString("craft_target_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CraftTargetID))

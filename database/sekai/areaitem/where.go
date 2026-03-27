@@ -73,6 +73,11 @@ func FlavorText(v string) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldFlavorText, v))
 }
 
+// SpawnPoint applies equality check predicate on the "spawn_point" field. It's identical to SpawnPointEQ.
+func SpawnPoint(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldEQ(FieldSpawnPoint, v))
+}
+
 // AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
 func AssetbundleName(v string) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldEQ(FieldAssetbundleName, v))
@@ -333,6 +338,61 @@ func FlavorTextContainsFold(v string) predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldContainsFold(FieldFlavorText, v))
 }
 
+// SpawnPointEQ applies the EQ predicate on the "spawn_point" field.
+func SpawnPointEQ(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldEQ(FieldSpawnPoint, v))
+}
+
+// SpawnPointNEQ applies the NEQ predicate on the "spawn_point" field.
+func SpawnPointNEQ(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldNEQ(FieldSpawnPoint, v))
+}
+
+// SpawnPointIn applies the In predicate on the "spawn_point" field.
+func SpawnPointIn(vs ...string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldIn(FieldSpawnPoint, vs...))
+}
+
+// SpawnPointNotIn applies the NotIn predicate on the "spawn_point" field.
+func SpawnPointNotIn(vs ...string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldNotIn(FieldSpawnPoint, vs...))
+}
+
+// SpawnPointGT applies the GT predicate on the "spawn_point" field.
+func SpawnPointGT(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldGT(FieldSpawnPoint, v))
+}
+
+// SpawnPointGTE applies the GTE predicate on the "spawn_point" field.
+func SpawnPointGTE(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldGTE(FieldSpawnPoint, v))
+}
+
+// SpawnPointLT applies the LT predicate on the "spawn_point" field.
+func SpawnPointLT(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldLT(FieldSpawnPoint, v))
+}
+
+// SpawnPointLTE applies the LTE predicate on the "spawn_point" field.
+func SpawnPointLTE(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldLTE(FieldSpawnPoint, v))
+}
+
+// SpawnPointContains applies the Contains predicate on the "spawn_point" field.
+func SpawnPointContains(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldContains(FieldSpawnPoint, v))
+}
+
+// SpawnPointHasPrefix applies the HasPrefix predicate on the "spawn_point" field.
+func SpawnPointHasPrefix(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldHasPrefix(FieldSpawnPoint, v))
+}
+
+// SpawnPointHasSuffix applies the HasSuffix predicate on the "spawn_point" field.
+func SpawnPointHasSuffix(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldHasSuffix(FieldSpawnPoint, v))
+}
+
 // SpawnPointIsNil applies the IsNil predicate on the "spawn_point" field.
 func SpawnPointIsNil() predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldIsNull(FieldSpawnPoint))
@@ -341,6 +401,16 @@ func SpawnPointIsNil() predicate.Areaitem {
 // SpawnPointNotNil applies the NotNil predicate on the "spawn_point" field.
 func SpawnPointNotNil() predicate.Areaitem {
 	return predicate.Areaitem(sql.FieldNotNull(FieldSpawnPoint))
+}
+
+// SpawnPointEqualFold applies the EqualFold predicate on the "spawn_point" field.
+func SpawnPointEqualFold(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldEqualFold(FieldSpawnPoint, v))
+}
+
+// SpawnPointContainsFold applies the ContainsFold predicate on the "spawn_point" field.
+func SpawnPointContainsFold(v string) predicate.Areaitem {
+	return predicate.Areaitem(sql.FieldContainsFold(FieldSpawnPoint, v))
 }
 
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.

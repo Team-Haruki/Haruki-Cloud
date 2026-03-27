@@ -28,7 +28,7 @@ type Bondshonor struct {
 	// GameCharacterUnitId2 holds the value of the "game_character_unit_id2" field.
 	GameCharacterUnitId2 int64 `json:"game_character_unit_id2,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
-	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
+	HonorRarity string `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Pronunciation holds the value of the "pronunciation" field.
@@ -49,13 +49,13 @@ func (*Bondshonor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case bondshonor.FieldHonorRarity, bondshonor.FieldLevels:
+		case bondshonor.FieldLevels:
 			values[i] = new([]byte)
 		case bondshonor.FieldConfigurableUnitVirtualSinger:
 			values[i] = new(sql.NullBool)
 		case bondshonor.FieldID, bondshonor.FieldGameID, bondshonor.FieldSeq, bondshonor.FieldBondsGroupID, bondshonor.FieldGameCharacterUnitId1, bondshonor.FieldGameCharacterUnitId2:
 			values[i] = new(sql.NullInt64)
-		case bondshonor.FieldName, bondshonor.FieldPronunciation, bondshonor.FieldDescription, bondshonor.FieldServerRegion:
+		case bondshonor.FieldHonorRarity, bondshonor.FieldName, bondshonor.FieldPronunciation, bondshonor.FieldDescription, bondshonor.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -109,12 +109,10 @@ func (_m *Bondshonor) assignValues(columns []string, values []any) error {
 				_m.GameCharacterUnitId2 = value.Int64
 			}
 		case bondshonor.FieldHonorRarity:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_rarity", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.HonorRarity); err != nil {
-					return fmt.Errorf("unmarshal field honor_rarity: %w", err)
-				}
+			} else if value.Valid {
+				_m.HonorRarity = value.String
 			}
 		case bondshonor.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -206,7 +204,7 @@ func (_m *Bondshonor) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitId2))
 	builder.WriteString(", ")
 	builder.WriteString("honor_rarity=")
-	builder.WriteString(fmt.Sprintf("%v", _m.HonorRarity))
+	builder.WriteString(_m.HonorRarity)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

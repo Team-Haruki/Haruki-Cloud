@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
@@ -77,26 +76,58 @@ func (_c *AreaCreate) SetNillableIsBaseArea(v *bool) *AreaCreate {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_c *AreaCreate) SetAreaType(v json.RawMessage) *AreaCreate {
+func (_c *AreaCreate) SetAreaType(v string) *AreaCreate {
 	_c.mutation.SetAreaType(v)
 	return _c
 }
 
+// SetNillableAreaType sets the "area_type" field if the given value is not nil.
+func (_c *AreaCreate) SetNillableAreaType(v *string) *AreaCreate {
+	if v != nil {
+		_c.SetAreaType(*v)
+	}
+	return _c
+}
+
 // SetViewType sets the "view_type" field.
-func (_c *AreaCreate) SetViewType(v json.RawMessage) *AreaCreate {
+func (_c *AreaCreate) SetViewType(v string) *AreaCreate {
 	_c.mutation.SetViewType(v)
 	return _c
 }
 
+// SetNillableViewType sets the "view_type" field if the given value is not nil.
+func (_c *AreaCreate) SetNillableViewType(v *string) *AreaCreate {
+	if v != nil {
+		_c.SetViewType(*v)
+	}
+	return _c
+}
+
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_c *AreaCreate) SetDisplayTimelineType(v json.RawMessage) *AreaCreate {
+func (_c *AreaCreate) SetDisplayTimelineType(v string) *AreaCreate {
 	_c.mutation.SetDisplayTimelineType(v)
 	return _c
 }
 
+// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
+func (_c *AreaCreate) SetNillableDisplayTimelineType(v *string) *AreaCreate {
+	if v != nil {
+		_c.SetDisplayTimelineType(*v)
+	}
+	return _c
+}
+
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_c *AreaCreate) SetAdditionalAreaType(v json.RawMessage) *AreaCreate {
+func (_c *AreaCreate) SetAdditionalAreaType(v string) *AreaCreate {
 	_c.mutation.SetAdditionalAreaType(v)
+	return _c
+}
+
+// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
+func (_c *AreaCreate) SetNillableAdditionalAreaType(v *string) *AreaCreate {
+	if v != nil {
+		_c.SetAdditionalAreaType(*v)
+	}
 	return _c
 }
 
@@ -284,19 +315,19 @@ func (_c *AreaCreate) createSpec() (*Area, *sqlgraph.CreateSpec) {
 		_node.IsBaseArea = value
 	}
 	if value, ok := _c.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
+		_spec.SetField(area.FieldAreaType, field.TypeString, value)
 		_node.AreaType = value
 	}
 	if value, ok := _c.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
+		_spec.SetField(area.FieldViewType, field.TypeString, value)
 		_node.ViewType = value
 	}
 	if value, ok := _c.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
 		_node.DisplayTimelineType = value
 	}
 	if value, ok := _c.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
 		_node.AdditionalAreaType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

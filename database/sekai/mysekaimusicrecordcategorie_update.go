@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -104,14 +102,16 @@ func (_u *MysekaimusicrecordcategorieUpdate) ClearSeq() *Mysekaimusicrecordcateg
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordcategorieUpdate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieUpdate {
+func (_u *MysekaimusicrecordcategorieUpdate) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordcategorieUpdate {
 	_u.mutation.SetMysekaiMusicTrackType(v)
 	return _u
 }
 
-// AppendMysekaiMusicTrackType appends value to the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordcategorieUpdate) AppendMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieUpdate {
-	_u.mutation.AppendMysekaiMusicTrackType(v)
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_u *MysekaimusicrecordcategorieUpdate) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordcategorieUpdate {
+	if v != nil {
+		_u.SetMysekaiMusicTrackType(*v)
+	}
 	return _u
 }
 
@@ -221,15 +221,10 @@ func (_u *MysekaimusicrecordcategorieUpdate) sqlSave(ctx context.Context) (_node
 		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMusicTrackType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, value)
-		})
+		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMusicTrackTypeCleared() {
-		_spec.ClearField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON)
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldUnit, field.TypeString, value)
@@ -335,14 +330,16 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) ClearSeq() *Mysekaimusicrecordca
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieUpdateOne {
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordcategorieUpdateOne {
 	_u.mutation.SetMysekaiMusicTrackType(v)
 	return _u
 }
 
-// AppendMysekaiMusicTrackType appends value to the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordcategorieUpdateOne) AppendMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieUpdateOne {
-	_u.mutation.AppendMysekaiMusicTrackType(v)
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_u *MysekaimusicrecordcategorieUpdateOne) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordcategorieUpdateOne {
+	if v != nil {
+		_u.SetMysekaiMusicTrackType(*v)
+	}
 	return _u
 }
 
@@ -482,15 +479,10 @@ func (_u *MysekaimusicrecordcategorieUpdateOne) sqlSave(ctx context.Context) (_n
 		_spec.ClearField(mysekaimusicrecordcategorie.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMusicTrackType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, value)
-		})
+		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMusicTrackTypeCleared() {
-		_spec.ClearField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON)
+		_spec.ClearField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
 		_spec.SetField(mysekaimusicrecordcategorie.FieldUnit, field.TypeString, value)

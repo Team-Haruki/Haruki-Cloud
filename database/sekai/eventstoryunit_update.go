@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventstoryunit"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -111,14 +109,16 @@ func (_u *EventstoryunitUpdate) ClearEventStoryID() *EventstoryunitUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventstoryunitUpdate) SetUnit(v json.RawMessage) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetUnit(v string) *EventstoryunitUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *EventstoryunitUpdate) AppendUnit(v json.RawMessage) *EventstoryunitUpdate {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *EventstoryunitUpdate) SetNillableUnit(v *string) *EventstoryunitUpdate {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -129,14 +129,16 @@ func (_u *EventstoryunitUpdate) ClearUnit() *EventstoryunitUpdate {
 }
 
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdate) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdate {
+func (_u *EventstoryunitUpdate) SetEventStoryUnitRelation(v string) *EventstoryunitUpdate {
 	_u.mutation.SetEventStoryUnitRelation(v)
 	return _u
 }
 
-// AppendEventStoryUnitRelation appends value to the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdate) AppendEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdate {
-	_u.mutation.AppendEventStoryUnitRelation(v)
+// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
+func (_u *EventstoryunitUpdate) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitUpdate {
+	if v != nil {
+		_u.SetEventStoryUnitRelation(*v)
+	}
 	return _u
 }
 
@@ -229,26 +231,16 @@ func (_u *EventstoryunitUpdate) sqlSave(ctx context.Context) (_node int, err err
 		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventstoryunit.FieldUnit, value)
-		})
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeJSON)
+		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventStoryUnitRelation(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventstoryunit.FieldEventStoryUnitRelation, value)
-		})
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
 	}
 	if _u.mutation.EventStoryUnitRelationCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON)
+		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)
@@ -355,14 +347,16 @@ func (_u *EventstoryunitUpdateOne) ClearEventStoryID() *EventstoryunitUpdateOne 
 }
 
 // SetUnit sets the "unit" field.
-func (_u *EventstoryunitUpdateOne) SetUnit(v json.RawMessage) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetUnit(v string) *EventstoryunitUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *EventstoryunitUpdateOne) AppendUnit(v json.RawMessage) *EventstoryunitUpdateOne {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *EventstoryunitUpdateOne) SetNillableUnit(v *string) *EventstoryunitUpdateOne {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -373,14 +367,16 @@ func (_u *EventstoryunitUpdateOne) ClearUnit() *EventstoryunitUpdateOne {
 }
 
 // SetEventStoryUnitRelation sets the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdateOne) SetEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdateOne {
+func (_u *EventstoryunitUpdateOne) SetEventStoryUnitRelation(v string) *EventstoryunitUpdateOne {
 	_u.mutation.SetEventStoryUnitRelation(v)
 	return _u
 }
 
-// AppendEventStoryUnitRelation appends value to the "event_story_unit_relation" field.
-func (_u *EventstoryunitUpdateOne) AppendEventStoryUnitRelation(v json.RawMessage) *EventstoryunitUpdateOne {
-	_u.mutation.AppendEventStoryUnitRelation(v)
+// SetNillableEventStoryUnitRelation sets the "event_story_unit_relation" field if the given value is not nil.
+func (_u *EventstoryunitUpdateOne) SetNillableEventStoryUnitRelation(v *string) *EventstoryunitUpdateOne {
+	if v != nil {
+		_u.SetEventStoryUnitRelation(*v)
+	}
 	return _u
 }
 
@@ -503,26 +499,16 @@ func (_u *EventstoryunitUpdateOne) sqlSave(ctx context.Context) (_node *Eventsto
 		_spec.ClearField(eventstoryunit.FieldEventStoryID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(eventstoryunit.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventstoryunit.FieldUnit, value)
-		})
+		_spec.SetField(eventstoryunit.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeJSON)
+		_spec.ClearField(eventstoryunit.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.EventStoryUnitRelation(); ok {
-		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedEventStoryUnitRelation(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventstoryunit.FieldEventStoryUnitRelation, value)
-		})
+		_spec.SetField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString, value)
 	}
 	if _u.mutation.EventStoryUnitRelationCleared() {
-		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeJSON)
+		_spec.ClearField(eventstoryunit.FieldEventStoryUnitRelation, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(eventstoryunit.FieldServerRegion, field.TypeString, value)

@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventitem"
 	"strings"
@@ -22,9 +21,9 @@ type Eventitem struct {
 	// EventID holds the value of the "event_id" field.
 	EventID int64 `json:"event_id,omitempty"`
 	// Name holds the value of the "name" field.
-	Name json.RawMessage `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
-	FlavorText json.RawMessage `json:"flavor_text,omitempty"`
+	FlavorText string `json:"flavor_text,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
@@ -39,11 +38,9 @@ func (*Eventitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case eventitem.FieldName, eventitem.FieldFlavorText:
-			values[i] = new([]byte)
 		case eventitem.FieldID, eventitem.FieldGameID, eventitem.FieldEventID, eventitem.FieldGameCharacterID:
 			values[i] = new(sql.NullInt64)
-		case eventitem.FieldAssetbundleName, eventitem.FieldServerRegion:
+		case eventitem.FieldName, eventitem.FieldFlavorText, eventitem.FieldAssetbundleName, eventitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -79,20 +76,16 @@ func (_m *Eventitem) assignValues(columns []string, values []any) error {
 				_m.EventID = value.Int64
 			}
 		case eventitem.FieldName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Name); err != nil {
-					return fmt.Errorf("unmarshal field name: %w", err)
-				}
+			} else if value.Valid {
+				_m.Name = value.String
 			}
 		case eventitem.FieldFlavorText:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field flavor_text", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.FlavorText); err != nil {
-					return fmt.Errorf("unmarshal field flavor_text: %w", err)
-				}
+			} else if value.Valid {
+				_m.FlavorText = value.String
 			}
 		case eventitem.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -155,10 +148,10 @@ func (_m *Eventitem) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.EventID))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Name))
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("flavor_text=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FlavorText))
+	builder.WriteString(_m.FlavorText)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)

@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,16 +16,16 @@ type Stamp struct {
 func (Stamp) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("stamp_type", json.RawMessage{}).Optional(),
+		field.String("stamp_type").Optional(),
 		field.Int64("seq").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.JSON("balloon_assetbundle_name", json.RawMessage{}).Optional(),
+		field.String("balloon_assetbundle_name").Optional(),
 		field.Int64("character_id1").Optional(),
 		field.Int64("game_character_unit_id").Optional(),
 		field.Int64("archive_published_at").Optional(),
 		field.String("description").Optional(),
-		field.JSON("archive_display_type", json.RawMessage{}).Optional(),
+		field.String("archive_display_type").Optional(),
 		field.Int64("character_id2").Optional(),
 		field.String("server_region"),
 	}

@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -20,7 +18,7 @@ func (Mysekaimusicrecordcategorie) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.String("name").Optional(),
 		field.Int64("seq").Optional(),
-		field.JSON("mysekai_music_track_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_music_track_type").Optional(),
 		field.String("unit").Optional(),
 		field.String("server_region"),
 	}

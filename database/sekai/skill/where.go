@@ -68,6 +68,11 @@ func Description(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldDescription, v))
 }
 
+// DescriptionSpriteName applies equality check predicate on the "description_sprite_name" field. It's identical to DescriptionSpriteNameEQ.
+func DescriptionSpriteName(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldEQ(FieldDescriptionSpriteName, v))
+}
+
 // SkillFilterID applies equality check predicate on the "skill_filter_id" field. It's identical to SkillFilterIDEQ.
 func SkillFilterID(v int64) predicate.Skill {
 	return predicate.Skill(sql.FieldEQ(FieldSkillFilterID, v))
@@ -278,6 +283,61 @@ func DescriptionContainsFold(v string) predicate.Skill {
 	return predicate.Skill(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// DescriptionSpriteNameEQ applies the EQ predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameEQ(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldEQ(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameNEQ applies the NEQ predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameNEQ(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldNEQ(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameIn applies the In predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameIn(vs ...string) predicate.Skill {
+	return predicate.Skill(sql.FieldIn(FieldDescriptionSpriteName, vs...))
+}
+
+// DescriptionSpriteNameNotIn applies the NotIn predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameNotIn(vs ...string) predicate.Skill {
+	return predicate.Skill(sql.FieldNotIn(FieldDescriptionSpriteName, vs...))
+}
+
+// DescriptionSpriteNameGT applies the GT predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameGT(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldGT(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameGTE applies the GTE predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameGTE(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldGTE(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameLT applies the LT predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameLT(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldLT(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameLTE applies the LTE predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameLTE(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldLTE(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameContains applies the Contains predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameContains(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldContains(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameHasPrefix applies the HasPrefix predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameHasPrefix(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldHasPrefix(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameHasSuffix applies the HasSuffix predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameHasSuffix(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldHasSuffix(FieldDescriptionSpriteName, v))
+}
+
 // DescriptionSpriteNameIsNil applies the IsNil predicate on the "description_sprite_name" field.
 func DescriptionSpriteNameIsNil() predicate.Skill {
 	return predicate.Skill(sql.FieldIsNull(FieldDescriptionSpriteName))
@@ -286,6 +346,16 @@ func DescriptionSpriteNameIsNil() predicate.Skill {
 // DescriptionSpriteNameNotNil applies the NotNil predicate on the "description_sprite_name" field.
 func DescriptionSpriteNameNotNil() predicate.Skill {
 	return predicate.Skill(sql.FieldNotNull(FieldDescriptionSpriteName))
+}
+
+// DescriptionSpriteNameEqualFold applies the EqualFold predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameEqualFold(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldEqualFold(FieldDescriptionSpriteName, v))
+}
+
+// DescriptionSpriteNameContainsFold applies the ContainsFold predicate on the "description_sprite_name" field.
+func DescriptionSpriteNameContainsFold(v string) predicate.Skill {
+	return predicate.Skill(sql.FieldContainsFold(FieldDescriptionSpriteName, v))
 }
 
 // SkillFilterIDEQ applies the EQ predicate on the "skill_filter_id" field.

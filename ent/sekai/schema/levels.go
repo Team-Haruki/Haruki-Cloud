@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,7 +16,7 @@ type Level struct {
 func (Level) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("level_type", json.RawMessage{}).Optional(),
+		field.String("level_type").Optional(),
 		field.Int64("level").Optional(),
 		field.Int64("total_exp").Optional(),
 		field.String("server_region"),

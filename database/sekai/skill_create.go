@@ -63,8 +63,16 @@ func (_c *SkillCreate) SetNillableDescription(v *string) *SkillCreate {
 }
 
 // SetDescriptionSpriteName sets the "description_sprite_name" field.
-func (_c *SkillCreate) SetDescriptionSpriteName(v json.RawMessage) *SkillCreate {
+func (_c *SkillCreate) SetDescriptionSpriteName(v string) *SkillCreate {
 	_c.mutation.SetDescriptionSpriteName(v)
+	return _c
+}
+
+// SetNillableDescriptionSpriteName sets the "description_sprite_name" field if the given value is not nil.
+func (_c *SkillCreate) SetNillableDescriptionSpriteName(v *string) *SkillCreate {
+	if v != nil {
+		_c.SetDescriptionSpriteName(*v)
+	}
 	return _c
 }
 
@@ -170,7 +178,7 @@ func (_c *SkillCreate) createSpec() (*Skill, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.DescriptionSpriteName(); ok {
-		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeJSON, value)
+		_spec.SetField(skill.FieldDescriptionSpriteName, field.TypeString, value)
 		_node.DescriptionSpriteName = value
 	}
 	if value, ok := _c.mutation.SkillFilterID(); ok {

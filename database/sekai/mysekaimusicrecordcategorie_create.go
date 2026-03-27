@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
@@ -63,8 +62,16 @@ func (_c *MysekaimusicrecordcategorieCreate) SetNillableSeq(v *int64) *Mysekaimu
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_c *MysekaimusicrecordcategorieCreate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordcategorieCreate {
+func (_c *MysekaimusicrecordcategorieCreate) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordcategorieCreate {
 	_c.mutation.SetMysekaiMusicTrackType(v)
+	return _c
+}
+
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_c *MysekaimusicrecordcategorieCreate) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordcategorieCreate {
+	if v != nil {
+		_c.SetMysekaiMusicTrackType(*v)
+	}
 	return _c
 }
 
@@ -164,7 +171,7 @@ func (_c *MysekaimusicrecordcategorieCreate) createSpec() (*Mysekaimusicrecordca
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeJSON, value)
+		_spec.SetField(mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, field.TypeString, value)
 		_node.MysekaiMusicTrackType = value
 	}
 	if value, ok := _c.mutation.Unit(); ok {

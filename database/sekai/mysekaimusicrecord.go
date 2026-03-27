@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
 	"strings"
@@ -20,7 +19,7 @@ type Mysekaimusicrecord struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
-	MysekaiMusicTrackType json.RawMessage `json:"mysekai_music_track_type,omitempty"`
+	MysekaiMusicTrackType string `json:"mysekai_music_track_type,omitempty"`
 	// ExternalID holds the value of the "external_id" field.
 	ExternalID int64 `json:"external_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -33,11 +32,9 @@ func (*Mysekaimusicrecord) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaimusicrecord.FieldMysekaiMusicTrackType:
-			values[i] = new([]byte)
 		case mysekaimusicrecord.FieldID, mysekaimusicrecord.FieldGameID, mysekaimusicrecord.FieldExternalID:
 			values[i] = new(sql.NullInt64)
-		case mysekaimusicrecord.FieldServerRegion:
+		case mysekaimusicrecord.FieldMysekaiMusicTrackType, mysekaimusicrecord.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -67,12 +64,10 @@ func (_m *Mysekaimusicrecord) assignValues(columns []string, values []any) error
 				_m.GameID = value.Int64
 			}
 		case mysekaimusicrecord.FieldMysekaiMusicTrackType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_music_track_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiMusicTrackType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_music_track_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiMusicTrackType = value.String
 			}
 		case mysekaimusicrecord.FieldExternalID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -126,7 +121,7 @@ func (_m *Mysekaimusicrecord) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_music_track_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiMusicTrackType))
+	builder.WriteString(_m.MysekaiMusicTrackType)
 	builder.WriteString(", ")
 	builder.WriteString("external_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ExternalID))

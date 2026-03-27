@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventitem"
@@ -49,14 +48,30 @@ func (_c *EventitemCreate) SetNillableEventID(v *int64) *EventitemCreate {
 }
 
 // SetName sets the "name" field.
-func (_c *EventitemCreate) SetName(v json.RawMessage) *EventitemCreate {
+func (_c *EventitemCreate) SetName(v string) *EventitemCreate {
 	_c.mutation.SetName(v)
 	return _c
 }
 
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_c *EventitemCreate) SetNillableName(v *string) *EventitemCreate {
+	if v != nil {
+		_c.SetName(*v)
+	}
+	return _c
+}
+
 // SetFlavorText sets the "flavor_text" field.
-func (_c *EventitemCreate) SetFlavorText(v json.RawMessage) *EventitemCreate {
+func (_c *EventitemCreate) SetFlavorText(v string) *EventitemCreate {
 	_c.mutation.SetFlavorText(v)
+	return _c
+}
+
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_c *EventitemCreate) SetNillableFlavorText(v *string) *EventitemCreate {
+	if v != nil {
+		_c.SetFlavorText(*v)
+	}
 	return _c
 }
 
@@ -166,11 +181,11 @@ func (_c *EventitemCreate) createSpec() (*Eventitem, *sqlgraph.CreateSpec) {
 		_node.EventID = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(eventitem.FieldName, field.TypeJSON, value)
+		_spec.SetField(eventitem.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.FlavorText(); ok {
-		_spec.SetField(eventitem.FieldFlavorText, field.TypeJSON, value)
+		_spec.SetField(eventitem.FieldFlavorText, field.TypeString, value)
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

@@ -74,6 +74,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
+// ByDescriptionSpriteName orders the results by the description_sprite_name field.
+func ByDescriptionSpriteName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescriptionSpriteName, opts...).ToFunc()
+}
+
 // BySkillFilterID orders the results by the skill_filter_id field.
 func BySkillFilterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSkillFilterID, opts...).ToFunc()

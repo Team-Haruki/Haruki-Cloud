@@ -66,6 +66,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
+// ByMysekaiFixtureMainGenreType orders the results by the mysekai_fixture_main_genre_type field.
+func ByMysekaiFixtureMainGenreType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiFixtureMainGenreType, opts...).ToFunc()
+}
+
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()

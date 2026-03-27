@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/worldbloom"
 	"strings"
@@ -24,7 +23,7 @@ type Worldbloom struct {
 	// GameCharacterID holds the value of the "game_character_id" field.
 	GameCharacterID int64 `json:"game_character_id,omitempty"`
 	// WorldBloomChapterType holds the value of the "world_bloom_chapter_type" field.
-	WorldBloomChapterType json.RawMessage `json:"world_bloom_chapter_type,omitempty"`
+	WorldBloomChapterType string `json:"world_bloom_chapter_type,omitempty"`
 	// ChapterNo holds the value of the "chapter_no" field.
 	ChapterNo int64 `json:"chapter_no,omitempty"`
 	// ChapterStartAt holds the value of the "chapter_start_at" field.
@@ -47,13 +46,11 @@ func (*Worldbloom) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case worldbloom.FieldWorldBloomChapterType:
-			values[i] = new([]byte)
 		case worldbloom.FieldIsSupplemental:
 			values[i] = new(sql.NullBool)
 		case worldbloom.FieldID, worldbloom.FieldGameID, worldbloom.FieldEventID, worldbloom.FieldGameCharacterID, worldbloom.FieldChapterNo, worldbloom.FieldChapterStartAt, worldbloom.FieldAggregateAt, worldbloom.FieldChapterEndAt, worldbloom.FieldCostume2DID:
 			values[i] = new(sql.NullInt64)
-		case worldbloom.FieldServerRegion:
+		case worldbloom.FieldWorldBloomChapterType, worldbloom.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -95,12 +92,10 @@ func (_m *Worldbloom) assignValues(columns []string, values []any) error {
 				_m.GameCharacterID = value.Int64
 			}
 		case worldbloom.FieldWorldBloomChapterType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field world_bloom_chapter_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.WorldBloomChapterType); err != nil {
-					return fmt.Errorf("unmarshal field world_bloom_chapter_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.WorldBloomChapterType = value.String
 			}
 		case worldbloom.FieldChapterNo:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -190,7 +185,7 @@ func (_m *Worldbloom) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterID))
 	builder.WriteString(", ")
 	builder.WriteString("world_bloom_chapter_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorldBloomChapterType))
+	builder.WriteString(_m.WorldBloomChapterType)
 	builder.WriteString(", ")
 	builder.WriteString("chapter_no=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ChapterNo))

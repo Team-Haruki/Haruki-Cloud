@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/worldbloom"
@@ -63,8 +62,16 @@ func (_c *WorldbloomCreate) SetNillableGameCharacterID(v *int64) *WorldbloomCrea
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (_c *WorldbloomCreate) SetWorldBloomChapterType(v json.RawMessage) *WorldbloomCreate {
+func (_c *WorldbloomCreate) SetWorldBloomChapterType(v string) *WorldbloomCreate {
 	_c.mutation.SetWorldBloomChapterType(v)
+	return _c
+}
+
+// SetNillableWorldBloomChapterType sets the "world_bloom_chapter_type" field if the given value is not nil.
+func (_c *WorldbloomCreate) SetNillableWorldBloomChapterType(v *string) *WorldbloomCreate {
+	if v != nil {
+		_c.SetWorldBloomChapterType(*v)
+	}
 	return _c
 }
 
@@ -234,7 +241,7 @@ func (_c *WorldbloomCreate) createSpec() (*Worldbloom, *sqlgraph.CreateSpec) {
 		_node.GameCharacterID = value
 	}
 	if value, ok := _c.mutation.WorldBloomChapterType(); ok {
-		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON, value)
+		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeString, value)
 		_node.WorldBloomChapterType = value
 	}
 	if value, ok := _c.mutation.ChapterNo(); ok {

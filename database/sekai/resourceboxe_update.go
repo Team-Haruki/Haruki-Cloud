@@ -30,14 +30,16 @@ func (_u *ResourceboxeUpdate) Where(ps ...predicate.Resourceboxe) *ResourceboxeU
 }
 
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdate) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetResourceBoxPurpose(v string) *ResourceboxeUpdate {
 	_u.mutation.SetResourceBoxPurpose(v)
 	return _u
 }
 
-// AppendResourceBoxPurpose appends value to the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdate) AppendResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdate {
-	_u.mutation.AppendResourceBoxPurpose(v)
+// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
+func (_u *ResourceboxeUpdate) SetNillableResourceBoxPurpose(v *string) *ResourceboxeUpdate {
+	if v != nil {
+		_u.SetResourceBoxPurpose(*v)
+	}
 	return _u
 }
 
@@ -75,14 +77,16 @@ func (_u *ResourceboxeUpdate) ClearGameID() *ResourceboxeUpdate {
 }
 
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_u *ResourceboxeUpdate) SetResourceBoxType(v json.RawMessage) *ResourceboxeUpdate {
+func (_u *ResourceboxeUpdate) SetResourceBoxType(v string) *ResourceboxeUpdate {
 	_u.mutation.SetResourceBoxType(v)
 	return _u
 }
 
-// AppendResourceBoxType appends value to the "resource_box_type" field.
-func (_u *ResourceboxeUpdate) AppendResourceBoxType(v json.RawMessage) *ResourceboxeUpdate {
-	_u.mutation.AppendResourceBoxType(v)
+// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
+func (_u *ResourceboxeUpdate) SetNillableResourceBoxType(v *string) *ResourceboxeUpdate {
+	if v != nil {
+		_u.SetResourceBoxType(*v)
+	}
 	return _u
 }
 
@@ -226,15 +230,10 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 		}
 	}
 	if value, ok := _u.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedResourceBoxPurpose(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, resourceboxe.FieldResourceBoxPurpose, value)
-		})
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
 	}
 	if _u.mutation.ResourceBoxPurposeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
+		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
 		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
@@ -246,15 +245,10 @@ func (_u *ResourceboxeUpdate) sqlSave(ctx context.Context) (_node int, err error
 		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedResourceBoxType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, resourceboxe.FieldResourceBoxType, value)
-		})
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
 	}
 	if _u.mutation.ResourceBoxTypeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeJSON)
+		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(resourceboxe.FieldDescription, field.TypeString, value)
@@ -309,14 +303,16 @@ type ResourceboxeUpdateOne struct {
 }
 
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdateOne) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetResourceBoxPurpose(v string) *ResourceboxeUpdateOne {
 	_u.mutation.SetResourceBoxPurpose(v)
 	return _u
 }
 
-// AppendResourceBoxPurpose appends value to the "resource_box_purpose" field.
-func (_u *ResourceboxeUpdateOne) AppendResourceBoxPurpose(v json.RawMessage) *ResourceboxeUpdateOne {
-	_u.mutation.AppendResourceBoxPurpose(v)
+// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
+func (_u *ResourceboxeUpdateOne) SetNillableResourceBoxPurpose(v *string) *ResourceboxeUpdateOne {
+	if v != nil {
+		_u.SetResourceBoxPurpose(*v)
+	}
 	return _u
 }
 
@@ -354,14 +350,16 @@ func (_u *ResourceboxeUpdateOne) ClearGameID() *ResourceboxeUpdateOne {
 }
 
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_u *ResourceboxeUpdateOne) SetResourceBoxType(v json.RawMessage) *ResourceboxeUpdateOne {
+func (_u *ResourceboxeUpdateOne) SetResourceBoxType(v string) *ResourceboxeUpdateOne {
 	_u.mutation.SetResourceBoxType(v)
 	return _u
 }
 
-// AppendResourceBoxType appends value to the "resource_box_type" field.
-func (_u *ResourceboxeUpdateOne) AppendResourceBoxType(v json.RawMessage) *ResourceboxeUpdateOne {
-	_u.mutation.AppendResourceBoxType(v)
+// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
+func (_u *ResourceboxeUpdateOne) SetNillableResourceBoxType(v *string) *ResourceboxeUpdateOne {
+	if v != nil {
+		_u.SetResourceBoxType(*v)
+	}
 	return _u
 }
 
@@ -535,15 +533,10 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 		}
 	}
 	if value, ok := _u.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedResourceBoxPurpose(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, resourceboxe.FieldResourceBoxPurpose, value)
-		})
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
 	}
 	if _u.mutation.ResourceBoxPurposeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON)
+		_spec.ClearField(resourceboxe.FieldResourceBoxPurpose, field.TypeString)
 	}
 	if value, ok := _u.mutation.GameID(); ok {
 		_spec.SetField(resourceboxe.FieldGameID, field.TypeInt64, value)
@@ -555,15 +548,10 @@ func (_u *ResourceboxeUpdateOne) sqlSave(ctx context.Context) (_node *Resourcebo
 		_spec.ClearField(resourceboxe.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedResourceBoxType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, resourceboxe.FieldResourceBoxType, value)
-		})
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
 	}
 	if _u.mutation.ResourceBoxTypeCleared() {
-		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeJSON)
+		_spec.ClearField(resourceboxe.FieldResourceBoxType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(resourceboxe.FieldDescription, field.TypeString, value)

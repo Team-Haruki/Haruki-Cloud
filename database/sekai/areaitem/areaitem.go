@@ -79,6 +79,11 @@ func ByFlavorText(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFlavorText, opts...).ToFunc()
 }
 
+// BySpawnPoint orders the results by the spawn_point field.
+func BySpawnPoint(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSpawnPoint, opts...).ToFunc()
+}
+
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()

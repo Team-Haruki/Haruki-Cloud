@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitem"
@@ -77,8 +76,16 @@ func (_c *AreaitemCreate) SetNillableFlavorText(v *string) *AreaitemCreate {
 }
 
 // SetSpawnPoint sets the "spawn_point" field.
-func (_c *AreaitemCreate) SetSpawnPoint(v json.RawMessage) *AreaitemCreate {
+func (_c *AreaitemCreate) SetSpawnPoint(v string) *AreaitemCreate {
 	_c.mutation.SetSpawnPoint(v)
+	return _c
+}
+
+// SetNillableSpawnPoint sets the "spawn_point" field if the given value is not nil.
+func (_c *AreaitemCreate) SetNillableSpawnPoint(v *string) *AreaitemCreate {
+	if v != nil {
+		_c.SetSpawnPoint(*v)
+	}
 	return _c
 }
 
@@ -182,7 +189,7 @@ func (_c *AreaitemCreate) createSpec() (*Areaitem, *sqlgraph.CreateSpec) {
 		_node.FlavorText = value
 	}
 	if value, ok := _c.mutation.SpawnPoint(); ok {
-		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeJSON, value)
+		_spec.SetField(areaitem.FieldSpawnPoint, field.TypeString, value)
 		_node.SpawnPoint = value
 	}
 	if value, ok := _c.mutation.AssetbundleName(); ok {

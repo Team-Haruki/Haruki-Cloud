@@ -68,6 +68,11 @@ func CharacterID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCharacterID, v))
 }
 
+// CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
+func CardRarityType(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldCardRarityType, v))
+}
+
 // SpecialTrainingPower1BonusFixed applies equality check predicate on the "special_training_power1_bonus_fixed" field. It's identical to SpecialTrainingPower1BonusFixedEQ.
 func SpecialTrainingPower1BonusFixed(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower1BonusFixed, v))
@@ -81,6 +86,16 @@ func SpecialTrainingPower2BonusFixed(v int64) predicate.Card {
 // SpecialTrainingPower3BonusFixed applies equality check predicate on the "special_training_power3_bonus_fixed" field. It's identical to SpecialTrainingPower3BonusFixedEQ.
 func SpecialTrainingPower3BonusFixed(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldSpecialTrainingPower3BonusFixed, v))
+}
+
+// Attr applies equality check predicate on the "attr" field. It's identical to AttrEQ.
+func Attr(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldAttr, v))
+}
+
+// SupportUnit applies equality check predicate on the "support_unit" field. It's identical to SupportUnitEQ.
+func SupportUnit(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldSupportUnit, v))
 }
 
 // SkillID applies equality check predicate on the "skill_id" field. It's identical to SkillIDEQ.
@@ -108,6 +123,11 @@ func GachaPhrase(v string) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldGachaPhrase, v))
 }
 
+// FlavorText applies equality check predicate on the "flavor_text" field. It's identical to FlavorTextEQ.
+func FlavorText(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldFlavorText, v))
+}
+
 // ReleaseAt applies equality check predicate on the "release_at" field. It's identical to ReleaseAtEQ.
 func ReleaseAt(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldReleaseAt, v))
@@ -121,6 +141,16 @@ func ArchivePublishedAt(v int64) predicate.Card {
 // CardSupplyID applies equality check predicate on the "card_supply_id" field. It's identical to CardSupplyIDEQ.
 func CardSupplyID(v int64) predicate.Card {
 	return predicate.Card(sql.FieldEQ(FieldCardSupplyID, v))
+}
+
+// InitialSpecialTrainingStatus applies equality check predicate on the "initial_special_training_status" field. It's identical to InitialSpecialTrainingStatusEQ.
+func InitialSpecialTrainingStatus(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldInitialSpecialTrainingStatus, v))
+}
+
+// ArchiveDisplayType applies equality check predicate on the "archive_display_type" field. It's identical to ArchiveDisplayTypeEQ.
+func ArchiveDisplayType(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldArchiveDisplayType, v))
 }
 
 // SpecialTrainingSkillID applies equality check predicate on the "special_training_skill_id" field. It's identical to SpecialTrainingSkillIDEQ.
@@ -293,6 +323,61 @@ func CharacterIDNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldCharacterID))
 }
 
+// CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
+func CardRarityTypeEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeNEQ applies the NEQ predicate on the "card_rarity_type" field.
+func CardRarityTypeNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeIn applies the In predicate on the "card_rarity_type" field.
+func CardRarityTypeIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeNotIn applies the NotIn predicate on the "card_rarity_type" field.
+func CardRarityTypeNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeGT applies the GT predicate on the "card_rarity_type" field.
+func CardRarityTypeGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeGTE applies the GTE predicate on the "card_rarity_type" field.
+func CardRarityTypeGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLT applies the LT predicate on the "card_rarity_type" field.
+func CardRarityTypeLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLTE applies the LTE predicate on the "card_rarity_type" field.
+func CardRarityTypeLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContains applies the Contains predicate on the "card_rarity_type" field.
+func CardRarityTypeContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasPrefix applies the HasPrefix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasSuffix applies the HasSuffix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldCardRarityType, v))
+}
+
 // CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
 func CardRarityTypeIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldCardRarityType))
@@ -301,6 +386,16 @@ func CardRarityTypeIsNil() predicate.Card {
 // CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
 func CardRarityTypeNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldCardRarityType))
+}
+
+// CardRarityTypeEqualFold applies the EqualFold predicate on the "card_rarity_type" field.
+func CardRarityTypeEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContainsFold applies the ContainsFold predicate on the "card_rarity_type" field.
+func CardRarityTypeContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldCardRarityType, v))
 }
 
 // SpecialTrainingPower1BonusFixedEQ applies the EQ predicate on the "special_training_power1_bonus_fixed" field.
@@ -453,6 +548,61 @@ func SpecialTrainingPower3BonusFixedNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldSpecialTrainingPower3BonusFixed))
 }
 
+// AttrEQ applies the EQ predicate on the "attr" field.
+func AttrEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldAttr, v))
+}
+
+// AttrNEQ applies the NEQ predicate on the "attr" field.
+func AttrNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldAttr, v))
+}
+
+// AttrIn applies the In predicate on the "attr" field.
+func AttrIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldAttr, vs...))
+}
+
+// AttrNotIn applies the NotIn predicate on the "attr" field.
+func AttrNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldAttr, vs...))
+}
+
+// AttrGT applies the GT predicate on the "attr" field.
+func AttrGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldAttr, v))
+}
+
+// AttrGTE applies the GTE predicate on the "attr" field.
+func AttrGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldAttr, v))
+}
+
+// AttrLT applies the LT predicate on the "attr" field.
+func AttrLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldAttr, v))
+}
+
+// AttrLTE applies the LTE predicate on the "attr" field.
+func AttrLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldAttr, v))
+}
+
+// AttrContains applies the Contains predicate on the "attr" field.
+func AttrContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldAttr, v))
+}
+
+// AttrHasPrefix applies the HasPrefix predicate on the "attr" field.
+func AttrHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldAttr, v))
+}
+
+// AttrHasSuffix applies the HasSuffix predicate on the "attr" field.
+func AttrHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldAttr, v))
+}
+
 // AttrIsNil applies the IsNil predicate on the "attr" field.
 func AttrIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldAttr))
@@ -463,6 +613,71 @@ func AttrNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldAttr))
 }
 
+// AttrEqualFold applies the EqualFold predicate on the "attr" field.
+func AttrEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldAttr, v))
+}
+
+// AttrContainsFold applies the ContainsFold predicate on the "attr" field.
+func AttrContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldAttr, v))
+}
+
+// SupportUnitEQ applies the EQ predicate on the "support_unit" field.
+func SupportUnitEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldSupportUnit, v))
+}
+
+// SupportUnitNEQ applies the NEQ predicate on the "support_unit" field.
+func SupportUnitNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldSupportUnit, v))
+}
+
+// SupportUnitIn applies the In predicate on the "support_unit" field.
+func SupportUnitIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldSupportUnit, vs...))
+}
+
+// SupportUnitNotIn applies the NotIn predicate on the "support_unit" field.
+func SupportUnitNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldSupportUnit, vs...))
+}
+
+// SupportUnitGT applies the GT predicate on the "support_unit" field.
+func SupportUnitGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldSupportUnit, v))
+}
+
+// SupportUnitGTE applies the GTE predicate on the "support_unit" field.
+func SupportUnitGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldSupportUnit, v))
+}
+
+// SupportUnitLT applies the LT predicate on the "support_unit" field.
+func SupportUnitLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldSupportUnit, v))
+}
+
+// SupportUnitLTE applies the LTE predicate on the "support_unit" field.
+func SupportUnitLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldSupportUnit, v))
+}
+
+// SupportUnitContains applies the Contains predicate on the "support_unit" field.
+func SupportUnitContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldSupportUnit, v))
+}
+
+// SupportUnitHasPrefix applies the HasPrefix predicate on the "support_unit" field.
+func SupportUnitHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldSupportUnit, v))
+}
+
+// SupportUnitHasSuffix applies the HasSuffix predicate on the "support_unit" field.
+func SupportUnitHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldSupportUnit, v))
+}
+
 // SupportUnitIsNil applies the IsNil predicate on the "support_unit" field.
 func SupportUnitIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldSupportUnit))
@@ -471,6 +686,16 @@ func SupportUnitIsNil() predicate.Card {
 // SupportUnitNotNil applies the NotNil predicate on the "support_unit" field.
 func SupportUnitNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldSupportUnit))
+}
+
+// SupportUnitEqualFold applies the EqualFold predicate on the "support_unit" field.
+func SupportUnitEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldSupportUnit, v))
+}
+
+// SupportUnitContainsFold applies the ContainsFold predicate on the "support_unit" field.
+func SupportUnitContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldSupportUnit, v))
 }
 
 // SkillIDEQ applies the EQ predicate on the "skill_id" field.
@@ -823,6 +1048,61 @@ func GachaPhraseContainsFold(v string) predicate.Card {
 	return predicate.Card(sql.FieldContainsFold(FieldGachaPhrase, v))
 }
 
+// FlavorTextEQ applies the EQ predicate on the "flavor_text" field.
+func FlavorTextEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldFlavorText, v))
+}
+
+// FlavorTextNEQ applies the NEQ predicate on the "flavor_text" field.
+func FlavorTextNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldFlavorText, v))
+}
+
+// FlavorTextIn applies the In predicate on the "flavor_text" field.
+func FlavorTextIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextNotIn applies the NotIn predicate on the "flavor_text" field.
+func FlavorTextNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextGT applies the GT predicate on the "flavor_text" field.
+func FlavorTextGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldFlavorText, v))
+}
+
+// FlavorTextGTE applies the GTE predicate on the "flavor_text" field.
+func FlavorTextGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldFlavorText, v))
+}
+
+// FlavorTextLT applies the LT predicate on the "flavor_text" field.
+func FlavorTextLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldFlavorText, v))
+}
+
+// FlavorTextLTE applies the LTE predicate on the "flavor_text" field.
+func FlavorTextLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldFlavorText, v))
+}
+
+// FlavorTextContains applies the Contains predicate on the "flavor_text" field.
+func FlavorTextContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldFlavorText, v))
+}
+
+// FlavorTextHasPrefix applies the HasPrefix predicate on the "flavor_text" field.
+func FlavorTextHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldFlavorText, v))
+}
+
+// FlavorTextHasSuffix applies the HasSuffix predicate on the "flavor_text" field.
+func FlavorTextHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldFlavorText, v))
+}
+
 // FlavorTextIsNil applies the IsNil predicate on the "flavor_text" field.
 func FlavorTextIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldFlavorText))
@@ -831,6 +1111,16 @@ func FlavorTextIsNil() predicate.Card {
 // FlavorTextNotNil applies the NotNil predicate on the "flavor_text" field.
 func FlavorTextNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldFlavorText))
+}
+
+// FlavorTextEqualFold applies the EqualFold predicate on the "flavor_text" field.
+func FlavorTextEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldFlavorText, v))
+}
+
+// FlavorTextContainsFold applies the ContainsFold predicate on the "flavor_text" field.
+func FlavorTextContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldFlavorText, v))
 }
 
 // ReleaseAtEQ applies the EQ predicate on the "release_at" field.
@@ -1013,6 +1303,61 @@ func MasterLessonAchieveResourcesNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldMasterLessonAchieveResources))
 }
 
+// InitialSpecialTrainingStatusEQ applies the EQ predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusNEQ applies the NEQ predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusIn applies the In predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldInitialSpecialTrainingStatus, vs...))
+}
+
+// InitialSpecialTrainingStatusNotIn applies the NotIn predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldInitialSpecialTrainingStatus, vs...))
+}
+
+// InitialSpecialTrainingStatusGT applies the GT predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusGTE applies the GTE predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusLT applies the LT predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusLTE applies the LTE predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusContains applies the Contains predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusHasPrefix applies the HasPrefix predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusHasSuffix applies the HasSuffix predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldInitialSpecialTrainingStatus, v))
+}
+
 // InitialSpecialTrainingStatusIsNil applies the IsNil predicate on the "initial_special_training_status" field.
 func InitialSpecialTrainingStatusIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldInitialSpecialTrainingStatus))
@@ -1023,6 +1368,71 @@ func InitialSpecialTrainingStatusNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldInitialSpecialTrainingStatus))
 }
 
+// InitialSpecialTrainingStatusEqualFold applies the EqualFold predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldInitialSpecialTrainingStatus, v))
+}
+
+// InitialSpecialTrainingStatusContainsFold applies the ContainsFold predicate on the "initial_special_training_status" field.
+func InitialSpecialTrainingStatusContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldInitialSpecialTrainingStatus, v))
+}
+
+// ArchiveDisplayTypeEQ applies the EQ predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldEQ(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeNEQ applies the NEQ predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeNEQ(v string) predicate.Card {
+	return predicate.Card(sql.FieldNEQ(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeIn applies the In predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldIn(FieldArchiveDisplayType, vs...))
+}
+
+// ArchiveDisplayTypeNotIn applies the NotIn predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeNotIn(vs ...string) predicate.Card {
+	return predicate.Card(sql.FieldNotIn(FieldArchiveDisplayType, vs...))
+}
+
+// ArchiveDisplayTypeGT applies the GT predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeGT(v string) predicate.Card {
+	return predicate.Card(sql.FieldGT(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeGTE applies the GTE predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeGTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldGTE(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeLT applies the LT predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeLT(v string) predicate.Card {
+	return predicate.Card(sql.FieldLT(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeLTE applies the LTE predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeLTE(v string) predicate.Card {
+	return predicate.Card(sql.FieldLTE(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeContains applies the Contains predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeContains(v string) predicate.Card {
+	return predicate.Card(sql.FieldContains(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeHasPrefix applies the HasPrefix predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeHasPrefix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasPrefix(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeHasSuffix applies the HasSuffix predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeHasSuffix(v string) predicate.Card {
+	return predicate.Card(sql.FieldHasSuffix(FieldArchiveDisplayType, v))
+}
+
 // ArchiveDisplayTypeIsNil applies the IsNil predicate on the "archive_display_type" field.
 func ArchiveDisplayTypeIsNil() predicate.Card {
 	return predicate.Card(sql.FieldIsNull(FieldArchiveDisplayType))
@@ -1031,6 +1441,16 @@ func ArchiveDisplayTypeIsNil() predicate.Card {
 // ArchiveDisplayTypeNotNil applies the NotNil predicate on the "archive_display_type" field.
 func ArchiveDisplayTypeNotNil() predicate.Card {
 	return predicate.Card(sql.FieldNotNull(FieldArchiveDisplayType))
+}
+
+// ArchiveDisplayTypeEqualFold applies the EqualFold predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeEqualFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldEqualFold(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeContainsFold applies the ContainsFold predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeContainsFold(v string) predicate.Card {
+	return predicate.Card(sql.FieldContainsFold(FieldArchiveDisplayType, v))
 }
 
 // SpecialTrainingSkillIDEQ applies the EQ predicate on the "special_training_skill_id" field.

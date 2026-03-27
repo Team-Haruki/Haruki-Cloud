@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -26,14 +24,14 @@ func (Gamecharacter) Fields() []ent.Field {
 		field.String("given_name_ruby").Optional(),
 		field.String("first_name_english").Optional(),
 		field.String("given_name_english").Optional(),
-		field.JSON("gender", json.RawMessage{}).Optional(),
+		field.String("gender").Optional(),
 		field.Float("height").Optional(),
 		field.Float("live2_d_height_adjustment").Optional(),
-		field.JSON("figure", json.RawMessage{}).Optional(),
-		field.JSON("breast_size", json.RawMessage{}).Optional(),
+		field.String("figure").Optional(),
+		field.String("breast_size").Optional(),
 		field.String("model_name").Optional(),
-		field.JSON("unit", json.RawMessage{}).Optional(),
-		field.JSON("support_unit_type", json.RawMessage{}).Optional(),
+		field.String("unit").Optional(),
+		field.String("support_unit_type").Optional(),
 		field.String("server_region"),
 	}
 }

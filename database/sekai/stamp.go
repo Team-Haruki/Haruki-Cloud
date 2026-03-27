@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/stamp"
 	"strings"
@@ -20,7 +19,7 @@ type Stamp struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// StampType holds the value of the "stamp_type" field.
-	StampType json.RawMessage `json:"stamp_type,omitempty"`
+	StampType string `json:"stamp_type,omitempty"`
 	// Seq holds the value of the "seq" field.
 	Seq int64 `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
@@ -28,7 +27,7 @@ type Stamp struct {
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// BalloonAssetbundleName holds the value of the "balloon_assetbundle_name" field.
-	BalloonAssetbundleName json.RawMessage `json:"balloon_assetbundle_name,omitempty"`
+	BalloonAssetbundleName string `json:"balloon_assetbundle_name,omitempty"`
 	// CharacterId1 holds the value of the "character_id1" field.
 	CharacterId1 int64 `json:"character_id1,omitempty"`
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
@@ -38,7 +37,7 @@ type Stamp struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
-	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
+	ArchiveDisplayType string `json:"archive_display_type,omitempty"`
 	// CharacterId2 holds the value of the "character_id2" field.
 	CharacterId2 int64 `json:"character_id2,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -51,11 +50,9 @@ func (*Stamp) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case stamp.FieldStampType, stamp.FieldBalloonAssetbundleName, stamp.FieldArchiveDisplayType:
-			values[i] = new([]byte)
 		case stamp.FieldID, stamp.FieldGameID, stamp.FieldSeq, stamp.FieldCharacterId1, stamp.FieldGameCharacterUnitID, stamp.FieldArchivePublishedAt, stamp.FieldCharacterId2:
 			values[i] = new(sql.NullInt64)
-		case stamp.FieldName, stamp.FieldAssetbundleName, stamp.FieldDescription, stamp.FieldServerRegion:
+		case stamp.FieldStampType, stamp.FieldName, stamp.FieldAssetbundleName, stamp.FieldBalloonAssetbundleName, stamp.FieldDescription, stamp.FieldArchiveDisplayType, stamp.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -85,12 +82,10 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case stamp.FieldStampType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field stamp_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.StampType); err != nil {
-					return fmt.Errorf("unmarshal field stamp_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.StampType = value.String
 			}
 		case stamp.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -111,12 +106,10 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 				_m.AssetbundleName = value.String
 			}
 		case stamp.FieldBalloonAssetbundleName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field balloon_assetbundle_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.BalloonAssetbundleName); err != nil {
-					return fmt.Errorf("unmarshal field balloon_assetbundle_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.BalloonAssetbundleName = value.String
 			}
 		case stamp.FieldCharacterId1:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -143,12 +136,10 @@ func (_m *Stamp) assignValues(columns []string, values []any) error {
 				_m.Description = value.String
 			}
 		case stamp.FieldArchiveDisplayType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_display_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.ArchiveDisplayType); err != nil {
-					return fmt.Errorf("unmarshal field archive_display_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.ArchiveDisplayType = value.String
 			}
 		case stamp.FieldCharacterId2:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -202,7 +193,7 @@ func (_m *Stamp) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("stamp_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.StampType))
+	builder.WriteString(_m.StampType)
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
@@ -214,7 +205,7 @@ func (_m *Stamp) String() string {
 	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("balloon_assetbundle_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BalloonAssetbundleName))
+	builder.WriteString(_m.BalloonAssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("character_id1=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterId1))
@@ -229,7 +220,7 @@ func (_m *Stamp) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("archive_display_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ArchiveDisplayType))
+	builder.WriteString(_m.ArchiveDisplayType)
 	builder.WriteString(", ")
 	builder.WriteString("character_id2=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CharacterId2))

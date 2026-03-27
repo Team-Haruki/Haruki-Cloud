@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,13 +16,13 @@ type Character2D struct {
 func (Character2D) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("character_type", json.RawMessage{}).Optional(),
+		field.String("character_type").Optional(),
 		field.Bool("is_next_grade").Optional(),
 		field.Int64("character_id").Optional(),
-		field.JSON("unit", json.RawMessage{}).Optional(),
+		field.String("unit").Optional(),
 		field.Bool("is_enabled_flip_display").Optional(),
 		field.String("asset_name").Optional(),
-		field.JSON("character_icon_assetbundle_name", json.RawMessage{}).Optional(),
+		field.String("character_icon_assetbundle_name").Optional(),
 		field.String("server_region"),
 	}
 }

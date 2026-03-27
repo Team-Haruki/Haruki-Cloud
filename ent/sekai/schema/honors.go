@@ -20,7 +20,7 @@ func (Honor) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("group_id").Optional(),
-		field.JSON("honor_rarity", json.RawMessage{}).Optional(),
+		field.String("honor_rarity").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.JSON("levels", json.RawMessage{}).Optional(),

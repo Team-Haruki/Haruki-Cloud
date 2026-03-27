@@ -84,6 +84,11 @@ func ByQuantity(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldQuantity, opts...).ToFunc()
 }
 
+// ByMysekaiBlueprintType orders the results by the mysekai_blueprint_type field.
+func ByMysekaiBlueprintType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiBlueprintType, opts...).ToFunc()
+}
+
 // ByServerRegion orders the results by the server_region field.
 func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()

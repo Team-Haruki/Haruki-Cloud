@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
 	"strings"
@@ -24,7 +23,7 @@ type Gachaticket struct {
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// GachaDisplayType holds the value of the "gacha_display_type" field.
-	GachaDisplayType json.RawMessage `json:"gacha_display_type,omitempty"`
+	GachaDisplayType string `json:"gacha_display_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -35,11 +34,9 @@ func (*Gachaticket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gachaticket.FieldGachaDisplayType:
-			values[i] = new([]byte)
 		case gachaticket.FieldID, gachaticket.FieldGameID:
 			values[i] = new(sql.NullInt64)
-		case gachaticket.FieldName, gachaticket.FieldAssetbundleName, gachaticket.FieldServerRegion:
+		case gachaticket.FieldName, gachaticket.FieldAssetbundleName, gachaticket.FieldGachaDisplayType, gachaticket.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -81,12 +78,10 @@ func (_m *Gachaticket) assignValues(columns []string, values []any) error {
 				_m.AssetbundleName = value.String
 			}
 		case gachaticket.FieldGachaDisplayType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_display_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.GachaDisplayType); err != nil {
-					return fmt.Errorf("unmarshal field gacha_display_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.GachaDisplayType = value.String
 			}
 		case gachaticket.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -140,7 +135,7 @@ func (_m *Gachaticket) String() string {
 	builder.WriteString(_m.AssetbundleName)
 	builder.WriteString(", ")
 	builder.WriteString("gacha_display_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.GachaDisplayType))
+	builder.WriteString(_m.GachaDisplayType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

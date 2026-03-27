@@ -266,7 +266,7 @@ func (c *CloudSource) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDiff
 		result = append(result, &masterdata.MusicDifficulty{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicDifficulty: jsonString(item.MusicDifficulty),
+			MusicDifficulty: item.MusicDifficulty,
 			PlayLevel:       int(item.PlayLevel),
 			TotalNoteCount:  int(item.TotalNoteCount),
 		})
@@ -298,7 +298,7 @@ func (c *CloudSource) FindMusicDifficultiesByNoteCount(noteCount int) ([]*master
 		result = append(result, &masterdata.MusicDifficulty{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicDifficulty: jsonString(item.MusicDifficulty),
+			MusicDifficulty: item.MusicDifficulty,
 			PlayLevel:       int(item.PlayLevel),
 			TotalNoteCount:  int(item.TotalNoteCount),
 		})
@@ -326,7 +326,7 @@ func (c *CloudSource) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, err
 		result = append(result, &masterdata.MusicVocal{
 			ID:              int(item.GameID),
 			MusicID:         int(item.MusicID),
-			MusicVocalType:  jsonString(item.MusicVocalType),
+			MusicVocalType:  item.MusicVocalType,
 			Caption:         item.Caption,
 			Characters:      parseMusicVocalCharactersFromRaw(item.Characters, int(item.GameID), int(item.MusicID)),
 			AssetBundleName: item.AssetbundleName,
@@ -349,7 +349,7 @@ func (c *CloudSource) GetMusicTags(musicID int) ([]string, error) {
 
 	result := make([]string, 0, len(items))
 	for _, item := range items {
-		tag := strings.TrimSpace(jsonString(item.MusicTag))
+		tag := strings.TrimSpace(item.MusicTag)
 		if tag != "" {
 			result = append(result, tag)
 		}
@@ -385,7 +385,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 		ID:        int(entity.GameID),
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
-		Unit:      jsonString(entity.Unit),
+		Unit:      entity.Unit,
 	}
 	c.mu.Lock()
 	c.characterByID[id] = model
@@ -481,7 +481,7 @@ func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 	}
 	return &masterdata.Event{
 		ID:              int(entity.GameID),
-		EventType:       jsonString(entity.EventType),
+		EventType:       entity.EventType,
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
 		StartAt:         entity.StartAt,

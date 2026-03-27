@@ -201,7 +201,7 @@ func convertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 
 	return &masterdata.Gacha{
 		ID:                     int(entity.GameID),
-		GachaType:              jsonString(entity.GachaType),
+		GachaType:              entity.GachaType,
 		Name:                   entity.Name,
 		Seq:                    int(entity.Seq),
 		AssetBundleName:        entity.AssetbundleName,
@@ -224,14 +224,14 @@ func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
 	return &masterdata.Card{
 		ID:                              int(entity.GameID),
 		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  jsonString(entity.CardRarityType),
-		Attr:                            jsonString(entity.Attr),
+		CardRarityType:                  entity.CardRarityType,
+		Attr:                            entity.Attr,
 		Prefix:                          entity.Prefix,
 		AssetBundleName:                 entity.AssetbundleName,
 		ReleaseAt:                       entity.ReleaseAt,
 		SkillID:                         int(entity.SkillID),
 		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     jsonString(entity.SupportUnit),
+		SupportUnit:                     entity.SupportUnit,
 		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
 		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
 		SpecialTrainingPower3BonusFixed: int(entity.SpecialTrainingPower3BonusFixed),

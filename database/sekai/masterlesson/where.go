@@ -53,6 +53,11 @@ func IDLTE(id int) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldLTE(FieldID, id))
 }
 
+// CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
+func CardRarityType(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldCardRarityType, v))
+}
+
 // MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
 func MasterRank(v int64) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldMasterRank, v))
@@ -83,6 +88,61 @@ func ServerRegion(v string) predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldEQ(FieldServerRegion, v))
 }
 
+// CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
+func CardRarityTypeEQ(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeNEQ applies the NEQ predicate on the "card_rarity_type" field.
+func CardRarityTypeNEQ(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeIn applies the In predicate on the "card_rarity_type" field.
+func CardRarityTypeIn(vs ...string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeNotIn applies the NotIn predicate on the "card_rarity_type" field.
+func CardRarityTypeNotIn(vs ...string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldNotIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeGT applies the GT predicate on the "card_rarity_type" field.
+func CardRarityTypeGT(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeGTE applies the GTE predicate on the "card_rarity_type" field.
+func CardRarityTypeGTE(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldGTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLT applies the LT predicate on the "card_rarity_type" field.
+func CardRarityTypeLT(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLTE applies the LTE predicate on the "card_rarity_type" field.
+func CardRarityTypeLTE(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldLTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContains applies the Contains predicate on the "card_rarity_type" field.
+func CardRarityTypeContains(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldContains(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasPrefix applies the HasPrefix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasPrefix(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldHasPrefix(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasSuffix applies the HasSuffix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasSuffix(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldHasSuffix(FieldCardRarityType, v))
+}
+
 // CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
 func CardRarityTypeIsNil() predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldIsNull(FieldCardRarityType))
@@ -91,6 +151,16 @@ func CardRarityTypeIsNil() predicate.Masterlesson {
 // CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
 func CardRarityTypeNotNil() predicate.Masterlesson {
 	return predicate.Masterlesson(sql.FieldNotNull(FieldCardRarityType))
+}
+
+// CardRarityTypeEqualFold applies the EqualFold predicate on the "card_rarity_type" field.
+func CardRarityTypeEqualFold(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldEqualFold(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContainsFold applies the ContainsFold predicate on the "card_rarity_type" field.
+func CardRarityTypeContainsFold(v string) predicate.Masterlesson {
+	return predicate.Masterlesson(sql.FieldContainsFold(FieldCardRarityType, v))
 }
 
 // MasterRankEQ applies the EQ predicate on the "master_rank" field.

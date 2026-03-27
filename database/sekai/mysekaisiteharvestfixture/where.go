@@ -73,6 +73,11 @@ func LastAttackStamina(v int64) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldLastAttackStamina, v))
 }
 
+// MysekaiSiteHarvestFixtureRarityType applies equality check predicate on the "mysekai_site_harvest_fixture_rarity_type" field. It's identical to MysekaiSiteHarvestFixtureRarityTypeEQ.
+func MysekaiSiteHarvestFixtureRarityType(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
 // AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
 func AssetbundleName(v string) predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldAssetbundleName, v))
@@ -308,6 +313,61 @@ func LastAttackStaminaNotNil() predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNotNull(FieldLastAttackStamina))
 }
 
+// MysekaiSiteHarvestFixtureRarityTypeEQ applies the EQ predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeEQ(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldEQ(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeNEQ applies the NEQ predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeNEQ(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldNEQ(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeIn applies the In predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeIn(vs ...string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldIn(FieldMysekaiSiteHarvestFixtureRarityType, vs...))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeNotIn applies the NotIn predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeNotIn(vs ...string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldNotIn(FieldMysekaiSiteHarvestFixtureRarityType, vs...))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeGT applies the GT predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeGT(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldGT(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeGTE applies the GTE predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeGTE(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldGTE(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeLT applies the LT predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeLT(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldLT(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeLTE applies the LTE predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeLTE(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldLTE(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeContains applies the Contains predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeContains(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldContains(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeHasPrefix applies the HasPrefix predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeHasPrefix(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldHasPrefix(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeHasSuffix applies the HasSuffix predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeHasSuffix(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldHasSuffix(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
 // MysekaiSiteHarvestFixtureRarityTypeIsNil applies the IsNil predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
 func MysekaiSiteHarvestFixtureRarityTypeIsNil() predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldIsNull(FieldMysekaiSiteHarvestFixtureRarityType))
@@ -316,6 +376,16 @@ func MysekaiSiteHarvestFixtureRarityTypeIsNil() predicate.Mysekaisiteharvestfixt
 // MysekaiSiteHarvestFixtureRarityTypeNotNil applies the NotNil predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
 func MysekaiSiteHarvestFixtureRarityTypeNotNil() predicate.Mysekaisiteharvestfixture {
 	return predicate.Mysekaisiteharvestfixture(sql.FieldNotNull(FieldMysekaiSiteHarvestFixtureRarityType))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeEqualFold applies the EqualFold predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeEqualFold(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldEqualFold(FieldMysekaiSiteHarvestFixtureRarityType, v))
+}
+
+// MysekaiSiteHarvestFixtureRarityTypeContainsFold applies the ContainsFold predicate on the "mysekai_site_harvest_fixture_rarity_type" field.
+func MysekaiSiteHarvestFixtureRarityTypeContainsFold(v string) predicate.Mysekaisiteharvestfixture {
+	return predicate.Mysekaisiteharvestfixture(sql.FieldContainsFold(FieldMysekaiSiteHarvestFixtureRarityType, v))
 }
 
 // AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.

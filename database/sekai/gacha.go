@@ -20,7 +20,7 @@ type Gacha struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// GachaType holds the value of the "gacha_type" field.
-	GachaType json.RawMessage `json:"gacha_type,omitempty"`
+	GachaType string `json:"gacha_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Seq holds the value of the "seq" field.
@@ -77,13 +77,13 @@ func (*Gacha) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gacha.FieldGachaType, gacha.FieldGachaCardRarityRates, gacha.FieldGachaDetails, gacha.FieldGachaBehaviors, gacha.FieldGachaPickups, gacha.FieldGachaPickupCostumes, gacha.FieldGachaInformation:
+		case gacha.FieldGachaCardRarityRates, gacha.FieldGachaDetails, gacha.FieldGachaBehaviors, gacha.FieldGachaPickups, gacha.FieldGachaPickupCostumes, gacha.FieldGachaInformation:
 			values[i] = new([]byte)
 		case gacha.FieldIsShowPeriod:
 			values[i] = new(sql.NullBool)
 		case gacha.FieldID, gacha.FieldGameID, gacha.FieldSeq, gacha.FieldGachaCardRarityRateGroupID, gacha.FieldStartAt, gacha.FieldEndAt, gacha.FieldGachaCeilItemID, gacha.FieldWishSelectCount, gacha.FieldWishFixedSelectCount, gacha.FieldWishLimitedSelectCount, gacha.FieldDrawableGachaHour, gacha.FieldGachaBonusID, gacha.FieldSpinLimit, gacha.FieldGachaBonusItemReceivableRewardGroupID, gacha.FieldGachaFreebieGroupID, gacha.FieldDailySpinLimit:
 			values[i] = new(sql.NullInt64)
-		case gacha.FieldName, gacha.FieldAssetbundleName, gacha.FieldServerRegion:
+		case gacha.FieldGachaType, gacha.FieldName, gacha.FieldAssetbundleName, gacha.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -113,12 +113,10 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case gacha.FieldGachaType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field gacha_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.GachaType); err != nil {
-					return fmt.Errorf("unmarshal field gacha_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.GachaType = value.String
 			}
 		case gacha.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -316,7 +314,7 @@ func (_m *Gacha) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("gacha_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.GachaType))
+	builder.WriteString(_m.GachaType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

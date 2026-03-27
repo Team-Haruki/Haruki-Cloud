@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musictag"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *MusictagUpdate) ClearMusicID() *MusictagUpdate {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_u *MusictagUpdate) SetMusicTag(v json.RawMessage) *MusictagUpdate {
+func (_u *MusictagUpdate) SetMusicTag(v string) *MusictagUpdate {
 	_u.mutation.SetMusicTag(v)
 	return _u
 }
 
-// AppendMusicTag appends value to the "music_tag" field.
-func (_u *MusictagUpdate) AppendMusicTag(v json.RawMessage) *MusictagUpdate {
-	_u.mutation.AppendMusicTag(v)
+// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
+func (_u *MusictagUpdate) SetNillableMusicTag(v *string) *MusictagUpdate {
+	if v != nil {
+		_u.SetMusicTag(*v)
+	}
 	return _u
 }
 
@@ -202,15 +202,10 @@ func (_u *MusictagUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicTag(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musictag.FieldMusicTag, value)
-		})
+		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
 	}
 	if _u.mutation.MusicTagCleared() {
-		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
+		_spec.ClearField(musictag.FieldMusicTag, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)
@@ -299,14 +294,16 @@ func (_u *MusictagUpdateOne) ClearMusicID() *MusictagUpdateOne {
 }
 
 // SetMusicTag sets the "music_tag" field.
-func (_u *MusictagUpdateOne) SetMusicTag(v json.RawMessage) *MusictagUpdateOne {
+func (_u *MusictagUpdateOne) SetMusicTag(v string) *MusictagUpdateOne {
 	_u.mutation.SetMusicTag(v)
 	return _u
 }
 
-// AppendMusicTag appends value to the "music_tag" field.
-func (_u *MusictagUpdateOne) AppendMusicTag(v json.RawMessage) *MusictagUpdateOne {
-	_u.mutation.AppendMusicTag(v)
+// SetNillableMusicTag sets the "music_tag" field if the given value is not nil.
+func (_u *MusictagUpdateOne) SetNillableMusicTag(v *string) *MusictagUpdateOne {
+	if v != nil {
+		_u.SetMusicTag(*v)
+	}
 	return _u
 }
 
@@ -447,15 +444,10 @@ func (_u *MusictagUpdateOne) sqlSave(ctx context.Context) (_node *Musictag, err 
 		_spec.ClearField(musictag.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicTag(); ok {
-		_spec.SetField(musictag.FieldMusicTag, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicTag(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musictag.FieldMusicTag, value)
-		})
+		_spec.SetField(musictag.FieldMusicTag, field.TypeString, value)
 	}
 	if _u.mutation.MusicTagCleared() {
-		_spec.ClearField(musictag.FieldMusicTag, field.TypeJSON)
+		_spec.ClearField(musictag.FieldMusicTag, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(musictag.FieldSeq, field.TypeInt64, value)

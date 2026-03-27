@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -111,14 +109,16 @@ func (_u *WorldbloomUpdate) ClearGameCharacterID() *WorldbloomUpdate {
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdate) SetWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdate {
+func (_u *WorldbloomUpdate) SetWorldBloomChapterType(v string) *WorldbloomUpdate {
 	_u.mutation.SetWorldBloomChapterType(v)
 	return _u
 }
 
-// AppendWorldBloomChapterType appends value to the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdate) AppendWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdate {
-	_u.mutation.AppendWorldBloomChapterType(v)
+// SetNillableWorldBloomChapterType sets the "world_bloom_chapter_type" field if the given value is not nil.
+func (_u *WorldbloomUpdate) SetNillableWorldBloomChapterType(v *string) *WorldbloomUpdate {
+	if v != nil {
+		_u.SetWorldBloomChapterType(*v)
+	}
 	return _u
 }
 
@@ -366,15 +366,10 @@ func (_u *WorldbloomUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.WorldBloomChapterType(); ok {
-		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomChapterType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloom.FieldWorldBloomChapterType, value)
-		})
+		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeString, value)
 	}
 	if _u.mutation.WorldBloomChapterTypeCleared() {
-		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON)
+		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ChapterNo(); ok {
 		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt64, value)
@@ -532,14 +527,16 @@ func (_u *WorldbloomUpdateOne) ClearGameCharacterID() *WorldbloomUpdateOne {
 }
 
 // SetWorldBloomChapterType sets the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdateOne) SetWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdateOne {
+func (_u *WorldbloomUpdateOne) SetWorldBloomChapterType(v string) *WorldbloomUpdateOne {
 	_u.mutation.SetWorldBloomChapterType(v)
 	return _u
 }
 
-// AppendWorldBloomChapterType appends value to the "world_bloom_chapter_type" field.
-func (_u *WorldbloomUpdateOne) AppendWorldBloomChapterType(v json.RawMessage) *WorldbloomUpdateOne {
-	_u.mutation.AppendWorldBloomChapterType(v)
+// SetNillableWorldBloomChapterType sets the "world_bloom_chapter_type" field if the given value is not nil.
+func (_u *WorldbloomUpdateOne) SetNillableWorldBloomChapterType(v *string) *WorldbloomUpdateOne {
+	if v != nil {
+		_u.SetWorldBloomChapterType(*v)
+	}
 	return _u
 }
 
@@ -817,15 +814,10 @@ func (_u *WorldbloomUpdateOne) sqlSave(ctx context.Context) (_node *Worldbloom, 
 		_spec.ClearField(worldbloom.FieldGameCharacterID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.WorldBloomChapterType(); ok {
-		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedWorldBloomChapterType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, worldbloom.FieldWorldBloomChapterType, value)
-		})
+		_spec.SetField(worldbloom.FieldWorldBloomChapterType, field.TypeString, value)
 	}
 	if _u.mutation.WorldBloomChapterTypeCleared() {
-		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeJSON)
+		_spec.ClearField(worldbloom.FieldWorldBloomChapterType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ChapterNo(); ok {
 		_spec.SetField(worldbloom.FieldChapterNo, field.TypeInt64, value)

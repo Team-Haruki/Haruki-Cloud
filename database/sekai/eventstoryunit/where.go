@@ -68,6 +68,16 @@ func EventStoryID(v int64) predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldEQ(FieldEventStoryID, v))
 }
 
+// Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
+func Unit(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEQ(FieldUnit, v))
+}
+
+// EventStoryUnitRelation applies equality check predicate on the "event_story_unit_relation" field. It's identical to EventStoryUnitRelationEQ.
+func EventStoryUnitRelation(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEQ(FieldEventStoryUnitRelation, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldEQ(FieldServerRegion, v))
@@ -223,6 +233,61 @@ func EventStoryIDNotNil() predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldNotNull(FieldEventStoryID))
 }
 
+// UnitEQ applies the EQ predicate on the "unit" field.
+func UnitEQ(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEQ(FieldUnit, v))
+}
+
+// UnitNEQ applies the NEQ predicate on the "unit" field.
+func UnitNEQ(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldNEQ(FieldUnit, v))
+}
+
+// UnitIn applies the In predicate on the "unit" field.
+func UnitIn(vs ...string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldIn(FieldUnit, vs...))
+}
+
+// UnitNotIn applies the NotIn predicate on the "unit" field.
+func UnitNotIn(vs ...string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldNotIn(FieldUnit, vs...))
+}
+
+// UnitGT applies the GT predicate on the "unit" field.
+func UnitGT(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldGT(FieldUnit, v))
+}
+
+// UnitGTE applies the GTE predicate on the "unit" field.
+func UnitGTE(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldGTE(FieldUnit, v))
+}
+
+// UnitLT applies the LT predicate on the "unit" field.
+func UnitLT(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldLT(FieldUnit, v))
+}
+
+// UnitLTE applies the LTE predicate on the "unit" field.
+func UnitLTE(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldLTE(FieldUnit, v))
+}
+
+// UnitContains applies the Contains predicate on the "unit" field.
+func UnitContains(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldContains(FieldUnit, v))
+}
+
+// UnitHasPrefix applies the HasPrefix predicate on the "unit" field.
+func UnitHasPrefix(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldHasPrefix(FieldUnit, v))
+}
+
+// UnitHasSuffix applies the HasSuffix predicate on the "unit" field.
+func UnitHasSuffix(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldHasSuffix(FieldUnit, v))
+}
+
 // UnitIsNil applies the IsNil predicate on the "unit" field.
 func UnitIsNil() predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldIsNull(FieldUnit))
@@ -233,6 +298,71 @@ func UnitNotNil() predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldNotNull(FieldUnit))
 }
 
+// UnitEqualFold applies the EqualFold predicate on the "unit" field.
+func UnitEqualFold(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEqualFold(FieldUnit, v))
+}
+
+// UnitContainsFold applies the ContainsFold predicate on the "unit" field.
+func UnitContainsFold(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldContainsFold(FieldUnit, v))
+}
+
+// EventStoryUnitRelationEQ applies the EQ predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationEQ(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEQ(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationNEQ applies the NEQ predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationNEQ(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldNEQ(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationIn applies the In predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationIn(vs ...string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldIn(FieldEventStoryUnitRelation, vs...))
+}
+
+// EventStoryUnitRelationNotIn applies the NotIn predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationNotIn(vs ...string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldNotIn(FieldEventStoryUnitRelation, vs...))
+}
+
+// EventStoryUnitRelationGT applies the GT predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationGT(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldGT(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationGTE applies the GTE predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationGTE(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldGTE(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationLT applies the LT predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationLT(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldLT(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationLTE applies the LTE predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationLTE(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldLTE(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationContains applies the Contains predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationContains(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldContains(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationHasPrefix applies the HasPrefix predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationHasPrefix(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldHasPrefix(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationHasSuffix applies the HasSuffix predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationHasSuffix(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldHasSuffix(FieldEventStoryUnitRelation, v))
+}
+
 // EventStoryUnitRelationIsNil applies the IsNil predicate on the "event_story_unit_relation" field.
 func EventStoryUnitRelationIsNil() predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldIsNull(FieldEventStoryUnitRelation))
@@ -241,6 +371,16 @@ func EventStoryUnitRelationIsNil() predicate.Eventstoryunit {
 // EventStoryUnitRelationNotNil applies the NotNil predicate on the "event_story_unit_relation" field.
 func EventStoryUnitRelationNotNil() predicate.Eventstoryunit {
 	return predicate.Eventstoryunit(sql.FieldNotNull(FieldEventStoryUnitRelation))
+}
+
+// EventStoryUnitRelationEqualFold applies the EqualFold predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationEqualFold(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldEqualFold(FieldEventStoryUnitRelation, v))
+}
+
+// EventStoryUnitRelationContainsFold applies the ContainsFold predicate on the "event_story_unit_relation" field.
+func EventStoryUnitRelationContainsFold(v string) predicate.Eventstoryunit {
+	return predicate.Eventstoryunit(sql.FieldContainsFold(FieldEventStoryUnitRelation, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

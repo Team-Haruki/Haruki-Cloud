@@ -68,6 +68,11 @@ func Name(v string) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldName, v))
 }
 
+// AssetbundleName applies equality check predicate on the "assetbundle_name" field. It's identical to AssetbundleNameEQ.
+func AssetbundleName(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldEQ(FieldAssetbundleName, v))
+}
+
 // ConvertStartAt applies equality check predicate on the "convert_start_at" field. It's identical to ConvertStartAtEQ.
 func ConvertStartAt(v int64) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldEQ(FieldConvertStartAt, v))
@@ -258,6 +263,61 @@ func NameContainsFold(v string) predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldName, v))
 }
 
+// AssetbundleNameEQ applies the EQ predicate on the "assetbundle_name" field.
+func AssetbundleNameEQ(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldEQ(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameNEQ applies the NEQ predicate on the "assetbundle_name" field.
+func AssetbundleNameNEQ(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldNEQ(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameIn applies the In predicate on the "assetbundle_name" field.
+func AssetbundleNameIn(vs ...string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldIn(FieldAssetbundleName, vs...))
+}
+
+// AssetbundleNameNotIn applies the NotIn predicate on the "assetbundle_name" field.
+func AssetbundleNameNotIn(vs ...string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldNotIn(FieldAssetbundleName, vs...))
+}
+
+// AssetbundleNameGT applies the GT predicate on the "assetbundle_name" field.
+func AssetbundleNameGT(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldGT(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameGTE applies the GTE predicate on the "assetbundle_name" field.
+func AssetbundleNameGTE(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldGTE(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameLT applies the LT predicate on the "assetbundle_name" field.
+func AssetbundleNameLT(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldLT(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameLTE applies the LTE predicate on the "assetbundle_name" field.
+func AssetbundleNameLTE(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldLTE(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameContains applies the Contains predicate on the "assetbundle_name" field.
+func AssetbundleNameContains(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldContains(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameHasPrefix applies the HasPrefix predicate on the "assetbundle_name" field.
+func AssetbundleNameHasPrefix(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldHasPrefix(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameHasSuffix applies the HasSuffix predicate on the "assetbundle_name" field.
+func AssetbundleNameHasSuffix(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldHasSuffix(FieldAssetbundleName, v))
+}
+
 // AssetbundleNameIsNil applies the IsNil predicate on the "assetbundle_name" field.
 func AssetbundleNameIsNil() predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldIsNull(FieldAssetbundleName))
@@ -266,6 +326,16 @@ func AssetbundleNameIsNil() predicate.Gachaceilitem {
 // AssetbundleNameNotNil applies the NotNil predicate on the "assetbundle_name" field.
 func AssetbundleNameNotNil() predicate.Gachaceilitem {
 	return predicate.Gachaceilitem(sql.FieldNotNull(FieldAssetbundleName))
+}
+
+// AssetbundleNameEqualFold applies the EqualFold predicate on the "assetbundle_name" field.
+func AssetbundleNameEqualFold(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldEqualFold(FieldAssetbundleName, v))
+}
+
+// AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
+func AssetbundleNameContainsFold(v string) predicate.Gachaceilitem {
+	return predicate.Gachaceilitem(sql.FieldContainsFold(FieldAssetbundleName, v))
 }
 
 // ConvertStartAtEQ applies the EQ predicate on the "convert_start_at" field.

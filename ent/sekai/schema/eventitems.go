@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,8 +17,8 @@ func (Eventitem) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
 		field.Int64("event_id").Optional(),
-		field.JSON("name", json.RawMessage{}).Optional(),
-		field.JSON("flavor_text", json.RawMessage{}).Optional(),
+		field.String("name").Optional(),
+		field.String("flavor_text").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.Int64("game_character_id").Optional(),
 		field.String("server_region"),

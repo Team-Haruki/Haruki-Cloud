@@ -49,8 +49,16 @@ func (_c *MysekaimaterialCreate) SetNillableSeq(v *int64) *MysekaimaterialCreate
 }
 
 // SetMysekaiMaterialType sets the "mysekai_material_type" field.
-func (_c *MysekaimaterialCreate) SetMysekaiMaterialType(v json.RawMessage) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiMaterialType(v string) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiMaterialType(v)
+	return _c
+}
+
+// SetNillableMysekaiMaterialType sets the "mysekai_material_type" field if the given value is not nil.
+func (_c *MysekaimaterialCreate) SetNillableMysekaiMaterialType(v *string) *MysekaimaterialCreate {
+	if v != nil {
+		_c.SetMysekaiMaterialType(*v)
+	}
 	return _c
 }
 
@@ -97,8 +105,16 @@ func (_c *MysekaimaterialCreate) SetNillableDescription(v *string) *Mysekaimater
 }
 
 // SetMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field.
-func (_c *MysekaimaterialCreate) SetMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialCreate {
+func (_c *MysekaimaterialCreate) SetMysekaiMaterialRarityType(v string) *MysekaimaterialCreate {
 	_c.mutation.SetMysekaiMaterialRarityType(v)
+	return _c
+}
+
+// SetNillableMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field if the given value is not nil.
+func (_c *MysekaimaterialCreate) SetNillableMysekaiMaterialRarityType(v *string) *MysekaimaterialCreate {
+	if v != nil {
+		_c.SetMysekaiMaterialRarityType(*v)
+	}
 	return _c
 }
 
@@ -228,7 +244,7 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_node.Seq = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeJSON, value)
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeString, value)
 		_node.MysekaiMaterialType = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
@@ -244,7 +260,7 @@ func (_c *MysekaimaterialCreate) createSpec() (*Mysekaimaterial, *sqlgraph.Creat
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.MysekaiMaterialRarityType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeJSON, value)
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeString, value)
 		_node.MysekaiMaterialRarityType = value
 	}
 	if value, ok := _c.mutation.IconAssetbundleName(); ok {

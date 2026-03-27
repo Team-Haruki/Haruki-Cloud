@@ -20,7 +20,7 @@ func (Skill) Fields() []ent.Field {
 		field.Int64("game_id").Optional(),
 		field.String("short_description").Optional(),
 		field.String("description").Optional(),
-		field.JSON("description_sprite_name", json.RawMessage{}).Optional(),
+		field.String("description_sprite_name").Optional(),
 		field.Int64("skill_filter_id").Optional(),
 		field.JSON("skill_effects", json.RawMessage{}).Optional(),
 		field.String("server_region"),

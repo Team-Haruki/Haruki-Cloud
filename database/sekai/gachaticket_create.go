@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
@@ -63,8 +62,16 @@ func (_c *GachaticketCreate) SetNillableAssetbundleName(v *string) *GachaticketC
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_c *GachaticketCreate) SetGachaDisplayType(v json.RawMessage) *GachaticketCreate {
+func (_c *GachaticketCreate) SetGachaDisplayType(v string) *GachaticketCreate {
 	_c.mutation.SetGachaDisplayType(v)
+	return _c
+}
+
+// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
+func (_c *GachaticketCreate) SetNillableGachaDisplayType(v *string) *GachaticketCreate {
+	if v != nil {
+		_c.SetGachaDisplayType(*v)
+	}
 	return _c
 }
 
@@ -150,7 +157,7 @@ func (_c *GachaticketCreate) createSpec() (*Gachaticket, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
 		_node.GachaDisplayType = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

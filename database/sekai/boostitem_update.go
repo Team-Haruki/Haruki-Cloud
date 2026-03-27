@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -151,14 +149,16 @@ func (_u *BoostitemUpdate) ClearAssetBundleName() *BoostitemUpdate {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *BoostitemUpdate) SetFlavorText(v json.RawMessage) *BoostitemUpdate {
+func (_u *BoostitemUpdate) SetFlavorText(v string) *BoostitemUpdate {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *BoostitemUpdate) AppendFlavorText(v json.RawMessage) *BoostitemUpdate {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *BoostitemUpdate) SetNillableFlavorText(v *string) *BoostitemUpdate {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -263,15 +263,10 @@ func (_u *BoostitemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(boostitem.FieldAssetBundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, boostitem.FieldFlavorText, value)
-		})
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(boostitem.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(boostitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)
@@ -418,14 +413,16 @@ func (_u *BoostitemUpdateOne) ClearAssetBundleName() *BoostitemUpdateOne {
 }
 
 // SetFlavorText sets the "flavor_text" field.
-func (_u *BoostitemUpdateOne) SetFlavorText(v json.RawMessage) *BoostitemUpdateOne {
+func (_u *BoostitemUpdateOne) SetFlavorText(v string) *BoostitemUpdateOne {
 	_u.mutation.SetFlavorText(v)
 	return _u
 }
 
-// AppendFlavorText appends value to the "flavor_text" field.
-func (_u *BoostitemUpdateOne) AppendFlavorText(v json.RawMessage) *BoostitemUpdateOne {
-	_u.mutation.AppendFlavorText(v)
+// SetNillableFlavorText sets the "flavor_text" field if the given value is not nil.
+func (_u *BoostitemUpdateOne) SetNillableFlavorText(v *string) *BoostitemUpdateOne {
+	if v != nil {
+		_u.SetFlavorText(*v)
+	}
 	return _u
 }
 
@@ -560,15 +557,10 @@ func (_u *BoostitemUpdateOne) sqlSave(ctx context.Context) (_node *Boostitem, er
 		_spec.ClearField(boostitem.FieldAssetBundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.FlavorText(); ok {
-		_spec.SetField(boostitem.FieldFlavorText, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFlavorText(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, boostitem.FieldFlavorText, value)
-		})
+		_spec.SetField(boostitem.FieldFlavorText, field.TypeString, value)
 	}
 	if _u.mutation.FlavorTextCleared() {
-		_spec.ClearField(boostitem.FieldFlavorText, field.TypeJSON)
+		_spec.ClearField(boostitem.FieldFlavorText, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(boostitem.FieldServerRegion, field.TypeString, value)

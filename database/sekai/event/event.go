@@ -103,6 +103,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByEventType orders the results by the event_type field.
+func ByEventType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEventType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -163,9 +168,19 @@ func ByVirtualLiveID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVirtualLiveID, opts...).ToFunc()
 }
 
+// ByUnit orders the results by the unit field.
+func ByUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnit, opts...).ToFunc()
+}
+
 // ByIsCountLeaderCharacterPlay orders the results by the is_count_leader_character_play field.
 func ByIsCountLeaderCharacterPlay(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsCountLeaderCharacterPlay, opts...).ToFunc()
+}
+
+// ByEventPointAssetbundleName orders the results by the event_point_assetbundle_name field.
+func ByEventPointAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEventPointAssetbundleName, opts...).ToFunc()
 }
 
 // ByStandbyScreenDisplayStartAt orders the results by the standby_screen_display_start_at field.

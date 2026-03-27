@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalk"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -192,14 +190,16 @@ func (_u *MysekaicharactertalkUpdate) ClearCharacterArchiveMysekaiCharacterTalkG
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_u *MysekaicharactertalkUpdate) SetAssetbundleName(v json.RawMessage) *MysekaicharactertalkUpdate {
+func (_u *MysekaicharactertalkUpdate) SetAssetbundleName(v string) *MysekaicharactertalkUpdate {
 	_u.mutation.SetAssetbundleName(v)
 	return _u
 }
 
-// AppendAssetbundleName appends value to the "assetbundle_name" field.
-func (_u *MysekaicharactertalkUpdate) AppendAssetbundleName(v json.RawMessage) *MysekaicharactertalkUpdate {
-	_u.mutation.AppendAssetbundleName(v)
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_u *MysekaicharactertalkUpdate) SetNillableAssetbundleName(v *string) *MysekaicharactertalkUpdate {
+	if v != nil {
+		_u.SetAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -359,15 +359,10 @@ func (_u *MysekaicharactertalkUpdate) sqlSave(ctx context.Context) (_node int, e
 		_spec.ClearField(mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalk.FieldAssetbundleName, value)
-		})
+		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
-		_spec.ClearField(mysekaicharactertalk.FieldAssetbundleName, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalk.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Lua(); ok {
 		_spec.SetField(mysekaicharactertalk.FieldLua, field.TypeString, value)
@@ -567,14 +562,16 @@ func (_u *MysekaicharactertalkUpdateOne) ClearCharacterArchiveMysekaiCharacterTa
 }
 
 // SetAssetbundleName sets the "assetbundle_name" field.
-func (_u *MysekaicharactertalkUpdateOne) SetAssetbundleName(v json.RawMessage) *MysekaicharactertalkUpdateOne {
+func (_u *MysekaicharactertalkUpdateOne) SetAssetbundleName(v string) *MysekaicharactertalkUpdateOne {
 	_u.mutation.SetAssetbundleName(v)
 	return _u
 }
 
-// AppendAssetbundleName appends value to the "assetbundle_name" field.
-func (_u *MysekaicharactertalkUpdateOne) AppendAssetbundleName(v json.RawMessage) *MysekaicharactertalkUpdateOne {
-	_u.mutation.AppendAssetbundleName(v)
+// SetNillableAssetbundleName sets the "assetbundle_name" field if the given value is not nil.
+func (_u *MysekaicharactertalkUpdateOne) SetNillableAssetbundleName(v *string) *MysekaicharactertalkUpdateOne {
+	if v != nil {
+		_u.SetAssetbundleName(*v)
+	}
 	return _u
 }
 
@@ -764,15 +761,10 @@ func (_u *MysekaicharactertalkUpdateOne) sqlSave(ctx context.Context) (_node *My
 		_spec.ClearField(mysekaicharactertalk.FieldCharacterArchiveMysekaiCharacterTalkGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
-		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAssetbundleName(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalk.FieldAssetbundleName, value)
-		})
+		_spec.SetField(mysekaicharactertalk.FieldAssetbundleName, field.TypeString, value)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
-		_spec.ClearField(mysekaicharactertalk.FieldAssetbundleName, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalk.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Lua(); ok {
 		_spec.SetField(mysekaicharactertalk.FieldLua, field.TypeString, value)

@@ -58,6 +58,16 @@ func GameID(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldGameID, v))
 }
 
+// VirtualLiveType applies equality check predicate on the "virtual_live_type" field. It's identical to VirtualLiveTypeEQ.
+func VirtualLiveType(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLiveType, v))
+}
+
+// VirtualLivePlatform applies equality check predicate on the "virtual_live_platform" field. It's identical to VirtualLivePlatformEQ.
+func VirtualLivePlatform(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLivePlatform, v))
+}
+
 // Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
 func Seq(v int64) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldSeq, v))
@@ -163,6 +173,61 @@ func GameIDNotNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotNull(FieldGameID))
 }
 
+// VirtualLiveTypeEQ applies the EQ predicate on the "virtual_live_type" field.
+func VirtualLiveTypeEQ(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeNEQ applies the NEQ predicate on the "virtual_live_type" field.
+func VirtualLiveTypeNEQ(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNEQ(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeIn applies the In predicate on the "virtual_live_type" field.
+func VirtualLiveTypeIn(vs ...string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIn(FieldVirtualLiveType, vs...))
+}
+
+// VirtualLiveTypeNotIn applies the NotIn predicate on the "virtual_live_type" field.
+func VirtualLiveTypeNotIn(vs ...string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotIn(FieldVirtualLiveType, vs...))
+}
+
+// VirtualLiveTypeGT applies the GT predicate on the "virtual_live_type" field.
+func VirtualLiveTypeGT(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldGT(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeGTE applies the GTE predicate on the "virtual_live_type" field.
+func VirtualLiveTypeGTE(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldGTE(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeLT applies the LT predicate on the "virtual_live_type" field.
+func VirtualLiveTypeLT(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldLT(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeLTE applies the LTE predicate on the "virtual_live_type" field.
+func VirtualLiveTypeLTE(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldLTE(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeContains applies the Contains predicate on the "virtual_live_type" field.
+func VirtualLiveTypeContains(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldContains(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeHasPrefix applies the HasPrefix predicate on the "virtual_live_type" field.
+func VirtualLiveTypeHasPrefix(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldHasPrefix(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeHasSuffix applies the HasSuffix predicate on the "virtual_live_type" field.
+func VirtualLiveTypeHasSuffix(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldHasSuffix(FieldVirtualLiveType, v))
+}
+
 // VirtualLiveTypeIsNil applies the IsNil predicate on the "virtual_live_type" field.
 func VirtualLiveTypeIsNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLiveType))
@@ -173,6 +238,71 @@ func VirtualLiveTypeNotNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLiveType))
 }
 
+// VirtualLiveTypeEqualFold applies the EqualFold predicate on the "virtual_live_type" field.
+func VirtualLiveTypeEqualFold(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEqualFold(FieldVirtualLiveType, v))
+}
+
+// VirtualLiveTypeContainsFold applies the ContainsFold predicate on the "virtual_live_type" field.
+func VirtualLiveTypeContainsFold(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldContainsFold(FieldVirtualLiveType, v))
+}
+
+// VirtualLivePlatformEQ applies the EQ predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformEQ(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEQ(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformNEQ applies the NEQ predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformNEQ(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNEQ(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformIn applies the In predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformIn(vs ...string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIn(FieldVirtualLivePlatform, vs...))
+}
+
+// VirtualLivePlatformNotIn applies the NotIn predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformNotIn(vs ...string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotIn(FieldVirtualLivePlatform, vs...))
+}
+
+// VirtualLivePlatformGT applies the GT predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformGT(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldGT(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformGTE applies the GTE predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformGTE(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldGTE(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformLT applies the LT predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformLT(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldLT(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformLTE applies the LTE predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformLTE(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldLTE(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformContains applies the Contains predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformContains(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldContains(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformHasPrefix applies the HasPrefix predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformHasPrefix(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldHasPrefix(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformHasSuffix applies the HasSuffix predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformHasSuffix(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldHasSuffix(FieldVirtualLivePlatform, v))
+}
+
 // VirtualLivePlatformIsNil applies the IsNil predicate on the "virtual_live_platform" field.
 func VirtualLivePlatformIsNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLivePlatform))
@@ -181,6 +311,16 @@ func VirtualLivePlatformIsNil() predicate.Virtuallive {
 // VirtualLivePlatformNotNil applies the NotNil predicate on the "virtual_live_platform" field.
 func VirtualLivePlatformNotNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLivePlatform))
+}
+
+// VirtualLivePlatformEqualFold applies the EqualFold predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformEqualFold(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldEqualFold(FieldVirtualLivePlatform, v))
+}
+
+// VirtualLivePlatformContainsFold applies the ContainsFold predicate on the "virtual_live_platform" field.
+func VirtualLivePlatformContainsFold(v string) predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldContainsFold(FieldVirtualLivePlatform, v))
 }
 
 // SeqEQ applies the EQ predicate on the "seq" field.

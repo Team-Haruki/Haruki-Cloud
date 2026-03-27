@@ -171,7 +171,7 @@ func (c *CloudSource) GetEventDeckBonuses(eventID int) ([]*masterdata.EventDeckB
 			ID:                  item.ID,
 			EventID:             int(item.EventID),
 			GameCharacterUnitID: int(item.GameCharacterUnitID),
-			CardAttr:            jsonString(item.CardAttr),
+			CardAttr:            item.CardAttr,
 			BonusRate:           item.BonusRate,
 		})
 	}
@@ -196,7 +196,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 	model := &masterdata.GameCharacterUnit{
 		ID:              entity.ID,
 		GameCharacterID: int(entity.GameCharacterID),
-		Unit:            jsonString(entity.Unit),
+		Unit:            entity.Unit,
 		ColorCode:       entity.ColorCode,
 	}
 	c.gcuMu.Lock()
@@ -254,7 +254,7 @@ func (c *CloudSource) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloo
 			AggregateAt:     item.AggregateAt,
 			ChapterEndAt:    item.ChapterEndAt,
 			IsSupplemental:  item.IsSupplemental,
-			ChapterType:     jsonString(item.WorldBloomChapterType),
+			ChapterType:     item.WorldBloomChapterType,
 		})
 	}
 	return result
@@ -279,7 +279,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 		ID:        entity.ID,
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
-		Unit:      jsonString(entity.Unit),
+		Unit:      entity.Unit,
 	}
 	c.charMu.Lock()
 	c.charCache[id] = model
@@ -364,7 +364,7 @@ func (c *CloudSource) getCardSupplyType(id int) string {
 func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 	return &masterdata.Event{
 		ID:              int(entity.GameID),
-		EventType:       jsonString(entity.EventType),
+		EventType:       entity.EventType,
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
 		StartAt:         entity.StartAt,
@@ -377,14 +377,14 @@ func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
 	return &masterdata.Card{
 		ID:                              int(entity.GameID),
 		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  jsonString(entity.CardRarityType),
-		Attr:                            jsonString(entity.Attr),
+		CardRarityType:                  entity.CardRarityType,
+		Attr:                            entity.Attr,
 		Prefix:                          entity.Prefix,
 		AssetBundleName:                 entity.AssetbundleName,
 		ReleaseAt:                       entity.ReleaseAt,
 		SkillID:                         int(entity.SkillID),
 		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     jsonString(entity.SupportUnit),
+		SupportUnit:                     entity.SupportUnit,
 		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
 		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
 		SpecialTrainingPower3BonusFixed: int(entity.SpecialTrainingPower3BonusFixed),

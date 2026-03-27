@@ -98,6 +98,11 @@ func GivenNameEnglish(v string) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldGivenNameEnglish, v))
 }
 
+// Gender applies equality check predicate on the "gender" field. It's identical to GenderEQ.
+func Gender(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldGender, v))
+}
+
 // Height applies equality check predicate on the "height" field. It's identical to HeightEQ.
 func Height(v float64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldHeight, v))
@@ -108,9 +113,29 @@ func Live2DHeightAdjustment(v float64) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldLive2DHeightAdjustment, v))
 }
 
+// Figure applies equality check predicate on the "figure" field. It's identical to FigureEQ.
+func Figure(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldFigure, v))
+}
+
+// BreastSize applies equality check predicate on the "breast_size" field. It's identical to BreastSizeEQ.
+func BreastSize(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldBreastSize, v))
+}
+
 // ModelName applies equality check predicate on the "model_name" field. It's identical to ModelNameEQ.
 func ModelName(v string) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldEQ(FieldModelName, v))
+}
+
+// Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
+func Unit(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldUnit, v))
+}
+
+// SupportUnitType applies equality check predicate on the "support_unit_type" field. It's identical to SupportUnitTypeEQ.
+func SupportUnitType(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldSupportUnitType, v))
 }
 
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
@@ -718,6 +743,61 @@ func GivenNameEnglishContainsFold(v string) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldContainsFold(FieldGivenNameEnglish, v))
 }
 
+// GenderEQ applies the EQ predicate on the "gender" field.
+func GenderEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldGender, v))
+}
+
+// GenderNEQ applies the NEQ predicate on the "gender" field.
+func GenderNEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNEQ(FieldGender, v))
+}
+
+// GenderIn applies the In predicate on the "gender" field.
+func GenderIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIn(FieldGender, vs...))
+}
+
+// GenderNotIn applies the NotIn predicate on the "gender" field.
+func GenderNotIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotIn(FieldGender, vs...))
+}
+
+// GenderGT applies the GT predicate on the "gender" field.
+func GenderGT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGT(FieldGender, v))
+}
+
+// GenderGTE applies the GTE predicate on the "gender" field.
+func GenderGTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGTE(FieldGender, v))
+}
+
+// GenderLT applies the LT predicate on the "gender" field.
+func GenderLT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLT(FieldGender, v))
+}
+
+// GenderLTE applies the LTE predicate on the "gender" field.
+func GenderLTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLTE(FieldGender, v))
+}
+
+// GenderContains applies the Contains predicate on the "gender" field.
+func GenderContains(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContains(FieldGender, v))
+}
+
+// GenderHasPrefix applies the HasPrefix predicate on the "gender" field.
+func GenderHasPrefix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasPrefix(FieldGender, v))
+}
+
+// GenderHasSuffix applies the HasSuffix predicate on the "gender" field.
+func GenderHasSuffix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasSuffix(FieldGender, v))
+}
+
 // GenderIsNil applies the IsNil predicate on the "gender" field.
 func GenderIsNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIsNull(FieldGender))
@@ -726,6 +806,16 @@ func GenderIsNil() predicate.Gamecharacter {
 // GenderNotNil applies the NotNil predicate on the "gender" field.
 func GenderNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldGender))
+}
+
+// GenderEqualFold applies the EqualFold predicate on the "gender" field.
+func GenderEqualFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEqualFold(FieldGender, v))
+}
+
+// GenderContainsFold applies the ContainsFold predicate on the "gender" field.
+func GenderContainsFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContainsFold(FieldGender, v))
 }
 
 // HeightEQ applies the EQ predicate on the "height" field.
@@ -828,6 +918,61 @@ func Live2DHeightAdjustmentNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldLive2DHeightAdjustment))
 }
 
+// FigureEQ applies the EQ predicate on the "figure" field.
+func FigureEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldFigure, v))
+}
+
+// FigureNEQ applies the NEQ predicate on the "figure" field.
+func FigureNEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNEQ(FieldFigure, v))
+}
+
+// FigureIn applies the In predicate on the "figure" field.
+func FigureIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIn(FieldFigure, vs...))
+}
+
+// FigureNotIn applies the NotIn predicate on the "figure" field.
+func FigureNotIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotIn(FieldFigure, vs...))
+}
+
+// FigureGT applies the GT predicate on the "figure" field.
+func FigureGT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGT(FieldFigure, v))
+}
+
+// FigureGTE applies the GTE predicate on the "figure" field.
+func FigureGTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGTE(FieldFigure, v))
+}
+
+// FigureLT applies the LT predicate on the "figure" field.
+func FigureLT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLT(FieldFigure, v))
+}
+
+// FigureLTE applies the LTE predicate on the "figure" field.
+func FigureLTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLTE(FieldFigure, v))
+}
+
+// FigureContains applies the Contains predicate on the "figure" field.
+func FigureContains(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContains(FieldFigure, v))
+}
+
+// FigureHasPrefix applies the HasPrefix predicate on the "figure" field.
+func FigureHasPrefix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasPrefix(FieldFigure, v))
+}
+
+// FigureHasSuffix applies the HasSuffix predicate on the "figure" field.
+func FigureHasSuffix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasSuffix(FieldFigure, v))
+}
+
 // FigureIsNil applies the IsNil predicate on the "figure" field.
 func FigureIsNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIsNull(FieldFigure))
@@ -838,6 +983,71 @@ func FigureNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldFigure))
 }
 
+// FigureEqualFold applies the EqualFold predicate on the "figure" field.
+func FigureEqualFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEqualFold(FieldFigure, v))
+}
+
+// FigureContainsFold applies the ContainsFold predicate on the "figure" field.
+func FigureContainsFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContainsFold(FieldFigure, v))
+}
+
+// BreastSizeEQ applies the EQ predicate on the "breast_size" field.
+func BreastSizeEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldBreastSize, v))
+}
+
+// BreastSizeNEQ applies the NEQ predicate on the "breast_size" field.
+func BreastSizeNEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNEQ(FieldBreastSize, v))
+}
+
+// BreastSizeIn applies the In predicate on the "breast_size" field.
+func BreastSizeIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIn(FieldBreastSize, vs...))
+}
+
+// BreastSizeNotIn applies the NotIn predicate on the "breast_size" field.
+func BreastSizeNotIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotIn(FieldBreastSize, vs...))
+}
+
+// BreastSizeGT applies the GT predicate on the "breast_size" field.
+func BreastSizeGT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGT(FieldBreastSize, v))
+}
+
+// BreastSizeGTE applies the GTE predicate on the "breast_size" field.
+func BreastSizeGTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGTE(FieldBreastSize, v))
+}
+
+// BreastSizeLT applies the LT predicate on the "breast_size" field.
+func BreastSizeLT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLT(FieldBreastSize, v))
+}
+
+// BreastSizeLTE applies the LTE predicate on the "breast_size" field.
+func BreastSizeLTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLTE(FieldBreastSize, v))
+}
+
+// BreastSizeContains applies the Contains predicate on the "breast_size" field.
+func BreastSizeContains(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContains(FieldBreastSize, v))
+}
+
+// BreastSizeHasPrefix applies the HasPrefix predicate on the "breast_size" field.
+func BreastSizeHasPrefix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasPrefix(FieldBreastSize, v))
+}
+
+// BreastSizeHasSuffix applies the HasSuffix predicate on the "breast_size" field.
+func BreastSizeHasSuffix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasSuffix(FieldBreastSize, v))
+}
+
 // BreastSizeIsNil applies the IsNil predicate on the "breast_size" field.
 func BreastSizeIsNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIsNull(FieldBreastSize))
@@ -846,6 +1056,16 @@ func BreastSizeIsNil() predicate.Gamecharacter {
 // BreastSizeNotNil applies the NotNil predicate on the "breast_size" field.
 func BreastSizeNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldBreastSize))
+}
+
+// BreastSizeEqualFold applies the EqualFold predicate on the "breast_size" field.
+func BreastSizeEqualFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEqualFold(FieldBreastSize, v))
+}
+
+// BreastSizeContainsFold applies the ContainsFold predicate on the "breast_size" field.
+func BreastSizeContainsFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContainsFold(FieldBreastSize, v))
 }
 
 // ModelNameEQ applies the EQ predicate on the "model_name" field.
@@ -923,6 +1143,61 @@ func ModelNameContainsFold(v string) predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldContainsFold(FieldModelName, v))
 }
 
+// UnitEQ applies the EQ predicate on the "unit" field.
+func UnitEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldUnit, v))
+}
+
+// UnitNEQ applies the NEQ predicate on the "unit" field.
+func UnitNEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNEQ(FieldUnit, v))
+}
+
+// UnitIn applies the In predicate on the "unit" field.
+func UnitIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIn(FieldUnit, vs...))
+}
+
+// UnitNotIn applies the NotIn predicate on the "unit" field.
+func UnitNotIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotIn(FieldUnit, vs...))
+}
+
+// UnitGT applies the GT predicate on the "unit" field.
+func UnitGT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGT(FieldUnit, v))
+}
+
+// UnitGTE applies the GTE predicate on the "unit" field.
+func UnitGTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGTE(FieldUnit, v))
+}
+
+// UnitLT applies the LT predicate on the "unit" field.
+func UnitLT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLT(FieldUnit, v))
+}
+
+// UnitLTE applies the LTE predicate on the "unit" field.
+func UnitLTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLTE(FieldUnit, v))
+}
+
+// UnitContains applies the Contains predicate on the "unit" field.
+func UnitContains(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContains(FieldUnit, v))
+}
+
+// UnitHasPrefix applies the HasPrefix predicate on the "unit" field.
+func UnitHasPrefix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasPrefix(FieldUnit, v))
+}
+
+// UnitHasSuffix applies the HasSuffix predicate on the "unit" field.
+func UnitHasSuffix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasSuffix(FieldUnit, v))
+}
+
 // UnitIsNil applies the IsNil predicate on the "unit" field.
 func UnitIsNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIsNull(FieldUnit))
@@ -933,6 +1208,71 @@ func UnitNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldUnit))
 }
 
+// UnitEqualFold applies the EqualFold predicate on the "unit" field.
+func UnitEqualFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEqualFold(FieldUnit, v))
+}
+
+// UnitContainsFold applies the ContainsFold predicate on the "unit" field.
+func UnitContainsFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContainsFold(FieldUnit, v))
+}
+
+// SupportUnitTypeEQ applies the EQ predicate on the "support_unit_type" field.
+func SupportUnitTypeEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEQ(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeNEQ applies the NEQ predicate on the "support_unit_type" field.
+func SupportUnitTypeNEQ(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNEQ(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeIn applies the In predicate on the "support_unit_type" field.
+func SupportUnitTypeIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldIn(FieldSupportUnitType, vs...))
+}
+
+// SupportUnitTypeNotIn applies the NotIn predicate on the "support_unit_type" field.
+func SupportUnitTypeNotIn(vs ...string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldNotIn(FieldSupportUnitType, vs...))
+}
+
+// SupportUnitTypeGT applies the GT predicate on the "support_unit_type" field.
+func SupportUnitTypeGT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGT(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeGTE applies the GTE predicate on the "support_unit_type" field.
+func SupportUnitTypeGTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldGTE(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeLT applies the LT predicate on the "support_unit_type" field.
+func SupportUnitTypeLT(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLT(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeLTE applies the LTE predicate on the "support_unit_type" field.
+func SupportUnitTypeLTE(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldLTE(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeContains applies the Contains predicate on the "support_unit_type" field.
+func SupportUnitTypeContains(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContains(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeHasPrefix applies the HasPrefix predicate on the "support_unit_type" field.
+func SupportUnitTypeHasPrefix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasPrefix(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeHasSuffix applies the HasSuffix predicate on the "support_unit_type" field.
+func SupportUnitTypeHasSuffix(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldHasSuffix(FieldSupportUnitType, v))
+}
+
 // SupportUnitTypeIsNil applies the IsNil predicate on the "support_unit_type" field.
 func SupportUnitTypeIsNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldIsNull(FieldSupportUnitType))
@@ -941,6 +1281,16 @@ func SupportUnitTypeIsNil() predicate.Gamecharacter {
 // SupportUnitTypeNotNil applies the NotNil predicate on the "support_unit_type" field.
 func SupportUnitTypeNotNil() predicate.Gamecharacter {
 	return predicate.Gamecharacter(sql.FieldNotNull(FieldSupportUnitType))
+}
+
+// SupportUnitTypeEqualFold applies the EqualFold predicate on the "support_unit_type" field.
+func SupportUnitTypeEqualFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldEqualFold(FieldSupportUnitType, v))
+}
+
+// SupportUnitTypeContainsFold applies the ContainsFold predicate on the "support_unit_type" field.
+func SupportUnitTypeContainsFold(v string) predicate.Gamecharacter {
+	return predicate.Gamecharacter(sql.FieldContainsFold(FieldSupportUnitType, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

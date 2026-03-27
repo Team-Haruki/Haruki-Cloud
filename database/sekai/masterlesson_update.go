@@ -30,14 +30,16 @@ func (_u *MasterlessonUpdate) Where(ps ...predicate.Masterlesson) *MasterlessonU
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *MasterlessonUpdate) SetCardRarityType(v json.RawMessage) *MasterlessonUpdate {
+func (_u *MasterlessonUpdate) SetCardRarityType(v string) *MasterlessonUpdate {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *MasterlessonUpdate) AppendCardRarityType(v json.RawMessage) *MasterlessonUpdate {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *MasterlessonUpdate) SetNillableCardRarityType(v *string) *MasterlessonUpdate {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -274,15 +276,10 @@ func (_u *MasterlessonUpdate) sqlSave(ctx context.Context) (_node int, err error
 		}
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, masterlesson.FieldCardRarityType, value)
-		})
+		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
 		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)
@@ -375,14 +372,16 @@ type MasterlessonUpdateOne struct {
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *MasterlessonUpdateOne) SetCardRarityType(v json.RawMessage) *MasterlessonUpdateOne {
+func (_u *MasterlessonUpdateOne) SetCardRarityType(v string) *MasterlessonUpdateOne {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *MasterlessonUpdateOne) AppendCardRarityType(v json.RawMessage) *MasterlessonUpdateOne {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *MasterlessonUpdateOne) SetNillableCardRarityType(v *string) *MasterlessonUpdateOne {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -649,15 +648,10 @@ func (_u *MasterlessonUpdateOne) sqlSave(ctx context.Context) (_node *Masterless
 		}
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, masterlesson.FieldCardRarityType, value)
-		})
+		_spec.SetField(masterlesson.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(masterlesson.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
 		_spec.SetField(masterlesson.FieldMasterRank, field.TypeInt64, value)

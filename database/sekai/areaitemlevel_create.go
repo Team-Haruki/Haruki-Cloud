@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/areaitemlevel"
@@ -49,14 +48,30 @@ func (_c *AreaitemlevelCreate) SetNillableLevel(v *int64) *AreaitemlevelCreate {
 }
 
 // SetTargetUnit sets the "target_unit" field.
-func (_c *AreaitemlevelCreate) SetTargetUnit(v json.RawMessage) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetUnit(v string) *AreaitemlevelCreate {
 	_c.mutation.SetTargetUnit(v)
 	return _c
 }
 
+// SetNillableTargetUnit sets the "target_unit" field if the given value is not nil.
+func (_c *AreaitemlevelCreate) SetNillableTargetUnit(v *string) *AreaitemlevelCreate {
+	if v != nil {
+		_c.SetTargetUnit(*v)
+	}
+	return _c
+}
+
 // SetTargetCardAttr sets the "target_card_attr" field.
-func (_c *AreaitemlevelCreate) SetTargetCardAttr(v json.RawMessage) *AreaitemlevelCreate {
+func (_c *AreaitemlevelCreate) SetTargetCardAttr(v string) *AreaitemlevelCreate {
 	_c.mutation.SetTargetCardAttr(v)
+	return _c
+}
+
+// SetNillableTargetCardAttr sets the "target_card_attr" field if the given value is not nil.
+func (_c *AreaitemlevelCreate) SetNillableTargetCardAttr(v *string) *AreaitemlevelCreate {
+	if v != nil {
+		_c.SetTargetCardAttr(*v)
+	}
 	return _c
 }
 
@@ -250,11 +265,11 @@ func (_c *AreaitemlevelCreate) createSpec() (*Areaitemlevel, *sqlgraph.CreateSpe
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.TargetUnit(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeJSON, value)
+		_spec.SetField(areaitemlevel.FieldTargetUnit, field.TypeString, value)
 		_node.TargetUnit = value
 	}
 	if value, ok := _c.mutation.TargetCardAttr(); ok {
-		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeJSON, value)
+		_spec.SetField(areaitemlevel.FieldTargetCardAttr, field.TypeString, value)
 		_node.TargetCardAttr = value
 	}
 	if value, ok := _c.mutation.TargetGameCharacterID(); ok {

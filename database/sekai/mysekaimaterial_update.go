@@ -84,14 +84,16 @@ func (_u *MysekaimaterialUpdate) ClearSeq() *MysekaimaterialUpdate {
 }
 
 // SetMysekaiMaterialType sets the "mysekai_material_type" field.
-func (_u *MysekaimaterialUpdate) SetMysekaiMaterialType(v json.RawMessage) *MysekaimaterialUpdate {
+func (_u *MysekaimaterialUpdate) SetMysekaiMaterialType(v string) *MysekaimaterialUpdate {
 	_u.mutation.SetMysekaiMaterialType(v)
 	return _u
 }
 
-// AppendMysekaiMaterialType appends value to the "mysekai_material_type" field.
-func (_u *MysekaimaterialUpdate) AppendMysekaiMaterialType(v json.RawMessage) *MysekaimaterialUpdate {
-	_u.mutation.AppendMysekaiMaterialType(v)
+// SetNillableMysekaiMaterialType sets the "mysekai_material_type" field if the given value is not nil.
+func (_u *MysekaimaterialUpdate) SetNillableMysekaiMaterialType(v *string) *MysekaimaterialUpdate {
+	if v != nil {
+		_u.SetMysekaiMaterialType(*v)
+	}
 	return _u
 }
 
@@ -162,14 +164,16 @@ func (_u *MysekaimaterialUpdate) ClearDescription() *MysekaimaterialUpdate {
 }
 
 // SetMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field.
-func (_u *MysekaimaterialUpdate) SetMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialUpdate {
+func (_u *MysekaimaterialUpdate) SetMysekaiMaterialRarityType(v string) *MysekaimaterialUpdate {
 	_u.mutation.SetMysekaiMaterialRarityType(v)
 	return _u
 }
 
-// AppendMysekaiMaterialRarityType appends value to the "mysekai_material_rarity_type" field.
-func (_u *MysekaimaterialUpdate) AppendMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialUpdate {
-	_u.mutation.AppendMysekaiMaterialRarityType(v)
+// SetNillableMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field if the given value is not nil.
+func (_u *MysekaimaterialUpdate) SetNillableMysekaiMaterialRarityType(v *string) *MysekaimaterialUpdate {
+	if v != nil {
+		_u.SetMysekaiMaterialRarityType(*v)
+	}
 	return _u
 }
 
@@ -338,15 +342,10 @@ func (_u *MysekaimaterialUpdate) sqlSave(ctx context.Context) (_node int, err er
 		_spec.ClearField(mysekaimaterial.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMaterialType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimaterial.FieldMysekaiMaterialType, value)
-		})
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMaterialTypeCleared() {
-		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeJSON)
+		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimaterial.FieldName, field.TypeString, value)
@@ -367,15 +366,10 @@ func (_u *MysekaimaterialUpdate) sqlSave(ctx context.Context) (_node int, err er
 		_spec.ClearField(mysekaimaterial.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialRarityType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMaterialRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimaterial.FieldMysekaiMaterialRarityType, value)
-		})
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMaterialRarityTypeCleared() {
-		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeJSON)
+		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.IconAssetbundleName(); ok {
 		_spec.SetField(mysekaimaterial.FieldIconAssetbundleName, field.TypeString, value)
@@ -487,14 +481,16 @@ func (_u *MysekaimaterialUpdateOne) ClearSeq() *MysekaimaterialUpdateOne {
 }
 
 // SetMysekaiMaterialType sets the "mysekai_material_type" field.
-func (_u *MysekaimaterialUpdateOne) SetMysekaiMaterialType(v json.RawMessage) *MysekaimaterialUpdateOne {
+func (_u *MysekaimaterialUpdateOne) SetMysekaiMaterialType(v string) *MysekaimaterialUpdateOne {
 	_u.mutation.SetMysekaiMaterialType(v)
 	return _u
 }
 
-// AppendMysekaiMaterialType appends value to the "mysekai_material_type" field.
-func (_u *MysekaimaterialUpdateOne) AppendMysekaiMaterialType(v json.RawMessage) *MysekaimaterialUpdateOne {
-	_u.mutation.AppendMysekaiMaterialType(v)
+// SetNillableMysekaiMaterialType sets the "mysekai_material_type" field if the given value is not nil.
+func (_u *MysekaimaterialUpdateOne) SetNillableMysekaiMaterialType(v *string) *MysekaimaterialUpdateOne {
+	if v != nil {
+		_u.SetMysekaiMaterialType(*v)
+	}
 	return _u
 }
 
@@ -565,14 +561,16 @@ func (_u *MysekaimaterialUpdateOne) ClearDescription() *MysekaimaterialUpdateOne
 }
 
 // SetMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field.
-func (_u *MysekaimaterialUpdateOne) SetMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialUpdateOne {
+func (_u *MysekaimaterialUpdateOne) SetMysekaiMaterialRarityType(v string) *MysekaimaterialUpdateOne {
 	_u.mutation.SetMysekaiMaterialRarityType(v)
 	return _u
 }
 
-// AppendMysekaiMaterialRarityType appends value to the "mysekai_material_rarity_type" field.
-func (_u *MysekaimaterialUpdateOne) AppendMysekaiMaterialRarityType(v json.RawMessage) *MysekaimaterialUpdateOne {
-	_u.mutation.AppendMysekaiMaterialRarityType(v)
+// SetNillableMysekaiMaterialRarityType sets the "mysekai_material_rarity_type" field if the given value is not nil.
+func (_u *MysekaimaterialUpdateOne) SetNillableMysekaiMaterialRarityType(v *string) *MysekaimaterialUpdateOne {
+	if v != nil {
+		_u.SetMysekaiMaterialRarityType(*v)
+	}
 	return _u
 }
 
@@ -771,15 +769,10 @@ func (_u *MysekaimaterialUpdateOne) sqlSave(ctx context.Context) (_node *Mysekai
 		_spec.ClearField(mysekaimaterial.FieldSeq, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMaterialType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimaterial.FieldMysekaiMaterialType, value)
-		})
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMaterialTypeCleared() {
-		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeJSON)
+		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(mysekaimaterial.FieldName, field.TypeString, value)
@@ -800,15 +793,10 @@ func (_u *MysekaimaterialUpdateOne) sqlSave(ctx context.Context) (_node *Mysekai
 		_spec.ClearField(mysekaimaterial.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiMaterialRarityType(); ok {
-		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMaterialRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimaterial.FieldMysekaiMaterialRarityType, value)
-		})
+		_spec.SetField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMaterialRarityTypeCleared() {
-		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeJSON)
+		_spec.ClearField(mysekaimaterial.FieldMysekaiMaterialRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.IconAssetbundleName(); ok {
 		_spec.SetField(mysekaimaterial.FieldIconAssetbundleName, field.TypeString, value)

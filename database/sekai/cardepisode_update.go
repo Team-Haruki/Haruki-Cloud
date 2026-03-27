@@ -315,14 +315,16 @@ func (_u *CardepisodeUpdate) ClearCosts() *CardepisodeUpdate {
 }
 
 // SetCardEpisodePartType sets the "card_episode_part_type" field.
-func (_u *CardepisodeUpdate) SetCardEpisodePartType(v json.RawMessage) *CardepisodeUpdate {
+func (_u *CardepisodeUpdate) SetCardEpisodePartType(v string) *CardepisodeUpdate {
 	_u.mutation.SetCardEpisodePartType(v)
 	return _u
 }
 
-// AppendCardEpisodePartType appends value to the "card_episode_part_type" field.
-func (_u *CardepisodeUpdate) AppendCardEpisodePartType(v json.RawMessage) *CardepisodeUpdate {
-	_u.mutation.AppendCardEpisodePartType(v)
+// SetNillableCardEpisodePartType sets the "card_episode_part_type" field if the given value is not nil.
+func (_u *CardepisodeUpdate) SetNillableCardEpisodePartType(v *string) *CardepisodeUpdate {
+	if v != nil {
+		_u.SetCardEpisodePartType(*v)
+	}
 	return _u
 }
 
@@ -491,15 +493,10 @@ func (_u *CardepisodeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(cardepisode.FieldCosts, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CardEpisodePartType(); ok {
-		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardEpisodePartType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, cardepisode.FieldCardEpisodePartType, value)
-		})
+		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeString, value)
 	}
 	if _u.mutation.CardEpisodePartTypeCleared() {
-		_spec.ClearField(cardepisode.FieldCardEpisodePartType, field.TypeJSON)
+		_spec.ClearField(cardepisode.FieldCardEpisodePartType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(cardepisode.FieldServerRegion, field.TypeString, value)
@@ -810,14 +807,16 @@ func (_u *CardepisodeUpdateOne) ClearCosts() *CardepisodeUpdateOne {
 }
 
 // SetCardEpisodePartType sets the "card_episode_part_type" field.
-func (_u *CardepisodeUpdateOne) SetCardEpisodePartType(v json.RawMessage) *CardepisodeUpdateOne {
+func (_u *CardepisodeUpdateOne) SetCardEpisodePartType(v string) *CardepisodeUpdateOne {
 	_u.mutation.SetCardEpisodePartType(v)
 	return _u
 }
 
-// AppendCardEpisodePartType appends value to the "card_episode_part_type" field.
-func (_u *CardepisodeUpdateOne) AppendCardEpisodePartType(v json.RawMessage) *CardepisodeUpdateOne {
-	_u.mutation.AppendCardEpisodePartType(v)
+// SetNillableCardEpisodePartType sets the "card_episode_part_type" field if the given value is not nil.
+func (_u *CardepisodeUpdateOne) SetNillableCardEpisodePartType(v *string) *CardepisodeUpdateOne {
+	if v != nil {
+		_u.SetCardEpisodePartType(*v)
+	}
 	return _u
 }
 
@@ -1016,15 +1015,10 @@ func (_u *CardepisodeUpdateOne) sqlSave(ctx context.Context) (_node *Cardepisode
 		_spec.ClearField(cardepisode.FieldCosts, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.CardEpisodePartType(); ok {
-		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardEpisodePartType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, cardepisode.FieldCardEpisodePartType, value)
-		})
+		_spec.SetField(cardepisode.FieldCardEpisodePartType, field.TypeString, value)
 	}
 	if _u.mutation.CardEpisodePartTypeCleared() {
-		_spec.ClearField(cardepisode.FieldCardEpisodePartType, field.TypeJSON)
+		_spec.ClearField(cardepisode.FieldCardEpisodePartType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(cardepisode.FieldServerRegion, field.TypeString, value)

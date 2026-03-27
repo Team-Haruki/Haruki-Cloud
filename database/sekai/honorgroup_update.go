@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/honorgroup"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -97,14 +95,16 @@ func (_u *HonorgroupUpdate) ClearPronunciation() *HonorgroupUpdate {
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_u *HonorgroupUpdate) SetHonorType(v json.RawMessage) *HonorgroupUpdate {
+func (_u *HonorgroupUpdate) SetHonorType(v string) *HonorgroupUpdate {
 	_u.mutation.SetHonorType(v)
 	return _u
 }
 
-// AppendHonorType appends value to the "honor_type" field.
-func (_u *HonorgroupUpdate) AppendHonorType(v json.RawMessage) *HonorgroupUpdate {
-	_u.mutation.AppendHonorType(v)
+// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
+func (_u *HonorgroupUpdate) SetNillableHonorType(v *string) *HonorgroupUpdate {
+	if v != nil {
+		_u.SetHonorType(*v)
+	}
 	return _u
 }
 
@@ -231,15 +231,10 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(honorgroup.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, honorgroup.FieldHonorType, value)
-		})
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
 	}
 	if _u.mutation.HonorTypeCleared() {
-		_spec.ClearField(honorgroup.FieldHonorType, field.TypeJSON)
+		_spec.ClearField(honorgroup.FieldHonorType, field.TypeString)
 	}
 	if value, ok := _u.mutation.BackgroundAssetbundleName(); ok {
 		_spec.SetField(honorgroup.FieldBackgroundAssetbundleName, field.TypeString, value)
@@ -344,14 +339,16 @@ func (_u *HonorgroupUpdateOne) ClearPronunciation() *HonorgroupUpdateOne {
 }
 
 // SetHonorType sets the "honor_type" field.
-func (_u *HonorgroupUpdateOne) SetHonorType(v json.RawMessage) *HonorgroupUpdateOne {
+func (_u *HonorgroupUpdateOne) SetHonorType(v string) *HonorgroupUpdateOne {
 	_u.mutation.SetHonorType(v)
 	return _u
 }
 
-// AppendHonorType appends value to the "honor_type" field.
-func (_u *HonorgroupUpdateOne) AppendHonorType(v json.RawMessage) *HonorgroupUpdateOne {
-	_u.mutation.AppendHonorType(v)
+// SetNillableHonorType sets the "honor_type" field if the given value is not nil.
+func (_u *HonorgroupUpdateOne) SetNillableHonorType(v *string) *HonorgroupUpdateOne {
+	if v != nil {
+		_u.SetHonorType(*v)
+	}
 	return _u
 }
 
@@ -508,15 +505,10 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 		_spec.ClearField(honorgroup.FieldPronunciation, field.TypeString)
 	}
 	if value, ok := _u.mutation.HonorType(); ok {
-		_spec.SetField(honorgroup.FieldHonorType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedHonorType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, honorgroup.FieldHonorType, value)
-		})
+		_spec.SetField(honorgroup.FieldHonorType, field.TypeString, value)
 	}
 	if _u.mutation.HonorTypeCleared() {
-		_spec.ClearField(honorgroup.FieldHonorType, field.TypeJSON)
+		_spec.ClearField(honorgroup.FieldHonorType, field.TypeString)
 	}
 	if value, ok := _u.mutation.BackgroundAssetbundleName(); ok {
 		_spec.SetField(honorgroup.FieldBackgroundAssetbundleName, field.TypeString, value)

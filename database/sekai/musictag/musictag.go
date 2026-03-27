@@ -63,6 +63,11 @@ func ByMusicID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicID, opts...).ToFunc()
 }
 
+// ByMusicTag orders the results by the music_tag field.
+func ByMusicTag(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMusicTag, opts...).ToFunc()
+}
+
 // BySeq orders the results by the seq field.
 func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()

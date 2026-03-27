@@ -130,6 +130,11 @@ func ByPower3BonusFixed(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPower3BonusFixed, opts...).ToFunc()
 }
 
+// ByCardEpisodePartType orders the results by the card_episode_part_type field.
+func ByCardEpisodePartType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardEpisodePartType, opts...).ToFunc()
+}
+
 // ByServerRegion orders the results by the server_region field.
 func ByServerRegion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServerRegion, opts...).ToFunc()

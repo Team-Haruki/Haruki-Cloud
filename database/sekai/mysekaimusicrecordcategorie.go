@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"strings"
@@ -24,7 +23,7 @@ type Mysekaimusicrecordcategorie struct {
 	// Seq holds the value of the "seq" field.
 	Seq int64 `json:"seq,omitempty"`
 	// MysekaiMusicTrackType holds the value of the "mysekai_music_track_type" field.
-	MysekaiMusicTrackType json.RawMessage `json:"mysekai_music_track_type,omitempty"`
+	MysekaiMusicTrackType string `json:"mysekai_music_track_type,omitempty"`
 	// Unit holds the value of the "unit" field.
 	Unit string `json:"unit,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -37,11 +36,9 @@ func (*Mysekaimusicrecordcategorie) scanValues(columns []string) ([]any, error) 
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType:
-			values[i] = new([]byte)
 		case mysekaimusicrecordcategorie.FieldID, mysekaimusicrecordcategorie.FieldGameID, mysekaimusicrecordcategorie.FieldSeq:
 			values[i] = new(sql.NullInt64)
-		case mysekaimusicrecordcategorie.FieldName, mysekaimusicrecordcategorie.FieldUnit, mysekaimusicrecordcategorie.FieldServerRegion:
+		case mysekaimusicrecordcategorie.FieldName, mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType, mysekaimusicrecordcategorie.FieldUnit, mysekaimusicrecordcategorie.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -83,12 +80,10 @@ func (_m *Mysekaimusicrecordcategorie) assignValues(columns []string, values []a
 				_m.Seq = value.Int64
 			}
 		case mysekaimusicrecordcategorie.FieldMysekaiMusicTrackType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_music_track_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiMusicTrackType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_music_track_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiMusicTrackType = value.String
 			}
 		case mysekaimusicrecordcategorie.FieldUnit:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,7 +143,7 @@ func (_m *Mysekaimusicrecordcategorie) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_music_track_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiMusicTrackType))
+	builder.WriteString(_m.MysekaiMusicTrackType)
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
 	builder.WriteString(_m.Unit)

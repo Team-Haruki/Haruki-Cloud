@@ -68,6 +68,11 @@ func AssetbundleName(v string) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
+// GachaDisplayType applies equality check predicate on the "gacha_display_type" field. It's identical to GachaDisplayTypeEQ.
+func GachaDisplayType(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldEQ(FieldGachaDisplayType, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldEQ(FieldServerRegion, v))
@@ -273,6 +278,61 @@ func AssetbundleNameContainsFold(v string) predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldContainsFold(FieldAssetbundleName, v))
 }
 
+// GachaDisplayTypeEQ applies the EQ predicate on the "gacha_display_type" field.
+func GachaDisplayTypeEQ(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldEQ(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeNEQ applies the NEQ predicate on the "gacha_display_type" field.
+func GachaDisplayTypeNEQ(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldNEQ(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeIn applies the In predicate on the "gacha_display_type" field.
+func GachaDisplayTypeIn(vs ...string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldIn(FieldGachaDisplayType, vs...))
+}
+
+// GachaDisplayTypeNotIn applies the NotIn predicate on the "gacha_display_type" field.
+func GachaDisplayTypeNotIn(vs ...string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldNotIn(FieldGachaDisplayType, vs...))
+}
+
+// GachaDisplayTypeGT applies the GT predicate on the "gacha_display_type" field.
+func GachaDisplayTypeGT(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldGT(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeGTE applies the GTE predicate on the "gacha_display_type" field.
+func GachaDisplayTypeGTE(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldGTE(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeLT applies the LT predicate on the "gacha_display_type" field.
+func GachaDisplayTypeLT(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldLT(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeLTE applies the LTE predicate on the "gacha_display_type" field.
+func GachaDisplayTypeLTE(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldLTE(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeContains applies the Contains predicate on the "gacha_display_type" field.
+func GachaDisplayTypeContains(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldContains(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeHasPrefix applies the HasPrefix predicate on the "gacha_display_type" field.
+func GachaDisplayTypeHasPrefix(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldHasPrefix(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeHasSuffix applies the HasSuffix predicate on the "gacha_display_type" field.
+func GachaDisplayTypeHasSuffix(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldHasSuffix(FieldGachaDisplayType, v))
+}
+
 // GachaDisplayTypeIsNil applies the IsNil predicate on the "gacha_display_type" field.
 func GachaDisplayTypeIsNil() predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldIsNull(FieldGachaDisplayType))
@@ -281,6 +341,16 @@ func GachaDisplayTypeIsNil() predicate.Gachaticket {
 // GachaDisplayTypeNotNil applies the NotNil predicate on the "gacha_display_type" field.
 func GachaDisplayTypeNotNil() predicate.Gachaticket {
 	return predicate.Gachaticket(sql.FieldNotNull(FieldGachaDisplayType))
+}
+
+// GachaDisplayTypeEqualFold applies the EqualFold predicate on the "gacha_display_type" field.
+func GachaDisplayTypeEqualFold(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldEqualFold(FieldGachaDisplayType, v))
+}
+
+// GachaDisplayTypeContainsFold applies the ContainsFold predicate on the "gacha_display_type" field.
+func GachaDisplayTypeContainsFold(v string) predicate.Gachaticket {
+	return predicate.Gachaticket(sql.FieldContainsFold(FieldGachaDisplayType, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

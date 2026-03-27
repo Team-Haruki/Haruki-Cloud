@@ -121,6 +121,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByGachaType orders the results by the gacha_type field.
+func ByGachaType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGachaType, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()

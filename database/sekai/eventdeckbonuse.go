@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
 	"strings"
@@ -24,7 +23,7 @@ type Eventdeckbonuse struct {
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
 	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
 	// CardAttr holds the value of the "card_attr" field.
-	CardAttr json.RawMessage `json:"card_attr,omitempty"`
+	CardAttr string `json:"card_attr,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -37,13 +36,11 @@ func (*Eventdeckbonuse) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case eventdeckbonuse.FieldCardAttr:
-			values[i] = new([]byte)
 		case eventdeckbonuse.FieldBonusRate:
 			values[i] = new(sql.NullFloat64)
 		case eventdeckbonuse.FieldID, eventdeckbonuse.FieldGameID, eventdeckbonuse.FieldEventID, eventdeckbonuse.FieldGameCharacterUnitID:
 			values[i] = new(sql.NullInt64)
-		case eventdeckbonuse.FieldServerRegion:
+		case eventdeckbonuse.FieldCardAttr, eventdeckbonuse.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -85,12 +82,10 @@ func (_m *Eventdeckbonuse) assignValues(columns []string, values []any) error {
 				_m.GameCharacterUnitID = value.Int64
 			}
 		case eventdeckbonuse.FieldCardAttr:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field card_attr", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.CardAttr); err != nil {
-					return fmt.Errorf("unmarshal field card_attr: %w", err)
-				}
+			} else if value.Valid {
+				_m.CardAttr = value.String
 			}
 		case eventdeckbonuse.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -150,7 +145,7 @@ func (_m *Eventdeckbonuse) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("card_attr=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CardAttr))
+	builder.WriteString(_m.CardAttr)
 	builder.WriteString(", ")
 	builder.WriteString("bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BonusRate))

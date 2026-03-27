@@ -262,7 +262,7 @@ func (_q *MasterlessonQuery) Clone() *MasterlessonQuery {
 // Example:
 //
 //	var v []struct {
-//		CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *MasterlessonQuery) GroupBy(field string, fields ...string) *Masterless
 // Example:
 //
 //	var v []struct {
-//		CardRarityType json.RawMessage `json:"card_rarity_type,omitempty"`
+//		CardRarityType string `json:"card_rarity_type,omitempty"`
 //	}
 //
 //	client.Masterlesson.Query().

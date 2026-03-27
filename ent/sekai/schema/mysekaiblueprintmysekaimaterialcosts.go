@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -22,7 +20,7 @@ func (Mysekaiblueprintmysekaimaterialcost) Fields() []ent.Field {
 		field.Int64("mysekai_material_id").Optional(),
 		field.Int64("seq").Optional(),
 		field.Int64("quantity").Optional(),
-		field.JSON("mysekai_blueprint_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_blueprint_type").Optional(),
 		field.String("server_region"),
 	}
 }

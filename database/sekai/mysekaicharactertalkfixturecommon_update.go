@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -84,14 +82,16 @@ func (_u *MysekaicharactertalkfixturecommonUpdate) ClearGameCharacterUnitID() *M
 }
 
 // SetMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field.
-func (_u *MysekaicharactertalkfixturecommonUpdate) SetMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonUpdate {
+func (_u *MysekaicharactertalkfixturecommonUpdate) SetMysekaiCharacterTalkFixtureCommonType(v string) *MysekaicharactertalkfixturecommonUpdate {
 	_u.mutation.SetMysekaiCharacterTalkFixtureCommonType(v)
 	return _u
 }
 
-// AppendMysekaiCharacterTalkFixtureCommonType appends value to the "mysekai_character_talk_fixture_common_type" field.
-func (_u *MysekaicharactertalkfixturecommonUpdate) AppendMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonUpdate {
-	_u.mutation.AppendMysekaiCharacterTalkFixtureCommonType(v)
+// SetNillableMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field if the given value is not nil.
+func (_u *MysekaicharactertalkfixturecommonUpdate) SetNillableMysekaiCharacterTalkFixtureCommonType(v *string) *MysekaicharactertalkfixturecommonUpdate {
+	if v != nil {
+		_u.SetMysekaiCharacterTalkFixtureCommonType(*v)
+	}
 	return _u
 }
 
@@ -229,15 +229,10 @@ func (_u *MysekaicharactertalkfixturecommonUpdate) sqlSave(ctx context.Context) 
 		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkFixtureCommonType(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCharacterTalkFixtureCommonType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, value)
-		})
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkFixtureCommonTypeCleared() {
-		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(); ok {
 		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, field.TypeInt64, value)
@@ -335,14 +330,16 @@ func (_u *MysekaicharactertalkfixturecommonUpdateOne) ClearGameCharacterUnitID()
 }
 
 // SetMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field.
-func (_u *MysekaicharactertalkfixturecommonUpdateOne) SetMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonUpdateOne {
+func (_u *MysekaicharactertalkfixturecommonUpdateOne) SetMysekaiCharacterTalkFixtureCommonType(v string) *MysekaicharactertalkfixturecommonUpdateOne {
 	_u.mutation.SetMysekaiCharacterTalkFixtureCommonType(v)
 	return _u
 }
 
-// AppendMysekaiCharacterTalkFixtureCommonType appends value to the "mysekai_character_talk_fixture_common_type" field.
-func (_u *MysekaicharactertalkfixturecommonUpdateOne) AppendMysekaiCharacterTalkFixtureCommonType(v json.RawMessage) *MysekaicharactertalkfixturecommonUpdateOne {
-	_u.mutation.AppendMysekaiCharacterTalkFixtureCommonType(v)
+// SetNillableMysekaiCharacterTalkFixtureCommonType sets the "mysekai_character_talk_fixture_common_type" field if the given value is not nil.
+func (_u *MysekaicharactertalkfixturecommonUpdateOne) SetNillableMysekaiCharacterTalkFixtureCommonType(v *string) *MysekaicharactertalkfixturecommonUpdateOne {
+	if v != nil {
+		_u.SetMysekaiCharacterTalkFixtureCommonType(*v)
+	}
 	return _u
 }
 
@@ -510,15 +507,10 @@ func (_u *MysekaicharactertalkfixturecommonUpdateOne) sqlSave(ctx context.Contex
 		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkFixtureCommonType(); ok {
-		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiCharacterTalkFixtureCommonType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, value)
-		})
+		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiCharacterTalkFixtureCommonTypeCleared() {
-		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeJSON)
+		_spec.ClearField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID(); ok {
 		_spec.SetField(mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, field.TypeInt64, value)

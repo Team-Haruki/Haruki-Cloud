@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
 	"strings"
@@ -20,7 +19,7 @@ type Mysekaiphenomenon struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiPhenomenaBrightnessType holds the value of the "mysekai_phenomena_brightness_type" field.
-	MysekaiPhenomenaBrightnessType json.RawMessage `json:"mysekai_phenomena_brightness_type,omitempty"`
+	MysekaiPhenomenaBrightnessType string `json:"mysekai_phenomena_brightness_type,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// EnglishName holds the value of the "english_name" field.
@@ -28,7 +27,7 @@ type Mysekaiphenomenon struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// MysekaiPhenomenaTimePeriodType holds the value of the "mysekai_phenomena_time_period_type" field.
-	MysekaiPhenomenaTimePeriodType json.RawMessage `json:"mysekai_phenomena_time_period_type,omitempty"`
+	MysekaiPhenomenaTimePeriodType string `json:"mysekai_phenomena_time_period_type,omitempty"`
 	// MysekaiPhenomenaBackgroundColorID holds the value of the "mysekai_phenomena_background_color_id" field.
 	MysekaiPhenomenaBackgroundColorID int64 `json:"mysekai_phenomena_background_color_id,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -47,11 +46,9 @@ func (*Mysekaiphenomenon) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
-			values[i] = new([]byte)
 		case mysekaiphenomenon.FieldID, mysekaiphenomenon.FieldGameID, mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
 			values[i] = new(sql.NullInt64)
-		case mysekaiphenomenon.FieldName, mysekaiphenomenon.FieldEnglishName, mysekaiphenomenon.FieldDescription, mysekaiphenomenon.FieldAssetbundleName, mysekaiphenomenon.FieldRampTextureAssetbundleName, mysekaiphenomenon.FieldIconAssetbundleName, mysekaiphenomenon.FieldServerRegion:
+		case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType, mysekaiphenomenon.FieldName, mysekaiphenomenon.FieldEnglishName, mysekaiphenomenon.FieldDescription, mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType, mysekaiphenomenon.FieldAssetbundleName, mysekaiphenomenon.FieldRampTextureAssetbundleName, mysekaiphenomenon.FieldIconAssetbundleName, mysekaiphenomenon.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -81,12 +78,10 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 				_m.GameID = value.Int64
 			}
 		case mysekaiphenomenon.FieldMysekaiPhenomenaBrightnessType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_brightness_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiPhenomenaBrightnessType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_phenomena_brightness_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiPhenomenaBrightnessType = value.String
 			}
 		case mysekaiphenomenon.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -107,12 +102,10 @@ func (_m *Mysekaiphenomenon) assignValues(columns []string, values []any) error 
 				_m.Description = value.String
 			}
 		case mysekaiphenomenon.FieldMysekaiPhenomenaTimePeriodType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_phenomena_time_period_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiPhenomenaTimePeriodType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_phenomena_time_period_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiPhenomenaTimePeriodType = value.String
 			}
 		case mysekaiphenomenon.FieldMysekaiPhenomenaBackgroundColorID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -184,7 +177,7 @@ func (_m *Mysekaiphenomenon) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_phenomena_brightness_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiPhenomenaBrightnessType))
+	builder.WriteString(_m.MysekaiPhenomenaBrightnessType)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -196,7 +189,7 @@ func (_m *Mysekaiphenomenon) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_phenomena_time_period_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiPhenomenaTimePeriodType))
+	builder.WriteString(_m.MysekaiPhenomenaTimePeriodType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_phenomena_background_color_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiPhenomenaBackgroundColorID))

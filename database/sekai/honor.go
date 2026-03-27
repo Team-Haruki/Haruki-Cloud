@@ -24,7 +24,7 @@ type Honor struct {
 	// GroupID holds the value of the "group_id" field.
 	GroupID int64 `json:"group_id,omitempty"`
 	// HonorRarity holds the value of the "honor_rarity" field.
-	HonorRarity json.RawMessage `json:"honor_rarity,omitempty"`
+	HonorRarity string `json:"honor_rarity,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
@@ -47,11 +47,11 @@ func (*Honor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case honor.FieldHonorRarity, honor.FieldLevels:
+		case honor.FieldLevels:
 			values[i] = new([]byte)
 		case honor.FieldID, honor.FieldGameID, honor.FieldSeq, honor.FieldGroupID, honor.FieldHonorTypeID, honor.FieldStartAt:
 			values[i] = new(sql.NullInt64)
-		case honor.FieldName, honor.FieldAssetbundleName, honor.FieldHonorMissionType, honor.FieldServerRegion:
+		case honor.FieldHonorRarity, honor.FieldName, honor.FieldAssetbundleName, honor.FieldHonorMissionType, honor.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -93,12 +93,10 @@ func (_m *Honor) assignValues(columns []string, values []any) error {
 				_m.GroupID = value.Int64
 			}
 		case honor.FieldHonorRarity:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field honor_rarity", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.HonorRarity); err != nil {
-					return fmt.Errorf("unmarshal field honor_rarity: %w", err)
-				}
+			} else if value.Valid {
+				_m.HonorRarity = value.String
 			}
 		case honor.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -190,7 +188,7 @@ func (_m *Honor) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GroupID))
 	builder.WriteString(", ")
 	builder.WriteString("honor_rarity=")
-	builder.WriteString(fmt.Sprintf("%v", _m.HonorRarity))
+	builder.WriteString(_m.HonorRarity)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

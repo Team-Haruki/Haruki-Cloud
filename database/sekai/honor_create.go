@@ -63,8 +63,16 @@ func (_c *HonorCreate) SetNillableGroupID(v *int64) *HonorCreate {
 }
 
 // SetHonorRarity sets the "honor_rarity" field.
-func (_c *HonorCreate) SetHonorRarity(v json.RawMessage) *HonorCreate {
+func (_c *HonorCreate) SetHonorRarity(v string) *HonorCreate {
 	_c.mutation.SetHonorRarity(v)
+	return _c
+}
+
+// SetNillableHonorRarity sets the "honor_rarity" field if the given value is not nil.
+func (_c *HonorCreate) SetNillableHonorRarity(v *string) *HonorCreate {
+	if v != nil {
+		_c.SetHonorRarity(*v)
+	}
 	return _c
 }
 
@@ -226,7 +234,7 @@ func (_c *HonorCreate) createSpec() (*Honor, *sqlgraph.CreateSpec) {
 		_node.GroupID = value
 	}
 	if value, ok := _c.mutation.HonorRarity(); ok {
-		_spec.SetField(honor.FieldHonorRarity, field.TypeJSON, value)
+		_spec.SetField(honor.FieldHonorRarity, field.TypeString, value)
 		_node.HonorRarity = value
 	}
 	if value, ok := _c.mutation.Name(); ok {

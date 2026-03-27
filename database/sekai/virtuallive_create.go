@@ -35,14 +35,30 @@ func (_c *VirtualliveCreate) SetNillableGameID(v *int64) *VirtualliveCreate {
 }
 
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_c *VirtualliveCreate) SetVirtualLiveType(v json.RawMessage) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLiveType(v string) *VirtualliveCreate {
 	_c.mutation.SetVirtualLiveType(v)
 	return _c
 }
 
+// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
+func (_c *VirtualliveCreate) SetNillableVirtualLiveType(v *string) *VirtualliveCreate {
+	if v != nil {
+		_c.SetVirtualLiveType(*v)
+	}
+	return _c
+}
+
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_c *VirtualliveCreate) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveCreate {
+func (_c *VirtualliveCreate) SetVirtualLivePlatform(v string) *VirtualliveCreate {
 	_c.mutation.SetVirtualLivePlatform(v)
+	return _c
+}
+
+// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
+func (_c *VirtualliveCreate) SetNillableVirtualLivePlatform(v *string) *VirtualliveCreate {
+	if v != nil {
+		_c.SetVirtualLivePlatform(*v)
+	}
 	return _c
 }
 
@@ -326,11 +342,11 @@ func (_c *VirtualliveCreate) createSpec() (*Virtuallive, *sqlgraph.CreateSpec) {
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
 		_node.VirtualLiveType = value
 	}
 	if value, ok := _c.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
 		_node.VirtualLivePlatform = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {

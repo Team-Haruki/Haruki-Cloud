@@ -262,7 +262,7 @@ func (_q *ResourceboxeQuery) Clone() *ResourceboxeQuery {
 // Example:
 //
 //	var v []struct {
-//		ResourceBoxPurpose json.RawMessage `json:"resource_box_purpose,omitempty"`
+//		ResourceBoxPurpose string `json:"resource_box_purpose,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -285,7 +285,7 @@ func (_q *ResourceboxeQuery) GroupBy(field string, fields ...string) *Resourcebo
 // Example:
 //
 //	var v []struct {
-//		ResourceBoxPurpose json.RawMessage `json:"resource_box_purpose,omitempty"`
+//		ResourceBoxPurpose string `json:"resource_box_purpose,omitempty"`
 //	}
 //
 //	client.Resourceboxe.Query().

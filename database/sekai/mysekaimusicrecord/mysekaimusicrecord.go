@@ -55,6 +55,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByMysekaiMusicTrackType orders the results by the mysekai_music_track_type field.
+func ByMysekaiMusicTrackType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiMusicTrackType, opts...).ToFunc()
+}
+
 // ByExternalID orders the results by the external_id field.
 func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldExternalID, opts...).ToFunc()

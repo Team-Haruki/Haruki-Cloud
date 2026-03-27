@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"encoding/json"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -21,7 +19,7 @@ func (Mysekaisiteharvestfixture) Fields() []ent.Field {
 		field.String("mysekai_site_harvest_fixture_type").Optional(),
 		field.Int64("hp").Optional(),
 		field.Int64("last_attack_stamina").Optional(),
-		field.JSON("mysekai_site_harvest_fixture_rarity_type", json.RawMessage{}).Optional(),
+		field.String("mysekai_site_harvest_fixture_rarity_type").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("server_region"),
 	}

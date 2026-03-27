@@ -71,6 +71,11 @@ func ByGameCharacterUnitID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterUnitID, opts...).ToFunc()
 }
 
+// ByCardAttr orders the results by the card_attr field.
+func ByCardAttr(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardAttr, opts...).ToFunc()
+}
+
 // ByBonusRate orders the results by the bonus_rate field.
 func ByBonusRate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBonusRate, opts...).ToFunc()

@@ -82,6 +82,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByStampType orders the results by the stamp_type field.
+func ByStampType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStampType, opts...).ToFunc()
+}
+
 // BySeq orders the results by the seq field.
 func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()
@@ -95,6 +100,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
+// ByBalloonAssetbundleName orders the results by the balloon_assetbundle_name field.
+func ByBalloonAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBalloonAssetbundleName, opts...).ToFunc()
 }
 
 // ByCharacterId1 orders the results by the character_id1 field.
@@ -115,6 +125,11 @@ func ByArchivePublishedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByArchiveDisplayType orders the results by the archive_display_type field.
+func ByArchiveDisplayType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArchiveDisplayType, opts...).ToFunc()
 }
 
 // ByCharacterId2 orders the results by the character_id2 field.

@@ -57,14 +57,16 @@ func (_u *VirtualliveUpdate) ClearGameID() *VirtualliveUpdate {
 }
 
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_u *VirtualliveUpdate) SetVirtualLiveType(v json.RawMessage) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLiveType(v string) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLiveType(v)
 	return _u
 }
 
-// AppendVirtualLiveType appends value to the "virtual_live_type" field.
-func (_u *VirtualliveUpdate) AppendVirtualLiveType(v json.RawMessage) *VirtualliveUpdate {
-	_u.mutation.AppendVirtualLiveType(v)
+// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
+func (_u *VirtualliveUpdate) SetNillableVirtualLiveType(v *string) *VirtualliveUpdate {
+	if v != nil {
+		_u.SetVirtualLiveType(*v)
+	}
 	return _u
 }
 
@@ -75,14 +77,16 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveType() *VirtualliveUpdate {
 }
 
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_u *VirtualliveUpdate) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdate {
+func (_u *VirtualliveUpdate) SetVirtualLivePlatform(v string) *VirtualliveUpdate {
 	_u.mutation.SetVirtualLivePlatform(v)
 	return _u
 }
 
-// AppendVirtualLivePlatform appends value to the "virtual_live_platform" field.
-func (_u *VirtualliveUpdate) AppendVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdate {
-	_u.mutation.AppendVirtualLivePlatform(v)
+// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
+func (_u *VirtualliveUpdate) SetNillableVirtualLivePlatform(v *string) *VirtualliveUpdate {
+	if v != nil {
+		_u.SetVirtualLivePlatform(*v)
+	}
 	return _u
 }
 
@@ -611,26 +615,16 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedVirtualLiveType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, virtuallive.FieldVirtualLiveType, value)
-		})
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
 	}
 	if _u.mutation.VirtualLiveTypeCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeJSON)
+		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeString)
 	}
 	if value, ok := _u.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedVirtualLivePlatform(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, virtuallive.FieldVirtualLivePlatform, value)
-		})
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
 	}
 	if _u.mutation.VirtualLivePlatformCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON)
+		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(virtuallive.FieldSeq, field.TypeInt64, value)
@@ -888,14 +882,16 @@ func (_u *VirtualliveUpdateOne) ClearGameID() *VirtualliveUpdateOne {
 }
 
 // SetVirtualLiveType sets the "virtual_live_type" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLiveType(v json.RawMessage) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLiveType(v string) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLiveType(v)
 	return _u
 }
 
-// AppendVirtualLiveType appends value to the "virtual_live_type" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLiveType(v json.RawMessage) *VirtualliveUpdateOne {
-	_u.mutation.AppendVirtualLiveType(v)
+// SetNillableVirtualLiveType sets the "virtual_live_type" field if the given value is not nil.
+func (_u *VirtualliveUpdateOne) SetNillableVirtualLiveType(v *string) *VirtualliveUpdateOne {
+	if v != nil {
+		_u.SetVirtualLiveType(*v)
+	}
 	return _u
 }
 
@@ -906,14 +902,16 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveType() *VirtualliveUpdateOne {
 }
 
 // SetVirtualLivePlatform sets the "virtual_live_platform" field.
-func (_u *VirtualliveUpdateOne) SetVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdateOne {
+func (_u *VirtualliveUpdateOne) SetVirtualLivePlatform(v string) *VirtualliveUpdateOne {
 	_u.mutation.SetVirtualLivePlatform(v)
 	return _u
 }
 
-// AppendVirtualLivePlatform appends value to the "virtual_live_platform" field.
-func (_u *VirtualliveUpdateOne) AppendVirtualLivePlatform(v json.RawMessage) *VirtualliveUpdateOne {
-	_u.mutation.AppendVirtualLivePlatform(v)
+// SetNillableVirtualLivePlatform sets the "virtual_live_platform" field if the given value is not nil.
+func (_u *VirtualliveUpdateOne) SetNillableVirtualLivePlatform(v *string) *VirtualliveUpdateOne {
+	if v != nil {
+		_u.SetVirtualLivePlatform(*v)
+	}
 	return _u
 }
 
@@ -1472,26 +1470,16 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 		_spec.ClearField(virtuallive.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.VirtualLiveType(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedVirtualLiveType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, virtuallive.FieldVirtualLiveType, value)
-		})
+		_spec.SetField(virtuallive.FieldVirtualLiveType, field.TypeString, value)
 	}
 	if _u.mutation.VirtualLiveTypeCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeJSON)
+		_spec.ClearField(virtuallive.FieldVirtualLiveType, field.TypeString)
 	}
 	if value, ok := _u.mutation.VirtualLivePlatform(); ok {
-		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedVirtualLivePlatform(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, virtuallive.FieldVirtualLivePlatform, value)
-		})
+		_spec.SetField(virtuallive.FieldVirtualLivePlatform, field.TypeString, value)
 	}
 	if _u.mutation.VirtualLivePlatformCleared() {
-		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeJSON)
+		_spec.ClearField(virtuallive.FieldVirtualLivePlatform, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(virtuallive.FieldSeq, field.TypeInt64, value)

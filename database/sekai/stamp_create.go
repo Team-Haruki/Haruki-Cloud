@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/stamp"
@@ -35,8 +34,16 @@ func (_c *StampCreate) SetNillableGameID(v *int64) *StampCreate {
 }
 
 // SetStampType sets the "stamp_type" field.
-func (_c *StampCreate) SetStampType(v json.RawMessage) *StampCreate {
+func (_c *StampCreate) SetStampType(v string) *StampCreate {
 	_c.mutation.SetStampType(v)
+	return _c
+}
+
+// SetNillableStampType sets the "stamp_type" field if the given value is not nil.
+func (_c *StampCreate) SetNillableStampType(v *string) *StampCreate {
+	if v != nil {
+		_c.SetStampType(*v)
+	}
 	return _c
 }
 
@@ -83,8 +90,16 @@ func (_c *StampCreate) SetNillableAssetbundleName(v *string) *StampCreate {
 }
 
 // SetBalloonAssetbundleName sets the "balloon_assetbundle_name" field.
-func (_c *StampCreate) SetBalloonAssetbundleName(v json.RawMessage) *StampCreate {
+func (_c *StampCreate) SetBalloonAssetbundleName(v string) *StampCreate {
 	_c.mutation.SetBalloonAssetbundleName(v)
+	return _c
+}
+
+// SetNillableBalloonAssetbundleName sets the "balloon_assetbundle_name" field if the given value is not nil.
+func (_c *StampCreate) SetNillableBalloonAssetbundleName(v *string) *StampCreate {
+	if v != nil {
+		_c.SetBalloonAssetbundleName(*v)
+	}
 	return _c
 }
 
@@ -145,8 +160,16 @@ func (_c *StampCreate) SetNillableDescription(v *string) *StampCreate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *StampCreate) SetArchiveDisplayType(v json.RawMessage) *StampCreate {
+func (_c *StampCreate) SetArchiveDisplayType(v string) *StampCreate {
 	_c.mutation.SetArchiveDisplayType(v)
+	return _c
+}
+
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_c *StampCreate) SetNillableArchiveDisplayType(v *string) *StampCreate {
+	if v != nil {
+		_c.SetArchiveDisplayType(*v)
+	}
 	return _c
 }
 
@@ -238,7 +261,7 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.StampType(); ok {
-		_spec.SetField(stamp.FieldStampType, field.TypeJSON, value)
+		_spec.SetField(stamp.FieldStampType, field.TypeString, value)
 		_node.StampType = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
@@ -254,7 +277,7 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node.AssetbundleName = value
 	}
 	if value, ok := _c.mutation.BalloonAssetbundleName(); ok {
-		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeJSON, value)
+		_spec.SetField(stamp.FieldBalloonAssetbundleName, field.TypeString, value)
 		_node.BalloonAssetbundleName = value
 	}
 	if value, ok := _c.mutation.CharacterId1(); ok {
@@ -274,7 +297,7 @@ func (_c *StampCreate) createSpec() (*Stamp, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeJSON, value)
+		_spec.SetField(stamp.FieldArchiveDisplayType, field.TypeString, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.CharacterId2(); ok {

@@ -74,6 +74,11 @@ func ByPronunciation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPronunciation, opts...).ToFunc()
 }
 
+// ByHonorType orders the results by the honor_type field.
+func ByHonorType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHonorType, opts...).ToFunc()
+}
+
 // ByBackgroundAssetbundleName orders the results by the background_assetbundle_name field.
 func ByBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBackgroundAssetbundleName, opts...).ToFunc()

@@ -68,6 +68,11 @@ func Seq(v int64) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldSeq, v))
 }
 
+// MysekaiMusicTrackType applies equality check predicate on the "mysekai_music_track_type" field. It's identical to MysekaiMusicTrackTypeEQ.
+func MysekaiMusicTrackType(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldMysekaiMusicTrackType, v))
+}
+
 // Unit applies equality check predicate on the "unit" field. It's identical to UnitEQ.
 func Unit(v string) predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldUnit, v))
@@ -253,6 +258,61 @@ func SeqNotNil() predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotNull(FieldSeq))
 }
 
+// MysekaiMusicTrackTypeEQ applies the EQ predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeEQ(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldEQ(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeNEQ applies the NEQ predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeNEQ(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldNEQ(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeIn applies the In predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldIn(FieldMysekaiMusicTrackType, vs...))
+}
+
+// MysekaiMusicTrackTypeNotIn applies the NotIn predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeNotIn(vs ...string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotIn(FieldMysekaiMusicTrackType, vs...))
+}
+
+// MysekaiMusicTrackTypeGT applies the GT predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeGT(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldGT(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeGTE applies the GTE predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeGTE(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldGTE(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeLT applies the LT predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeLT(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldLT(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeLTE applies the LTE predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeLTE(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldLTE(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeContains applies the Contains predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeContains(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldContains(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeHasPrefix applies the HasPrefix predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeHasPrefix(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasPrefix(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeHasSuffix applies the HasSuffix predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeHasSuffix(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldHasSuffix(FieldMysekaiMusicTrackType, v))
+}
+
 // MysekaiMusicTrackTypeIsNil applies the IsNil predicate on the "mysekai_music_track_type" field.
 func MysekaiMusicTrackTypeIsNil() predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldIsNull(FieldMysekaiMusicTrackType))
@@ -261,6 +321,16 @@ func MysekaiMusicTrackTypeIsNil() predicate.Mysekaimusicrecordcategorie {
 // MysekaiMusicTrackTypeNotNil applies the NotNil predicate on the "mysekai_music_track_type" field.
 func MysekaiMusicTrackTypeNotNil() predicate.Mysekaimusicrecordcategorie {
 	return predicate.Mysekaimusicrecordcategorie(sql.FieldNotNull(FieldMysekaiMusicTrackType))
+}
+
+// MysekaiMusicTrackTypeEqualFold applies the EqualFold predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeEqualFold(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldEqualFold(FieldMysekaiMusicTrackType, v))
+}
+
+// MysekaiMusicTrackTypeContainsFold applies the ContainsFold predicate on the "mysekai_music_track_type" field.
+func MysekaiMusicTrackTypeContainsFold(v string) predicate.Mysekaimusicrecordcategorie {
+	return predicate.Mysekaimusicrecordcategorie(sql.FieldContainsFold(FieldMysekaiMusicTrackType, v))
 }
 
 // UnitEQ applies the EQ predicate on the "unit" field.

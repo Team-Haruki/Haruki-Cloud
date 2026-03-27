@@ -68,9 +68,19 @@ func Costume3DGroupID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DGroupID, v))
 }
 
+// Costume3DType applies equality check predicate on the "costume3_d_type" field. It's identical to Costume3DTypeEQ.
+func Costume3DType(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldName, v))
+}
+
+// PartType applies equality check predicate on the "part_type" field. It's identical to PartTypeEQ.
+func PartType(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldPartType, v))
 }
 
 // ColorID applies equality check predicate on the "color_id" field. It's identical to ColorIDEQ.
@@ -88,6 +98,11 @@ func CharacterID(v int64) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldCharacterID, v))
 }
 
+// Costume3DRarity applies equality check predicate on the "costume3_d_rarity" field. It's identical to Costume3DRarityEQ.
+func Costume3DRarity(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DRarity, v))
+}
+
 // HowToObtain applies equality check predicate on the "how_to_obtain" field. It's identical to HowToObtainEQ.
 func HowToObtain(v string) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldHowToObtain, v))
@@ -101,6 +116,11 @@ func AssetbundleName(v string) predicate.Costume3D {
 // Designer applies equality check predicate on the "designer" field. It's identical to DesignerEQ.
 func Designer(v string) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldEQ(FieldDesigner, v))
+}
+
+// ArchiveDisplayType applies equality check predicate on the "archive_display_type" field. It's identical to ArchiveDisplayTypeEQ.
+func ArchiveDisplayType(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldArchiveDisplayType, v))
 }
 
 // ArchivePublishedAt applies equality check predicate on the "archive_published_at" field. It's identical to ArchivePublishedAtEQ.
@@ -268,6 +288,61 @@ func Costume3DGroupIDNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldCostume3DGroupID))
 }
 
+// Costume3DTypeEQ applies the EQ predicate on the "costume3_d_type" field.
+func Costume3DTypeEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DType, v))
+}
+
+// Costume3DTypeNEQ applies the NEQ predicate on the "costume3_d_type" field.
+func Costume3DTypeNEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNEQ(FieldCostume3DType, v))
+}
+
+// Costume3DTypeIn applies the In predicate on the "costume3_d_type" field.
+func Costume3DTypeIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldIn(FieldCostume3DType, vs...))
+}
+
+// Costume3DTypeNotIn applies the NotIn predicate on the "costume3_d_type" field.
+func Costume3DTypeNotIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNotIn(FieldCostume3DType, vs...))
+}
+
+// Costume3DTypeGT applies the GT predicate on the "costume3_d_type" field.
+func Costume3DTypeGT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGT(FieldCostume3DType, v))
+}
+
+// Costume3DTypeGTE applies the GTE predicate on the "costume3_d_type" field.
+func Costume3DTypeGTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGTE(FieldCostume3DType, v))
+}
+
+// Costume3DTypeLT applies the LT predicate on the "costume3_d_type" field.
+func Costume3DTypeLT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLT(FieldCostume3DType, v))
+}
+
+// Costume3DTypeLTE applies the LTE predicate on the "costume3_d_type" field.
+func Costume3DTypeLTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLTE(FieldCostume3DType, v))
+}
+
+// Costume3DTypeContains applies the Contains predicate on the "costume3_d_type" field.
+func Costume3DTypeContains(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContains(FieldCostume3DType, v))
+}
+
+// Costume3DTypeHasPrefix applies the HasPrefix predicate on the "costume3_d_type" field.
+func Costume3DTypeHasPrefix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasPrefix(FieldCostume3DType, v))
+}
+
+// Costume3DTypeHasSuffix applies the HasSuffix predicate on the "costume3_d_type" field.
+func Costume3DTypeHasSuffix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasSuffix(FieldCostume3DType, v))
+}
+
 // Costume3DTypeIsNil applies the IsNil predicate on the "costume3_d_type" field.
 func Costume3DTypeIsNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIsNull(FieldCostume3DType))
@@ -276,6 +351,16 @@ func Costume3DTypeIsNil() predicate.Costume3D {
 // Costume3DTypeNotNil applies the NotNil predicate on the "costume3_d_type" field.
 func Costume3DTypeNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldCostume3DType))
+}
+
+// Costume3DTypeEqualFold applies the EqualFold predicate on the "costume3_d_type" field.
+func Costume3DTypeEqualFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEqualFold(FieldCostume3DType, v))
+}
+
+// Costume3DTypeContainsFold applies the ContainsFold predicate on the "costume3_d_type" field.
+func Costume3DTypeContainsFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContainsFold(FieldCostume3DType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -353,6 +438,61 @@ func NameContainsFold(v string) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldContainsFold(FieldName, v))
 }
 
+// PartTypeEQ applies the EQ predicate on the "part_type" field.
+func PartTypeEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldPartType, v))
+}
+
+// PartTypeNEQ applies the NEQ predicate on the "part_type" field.
+func PartTypeNEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNEQ(FieldPartType, v))
+}
+
+// PartTypeIn applies the In predicate on the "part_type" field.
+func PartTypeIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldIn(FieldPartType, vs...))
+}
+
+// PartTypeNotIn applies the NotIn predicate on the "part_type" field.
+func PartTypeNotIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNotIn(FieldPartType, vs...))
+}
+
+// PartTypeGT applies the GT predicate on the "part_type" field.
+func PartTypeGT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGT(FieldPartType, v))
+}
+
+// PartTypeGTE applies the GTE predicate on the "part_type" field.
+func PartTypeGTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGTE(FieldPartType, v))
+}
+
+// PartTypeLT applies the LT predicate on the "part_type" field.
+func PartTypeLT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLT(FieldPartType, v))
+}
+
+// PartTypeLTE applies the LTE predicate on the "part_type" field.
+func PartTypeLTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLTE(FieldPartType, v))
+}
+
+// PartTypeContains applies the Contains predicate on the "part_type" field.
+func PartTypeContains(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContains(FieldPartType, v))
+}
+
+// PartTypeHasPrefix applies the HasPrefix predicate on the "part_type" field.
+func PartTypeHasPrefix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasPrefix(FieldPartType, v))
+}
+
+// PartTypeHasSuffix applies the HasSuffix predicate on the "part_type" field.
+func PartTypeHasSuffix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasSuffix(FieldPartType, v))
+}
+
 // PartTypeIsNil applies the IsNil predicate on the "part_type" field.
 func PartTypeIsNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIsNull(FieldPartType))
@@ -361,6 +501,16 @@ func PartTypeIsNil() predicate.Costume3D {
 // PartTypeNotNil applies the NotNil predicate on the "part_type" field.
 func PartTypeNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldPartType))
+}
+
+// PartTypeEqualFold applies the EqualFold predicate on the "part_type" field.
+func PartTypeEqualFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEqualFold(FieldPartType, v))
+}
+
+// PartTypeContainsFold applies the ContainsFold predicate on the "part_type" field.
+func PartTypeContainsFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContainsFold(FieldPartType, v))
 }
 
 // ColorIDEQ applies the EQ predicate on the "color_id" field.
@@ -538,6 +688,61 @@ func CharacterIDNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldCharacterID))
 }
 
+// Costume3DRarityEQ applies the EQ predicate on the "costume3_d_rarity" field.
+func Costume3DRarityEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityNEQ applies the NEQ predicate on the "costume3_d_rarity" field.
+func Costume3DRarityNEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNEQ(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityIn applies the In predicate on the "costume3_d_rarity" field.
+func Costume3DRarityIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldIn(FieldCostume3DRarity, vs...))
+}
+
+// Costume3DRarityNotIn applies the NotIn predicate on the "costume3_d_rarity" field.
+func Costume3DRarityNotIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNotIn(FieldCostume3DRarity, vs...))
+}
+
+// Costume3DRarityGT applies the GT predicate on the "costume3_d_rarity" field.
+func Costume3DRarityGT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGT(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityGTE applies the GTE predicate on the "costume3_d_rarity" field.
+func Costume3DRarityGTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGTE(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityLT applies the LT predicate on the "costume3_d_rarity" field.
+func Costume3DRarityLT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLT(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityLTE applies the LTE predicate on the "costume3_d_rarity" field.
+func Costume3DRarityLTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLTE(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityContains applies the Contains predicate on the "costume3_d_rarity" field.
+func Costume3DRarityContains(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContains(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityHasPrefix applies the HasPrefix predicate on the "costume3_d_rarity" field.
+func Costume3DRarityHasPrefix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasPrefix(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityHasSuffix applies the HasSuffix predicate on the "costume3_d_rarity" field.
+func Costume3DRarityHasSuffix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasSuffix(FieldCostume3DRarity, v))
+}
+
 // Costume3DRarityIsNil applies the IsNil predicate on the "costume3_d_rarity" field.
 func Costume3DRarityIsNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIsNull(FieldCostume3DRarity))
@@ -546,6 +751,16 @@ func Costume3DRarityIsNil() predicate.Costume3D {
 // Costume3DRarityNotNil applies the NotNil predicate on the "costume3_d_rarity" field.
 func Costume3DRarityNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldCostume3DRarity))
+}
+
+// Costume3DRarityEqualFold applies the EqualFold predicate on the "costume3_d_rarity" field.
+func Costume3DRarityEqualFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEqualFold(FieldCostume3DRarity, v))
+}
+
+// Costume3DRarityContainsFold applies the ContainsFold predicate on the "costume3_d_rarity" field.
+func Costume3DRarityContainsFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContainsFold(FieldCostume3DRarity, v))
 }
 
 // HowToObtainEQ applies the EQ predicate on the "how_to_obtain" field.
@@ -773,6 +988,61 @@ func DesignerContainsFold(v string) predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldContainsFold(FieldDesigner, v))
 }
 
+// ArchiveDisplayTypeEQ applies the EQ predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEQ(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeNEQ applies the NEQ predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeNEQ(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNEQ(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeIn applies the In predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldIn(FieldArchiveDisplayType, vs...))
+}
+
+// ArchiveDisplayTypeNotIn applies the NotIn predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeNotIn(vs ...string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldNotIn(FieldArchiveDisplayType, vs...))
+}
+
+// ArchiveDisplayTypeGT applies the GT predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeGT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGT(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeGTE applies the GTE predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeGTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldGTE(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeLT applies the LT predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeLT(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLT(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeLTE applies the LTE predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeLTE(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldLTE(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeContains applies the Contains predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeContains(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContains(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeHasPrefix applies the HasPrefix predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeHasPrefix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasPrefix(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeHasSuffix applies the HasSuffix predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeHasSuffix(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldHasSuffix(FieldArchiveDisplayType, v))
+}
+
 // ArchiveDisplayTypeIsNil applies the IsNil predicate on the "archive_display_type" field.
 func ArchiveDisplayTypeIsNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldIsNull(FieldArchiveDisplayType))
@@ -781,6 +1051,16 @@ func ArchiveDisplayTypeIsNil() predicate.Costume3D {
 // ArchiveDisplayTypeNotNil applies the NotNil predicate on the "archive_display_type" field.
 func ArchiveDisplayTypeNotNil() predicate.Costume3D {
 	return predicate.Costume3D(sql.FieldNotNull(FieldArchiveDisplayType))
+}
+
+// ArchiveDisplayTypeEqualFold applies the EqualFold predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeEqualFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldEqualFold(FieldArchiveDisplayType, v))
+}
+
+// ArchiveDisplayTypeContainsFold applies the ContainsFold predicate on the "archive_display_type" field.
+func ArchiveDisplayTypeContainsFold(v string) predicate.Costume3D {
+	return predicate.Costume3D(sql.FieldContainsFold(FieldArchiveDisplayType, v))
 }
 
 // ArchivePublishedAtEQ applies the EQ predicate on the "archive_published_at" field.

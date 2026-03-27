@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/level"
@@ -35,8 +34,16 @@ func (_c *LevelCreate) SetNillableGameID(v *int64) *LevelCreate {
 }
 
 // SetLevelType sets the "level_type" field.
-func (_c *LevelCreate) SetLevelType(v json.RawMessage) *LevelCreate {
+func (_c *LevelCreate) SetLevelType(v string) *LevelCreate {
 	_c.mutation.SetLevelType(v)
+	return _c
+}
+
+// SetNillableLevelType sets the "level_type" field if the given value is not nil.
+func (_c *LevelCreate) SetNillableLevelType(v *string) *LevelCreate {
+	if v != nil {
+		_c.SetLevelType(*v)
+	}
 	return _c
 }
 
@@ -142,7 +149,7 @@ func (_c *LevelCreate) createSpec() (*Level, *sqlgraph.CreateSpec) {
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.LevelType(); ok {
-		_spec.SetField(level.FieldLevelType, field.TypeJSON, value)
+		_spec.SetField(level.FieldLevelType, field.TypeString, value)
 		_node.LevelType = value
 	}
 	if value, ok := _c.mutation.Level(); ok {

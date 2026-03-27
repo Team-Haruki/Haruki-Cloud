@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
 	"strings"
@@ -20,7 +19,7 @@ type Mysekaicharactertalkcondition struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// MysekaiCharacterTalkConditionType holds the value of the "mysekai_character_talk_condition_type" field.
-	MysekaiCharacterTalkConditionType json.RawMessage `json:"mysekai_character_talk_condition_type,omitempty"`
+	MysekaiCharacterTalkConditionType string `json:"mysekai_character_talk_condition_type,omitempty"`
 	// MysekaiCharacterTalkConditionTypeValue holds the value of the "mysekai_character_talk_condition_type_value" field.
 	MysekaiCharacterTalkConditionTypeValue int64 `json:"mysekai_character_talk_condition_type_value,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -33,11 +32,9 @@ func (*Mysekaicharactertalkcondition) scanValues(columns []string) ([]any, error
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
-			values[i] = new([]byte)
 		case mysekaicharactertalkcondition.FieldID, mysekaicharactertalkcondition.FieldGameID, mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue:
 			values[i] = new(sql.NullInt64)
-		case mysekaicharactertalkcondition.FieldServerRegion:
+		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType, mysekaicharactertalkcondition.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -67,12 +64,10 @@ func (_m *Mysekaicharactertalkcondition) assignValues(columns []string, values [
 				_m.GameID = value.Int64
 			}
 		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_condition_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiCharacterTalkConditionType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_character_talk_condition_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiCharacterTalkConditionType = value.String
 			}
 		case mysekaicharactertalkcondition.FieldMysekaiCharacterTalkConditionTypeValue:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -126,7 +121,7 @@ func (_m *Mysekaicharactertalkcondition) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_character_talk_condition_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCharacterTalkConditionType))
+	builder.WriteString(_m.MysekaiCharacterTalkConditionType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_character_talk_condition_type_value=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCharacterTalkConditionTypeValue))

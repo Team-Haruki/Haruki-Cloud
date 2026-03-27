@@ -18,7 +18,7 @@ type Event struct {
 func (Event) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("game_id").Optional(),
-		field.JSON("event_type", json.RawMessage{}).Optional(),
+		field.String("event_type").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
 		field.String("bgm_assetbundle_name").Optional(),
@@ -31,10 +31,10 @@ func (Event) Fields() []ent.Field {
 		field.Int64("closed_at").Optional(),
 		field.Int64("distribution_end_at").Optional(),
 		field.Int64("virtual_live_id").Optional(),
-		field.JSON("unit", json.RawMessage{}).Optional(),
+		field.String("unit").Optional(),
 		field.Bool("is_count_leader_character_play").Optional(),
 		field.JSON("event_ranking_reward_ranges", json.RawMessage{}).Optional(),
-		field.JSON("event_point_assetbundle_name", json.RawMessage{}).Optional(),
+		field.String("event_point_assetbundle_name").Optional(),
 		field.Int64("standby_screen_display_start_at").Optional(),
 		field.String("server_region"),
 	}

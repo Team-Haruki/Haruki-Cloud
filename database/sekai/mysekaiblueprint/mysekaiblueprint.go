@@ -67,6 +67,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByMysekaiCraftType orders the results by the mysekai_craft_type field.
+func ByMysekaiCraftType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiCraftType, opts...).ToFunc()
+}
+
 // ByCraftTargetID orders the results by the craft_target_id field.
 func ByCraftTargetID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCraftTargetID, opts...).ToFunc()

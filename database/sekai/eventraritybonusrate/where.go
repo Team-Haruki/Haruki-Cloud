@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldGameID, v))
 }
 
+// CardRarityType applies equality check predicate on the "card_rarity_type" field. It's identical to CardRarityTypeEQ.
+func CardRarityType(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldCardRarityType, v))
+}
+
 // MasterRank applies equality check predicate on the "master_rank" field. It's identical to MasterRankEQ.
 func MasterRank(v int64) predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldMasterRank, v))
@@ -123,6 +128,61 @@ func GameIDNotNil() predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldGameID))
 }
 
+// CardRarityTypeEQ applies the EQ predicate on the "card_rarity_type" field.
+func CardRarityTypeEQ(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeNEQ applies the NEQ predicate on the "card_rarity_type" field.
+func CardRarityTypeNEQ(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNEQ(FieldCardRarityType, v))
+}
+
+// CardRarityTypeIn applies the In predicate on the "card_rarity_type" field.
+func CardRarityTypeIn(vs ...string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeNotIn applies the NotIn predicate on the "card_rarity_type" field.
+func CardRarityTypeNotIn(vs ...string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldNotIn(FieldCardRarityType, vs...))
+}
+
+// CardRarityTypeGT applies the GT predicate on the "card_rarity_type" field.
+func CardRarityTypeGT(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeGTE applies the GTE predicate on the "card_rarity_type" field.
+func CardRarityTypeGTE(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldGTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLT applies the LT predicate on the "card_rarity_type" field.
+func CardRarityTypeLT(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLT(FieldCardRarityType, v))
+}
+
+// CardRarityTypeLTE applies the LTE predicate on the "card_rarity_type" field.
+func CardRarityTypeLTE(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldLTE(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContains applies the Contains predicate on the "card_rarity_type" field.
+func CardRarityTypeContains(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldContains(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasPrefix applies the HasPrefix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasPrefix(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldHasPrefix(FieldCardRarityType, v))
+}
+
+// CardRarityTypeHasSuffix applies the HasSuffix predicate on the "card_rarity_type" field.
+func CardRarityTypeHasSuffix(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldHasSuffix(FieldCardRarityType, v))
+}
+
 // CardRarityTypeIsNil applies the IsNil predicate on the "card_rarity_type" field.
 func CardRarityTypeIsNil() predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldIsNull(FieldCardRarityType))
@@ -131,6 +191,16 @@ func CardRarityTypeIsNil() predicate.Eventraritybonusrate {
 // CardRarityTypeNotNil applies the NotNil predicate on the "card_rarity_type" field.
 func CardRarityTypeNotNil() predicate.Eventraritybonusrate {
 	return predicate.Eventraritybonusrate(sql.FieldNotNull(FieldCardRarityType))
+}
+
+// CardRarityTypeEqualFold applies the EqualFold predicate on the "card_rarity_type" field.
+func CardRarityTypeEqualFold(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldEqualFold(FieldCardRarityType, v))
+}
+
+// CardRarityTypeContainsFold applies the ContainsFold predicate on the "card_rarity_type" field.
+func CardRarityTypeContainsFold(v string) predicate.Eventraritybonusrate {
+	return predicate.Eventraritybonusrate(sql.FieldContainsFold(FieldCardRarityType, v))
 }
 
 // MasterRankEQ applies the EQ predicate on the "master_rank" field.

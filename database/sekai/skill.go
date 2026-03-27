@@ -24,7 +24,7 @@ type Skill struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// DescriptionSpriteName holds the value of the "description_sprite_name" field.
-	DescriptionSpriteName json.RawMessage `json:"description_sprite_name,omitempty"`
+	DescriptionSpriteName string `json:"description_sprite_name,omitempty"`
 	// SkillFilterID holds the value of the "skill_filter_id" field.
 	SkillFilterID int64 `json:"skill_filter_id,omitempty"`
 	// SkillEffects holds the value of the "skill_effects" field.
@@ -39,11 +39,11 @@ func (*Skill) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case skill.FieldDescriptionSpriteName, skill.FieldSkillEffects:
+		case skill.FieldSkillEffects:
 			values[i] = new([]byte)
 		case skill.FieldID, skill.FieldGameID, skill.FieldSkillFilterID:
 			values[i] = new(sql.NullInt64)
-		case skill.FieldShortDescription, skill.FieldDescription, skill.FieldServerRegion:
+		case skill.FieldShortDescription, skill.FieldDescription, skill.FieldDescriptionSpriteName, skill.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -85,12 +85,10 @@ func (_m *Skill) assignValues(columns []string, values []any) error {
 				_m.Description = value.String
 			}
 		case skill.FieldDescriptionSpriteName:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description_sprite_name", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.DescriptionSpriteName); err != nil {
-					return fmt.Errorf("unmarshal field description_sprite_name: %w", err)
-				}
+			} else if value.Valid {
+				_m.DescriptionSpriteName = value.String
 			}
 		case skill.FieldSkillFilterID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -158,7 +156,7 @@ func (_m *Skill) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("description_sprite_name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.DescriptionSpriteName))
+	builder.WriteString(_m.DescriptionSpriteName)
 	builder.WriteString(", ")
 	builder.WriteString("skill_filter_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SkillFilterID))

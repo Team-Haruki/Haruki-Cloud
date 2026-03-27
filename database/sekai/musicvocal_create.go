@@ -49,8 +49,16 @@ func (_c *MusicvocalCreate) SetNillableMusicID(v *int64) *MusicvocalCreate {
 }
 
 // SetMusicVocalType sets the "music_vocal_type" field.
-func (_c *MusicvocalCreate) SetMusicVocalType(v json.RawMessage) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetMusicVocalType(v string) *MusicvocalCreate {
 	_c.mutation.SetMusicVocalType(v)
+	return _c
+}
+
+// SetNillableMusicVocalType sets the "music_vocal_type" field if the given value is not nil.
+func (_c *MusicvocalCreate) SetNillableMusicVocalType(v *string) *MusicvocalCreate {
+	if v != nil {
+		_c.SetMusicVocalType(*v)
+	}
 	return _c
 }
 
@@ -145,8 +153,16 @@ func (_c *MusicvocalCreate) SetNillableSpecialSeasonID(v *int64) *MusicvocalCrea
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_c *MusicvocalCreate) SetArchiveDisplayType(v json.RawMessage) *MusicvocalCreate {
+func (_c *MusicvocalCreate) SetArchiveDisplayType(v string) *MusicvocalCreate {
 	_c.mutation.SetArchiveDisplayType(v)
+	return _c
+}
+
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_c *MusicvocalCreate) SetNillableArchiveDisplayType(v *string) *MusicvocalCreate {
+	if v != nil {
+		_c.SetArchiveDisplayType(*v)
+	}
 	return _c
 }
 
@@ -228,7 +244,7 @@ func (_c *MusicvocalCreate) createSpec() (*Musicvocal, *sqlgraph.CreateSpec) {
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicVocalType(); ok {
-		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeJSON, value)
+		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeString, value)
 		_node.MusicVocalType = value
 	}
 	if value, ok := _c.mutation.Seq(); ok {
@@ -260,7 +276,7 @@ func (_c *MusicvocalCreate) createSpec() (*Musicvocal, *sqlgraph.CreateSpec) {
 		_node.SpecialSeasonID = value
 	}
 	if value, ok := _c.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeJSON, value)
+		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeString, value)
 		_node.ArchiveDisplayType = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

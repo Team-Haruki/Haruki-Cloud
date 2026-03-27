@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldGameID, v))
 }
 
+// LevelType applies equality check predicate on the "level_type" field. It's identical to LevelTypeEQ.
+func LevelType(v string) predicate.Level {
+	return predicate.Level(sql.FieldEQ(FieldLevelType, v))
+}
+
 // Level applies equality check predicate on the "level" field. It's identical to LevelEQ.
 func Level(v int64) predicate.Level {
 	return predicate.Level(sql.FieldEQ(FieldLevel, v))
@@ -123,6 +128,61 @@ func GameIDNotNil() predicate.Level {
 	return predicate.Level(sql.FieldNotNull(FieldGameID))
 }
 
+// LevelTypeEQ applies the EQ predicate on the "level_type" field.
+func LevelTypeEQ(v string) predicate.Level {
+	return predicate.Level(sql.FieldEQ(FieldLevelType, v))
+}
+
+// LevelTypeNEQ applies the NEQ predicate on the "level_type" field.
+func LevelTypeNEQ(v string) predicate.Level {
+	return predicate.Level(sql.FieldNEQ(FieldLevelType, v))
+}
+
+// LevelTypeIn applies the In predicate on the "level_type" field.
+func LevelTypeIn(vs ...string) predicate.Level {
+	return predicate.Level(sql.FieldIn(FieldLevelType, vs...))
+}
+
+// LevelTypeNotIn applies the NotIn predicate on the "level_type" field.
+func LevelTypeNotIn(vs ...string) predicate.Level {
+	return predicate.Level(sql.FieldNotIn(FieldLevelType, vs...))
+}
+
+// LevelTypeGT applies the GT predicate on the "level_type" field.
+func LevelTypeGT(v string) predicate.Level {
+	return predicate.Level(sql.FieldGT(FieldLevelType, v))
+}
+
+// LevelTypeGTE applies the GTE predicate on the "level_type" field.
+func LevelTypeGTE(v string) predicate.Level {
+	return predicate.Level(sql.FieldGTE(FieldLevelType, v))
+}
+
+// LevelTypeLT applies the LT predicate on the "level_type" field.
+func LevelTypeLT(v string) predicate.Level {
+	return predicate.Level(sql.FieldLT(FieldLevelType, v))
+}
+
+// LevelTypeLTE applies the LTE predicate on the "level_type" field.
+func LevelTypeLTE(v string) predicate.Level {
+	return predicate.Level(sql.FieldLTE(FieldLevelType, v))
+}
+
+// LevelTypeContains applies the Contains predicate on the "level_type" field.
+func LevelTypeContains(v string) predicate.Level {
+	return predicate.Level(sql.FieldContains(FieldLevelType, v))
+}
+
+// LevelTypeHasPrefix applies the HasPrefix predicate on the "level_type" field.
+func LevelTypeHasPrefix(v string) predicate.Level {
+	return predicate.Level(sql.FieldHasPrefix(FieldLevelType, v))
+}
+
+// LevelTypeHasSuffix applies the HasSuffix predicate on the "level_type" field.
+func LevelTypeHasSuffix(v string) predicate.Level {
+	return predicate.Level(sql.FieldHasSuffix(FieldLevelType, v))
+}
+
 // LevelTypeIsNil applies the IsNil predicate on the "level_type" field.
 func LevelTypeIsNil() predicate.Level {
 	return predicate.Level(sql.FieldIsNull(FieldLevelType))
@@ -131,6 +191,16 @@ func LevelTypeIsNil() predicate.Level {
 // LevelTypeNotNil applies the NotNil predicate on the "level_type" field.
 func LevelTypeNotNil() predicate.Level {
 	return predicate.Level(sql.FieldNotNull(FieldLevelType))
+}
+
+// LevelTypeEqualFold applies the EqualFold predicate on the "level_type" field.
+func LevelTypeEqualFold(v string) predicate.Level {
+	return predicate.Level(sql.FieldEqualFold(FieldLevelType, v))
+}
+
+// LevelTypeContainsFold applies the ContainsFold predicate on the "level_type" field.
+func LevelTypeContainsFold(v string) predicate.Level {
+	return predicate.Level(sql.FieldContainsFold(FieldLevelType, v))
 }
 
 // LevelEQ applies the EQ predicate on the "level" field.

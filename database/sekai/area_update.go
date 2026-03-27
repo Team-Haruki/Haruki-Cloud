@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/area"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -124,14 +122,16 @@ func (_u *AreaUpdate) ClearIsBaseArea() *AreaUpdate {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_u *AreaUpdate) SetAreaType(v json.RawMessage) *AreaUpdate {
+func (_u *AreaUpdate) SetAreaType(v string) *AreaUpdate {
 	_u.mutation.SetAreaType(v)
 	return _u
 }
 
-// AppendAreaType appends value to the "area_type" field.
-func (_u *AreaUpdate) AppendAreaType(v json.RawMessage) *AreaUpdate {
-	_u.mutation.AppendAreaType(v)
+// SetNillableAreaType sets the "area_type" field if the given value is not nil.
+func (_u *AreaUpdate) SetNillableAreaType(v *string) *AreaUpdate {
+	if v != nil {
+		_u.SetAreaType(*v)
+	}
 	return _u
 }
 
@@ -142,14 +142,16 @@ func (_u *AreaUpdate) ClearAreaType() *AreaUpdate {
 }
 
 // SetViewType sets the "view_type" field.
-func (_u *AreaUpdate) SetViewType(v json.RawMessage) *AreaUpdate {
+func (_u *AreaUpdate) SetViewType(v string) *AreaUpdate {
 	_u.mutation.SetViewType(v)
 	return _u
 }
 
-// AppendViewType appends value to the "view_type" field.
-func (_u *AreaUpdate) AppendViewType(v json.RawMessage) *AreaUpdate {
-	_u.mutation.AppendViewType(v)
+// SetNillableViewType sets the "view_type" field if the given value is not nil.
+func (_u *AreaUpdate) SetNillableViewType(v *string) *AreaUpdate {
+	if v != nil {
+		_u.SetViewType(*v)
+	}
 	return _u
 }
 
@@ -160,14 +162,16 @@ func (_u *AreaUpdate) ClearViewType() *AreaUpdate {
 }
 
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_u *AreaUpdate) SetDisplayTimelineType(v json.RawMessage) *AreaUpdate {
+func (_u *AreaUpdate) SetDisplayTimelineType(v string) *AreaUpdate {
 	_u.mutation.SetDisplayTimelineType(v)
 	return _u
 }
 
-// AppendDisplayTimelineType appends value to the "display_timeline_type" field.
-func (_u *AreaUpdate) AppendDisplayTimelineType(v json.RawMessage) *AreaUpdate {
-	_u.mutation.AppendDisplayTimelineType(v)
+// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
+func (_u *AreaUpdate) SetNillableDisplayTimelineType(v *string) *AreaUpdate {
+	if v != nil {
+		_u.SetDisplayTimelineType(*v)
+	}
 	return _u
 }
 
@@ -178,14 +182,16 @@ func (_u *AreaUpdate) ClearDisplayTimelineType() *AreaUpdate {
 }
 
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_u *AreaUpdate) SetAdditionalAreaType(v json.RawMessage) *AreaUpdate {
+func (_u *AreaUpdate) SetAdditionalAreaType(v string) *AreaUpdate {
 	_u.mutation.SetAdditionalAreaType(v)
 	return _u
 }
 
-// AppendAdditionalAreaType appends value to the "additional_area_type" field.
-func (_u *AreaUpdate) AppendAdditionalAreaType(v json.RawMessage) *AreaUpdate {
-	_u.mutation.AppendAdditionalAreaType(v)
+// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
+func (_u *AreaUpdate) SetNillableAdditionalAreaType(v *string) *AreaUpdate {
+	if v != nil {
+		_u.SetAdditionalAreaType(*v)
+	}
 	return _u
 }
 
@@ -449,48 +455,28 @@ func (_u *AreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(area.FieldIsBaseArea, field.TypeBool)
 	}
 	if value, ok := _u.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAreaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldAreaType, value)
-		})
+		_spec.SetField(area.FieldAreaType, field.TypeString, value)
 	}
 	if _u.mutation.AreaTypeCleared() {
-		_spec.ClearField(area.FieldAreaType, field.TypeJSON)
+		_spec.ClearField(area.FieldAreaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedViewType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldViewType, value)
-		})
+		_spec.SetField(area.FieldViewType, field.TypeString, value)
 	}
 	if _u.mutation.ViewTypeCleared() {
-		_spec.ClearField(area.FieldViewType, field.TypeJSON)
+		_spec.ClearField(area.FieldViewType, field.TypeString)
 	}
 	if value, ok := _u.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDisplayTimelineType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldDisplayTimelineType, value)
-		})
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
 	}
 	if _u.mutation.DisplayTimelineTypeCleared() {
-		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeJSON)
+		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAdditionalAreaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldAdditionalAreaType, value)
-		})
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
 	}
 	if _u.mutation.AdditionalAreaTypeCleared() {
-		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeJSON)
+		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(area.FieldName, field.TypeString, value)
@@ -664,14 +650,16 @@ func (_u *AreaUpdateOne) ClearIsBaseArea() *AreaUpdateOne {
 }
 
 // SetAreaType sets the "area_type" field.
-func (_u *AreaUpdateOne) SetAreaType(v json.RawMessage) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetAreaType(v string) *AreaUpdateOne {
 	_u.mutation.SetAreaType(v)
 	return _u
 }
 
-// AppendAreaType appends value to the "area_type" field.
-func (_u *AreaUpdateOne) AppendAreaType(v json.RawMessage) *AreaUpdateOne {
-	_u.mutation.AppendAreaType(v)
+// SetNillableAreaType sets the "area_type" field if the given value is not nil.
+func (_u *AreaUpdateOne) SetNillableAreaType(v *string) *AreaUpdateOne {
+	if v != nil {
+		_u.SetAreaType(*v)
+	}
 	return _u
 }
 
@@ -682,14 +670,16 @@ func (_u *AreaUpdateOne) ClearAreaType() *AreaUpdateOne {
 }
 
 // SetViewType sets the "view_type" field.
-func (_u *AreaUpdateOne) SetViewType(v json.RawMessage) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetViewType(v string) *AreaUpdateOne {
 	_u.mutation.SetViewType(v)
 	return _u
 }
 
-// AppendViewType appends value to the "view_type" field.
-func (_u *AreaUpdateOne) AppendViewType(v json.RawMessage) *AreaUpdateOne {
-	_u.mutation.AppendViewType(v)
+// SetNillableViewType sets the "view_type" field if the given value is not nil.
+func (_u *AreaUpdateOne) SetNillableViewType(v *string) *AreaUpdateOne {
+	if v != nil {
+		_u.SetViewType(*v)
+	}
 	return _u
 }
 
@@ -700,14 +690,16 @@ func (_u *AreaUpdateOne) ClearViewType() *AreaUpdateOne {
 }
 
 // SetDisplayTimelineType sets the "display_timeline_type" field.
-func (_u *AreaUpdateOne) SetDisplayTimelineType(v json.RawMessage) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetDisplayTimelineType(v string) *AreaUpdateOne {
 	_u.mutation.SetDisplayTimelineType(v)
 	return _u
 }
 
-// AppendDisplayTimelineType appends value to the "display_timeline_type" field.
-func (_u *AreaUpdateOne) AppendDisplayTimelineType(v json.RawMessage) *AreaUpdateOne {
-	_u.mutation.AppendDisplayTimelineType(v)
+// SetNillableDisplayTimelineType sets the "display_timeline_type" field if the given value is not nil.
+func (_u *AreaUpdateOne) SetNillableDisplayTimelineType(v *string) *AreaUpdateOne {
+	if v != nil {
+		_u.SetDisplayTimelineType(*v)
+	}
 	return _u
 }
 
@@ -718,14 +710,16 @@ func (_u *AreaUpdateOne) ClearDisplayTimelineType() *AreaUpdateOne {
 }
 
 // SetAdditionalAreaType sets the "additional_area_type" field.
-func (_u *AreaUpdateOne) SetAdditionalAreaType(v json.RawMessage) *AreaUpdateOne {
+func (_u *AreaUpdateOne) SetAdditionalAreaType(v string) *AreaUpdateOne {
 	_u.mutation.SetAdditionalAreaType(v)
 	return _u
 }
 
-// AppendAdditionalAreaType appends value to the "additional_area_type" field.
-func (_u *AreaUpdateOne) AppendAdditionalAreaType(v json.RawMessage) *AreaUpdateOne {
-	_u.mutation.AppendAdditionalAreaType(v)
+// SetNillableAdditionalAreaType sets the "additional_area_type" field if the given value is not nil.
+func (_u *AreaUpdateOne) SetNillableAdditionalAreaType(v *string) *AreaUpdateOne {
+	if v != nil {
+		_u.SetAdditionalAreaType(*v)
+	}
 	return _u
 }
 
@@ -1019,48 +1013,28 @@ func (_u *AreaUpdateOne) sqlSave(ctx context.Context) (_node *Area, err error) {
 		_spec.ClearField(area.FieldIsBaseArea, field.TypeBool)
 	}
 	if value, ok := _u.mutation.AreaType(); ok {
-		_spec.SetField(area.FieldAreaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAreaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldAreaType, value)
-		})
+		_spec.SetField(area.FieldAreaType, field.TypeString, value)
 	}
 	if _u.mutation.AreaTypeCleared() {
-		_spec.ClearField(area.FieldAreaType, field.TypeJSON)
+		_spec.ClearField(area.FieldAreaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ViewType(); ok {
-		_spec.SetField(area.FieldViewType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedViewType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldViewType, value)
-		})
+		_spec.SetField(area.FieldViewType, field.TypeString, value)
 	}
 	if _u.mutation.ViewTypeCleared() {
-		_spec.ClearField(area.FieldViewType, field.TypeJSON)
+		_spec.ClearField(area.FieldViewType, field.TypeString)
 	}
 	if value, ok := _u.mutation.DisplayTimelineType(); ok {
-		_spec.SetField(area.FieldDisplayTimelineType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDisplayTimelineType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldDisplayTimelineType, value)
-		})
+		_spec.SetField(area.FieldDisplayTimelineType, field.TypeString, value)
 	}
 	if _u.mutation.DisplayTimelineTypeCleared() {
-		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeJSON)
+		_spec.ClearField(area.FieldDisplayTimelineType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AdditionalAreaType(); ok {
-		_spec.SetField(area.FieldAdditionalAreaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedAdditionalAreaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, area.FieldAdditionalAreaType, value)
-		})
+		_spec.SetField(area.FieldAdditionalAreaType, field.TypeString, value)
 	}
 	if _u.mutation.AdditionalAreaTypeCleared() {
-		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeJSON)
+		_spec.ClearField(area.FieldAdditionalAreaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(area.FieldName, field.TypeString, value)

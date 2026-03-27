@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gachaticket"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -97,14 +95,16 @@ func (_u *GachaticketUpdate) ClearAssetbundleName() *GachaticketUpdate {
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_u *GachaticketUpdate) SetGachaDisplayType(v json.RawMessage) *GachaticketUpdate {
+func (_u *GachaticketUpdate) SetGachaDisplayType(v string) *GachaticketUpdate {
 	_u.mutation.SetGachaDisplayType(v)
 	return _u
 }
 
-// AppendGachaDisplayType appends value to the "gacha_display_type" field.
-func (_u *GachaticketUpdate) AppendGachaDisplayType(v json.RawMessage) *GachaticketUpdate {
-	_u.mutation.AppendGachaDisplayType(v)
+// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
+func (_u *GachaticketUpdate) SetNillableGachaDisplayType(v *string) *GachaticketUpdate {
+	if v != nil {
+		_u.SetGachaDisplayType(*v)
+	}
 	return _u
 }
 
@@ -191,15 +191,10 @@ func (_u *GachaticketUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		_spec.ClearField(gachaticket.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGachaDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gachaticket.FieldGachaDisplayType, value)
-		})
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.GachaDisplayTypeCleared() {
-		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeJSON)
+		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)
@@ -292,14 +287,16 @@ func (_u *GachaticketUpdateOne) ClearAssetbundleName() *GachaticketUpdateOne {
 }
 
 // SetGachaDisplayType sets the "gacha_display_type" field.
-func (_u *GachaticketUpdateOne) SetGachaDisplayType(v json.RawMessage) *GachaticketUpdateOne {
+func (_u *GachaticketUpdateOne) SetGachaDisplayType(v string) *GachaticketUpdateOne {
 	_u.mutation.SetGachaDisplayType(v)
 	return _u
 }
 
-// AppendGachaDisplayType appends value to the "gacha_display_type" field.
-func (_u *GachaticketUpdateOne) AppendGachaDisplayType(v json.RawMessage) *GachaticketUpdateOne {
-	_u.mutation.AppendGachaDisplayType(v)
+// SetNillableGachaDisplayType sets the "gacha_display_type" field if the given value is not nil.
+func (_u *GachaticketUpdateOne) SetNillableGachaDisplayType(v *string) *GachaticketUpdateOne {
+	if v != nil {
+		_u.SetGachaDisplayType(*v)
+	}
 	return _u
 }
 
@@ -416,15 +413,10 @@ func (_u *GachaticketUpdateOne) sqlSave(ctx context.Context) (_node *Gachaticket
 		_spec.ClearField(gachaticket.FieldAssetbundleName, field.TypeString)
 	}
 	if value, ok := _u.mutation.GachaDisplayType(); ok {
-		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGachaDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gachaticket.FieldGachaDisplayType, value)
-		})
+		_spec.SetField(gachaticket.FieldGachaDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.GachaDisplayTypeCleared() {
-		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeJSON)
+		_spec.ClearField(gachaticket.FieldGachaDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gachaticket.FieldServerRegion, field.TypeString, value)

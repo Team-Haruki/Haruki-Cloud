@@ -70,6 +70,11 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByCharacterType orders the results by the character_type field.
+func ByCharacterType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCharacterType, opts...).ToFunc()
+}
+
 // ByIsNextGrade orders the results by the is_next_grade field.
 func ByIsNextGrade(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsNextGrade, opts...).ToFunc()
@@ -80,6 +85,11 @@ func ByCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCharacterID, opts...).ToFunc()
 }
 
+// ByUnit orders the results by the unit field.
+func ByUnit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnit, opts...).ToFunc()
+}
+
 // ByIsEnabledFlipDisplay orders the results by the is_enabled_flip_display field.
 func ByIsEnabledFlipDisplay(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsEnabledFlipDisplay, opts...).ToFunc()
@@ -88,6 +98,11 @@ func ByIsEnabledFlipDisplay(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetName orders the results by the asset_name field.
 func ByAssetName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetName, opts...).ToFunc()
+}
+
+// ByCharacterIconAssetbundleName orders the results by the character_icon_assetbundle_name field.
+func ByCharacterIconAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCharacterIconAssetbundleName, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

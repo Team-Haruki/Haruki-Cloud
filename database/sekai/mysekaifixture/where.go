@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldGameID, v))
 }
 
+// MysekaiFixtureType applies equality check predicate on the "mysekai_fixture_type" field. It's identical to MysekaiFixtureTypeEQ.
+func MysekaiFixtureType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldName, v))
@@ -88,6 +93,26 @@ func MysekaiFixtureSubGenreID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureSubGenreID, v))
 }
 
+// MysekaiFixtureHandleType applies equality check predicate on the "mysekai_fixture_handle_type" field. It's identical to MysekaiFixtureHandleTypeEQ.
+func MysekaiFixtureHandleType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiSettableSiteType applies equality check predicate on the "mysekai_settable_site_type" field. It's identical to MysekaiSettableSiteTypeEQ.
+func MysekaiSettableSiteType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableLayoutType applies equality check predicate on the "mysekai_settable_layout_type" field. It's identical to MysekaiSettableLayoutTypeEQ.
+func MysekaiSettableLayoutType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiFixturePutType applies equality check predicate on the "mysekai_fixture_put_type" field. It's identical to MysekaiFixturePutTypeEQ.
+func MysekaiFixturePutType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePutType, v))
+}
+
 // MysekaiFixturePutSoundID applies equality check predicate on the "mysekai_fixture_put_sound_id" field. It's identical to MysekaiFixturePutSoundIDEQ.
 func MysekaiFixturePutSoundID(v int64) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePutSoundID, v))
@@ -106,6 +131,11 @@ func IsAssembled(v bool) predicate.Mysekaifixture {
 // IsDisassembled applies equality check predicate on the "is_disassembled" field. It's identical to IsDisassembledEQ.
 func IsDisassembled(v bool) predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldEQ(FieldIsDisassembled, v))
+}
+
+// MysekaiFixturePlayerActionType applies equality check predicate on the "mysekai_fixture_player_action_type" field. It's identical to MysekaiFixturePlayerActionTypeEQ.
+func MysekaiFixturePlayerActionType(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePlayerActionType, v))
 }
 
 // IsGameCharacterAction applies equality check predicate on the "is_game_character_action" field. It's identical to IsGameCharacterActionEQ.
@@ -193,6 +223,61 @@ func GameIDNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldGameID))
 }
 
+// MysekaiFixtureTypeEQ applies the EQ predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeNEQ applies the NEQ predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeIn applies the In predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureType, vs...))
+}
+
+// MysekaiFixtureTypeNotIn applies the NotIn predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureType, vs...))
+}
+
+// MysekaiFixtureTypeGT applies the GT predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeGTE applies the GTE predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeLT applies the LT predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeLTE applies the LTE predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeContains applies the Contains predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiFixtureType, v))
+}
+
 // MysekaiFixtureTypeIsNil applies the IsNil predicate on the "mysekai_fixture_type" field.
 func MysekaiFixtureTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiFixtureType))
@@ -201,6 +286,16 @@ func MysekaiFixtureTypeIsNil() predicate.Mysekaifixture {
 // MysekaiFixtureTypeNotNil applies the NotNil predicate on the "mysekai_fixture_type" field.
 func MysekaiFixtureTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiFixtureType))
+}
+
+// MysekaiFixtureTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiFixtureType, v))
+}
+
+// MysekaiFixtureTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_type" field.
+func MysekaiFixtureTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiFixtureType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -588,6 +683,61 @@ func MysekaiFixtureSubGenreIDNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiFixtureSubGenreID))
 }
 
+// MysekaiFixtureHandleTypeEQ applies the EQ predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeNEQ applies the NEQ predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeIn applies the In predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixtureHandleType, vs...))
+}
+
+// MysekaiFixtureHandleTypeNotIn applies the NotIn predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixtureHandleType, vs...))
+}
+
+// MysekaiFixtureHandleTypeGT applies the GT predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeGTE applies the GTE predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeLT applies the LT predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeLTE applies the LTE predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeContains applies the Contains predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiFixtureHandleType, v))
+}
+
 // MysekaiFixtureHandleTypeIsNil applies the IsNil predicate on the "mysekai_fixture_handle_type" field.
 func MysekaiFixtureHandleTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiFixtureHandleType))
@@ -596,6 +746,71 @@ func MysekaiFixtureHandleTypeIsNil() predicate.Mysekaifixture {
 // MysekaiFixtureHandleTypeNotNil applies the NotNil predicate on the "mysekai_fixture_handle_type" field.
 func MysekaiFixtureHandleTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiFixtureHandleType))
+}
+
+// MysekaiFixtureHandleTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiFixtureHandleTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_handle_type" field.
+func MysekaiFixtureHandleTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiFixtureHandleType, v))
+}
+
+// MysekaiSettableSiteTypeEQ applies the EQ predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeNEQ applies the NEQ predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeIn applies the In predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiSettableSiteType, vs...))
+}
+
+// MysekaiSettableSiteTypeNotIn applies the NotIn predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiSettableSiteType, vs...))
+}
+
+// MysekaiSettableSiteTypeGT applies the GT predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeGTE applies the GTE predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeLT applies the LT predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeLTE applies the LTE predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeContains applies the Contains predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeHasPrefix applies the HasPrefix predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeHasSuffix applies the HasSuffix predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiSettableSiteType, v))
 }
 
 // MysekaiSettableSiteTypeIsNil applies the IsNil predicate on the "mysekai_settable_site_type" field.
@@ -608,6 +823,71 @@ func MysekaiSettableSiteTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiSettableSiteType))
 }
 
+// MysekaiSettableSiteTypeEqualFold applies the EqualFold predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableSiteTypeContainsFold applies the ContainsFold predicate on the "mysekai_settable_site_type" field.
+func MysekaiSettableSiteTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiSettableSiteType, v))
+}
+
+// MysekaiSettableLayoutTypeEQ applies the EQ predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeNEQ applies the NEQ predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeIn applies the In predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiSettableLayoutType, vs...))
+}
+
+// MysekaiSettableLayoutTypeNotIn applies the NotIn predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiSettableLayoutType, vs...))
+}
+
+// MysekaiSettableLayoutTypeGT applies the GT predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeGTE applies the GTE predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeLT applies the LT predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeLTE applies the LTE predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeContains applies the Contains predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeHasPrefix applies the HasPrefix predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeHasSuffix applies the HasSuffix predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiSettableLayoutType, v))
+}
+
 // MysekaiSettableLayoutTypeIsNil applies the IsNil predicate on the "mysekai_settable_layout_type" field.
 func MysekaiSettableLayoutTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiSettableLayoutType))
@@ -618,6 +898,71 @@ func MysekaiSettableLayoutTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiSettableLayoutType))
 }
 
+// MysekaiSettableLayoutTypeEqualFold applies the EqualFold predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiSettableLayoutTypeContainsFold applies the ContainsFold predicate on the "mysekai_settable_layout_type" field.
+func MysekaiSettableLayoutTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiSettableLayoutType, v))
+}
+
+// MysekaiFixturePutTypeEQ applies the EQ predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeNEQ applies the NEQ predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeIn applies the In predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixturePutType, vs...))
+}
+
+// MysekaiFixturePutTypeNotIn applies the NotIn predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixturePutType, vs...))
+}
+
+// MysekaiFixturePutTypeGT applies the GT predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeGTE applies the GTE predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeLT applies the LT predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeLTE applies the LTE predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeContains applies the Contains predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiFixturePutType, v))
+}
+
 // MysekaiFixturePutTypeIsNil applies the IsNil predicate on the "mysekai_fixture_put_type" field.
 func MysekaiFixturePutTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiFixturePutType))
@@ -626,6 +971,16 @@ func MysekaiFixturePutTypeIsNil() predicate.Mysekaifixture {
 // MysekaiFixturePutTypeNotNil applies the NotNil predicate on the "mysekai_fixture_put_type" field.
 func MysekaiFixturePutTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiFixturePutType))
+}
+
+// MysekaiFixturePutTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiFixturePutType, v))
+}
+
+// MysekaiFixturePutTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_put_type" field.
+func MysekaiFixturePutTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiFixturePutType, v))
 }
 
 // MysekaiFixtureAnotherColorsIsNil applies the IsNil predicate on the "mysekai_fixture_another_colors" field.
@@ -788,6 +1143,61 @@ func IsDisassembledNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldIsDisassembled))
 }
 
+// MysekaiFixturePlayerActionTypeEQ applies the EQ predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEQ(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeNEQ applies the NEQ predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeNEQ(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNEQ(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeIn applies the In predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldIn(FieldMysekaiFixturePlayerActionType, vs...))
+}
+
+// MysekaiFixturePlayerActionTypeNotIn applies the NotIn predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeNotIn(vs ...string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldNotIn(FieldMysekaiFixturePlayerActionType, vs...))
+}
+
+// MysekaiFixturePlayerActionTypeGT applies the GT predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeGT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGT(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeGTE applies the GTE predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeGTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldGTE(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeLT applies the LT predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeLT(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLT(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeLTE applies the LTE predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeLTE(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldLTE(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeContains applies the Contains predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeContains(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContains(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeHasPrefix applies the HasPrefix predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeHasPrefix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasPrefix(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeHasSuffix applies the HasSuffix predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeHasSuffix(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldHasSuffix(FieldMysekaiFixturePlayerActionType, v))
+}
+
 // MysekaiFixturePlayerActionTypeIsNil applies the IsNil predicate on the "mysekai_fixture_player_action_type" field.
 func MysekaiFixturePlayerActionTypeIsNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldIsNull(FieldMysekaiFixturePlayerActionType))
@@ -796,6 +1206,16 @@ func MysekaiFixturePlayerActionTypeIsNil() predicate.Mysekaifixture {
 // MysekaiFixturePlayerActionTypeNotNil applies the NotNil predicate on the "mysekai_fixture_player_action_type" field.
 func MysekaiFixturePlayerActionTypeNotNil() predicate.Mysekaifixture {
 	return predicate.Mysekaifixture(sql.FieldNotNull(FieldMysekaiFixturePlayerActionType))
+}
+
+// MysekaiFixturePlayerActionTypeEqualFold applies the EqualFold predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeEqualFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldEqualFold(FieldMysekaiFixturePlayerActionType, v))
+}
+
+// MysekaiFixturePlayerActionTypeContainsFold applies the ContainsFold predicate on the "mysekai_fixture_player_action_type" field.
+func MysekaiFixturePlayerActionTypeContainsFold(v string) predicate.Mysekaifixture {
+	return predicate.Mysekaifixture(sql.FieldContainsFold(FieldMysekaiFixturePlayerActionType, v))
 }
 
 // IsGameCharacterActionEQ applies the EQ predicate on the "is_game_character_action" field.

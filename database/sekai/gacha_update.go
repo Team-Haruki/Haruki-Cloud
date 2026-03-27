@@ -57,14 +57,16 @@ func (_u *GachaUpdate) ClearGameID() *GachaUpdate {
 }
 
 // SetGachaType sets the "gacha_type" field.
-func (_u *GachaUpdate) SetGachaType(v json.RawMessage) *GachaUpdate {
+func (_u *GachaUpdate) SetGachaType(v string) *GachaUpdate {
 	_u.mutation.SetGachaType(v)
 	return _u
 }
 
-// AppendGachaType appends value to the "gacha_type" field.
-func (_u *GachaUpdate) AppendGachaType(v json.RawMessage) *GachaUpdate {
-	_u.mutation.AppendGachaType(v)
+// SetNillableGachaType sets the "gacha_type" field if the given value is not nil.
+func (_u *GachaUpdate) SetNillableGachaType(v *string) *GachaUpdate {
+	if v != nil {
+		_u.SetGachaType(*v)
+	}
 	return _u
 }
 
@@ -685,15 +687,10 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(gacha.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GachaType(); ok {
-		_spec.SetField(gacha.FieldGachaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGachaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gacha.FieldGachaType, value)
-		})
+		_spec.SetField(gacha.FieldGachaType, field.TypeString, value)
 	}
 	if _u.mutation.GachaTypeCleared() {
-		_spec.ClearField(gacha.FieldGachaType, field.TypeJSON)
+		_spec.ClearField(gacha.FieldGachaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gacha.FieldName, field.TypeString, value)
@@ -956,14 +953,16 @@ func (_u *GachaUpdateOne) ClearGameID() *GachaUpdateOne {
 }
 
 // SetGachaType sets the "gacha_type" field.
-func (_u *GachaUpdateOne) SetGachaType(v json.RawMessage) *GachaUpdateOne {
+func (_u *GachaUpdateOne) SetGachaType(v string) *GachaUpdateOne {
 	_u.mutation.SetGachaType(v)
 	return _u
 }
 
-// AppendGachaType appends value to the "gacha_type" field.
-func (_u *GachaUpdateOne) AppendGachaType(v json.RawMessage) *GachaUpdateOne {
-	_u.mutation.AppendGachaType(v)
+// SetNillableGachaType sets the "gacha_type" field if the given value is not nil.
+func (_u *GachaUpdateOne) SetNillableGachaType(v *string) *GachaUpdateOne {
+	if v != nil {
+		_u.SetGachaType(*v)
+	}
 	return _u
 }
 
@@ -1614,15 +1613,10 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 		_spec.ClearField(gacha.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.GachaType(); ok {
-		_spec.SetField(gacha.FieldGachaType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGachaType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gacha.FieldGachaType, value)
-		})
+		_spec.SetField(gacha.FieldGachaType, field.TypeString, value)
 	}
 	if _u.mutation.GachaTypeCleared() {
-		_spec.ClearField(gacha.FieldGachaType, field.TypeJSON)
+		_spec.ClearField(gacha.FieldGachaType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(gacha.FieldName, field.TypeString, value)

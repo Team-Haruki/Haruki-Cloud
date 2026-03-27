@@ -68,6 +68,11 @@ func GroupID(v int64) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldGroupID, v))
 }
 
+// HonorRarity applies equality check predicate on the "honor_rarity" field. It's identical to HonorRarityEQ.
+func HonorRarity(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldEQ(FieldHonorRarity, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Honor {
 	return predicate.Honor(sql.FieldEQ(FieldName, v))
@@ -248,6 +253,61 @@ func GroupIDNotNil() predicate.Honor {
 	return predicate.Honor(sql.FieldNotNull(FieldGroupID))
 }
 
+// HonorRarityEQ applies the EQ predicate on the "honor_rarity" field.
+func HonorRarityEQ(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldEQ(FieldHonorRarity, v))
+}
+
+// HonorRarityNEQ applies the NEQ predicate on the "honor_rarity" field.
+func HonorRarityNEQ(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldNEQ(FieldHonorRarity, v))
+}
+
+// HonorRarityIn applies the In predicate on the "honor_rarity" field.
+func HonorRarityIn(vs ...string) predicate.Honor {
+	return predicate.Honor(sql.FieldIn(FieldHonorRarity, vs...))
+}
+
+// HonorRarityNotIn applies the NotIn predicate on the "honor_rarity" field.
+func HonorRarityNotIn(vs ...string) predicate.Honor {
+	return predicate.Honor(sql.FieldNotIn(FieldHonorRarity, vs...))
+}
+
+// HonorRarityGT applies the GT predicate on the "honor_rarity" field.
+func HonorRarityGT(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldGT(FieldHonorRarity, v))
+}
+
+// HonorRarityGTE applies the GTE predicate on the "honor_rarity" field.
+func HonorRarityGTE(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldGTE(FieldHonorRarity, v))
+}
+
+// HonorRarityLT applies the LT predicate on the "honor_rarity" field.
+func HonorRarityLT(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldLT(FieldHonorRarity, v))
+}
+
+// HonorRarityLTE applies the LTE predicate on the "honor_rarity" field.
+func HonorRarityLTE(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldLTE(FieldHonorRarity, v))
+}
+
+// HonorRarityContains applies the Contains predicate on the "honor_rarity" field.
+func HonorRarityContains(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldContains(FieldHonorRarity, v))
+}
+
+// HonorRarityHasPrefix applies the HasPrefix predicate on the "honor_rarity" field.
+func HonorRarityHasPrefix(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldHasPrefix(FieldHonorRarity, v))
+}
+
+// HonorRarityHasSuffix applies the HasSuffix predicate on the "honor_rarity" field.
+func HonorRarityHasSuffix(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldHasSuffix(FieldHonorRarity, v))
+}
+
 // HonorRarityIsNil applies the IsNil predicate on the "honor_rarity" field.
 func HonorRarityIsNil() predicate.Honor {
 	return predicate.Honor(sql.FieldIsNull(FieldHonorRarity))
@@ -256,6 +316,16 @@ func HonorRarityIsNil() predicate.Honor {
 // HonorRarityNotNil applies the NotNil predicate on the "honor_rarity" field.
 func HonorRarityNotNil() predicate.Honor {
 	return predicate.Honor(sql.FieldNotNull(FieldHonorRarity))
+}
+
+// HonorRarityEqualFold applies the EqualFold predicate on the "honor_rarity" field.
+func HonorRarityEqualFold(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldEqualFold(FieldHonorRarity, v))
+}
+
+// HonorRarityContainsFold applies the ContainsFold predicate on the "honor_rarity" field.
+func HonorRarityContainsFold(v string) predicate.Honor {
+	return predicate.Honor(sql.FieldContainsFold(FieldHonorRarity, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

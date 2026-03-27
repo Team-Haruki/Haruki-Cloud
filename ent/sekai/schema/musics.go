@@ -30,7 +30,7 @@ func (Music) Fields() []ent.Field {
 		field.Int64("dancer_count").Optional(),
 		field.Int64("self_dancer_position").Optional(),
 		field.String("assetbundle_name").Optional(),
-		field.JSON("live_talk_background_assetbundle_name", json.RawMessage{}).Optional(),
+		field.String("live_talk_background_assetbundle_name").Optional(),
 		field.Int64("published_at").Optional(),
 		field.Int64("released_at").Optional(),
 		field.Int64("live_stage_id").Optional(),

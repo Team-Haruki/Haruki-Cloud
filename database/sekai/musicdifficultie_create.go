@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -49,8 +48,16 @@ func (_c *MusicdifficultieCreate) SetNillableMusicID(v *int64) *Musicdifficultie
 }
 
 // SetMusicDifficulty sets the "music_difficulty" field.
-func (_c *MusicdifficultieCreate) SetMusicDifficulty(v json.RawMessage) *MusicdifficultieCreate {
+func (_c *MusicdifficultieCreate) SetMusicDifficulty(v string) *MusicdifficultieCreate {
 	_c.mutation.SetMusicDifficulty(v)
+	return _c
+}
+
+// SetNillableMusicDifficulty sets the "music_difficulty" field if the given value is not nil.
+func (_c *MusicdifficultieCreate) SetNillableMusicDifficulty(v *string) *MusicdifficultieCreate {
+	if v != nil {
+		_c.SetMusicDifficulty(*v)
+	}
 	return _c
 }
 
@@ -174,7 +181,7 @@ func (_c *MusicdifficultieCreate) createSpec() (*Musicdifficultie, *sqlgraph.Cre
 		_node.MusicID = value
 	}
 	if value, ok := _c.mutation.MusicDifficulty(); ok {
-		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeJSON, value)
+		_spec.SetField(musicdifficultie.FieldMusicDifficulty, field.TypeString, value)
 		_node.MusicDifficulty = value
 	}
 	if value, ok := _c.mutation.PlayLevel(); ok {

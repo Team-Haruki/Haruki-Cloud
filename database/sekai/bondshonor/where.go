@@ -78,6 +78,11 @@ func GameCharacterUnitId2(v int64) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldGameCharacterUnitId2, v))
 }
 
+// HonorRarity applies equality check predicate on the "honor_rarity" field. It's identical to HonorRarityEQ.
+func HonorRarity(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldEQ(FieldHonorRarity, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldEQ(FieldName, v))
@@ -353,6 +358,61 @@ func GameCharacterUnitId2NotNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotNull(FieldGameCharacterUnitId2))
 }
 
+// HonorRarityEQ applies the EQ predicate on the "honor_rarity" field.
+func HonorRarityEQ(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldEQ(FieldHonorRarity, v))
+}
+
+// HonorRarityNEQ applies the NEQ predicate on the "honor_rarity" field.
+func HonorRarityNEQ(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldNEQ(FieldHonorRarity, v))
+}
+
+// HonorRarityIn applies the In predicate on the "honor_rarity" field.
+func HonorRarityIn(vs ...string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldIn(FieldHonorRarity, vs...))
+}
+
+// HonorRarityNotIn applies the NotIn predicate on the "honor_rarity" field.
+func HonorRarityNotIn(vs ...string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldNotIn(FieldHonorRarity, vs...))
+}
+
+// HonorRarityGT applies the GT predicate on the "honor_rarity" field.
+func HonorRarityGT(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldGT(FieldHonorRarity, v))
+}
+
+// HonorRarityGTE applies the GTE predicate on the "honor_rarity" field.
+func HonorRarityGTE(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldGTE(FieldHonorRarity, v))
+}
+
+// HonorRarityLT applies the LT predicate on the "honor_rarity" field.
+func HonorRarityLT(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldLT(FieldHonorRarity, v))
+}
+
+// HonorRarityLTE applies the LTE predicate on the "honor_rarity" field.
+func HonorRarityLTE(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldLTE(FieldHonorRarity, v))
+}
+
+// HonorRarityContains applies the Contains predicate on the "honor_rarity" field.
+func HonorRarityContains(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldContains(FieldHonorRarity, v))
+}
+
+// HonorRarityHasPrefix applies the HasPrefix predicate on the "honor_rarity" field.
+func HonorRarityHasPrefix(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldHasPrefix(FieldHonorRarity, v))
+}
+
+// HonorRarityHasSuffix applies the HasSuffix predicate on the "honor_rarity" field.
+func HonorRarityHasSuffix(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldHasSuffix(FieldHonorRarity, v))
+}
+
 // HonorRarityIsNil applies the IsNil predicate on the "honor_rarity" field.
 func HonorRarityIsNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldIsNull(FieldHonorRarity))
@@ -361,6 +421,16 @@ func HonorRarityIsNil() predicate.Bondshonor {
 // HonorRarityNotNil applies the NotNil predicate on the "honor_rarity" field.
 func HonorRarityNotNil() predicate.Bondshonor {
 	return predicate.Bondshonor(sql.FieldNotNull(FieldHonorRarity))
+}
+
+// HonorRarityEqualFold applies the EqualFold predicate on the "honor_rarity" field.
+func HonorRarityEqualFold(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldEqualFold(FieldHonorRarity, v))
+}
+
+// HonorRarityContainsFold applies the ContainsFold predicate on the "honor_rarity" field.
+func HonorRarityContainsFold(v string) predicate.Bondshonor {
+	return predicate.Bondshonor(sql.FieldContainsFold(FieldHonorRarity, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

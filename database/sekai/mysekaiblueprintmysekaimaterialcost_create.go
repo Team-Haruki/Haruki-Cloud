@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprintmysekaimaterialcost"
@@ -91,8 +90,16 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableQuantity(v *int6
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostCreate {
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetMysekaiBlueprintType(v string) *MysekaiblueprintmysekaimaterialcostCreate {
 	_c.mutation.SetMysekaiBlueprintType(v)
+	return _c
+}
+
+// SetNillableMysekaiBlueprintType sets the "mysekai_blueprint_type" field if the given value is not nil.
+func (_c *MysekaiblueprintmysekaimaterialcostCreate) SetNillableMysekaiBlueprintType(v *string) *MysekaiblueprintmysekaimaterialcostCreate {
+	if v != nil {
+		_c.SetMysekaiBlueprintType(*v)
+	}
 	return _c
 }
 
@@ -186,7 +193,7 @@ func (_c *MysekaiblueprintmysekaimaterialcostCreate) createSpec() (*Mysekaibluep
 		_node.Quantity = value
 	}
 	if value, ok := _c.mutation.MysekaiBlueprintType(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeString, value)
 		_node.MysekaiBlueprintType = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {

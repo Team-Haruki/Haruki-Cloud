@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/boostitem"
 	"strings"
@@ -28,7 +27,7 @@ type Boostitem struct {
 	// AssetBundleName holds the value of the "asset_bundle_name" field.
 	AssetBundleName string `json:"asset_bundle_name,omitempty"`
 	// FlavorText holds the value of the "flavor_text" field.
-	FlavorText json.RawMessage `json:"flavor_text,omitempty"`
+	FlavorText string `json:"flavor_text,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -39,11 +38,9 @@ func (*Boostitem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case boostitem.FieldFlavorText:
-			values[i] = new([]byte)
 		case boostitem.FieldID, boostitem.FieldGameID, boostitem.FieldSeq, boostitem.FieldRecoveryValue:
 			values[i] = new(sql.NullInt64)
-		case boostitem.FieldName, boostitem.FieldAssetBundleName, boostitem.FieldServerRegion:
+		case boostitem.FieldName, boostitem.FieldAssetBundleName, boostitem.FieldFlavorText, boostitem.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -97,12 +94,10 @@ func (_m *Boostitem) assignValues(columns []string, values []any) error {
 				_m.AssetBundleName = value.String
 			}
 		case boostitem.FieldFlavorText:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field flavor_text", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.FlavorText); err != nil {
-					return fmt.Errorf("unmarshal field flavor_text: %w", err)
-				}
+			} else if value.Valid {
+				_m.FlavorText = value.String
 			}
 		case boostitem.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -162,7 +157,7 @@ func (_m *Boostitem) String() string {
 	builder.WriteString(_m.AssetBundleName)
 	builder.WriteString(", ")
 	builder.WriteString("flavor_text=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FlavorText))
+	builder.WriteString(_m.FlavorText)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

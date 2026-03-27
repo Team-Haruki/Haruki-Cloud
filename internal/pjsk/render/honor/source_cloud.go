@@ -101,7 +101,7 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 
 	model := &masterdata.HonorGroup{
 		ID:          int(entity.GameID),
-		HonorType:   jsonString(entity.HonorType),
+		HonorType:   entity.HonorType,
 		Name:        entity.Name,
 		Description: "",
 	}
@@ -139,7 +139,7 @@ func (c *CloudSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) 
 		ID:                   int(entity.GameID),
 		GameCharacterUnitID1: int(entity.GameCharacterUnitId1),
 		GameCharacterUnitID2: int(entity.GameCharacterUnitId2),
-		HonorRarity:          jsonString(entity.HonorRarity),
+		HonorRarity:          entity.HonorRarity,
 		Name:                 entity.Name,
 		Description:          entity.Description,
 		BondsGroupID:         int(entity.BondsGroupID),
@@ -171,7 +171,7 @@ func (c *CloudSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacte
 	model := &masterdata.GameCharacterUnit{
 		ID:              int(entity.GameID),
 		GameCharacterID: int(entity.GameCharacterID),
-		Unit:            jsonString(entity.Unit),
+		Unit:            entity.Unit,
 		ColorCode:       entity.ColorCode,
 	}
 
@@ -185,7 +185,7 @@ func convertCloudHonor(entity *sekaiDB.Honor) (*masterdata.Honor, error) {
 	model := &masterdata.Honor{
 		ID:              int(entity.GameID),
 		GroupID:         int(entity.GroupID),
-		HonorRarity:     jsonString(entity.HonorRarity),
+		HonorRarity:     entity.HonorRarity,
 		Name:            entity.Name,
 		Description:     "",
 		AssetBundleName: entity.AssetbundleName,

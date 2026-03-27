@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
@@ -35,8 +34,16 @@ func (_c *EventraritybonusrateCreate) SetNillableGameID(v *int64) *Eventraritybo
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_c *EventraritybonusrateCreate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateCreate {
+func (_c *EventraritybonusrateCreate) SetCardRarityType(v string) *EventraritybonusrateCreate {
 	_c.mutation.SetCardRarityType(v)
+	return _c
+}
+
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_c *EventraritybonusrateCreate) SetNillableCardRarityType(v *string) *EventraritybonusrateCreate {
+	if v != nil {
+		_c.SetCardRarityType(*v)
+	}
 	return _c
 }
 
@@ -142,7 +149,7 @@ func (_c *EventraritybonusrateCreate) createSpec() (*Eventraritybonusrate, *sqlg
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
 		_node.CardRarityType = value
 	}
 	if value, ok := _c.mutation.MasterRank(); ok {

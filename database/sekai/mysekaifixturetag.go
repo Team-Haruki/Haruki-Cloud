@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturetag"
 	"strings"
@@ -24,7 +23,7 @@ type Mysekaifixturetag struct {
 	// Pronunciation holds the value of the "pronunciation" field.
 	Pronunciation string `json:"pronunciation,omitempty"`
 	// MysekaiFixtureTagType holds the value of the "mysekai_fixture_tag_type" field.
-	MysekaiFixtureTagType json.RawMessage `json:"mysekai_fixture_tag_type,omitempty"`
+	MysekaiFixtureTagType string `json:"mysekai_fixture_tag_type,omitempty"`
 	// ExternalID holds the value of the "external_id" field.
 	ExternalID int64 `json:"external_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -37,11 +36,9 @@ func (*Mysekaifixturetag) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaifixturetag.FieldMysekaiFixtureTagType:
-			values[i] = new([]byte)
 		case mysekaifixturetag.FieldID, mysekaifixturetag.FieldGameID, mysekaifixturetag.FieldExternalID:
 			values[i] = new(sql.NullInt64)
-		case mysekaifixturetag.FieldName, mysekaifixturetag.FieldPronunciation, mysekaifixturetag.FieldServerRegion:
+		case mysekaifixturetag.FieldName, mysekaifixturetag.FieldPronunciation, mysekaifixturetag.FieldMysekaiFixtureTagType, mysekaifixturetag.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -83,12 +80,10 @@ func (_m *Mysekaifixturetag) assignValues(columns []string, values []any) error 
 				_m.Pronunciation = value.String
 			}
 		case mysekaifixturetag.FieldMysekaiFixtureTagType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_fixture_tag_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiFixtureTagType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_fixture_tag_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiFixtureTagType = value.String
 			}
 		case mysekaifixturetag.FieldExternalID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -148,7 +143,7 @@ func (_m *Mysekaifixturetag) String() string {
 	builder.WriteString(_m.Pronunciation)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_fixture_tag_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiFixtureTagType))
+	builder.WriteString(_m.MysekaiFixtureTagType)
 	builder.WriteString(", ")
 	builder.WriteString("external_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ExternalID))

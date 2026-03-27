@@ -84,14 +84,16 @@ func (_u *MusicvocalUpdate) ClearMusicID() *MusicvocalUpdate {
 }
 
 // SetMusicVocalType sets the "music_vocal_type" field.
-func (_u *MusicvocalUpdate) SetMusicVocalType(v json.RawMessage) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetMusicVocalType(v string) *MusicvocalUpdate {
 	_u.mutation.SetMusicVocalType(v)
 	return _u
 }
 
-// AppendMusicVocalType appends value to the "music_vocal_type" field.
-func (_u *MusicvocalUpdate) AppendMusicVocalType(v json.RawMessage) *MusicvocalUpdate {
-	_u.mutation.AppendMusicVocalType(v)
+// SetNillableMusicVocalType sets the "music_vocal_type" field if the given value is not nil.
+func (_u *MusicvocalUpdate) SetNillableMusicVocalType(v *string) *MusicvocalUpdate {
+	if v != nil {
+		_u.SetMusicVocalType(*v)
+	}
 	return _u
 }
 
@@ -268,14 +270,16 @@ func (_u *MusicvocalUpdate) ClearSpecialSeasonID() *MusicvocalUpdate {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *MusicvocalUpdate) SetArchiveDisplayType(v json.RawMessage) *MusicvocalUpdate {
+func (_u *MusicvocalUpdate) SetArchiveDisplayType(v string) *MusicvocalUpdate {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *MusicvocalUpdate) AppendArchiveDisplayType(v json.RawMessage) *MusicvocalUpdate {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *MusicvocalUpdate) SetNillableArchiveDisplayType(v *string) *MusicvocalUpdate {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -359,15 +363,10 @@ func (_u *MusicvocalUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicVocalType(); ok {
-		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicVocalType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicvocal.FieldMusicVocalType, value)
-		})
+		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeString, value)
 	}
 	if _u.mutation.MusicVocalTypeCleared() {
-		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeJSON)
+		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(musicvocal.FieldSeq, field.TypeInt64, value)
@@ -429,15 +428,10 @@ func (_u *MusicvocalUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicvocal.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(musicvocal.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(musicvocal.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musicvocal.FieldServerRegion, field.TypeString, value)
@@ -517,14 +511,16 @@ func (_u *MusicvocalUpdateOne) ClearMusicID() *MusicvocalUpdateOne {
 }
 
 // SetMusicVocalType sets the "music_vocal_type" field.
-func (_u *MusicvocalUpdateOne) SetMusicVocalType(v json.RawMessage) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetMusicVocalType(v string) *MusicvocalUpdateOne {
 	_u.mutation.SetMusicVocalType(v)
 	return _u
 }
 
-// AppendMusicVocalType appends value to the "music_vocal_type" field.
-func (_u *MusicvocalUpdateOne) AppendMusicVocalType(v json.RawMessage) *MusicvocalUpdateOne {
-	_u.mutation.AppendMusicVocalType(v)
+// SetNillableMusicVocalType sets the "music_vocal_type" field if the given value is not nil.
+func (_u *MusicvocalUpdateOne) SetNillableMusicVocalType(v *string) *MusicvocalUpdateOne {
+	if v != nil {
+		_u.SetMusicVocalType(*v)
+	}
 	return _u
 }
 
@@ -701,14 +697,16 @@ func (_u *MusicvocalUpdateOne) ClearSpecialSeasonID() *MusicvocalUpdateOne {
 }
 
 // SetArchiveDisplayType sets the "archive_display_type" field.
-func (_u *MusicvocalUpdateOne) SetArchiveDisplayType(v json.RawMessage) *MusicvocalUpdateOne {
+func (_u *MusicvocalUpdateOne) SetArchiveDisplayType(v string) *MusicvocalUpdateOne {
 	_u.mutation.SetArchiveDisplayType(v)
 	return _u
 }
 
-// AppendArchiveDisplayType appends value to the "archive_display_type" field.
-func (_u *MusicvocalUpdateOne) AppendArchiveDisplayType(v json.RawMessage) *MusicvocalUpdateOne {
-	_u.mutation.AppendArchiveDisplayType(v)
+// SetNillableArchiveDisplayType sets the "archive_display_type" field if the given value is not nil.
+func (_u *MusicvocalUpdateOne) SetNillableArchiveDisplayType(v *string) *MusicvocalUpdateOne {
+	if v != nil {
+		_u.SetArchiveDisplayType(*v)
+	}
 	return _u
 }
 
@@ -822,15 +820,10 @@ func (_u *MusicvocalUpdateOne) sqlSave(ctx context.Context) (_node *Musicvocal, 
 		_spec.ClearField(musicvocal.FieldMusicID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MusicVocalType(); ok {
-		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMusicVocalType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicvocal.FieldMusicVocalType, value)
-		})
+		_spec.SetField(musicvocal.FieldMusicVocalType, field.TypeString, value)
 	}
 	if _u.mutation.MusicVocalTypeCleared() {
-		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeJSON)
+		_spec.ClearField(musicvocal.FieldMusicVocalType, field.TypeString)
 	}
 	if value, ok := _u.mutation.Seq(); ok {
 		_spec.SetField(musicvocal.FieldSeq, field.TypeInt64, value)
@@ -892,15 +885,10 @@ func (_u *MusicvocalUpdateOne) sqlSave(ctx context.Context) (_node *Musicvocal, 
 		_spec.ClearField(musicvocal.FieldSpecialSeasonID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ArchiveDisplayType(); ok {
-		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedArchiveDisplayType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, musicvocal.FieldArchiveDisplayType, value)
-		})
+		_spec.SetField(musicvocal.FieldArchiveDisplayType, field.TypeString, value)
 	}
 	if _u.mutation.ArchiveDisplayTypeCleared() {
-		_spec.ClearField(musicvocal.FieldArchiveDisplayType, field.TypeJSON)
+		_spec.ClearField(musicvocal.FieldArchiveDisplayType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(musicvocal.FieldServerRegion, field.TypeString, value)

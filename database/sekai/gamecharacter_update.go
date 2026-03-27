@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacter"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -231,14 +229,16 @@ func (_u *GamecharacterUpdate) ClearGivenNameEnglish() *GamecharacterUpdate {
 }
 
 // SetGender sets the "gender" field.
-func (_u *GamecharacterUpdate) SetGender(v json.RawMessage) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetGender(v string) *GamecharacterUpdate {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
-// AppendGender appends value to the "gender" field.
-func (_u *GamecharacterUpdate) AppendGender(v json.RawMessage) *GamecharacterUpdate {
-	_u.mutation.AppendGender(v)
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableGender(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetGender(*v)
+	}
 	return _u
 }
 
@@ -303,14 +303,16 @@ func (_u *GamecharacterUpdate) ClearLive2DHeightAdjustment() *GamecharacterUpdat
 }
 
 // SetFigure sets the "figure" field.
-func (_u *GamecharacterUpdate) SetFigure(v json.RawMessage) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetFigure(v string) *GamecharacterUpdate {
 	_u.mutation.SetFigure(v)
 	return _u
 }
 
-// AppendFigure appends value to the "figure" field.
-func (_u *GamecharacterUpdate) AppendFigure(v json.RawMessage) *GamecharacterUpdate {
-	_u.mutation.AppendFigure(v)
+// SetNillableFigure sets the "figure" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableFigure(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetFigure(*v)
+	}
 	return _u
 }
 
@@ -321,14 +323,16 @@ func (_u *GamecharacterUpdate) ClearFigure() *GamecharacterUpdate {
 }
 
 // SetBreastSize sets the "breast_size" field.
-func (_u *GamecharacterUpdate) SetBreastSize(v json.RawMessage) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetBreastSize(v string) *GamecharacterUpdate {
 	_u.mutation.SetBreastSize(v)
 	return _u
 }
 
-// AppendBreastSize appends value to the "breast_size" field.
-func (_u *GamecharacterUpdate) AppendBreastSize(v json.RawMessage) *GamecharacterUpdate {
-	_u.mutation.AppendBreastSize(v)
+// SetNillableBreastSize sets the "breast_size" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableBreastSize(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetBreastSize(*v)
+	}
 	return _u
 }
 
@@ -359,14 +363,16 @@ func (_u *GamecharacterUpdate) ClearModelName() *GamecharacterUpdate {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterUpdate) SetUnit(v json.RawMessage) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetUnit(v string) *GamecharacterUpdate {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *GamecharacterUpdate) AppendUnit(v json.RawMessage) *GamecharacterUpdate {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableUnit(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -377,14 +383,16 @@ func (_u *GamecharacterUpdate) ClearUnit() *GamecharacterUpdate {
 }
 
 // SetSupportUnitType sets the "support_unit_type" field.
-func (_u *GamecharacterUpdate) SetSupportUnitType(v json.RawMessage) *GamecharacterUpdate {
+func (_u *GamecharacterUpdate) SetSupportUnitType(v string) *GamecharacterUpdate {
 	_u.mutation.SetSupportUnitType(v)
 	return _u
 }
 
-// AppendSupportUnitType appends value to the "support_unit_type" field.
-func (_u *GamecharacterUpdate) AppendSupportUnitType(v json.RawMessage) *GamecharacterUpdate {
-	_u.mutation.AppendSupportUnitType(v)
+// SetNillableSupportUnitType sets the "support_unit_type" field if the given value is not nil.
+func (_u *GamecharacterUpdate) SetNillableSupportUnitType(v *string) *GamecharacterUpdate {
+	if v != nil {
+		_u.SetSupportUnitType(*v)
+	}
 	return _u
 }
 
@@ -513,15 +521,10 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldGivenNameEnglish, field.TypeString)
 	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(gamecharacter.FieldGender, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGender(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldGender, value)
-		})
+		_spec.SetField(gamecharacter.FieldGender, field.TypeString, value)
 	}
 	if _u.mutation.GenderCleared() {
-		_spec.ClearField(gamecharacter.FieldGender, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldGender, field.TypeString)
 	}
 	if value, ok := _u.mutation.Height(); ok {
 		_spec.SetField(gamecharacter.FieldHeight, field.TypeFloat64, value)
@@ -542,26 +545,16 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldLive2DHeightAdjustment, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.Figure(); ok {
-		_spec.SetField(gamecharacter.FieldFigure, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFigure(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldFigure, value)
-		})
+		_spec.SetField(gamecharacter.FieldFigure, field.TypeString, value)
 	}
 	if _u.mutation.FigureCleared() {
-		_spec.ClearField(gamecharacter.FieldFigure, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldFigure, field.TypeString)
 	}
 	if value, ok := _u.mutation.BreastSize(); ok {
-		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedBreastSize(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldBreastSize, value)
-		})
+		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeString, value)
 	}
 	if _u.mutation.BreastSizeCleared() {
-		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeString)
 	}
 	if value, ok := _u.mutation.ModelName(); ok {
 		_spec.SetField(gamecharacter.FieldModelName, field.TypeString, value)
@@ -570,26 +563,16 @@ func (_u *GamecharacterUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		_spec.ClearField(gamecharacter.FieldModelName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacter.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldUnit, value)
-		})
+		_spec.SetField(gamecharacter.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacter.FieldUnit, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.SupportUnitType(); ok {
-		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSupportUnitType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldSupportUnitType, value)
-		})
+		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeString, value)
 	}
 	if _u.mutation.SupportUnitTypeCleared() {
-		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)
@@ -816,14 +799,16 @@ func (_u *GamecharacterUpdateOne) ClearGivenNameEnglish() *GamecharacterUpdateOn
 }
 
 // SetGender sets the "gender" field.
-func (_u *GamecharacterUpdateOne) SetGender(v json.RawMessage) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetGender(v string) *GamecharacterUpdateOne {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
-// AppendGender appends value to the "gender" field.
-func (_u *GamecharacterUpdateOne) AppendGender(v json.RawMessage) *GamecharacterUpdateOne {
-	_u.mutation.AppendGender(v)
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableGender(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetGender(*v)
+	}
 	return _u
 }
 
@@ -888,14 +873,16 @@ func (_u *GamecharacterUpdateOne) ClearLive2DHeightAdjustment() *GamecharacterUp
 }
 
 // SetFigure sets the "figure" field.
-func (_u *GamecharacterUpdateOne) SetFigure(v json.RawMessage) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetFigure(v string) *GamecharacterUpdateOne {
 	_u.mutation.SetFigure(v)
 	return _u
 }
 
-// AppendFigure appends value to the "figure" field.
-func (_u *GamecharacterUpdateOne) AppendFigure(v json.RawMessage) *GamecharacterUpdateOne {
-	_u.mutation.AppendFigure(v)
+// SetNillableFigure sets the "figure" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableFigure(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetFigure(*v)
+	}
 	return _u
 }
 
@@ -906,14 +893,16 @@ func (_u *GamecharacterUpdateOne) ClearFigure() *GamecharacterUpdateOne {
 }
 
 // SetBreastSize sets the "breast_size" field.
-func (_u *GamecharacterUpdateOne) SetBreastSize(v json.RawMessage) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetBreastSize(v string) *GamecharacterUpdateOne {
 	_u.mutation.SetBreastSize(v)
 	return _u
 }
 
-// AppendBreastSize appends value to the "breast_size" field.
-func (_u *GamecharacterUpdateOne) AppendBreastSize(v json.RawMessage) *GamecharacterUpdateOne {
-	_u.mutation.AppendBreastSize(v)
+// SetNillableBreastSize sets the "breast_size" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableBreastSize(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetBreastSize(*v)
+	}
 	return _u
 }
 
@@ -944,14 +933,16 @@ func (_u *GamecharacterUpdateOne) ClearModelName() *GamecharacterUpdateOne {
 }
 
 // SetUnit sets the "unit" field.
-func (_u *GamecharacterUpdateOne) SetUnit(v json.RawMessage) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetUnit(v string) *GamecharacterUpdateOne {
 	_u.mutation.SetUnit(v)
 	return _u
 }
 
-// AppendUnit appends value to the "unit" field.
-func (_u *GamecharacterUpdateOne) AppendUnit(v json.RawMessage) *GamecharacterUpdateOne {
-	_u.mutation.AppendUnit(v)
+// SetNillableUnit sets the "unit" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableUnit(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetUnit(*v)
+	}
 	return _u
 }
 
@@ -962,14 +953,16 @@ func (_u *GamecharacterUpdateOne) ClearUnit() *GamecharacterUpdateOne {
 }
 
 // SetSupportUnitType sets the "support_unit_type" field.
-func (_u *GamecharacterUpdateOne) SetSupportUnitType(v json.RawMessage) *GamecharacterUpdateOne {
+func (_u *GamecharacterUpdateOne) SetSupportUnitType(v string) *GamecharacterUpdateOne {
 	_u.mutation.SetSupportUnitType(v)
 	return _u
 }
 
-// AppendSupportUnitType appends value to the "support_unit_type" field.
-func (_u *GamecharacterUpdateOne) AppendSupportUnitType(v json.RawMessage) *GamecharacterUpdateOne {
-	_u.mutation.AppendSupportUnitType(v)
+// SetNillableSupportUnitType sets the "support_unit_type" field if the given value is not nil.
+func (_u *GamecharacterUpdateOne) SetNillableSupportUnitType(v *string) *GamecharacterUpdateOne {
+	if v != nil {
+		_u.SetSupportUnitType(*v)
+	}
 	return _u
 }
 
@@ -1128,15 +1121,10 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldGivenNameEnglish, field.TypeString)
 	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(gamecharacter.FieldGender, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedGender(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldGender, value)
-		})
+		_spec.SetField(gamecharacter.FieldGender, field.TypeString, value)
 	}
 	if _u.mutation.GenderCleared() {
-		_spec.ClearField(gamecharacter.FieldGender, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldGender, field.TypeString)
 	}
 	if value, ok := _u.mutation.Height(); ok {
 		_spec.SetField(gamecharacter.FieldHeight, field.TypeFloat64, value)
@@ -1157,26 +1145,16 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldLive2DHeightAdjustment, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.Figure(); ok {
-		_spec.SetField(gamecharacter.FieldFigure, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedFigure(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldFigure, value)
-		})
+		_spec.SetField(gamecharacter.FieldFigure, field.TypeString, value)
 	}
 	if _u.mutation.FigureCleared() {
-		_spec.ClearField(gamecharacter.FieldFigure, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldFigure, field.TypeString)
 	}
 	if value, ok := _u.mutation.BreastSize(); ok {
-		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedBreastSize(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldBreastSize, value)
-		})
+		_spec.SetField(gamecharacter.FieldBreastSize, field.TypeString, value)
 	}
 	if _u.mutation.BreastSizeCleared() {
-		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldBreastSize, field.TypeString)
 	}
 	if value, ok := _u.mutation.ModelName(); ok {
 		_spec.SetField(gamecharacter.FieldModelName, field.TypeString, value)
@@ -1185,26 +1163,16 @@ func (_u *GamecharacterUpdateOne) sqlSave(ctx context.Context) (_node *Gamechara
 		_spec.ClearField(gamecharacter.FieldModelName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Unit(); ok {
-		_spec.SetField(gamecharacter.FieldUnit, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedUnit(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldUnit, value)
-		})
+		_spec.SetField(gamecharacter.FieldUnit, field.TypeString, value)
 	}
 	if _u.mutation.UnitCleared() {
-		_spec.ClearField(gamecharacter.FieldUnit, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldUnit, field.TypeString)
 	}
 	if value, ok := _u.mutation.SupportUnitType(); ok {
-		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedSupportUnitType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, gamecharacter.FieldSupportUnitType, value)
-		})
+		_spec.SetField(gamecharacter.FieldSupportUnitType, field.TypeString, value)
 	}
 	if _u.mutation.SupportUnitTypeCleared() {
-		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeJSON)
+		_spec.ClearField(gamecharacter.FieldSupportUnitType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gamecharacter.FieldServerRegion, field.TypeString, value)

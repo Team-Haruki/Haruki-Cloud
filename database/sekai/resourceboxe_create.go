@@ -21,8 +21,16 @@ type ResourceboxeCreate struct {
 }
 
 // SetResourceBoxPurpose sets the "resource_box_purpose" field.
-func (_c *ResourceboxeCreate) SetResourceBoxPurpose(v json.RawMessage) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetResourceBoxPurpose(v string) *ResourceboxeCreate {
 	_c.mutation.SetResourceBoxPurpose(v)
+	return _c
+}
+
+// SetNillableResourceBoxPurpose sets the "resource_box_purpose" field if the given value is not nil.
+func (_c *ResourceboxeCreate) SetNillableResourceBoxPurpose(v *string) *ResourceboxeCreate {
+	if v != nil {
+		_c.SetResourceBoxPurpose(*v)
+	}
 	return _c
 }
 
@@ -41,8 +49,16 @@ func (_c *ResourceboxeCreate) SetNillableGameID(v *int64) *ResourceboxeCreate {
 }
 
 // SetResourceBoxType sets the "resource_box_type" field.
-func (_c *ResourceboxeCreate) SetResourceBoxType(v json.RawMessage) *ResourceboxeCreate {
+func (_c *ResourceboxeCreate) SetResourceBoxType(v string) *ResourceboxeCreate {
 	_c.mutation.SetResourceBoxType(v)
+	return _c
+}
+
+// SetNillableResourceBoxType sets the "resource_box_type" field if the given value is not nil.
+func (_c *ResourceboxeCreate) SetNillableResourceBoxType(v *string) *ResourceboxeCreate {
+	if v != nil {
+		_c.SetResourceBoxType(*v)
+	}
 	return _c
 }
 
@@ -164,7 +180,7 @@ func (_c *ResourceboxeCreate) createSpec() (*Resourceboxe, *sqlgraph.CreateSpec)
 		_spec = sqlgraph.NewCreateSpec(resourceboxe.Table, sqlgraph.NewFieldSpec(resourceboxe.FieldID, field.TypeInt))
 	)
 	if value, ok := _c.mutation.ResourceBoxPurpose(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeJSON, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxPurpose, field.TypeString, value)
 		_node.ResourceBoxPurpose = value
 	}
 	if value, ok := _c.mutation.GameID(); ok {
@@ -172,7 +188,7 @@ func (_c *ResourceboxeCreate) createSpec() (*Resourceboxe, *sqlgraph.CreateSpec)
 		_node.GameID = value
 	}
 	if value, ok := _c.mutation.ResourceBoxType(); ok {
-		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeJSON, value)
+		_spec.SetField(resourceboxe.FieldResourceBoxType, field.TypeString, value)
 		_node.ResourceBoxType = value
 	}
 	if value, ok := _c.mutation.Description(); ok {

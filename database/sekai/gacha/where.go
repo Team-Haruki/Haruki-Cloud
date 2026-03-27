@@ -58,6 +58,11 @@ func GameID(v int64) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldGameID, v))
 }
 
+// GachaType applies equality check predicate on the "gacha_type" field. It's identical to GachaTypeEQ.
+func GachaType(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldGachaType, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldName, v))
@@ -198,6 +203,61 @@ func GameIDNotNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotNull(FieldGameID))
 }
 
+// GachaTypeEQ applies the EQ predicate on the "gacha_type" field.
+func GachaTypeEQ(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldGachaType, v))
+}
+
+// GachaTypeNEQ applies the NEQ predicate on the "gacha_type" field.
+func GachaTypeNEQ(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNEQ(FieldGachaType, v))
+}
+
+// GachaTypeIn applies the In predicate on the "gacha_type" field.
+func GachaTypeIn(vs ...string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldIn(FieldGachaType, vs...))
+}
+
+// GachaTypeNotIn applies the NotIn predicate on the "gacha_type" field.
+func GachaTypeNotIn(vs ...string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotIn(FieldGachaType, vs...))
+}
+
+// GachaTypeGT applies the GT predicate on the "gacha_type" field.
+func GachaTypeGT(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGT(FieldGachaType, v))
+}
+
+// GachaTypeGTE applies the GTE predicate on the "gacha_type" field.
+func GachaTypeGTE(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGTE(FieldGachaType, v))
+}
+
+// GachaTypeLT applies the LT predicate on the "gacha_type" field.
+func GachaTypeLT(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLT(FieldGachaType, v))
+}
+
+// GachaTypeLTE applies the LTE predicate on the "gacha_type" field.
+func GachaTypeLTE(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLTE(FieldGachaType, v))
+}
+
+// GachaTypeContains applies the Contains predicate on the "gacha_type" field.
+func GachaTypeContains(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldContains(FieldGachaType, v))
+}
+
+// GachaTypeHasPrefix applies the HasPrefix predicate on the "gacha_type" field.
+func GachaTypeHasPrefix(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldHasPrefix(FieldGachaType, v))
+}
+
+// GachaTypeHasSuffix applies the HasSuffix predicate on the "gacha_type" field.
+func GachaTypeHasSuffix(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldHasSuffix(FieldGachaType, v))
+}
+
 // GachaTypeIsNil applies the IsNil predicate on the "gacha_type" field.
 func GachaTypeIsNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldIsNull(FieldGachaType))
@@ -206,6 +266,16 @@ func GachaTypeIsNil() predicate.Gacha {
 // GachaTypeNotNil applies the NotNil predicate on the "gacha_type" field.
 func GachaTypeNotNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotNull(FieldGachaType))
+}
+
+// GachaTypeEqualFold applies the EqualFold predicate on the "gacha_type" field.
+func GachaTypeEqualFold(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEqualFold(FieldGachaType, v))
+}
+
+// GachaTypeContainsFold applies the ContainsFold predicate on the "gacha_type" field.
+func GachaTypeContainsFold(v string) predicate.Gacha {
+	return predicate.Gacha(sql.FieldContainsFold(FieldGachaType, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/gamecharacter"
 	"strings"
@@ -36,21 +35,21 @@ type Gamecharacter struct {
 	// GivenNameEnglish holds the value of the "given_name_english" field.
 	GivenNameEnglish string `json:"given_name_english,omitempty"`
 	// Gender holds the value of the "gender" field.
-	Gender json.RawMessage `json:"gender,omitempty"`
+	Gender string `json:"gender,omitempty"`
 	// Height holds the value of the "height" field.
 	Height float64 `json:"height,omitempty"`
 	// Live2DHeightAdjustment holds the value of the "live2_d_height_adjustment" field.
 	Live2DHeightAdjustment float64 `json:"live2_d_height_adjustment,omitempty"`
 	// Figure holds the value of the "figure" field.
-	Figure json.RawMessage `json:"figure,omitempty"`
+	Figure string `json:"figure,omitempty"`
 	// BreastSize holds the value of the "breast_size" field.
-	BreastSize json.RawMessage `json:"breast_size,omitempty"`
+	BreastSize string `json:"breast_size,omitempty"`
 	// ModelName holds the value of the "model_name" field.
 	ModelName string `json:"model_name,omitempty"`
 	// Unit holds the value of the "unit" field.
-	Unit json.RawMessage `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
 	// SupportUnitType holds the value of the "support_unit_type" field.
-	SupportUnitType json.RawMessage `json:"support_unit_type,omitempty"`
+	SupportUnitType string `json:"support_unit_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -61,13 +60,11 @@ func (*Gamecharacter) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gamecharacter.FieldGender, gamecharacter.FieldFigure, gamecharacter.FieldBreastSize, gamecharacter.FieldUnit, gamecharacter.FieldSupportUnitType:
-			values[i] = new([]byte)
 		case gamecharacter.FieldHeight, gamecharacter.FieldLive2DHeightAdjustment:
 			values[i] = new(sql.NullFloat64)
 		case gamecharacter.FieldID, gamecharacter.FieldGameID, gamecharacter.FieldSeq, gamecharacter.FieldResourceID:
 			values[i] = new(sql.NullInt64)
-		case gamecharacter.FieldFirstName, gamecharacter.FieldGivenName, gamecharacter.FieldFirstNameRuby, gamecharacter.FieldGivenNameRuby, gamecharacter.FieldFirstNameEnglish, gamecharacter.FieldGivenNameEnglish, gamecharacter.FieldModelName, gamecharacter.FieldServerRegion:
+		case gamecharacter.FieldFirstName, gamecharacter.FieldGivenName, gamecharacter.FieldFirstNameRuby, gamecharacter.FieldGivenNameRuby, gamecharacter.FieldFirstNameEnglish, gamecharacter.FieldGivenNameEnglish, gamecharacter.FieldGender, gamecharacter.FieldFigure, gamecharacter.FieldBreastSize, gamecharacter.FieldModelName, gamecharacter.FieldUnit, gamecharacter.FieldSupportUnitType, gamecharacter.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -145,12 +142,10 @@ func (_m *Gamecharacter) assignValues(columns []string, values []any) error {
 				_m.GivenNameEnglish = value.String
 			}
 		case gamecharacter.FieldGender:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field gender", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Gender); err != nil {
-					return fmt.Errorf("unmarshal field gender: %w", err)
-				}
+			} else if value.Valid {
+				_m.Gender = value.String
 			}
 		case gamecharacter.FieldHeight:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -165,20 +160,16 @@ func (_m *Gamecharacter) assignValues(columns []string, values []any) error {
 				_m.Live2DHeightAdjustment = value.Float64
 			}
 		case gamecharacter.FieldFigure:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field figure", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Figure); err != nil {
-					return fmt.Errorf("unmarshal field figure: %w", err)
-				}
+			} else if value.Valid {
+				_m.Figure = value.String
 			}
 		case gamecharacter.FieldBreastSize:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field breast_size", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.BreastSize); err != nil {
-					return fmt.Errorf("unmarshal field breast_size: %w", err)
-				}
+			} else if value.Valid {
+				_m.BreastSize = value.String
 			}
 		case gamecharacter.FieldModelName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -187,20 +178,16 @@ func (_m *Gamecharacter) assignValues(columns []string, values []any) error {
 				_m.ModelName = value.String
 			}
 		case gamecharacter.FieldUnit:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field unit", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Unit); err != nil {
-					return fmt.Errorf("unmarshal field unit: %w", err)
-				}
+			} else if value.Valid {
+				_m.Unit = value.String
 			}
 		case gamecharacter.FieldSupportUnitType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field support_unit_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.SupportUnitType); err != nil {
-					return fmt.Errorf("unmarshal field support_unit_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.SupportUnitType = value.String
 			}
 		case gamecharacter.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -272,7 +259,7 @@ func (_m *Gamecharacter) String() string {
 	builder.WriteString(_m.GivenNameEnglish)
 	builder.WriteString(", ")
 	builder.WriteString("gender=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Gender))
+	builder.WriteString(_m.Gender)
 	builder.WriteString(", ")
 	builder.WriteString("height=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Height))
@@ -281,19 +268,19 @@ func (_m *Gamecharacter) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Live2DHeightAdjustment))
 	builder.WriteString(", ")
 	builder.WriteString("figure=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Figure))
+	builder.WriteString(_m.Figure)
 	builder.WriteString(", ")
 	builder.WriteString("breast_size=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BreastSize))
+	builder.WriteString(_m.BreastSize)
 	builder.WriteString(", ")
 	builder.WriteString("model_name=")
 	builder.WriteString(_m.ModelName)
 	builder.WriteString(", ")
 	builder.WriteString("unit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Unit))
+	builder.WriteString(_m.Unit)
 	builder.WriteString(", ")
 	builder.WriteString("support_unit_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SupportUnitType))
+	builder.WriteString(_m.SupportUnitType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

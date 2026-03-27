@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
 	"strings"
@@ -26,7 +25,7 @@ type Mysekaisiteharvestfixture struct {
 	// LastAttackStamina holds the value of the "last_attack_stamina" field.
 	LastAttackStamina int64 `json:"last_attack_stamina,omitempty"`
 	// MysekaiSiteHarvestFixtureRarityType holds the value of the "mysekai_site_harvest_fixture_rarity_type" field.
-	MysekaiSiteHarvestFixtureRarityType json.RawMessage `json:"mysekai_site_harvest_fixture_rarity_type,omitempty"`
+	MysekaiSiteHarvestFixtureRarityType string `json:"mysekai_site_harvest_fixture_rarity_type,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
@@ -39,11 +38,9 @@ func (*Mysekaisiteharvestfixture) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType:
-			values[i] = new([]byte)
 		case mysekaisiteharvestfixture.FieldID, mysekaisiteharvestfixture.FieldGameID, mysekaisiteharvestfixture.FieldHp, mysekaisiteharvestfixture.FieldLastAttackStamina:
 			values[i] = new(sql.NullInt64)
-		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, mysekaisiteharvestfixture.FieldAssetbundleName, mysekaisiteharvestfixture.FieldServerRegion:
+		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureType, mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType, mysekaisiteharvestfixture.FieldAssetbundleName, mysekaisiteharvestfixture.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -91,12 +88,10 @@ func (_m *Mysekaisiteharvestfixture) assignValues(columns []string, values []any
 				_m.LastAttackStamina = value.Int64
 			}
 		case mysekaisiteharvestfixture.FieldMysekaiSiteHarvestFixtureRarityType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_site_harvest_fixture_rarity_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiSiteHarvestFixtureRarityType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_site_harvest_fixture_rarity_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiSiteHarvestFixtureRarityType = value.String
 			}
 		case mysekaisiteharvestfixture.FieldAssetbundleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -159,7 +154,7 @@ func (_m *Mysekaisiteharvestfixture) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.LastAttackStamina))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_site_harvest_fixture_rarity_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiSiteHarvestFixtureRarityType))
+	builder.WriteString(_m.MysekaiSiteHarvestFixtureRarityType)
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)

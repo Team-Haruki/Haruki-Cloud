@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/eventraritybonusrate"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *EventraritybonusrateUpdate) ClearGameID() *EventraritybonusrateUpdate 
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdate) SetCardRarityType(v json.RawMessage) *EventraritybonusrateUpdate {
+func (_u *EventraritybonusrateUpdate) SetCardRarityType(v string) *EventraritybonusrateUpdate {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdate) AppendCardRarityType(v json.RawMessage) *EventraritybonusrateUpdate {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *EventraritybonusrateUpdate) SetNillableCardRarityType(v *string) *EventraritybonusrateUpdate {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -193,15 +193,10 @@ func (_u *EventraritybonusrateUpdate) sqlSave(ctx context.Context) (_node int, e
 		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventraritybonusrate.FieldCardRarityType, value)
-		})
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
 		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)
@@ -272,14 +267,16 @@ func (_u *EventraritybonusrateUpdateOne) ClearGameID() *EventraritybonusrateUpda
 }
 
 // SetCardRarityType sets the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdateOne) SetCardRarityType(v json.RawMessage) *EventraritybonusrateUpdateOne {
+func (_u *EventraritybonusrateUpdateOne) SetCardRarityType(v string) *EventraritybonusrateUpdateOne {
 	_u.mutation.SetCardRarityType(v)
 	return _u
 }
 
-// AppendCardRarityType appends value to the "card_rarity_type" field.
-func (_u *EventraritybonusrateUpdateOne) AppendCardRarityType(v json.RawMessage) *EventraritybonusrateUpdateOne {
-	_u.mutation.AppendCardRarityType(v)
+// SetNillableCardRarityType sets the "card_rarity_type" field if the given value is not nil.
+func (_u *EventraritybonusrateUpdateOne) SetNillableCardRarityType(v *string) *EventraritybonusrateUpdateOne {
+	if v != nil {
+		_u.SetCardRarityType(*v)
+	}
 	return _u
 }
 
@@ -438,15 +435,10 @@ func (_u *EventraritybonusrateUpdateOne) sqlSave(ctx context.Context) (_node *Ev
 		_spec.ClearField(eventraritybonusrate.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.CardRarityType(); ok {
-		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedCardRarityType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, eventraritybonusrate.FieldCardRarityType, value)
-		})
+		_spec.SetField(eventraritybonusrate.FieldCardRarityType, field.TypeString, value)
 	}
 	if _u.mutation.CardRarityTypeCleared() {
-		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeJSON)
+		_spec.ClearField(eventraritybonusrate.FieldCardRarityType, field.TypeString)
 	}
 	if value, ok := _u.mutation.MasterRank(); ok {
 		_spec.SetField(eventraritybonusrate.FieldMasterRank, field.TypeInt64, value)

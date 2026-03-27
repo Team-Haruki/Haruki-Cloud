@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -77,14 +75,16 @@ func (_u *MysekaifixturemaingenreUpdate) ClearName() *MysekaifixturemaingenreUpd
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdate) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdate {
+func (_u *MysekaifixturemaingenreUpdate) SetMysekaiFixtureMainGenreType(v string) *MysekaifixturemaingenreUpdate {
 	_u.mutation.SetMysekaiFixtureMainGenreType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureMainGenreType appends value to the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdate) AppendMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdate {
-	_u.mutation.AppendMysekaiFixtureMainGenreType(v)
+// SetNillableMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field if the given value is not nil.
+func (_u *MysekaifixturemaingenreUpdate) SetNillableMysekaiFixtureMainGenreType(v *string) *MysekaifixturemaingenreUpdate {
+	if v != nil {
+		_u.SetMysekaiFixtureMainGenreType(*v)
+	}
 	return _u
 }
 
@@ -212,15 +212,10 @@ func (_u *MysekaifixturemaingenreUpdate) sqlSave(ctx context.Context) (_node int
 		_spec.ClearField(mysekaifixturemaingenre.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreType(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureMainGenreType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, value)
-		})
+		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureMainGenreTypeCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON)
+		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldAssetbundleName, field.TypeString, value)
@@ -308,14 +303,16 @@ func (_u *MysekaifixturemaingenreUpdateOne) ClearName() *Mysekaifixturemaingenre
 }
 
 // SetMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdateOne) SetMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdateOne {
+func (_u *MysekaifixturemaingenreUpdateOne) SetMysekaiFixtureMainGenreType(v string) *MysekaifixturemaingenreUpdateOne {
 	_u.mutation.SetMysekaiFixtureMainGenreType(v)
 	return _u
 }
 
-// AppendMysekaiFixtureMainGenreType appends value to the "mysekai_fixture_main_genre_type" field.
-func (_u *MysekaifixturemaingenreUpdateOne) AppendMysekaiFixtureMainGenreType(v json.RawMessage) *MysekaifixturemaingenreUpdateOne {
-	_u.mutation.AppendMysekaiFixtureMainGenreType(v)
+// SetNillableMysekaiFixtureMainGenreType sets the "mysekai_fixture_main_genre_type" field if the given value is not nil.
+func (_u *MysekaifixturemaingenreUpdateOne) SetNillableMysekaiFixtureMainGenreType(v *string) *MysekaifixturemaingenreUpdateOne {
+	if v != nil {
+		_u.SetMysekaiFixtureMainGenreType(*v)
+	}
 	return _u
 }
 
@@ -473,15 +470,10 @@ func (_u *MysekaifixturemaingenreUpdateOne) sqlSave(ctx context.Context) (_node 
 		_spec.ClearField(mysekaifixturemaingenre.FieldName, field.TypeString)
 	}
 	if value, ok := _u.mutation.MysekaiFixtureMainGenreType(); ok {
-		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiFixtureMainGenreType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, value)
-		})
+		_spec.SetField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiFixtureMainGenreTypeCleared() {
-		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeJSON)
+		_spec.ClearField(mysekaifixturemaingenre.FieldMysekaiFixtureMainGenreType, field.TypeString)
 	}
 	if value, ok := _u.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaifixturemaingenre.FieldAssetbundleName, field.TypeString, value)

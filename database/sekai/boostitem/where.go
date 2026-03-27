@@ -78,6 +78,11 @@ func AssetBundleName(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldAssetBundleName, v))
 }
 
+// FlavorText applies equality check predicate on the "flavor_text" field. It's identical to FlavorTextEQ.
+func FlavorText(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldEQ(FieldFlavorText, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldEQ(FieldServerRegion, v))
@@ -383,6 +388,61 @@ func AssetBundleNameContainsFold(v string) predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldContainsFold(FieldAssetBundleName, v))
 }
 
+// FlavorTextEQ applies the EQ predicate on the "flavor_text" field.
+func FlavorTextEQ(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldEQ(FieldFlavorText, v))
+}
+
+// FlavorTextNEQ applies the NEQ predicate on the "flavor_text" field.
+func FlavorTextNEQ(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldNEQ(FieldFlavorText, v))
+}
+
+// FlavorTextIn applies the In predicate on the "flavor_text" field.
+func FlavorTextIn(vs ...string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextNotIn applies the NotIn predicate on the "flavor_text" field.
+func FlavorTextNotIn(vs ...string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldNotIn(FieldFlavorText, vs...))
+}
+
+// FlavorTextGT applies the GT predicate on the "flavor_text" field.
+func FlavorTextGT(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldGT(FieldFlavorText, v))
+}
+
+// FlavorTextGTE applies the GTE predicate on the "flavor_text" field.
+func FlavorTextGTE(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldGTE(FieldFlavorText, v))
+}
+
+// FlavorTextLT applies the LT predicate on the "flavor_text" field.
+func FlavorTextLT(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldLT(FieldFlavorText, v))
+}
+
+// FlavorTextLTE applies the LTE predicate on the "flavor_text" field.
+func FlavorTextLTE(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldLTE(FieldFlavorText, v))
+}
+
+// FlavorTextContains applies the Contains predicate on the "flavor_text" field.
+func FlavorTextContains(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldContains(FieldFlavorText, v))
+}
+
+// FlavorTextHasPrefix applies the HasPrefix predicate on the "flavor_text" field.
+func FlavorTextHasPrefix(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldHasPrefix(FieldFlavorText, v))
+}
+
+// FlavorTextHasSuffix applies the HasSuffix predicate on the "flavor_text" field.
+func FlavorTextHasSuffix(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldHasSuffix(FieldFlavorText, v))
+}
+
 // FlavorTextIsNil applies the IsNil predicate on the "flavor_text" field.
 func FlavorTextIsNil() predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldIsNull(FieldFlavorText))
@@ -391,6 +451,16 @@ func FlavorTextIsNil() predicate.Boostitem {
 // FlavorTextNotNil applies the NotNil predicate on the "flavor_text" field.
 func FlavorTextNotNil() predicate.Boostitem {
 	return predicate.Boostitem(sql.FieldNotNull(FieldFlavorText))
+}
+
+// FlavorTextEqualFold applies the EqualFold predicate on the "flavor_text" field.
+func FlavorTextEqualFold(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldEqualFold(FieldFlavorText, v))
+}
+
+// FlavorTextContainsFold applies the ContainsFold predicate on the "flavor_text" field.
+func FlavorTextContainsFold(v string) predicate.Boostitem {
+	return predicate.Boostitem(sql.FieldContainsFold(FieldFlavorText, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

@@ -22,7 +22,7 @@ type Musicvocal struct {
 	// MusicID holds the value of the "music_id" field.
 	MusicID int64 `json:"music_id,omitempty"`
 	// MusicVocalType holds the value of the "music_vocal_type" field.
-	MusicVocalType json.RawMessage `json:"music_vocal_type,omitempty"`
+	MusicVocalType string `json:"music_vocal_type,omitempty"`
 	// Seq holds the value of the "seq" field.
 	Seq int64 `json:"seq,omitempty"`
 	// ReleaseConditionID holds the value of the "release_condition_id" field.
@@ -38,7 +38,7 @@ type Musicvocal struct {
 	// SpecialSeasonID holds the value of the "special_season_id" field.
 	SpecialSeasonID int64 `json:"special_season_id,omitempty"`
 	// ArchiveDisplayType holds the value of the "archive_display_type" field.
-	ArchiveDisplayType json.RawMessage `json:"archive_display_type,omitempty"`
+	ArchiveDisplayType string `json:"archive_display_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -49,11 +49,11 @@ func (*Musicvocal) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case musicvocal.FieldMusicVocalType, musicvocal.FieldCharacters, musicvocal.FieldArchiveDisplayType:
+		case musicvocal.FieldCharacters:
 			values[i] = new([]byte)
 		case musicvocal.FieldID, musicvocal.FieldGameID, musicvocal.FieldMusicID, musicvocal.FieldSeq, musicvocal.FieldReleaseConditionID, musicvocal.FieldArchivePublishedAt, musicvocal.FieldSpecialSeasonID:
 			values[i] = new(sql.NullInt64)
-		case musicvocal.FieldCaption, musicvocal.FieldAssetbundleName, musicvocal.FieldServerRegion:
+		case musicvocal.FieldMusicVocalType, musicvocal.FieldCaption, musicvocal.FieldAssetbundleName, musicvocal.FieldArchiveDisplayType, musicvocal.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -89,12 +89,10 @@ func (_m *Musicvocal) assignValues(columns []string, values []any) error {
 				_m.MusicID = value.Int64
 			}
 		case musicvocal.FieldMusicVocalType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field music_vocal_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MusicVocalType); err != nil {
-					return fmt.Errorf("unmarshal field music_vocal_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MusicVocalType = value.String
 			}
 		case musicvocal.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -141,12 +139,10 @@ func (_m *Musicvocal) assignValues(columns []string, values []any) error {
 				_m.SpecialSeasonID = value.Int64
 			}
 		case musicvocal.FieldArchiveDisplayType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field archive_display_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.ArchiveDisplayType); err != nil {
-					return fmt.Errorf("unmarshal field archive_display_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.ArchiveDisplayType = value.String
 			}
 		case musicvocal.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -197,7 +193,7 @@ func (_m *Musicvocal) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.MusicID))
 	builder.WriteString(", ")
 	builder.WriteString("music_vocal_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MusicVocalType))
+	builder.WriteString(_m.MusicVocalType)
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))
@@ -221,7 +217,7 @@ func (_m *Musicvocal) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.SpecialSeasonID))
 	builder.WriteString(", ")
 	builder.WriteString("archive_display_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ArchiveDisplayType))
+	builder.WriteString(_m.ArchiveDisplayType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

@@ -3,7 +3,6 @@
 package sekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
 	"strings"
@@ -22,7 +21,7 @@ type Mysekaicharactertalkfixturecommon struct {
 	// GameCharacterUnitID holds the value of the "game_character_unit_id" field.
 	GameCharacterUnitID int64 `json:"game_character_unit_id,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonType holds the value of the "mysekai_character_talk_fixture_common_type" field.
-	MysekaiCharacterTalkFixtureCommonType json.RawMessage `json:"mysekai_character_talk_fixture_common_type,omitempty"`
+	MysekaiCharacterTalkFixtureCommonType string `json:"mysekai_character_talk_fixture_common_type,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID holds the value of the "mysekai_character_talk_fixture_common_mysekai_fixture_group_id" field.
 	MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID int64 `json:"mysekai_character_talk_fixture_common_mysekai_fixture_group_id,omitempty"`
 	// MysekaiCharacterTalkFixtureCommonTweetGroupID holds the value of the "mysekai_character_talk_fixture_common_tweet_group_id" field.
@@ -37,11 +36,9 @@ func (*Mysekaicharactertalkfixturecommon) scanValues(columns []string) ([]any, e
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType:
-			values[i] = new([]byte)
 		case mysekaicharactertalkfixturecommon.FieldID, mysekaicharactertalkfixturecommon.FieldGameID, mysekaicharactertalkfixturecommon.FieldGameCharacterUnitID, mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID, mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonTweetGroupID:
 			values[i] = new(sql.NullInt64)
-		case mysekaicharactertalkfixturecommon.FieldServerRegion:
+		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType, mysekaicharactertalkfixturecommon.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -77,12 +74,10 @@ func (_m *Mysekaicharactertalkfixturecommon) assignValues(columns []string, valu
 				_m.GameCharacterUnitID = value.Int64
 			}
 		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mysekai_character_talk_fixture_common_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.MysekaiCharacterTalkFixtureCommonType); err != nil {
-					return fmt.Errorf("unmarshal field mysekai_character_talk_fixture_common_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.MysekaiCharacterTalkFixtureCommonType = value.String
 			}
 		case mysekaicharactertalkfixturecommon.FieldMysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -145,7 +140,7 @@ func (_m *Mysekaicharactertalkfixturecommon) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_character_talk_fixture_common_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCharacterTalkFixtureCommonType))
+	builder.WriteString(_m.MysekaiCharacterTalkFixtureCommonType)
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_character_talk_fixture_common_mysekai_fixture_group_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiCharacterTalkFixtureCommonMysekaiFixtureGroupID))

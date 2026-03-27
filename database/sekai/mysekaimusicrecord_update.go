@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaimusicrecord"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -57,14 +55,16 @@ func (_u *MysekaimusicrecordUpdate) ClearGameID() *MysekaimusicrecordUpdate {
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordUpdate) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordUpdate {
+func (_u *MysekaimusicrecordUpdate) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordUpdate {
 	_u.mutation.SetMysekaiMusicTrackType(v)
 	return _u
 }
 
-// AppendMysekaiMusicTrackType appends value to the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordUpdate) AppendMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordUpdate {
-	_u.mutation.AppendMysekaiMusicTrackType(v)
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_u *MysekaimusicrecordUpdate) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordUpdate {
+	if v != nil {
+		_u.SetMysekaiMusicTrackType(*v)
+	}
 	return _u
 }
 
@@ -166,15 +166,10 @@ func (_u *MysekaimusicrecordUpdate) sqlSave(ctx context.Context) (_node int, err
 		_spec.ClearField(mysekaimusicrecord.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMusicTrackType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimusicrecord.FieldMysekaiMusicTrackType, value)
-		})
+		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMusicTrackTypeCleared() {
-		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON)
+		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)
@@ -236,14 +231,16 @@ func (_u *MysekaimusicrecordUpdateOne) ClearGameID() *MysekaimusicrecordUpdateOn
 }
 
 // SetMysekaiMusicTrackType sets the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordUpdateOne) SetMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordUpdateOne {
+func (_u *MysekaimusicrecordUpdateOne) SetMysekaiMusicTrackType(v string) *MysekaimusicrecordUpdateOne {
 	_u.mutation.SetMysekaiMusicTrackType(v)
 	return _u
 }
 
-// AppendMysekaiMusicTrackType appends value to the "mysekai_music_track_type" field.
-func (_u *MysekaimusicrecordUpdateOne) AppendMysekaiMusicTrackType(v json.RawMessage) *MysekaimusicrecordUpdateOne {
-	_u.mutation.AppendMysekaiMusicTrackType(v)
+// SetNillableMysekaiMusicTrackType sets the "mysekai_music_track_type" field if the given value is not nil.
+func (_u *MysekaimusicrecordUpdateOne) SetNillableMysekaiMusicTrackType(v *string) *MysekaimusicrecordUpdateOne {
+	if v != nil {
+		_u.SetMysekaiMusicTrackType(*v)
+	}
 	return _u
 }
 
@@ -375,15 +372,10 @@ func (_u *MysekaimusicrecordUpdateOne) sqlSave(ctx context.Context) (_node *Myse
 		_spec.ClearField(mysekaimusicrecord.FieldGameID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiMusicTrackType(); ok {
-		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiMusicTrackType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaimusicrecord.FieldMysekaiMusicTrackType, value)
-		})
+		_spec.SetField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiMusicTrackTypeCleared() {
-		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeJSON)
+		_spec.ClearField(mysekaimusicrecord.FieldMysekaiMusicTrackType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(mysekaimusicrecord.FieldExternalID, field.TypeInt64, value)

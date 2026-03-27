@@ -4,7 +4,6 @@ package sekai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/mysekaiblueprintmysekaimaterialcost"
@@ -12,7 +11,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -165,14 +163,16 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) ClearQuantity() *Mysekaiblu
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdate {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetMysekaiBlueprintType(v string) *MysekaiblueprintmysekaimaterialcostUpdate {
 	_u.mutation.SetMysekaiBlueprintType(v)
 	return _u
 }
 
-// AppendMysekaiBlueprintType appends value to the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdate) AppendMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdate {
-	_u.mutation.AppendMysekaiBlueprintType(v)
+// SetNillableMysekaiBlueprintType sets the "mysekai_blueprint_type" field if the given value is not nil.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdate) SetNillableMysekaiBlueprintType(v *string) *MysekaiblueprintmysekaimaterialcostUpdate {
+	if v != nil {
+		_u.SetMysekaiBlueprintType(*v)
+	}
 	return _u
 }
 
@@ -283,15 +283,10 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdate) sqlSave(ctx context.Context
 		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintType(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiBlueprintType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, value)
-		})
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiBlueprintTypeCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)
@@ -452,14 +447,16 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) ClearQuantity() *Mysekai
 }
 
 // SetMysekaiBlueprintType sets the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetMysekaiBlueprintType(v string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
 	_u.mutation.SetMysekaiBlueprintType(v)
 	return _u
 }
 
-// AppendMysekaiBlueprintType appends value to the "mysekai_blueprint_type" field.
-func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) AppendMysekaiBlueprintType(v json.RawMessage) *MysekaiblueprintmysekaimaterialcostUpdateOne {
-	_u.mutation.AppendMysekaiBlueprintType(v)
+// SetNillableMysekaiBlueprintType sets the "mysekai_blueprint_type" field if the given value is not nil.
+func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) SetNillableMysekaiBlueprintType(v *string) *MysekaiblueprintmysekaimaterialcostUpdateOne {
+	if v != nil {
+		_u.SetMysekaiBlueprintType(*v)
+	}
 	return _u
 }
 
@@ -600,15 +597,10 @@ func (_u *MysekaiblueprintmysekaimaterialcostUpdateOne) sqlSave(ctx context.Cont
 		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldQuantity, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.MysekaiBlueprintType(); ok {
-		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedMysekaiBlueprintType(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, value)
-		})
+		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeString, value)
 	}
 	if _u.mutation.MysekaiBlueprintTypeCleared() {
-		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeJSON)
+		_spec.ClearField(mysekaiblueprintmysekaimaterialcost.FieldMysekaiBlueprintType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaiblueprintmysekaimaterialcost.FieldServerRegion, field.TypeString, value)

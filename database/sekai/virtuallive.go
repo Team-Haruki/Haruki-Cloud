@@ -20,9 +20,9 @@ type Virtuallive struct {
 	// GameID holds the value of the "game_id" field.
 	GameID int64 `json:"game_id,omitempty"`
 	// VirtualLiveType holds the value of the "virtual_live_type" field.
-	VirtualLiveType json.RawMessage `json:"virtual_live_type,omitempty"`
+	VirtualLiveType string `json:"virtual_live_type,omitempty"`
 	// VirtualLivePlatform holds the value of the "virtual_live_platform" field.
-	VirtualLivePlatform json.RawMessage `json:"virtual_live_platform,omitempty"`
+	VirtualLivePlatform string `json:"virtual_live_platform,omitempty"`
 	// Seq holds the value of the "seq" field.
 	Seq int64 `json:"seq,omitempty"`
 	// Name holds the value of the "name" field.
@@ -75,11 +75,11 @@ func (*Virtuallive) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case virtuallive.FieldVirtualLiveType, virtuallive.FieldVirtualLivePlatform, virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation:
+		case virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation:
 			values[i] = new([]byte)
 		case virtuallive.FieldID, virtuallive.FieldGameID, virtuallive.FieldSeq, virtuallive.FieldScreenMvMusicVocalID, virtuallive.FieldStartAt, virtuallive.FieldEndAt, virtuallive.FieldRankingAnnounceAt, virtuallive.FieldArchiveReleaseConditionID, virtuallive.FieldSubGameCharacterPenlightColorGroupID, virtuallive.FieldVirtualLiveGroupID:
 			values[i] = new(sql.NullInt64)
-		case virtuallive.FieldName, virtuallive.FieldAssetbundleName, virtuallive.FieldServerRegion:
+		case virtuallive.FieldVirtualLiveType, virtuallive.FieldVirtualLivePlatform, virtuallive.FieldName, virtuallive.FieldAssetbundleName, virtuallive.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -109,20 +109,16 @@ func (_m *Virtuallive) assignValues(columns []string, values []any) error {
 				_m.GameID = value.Int64
 			}
 		case virtuallive.FieldVirtualLiveType:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_type", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.VirtualLiveType); err != nil {
-					return fmt.Errorf("unmarshal field virtual_live_type: %w", err)
-				}
+			} else if value.Valid {
+				_m.VirtualLiveType = value.String
 			}
 		case virtuallive.FieldVirtualLivePlatform:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field virtual_live_platform", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.VirtualLivePlatform); err != nil {
-					return fmt.Errorf("unmarshal field virtual_live_platform: %w", err)
-				}
+			} else if value.Valid {
+				_m.VirtualLivePlatform = value.String
 			}
 		case virtuallive.FieldSeq:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -318,10 +314,10 @@ func (_m *Virtuallive) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveType))
+	builder.WriteString(_m.VirtualLiveType)
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_platform=")
-	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLivePlatform))
+	builder.WriteString(_m.VirtualLivePlatform)
 	builder.WriteString(", ")
 	builder.WriteString("seq=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Seq))

@@ -69,6 +69,11 @@ func ByMusicID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicID, opts...).ToFunc()
 }
 
+// ByMusicDifficulty orders the results by the music_difficulty field.
+func ByMusicDifficulty(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMusicDifficulty, opts...).ToFunc()
+}
+
 // ByPlayLevel orders the results by the play_level field.
 func ByPlayLevel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPlayLevel, opts...).ToFunc()

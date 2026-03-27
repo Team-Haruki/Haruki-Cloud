@@ -167,6 +167,11 @@ func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
 }
 
+// ByLiveTalkBackgroundAssetbundleName orders the results by the live_talk_background_assetbundle_name field.
+func ByLiveTalkBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLiveTalkBackgroundAssetbundleName, opts...).ToFunc()
+}
+
 // ByPublishedAt orders the results by the published_at field.
 func ByPublishedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPublishedAt, opts...).ToFunc()

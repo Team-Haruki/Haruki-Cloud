@@ -118,6 +118,16 @@ func ByGameID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameID, opts...).ToFunc()
 }
 
+// ByVirtualLiveType orders the results by the virtual_live_type field.
+func ByVirtualLiveType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVirtualLiveType, opts...).ToFunc()
+}
+
+// ByVirtualLivePlatform orders the results by the virtual_live_platform field.
+func ByVirtualLivePlatform(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVirtualLivePlatform, opts...).ToFunc()
+}
+
 // BySeq orders the results by the seq field.
 func BySeq(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeq, opts...).ToFunc()

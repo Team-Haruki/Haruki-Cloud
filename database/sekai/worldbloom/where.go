@@ -68,6 +68,11 @@ func GameCharacterID(v int64) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
+// WorldBloomChapterType applies equality check predicate on the "world_bloom_chapter_type" field. It's identical to WorldBloomChapterTypeEQ.
+func WorldBloomChapterType(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldWorldBloomChapterType, v))
+}
+
 // ChapterNo applies equality check predicate on the "chapter_no" field. It's identical to ChapterNoEQ.
 func ChapterNo(v int64) predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldEQ(FieldChapterNo, v))
@@ -253,6 +258,61 @@ func GameCharacterIDNotNil() predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldNotNull(FieldGameCharacterID))
 }
 
+// WorldBloomChapterTypeEQ applies the EQ predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeEQ(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEQ(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeNEQ applies the NEQ predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeNEQ(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNEQ(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeIn applies the In predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeIn(vs ...string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldIn(FieldWorldBloomChapterType, vs...))
+}
+
+// WorldBloomChapterTypeNotIn applies the NotIn predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeNotIn(vs ...string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldNotIn(FieldWorldBloomChapterType, vs...))
+}
+
+// WorldBloomChapterTypeGT applies the GT predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeGT(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGT(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeGTE applies the GTE predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeGTE(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldGTE(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeLT applies the LT predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeLT(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLT(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeLTE applies the LTE predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeLTE(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldLTE(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeContains applies the Contains predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeContains(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldContains(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeHasPrefix applies the HasPrefix predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeHasPrefix(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldHasPrefix(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeHasSuffix applies the HasSuffix predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeHasSuffix(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldHasSuffix(FieldWorldBloomChapterType, v))
+}
+
 // WorldBloomChapterTypeIsNil applies the IsNil predicate on the "world_bloom_chapter_type" field.
 func WorldBloomChapterTypeIsNil() predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldIsNull(FieldWorldBloomChapterType))
@@ -261,6 +321,16 @@ func WorldBloomChapterTypeIsNil() predicate.Worldbloom {
 // WorldBloomChapterTypeNotNil applies the NotNil predicate on the "world_bloom_chapter_type" field.
 func WorldBloomChapterTypeNotNil() predicate.Worldbloom {
 	return predicate.Worldbloom(sql.FieldNotNull(FieldWorldBloomChapterType))
+}
+
+// WorldBloomChapterTypeEqualFold applies the EqualFold predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeEqualFold(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldEqualFold(FieldWorldBloomChapterType, v))
+}
+
+// WorldBloomChapterTypeContainsFold applies the ContainsFold predicate on the "world_bloom_chapter_type" field.
+func WorldBloomChapterTypeContainsFold(v string) predicate.Worldbloom {
+	return predicate.Worldbloom(sql.FieldContainsFold(FieldWorldBloomChapterType, v))
 }
 
 // ChapterNoEQ applies the EQ predicate on the "chapter_no" field.

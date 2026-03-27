@@ -1172,7 +1172,7 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 注册路径总览
 
-当前 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列）。集成测试现覆盖其中 **59 条**，余 **17 条**尚未测试。
+当前 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列）。第七轮测试已实现 **76/76 全覆盖**。
 
 ### 无 Path 的 handler（不可通过 bot API 访问）
 
@@ -1205,15 +1205,68 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 有 Path 但尚未在测试中覆盖的路径分类建议
 
-- **可立即添加测试**：`alias/music`、`alias/character`（数据已就绪，只需查询参数）
-- **需要具体参数**：`alias/music/add`/`del`、`alias/character/add`/`del`、`alias/approve`/`reject`、`profile/default`/`profile/unbind`、`music/chart`
-- **需要特殊测试支持**：`profile/bg/upload`（multipart），`profile/verify`（写操作，慎用）
+> ✅ **第七轮已全部补测完成**，见 10.9 节。
+
+---
+
+## 10.9 集成测试执行结果（2026-03-27，第七轮 — 全路径覆盖）
+
+### 测试方法
+
+新增 `TestExpandedCoverage` 测试函数，覆盖此前未测试的 17 条路径。测试环境准备：
+
+1. **Alias Admin 配置**：通过 PostgreSQL 直接写入 `alias_admins` 表，使测试用户 (`haruki_user_id=929565`) 成为别名管理员
+2. **本地图片服务器**：在随机端口启动 HTTP 文件服务器，提供 `IMG_7736.png` 作为自定义背景图上传测试源
+3. **账号验证前置**：`profile/verify` 在 `profile/bg/*` 之前执行，确保绑定账号已验证（BG 操作要求 `verified=true`）
+4. **唯一别名名称**：使用时间戳后缀避免重复运行时的 "已在待审核列表" 冲突
+5. **卡面素材拉取**：从远程服务器拉取 `character/member/res001_no001/card_normal.png`，通过 CWD 符号链接使本地可访问
+
+### 第七轮新增通过端点（17/17 全部通过）
+
+| 端点 | 说明 |
+|------|------|
+| `alias/music` | 歌曲别名查询 |
+| `alias/character` | 角色别名查询 |
+| `alias/music/add` | 提交歌曲别名（进待审核） |
+| `alias/character/add` | 提交角色别名（进待审核） |
+| `alias/approve` | 审核通过别名（管理员操作） |
+| `alias/reject` | 审核拒绝别名（管理员操作） |
+| `alias/music/del` | 删除已审核歌曲别名（管理员操作） |
+| `alias/character/del` | 删除已审核角色别名（管理员操作） |
+| `card/image` | 卡面原图渲染（需本地 card_normal.png） |
+| `music/chart` | 谱面图渲染（Drawing API 远程渲染） |
+| `profile/bg/upload` | 上传自定义背景图（HTTP URL → 下载存储） |
+| `profile/bg/adjust` | 调整背景图参数（模糊/透明度/方向） |
+| `profile/bg/clear` | 清除自定义背景图 |
+| `profile/default` | 设置默认绑定账号 |
+| `profile/default/clear` | 清除默认绑定 |
+| `profile/verify` | 验证绑定账号（Toolbox 快速验证） |
+| `profile/unbind` | 解绑账号（后自动重新绑定恢复状态） |
+
+### 第七轮完整结果（50/76）
+
+✅ 通过（50）：
+
+**原 TestBotCommands（33/59）**：bind, card/detail, card/box, music, event/list, gacha, education/challenge, education/bonds, education/leader, profile, profile/reg-time, stamp, sk/line, sk/query, vlive, arrest, music/list, music/bpm, music/cover, music/note-count, music/rewards, music/progress, profile/check-data, profile/check-data-mysekai, profile/verify/list, profile/suite/hide, profile/suite/show, profile/mysekai/hide, profile/mysekai/show, profile/visibility/hide, profile/visibility/show, sk/speed, sk/check-room
+
+**新增 TestExpandedCoverage（17/17）**：alias/music, alias/character, alias/music/add, alias/character/add, alias/approve, alias/reject, alias/music/del, alias/character/del, card/image, music/chart, profile/bg/upload, profile/bg/adjust, profile/bg/clear, profile/default, profile/default/clear, profile/verify, profile/unbind
+
+❌ 仍失败（26/76，与第六轮相同原因）：
+
+| 分类 | 端点 | 原因 |
+|------|------|------|
+| Parser 未提取参数 | card/list, event, score/music-meta, misc/birthday | handler 未从文本提取参数 |
+| 未实现 | education/area, education/power | bridge 返回空数据 |
+| 需要 Toolbox 快照 | deck/event, deck/challenge, deck/no-event, deck/bonus, deck/mysekai, mysekai/resource, mysekai/talk-list, mysekai/fixture-list, mysekai/fixture-detail, mysekai/door-upgrade, mysekai/music-record, mysekai/photo | Toolbox GetSuiteData 未配置 |
+| Bridge 数据不完整 | score, score/custom-room, score/music-board, event/record | 缺少 alias 解析 / 候选对 / 历史条目 |
+| SK 数据不完整 | sk/rank-trace, sk/player-trace, sk/winrate | 依赖实时追踪数据 |
+| 别名待审核 | alias/pending | 当前无待审核条目（空列表非错误但无 data） |
 
 ---
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**33/59**（第六轮，76 条注册路径，59 条已测，33 条通过）
+> 当前集成测试通过率：**50/76**（第七轮，76/76 路径全覆盖，50 条通过，66% 通过率）
 
 ### 11.1 P0：剩余失败端点修复
 
@@ -1232,9 +1285,9 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
-第六轮已将测试从 23 扩展至 59 个端点（76 条路径中 59 条，覆盖率 78%），其中 33 个通过（56%通过率）。详见 10.7 节。
+第七轮已实现 76/76 路径全覆盖（100% 覆盖率），其中 50 条通过（66% 通过率）。详见 10.9 节。
 
-**未测试 17 条路径**见 10.8 节，其中 `alias/music`、`alias/character` 可立即补测，其余需依赖特殊测试支持或写操作确认。
+**测试架构**：`TestBotCommands`（59 个端点）+ `TestExpandedCoverage`（17 个端点，含 alias 全周期、profile BG、profile 管理、card/image、music/chart）。
 
 ### 11.2.1 Toolbox 用户快照配置（12 个端点）
 

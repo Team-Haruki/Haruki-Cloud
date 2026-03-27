@@ -5,11 +5,14 @@ package integration_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +20,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	_ "github.com/lib/pq"
 	corecrypto "haruki-cloud/internal/core/crypto"
 	utilscrypto "haruki-cloud/utils/crypto"
 
@@ -35,6 +39,10 @@ const (
 	gameUserID     = "GAME_USER_ID_REDACTED"
 
 	credentialSignToken = "CREDENTIAL_SIGN_TOKEN_REDACTED_0000000000000000000000000000000000"
+
+	// Database DSNs for test setup
+	usersDSN = "host=localhost port=5432 user=haruki_users password=users_pw_2026 dbname=haruki_users sslmode=disable"
+	pjskDSN  = "host=localhost port=5432 user=haruki_pjsk password=pjsk_pw_2026 dbname=haruki_pjsk sslmode=disable"
 
 	noisePrivKeyHex  = "NOISE_PRIV_KEY_REDACTED_000000000000000000000000000000000000000000"
 	serverPubKeyHex  = "NOISE_PUB_KEY_REDACTED_0000000000000000000000000000000000000000000"
@@ -132,6 +140,19 @@ func sendBotCommand(t *testing.T, path, cmd, fullText string) ([]byte, int) {
 	t.Helper()
 	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", baseURL, botID, path)
 	req := makeBotReq(cmd, fullText)
+	return noiseRoundTrip(t, url, req)
+}
+
+func sendBotCommandWithSegments(t *testing.T, path, cmd string, segments []msgSegment) ([]byte, int) {
+	t.Helper()
+	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", baseURL, botID, path)
+	req := botRequest{
+		Platform:       platform,
+		PlatformUserID: platformUserID,
+		Server:         region,
+		MatchedCommand: cmd,
+		Message:        segments,
+	}
 	return noiseRoundTrip(t, url, req)
 }
 
@@ -478,6 +499,276 @@ func TestBotCommands(t *testing.T) {
 	}
 
 	t.Log("\n=== Results Summary ===")
+	for name, result := range results {
+		t.Logf("  %-30s %s", name, result)
+	}
+}
+
+// ─── Phase 3b: Expanded Coverage Tests (17 new paths) ───────────────
+
+// resolveHarukiUserID queries the users DB to find the haruki_user_id for our test user.
+func resolveHarukiUserID(t *testing.T) int {
+	t.Helper()
+	db, err := sql.Open("postgres", usersDSN)
+	if err != nil {
+		t.Fatalf("open users DB: %v", err)
+	}
+	defer db.Close()
+	var id int
+	err = db.QueryRow("SELECT id FROM users WHERE platform=$1 AND user_id=$2", platform, platformUserID).Scan(&id)
+	if err != nil {
+		t.Fatalf("resolve haruki_user_id for %s/%s: %v", platform, platformUserID, err)
+	}
+	return id
+}
+
+// ensureAliasAdmin inserts or updates the alias_admins record for our test user.
+func ensureAliasAdmin(t *testing.T, harukiUserID int) {
+	t.Helper()
+	db, err := sql.Open("postgres", pjskDSN)
+	if err != nil {
+		t.Fatalf("open pjsk DB: %v", err)
+	}
+	defer db.Close()
+	_, err = db.Exec(`INSERT INTO alias_admins (haruki_user_id, name) VALUES ($1, $2)
+		ON CONFLICT (haruki_user_id) DO UPDATE SET name=$2`, harukiUserID, "integration-test-admin")
+	if err != nil {
+		t.Fatalf("insert alias admin: %v", err)
+	}
+	t.Logf("✅ Alias admin configured: haruki_user_id=%d", harukiUserID)
+}
+
+// startImageServer serves project-root files on a random port and returns the base URL.
+func startImageServer(t *testing.T) string {
+	t.Helper()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("start image server: %v", err)
+	}
+	port := listener.Addr().(*net.TCPAddr).Port
+	mux := http.NewServeMux()
+	// Serve from project root (tests run with cwd = integration/)
+	mux.Handle("/", http.FileServer(http.Dir("..")))
+	srv := &http.Server{Handler: mux}
+	go srv.Serve(listener)
+	t.Cleanup(func() { srv.Shutdown(context.Background()) })
+	base := fmt.Sprintf("http://127.0.0.1:%d", port)
+	t.Logf("✅ Image server started at %s", base)
+	return base
+}
+
+// getPendingAliasIDs queries the DB for recent pending alias IDs (for approve/reject tests).
+func getPendingAliasIDs(t *testing.T, limit int) []int64 {
+	t.Helper()
+	db, err := sql.Open("postgres", pjskDSN)
+	if err != nil {
+		t.Logf("open pjsk DB for pending: %v", err)
+		return nil
+	}
+	defer db.Close()
+	rows, err := db.Query("SELECT id FROM pending_alias ORDER BY id DESC LIMIT $1", limit)
+	if err != nil {
+		t.Logf("query pending alias: %v", err)
+		return nil
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func TestExpandedCoverage(t *testing.T) {
+	if sessionToken == "" {
+		t.Skip("no session token — run TestAuth first")
+	}
+
+	// ─── Setup: alias admin + image server ───────────────────
+	harukiUserID := resolveHarukiUserID(t)
+	ensureAliasAdmin(t, harukiUserID)
+	imageBase := startImageServer(t)
+	imageURL := imageBase + "/IMG_7736.png"
+
+	results := make(map[string]string)
+
+	runTest := func(t *testing.T, name string, data []byte, status int) {
+		t.Helper()
+		r := parseBotResp(t, data)
+		if status != 200 {
+			errMsg := r.Error
+			if errMsg == "" {
+				errMsg = truncate(data, 200)
+			}
+			t.Logf("⚠️  %s: HTTP %d — %s", name, status, errMsg)
+			results[name] = fmt.Sprintf("HTTP %d: %s", status, truncate([]byte(errMsg), 80))
+			return
+		}
+		if r.Error != "" {
+			t.Logf("⚠️  %s: error=%s", name, r.Error)
+			results[name] = fmt.Sprintf("error: %s", r.Error)
+			return
+		}
+		if r.Message == "ok" && r.Data != nil {
+			t.Logf("✅ %s: OK (data: %v)", name, summarizeData(r.Data))
+			results[name] = "✅ OK"
+		} else if r.Message == "ok" {
+			t.Logf("✅ %s: OK (text-only response)", name)
+			results[name] = "✅ OK (text)"
+		} else {
+			t.Logf("⚠️  %s: msg=%s data=%v", name, r.Message, r.Data)
+			results[name] = fmt.Sprintf("msg=%s", r.Message)
+		}
+	}
+
+	// ─── Alias Query ─────────────────────────────────────────
+	t.Run("alias/music", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/music", "/歌曲别名", "/歌曲别名 Tell Your World")
+		runTest(t, "alias/music", data, status)
+	})
+
+	t.Run("alias/character", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/character", "/角色别名", "/角色别名 miku")
+		runTest(t, "alias/character", data, status)
+	})
+
+	// ─── Alias Add (creates pending entries for approve/reject) ──
+	// Use timestamp-based alias names to avoid "already pending" conflicts from prior runs.
+	testSuffix := fmt.Sprintf("%d", time.Now().UnixMilli()%100000)
+	musicTestAlias := "测试别名m" + testSuffix
+	charaTestAlias := "测试别名c" + testSuffix
+
+	t.Run("alias/music/add", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/music/add", "/添加歌曲别名",
+			"/添加歌曲别名\nTell Your World\n"+musicTestAlias)
+		runTest(t, "alias/music/add", data, status)
+	})
+
+	t.Run("alias/character/add", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/character/add", "/添加角色别名",
+			"/添加角色别名\n初音ミク\n"+charaTestAlias)
+		runTest(t, "alias/character/add", data, status)
+	})
+
+	// ─── Alias Approve (needs pending entries from above) ────
+	t.Run("alias/approve", func(t *testing.T) {
+		pendingIDs := getPendingAliasIDs(t, 10)
+		if len(pendingIDs) == 0 {
+			t.Log("⚠️  alias/approve: no pending aliases to approve")
+			results["alias/approve"] = "skipped: no pending"
+			return
+		}
+		// Approve all pending aliases (space-separated IDs)
+		idStrs := make([]string, len(pendingIDs))
+		for i, id := range pendingIDs {
+			idStrs[i] = fmt.Sprintf("%d", id)
+		}
+		cmd := "/同意别名 " + strings.Join(idStrs, " ")
+		data, status := sendBotCommand(t, "alias/approve", "/同意别名", cmd)
+		runTest(t, "alias/approve", data, status)
+	})
+
+	// ─── Alias Reject (add another then reject it) ───────────
+	t.Run("alias/reject", func(t *testing.T) {
+		// First add a temp alias so we have something to reject
+		sendBotCommand(t, "alias/music/add", "/添加歌曲别名",
+			"/添加歌曲别名\nTell Your World\n临时reject"+testSuffix)
+		time.Sleep(200 * time.Millisecond)
+
+		pendingIDs := getPendingAliasIDs(t, 1)
+		if len(pendingIDs) == 0 {
+			t.Log("⚠️  alias/reject: no pending aliases to reject")
+			results["alias/reject"] = "skipped: no pending"
+			return
+		}
+		cmd := fmt.Sprintf("/拒绝别名 %d 集成测试拒绝", pendingIDs[0])
+		data, status := sendBotCommand(t, "alias/reject", "/拒绝别名", cmd)
+		runTest(t, "alias/reject", data, status)
+	})
+
+	// ─── Alias Delete ────────────────────────────────────────
+	t.Run("alias/music/del", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/music/del", "/删除歌曲别名",
+			"/删除歌曲别名\nTell Your World\n"+musicTestAlias)
+		runTest(t, "alias/music/del", data, status)
+	})
+
+	t.Run("alias/character/del", func(t *testing.T) {
+		data, status := sendBotCommand(t, "alias/character/del", "/删除角色别名",
+			"/删除角色别名\n初音ミク\n"+charaTestAlias)
+		runTest(t, "alias/character/del", data, status)
+	})
+
+	// ─── Profile Verify (run BEFORE bg tests, since bg requires verified binding) ──
+	t.Run("profile/verify", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/verify", "/pjsk验证", "/pjsk验证")
+		runTest(t, "profile/verify", data, status)
+	})
+
+	// ─── Card Image ──────────────────────────────────────────
+	t.Run("card/image", func(t *testing.T) {
+		data, status := sendBotCommand(t, "card/image", "/查卡面", "/查卡面 1")
+		runTest(t, "card/image", data, status)
+	})
+
+	// ─── Music Chart ─────────────────────────────────────────
+	t.Run("music/chart", func(t *testing.T) {
+		data, status := sendBotCommand(t, "music/chart", "/查谱面", "/查谱面 Tell Your World master")
+		runTest(t, "music/chart", data, status)
+	})
+
+	// ─── Profile BG Upload (with image segment) ──────────────
+	t.Run("profile/bg/upload", func(t *testing.T) {
+		segments := []msgSegment{
+			{Type: "text", Data: map[string]string{"text": "/上传个人信息背景"}},
+			{Type: "image", Data: map[string]string{"url": imageURL}},
+		}
+		data, status := sendBotCommandWithSegments(t, "profile/bg/upload", "/上传个人信息背景", segments)
+		runTest(t, "profile/bg/upload", data, status)
+	})
+
+	// ─── Profile BG Adjust ───────────────────────────────────
+	t.Run("profile/bg/adjust", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/bg/adjust", "/调整个人信息背景",
+			"/调整个人信息背景\n模糊 5\n透明 80")
+		runTest(t, "profile/bg/adjust", data, status)
+	})
+
+	// ─── Profile BG Clear ────────────────────────────────────
+	t.Run("profile/bg/clear", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/bg/clear", "/清空个人信息背景",
+			"/清空个人信息背景")
+		runTest(t, "profile/bg/clear", data, status)
+	})
+
+	// ─── Profile Default Set ─────────────────────────────────
+	t.Run("profile/default", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/default", "/设置主账号",
+			"/设置主账号 u1")
+		runTest(t, "profile/default", data, status)
+	})
+
+	// ─── Profile Default Clear ───────────────────────────────
+	t.Run("profile/default/clear", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/default/clear", "/清除默认绑定",
+			"/清除默认绑定 u1")
+		runTest(t, "profile/default/clear", data, status)
+	})
+
+	// ─── Profile Unbind (use u1 then re-bind) ────────────────
+	// This is a destructive test — unbind u1, then re-bind to restore state.
+	t.Run("profile/unbind", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/unbind", "/解绑", "/解绑 u1")
+		runTest(t, "profile/unbind", data, status)
+
+		// Restore: re-bind the game account
+		time.Sleep(200 * time.Millisecond)
+		sendBotCommand(t, "profile/bind", "/绑定", "/绑定 "+gameUserID)
+	})
+
+	t.Log("\n=== Expanded Coverage Results ===")
 	for name, result := range results {
 		t.Logf("  %-30s %s", name, result)
 	}

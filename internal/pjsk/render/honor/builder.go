@@ -74,8 +74,6 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 
 	req.HonorLevel = &honorLevel
-	honorType := "normal"
-	req.HonorType = &honorType
 
 	groupType := group.HonorType
 	if groupType == "world_link" {
@@ -149,10 +147,19 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	if group.FrameName != nil {
 		frameName = *group.FrameName
 	}
+	honorType := "normal"
+	if strings.HasPrefix(frameName, "honor_frame_birthday") || strings.HasPrefix(bgAssetName, "honor_bg_birthday") || strings.HasPrefix(assetName, "honor_bg_birthday") {
+		honorType = "birthday"
+	}
+	req.HonorType = &honorType
 	rarityRank := mapHonorRarity(rarity)
 	if frameName != "" {
 		framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
 		req.FrameImgPath = &framePath
+		if strings.HasPrefix(frameName, "honor_frame_birthday") {
+			levelPath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank))
+			req.FrameDegreeLevelImgPath = &levelPath
+		}
 	} else {
 		framePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
 		req.FrameImgPath = &framePath

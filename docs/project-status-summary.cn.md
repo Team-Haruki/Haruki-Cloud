@@ -1168,9 +1168,52 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
   - BizType 是腾讯云内容安全控制台中创建的自定义审核策略标识，可选参数，留空时使用默认策略
   - 如需自定义审核策略，需登录腾讯云控制台 → 内容安全 → 图片内容安全 → 策略管理 → 创建策略后获取
 
+## 10.8 Handler 路径审计（2026-03-27）
+
+### 注册路径总览
+
+当前 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列）。集成测试现覆盖其中 **59 条**，余 **17 条**尚未测试。
+
+### 无 Path 的 handler（不可通过 bot API 访问）
+
+| handler | 文件 | 指令 | 说明 |
+|---------|------|------|------|
+| `HeyiweiHandle` | `misc.go` | `/b30`、`/b39`、`/pjsk b30` 等 | 返回固定字符串 `"何意味"`，为占位/拦截 handler。不返回 `*parser.ResolvedCommand`，即使添加 Path 也无法在 bot API 中正常工作。可按需 Disable 或改为真实 b30 实现 |
+| `MysekaiBlueprintHandle` | `mysekai.go` | `/msb`、`/mysekai blueprint` | 根据参数派发到 `mysekai-fixture-list` 或 `mysekai-talk-list`，逻辑正确但无 Path。如需 bot API 可访问，添加 `Path: "mysekai/blueprint"` 并在 bridge 添加对应 case |
+
+### 未纳入集成测试的 17 条路径
+
+| 路径 | 分类 | 说明 |
+|------|------|------|
+| `alias/music` | 别名查询 | 歌曲别名查询，数据已导入，可直接测试 |
+| `alias/music/add` | 别名提交 | 提交新别名（待审核） |
+| `alias/music/del` | 别名删除 | 删除别名（需权限） |
+| `alias/character` | 别名查询 | 角色别名查询，数据已导入，可直接测试 |
+| `alias/character/add` | 别名提交 | 提交新角色别名（待审核） |
+| `alias/character/del` | 别名删除 | 删除角色别名（需权限） |
+| `alias/approve` | 别名审核 | 审核通过别名（需管理权限） |
+| `alias/reject` | 别名审核 | 审核拒绝别名（需管理权限） |
+| `card/image` | 渲染 | 卡面原图渲染（大图），依赖远程 asset |
+| `music/chart` | 渲染 | 谱面图渲染，依赖本地 chart 文件 |
+| `profile/bg/upload` | 用户设置 | 上传个人信息页背景图，需文件上传支持 |
+| `profile/bg/clear` | 用户设置 | 清除背景图 |
+| `profile/bg/adjust` | 用户设置 | 调整背景图位置/大小参数 |
+| `profile/default` | 用户设置 | 设置默认展示绑定账号 |
+| `profile/default/clear` | 用户设置 | 清除默认绑定 |
+| `profile/unbind` | 账号管理 | 解绑账号 |
+| `profile/verify` | 账号验证 | 对实际游戏账号发起验证（单向写入） |
+
+### 有 Path 但尚未在测试中覆盖的路径分类建议
+
+- **可立即添加测试**：`alias/music`、`alias/character`（数据已就绪，只需查询参数）
+- **需要具体参数**：`alias/music/add`/`del`、`alias/character/add`/`del`、`alias/approve`/`reject`、`profile/default`/`profile/unbind`、`music/chart`
+- **需要特殊测试支持**：`profile/bg/upload`（multipart），`profile/verify`（写操作，慎用）
+
+---
+
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**33/58**（第六轮，2026-03-27）
+> 当前集成测试通过率：**33/59**（第六轮，76 条注册路径，59 条已测，33 条通过）
 
 ### 11.1 P0：剩余失败端点修复
 
@@ -1189,7 +1232,9 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
-第六轮已将测试从 23 扩展至 58 个端点（覆盖率 83%），其中 33 个通过（57%通过率）。详见 10.7 节。
+第六轮已将测试从 23 扩展至 59 个端点（76 条路径中 59 条，覆盖率 78%），其中 33 个通过（56%通过率）。详见 10.7 节。
+
+**未测试 17 条路径**见 10.8 节，其中 `alias/music`、`alias/character` 可立即补测，其余需依赖特殊测试支持或写操作确认。
 
 ### 11.2.1 Toolbox 用户快照配置（12 个端点）
 
@@ -1217,14 +1262,21 @@ deck/\*、mysekai/\* 共 12 个端点因 "local user snapshot is not configured"
 
 这两个功能依赖对 master 数据结构的深度了解，工作量较大，建议视需求排期。
 
-### 11.4 P2：角色图标扩展（影响 bonds 渲染完整性）
+### 11.4 P1：无 Path Handler 处置
+
+| handler | 建议 |
+|---------|------|
+| `HeyiweiHandle` | 改为 `Disabled: true`（与其他占位 handler 保持一致），避免在 ZeroBot 路由中拦截真实指令 |
+| `MysekaiBlueprintHandle` | 如需 bot API 可访问，添加 `Path: "mysekai/blueprint"` 并在 `bridge.go` 添加 `case "mysekai-blueprint"` case（或直接复用 fixture-list/talk-list 的 dispatch 逻辑） |
+
+### 11.5 P2：角色图标扩展（影响 bonds 渲染完整性）
 
 目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色在 bonds 渲染中被直接跳过（无图标文件）。需要：
 
 - 确认 Drawing API 服务器 `static_images/chara_icon/` 实际存在的文件列表
 - 将缺失的新角色图标（ID > 26）补充至服务器并更新 `CharacterIDToNickname` 映射
 
-### 11.5 P3：其他待处理事项
+### 11.6 P3：其他待处理事项
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
@@ -1238,6 +1290,8 @@ deck/\*、mysekai/\* 共 12 个端点因 "local user snapshot is not configured"
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | education/area、education/power | ⏸ 待排期 | master 数据驱动实现，工作量大 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
+| `HeyiweiHandle` 处置 | ⏸ 待操作 | 建议改为 Disabled（见 11.4 节） |
+| `MysekaiBlueprintHandle` 接入 | ⏸ 待决策 | 视需求决定是否添加 Path + bridge case（见 11.4 节） |
 
 ## 12. 相关文档
 

@@ -75,7 +75,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 		Phenoms:             extractMysekaiPhenoms(func(p string) string { return c.regionPath(region, p) }, merged),
 		GateID:              gateID,
 		GateLevel:           gateLevel,
-		GateIconPath:        c.regionPath(region, fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID)),
+		GateIconPath:        c.staticPath(fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID)),
 		VisitCharacters:     c.extractVisitCharacters(region, merged),
 		SiteResourceNumbers: c.extractSiteResourceNumbers(region, merged),
 	}, nil
@@ -863,7 +863,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		for _, cuids := range item.cuidsSet {
 			icons := make([]string, 0, len(cuids))
 			for _, cuid := range cuids {
-				icons = append(icons, fmt.Sprintf("chara_icon/%s.png", charaIconName(cuid)))
+				icons = append(icons, c.staticPath(fmt.Sprintf("chara_icon/%s.png", charaIconName(cuid))))
 			}
 			iconGroups = append(iconGroups, icons)
 		}
@@ -1115,7 +1115,7 @@ func (c *Controller) extractVisitCharacters(region renderregion.Value, merged ma
 		}
 		var reservationIconPath *string
 		if boolValue(entry["isReservation"]) {
-			path := c.regionPath(region, "mysekai/invitationcard.png")
+			path := c.staticPath("mysekai/invitationcard.png")
 			reservationIconPath = &path
 		}
 
@@ -1185,7 +1185,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 				Number:              resMap[key],
 				TextColor:           resourceTextColor(key, materialRarityMap),
 				HasMusicRecord:      hasRecord,
-				MusicRecordIconPath: musicRecordIconPath(func(p string) string { return c.regionPath(region, p) }, hasRecord),
+				MusicRecordIconPath: musicRecordIconPath(func(p string) string { return c.staticPath(p) }, hasRecord),
 			})
 		}
 		if len(resources) == 0 {
@@ -1367,7 +1367,7 @@ func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.Mys
 		for _, ids := range grouped[count] {
 			icons := make([]string, 0, len(ids))
 			for _, id := range ids {
-				icons = append(icons, fmt.Sprintf("chara_icon/%s.png", charaIconName(id)))
+				icons = append(icons, c.staticPath(fmt.Sprintf("chara_icon/%s.png", charaIconName(id))))
 			}
 			iconGroups = append(iconGroups, icons)
 		}

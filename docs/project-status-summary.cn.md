@@ -874,21 +874,151 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 
 - ⚠️ `tmp/*.db` 文件（bot.db、pjsk.db、sekai.db、users.db）被意外提交，应加入 `.gitignore`
 
+## 10.4 集成测试执行结果（2026-03-27，第四轮）
+
+**本轮新增通过：`profile` ✅（honor group 数据修复 + ent string enum 迁移）**
+
+当前通过数：**17/23**
+
+### 本轮修复内容
+
+#### ent schema enum 字段类型迁移（string enum migration）
+
+远程 ent schema 将大批 enum 字段从 `json.RawMessage`（jsonb）改为了 `string` 类型，导致所有调用 `jsonString(entity.Field)` 的地方编译失败。
+
+修复范围：
+
+| 文件 | 修复的字段 |
+|------|-----------|
+| `chardata/loader.go` | `Unit`（json.Unmarshal → 直接赋值，移除 encoding/json import）|
+| `render/card/source_cloud.go` | `Unit`, `CardRarityType`, `Attr`, `SupportUnit`, `DescriptionSpriteName`, `GachaType` |
+| `render/event/source_cloud.go` | `CardAttr`, `Unit` ×2, `WorldBloomChapterType`, `EventType`, `CardRarityType`, `Attr`, `SupportUnit` |
+| `render/gacha/source_cloud.go` | `GachaType`, `CardRarityType`, `Attr`, `SupportUnit` |
+| `render/honor/source_cloud.go` | `HonorType`, `HonorRarity` ×2, `Unit` |
+| `render/music/source_cloud.go` | `MusicDifficulty` ×2, `MusicVocalType`, `MusicTag`, `Unit`, `EventType` |
+| `render/education/source_cloud.go` | `ResourceBoxPurpose`, `ResourceBoxType` |
+
+#### profile honor 路径修复（honor group 数据补充）
+
+honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径通过 group 的 `backgroundAssetbundleName`（`honor_bg_birthday_01_06`）而非 honor 自身的 `assetbundle_name`（`honor_6833`）构建。数据库侧补充了 group 544 的完整数据后，Drawing API 服务器上已有对应资源，profile 渲染成功。
+
+### 第四轮完整指令端点测试结果（17/23）
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| `profile/bind` | ✅ | |
+| `card/detail` | ✅ | |
+| `card/box` | ✅ | |
+| `music` | ✅ | |
+| `event/list` | ✅ | |
+| `gacha` | ✅ | |
+| `stamp` | ✅ | |
+| `sk/line` | ✅ | |
+| `sk/query` | ✅ | |
+| `vlive` | ✅ | |
+| `arrest` | ✅ | |
+| `profile/reg-time` | ✅ | |
+| `education/challenge` | ✅ | |
+| `education/bonds` | ✅ | |
+| `education/leader` | ✅ | |
+| `profile` | ✅ | 新增（honor group 数据 + ent 迁移修复）|
+| `card/list` | ❌ | Parser handler 接入不完整 |
+| `event` | ❌ | Parser handler 接入不完整 |
+| `score/music-meta` | ❌ | Parser handler 接入不完整 |
+| `misc/birthday` | ❌ | Parser handler 接入不完整 |
+| `education/area` | ❌ | 未实现 |
+| `education/power` | ❌ | 未实现 |
+
+## 10.5 集成测试覆盖率审计（2026-03-27）
+
+当前集成测试覆盖了 23 个端点（含 bind），而项目共有 **70 个 enabled handler path**，实际覆盖率约 **33%**。
+
+### 未覆盖端点分类
+
+#### A 类：无需用户数据，可直接测试
+
+| 端点 | 命令示例 | 说明 |
+|------|---------|------|
+| `music/list` | `/歌曲列表` | 无需参数 |
+| `music/bpm` | `/查bpm Tell Your World` | 歌曲名/别名 |
+| `music/cover` | `/查曲绘 Tell Your World` | 歌曲名/别名 |
+| `music/note-count` | `/查物量 Tell Your World` | 歌曲名/别名 |
+| `music/rewards` | `/曲目奖励 Tell Your World` | 歌曲名/别名 |
+| `score/music-board` | `/歌曲排行 Tell Your World` | 歌曲名/别名 |
+| `alias/pending` | `/待审核别名` | 无需参数，只读 |
+| `profile/check-data` | `/pjsk check data` | 读取套件抓包时间 |
+| `profile/check-data-mysekai` | `/pjsk msd` | 读取烤森抓包时间 |
+| `profile/verify/list` | `/验证列表` | 读取验证列表 |
+
+#### B 类：Profile 可逆写操作（幂等）
+
+| 端点 | 命令示例 | 说明 |
+|------|---------|------|
+| `profile/suite/hide` | `/pjsk suite hide` | 切换可见性，可逆 |
+| `profile/suite/show` | `/pjsk suite show` | 同上 |
+| `profile/mysekai/hide` | `/pjsk mysekai hide` | 切换可见性，可逆 |
+| `profile/mysekai/show` | `/pjsk mysekai show` | 同上 |
+| `profile/visibility/hide` | `/pjsk hide` | 切换可见性，可逆 |
+| `profile/visibility/show` | `/pjsk show` | 同上 |
+
+#### C 类：依赖 Toolbox 用户快照数据
+
+| 端点 | 命令示例 | 说明 |
+|------|---------|------|
+| `music/progress` | `/打歌进度` | 需用户打歌记录 |
+| `event/record` | `/活动记录` | 需用户活动历史 |
+| `deck/event` | `/活动组卡` | 需用户卡牌数据 |
+| `deck/challenge` | `/挑战组卡` | 同上 |
+| `deck/no-event` | `/长草组卡` | 同上 |
+| `deck/bonus` | `/加成组卡` | 同上 |
+| `deck/mysekai` | `/烤森组卡` | 需用户 mysekai 数据 |
+| `score` | `/分数 Tell Your World` | 需用户分数数据 |
+| `score/custom-room` | `/自定义房间控分` | 自定义参数计算 |
+| `mysekai/resource` | `/烤森资源` | 需用户 mysekai 数据 |
+| `mysekai/talk-list` | `/mysekai对话` | 同上 |
+| `mysekai/fixture-list` | `/家具列表` | 同上 |
+| `mysekai/fixture-detail` | `/家具详情` | 同上 |
+| `mysekai/door-upgrade` | `/大门升级` | 同上 |
+| `mysekai/music-record` | `/唱片` | 同上 |
+| `mysekai/photo` | `/照片` | 同上 |
+
+#### D 类：依赖 SK Tracker 实时数据
+
+| 端点 | 命令示例 | 说明 |
+|------|---------|------|
+| `sk/check-room` | `/sk查房` | 查询当前活动房间 |
+| `sk/speed` | `/时速` | 实时时速计算 |
+| `sk/player-trace` | `/sk玩家轨迹` | 玩家轨迹查询 |
+| `sk/rank-trace` | `/档线轨迹` | 档线轨迹查询 |
+| `sk/winrate` | `/胜率预测` | JP region only |
+
+#### E 类：有破坏性/需要特殊权限，不宜自动测试
+
+| 端点 | 原因 |
+|------|------|
+| `profile/unbind` | 会解除绑定，影响后续测试 |
+| `profile/default` | 修改默认绑定 |
+| `profile/default/clear` | 同上 |
+| `profile/verify` | 触发外部验证流程 |
+| `profile/bg/upload` | 需要上传文件 |
+| `profile/bg/clear` | 修改用户数据 |
+| `profile/bg/adjust` | 同上 |
+| `alias/approve` | Admin 操作 |
+| `alias/reject` | Admin 操作 |
+| `card/image` | Handler disabled |
+
+### 扩展测试计划优先级
+
+1. **立即可做**：A 类 10 个端点 + B 类 6 个端点，预计新增 16 个测试用例
+2. **需 Toolbox 数据**：C 类 17 个端点，当前测试用户已有 suite 数据，部分可能通过
+3. **需 Tracker 配置**：D 类 5 个端点，视 Tracker API 可用性而定
+4. **不做**：E 类，需人工确认或破坏测试环境
+
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**16/23**（第三轮，2026-03-27）
+> 当前集成测试通过率：**17/23**（第四轮，2026-03-27）
 
 ### 11.1 P0：剩余失败端点修复
-
-#### `profile` ❌ — honor 资源缺失
-
-错误：`图片文件不存在: .../asset/jp-assets/startapp/honor/honor_6833/degree_sub.png`
-
-Drawing API 服务器上 startapp 和 ondemand 均不存在 `honor_6833` 目录。双路径解析逻辑已正确实现（`ResolveRegionAssetPath`），问题是远程资产文件本身缺失。
-
-需要：
-- 确认 `honor_6833` 是玩家当前装备的称号的 `assetBundleName`，可能是按 ID 命名的目录
-- 在远程 Drawing API 服务器补充该 honor 资源（或确认是否有通用 fallback 图）
 
 #### `card/list`、`event`、`score/music-meta`、`misc/birthday` ❌ — Parser handler 参数未提取
 
@@ -903,7 +1033,16 @@ Drawing API 服务器上 startapp 和 ondemand 均不存在 `honor_6833` 目录�
 
 实现位置：`api/bot/pjsk/sekai/` 各 handler 文件，需从 `req.MatchedCommand.Text` 或 `req.MatchedCommand.Args` 提取参数，通过 parser 解析后填充 `ResolvedCommand`。
 
-### 11.2 P1：未实现的 Education 端点
+### 11.2 P0：集成测试覆盖率扩展
+
+当前已有 23 个测试用例覆盖 70 个 enabled handler path 中的 23 个（33%）。按上方 10.5 的分类，优先扩展：
+
+1. **A 类（10 个）+ B 类（6 个）**：无需用户数据或只是可逆写操作，可立即添加至 `integration/api_test.go`
+2. **C 类（17 个）**：Toolbox 用户数据相关，测试用户已有 suite 数据，尝试后确认是否通过
+3. **D 类（5 个）**：SK Tracker 实时数据，视 Tracker 配置可用性决定
+4. **E 类**：不做自动测试
+
+### 11.3 P1：未实现的 Education 端点
 
 `education/area`（区域道具）和 `education/power`（加成信息）已有 handler 路由，但 bridge executor 返回空数据：
 
@@ -914,14 +1053,14 @@ Drawing API 服务器上 startapp 和 ondemand 均不存在 `honor_6833` 目录�
 
 这两个功能依赖对 master 数据结构的深度了解，工作量较大，建议视需求排期。
 
-### 11.3 P2：角色图标扩展（影响 bonds 渲染完整性）
+### 11.4 P2：角色图标扩展（影响 bonds 渲染完整性）
 
 目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色在 bonds 渲染中被直接跳过（无图标文件）。需要：
 
 - 确认 Drawing API 服务器 `static_images/chara_icon/` 实际存在的文件列表
 - 将缺失的新角色图标（ID > 26）补充至服务器并更新 `CharacterIDToNickname` 映射
 
-### 11.4 P3：其他待处理事项
+### 11.5 P3：其他待处理事项
 
 | 事项 | 状态 | 说明 |
 |------|------|------|

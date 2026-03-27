@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-26（v16.9）
+> 最后更新：2026-03-27（v17.0）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -876,48 +876,62 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 
 ## 11. 接下来需要做的事
 
-### 11.1 剩余失败端点修复（优先级高）
+> 当前集成测试通过率：**16/23**（第三轮，2026-03-27）
 
-#### profile honor 资源缺失（影响 `profile`）
+### 11.1 P0：剩余失败端点修复
 
-`honor_6833` 在 Drawing API 服务器上 startapp 和 ondemand 均不存在。双路径解析逻辑已正确实现，问题是资源文件本身缺失。需要：
+#### `profile` ❌ — honor 资源缺失
 
-- 确认该 honor 的 `assetBundleName` 是否为数字 ID（`honor_6833`）还是应映射为命名目录
-- 补充缺失的 honor 资源到 Drawing API 服务器
+错误：`图片文件不存在: .../asset/jp-assets/startapp/honor/honor_6833/degree_sub.png`
 
-#### Parser handler 接入不完整（影响 `card/list`、`event`、`score/music-meta`、`misc/birthday`）
+Drawing API 服务器上 startapp 和 ondemand 均不存在 `honor_6833` 目录。双路径解析逻辑已正确实现（`ResolveRegionAssetPath`），问题是远程资产文件本身缺失。
 
-这 4 个端点的 handler 目前只调用 `makeResolvedCmd()` 而未提取 args 参数，导致请求体为空：
+需要：
+- 确认 `honor_6833` 是玩家当前装备的称号的 `assetBundleName`，可能是按 ID 命名的目录
+- 在远程 Drawing API 服务器补充该 honor 资源（或确认是否有通用 fallback 图）
 
-- **`card/list`**：需要从命令文本中提取多个卡牌 ID（如 `/查卡 123 456 789`）
-- **`event`**：需要从 args 中提取 event ID 或通过 query 自动解析当前活动
-- **`score/music-meta`**：需要从 args 中提取歌曲名/ID
-- **`misc/birthday`**：需要从 args 中提取角色名并解析为生日日期
+#### `card/list`、`event`、`score/music-meta`、`misc/birthday` ❌ — Parser handler 参数未提取
 
-### 11.2 未实现的 Education 端点（优先级中）
+这 4 个端点的 handler 目前只调用 `makeResolvedCmd()` 而未从命令文本中提取参数，导致请求体为空而报错。
 
-`education/area`（区域道具）和 `education/power`（加成信息）需要从 suite 数据中提取并结合 master 数据进行计算：
+| 端点 | 错误信息 | 需要的参数 |
+|------|---------|-----------|
+| `card/list` | `card ids are required` | 从文本提取卡牌 ID 列表（支持别名查卡） |
+| `event` | `event id is required` | 从 args 提取 event ID，或空时返回当前活动 |
+| `score/music-meta` | `music meta request is empty` | 从 args 提取歌曲名/ID（支持别名） |
+| `misc/birthday` | `invalid birthday request` | 从 args 提取角色名并解析为角色 ID |
 
-- **`education/area`**：从 `userAreas.areaItems` 中提取道具等级，结合 `areaItemLevels` master 计算升级所需材料
-- **`education/power`**：从 `userCharacters` 中提取角色等级，结合 `skillCoefficients` 等 master 数据计算加成倍率
+实现位置：`api/bot/pjsk/sekai/` 各 handler 文件，需从 `req.MatchedCommand.Text` 或 `req.MatchedCommand.Args` 提取参数，通过 parser 解析后填充 `ResolvedCommand`。
 
-这两个功能依赖对 master 数据结构的深度了解，工作量较大。
+### 11.2 P1：未实现的 Education 端点
 
-### 11.3 角色图标扩展（影响 bonds 渲染完整性）
+`education/area`（区域道具）和 `education/power`（加成信息）已有 handler 路由，但 bridge executor 返回空数据：
 
-目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色无图标文件，bonds 渲染中直接跳过。需要：
+| 端点 | 错误信息 | 说明 |
+|------|---------|------|
+| `education/area` | `area item request has no items` | 需从 suite 数据的 `userAreas.areaItems` 提取道具等级，结合 `areaItemLevels` master 数据计算 |
+| `education/power` | `power bonus request has no bonuses` | 需从 `userCharacters` 提取角色等级，结合 `skillCoefficients` 等 master 数据计算加成倍率 |
 
-- 确认 Drawing API 服务器 `static_images/chara_icon/` 目录中实际存在的文件列表
-- 将缺失的新角色图标（SEKAI 26 位以后）补充到服务器并更新 `CharacterIDToNickname` 映射
+这两个功能依赖对 master 数据结构的深度了解，工作量较大，建议视需求排期。
 
-### 11.4 其他待处理事项
+### 11.3 P2：角色图标扩展（影响 bonds 渲染完整性）
 
-| 事项 | 说明 |
-|------|------|
-| `tmp/` 加入 `.gitignore` | commit `7e2ca58` 意外包含了 `tmp/*.db` 文件 |
-| `origin/test` 需要 force push | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
-| education/area、education/power | master 数据驱动实现，工作量大，视需求排期 |
-| alias 管理 API 归属 | 别名新增/审核/拒绝 API 归属（bot API vs admin API）待设计决策 |
+目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色在 bonds 渲染中被直接跳过（无图标文件）。需要：
+
+- 确认 Drawing API 服务器 `static_images/chara_icon/` 实际存在的文件列表
+- 将缺失的新角色图标（ID > 26）补充至服务器并更新 `CharacterIDToNickname` 映射
+
+### 11.4 P3：其他待处理事项
+
+| 事项 | 状态 | 说明 |
+|------|------|------|
+| `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
+| `alias` 数据导入 | ✅ 已完成 | 12,976 music + 1,230 character alias 已导入 `haruki_pjsk.alias` 表（commit `c151c96`）|
+| `tmp/` gitignore | ✅ 已完成 | `tmp/*.db` 已移除追踪，`tmp/` 已加入 `.gitignore`（commit `c151c96`）|
+| `sshkey` gitignore | ✅ 已完成 | SSH 私钥已加入 `.gitignore`（commit `c151c96`）|
+| ondemand/startapp 布局文档化 | ✅ 已完成 | 远程服务器实际目录布局已记录于 10.3 节 |
+| education/area、education/power | ⏸ 待排期 | master 数据驱动实现，工作量大 |
+| alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
 
 ## 12. 相关文档
 

@@ -126,16 +126,13 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
-	mysekaiController := (*mysekai.Controller)(nil)
+	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion)
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewController(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
 	skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), nil, assetHelper)
-	if snapshotService != nil {
-		mysekaiController = mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion)
-	}
 
 	var cardController *card.Controller
 	var eventController *event.Controller

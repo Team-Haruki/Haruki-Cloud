@@ -48,6 +48,18 @@ func NewController(cards CardSource, events EventSource, drawingClient *drawing.
 	}
 }
 
+// WithSnapshot returns a shallow copy of this Controller that uses the given
+// snapshot instead of the one configured at construction time. This is used by
+// the bridge layer to inject a live Toolbox snapshot on a per-request basis.
+func (c *Controller) WithSnapshot(s *userdata.Service) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.snapshot = s
+	return &clone
+}
+
 func (c *Controller) BuildRecommendRequest(req drawing.DeckRequest) (*drawing.DeckRequest, error) {
 	if strings.TrimSpace(req.Region) == "" {
 		return nil, fmt.Errorf("deck request missing region")

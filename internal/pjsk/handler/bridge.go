@@ -475,7 +475,15 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	if detail, _ := buildPublicMusicProfiles(r, app); detail != nil {
 		q.Profile = detail
 	}
-	data, err = app.Decks.RenderAutoRecommend(q)
+
+	// Try to inject live Toolbox snapshot so the deck controller can operate
+	// on real user data even when no local snapshot file is configured.
+	deckCtrl := app.Decks
+	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+		deckCtrl = deckCtrl.WithSnapshot(snapshot)
+	}
+
+	data, err = deckCtrl.RenderAutoRecommend(q)
 	if err != nil {
 		return nil, err
 	}
@@ -572,6 +580,51 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 // buildEducationSnapshot creates a userdata.Service from live Toolbox suite data.
 func buildEducationSnapshot(app *renderapp.App, region renderregion.Value, suiteJSON []byte) (*userdata.Service, error) {
 	return userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, nil, nil)
+}
+
+// resolveLiveSnapshot resolves the requester's Toolbox binding and fetches a
+// live snapshot. If needMySekai is true it also fetches mysekai data and merges
+// it into the snapshot. Returns nil if the user has no usable binding or if any
+// API call fails (callers fall back to the controller-level static snapshot).
+func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return nil
+	}
+
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+
+	_, binding, resolveErr := app.Bindings.ResolveUserBinding(
+		context.Background(), platform, platformUserID, regionStr)
+	if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
+		return nil
+	}
+	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
+	if convErr != nil {
+		return nil
+	}
+
+	tc := sekaiutils.GetToolboxClient()
+	suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
+	if suiteErr != nil || len(suiteJSON) == 0 {
+		return nil
+	}
+
+	var mysekaiJSON []byte
+	if needMySekai && hasUsableMySekaiData(binding) {
+		mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
+	}
+
+	region := renderregion.Normalize(regionStr)
+	snapshot, err := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil)
+	if err != nil {
+		return nil
+	}
+	return snapshot
 }
 
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
@@ -1053,35 +1106,42 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	var data []byte
 	_, publicProfileCard := buildPublicMusicProfiles(r, app)
+
+	// Inject live Toolbox snapshot (suite + mysekai merged).
+	msCtrl := app.MySekai
+	if snapshot := resolveLiveSnapshot(r, app, true); snapshot != nil {
+		msCtrl = msCtrl.WithSnapshot(snapshot)
+	}
+
 	switch r.Mode {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderResource(q)
+		data, err = msCtrl.RenderResource(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderFixtureList(q)
+		data, err = msCtrl.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
 		q := mysekai.FixtureDetailQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
-		data, err = app.MySekai.RenderFixtureDetail(q)
+		data, err = msCtrl.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderDoorUpgrade(q)
+		data, err = msCtrl.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
 		q := mysekai.MusicRecordQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderMusicRecord(q)
+		data, err = msCtrl.RenderMusicRecord(q)
 	case "mysekai-photo":
 		q := mysekai.PhotoQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		result, resolveErr := app.MySekai.ResolvePhoto(q)
+		result, resolveErr := msCtrl.ResolvePhoto(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -1102,7 +1162,7 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderTalkList(q)
+		data, err = msCtrl.RenderTalkList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported mysekai mode %q", r.Mode)
 	}

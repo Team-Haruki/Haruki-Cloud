@@ -31,6 +31,18 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdat
 	}
 }
 
+// WithSnapshot returns a shallow copy of this Controller that uses the given
+// snapshot instead of the one configured at construction time. This is used by
+// the bridge layer to inject a live Toolbox snapshot on a per-request basis.
+func (c *Controller) WithSnapshot(s *userdata.Service) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.snapshot = s
+	return &clone
+}
+
 func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.MysekaiResourceRequest, error) {
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {

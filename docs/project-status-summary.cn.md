@@ -1332,9 +1332,9 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS
+> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS。
 >
-> 剩余 19 个 ⚠️ 端点返回 HTTP 500 但测试框架标记为 warning（不阻塞）。
+> 以上是最近一次完整回归的结果快照。由于随后又合入了 parser、score、education、bonds 等修复，旧版“剩余 19 个 warning”分类已与当前代码状态不完全一致。以下待处理项以**当前代码状态**为准，完整数量需在下一轮全量回归后刷新。
 
 ### 11.1 ✅ Parser handler 参数提取（已完成）
 
@@ -1349,61 +1349,42 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 **验证结果**：
 - `card_test.go`、`event_test.go`、`score_test.go`、`misc_birthday_test.go` 已覆盖对应解析逻辑
 - `bridge_test.go` 中 `score/music-meta` 构建请求已通过
-### 11.1 P0：剩余 19 个 ⚠️ 端点分类
+### 11.1.1 P0：当前仍待回归确认的问题
+
+按当前代码状态整理，已完成的 parser / score / education / bonds 修复项不再计入剩余问题。当前仍需关注的主要是以下 4 类：
 
 #### A. Drawing API 服务端错误（4 个）
 
 | 端点 | 错误信息 | 原因 |
 |------|---------|------|
-| `deck/event` | `{"detail":"None"}` | Drawing API 内部处理返回 None，可能是请求数据格式问题 |
+| `deck/event` | `{"detail":"None"}` | Drawing API 内部处理返回 None，需检查 deck 请求数据与服务端消费逻辑 |
 | `deck/challenge` | `{"detail":"None"}` | 同上 |
 | `deck/no-event` | `{"detail":"None"}` | 同上 |
-| `mysekai/door-upgrade` | `color must be int or tuple` | Python Pillow 颜色参数类型错误，Drawing API 侧 bug |
+| `mysekai/door-upgrade` | `color must be int or tuple` | Python Pillow 颜色参数类型错误，属于 Drawing API 侧 bug |
 
 #### B. Drawing API 服务端资产缺失（1 个）
 
 | 端点 | 缺失资产 | 说明 |
 |------|---------|------|
-| `mysekai/talk-list` | `character/character_sd_l/chr_sp_*.png` | SD 立绘仅在 kr-assets 存在，jp-assets 未下载 |
+| `mysekai/talk-list` | `character/character_sd_l/chr_sp_*.png` | SD 立绘资源在服务器侧不完整，当前 `jp-assets` 未具备所需文件 |
 
-#### C. Parser handler 参数未提取（4 个）
-
-| 端点 | 错误信息 | 需要的参数 |
-|------|---------|-----------|
-| `card/list` | `card ids are required` | 从文本提取卡牌 ID 列表（支持别名查卡） |
-| `event` | `event id is required` | 从 args 提取 event ID，或空时返回当前活动 |
-| `score/music-meta` | `music meta request is empty` | 从 args 提取歌曲名/ID（支持别名） |
-| `misc/birthday` | `invalid birthday request` | 从 args 提取角色名并解析为角色 ID |
-
-#### D. Bridge 数据未填充（5 个）
+#### C. 数据依赖不足（3 个）
 
 | 端点 | 错误信息 | 说明 |
 |------|---------|------|
-| `event/record` | `at least one history entry` | 需 SK 历史排名数据 |
-| `score` | `invalid score control request` | MusicID 未从歌曲名解析 |
-| `score/custom-room` | `invalid custom-room score request` | CandidatePairs 为空 |
-| `score/music-board` | `music board request has no items` | 排行榜条目未填充 |
-| `card/box` | `context deadline exceeded` | 渲染量过大（全卡牌箱），90s 超时 |
+| `event/record` | `at least one history entry` | 依赖用户活动历史数据，当前测试账号数据不足 |
+| `sk/player-trace` | `no ranks` | 依赖活跃 SK 期间的排名追踪数据 |
+| `sk/winrate` | `no teams` | 依赖对战记录/队伍数据 |
 
-#### E. Bridge executor 返回空数据（2 个）
-
-| 端点 | 错误信息 | 说明 |
-|------|---------|------|
-| `education/area` | `area item request has no items` | 需从 suite 数据的 userAreas 提取 |
-| `education/power` | `power bonus request has no bonuses` | 需从 userCharacters 计算加成 |
-
-#### F. SK/追踪数据不足（2 个）
-
-| 端点 | 错误信息 | 说明 |
-|------|---------|------|
-| `sk/player-trace` | `no ranks` | 需活跃 SK 期间的排名追踪数据 |
-| `sk/winrate` | `no teams` | 需对战记录数据 |
-
-#### G. 非测试环境问题（1 个）
+#### D. 性能 / 测试环境限制（1 个）
 
 | 端点 | 说明 |
 |------|------|
-| `card/box` | 全卡牌箱渲染耗时 >90s，属于性能限制而非 bug |
+| `card/box` | 全卡牌箱渲染耗时超过 90s，当前更像性能与测试超时限制问题，而非功能缺失 |
+
+**备注**：
+- 以上按当前代码状态去重后，可明确归入待处理的问题约为 9 个端点/场景
+- 该数量用于整理待办，不替代下一轮完整集成测试统计
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
@@ -1484,11 +1465,10 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
+| 全量集成测试重跑 | ⏸ 待执行 | 当前 57/76 与后续代码修复并非完全同一快照，需重新回归刷新 warning 数量与分类 |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
-| `profile` / `gacha` Drawing 资源可用性 | ⏸ 待处理 | 仍存在 `honor/*`、`gacha/*` 资源路径或资源缺失问题，属于 Drawing 资源/部署侧问题 |
-| `music/bpm` / `music/cover` 本地资源 | ⏸ 待处理 | 当前测试环境仍缺少本地 chart / jacket 资源，相关失败属于资源准备问题而非 bridge/handler 逻辑 |
 
 ## 12. 相关文档
 

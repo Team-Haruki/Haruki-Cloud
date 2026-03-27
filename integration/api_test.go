@@ -352,7 +352,7 @@ func TestBotCommands(t *testing.T) {
 
 		// Card
 		{"card/detail", "card/detail", "/查卡", "/查卡 1", true},
-		{"card/list", "card/list", "/查牌", "/查牌 初音未来", true},
+		{"card/list", "card/list", "/卡牌列表", "/卡牌列表 初音未来", true},
 		{"card/box", "card/box", "/查箱", "/查箱", true},
 
 		// Music — basic

@@ -423,16 +423,17 @@ func (c *Controller) materialIconPath(resourceType string, materialID int) strin
 	if resourceType == "paid_jewel" {
 		resourceType = "jewel"
 	}
+	region := "jp"
 	switch resourceType {
 	case "coin", "virtual_coin", "jewel":
-		return assets.ResolveAssetPath(c.assets, "",
-			filepath.Join("thumbnail", "common_material_rip", resourceType+".png"))
+		return assets.ResolveRegionAssetPath(c.assets, region,
+			filepath.Join("thumbnail", "common_material", resourceType+".png"))
 	case "material":
 		if materialID <= 0 {
 			return ""
 		}
-		return assets.ResolveAssetPath(c.assets, "",
-			filepath.Join("thumbnail", "material_rip", fmt.Sprintf("material%d.png", materialID)))
+		return assets.ResolveRegionAssetPath(c.assets, region,
+			filepath.Join("thumbnail", "material", fmt.Sprintf("material%d.png", materialID)))
 	default:
 		return ""
 	}

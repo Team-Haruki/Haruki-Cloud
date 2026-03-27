@@ -220,7 +220,7 @@ func loadBirthdayCards(app *renderapp.App, region renderregion.Value, cid int) (
 			assets.ResolveRegionAssetPath(
 				app.Assets,
 				region.String(),
-				filepath.Join("thumbnail", "chara_rip", entity.AssetbundleName+"_normal.png"),
+				filepath.Join("thumbnail", "chara", entity.AssetbundleName+"_normal.png"),
 			),
 		)
 

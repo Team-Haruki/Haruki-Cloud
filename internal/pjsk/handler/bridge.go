@@ -987,6 +987,8 @@ func buildBondsRequestFromSuite(
 		requiredCharIDs[pair.CharID2] = struct{}{}
 	}
 
+	// Map game_id → game_character_id for icon paths (e.g., 46 → actual 1-26 range ID)
+	gameIDToCharID := make(map[int]int, len(requiredCharIDs))
 	charColorMap := make(map[int][]int, len(requiredCharIDs))
 	if len(requiredCharIDs) > 0 {
 		charIDs := make([]int64, 0, len(requiredCharIDs))
@@ -998,7 +1000,7 @@ func buildBondsRequestFromSuite(
 		colorRows, err := app.Sekai.Gamecharacterunit.Query().
 			Where(
 				gamecharacterunitdb.ServerRegionEQ(normalizedRegion),
-				gamecharacterunitdb.GameCharacterIDIn(charIDs...),
+				gamecharacterunitdb.GameIDIn(charIDs...),
 			).
 			Order(gamecharacterunitdb.ByID()).
 			All(ctx)
@@ -1006,12 +1008,24 @@ func buildBondsRequestFromSuite(
 			return nil, fmt.Errorf("query gamecharacterunit colors: %w", err)
 		}
 		for _, row := range colorRows {
+			gameID := int(row.GameID)
 			charID := int(row.GameCharacterID)
-			if _, ok := charColorMap[charID]; ok {
+			if charID > 0 {
+				gameIDToCharID[gameID] = charID
+			}
+			if _, ok := charColorMap[gameID]; ok {
 				continue
 			}
-			charColorMap[charID] = parseBondColorCode(row.ColorCode)
+			charColorMap[gameID] = parseBondColorCode(row.ColorCode)
 		}
+	}
+
+	// resolveCharIcon maps a game_id to its icon path via game_character_id
+	resolveCharIcon := func(gameID int) string {
+		if mapped, ok := gameIDToCharID[gameID]; ok {
+			return charaIconPath(app.Assets, mapped)
+		}
+		return charaIconPath(app.Assets, gameID)
 	}
 
 	bonds := make([]drawing.BondInfo, 0, len(suiteBonds))
@@ -1029,8 +1043,8 @@ func buildBondsRequestFromSuite(
 		info := drawing.BondInfo{
 			CharaID1:       pair.CharID1,
 			CharaID2:       pair.CharID2,
-			CharaIconPath1: charaIconPath(app.Assets, pair.CharID1),
-			CharaIconPath2: charaIconPath(app.Assets, pair.CharID2),
+			CharaIconPath1: resolveCharIcon(pair.CharID1),
+			CharaIconPath2: resolveCharIcon(pair.CharID2),
 			CharaRank1:     charRankMap[pair.CharID1],
 			CharaRank2:     charRankMap[pair.CharID2],
 			BondLevel:      sb.Rank,

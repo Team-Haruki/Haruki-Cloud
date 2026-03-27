@@ -1243,7 +1243,7 @@ func (c *Controller) resourceImagePath(region renderregion.Value, key string, ma
 			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon)), false
 		}
 	case "material":
-		return c.regionPath(region, fmt.Sprintf("thumbnail/material_rip/material%d.png", id)), false
+		return c.regionPath(region, fmt.Sprintf("thumbnail/material/material%d.png", id)), false
 	case "mysekai_item":
 		if icon := itemMap[id]; icon != "" {
 			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/item/%s.png", icon)), false

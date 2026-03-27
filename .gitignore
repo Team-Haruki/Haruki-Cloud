@@ -45,3 +45,5 @@ test_auth
 # Database exports and game data
 exports/
 Data/
+sshkey
+tmp/

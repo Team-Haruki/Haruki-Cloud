@@ -802,17 +802,88 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | Toolbox MySEKAI | ✅ |
 | Event Tracker 活动排名 | ✅ |
 
+## 10.3 集成测试执行结果（2026-03-27，第三轮）
+
+**本轮新增通过：`gacha` ✅（得益于 startapp/ondemand 双路径解析）**
+
+当前通过数：**16/23**
+
+### 本轮改进内容
+
+#### startapp/ondemand 双路径解析系统（commit `7e2ca58`）
+
+新增 `ResolveRegionAssetPath()` 函数，根据资源路径的顶层目录自动判断优先尝试 `startapp` 还是 `ondemand`，失败后自动回退到另一路径。
+
+远程服务器实际目录布局（INTERNAL_HOST Drawing API）：
+
+| 目录 | startapp 子目录 | ondemand 子目录 |
+|------|----------------|-----------------|
+| bonds_honor | ✅ | - |
+| character | ✅ | - |
+| home | ✅ | - |
+| honor | ✅ | - |
+| music | ✅ (jacket, music_score, short) | ✅ (long) |
+| rank_live | ✅ | - |
+| stamp | ✅ | - |
+| thumbnail | ✅ | - |
+| event | - | ✅ |
+| event_story | - | ✅ |
+| gacha | - | ✅ |
+| mysekai | - | ✅ |
+
+`onDemandPreferredTopLevel`：event、event_story、gacha、mysekai（music 被移除，因 jacket/score 在 startapp）。
+
+#### 别名数据导入
+
+从 `exports/` 导入别名数据至 `haruki_pjsk.alias` 表：
+- music_alias: 12,976 条（alias_type = "music"）
+- character_alias: 1,230 条（alias_type = "character"）
+
+#### 修复 music 路径回归
+
+`onDemandPreferredTopLevel` 中 `"music"` 导致 jacket 路径错误指向 ondemand，但实际 jacket 文件在 startapp。移除后 music 测试恢复。
+
+### 第三轮完整指令端点测试结果（16/23）
+
+| 端点 | 结果 | 说明 |
+|------|------|------|
+| `profile/bind` | ✅ | |
+| `card/detail` | ✅ | |
+| `card/box` | ✅ | |
+| `music` | ✅ | |
+| `event/list` | ✅ | |
+| `gacha` | ✅ | 新增（ondemand 路径修复）|
+| `stamp` | ✅ | |
+| `sk/line` | ✅ | |
+| `sk/query` | ✅ | |
+| `vlive` | ✅ | |
+| `arrest` | ✅ | |
+| `profile/reg-time` | ✅ | |
+| `education/challenge` | ✅ | |
+| `education/bonds` | ✅ | |
+| `education/leader` | ✅ | |
+| `profile` | ❌ | honor_6833 资源不存在（startapp/ondemand 均无，需补充资源） |
+| `education/area` | ❌ | 未实现 |
+| `education/power` | ❌ | 未实现 |
+| `card/list` | ❌ | Parser handler 接入不完整 |
+| `event` | ❌ | Parser handler 接入不完整 |
+| `score/music-meta` | ❌ | Parser handler 接入不完整 |
+| `misc/birthday` | ❌ | Parser handler 接入不完整 |
+
+### commit `7e2ca58` 评审备注
+
+- ⚠️ `tmp/*.db` 文件（bot.db、pjsk.db、sekai.db、users.db）被意外提交，应加入 `.gitignore`
+
 ## 11. 接下来需要做的事
 
 ### 11.1 剩余失败端点修复（优先级高）
 
-#### startapp vs ondemand 资源路径问题（影响 `profile`、`gacha`）
+#### profile honor 资源缺失（影响 `profile`）
 
-部分游戏资源实际存储在 `ondemand` 目录而非 `startapp`，目前 `RegionAssetDir()` 固定返回 `startapp`。需要为 `honor` 和 `gacha` 添加 fallback 逻辑：
+`honor_6833` 在 Drawing API 服务器上 startapp 和 ondemand 均不存在。双路径解析逻辑已正确实现，问题是资源文件本身缺失。需要：
 
-- 在 `honor/builder.go` 的 `buildNormalHonorRequest` 中，`degree_sub.png` 等资源先尝试 `startapp`，再 fallback 到 `ondemand`
-- 在 `gacha/builder.go` 中，gacha logo/banner 路径类似处理
-- 实现方式：`assets.AssetHelper.FirstExisting()` 已支持多路径，直接传 `startapp` 和 `ondemand` 两个候选路径即可
+- 确认该 honor 的 `assetBundleName` 是否为数字 ID（`honor_6833`）还是应映射为命名目录
+- 补充缺失的 honor 资源到 Drawing API 服务器
 
 #### Parser handler 接入不完整（影响 `card/list`、`event`、`score/music-meta`、`misc/birthday`）
 
@@ -843,8 +914,8 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 
 | 事项 | 说明 |
 |------|------|
+| `tmp/` 加入 `.gitignore` | commit `7e2ca58` 意外包含了 `tmp/*.db` 文件 |
 | `origin/test` 需要 force push | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
-| ondemand fallback 机制完善 | 部分资源用 `ondemand`，应建立通用的双路径 fallback，而非逐个硬编码 |
 | education/area、education/power | master 数据驱动实现，工作量大，视需求排期 |
 | alias 管理 API 归属 | 别名新增/审核/拒绝 API 归属（bot API vs admin API）待设计决策 |
 

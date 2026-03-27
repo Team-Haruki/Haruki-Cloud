@@ -10,6 +10,9 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
+// pathResolver resolves a relative asset path to its full Drawing-API-relative path.
+type pathResolver func(relPath string) string
+
 func intNumber(value interface{}, fallback int) int {
 	switch v := value.(type) {
 	case float64:
@@ -129,7 +132,7 @@ func extractMysekaiGate(merged map[string]interface{}) (int, int) {
 	return gateID, gateLevel
 }
 
-func extractMysekaiPhenoms(merged map[string]interface{}) []drawing.MysekaiPhenomRequest {
+func extractMysekaiPhenoms(resolve pathResolver, merged map[string]interface{}) []drawing.MysekaiPhenomRequest {
 	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]interface{})
 	if !ok {
 		return []drawing.MysekaiPhenomRequest{}
@@ -173,7 +176,7 @@ func extractMysekaiPhenoms(merged map[string]interface{}) []drawing.MysekaiPheno
 		phenomID := intNumber(schedule["mysekaiPhenomenaId"], 1)
 		phenoms = append(phenoms, drawing.MysekaiPhenomRequest{
 			RefreshReason:  "natural",
-			ImagePath:      fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", mysekaiPhenomIconName(phenomID)),
+			ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", mysekaiPhenomIconName(phenomID))),
 			BackgroundFill: bg,
 			Text:           phenomStart.Add(time.Duration(i) * 12 * time.Hour).Format("15:04"),
 			TextFill:       fg,
@@ -258,11 +261,11 @@ func resourceRarity(key string, materialRarityMap map[int]string) int {
 	return 0
 }
 
-func musicRecordIconPath(hasRecord bool) *string {
+func musicRecordIconPath(resolve pathResolver, hasRecord bool) *string {
 	if !hasRecord {
 		return nil
 	}
-	path := "mysekai/music_record.png"
+	path := resolve("mysekai/music_record.png")
 	return &path
 }
 
@@ -276,7 +279,7 @@ func birthdayCharacterID(characters map[int]map[string]interface{}, fixtureName 
 	return 0
 }
 
-func fixtureThumbnailPath(item map[string]interface{}) string {
+func fixtureThumbnailPath(resolve pathResolver, item map[string]interface{}) string {
 	assetbundleName := stringValue(item["assetbundleName"])
 	if assetbundleName == "" {
 		return ""
@@ -286,13 +289,13 @@ func fixtureThumbnailPath(item map[string]interface{}) string {
 		if layoutType == "" {
 			layoutType = "floor_appearance"
 		}
-		return fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_1.png", assetbundleName, assetbundleName, layoutType)
+		return resolve(fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_1.png", assetbundleName, assetbundleName, layoutType))
 	}
-	return fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName)
+	return resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName))
 }
 
-func fixtureColorImages(item map[string]interface{}) []drawing.MysekaiFixtureColorImage {
-	base := fixtureThumbnailPath(item)
+func fixtureColorImages(resolve pathResolver, item map[string]interface{}) []drawing.MysekaiFixtureColorImage {
+	base := fixtureThumbnailPath(resolve, item)
 	if base == "" {
 		return nil
 	}
@@ -310,13 +313,13 @@ func fixtureColorImages(item map[string]interface{}) []drawing.MysekaiFixtureCol
 	for index, raw := range rawColors {
 		color, _ := raw.(map[string]interface{})
 		colorCode := stringValue(color["colorCode"])
-		path := fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2)
+		path := resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2))
 		if stringValue(item["mysekaiFixtureType"]) == "surface_appearance" {
 			layoutType := stringValue(item["mysekaiSettableLayoutType"])
 			if layoutType == "" {
 				layoutType = "floor_appearance"
 			}
-			path = fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_%d.png", assetbundleName, assetbundleName, layoutType, index+2)
+			path = resolve(fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_%d.png", assetbundleName, assetbundleName, layoutType, index+2))
 		}
 		var codePtr *string
 		if colorCode != "" {

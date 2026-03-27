@@ -197,7 +197,7 @@ func (c *HarukiDrawingClient) GenerateMysekaiFixtureList(req *MysekaiFixtureList
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiFixtureDetail(req *MysekaiFixtureDetailRequest) ([]byte, error) {
-	return c.post("/api/pjsk/mysekai/fixture-detail", req)
+	return c.post("/api/pjsk/mysekai/fixture-detail", []interface{}{req})
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiDoorUpgrade(req *MysekaiDoorUpgradeRequest) ([]byte, error) {

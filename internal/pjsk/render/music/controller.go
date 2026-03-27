@@ -522,7 +522,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 			}
 			meta["music_id"] = musicInfo.ID
 			meta["music_title"] = musicInfo.Title
-			meta["music_cover_path"] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, resolved)
+			meta["music_cover"] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, resolved)
 			result[rate] = append(result[rate], meta)
 		}
 	}

@@ -440,8 +440,8 @@ func TestBotCommands(t *testing.T) {
 		{"deck/mysekai", "deck/mysekai", "/烤森组卡", "/烤森组卡", true},
 
 		// Score — user score
-		{"score", "score", "/控分", "/控分 100000 Tell Your World", true},
-		{"score/custom-room", "score/custom-room", "/自定义房间控分", "/自定义房间控分 100000", true},
+		{"score", "score", "/控分", "/控分 360 Tell Your World", true},
+		{"score/custom-room", "score/custom-room", "/自定义房间控分", "/自定义房间控分 50", true},
 
 		// MySEKAI
 		{"mysekai/resource", "mysekai/resource", "/mysekai资源", "/mysekai资源", true},

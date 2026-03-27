@@ -1287,19 +1287,73 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 **提交**：`3537148` — `feat: inject live Toolbox snapshots into deck/* and mysekai/* endpoints`
 
+### 10.11 第九轮：Asset 路径修复 — ondemand 前缀 + staticPath（2026-03-27）
+
+通过 EasyTier VPN 网格打通 Drawing API（`INTERNAL_IP_1:28000`），SSH 调查容器内文件布局后修复资产路径。
+
+**问题根因**：mysekai/deck 控制器中所有资产路径使用硬编码相对路径（如 `mysekai/icon/...`），但 Drawing API 的 `get_img_from_path()` 需要完整前缀路径（如 `asset/jp-assets/ondemand/mysekai/icon/...`）。
+
+**代码改动**：
+- `mysekai/controller.go`：添加 `assets *AssetHelper` 字段 + `regionPath()`/`staticPath()` 方法，更新 ~20 处硬编码路径
+- `mysekai/helpers.go`：添加 `pathResolver` 类型，更新 `extractMysekaiPhenoms`、`fixtureThumbnailPath`、`fixtureColorImages`、`musicRecordIconPath`
+- `deck/controller.go`：canvas 路径改用 `assets.ResolveRegionAssetPath()`
+- `drawing/client.go`：`GenerateMysekaiFixtureDetail()` 请求体包装为数组
+- `app/app.go`：传递 `assetHelper` 给 `mysekai.NewController()`
+
+**提交**：`7e16352` — `fix: resolve mysekai/deck asset paths through region asset helper`
+
+**结果**：55/76 ✅ OK（72%），新增 4 个通过：mysekai/fixture-list、mysekai/music-record、deck/bonus、deck/mysekai
+
+### 10.12 第十轮：static_images 路径修复 + DNS 恢复（2026-03-28）
+
+SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 region assets，修正路径分类。
+
+**修复内容**：
+| 资产 | 原路径方式 | 正确路径方式 | 影响端点 |
+|------|-----------|-------------|---------|
+| `gate_icon/gate_*.png` | `regionPath` → ondemand | `staticPath` → static_images/mysekai/ | mysekai/resource |
+| `invitationcard.png` | `regionPath` → ondemand | `staticPath` → static_images/mysekai/ | mysekai/resource (visit chars) |
+| `chara_icon/*.png` | 裸 `fmt.Sprintf` | `staticPath` → static_images/chara_icon/ | mysekai/talk-list, fixture reactions |
+| `music_record.png` | `regionPath` → ondemand | `staticPath` → static_images/mysekai/ | mysekai/resource (site resources) |
+
+**额外修复**：远程 Drawing 服务器 DNS 解析恢复，`mysekai/fixture-detail` 不再报 name resolution 错误。
+
+**提交**：`debc7ed` — `fix: use staticPath for gate_icon, invitationcard, chara_icon, music_record`
+
+**结果**：**57/76 ✅ OK（75%）**，76/76 测试全部 PASS。新增通过：mysekai/resource、mysekai/fixture-detail
+
+| 类别 | 通过数 | 端点 |
+|------|--------|------|
+| TestBotCommands ✅ | 40/59 | card/detail, music, event/list, gacha, education/{challenge,bonds,leader}, profile(×10), stamp, sk/{line,query,speed,check-room,rank-trace}, vlive, arrest, music/{list,bpm,cover,note-count,rewards,progress}, alias/pending, deck/{bonus,mysekai}, mysekai/{resource,fixture-list,fixture-detail,music-record,photo} |
+| TestExpandedCoverage ✅ | 17/17 | alias(×8), profile/{verify,bg/upload,bg/adjust,bg/clear,default,default/clear,unbind}, card/image, music/chart |
+| ⚠️ 仍失败 | 19 | 见下方 §11 分类 |
+
 ---
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**50/76**（第八轮，76/76 路径全覆盖，Drawing API 不可达时 22/59 个 TestBotCommands 通过 + 17/17 TestExpandedCoverage 通过）
+> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS
 >
-> **注**：第八轮因远程 SSH 不可达导致 Drawing API（port 28000）离线，大量依赖渲染的端点显示 "connection refused"。Toolbox 快照注入已验证成功，Drawing API 恢复后预计达到 **≥55/76**。
+> 剩余 19 个 ⚠️ 端点返回 HTTP 500 但测试框架标记为 warning（不阻塞）。
 
-### 11.1 P0：剩余失败端点修复
+### 11.1 P0：剩余 19 个 ⚠️ 端点分类
 
-#### `card/list`、`event`、`score/music-meta`、`misc/birthday` ❌ — Parser handler 参数未提取
+#### A. Drawing API 服务端错误（4 个）
 
-这 4 个端点的 handler 目前只调用 `makeResolvedCmd()` 而未从命令文本中提取参数，导致请求体为空而报错。
+| 端点 | 错误信息 | 原因 |
+|------|---------|------|
+| `deck/event` | `{"detail":"None"}` | Drawing API 内部处理返回 None，可能是请求数据格式问题 |
+| `deck/challenge` | `{"detail":"None"}` | 同上 |
+| `deck/no-event` | `{"detail":"None"}` | 同上 |
+| `mysekai/door-upgrade` | `color must be int or tuple` | Python Pillow 颜色参数类型错误，Drawing API 侧 bug |
+
+#### B. Drawing API 服务端资产缺失（1 个）
+
+| 端点 | 缺失资产 | 说明 |
+|------|---------|------|
+| `mysekai/talk-list` | `character/character_sd_l/chr_sp_*.png` | SD 立绘仅在 kr-assets 存在，jp-assets 未下载 |
+
+#### C. Parser handler 参数未提取（4 个）
 
 | 端点 | 错误信息 | 需要的参数 |
 |------|---------|-----------|
@@ -1308,7 +1362,35 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 | `score/music-meta` | `music meta request is empty` | 从 args 提取歌曲名/ID（支持别名） |
 | `misc/birthday` | `invalid birthday request` | 从 args 提取角色名并解析为角色 ID |
 
-实现位置：`api/bot/pjsk/sekai/` 各 handler 文件，需从 `req.MatchedCommand.Text` 或 `req.MatchedCommand.Args` 提取参数，通过 parser 解析后填充 `ResolvedCommand`。
+#### D. Bridge 数据未填充（5 个）
+
+| 端点 | 错误信息 | 说明 |
+|------|---------|------|
+| `event/record` | `at least one history entry` | 需 SK 历史排名数据 |
+| `score` | `invalid score control request` | MusicID 未从歌曲名解析 |
+| `score/custom-room` | `invalid custom-room score request` | CandidatePairs 为空 |
+| `score/music-board` | `music board request has no items` | 排行榜条目未填充 |
+| `card/box` | `context deadline exceeded` | 渲染量过大（全卡牌箱），90s 超时 |
+
+#### E. Bridge executor 返回空数据（2 个）
+
+| 端点 | 错误信息 | 说明 |
+|------|---------|------|
+| `education/area` | `area item request has no items` | 需从 suite 数据的 userAreas 提取 |
+| `education/power` | `power bonus request has no bonuses` | 需从 userCharacters 计算加成 |
+
+#### F. SK/追踪数据不足（2 个）
+
+| 端点 | 错误信息 | 说明 |
+|------|---------|------|
+| `sk/player-trace` | `no ranks` | 需活跃 SK 期间的排名追踪数据 |
+| `sk/winrate` | `no teams` | 需对战记录数据 |
+
+#### G. 非测试环境问题（1 个）
+
+| 端点 | 说明 |
+|------|------|
+| `card/box` | 全卡牌箱渲染耗时 >90s，属于性能限制而非 bug |
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 

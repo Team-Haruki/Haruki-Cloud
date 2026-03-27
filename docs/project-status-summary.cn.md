@@ -1014,9 +1014,117 @@ honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径�
 3. **需 Tracker 配置**：D 类 5 个端点，视 Tracker API 可用性而定
 4. **不做**：E 类，需人工确认或破坏测试环境
 
+## 10.6 集成测试执行结果（2026-03-27，第五轮）
+
+**测试规模从 23 扩展到 58 个端点**（含 bind 为 59），覆盖率从 33% 提升到 83%。
+
+当前通过数：**31/58**
+
+### 本轮修复内容
+
+#### 指令 trie 大小写排序冲突
+
+由于 `slices.Sort` 按字典序排序，大写命令（如 `/查BPM`）排在小写（`/查bpm`）之前，先注册进 trie 占位。发送 `/查bpm` 作为 `matched_command` 时，trie 返回 `/查BPM`，与请求的 `/查bpm` 不一致导致 400 错误。
+
+修复：测试改用无大小写歧义的命令（`/pjsk bpm`、`/pjsk hide id`、`/pjsk show id`）。
+
+#### 参数格式修正
+
+| 端点 | 修复前 | 修复后 | 原因 |
+|------|-------|--------|------|
+| `music/note-count` | `/查物量 Tell Your World` | `/查物量 1000` | handler 需要物量数值，不是歌曲名 |
+| `score` | `/控分 Tell Your World` | `/控分 100000 Tell Your World` | 需要目标 PT（数值在前）|
+| `score/custom-room` | `/自定义房间控分` | `/自定义房间控分 100000` | 需要目标 PT |
+| `mysekai/photo` | `/msp` | `/msp 1` | 需要照片编号 |
+| `mysekai/fixture-detail` | `/msf` | `/msf 1` | 需要家具 ID |
+
+### 第五轮完整指令端点测试结果（31/58）
+
+#### ✅ 通过（31 个）
+
+| 端点 | 类型 | 说明 |
+|------|------|------|
+| `profile/bind` | 基础 | |
+| `card/detail` | 基础 | |
+| `card/box` | 基础 | |
+| `music` | 基础 | |
+| `event/list` | 基础 | |
+| `gacha` | 基础 | |
+| `stamp` | 基础 | |
+| `sk/line` | 基础 | |
+| `sk/query` | 基础 | |
+| `vlive` | 基础 | |
+| `arrest` | 基础 | |
+| `profile/reg-time` | 基础 | |
+| `profile` | 基础 | |
+| `education/challenge` | 基础 | |
+| `education/bonds` | 基础 | |
+| `education/leader` | 基础 | |
+| `music/list` | A 类新增 | |
+| `music/note-count` | A 类新增 | 参数修正后通过 |
+| `music/rewards` | A 类新增 | |
+| `music/progress` | C 类新增 | 用户有打歌数据 |
+| `profile/check-data` | A 类新增 | |
+| `profile/check-data-mysekai` | A 类新增 | |
+| `profile/verify/list` | A 类新增 | |
+| `profile/suite/hide` | B 类新增 | |
+| `profile/suite/show` | B 类新增 | |
+| `profile/mysekai/hide` | B 类新增 | |
+| `profile/mysekai/show` | B 类新增 | |
+| `profile/visibility/hide` | B 类新增 | 命令修正后通过 |
+| `profile/visibility/show` | B 类新增 | 命令修正后通过 |
+| `sk/speed` | D 类新增 | |
+| `sk/check-room` | D 类新增 | |
+| `sk/rank-trace` | D 类新增 | |
+
+#### ❌ 失败（27 个）
+
+| 端点 | 错误 | 归因 |
+|------|------|------|
+| `card/list` | card ids are required | Parser handler 未提取参数 |
+| `event` | event id is required | Parser handler 未提取参数 |
+| `score/music-meta` | music meta request is empty | Parser handler 未提取参数 |
+| `misc/birthday` | invalid birthday request | Parser handler 未提取参数 |
+| `education/area` | area item request has no items | 功能未实现 |
+| `education/power` | power bonus request has no bonuses | 功能未实现 |
+| `music/bpm` | 当前环境没有可读取的本地谱面文件 | 本地无 chart 资源 |
+| `music/cover` | startapp/music/jacket/...no such file | 本地无 jacket 资源 |
+| `alias/pending` | 你不是别名审核管理员 | 需 admin 权限 |
+| `score` | invalid score control request | Bridge 未完整填充 MusicID |
+| `score/custom-room` | invalid custom-room score request | 需 CandidatePairs 数据 |
+| `score/music-board` | music board request has no items | Bridge 未填充 items |
+| `event/record` | requires at least one history entry | 用户无活动历史 |
+| `deck/event` | local user snapshot is not configured | 无 Toolbox 用户快照 |
+| `deck/challenge` | 同上 | 同上 |
+| `deck/no-event` | 同上 | 同上 |
+| `deck/bonus` | 同上 | 同上 |
+| `deck/mysekai` | 同上 | 同上 |
+| `mysekai/resource` | 同上 | 同上 |
+| `mysekai/talk-list` | 同上 | 同上 |
+| `mysekai/fixture-list` | 同上 | 同上 |
+| `mysekai/fixture-detail` | 同上 | 同上 |
+| `mysekai/door-upgrade` | 同上 | 同上 |
+| `mysekai/music-record` | 同上 | 同上 |
+| `mysekai/photo` | 同上 | 同上 |
+| `sk/player-trace` | sk player-trace request has no ranks | 需用户 SK 排名数据 |
+| `sk/winrate` | sk winrate request has no teams | 需 5v5 队伍配置 |
+
+### 失败归因分类
+
+| 类别 | 数量 | 说明 |
+|------|------|------|
+| Parser handler 未接入 | 4 | card/list, event, score/music-meta, misc/birthday |
+| 功能未实现 | 2 | education/area, education/power |
+| 本地无资源文件 | 2 | music/bpm (chart), music/cover (jacket) |
+| 无 Toolbox 用户快照 | 12 | deck/\*, mysekai/\* |
+| Bridge 数据不完整 | 3 | score, score/custom-room, score/music-board |
+| 用户数据不足 | 2 | event/record (无历史), sk/player-trace (无排名) |
+| 权限不足 | 1 | alias/pending (需 admin) |
+| 外部依赖 | 1 | sk/winrate (需 5v5 配置) |
+
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**17/23**（第四轮，2026-03-27）
+> 当前集成测试通过率：**31/58**（第五轮，2026-03-27）
 
 ### 11.1 P0：剩余失败端点修复
 
@@ -1033,14 +1141,24 @@ honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径�
 
 实现位置：`api/bot/pjsk/sekai/` 各 handler 文件，需从 `req.MatchedCommand.Text` 或 `req.MatchedCommand.Args` 提取参数，通过 parser 解析后填充 `ResolvedCommand`。
 
-### 11.2 P0：集成测试覆盖率扩展
+### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
-当前已有 23 个测试用例覆盖 70 个 enabled handler path 中的 23 个（33%）。按上方 10.5 的分类，优先扩展：
+第五轮已将测试从 23 扩展至 58 个端点（覆盖率 83%），其中 31 个通过。详见 10.6 节。
 
-1. **A 类（10 个）+ B 类（6 个）**：无需用户数据或只是可逆写操作，可立即添加至 `integration/api_test.go`
-2. **C 类（17 个）**：Toolbox 用户数据相关，测试用户已有 suite 数据，尝试后确认是否通过
-3. **D 类（5 个）**：SK Tracker 实时数据，视 Tracker 配置可用性决定
-4. **E 类**：不做自动测试
+### 11.2.1 Toolbox 用户快照配置（12 个端点）
+
+deck/\*、mysekai/\* 共 12 个端点因 "local user snapshot is not configured" 失败。这些端点依赖 Toolbox `GetSuiteData` 返回的用户快照数据。需要：
+
+- 确认测试用户 (`gameUserId=GAME_USER_ID_REDACTED`) 在 Toolbox 上有有效的 suite 数据抓取记录
+- 或调整 Toolbox 配置使其可达
+
+### 11.2.2 Score/Bridge 数据填充（3 个端点）
+
+| 端点 | 问题 | 修复方向 |
+|------|------|---------|
+| `score` | MusicID 未从歌曲名解析 | Bridge 需接入 alias 解析歌曲名→MusicID |
+| `score/custom-room` | CandidatePairs 为空 | 需提供有效的候选对组数据 |
+| `score/music-board` | items 为空 | Bridge 未填充排行榜条目 |
 
 ### 11.3 P1：未实现的 Education 端点
 

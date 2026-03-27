@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
@@ -19,16 +20,30 @@ type Controller struct {
 	masterdata    *localMasterdataStore
 	defaultRegion renderregion.Value
 	nicknames     map[string]int
+	assets        *assets.AssetHelper
 }
 
-func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdata.Service, masterdataDir string, defaultRegion renderregion.Value) *Controller {
+func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdata.Service, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper) *Controller {
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
 		masterdata:    newLocalMasterdataStore(masterdataDir),
 		defaultRegion: renderregion.WithDefault(defaultRegion),
 		nicknames:     cloneNicknames(defaultNicknames),
+		assets:        assetHelper,
 	}
+}
+
+// regionPath resolves a region-specific asset path through the AssetHelper.
+// For paths starting with "mysekai/", "event/", "gacha/" the ondemand mode is
+// tried first; for others startapp is tried first.
+func (c *Controller) regionPath(region renderregion.Value, relPath string) string {
+	return assets.ResolveRegionAssetPath(c.assets, region.String(), relPath)
+}
+
+// staticPath resolves a path under the Drawing API's static_images directory.
+func (c *Controller) staticPath(relPath string) string {
+	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, relPath)
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given
@@ -57,12 +72,12 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 	gateID, gateLevel := extractMysekaiGate(merged)
 	return &drawing.MysekaiResourceRequest{
 		Profile:             *profile,
-		Phenoms:             extractMysekaiPhenoms(merged),
+		Phenoms:             extractMysekaiPhenoms(func(p string) string { return c.regionPath(region, p) }, merged),
 		GateID:              gateID,
 		GateLevel:           gateLevel,
-		GateIconPath:        fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID),
-		VisitCharacters:     c.extractVisitCharacters(merged),
-		SiteResourceNumbers: c.extractSiteResourceNumbers(merged),
+		GateIconPath:        c.staticPath(fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID)),
+		VisitCharacters:     c.extractVisitCharacters(region, merged),
+		SiteResourceNumbers: c.extractSiteResourceNumbers(region, merged),
 	}, nil
 }
 
@@ -144,7 +159,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		grouped[mainGenreID][subGenreID] = append(grouped[mainGenreID][subGenreID], fixtureRow{
 			fixture: drawing.MysekaiFixture{
 				ID:          fixtureID,
-				ImagePath:   fixtureThumbnailPath(item),
+				ImagePath:   fixtureThumbnailPath(func(p string) string { return c.regionPath(region, p) }, item),
 				CharacterID: characterID,
 				Obtained:    obtained,
 			},
@@ -194,7 +209,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			if subID != -1 && len(grouped[genreID]) > 1 {
 				if info := subGenreMap[subID]; len(info) > 0 {
 					name := stringValue(info["name"])
-					imagePath := fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))
+					imagePath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])))
 					subGenre.Name = &name
 					subGenre.ImagePath = &imagePath
 					if total := subProgressAll[genreID][subID]; total > 0 {
@@ -212,7 +227,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		mainInfo := mainGenreMap[genreID]
 		mainGenre := drawing.MysekaiFixtureMainGenre{
 			Name:      stringValue(mainInfo["name"]),
-			ImagePath: fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainInfo["assetbundleName"])),
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainInfo["assetbundleName"]))),
 			SubGenres: subGenres,
 		}
 		if total := mainProgressAll[genreID]; total > 0 {
@@ -277,9 +292,9 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 
 		request := drawing.MysekaiFixtureDetailRequest{
 			Title:              fmt.Sprintf("【%s-%d】%s", strings.ToUpper(region.String()), fixtureID, stringValue(fixture["name"])),
-			Images:             fixtureColorImages(fixture),
+			Images:             fixtureColorImages(func(p string) string { return c.regionPath(region, p) }, fixture),
 			MainGenreName:      stringValue(mainGenre["name"]),
-			MainGenreImagePath: fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"])),
+			MainGenreImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"]))),
 			Size: map[string]int{
 				"width":  nestedInt(fixture, "gridSize", "width"),
 				"depth":  nestedInt(fixture, "gridSize", "depth"),
@@ -290,18 +305,18 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 			BasicInfo:               fixtureBasicInfo(fixture),
 			Tags:                    fixtureTags(fixture, tags),
 			ReactionCharacterGroups: c.fixtureReactionCharacterGroups(fixtureID),
-			RecycleMaterials:        c.fixtureRecycleMaterials(fixtureID, onlyDisassemble),
+			RecycleMaterials:        c.fixtureRecycleMaterials(region, fixtureID, onlyDisassemble),
 		}
 
 		if subGenreID != 0 {
 			subName := stringValue(subGenre["name"])
-			subPath := fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"]))
+			subPath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"])))
 			request.SubGenreName = &subName
 			request.SubGenreImagePath = &subPath
 		}
 		if blueprint := findFixtureBlueprint(blueprints, fixtureID); blueprint != nil {
 			request.BasicInfo = append(request.BasicInfo, fixtureBlueprintInfo(blueprint)...)
-			request.CostMaterials = c.fixtureCostMaterials(intNumber(blueprint["id"], 0), blueprintCosts)
+			request.CostMaterials = c.fixtureCostMaterials(region, intNumber(blueprint["id"], 0), blueprintCosts)
 		}
 		requests = append(requests, request)
 	}
@@ -433,7 +448,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 					levelColor = red
 				}
 				outItems = append(outItems, drawing.MysekaiGateMaterialItem{
-					ImagePath:   fmt.Sprintf("mysekai/thumbnail/material/%s.png", materialIcons[item.MaterialID]),
+					ImagePath:   c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", materialIcons[item.MaterialID])),
 					Quantity:    item.Quantity,
 					Color:       color,
 					SumQuantity: fmt.Sprintf("%s/%d", formatMysekaiQuantity(userQty), sumMaterials[item.MaterialID]),
@@ -560,12 +575,12 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 	}
 
 	tagIcons := map[string]string{
-		"light_music_club": "icon_light_sound.png",
-		"idol":             "icon_idol.png",
-		"street":           "icon_street.png",
-		"theme_park":       "icon_theme_park.png",
-		"school_refusal":   "icon_school_refusal.png",
-		"vocaloid":         "icon_piapro.png",
+		"light_music_club": c.staticPath("icon_light_sound.png"),
+		"idol":             c.staticPath("icon_idol.png"),
+		"street":           c.staticPath("icon_street.png"),
+		"theme_park":       c.staticPath("icon_theme_park.png"),
+		"school_refusal":   c.staticPath("icon_school_refusal.png"),
+		"vocaloid":         c.staticPath("icon_piapro.png"),
 		"other":            "",
 	}
 	order := []string{"light_music_club", "street", "idol", "theme_park", "school_refusal", "vocaloid", "other"}
@@ -601,7 +616,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 				continue
 			}
 			record := drawing.MysekaiMusicrecord{
-				ImagePath: fmt.Sprintf("music/jacket/%s/%s.png", assetbundleName, assetbundleName),
+				ImagePath: c.regionPath(region, fmt.Sprintf("music/jacket/%s/%s.png", assetbundleName, assetbundleName)),
 				Obtained:  musicObtainedAt[musicID] != 0,
 			}
 			if showID {
@@ -809,7 +824,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 			fixture := fixtureMap[fixtureID]
 			fixtures = append(fixtures, drawing.MysekaiFixture{
 				ID:        fixtureID,
-				ImagePath: fixtureThumbnailPath(fixture),
+				ImagePath: fixtureThumbnailPath(func(p string) string { return c.regionPath(region, p) }, fixture),
 				Obtained:  hasFixture(obtainedFixtureIDs, fixtureID),
 			})
 		}
@@ -830,7 +845,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		info := mainGenreMap[mainGenreID]
 		singleMainGenres = append(singleMainGenres, drawing.MysekaiSingleTalkMainGenre{
 			Name:      stringValue(info["name"]),
-			ImagePath: fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])),
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))),
 			SubGenres: [][]drawing.MysekaiTalkFixtures{groupedSingle[mainGenreID]},
 		})
 	}
@@ -858,7 +873,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		for _, cuids := range item.cuidsSet {
 			icons := make([]string, 0, len(cuids))
 			for _, cuid := range cuids {
-				icons = append(icons, fmt.Sprintf("chara_icon/%s.png", charaIconName(cuid)))
+				icons = append(icons, c.staticPath(fmt.Sprintf("chara_icon/%s.png", charaIconName(cuid))))
 			}
 			iconGroups = append(iconGroups, icons)
 		}
@@ -868,7 +883,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 			fixture := fixtureMap[fixtureID]
 			fixtures = append(fixtures, drawing.MysekaiFixture{
 				ID:        fixtureID,
-				ImagePath: fixtureThumbnailPath(fixture),
+				ImagePath: fixtureThumbnailPath(func(p string) string { return c.regionPath(region, p) }, fixture),
 				Obtained:  hasFixture(obtainedFixtureIDs, fixtureID),
 			})
 		}
@@ -900,7 +915,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	}
 	return &drawing.MysekaiTalkListRequest{
 		Profile:          c.mysekaiProfileCard(region, merged, query.Profile),
-		SdImagePath:      fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", characterUnitID),
+		SdImagePath:      c.regionPath(region, fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", characterUnitID)),
 		ProgressMessage:  &progressMessage,
 		PromptMessage:    promptMessage,
 		ShowID:           true,
@@ -1091,7 +1106,7 @@ func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]in
 	return result
 }
 
-func (c *Controller) extractVisitCharacters(merged map[string]interface{}) []drawing.MysekaiVisitCharacter {
+func (c *Controller) extractVisitCharacters(region renderregion.Value, merged map[string]interface{}) []drawing.MysekaiVisitCharacter {
 	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]interface{})
 	if !ok {
 		return []drawing.MysekaiVisitCharacter{}
@@ -1126,17 +1141,17 @@ func (c *Controller) extractVisitCharacters(merged map[string]interface{}) []dra
 
 		var memoriaPath *string
 		if gameCharacterID := c.gameCharacterIDByUnitID(displayUnitID); gameCharacterID > 0 {
-			path := fmt.Sprintf("mysekai/item_preview/material/item_memoria_%d.png", gameCharacterID)
+			path := c.regionPath(region, fmt.Sprintf("mysekai/item_preview/material/item_memoria_%d.png", gameCharacterID))
 			memoriaPath = &path
 		}
 		var reservationIconPath *string
 		if boolValue(entry["isReservation"]) {
-			path := "mysekai/invitationcard.png"
+			path := c.staticPath("mysekai/invitationcard.png")
 			reservationIconPath = &path
 		}
 
 		result = append(result, drawing.MysekaiVisitCharacter{
-			SdImagePath:         fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", displayUnitID),
+			SdImagePath:         c.regionPath(region, fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", displayUnitID)),
 			MemoriaImagePath:    memoriaPath,
 			IsRead:              false,
 			IsReservation:       boolValue(entry["isReservation"]),
@@ -1149,7 +1164,7 @@ func (c *Controller) extractVisitCharacters(merged map[string]interface{}) []dra
 	return result
 }
 
-func (c *Controller) extractSiteResourceNumbers(merged map[string]interface{}) []drawing.MysekaiSiteResourceNumber {
+func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merged map[string]interface{}) []drawing.MysekaiSiteResourceNumber {
 	updated := nestedList(merged, "userMysekaiHarvestMaps")
 	if len(updated) == 0 {
 		return []drawing.MysekaiSiteResourceNumber{}
@@ -1192,7 +1207,7 @@ func (c *Controller) extractSiteResourceNumbers(merged map[string]interface{}) [
 		keys := sortKeysByResource(resMap, materialRarityMap)
 		resources := make([]drawing.MysekaiResourceNumber, 0, len(keys))
 		for _, key := range keys {
-			imagePath, hasRecord := c.resourceImagePath(key, materialMap, itemMap, musicRecordMap, merged)
+			imagePath, hasRecord := c.resourceImagePath(region, key, materialMap, itemMap, musicRecordMap, merged)
 			if imagePath == "" {
 				continue
 			}
@@ -1201,21 +1216,21 @@ func (c *Controller) extractSiteResourceNumbers(merged map[string]interface{}) [
 				Number:              resMap[key],
 				TextColor:           resourceTextColor(key, materialRarityMap),
 				HasMusicRecord:      hasRecord,
-				MusicRecordIconPath: musicRecordIconPath(hasRecord),
+				MusicRecordIconPath: musicRecordIconPath(func(p string) string { return c.staticPath(p) }, hasRecord),
 			})
 		}
 		if len(resources) == 0 {
 			continue
 		}
 		result = append(result, drawing.MysekaiSiteResourceNumber{
-			ImagePath:       fmt.Sprintf("mysekai/site/sitemap/texture/img_harvest_site_%d.png", siteID),
+			ImagePath:       c.regionPath(region, fmt.Sprintf("mysekai/site/sitemap/texture/img_harvest_site_%d.png", siteID)),
 			ResourceNumbers: resources,
 		})
 	}
 	return result
 }
 
-func (c *Controller) resourceImagePath(key string, materialMap, itemMap, musicRecordMap map[int]string, merged map[string]interface{}) (string, bool) {
+func (c *Controller) resourceImagePath(region renderregion.Value, key string, materialMap, itemMap, musicRecordMap map[int]string, merged map[string]interface{}) (string, bool) {
 	parts := strings.Split(key, "_")
 	if len(parts) < 2 {
 		return "", false
@@ -1225,17 +1240,17 @@ func (c *Controller) resourceImagePath(key string, materialMap, itemMap, musicRe
 	switch typeKey {
 	case "mysekai_material":
 		if icon := materialMap[id]; icon != "" {
-			return fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon), false
+			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon)), false
 		}
 	case "material":
-		return fmt.Sprintf("thumbnail/material_rip/material%d.png", id), false
+		return c.regionPath(region, fmt.Sprintf("thumbnail/material_rip/material%d.png", id)), false
 	case "mysekai_item":
 		if icon := itemMap[id]; icon != "" {
-			return fmt.Sprintf("mysekai/thumbnail/item/%s.png", icon), false
+			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/item/%s.png", icon)), false
 		}
 	case "mysekai_music_record":
 		if jacket := musicRecordMap[id]; jacket != "" {
-			return fmt.Sprintf("music/jacket/%s/%s.png", jacket, jacket), c.hasMysekaiMusicRecord(merged, id)
+			return c.regionPath(region, fmt.Sprintf("music/jacket/%s/%s.png", jacket, jacket)), c.hasMysekaiMusicRecord(merged, id)
 		}
 	}
 	return "", false
@@ -1298,7 +1313,7 @@ func (c *Controller) gameCharacterIDByUnitID(unitID int) int {
 	return 0
 }
 
-func (c *Controller) fixtureCostMaterials(blueprintID int, costs []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
+func (c *Controller) fixtureCostMaterials(region renderregion.Value, blueprintID int, costs []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
 	var result []drawing.MysekaiFixtureMaterial
 	iconMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	for _, item := range costs {
@@ -1311,14 +1326,14 @@ func (c *Controller) fixtureCostMaterials(blueprintID int, costs []map[string]in
 			continue
 		}
 		result = append(result, drawing.MysekaiFixtureMaterial{
-			ImagePath: fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon),
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon)),
 			Quantity:  intNumber(item["quantity"], 0),
 		})
 	}
 	return result
 }
 
-func (c *Controller) fixtureRecycleMaterials(fixtureID int, items []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
+func (c *Controller) fixtureRecycleMaterials(region renderregion.Value, fixtureID int, items []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
 	var result []drawing.MysekaiFixtureMaterial
 	iconMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	for _, item := range items {
@@ -1331,7 +1346,7 @@ func (c *Controller) fixtureRecycleMaterials(fixtureID int, items []map[string]i
 			continue
 		}
 		result = append(result, drawing.MysekaiFixtureMaterial{
-			ImagePath: fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon),
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", icon)),
 			Quantity:  intNumber(item["quantity"], 0),
 		})
 	}
@@ -1383,7 +1398,7 @@ func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.Mys
 		for _, ids := range grouped[count] {
 			icons := make([]string, 0, len(ids))
 			for _, id := range ids {
-				icons = append(icons, fmt.Sprintf("chara_icon/%s.png", charaIconName(id)))
+				icons = append(icons, c.staticPath(fmt.Sprintf("chara_icon/%s.png", charaIconName(id))))
 			}
 			iconGroups = append(iconGroups, icons)
 		}

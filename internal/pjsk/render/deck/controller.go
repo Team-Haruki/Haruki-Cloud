@@ -198,7 +198,7 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 	}
 
 	target := "score"
-	canvasPath := "mysekai/icon/category_icon/icon_canvas.png"
+	canvasPath := assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")
 	request := &drawing.DeckRequest{
 		Region:              region.String(),
 		Profile:             *profile,

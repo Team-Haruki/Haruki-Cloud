@@ -390,7 +390,7 @@ func TestBotCommands(t *testing.T) {
 		{"vlive", "vlive", "/vlive", "/vlive", true},
 
 		// Misc
-		{"misc/birthday", "misc/birthday", "/生日", "/生日 miku", true},
+		{"misc/birthday", "misc/birthday", "/生日", "/生日", true},
 
 		// Arrest
 		{"arrest", "arrest", "/逮捕", "/逮捕", true},

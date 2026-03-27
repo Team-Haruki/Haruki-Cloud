@@ -19,7 +19,7 @@ func TestConvertCloudHonorDecodesLevels(t *testing.T) {
 	entity := &sekaiDB.Honor{
 		GameID:          101,
 		GroupID:         20,
-		HonorRarity:     json.RawMessage(`"low"`),
+		HonorRarity:     "low",
 		Name:            "Test Honor",
 		AssetbundleName: "honor_top_001",
 		Levels:          json.RawMessage(levelsJSON),

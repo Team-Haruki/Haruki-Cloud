@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	ProfileModeRender       = "profile"
 	ProfileModeBind         = "profile-bind"
 	ProfileModeBindList     = "profile-bind-list"
 	ProfileModeUnbind       = "profile-unbind"

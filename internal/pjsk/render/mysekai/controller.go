@@ -102,6 +102,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	if query.ShowID != nil {
 		showID = *query.ShowID
 	}
+	onlyCraftable := query.OnlyCraftable != nil && *query.OnlyCraftable
 
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
 	mainGenreMap := c.masterdata.loadMapByID("mysekaiFixtureMainGenres.json")
@@ -109,6 +110,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := c.obtainedMysekaiFixtureIDs(merged, blueprints)
+	craftableFixtureIDs := c.craftableMysekaiFixtureIDs(blueprints)
 
 	type fixtureRow struct {
 		fixture drawing.MysekaiFixture
@@ -126,6 +128,11 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		fixtureID := intNumber(item["id"], 0)
 		if fixtureID == 0 || strings.EqualFold(stringValue(item["mysekaiFixtureType"]), "gate") {
 			continue
+		}
+		if onlyCraftable {
+			if _, ok := craftableFixtureIDs[fixtureID]; !ok {
+				continue
+			}
 		}
 
 		mainGenreID := intNumber(item["mysekaiFixtureMainGenreId"], -1)
@@ -664,6 +671,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	if strings.TrimSpace(query.Query) == "" {
 		return nil, fmt.Errorf("mysekai talk list requires character query")
 	}
+	showAllTalks := query.ShowAllTalks != nil && *query.ShowAllTalks
 
 	_, characterUnitID := c.resolveTalkCharacter(query.Query)
 	if characterUnitID == 0 {
@@ -681,9 +689,11 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	talks := c.masterdata.loadList("mysekaiCharacterTalks.json")
 
 	userTalkReads := map[int]bool{}
-	for _, raw := range nestedList(merged, "userMysekaiCharacterTalks") {
-		item, _ := raw.(map[string]interface{})
-		userTalkReads[intNumber(item["mysekaiCharacterTalkId"], 0)] = boolValue(item["isRead"])
+	if !showAllTalks {
+		for _, raw := range nestedList(merged, "userMysekaiCharacterTalks") {
+			item, _ := raw.(map[string]interface{})
+			userTalkReads[intNumber(item["mysekaiCharacterTalkId"], 0)] = boolValue(item["isRead"])
+		}
 	}
 
 	type talkRead struct {
@@ -894,13 +904,20 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		return multiReads[i].Fixtures[0].ID < multiReads[j].Fixtures[0].ID
 	})
 
-	progressMessage := fmt.Sprintf("未读对话家具列表 - 进度: %d/%d (%.1f%%)", totalReads, totalTalks, percent(totalReads, totalTalks))
-	promptMessage := "*仅展示未读对话家具，灰色表示未获得蓝图"
+	var progressMessage string
+	var promptMessage *string
+	if showAllTalks {
+		progressMessage = fmt.Sprintf("对话家具列表 - 共 %d 条对话", totalTalks)
+	} else {
+		progressMessage = fmt.Sprintf("未读对话家具列表 - 进度: %d/%d (%.1f%%)", totalReads, totalTalks, percent(totalReads, totalTalks))
+		prompt := "*仅展示未读对话家具，灰色表示未获得蓝图"
+		promptMessage = &prompt
+	}
 	return &drawing.MysekaiTalkListRequest{
 		Profile:          c.mysekaiProfileCard(region, merged, query.Profile),
 		SdImagePath:      c.regionPath(region, fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", characterUnitID)),
 		ProgressMessage:  &progressMessage,
-		PromptMessage:    &promptMessage,
+		PromptMessage:    promptMessage,
 		ShowID:           true,
 		SingleMainGenres: singleMainGenres,
 		MultiReads:       multiReads,
@@ -1065,6 +1082,20 @@ func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]interface{}, bl
 		blueprintID := intNumber(item["mysekaiBlueprintId"], 0)
 		blueprint := blueprints[blueprintID]
 		if len(blueprint) == 0 || stringValue(blueprint["mysekaiCraftType"]) != "mysekai_fixture" {
+			continue
+		}
+		targetID := intNumber(blueprint["craftTargetId"], 0)
+		if targetID != 0 {
+			result[targetID] = struct{}{}
+		}
+	}
+	return result
+}
+
+func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]interface{}) map[int]struct{} {
+	result := map[int]struct{}{}
+	for _, blueprint := range blueprints {
+		if stringValue(blueprint["mysekaiCraftType"]) != "mysekai_fixture" {
 			continue
 		}
 		targetID := intNumber(blueprint["craftTargetId"], 0)

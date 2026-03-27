@@ -26,7 +26,7 @@ func TestConvertGachaEntityDecodesNestedFields(t *testing.T) {
 
 	entity := &sekaiDB.Gacha{
 		GameID:               101,
-		GachaType:            json.RawMessage(`"ceil"`),
+		GachaType:            "ceil",
 		Name:                 "Test Gacha",
 		Seq:                  7,
 		AssetbundleName:      "ab_gacha_101",

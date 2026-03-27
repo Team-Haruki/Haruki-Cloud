@@ -1332,65 +1332,59 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS
+> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS。
 >
-> 剩余 19 个 ⚠️ 端点返回 HTTP 500 但测试框架标记为 warning（不阻塞）。
+> 以上是最近一次完整回归的结果快照。由于随后又合入了 parser、score、education、bonds 等修复，旧版“剩余 19 个 warning”分类已与当前代码状态不完全一致。以下待处理项以**当前代码状态**为准，完整数量需在下一轮全量回归后刷新。
 
-### 11.1 P0：剩余 19 个 ⚠️ 端点分类
+### 11.1 ✅ Parser handler 参数提取（已完成）
+
+`card/list`、`event`、`score/music-meta`、`misc/birthday` 的参数提取问题已修复，相关 bot 路由不再因请求体为空而直接失败。
+
+**代码改动**：
+- `card/detail` / `card/list` 统一改为按参数语义分流：单卡 ID 走 detail，普通查询走 list，`box/id/before` 语义走 card-box
+- `event` 支持空参数时返回当前活动，传数字参数时解析为 `event_id`
+- `score/music-meta` 支持从命令文本拆分 1–3 个歌曲查询项并写入 `queries`
+- `misc/birthday` 支持“最近第 N 个生日”与“角色名 → character_id”两类参数
+
+**验证结果**：
+- `card_test.go`、`event_test.go`、`score_test.go`、`misc_birthday_test.go` 已覆盖对应解析逻辑
+- `bridge_test.go` 中 `score/music-meta` 构建请求已通过
+### 11.1.1 P0：当前仍待回归确认的问题
+
+按当前代码状态整理，已完成的 parser / score / education / bonds 修复项不再计入剩余问题。当前仍需关注的主要是以下 4 类：
 
 #### A. Drawing API 服务端错误（4 个）
 
 | 端点 | 错误信息 | 原因 |
 |------|---------|------|
-| `deck/event` | `{"detail":"None"}` | Drawing API 内部处理返回 None，可能是请求数据格式问题 |
+| `deck/event` | `{"detail":"None"}` | Drawing API 内部处理返回 None，需检查 deck 请求数据与服务端消费逻辑 |
 | `deck/challenge` | `{"detail":"None"}` | 同上 |
 | `deck/no-event` | `{"detail":"None"}` | 同上 |
-| `mysekai/door-upgrade` | `color must be int or tuple` | Python Pillow 颜色参数类型错误，Drawing API 侧 bug |
+| `mysekai/door-upgrade` | `color must be int or tuple` | Python Pillow 颜色参数类型错误，属于 Drawing API 侧 bug |
 
 #### B. Drawing API 服务端资产缺失（1 个）
 
 | 端点 | 缺失资产 | 说明 |
 |------|---------|------|
-| `mysekai/talk-list` | `character/character_sd_l/chr_sp_*.png` | SD 立绘仅在 kr-assets 存在，jp-assets 未下载 |
+| `mysekai/talk-list` | `character/character_sd_l/chr_sp_*.png` | SD 立绘资源在服务器侧不完整，当前 `jp-assets` 未具备所需文件 |
 
-#### C. Parser handler 参数未提取（4 个）
-
-| 端点 | 错误信息 | 需要的参数 |
-|------|---------|-----------|
-| `card/list` | `card ids are required` | 从文本提取卡牌 ID 列表（支持别名查卡） |
-| `event` | `event id is required` | 从 args 提取 event ID，或空时返回当前活动 |
-| `score/music-meta` | `music meta request is empty` | 从 args 提取歌曲名/ID（支持别名） |
-| `misc/birthday` | `invalid birthday request` | 从 args 提取角色名并解析为角色 ID |
-
-#### D. Bridge 数据未填充（5 个）
+#### C. 数据依赖不足（3 个）
 
 | 端点 | 错误信息 | 说明 |
 |------|---------|------|
-| `event/record` | `at least one history entry` | 需 SK 历史排名数据 |
-| `score` | `invalid score control request` | MusicID 未从歌曲名解析 |
-| `score/custom-room` | `invalid custom-room score request` | CandidatePairs 为空 |
-| `score/music-board` | `music board request has no items` | 排行榜条目未填充 |
-| `card/box` | `context deadline exceeded` | 渲染量过大（全卡牌箱），90s 超时 |
+| `event/record` | `at least one history entry` | 依赖用户活动历史数据，当前测试账号数据不足 |
+| `sk/player-trace` | `no ranks` | 依赖活跃 SK 期间的排名追踪数据 |
+| `sk/winrate` | `no teams` | 依赖对战记录/队伍数据 |
 
-#### E. Bridge executor 返回空数据（2 个）
-
-| 端点 | 错误信息 | 说明 |
-|------|---------|------|
-| `education/area` | `area item request has no items` | 需从 suite 数据的 userAreas 提取 |
-| `education/power` | `power bonus request has no bonuses` | 需从 userCharacters 计算加成 |
-
-#### F. SK/追踪数据不足（2 个）
-
-| 端点 | 错误信息 | 说明 |
-|------|---------|------|
-| `sk/player-trace` | `no ranks` | 需活跃 SK 期间的排名追踪数据 |
-| `sk/winrate` | `no teams` | 需对战记录数据 |
-
-#### G. 非测试环境问题（1 个）
+#### D. 性能 / 测试环境限制（1 个）
 
 | 端点 | 说明 |
 |------|------|
-| `card/box` | 全卡牌箱渲染耗时 >90s，属于性能限制而非 bug |
+| `card/box` | 全卡牌箱渲染耗时超过 90s，当前更像性能与测试超时限制问题，而非功能缺失 |
+
+**备注**：
+- 以上按当前代码状态去重后，可明确归入待处理的问题约为 9 个端点/场景
+- 该数量用于整理待办，不替代下一轮完整集成测试统计
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
@@ -1417,55 +1411,64 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 - **mysekai/photo (1)：✅ 完全通过**（不依赖 Drawing API）
 - 其余 11 个端点仅因 Drawing API 不可达而失败（connection refused on port 28000）
 
-### 11.2.2 Score/Bridge 数据填充（3 个端点）
+### 11.2.2 ✅ Score/Bridge 数据填充（已完成）
 
-| 端点 | 问题 | 修复方向 |
-|------|------|---------|
-| `score` | MusicID 未从歌曲名解析 | Bridge 需接入 alias 解析歌曲名→MusicID |
-| `score/custom-room` | CandidatePairs 为空 | 需提供有效的候选对组数据 |
-| `score/music-board` | items 为空 | Bridge 未填充排行榜条目 |
+此前缺失的 3 个 score 端点数据填充已完成：
 
-### 11.3 P1：未实现的 Education 端点
+| 端点 | 已完成内容 |
+|------|-----------|
+| `score` | 支持从歌曲名/ID 解析 `music_id`，补齐封面、分数线与有效分数候选 |
+| `score/custom-room` | 已接入 `data/custom_room_pt.csv` 作为候选对组数据源，能够生成有效 `candidate_pairs` |
+| `score/music-board` | 已从 music meta 快照构建排行榜条目与高亮曲目列表，不再出现 `items` 为空 |
 
-`education/area`（区域道具）和 `education/power`（加成信息）已有 handler 路由，但 bridge executor 返回空数据：
+**验证结果**：
+- `bridge_test.go` 中 `TestExecuteScoreControlBuildsRequestFromParams`
+- `bridge_test.go` 中 `TestExecuteCustomRoomScoreBuildsRequestFromParams`
+- `bridge_test.go` 中 `TestExecuteScoreMusicBoardBuildsRequestFromParams`
 
-| 端点 | 错误信息 | 说明 |
-|------|---------|------|
-| `education/area` | `area item request has no items` | 需从 suite 数据的 `userAreas.areaItems` 提取道具等级，结合 `areaItemLevels` master 数据计算 |
-| `education/power` | `power bonus request has no bonuses` | 需从 `userCharacters` 提取角色等级，结合 `skillCoefficients` 等 master 数据计算加成倍率 |
+### 11.3 ✅ Education 端点实现（已完成）
 
-这两个功能依赖对 master 数据结构的深度了解，工作量较大，建议视需求排期。
+此前未实现的 `education/area`（区域道具）与 `education/power`（加成信息）已改为从 Toolbox suite 快照构建请求，再结合 Cloud 侧 master data 进行计算。
 
-### 11.4 P1：无 Path Handler 处置
+**代码改动**：
+- `bridge.go` 新增 `buildEducationSnapshotFromSuite()`，统一从 Toolbox 构造运行时教育快照
+- `education/area` 改为走 `BuildAreaItemUpgradeMaterialsRequestFromSnapshot()`
+- `education/power` 改为走 `BuildPowerBonusDetailRequestFromSnapshot()`
 
-| handler | 建议 |
-|---------|------|
-| `HeyiweiHandle` | 改为 `Disabled: true`（与其他占位 handler 保持一致），避免在 ZeroBot 路由中拦截真实指令 |
-| `MysekaiBlueprintHandle` | 如需 bot API 可访问，添加 `Path: "mysekai/blueprint"` 并在 `bridge.go` 添加 `case "mysekai-blueprint"` case（或直接复用 fixture-list/talk-list 的 dispatch 逻辑） |
+**验证结果**：
+- `render/education/snapshot_build_test.go` 中的 power / area 构建测试已更新并通过
 
-### 11.5 P2：角色图标扩展（影响 bonds 渲染完整性）
+### 11.4 ✅ 无 Path Handler 处置（已完成）
 
-目前 `CharacterIDToNickname` 只有 1–26 号角色，ID > 26 的新角色在 bonds 渲染中被直接跳过（无图标文件）。需要：
+| handler | 处理结果 |
+|---------|---------|
+| `HeyiweiHandle` | 已改为 `Disabled: true`，不再拦截真实指令 |
+| `MysekaiBlueprintHandle` | 已添加 `Path: "mysekai/blueprint"`，并在 handler 内直接复用 `mysekai-fixture-list` / `mysekai-talk-list` 的分流逻辑，无需单独 bridge case |
 
-- 确认 Drawing API 服务器 `static_images/chara_icon/` 实际存在的文件列表
-- 将缺失的新角色图标（ID > 26）补充至服务器并更新 `CharacterIDToNickname` 映射
+**验证结果**：
+- `misc_test.go` 已检查 `HeyiweiHandle` 为 disabled
+- `mysekai_test.go` 已覆盖 `MysekaiBlueprintHandle` 的派发行为
 
-### 11.6 P3：其他待处理事项
+### 11.5 ✅ education/bonds 数据补全（已完成）
+
+此前文档对问题原因的判断不准确。实际问题不在于必须扩充 `CharacterIDToNickname`，而在于 bridge 在构造 `education/bonds` 请求时，过早按昵称映射过滤条目，导致本应走 `chr_icon_<id>.png` 回退路径的羁绊数据被直接丢弃。
+
+**代码改动**：
+- `buildBondsRequestFromSuite()` 不再因缺少 `CharacterIDToNickname` 映射而提前跳过 bonds 条目
+- 统一交给 `charaIconPath()` 处理角色图标路径回退
+- 补齐 Drawing 侧实际使用的 `max_level`、`need_exp`、`color1`、`color2` 字段
+
+**验证结果**：
+- `bridge_test.go` 中新增 `TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress`
+
+### 11.6 P3：其他待处理事项（当前剩余）
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
+| 全量集成测试重跑 | ⏸ 待执行 | 当前 57/76 与后续代码修复并非完全同一快照，需重新回归刷新 warning 数量与分类 |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
-| `alias` 数据导入 | ✅ 已完成 | 12,976 music + 1,230 character alias 已导入 `haruki_pjsk.alias` 表（commit `c151c96`）|
-| `tmp/` gitignore | ✅ 已完成 | `tmp/*.db` 已移除追踪，`tmp/` 已加入 `.gitignore`（commit `c151c96`）|
-| `sshkey` gitignore | ✅ 已完成 | SSH 私钥已加入 `.gitignore`（commit `c151c96`）|
-| `music/` gitignore | ✅ 已完成 | CWD 下 `music/` 符号链接目录已加入 `.gitignore` |
-| ondemand/startapp 布局文档化 | ✅ 已完成 | 远程服务器实际目录布局已记录于 10.3 节 |
-| Censor Baidu 文本审核 | ✅ 已配置 | API Key + Secret 已写入 .env |
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
-| education/area、education/power | ⏸ 待排期 | master 数据驱动实现，工作量大 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
-| `HeyiweiHandle` 处置 | ⏸ 待操作 | 建议改为 Disabled（见 11.4 节） |
-| `MysekaiBlueprintHandle` 接入 | ⏸ 待决策 | 视需求决定是否添加 Path + bridge case（见 11.4 节） |
 
 ## 12. 相关文档
 

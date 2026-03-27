@@ -258,6 +258,14 @@ func (routeTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, c
 	}, nil
 }
 
+func (routeTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	return nil, nil
+}
+
+func (routeTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return nil, nil
+}
+
 type routeGachaSource struct {
 	region   renderregion.Value
 	gachas   []*masterdata.Gacha
@@ -598,6 +606,34 @@ func (s *routeEducationSource) GetResourceBoxByPurpose(purpose string, id int) *
 	copy := *item
 	copy.Details = append([]rendereducation.ResourceBoxDetail(nil), item.Details...)
 	return &copy
+}
+
+func (s *routeEducationSource) GetResourceBoxesByPurpose(purpose string) []*rendereducation.ResourceBox {
+	return nil
+}
+
+func (s *routeEducationSource) GetAreaItem(id int) *rendereducation.AreaItem {
+	return nil
+}
+
+func (s *routeEducationSource) GetAreaItemLevels(areaItemID int) []*rendereducation.AreaItemLevel {
+	return nil
+}
+
+func (s *routeEducationSource) GetAreaItemLevel(areaItemID, level int) *rendereducation.AreaItemLevel {
+	return nil
+}
+
+func (s *routeEducationSource) GetCharacterRank(characterID, rank int) *rendereducation.CharacterRank {
+	return nil
+}
+
+func (s *routeEducationSource) GetMysekaiGateLevel(gateID, level int) *rendereducation.MysekaiGateLevel {
+	return nil
+}
+
+func (s *routeEducationSource) GetShopItemByResourceBoxID(resourceBoxID int) *rendereducation.ShopItem {
+	return nil
 }
 
 func (s *routeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
@@ -3698,7 +3734,7 @@ func mysekaiRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) 
 	return &renderapp.App{
 		Drawing: drawingClient,
 		Assets:  assetHelper,
-		MySekai: rendermysekai.NewController(drawingClient, snapshot, masterdataDir, renderregion.JP),
+		MySekai: rendermysekai.NewController(drawingClient, snapshot, masterdataDir, renderregion.JP, nil),
 	}
 }
 

@@ -205,6 +205,14 @@ func (botTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, cha
 	}, nil
 }
 
+func (botTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	return nil, nil
+}
+
+func (botTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return nil, nil
+}
+
 // testBotApp registers bot routes on a fresh Fiber instance.
 func testBotApp(t *testing.T, drawingURL string) *fiber.App {
 	t.Helper()

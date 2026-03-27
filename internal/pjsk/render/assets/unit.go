@@ -2,7 +2,7 @@ package assets
 
 func UnitIconFilename(unit string) string {
 	switch unit {
-	case "light_sound_club":
+	case "light_sound", "light_sound_club":
 		return "icon_light_sound"
 	case "idol", "more_more_jump":
 		return "icon_idol"

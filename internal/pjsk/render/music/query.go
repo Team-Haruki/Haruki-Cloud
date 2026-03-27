@@ -53,6 +53,21 @@ type ProgressQuery struct {
 	Profile    *drawing.ProfileCardRequest `json:"-"`
 }
 
+type BoardQuery struct {
+	LiveType      string    `json:"live_type,omitempty"`
+	Target        string    `json:"target,omitempty"`
+	Ascend        bool      `json:"ascend,omitempty"`
+	Page          int       `json:"page,omitempty"`
+	SkillStrategy string    `json:"skill_strategy,omitempty"`
+	Skills        []float64 `json:"skills,omitempty"`
+	Power         int       `json:"power,omitempty"`
+	DeckBonus     float64   `json:"deck_bonus,omitempty"`
+	PlayInterval  float64   `json:"play_interval,omitempty"`
+	DiffFilter    []string  `json:"diff_filter,omitempty"`
+	LevelFilter   string    `json:"level_filter,omitempty"`
+	SpecQueries   []string  `json:"spec_queries,omitempty"`
+}
+
 type RewardsDetailQuery struct {
 	Region        string                                `json:"region"`
 	RankRewards   int                                   `json:"rank_rewards"`

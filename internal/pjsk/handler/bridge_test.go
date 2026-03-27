@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/config"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
+	sekaienttest "haruki-cloud/database/sekai/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/parser"
@@ -24,9 +25,11 @@ import (
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderscore "haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/imagecache"
 	sekaiapi "haruki-cloud/utils/sekai"
 
@@ -217,6 +220,464 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 }
 
+func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/score/music-meta" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req []drawing.MusicMetaRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if len(req) != 1 {
+			t.Fatalf("expected 1 request, got %d", len(req))
+		}
+		if req[0].MusicID != 1 || req[0].MusicTitle != "Song A" {
+			t.Fatalf("unexpected request header: %+v", req[0])
+		}
+		if len(req[0].Metas) != 2 {
+			t.Fatalf("expected 2 meta entries, got %d", len(req[0].Metas))
+		}
+		if req[0].Metas[0].Difficulty != "expert" || req[0].Metas[1].Difficulty != "master" {
+			t.Fatalf("unexpected meta order: %+v", req[0].Metas)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	metaPath := filepath.Join(root, "music_meta.json")
+	if err := os.WriteFile(userPath, []byte(`{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte(`[
+  {"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.2, "base_score_auto": 1.1, "skill_score_solo": [0.1,0.2], "skill_score_auto": [0.3,0.4], "skill_score_multi": [0.5,0.6], "fever_score": 0.7},
+  {"music_id": 1, "difficulty": "expert", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.0, "base_score_auto": 0.9, "skill_score_solo": [0.11,0.22], "skill_score_auto": [0.33,0.44], "skill_score_multi": [0.55,0.66], "fever_score": 0.77}
+]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+	}
+	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MusicMetaJSON: metaPath,
+	})
+	app := &renderapp.App{
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(struct {
+		Queries []string `json:"queries"`
+	}{Queries: []string{"Song A"}})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeScore(&parser.ResolvedCommand{
+		Module: parser.ModuleScore,
+		Mode:   "score-music-meta",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeScore music-meta: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected music-meta message: %+v", message)
+	}
+}
+
+func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/score/control" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req drawing.ScoreControlRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.MusicID != 1 || req.MusicTitle != "Song A" || req.MusicBasicPoint != 100 {
+			t.Fatalf("unexpected request header: %+v", req)
+		}
+		if req.TargetPoint != 100 || len(req.ValidScores) == 0 {
+			t.Fatalf("unexpected request payload: %+v", req)
+		}
+		if !strings.Contains(req.MusicCoverPath, "music/jacket/jacket_test/jacket_test.png") {
+			t.Fatalf("unexpected cover path: %q", req.MusicCoverPath)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	metaPath := filepath.Join(root, "music_meta.json")
+	if err := os.WriteFile(userPath, []byte(`{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte(`[
+  {"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.2, "base_score_auto": 1.1, "skill_score_solo": [0.1,0.2], "skill_score_auto": [0.3,0.4], "skill_score_multi": [0.5,0.6], "fever_score": 0.7},
+  {"music_id": 1, "difficulty": "expert", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.0, "base_score_auto": 0.9, "skill_score_solo": [0.11,0.22], "skill_score_auto": [0.33,0.44], "skill_score_multi": [0.55,0.66], "fever_score": 0.77}
+]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+	}
+	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MusicMetaJSON: metaPath,
+	})
+	app := &renderapp.App{
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(struct {
+		TargetPoint int    `json:"target_point"`
+		Query       string `json:"query"`
+		WL          bool   `json:"wl"`
+	}{
+		TargetPoint: 100,
+		Query:       "Song A",
+		WL:          false,
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeScore(&parser.ResolvedCommand{
+		Module: parser.ModuleScore,
+		Mode:   "score-control",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeScore score-control: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected score-control message: %+v", message)
+	}
+}
+
+func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/score/custom-room" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req drawing.CustomRoomScoreRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.TargetPoint != 22 {
+			t.Fatalf("unexpected target point: %+v", req)
+		}
+		if len(req.CandidatePairs) != 1 || len(req.CandidatePairs[0]) != 2 || req.CandidatePairs[0][0] != 100 || req.CandidatePairs[0][1] != 0 {
+			t.Fatalf("unexpected candidate pairs: %+v", req.CandidatePairs)
+		}
+		list := req.MusicListMap[100]
+		if len(list) != 1 {
+			t.Fatalf("unexpected music list map: %+v", req.MusicListMap)
+		}
+		if title, _ := list[0]["music_title"].(string); title != "Song A" {
+			t.Fatalf("unexpected music title: %+v", list[0])
+		}
+		if cover, _ := list[0]["music_cover"].(string); !strings.Contains(cover, "music/jacket/jacket_test/jacket_test.png") {
+			t.Fatalf("unexpected music cover: %+v", list[0])
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	metaPath := filepath.Join(root, "music_meta.json")
+	if err := os.WriteFile(userPath, []byte(`{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte(`[
+  {"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.2, "base_score_auto": 1.1, "skill_score_solo": [0.1,0.2], "skill_score_auto": [0.3,0.4], "skill_score_multi": [0.5,0.6], "fever_score": 0.7}
+]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+	}
+	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MusicMetaJSON: metaPath,
+	})
+	app := &renderapp.App{
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(struct {
+		TargetPoint int `json:"target_point"`
+	}{TargetPoint: 22})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeScore(&parser.ResolvedCommand{
+		Module: parser.ModuleScore,
+		Mode:   "score-custom-room",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeScore custom-room: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected custom-room message: %+v", message)
+	}
+}
+
+func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/score/music-board" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req drawing.MusicBoardRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.LiveType != "solo" || req.Target != "score" {
+			t.Fatalf("unexpected board mode: %+v", req)
+		}
+		if len(req.Items) == 0 {
+			t.Fatalf("expected board items, got none")
+		}
+		if len(req.SpecMidDiffs) != 2 {
+			t.Fatalf("expected highlighted diffs, got %+v", req.SpecMidDiffs)
+		}
+		if req.Items[0].MusicID != 1 || req.Items[0].Difficulty != "master" {
+			t.Fatalf("unexpected first board item: %+v", req.Items[0])
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	metaPath := filepath.Join(root, "music_meta.json")
+	if err := os.WriteFile(userPath, []byte(`{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte(`[
+  {"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70},
+  {"music_id": 1, "difficulty": "expert", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.00, "base_score_auto": 0.95, "skill_score_solo": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_auto": [0.09,0.08,0.07,0.06,0.05,0.04], "skill_score_multi": [0.12,0.11,0.10,0.09,0.08,0.07], "fever_score": 0.60},
+  {"music_id": 2, "difficulty": "master", "music_time": 140, "tap_count": 500, "event_rate": 110, "base_score": 1.05, "base_score_auto": 0.98, "skill_score_solo": [0.08,0.07,0.06,0.05,0.04,0.03], "skill_score_auto": [0.07,0.06,0.05,0.04,0.03,0.02], "skill_score_multi": [0.10,0.09,0.08,0.07,0.06,0.05], "fever_score": 0.55}
+]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 30},
+			},
+		},
+	}
+	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MusicMetaJSON: metaPath,
+	})
+	app := &renderapp.App{
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(music.BoardQuery{
+		SpecQueries: []string{"Song A"},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeScore(&parser.ResolvedCommand{
+		Module: parser.ModuleScore,
+		Mode:   "score-music-board",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeScore music-board: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected music-board message: %+v", message)
+	}
+}
+
+func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_bonds?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Bond.Create().
+		SetServerRegion("jp").
+		SetGroupID(2127).
+		SetCharacterId1(21).
+		SetCharacterId2(27).
+		Save(ctx); err != nil {
+		t.Fatalf("create bond master: %v", err)
+	}
+	for _, item := range []struct {
+		Level    int64
+		TotalExp int64
+	}{
+		{Level: 1, TotalExp: 0},
+		{Level: 2, TotalExp: 10},
+		{Level: 3, TotalExp: 30},
+	} {
+		if _, err := sekaiClient.Level.Create().
+			SetServerRegion("jp").
+			SetLevelType("bonds").
+			SetLevel(item.Level).
+			SetTotalExp(item.TotalExp).
+			Save(ctx); err != nil {
+			t.Fatalf("create level master: %v", err)
+		}
+	}
+	for _, item := range []struct {
+		CharacterID int64
+		ColorCode   string
+	}{
+		{CharacterID: 21, ColorCode: "#112233"},
+		{CharacterID: 27, ColorCode: "#445566"},
+	} {
+		if _, err := sekaiClient.Gamecharacterunit.Create().
+			SetServerRegion("jp").
+			SetGameCharacterID(item.CharacterID).
+			SetColorCode(item.ColorCode).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacterunit: %v", err)
+		}
+	}
+
+	toolboxServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/private/game-data/jp/suite/123" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		switch r.URL.Query().Get("key") {
+		case "userBonds":
+			_, _ = w.Write([]byte(`[{"bondsGroupId":2127,"rank":2,"exp":7}]`))
+		case "userCharacters":
+			_, _ = w.Write([]byte(`[{"characterId":21,"characterRank":55},{"characterId":27,"characterRank":33}]`))
+		default:
+			t.Fatalf("unexpected key: %s", r.URL.Query().Get("key"))
+		}
+	}))
+	defer toolboxServer.Close()
+
+	oldToolbox := config.Cfg.Toolbox
+	config.Cfg.Toolbox.BaseURL = toolboxServer.URL
+	config.Cfg.Toolbox.APIToken = "test-token"
+	config.Cfg.Toolbox.UserAgent = "bridge-test"
+	t.Cleanup(func() {
+		config.Cfg.Toolbox = oldToolbox
+	})
+
+	req, err := buildBondsRequestFromSuite(
+		&renderapp.App{
+			Sekai:  sekaiClient,
+			Assets: assets.NewAssetHelper(t.TempDir(), nil),
+		},
+		"jp",
+		123,
+		"qq",
+		"42",
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildBondsRequestFromSuite: %v", err)
+	}
+	if req.MaxLevel != 3 {
+		t.Fatalf("unexpected max level: %d", req.MaxLevel)
+	}
+	if len(req.Bonds) != 1 {
+		t.Fatalf("unexpected bonds: %+v", req.Bonds)
+	}
+
+	bond := req.Bonds[0]
+	if bond.CharaID1 != 21 || bond.CharaID2 != 27 {
+		t.Fatalf("unexpected bond pair: %+v", bond)
+	}
+	if bond.CharaIconPath1 != "static_images/chara_icon/miku.png" {
+		t.Fatalf("unexpected icon path1: %q", bond.CharaIconPath1)
+	}
+	if bond.CharaIconPath2 != "static_images/chara_icon/chr_icon_27.png" {
+		t.Fatalf("unexpected icon path2: %q", bond.CharaIconPath2)
+	}
+	if bond.CharaRank1 != 55 || bond.CharaRank2 != 33 {
+		t.Fatalf("unexpected character ranks: %+v", bond)
+	}
+	if bond.BondLevel != 2 || !bond.HasBond {
+		t.Fatalf("unexpected bond core fields: %+v", bond)
+	}
+	if bond.NeedExp == nil || *bond.NeedExp != 13 {
+		t.Fatalf("unexpected need exp: %+v", bond.NeedExp)
+	}
+	if len(bond.Color1) != 3 || bond.Color1[0] != 17 || bond.Color1[1] != 34 || bond.Color1[2] != 51 {
+		t.Fatalf("unexpected color1: %+v", bond.Color1)
+	}
+	if len(bond.Color2) != 3 || bond.Color2[0] != 68 || bond.Color2[1] != 85 || bond.Color2[2] != 102 {
+		t.Fatalf("unexpected color2: %+v", bond.Color2)
+	}
+}
+
 func TestExecuteMysekaiPhoto(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/image/jp/mysekai/photos/test" {
@@ -266,7 +727,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 		MySekaiJSON:   mysekaiPath,
 	})
 	app := &renderapp.App{
-		MySekai:    rendermysekai.NewController(nil, snapshot, "", renderregion.JP),
+		MySekai:    rendermysekai.NewController(nil, snapshot, "", renderregion.JP, nil),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 

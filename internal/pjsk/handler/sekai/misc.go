@@ -6,8 +6,15 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"strconv"
 	"strings"
 )
+
+type miscBirthdayParams struct {
+	Cid           int `json:"cid,omitempty"`
+	UpcomingIndex int `json:"upcoming_index,omitempty"`
+}
 
 func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
@@ -18,9 +25,40 @@ func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleMisc, "misc-birthday"), nil
+			params, err := buildMiscBirthdayParams(ctx.GetArgs(), ctx.originalTriggerCmd)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMisc, "misc-birthday", params), nil
 		},
 	}
+}
+
+func buildMiscBirthdayParams(args string, triggerCmd string) (miscBirthdayParams, error) {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return miscBirthdayParams{UpcomingIndex: 1}, nil
+	}
+
+	if index, err := strconv.Atoi(args); err == nil {
+		if index <= 0 {
+			return miscBirthdayParams{}, fmt.Errorf("角色生日索引超出范围")
+		}
+		return miscBirthdayParams{UpcomingIndex: index}, nil
+	}
+
+	cid, remaining := resolveNicknameArg(args)
+	if cid > 0 && strings.TrimSpace(remaining) == "" {
+		return miscBirthdayParams{Cid: cid}, nil
+	}
+
+	usage := fmt.Sprintf(
+		"使用方式:\n查询最近的角色生日: %q\n查询第二近的角色生日: %q 2\n查询指定角色下次生日: %q 角色名",
+		triggerCmd,
+		triggerCmd,
+		triggerCmd,
+	)
+	return miscBirthdayParams{}, fmt.Errorf("%s", usage)
 }
 
 func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
@@ -36,7 +74,7 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, handler.ProfileModeRender, p), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeRender, p), nil
 		},
 	}
 }
@@ -123,6 +161,7 @@ func (sekaiHandlers) HeyiweiHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/pjskb30", "/pjskdetail", "/b30", "/b39", "/pjskb39", "/pjsk b30", "/pjsk b39", "/pjsk detail",
 			},
+			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			return "何意味", nil

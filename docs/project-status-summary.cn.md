@@ -1122,9 +1122,55 @@ honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径�
 | 权限不足 | 1 | alias/pending (需 admin) |
 | 外部依赖 | 1 | sk/winrate (需 5v5 配置) |
 
+## 10.7 集成测试执行结果（2026-03-27，第六轮）
+
+**通过数：33/58**（较第五轮 +2）
+
+### 本轮修复内容
+
+#### 远程素材拉取 + CWD 符号链接
+
+`music/bpm` 和 `music/cover` 依赖本地谱面文件（music_score）和曲绘文件（jacket），此前本地环境未配置。
+
+从远程服务器 (`INTERNAL_HOST:60022`) 的 `/data/HarukiServices/asset/data/jp-assets/startapp/music/` 拉取 Tell Your World（musicID=1）的 chart 和 jacket 文件至 `tmp/game-assets/`，然后在项目 CWD 下创建符号链接：
+
+```
+music/music_score/0001_01 → tmp/game-assets/music/music_score/0001_01
+music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
+```
+
+**关键发现**：`asset_dirs.primary` 不能设置为本地目录，否则 `ResolveAssetPath` 会将本地路径传给 Drawing API（远程），导致 Drawing API 找不到文件。保持 `asset_dirs` 为空，让 `AssetHelper` 默认使用 CWD (`.`) 作为 root，这样：
+- 本地文件通过 `FirstExisting` 从 CWD 相对路径找到 → BPM/Cover 正常
+- Drawing API 收到的路径不含本地前缀 → 远程渲染正常
+
+#### IPv6 连接问题修复
+
+集成测试 `baseURL` 从 `http://localhost:6666` 改为 `http://127.0.0.1:6666`，避免 Go HTTP 客户端优先解析为 IPv6 `[::1]` 而服务器只监听 IPv4 的问题。
+
+### 第六轮新增通过端点
+
+| 端点 | 说明 |
+|------|------|
+| `music/bpm` | 本地 chart 文件可用，BPM 解析成功 |
+| `music/cover` | 本地 jacket 文件可用，曲绘返回成功 |
+
+### 第六轮完整结果（33/58）
+
+✅ 通过（33）：bind, card/detail, card/box, music, event/list, gacha, education/challenge, education/bonds, education/leader, profile, profile/reg-time, stamp, sk/line, sk/query, vlive, arrest, music/list, **music/bpm**, **music/cover**, music/note-count, music/rewards, music/progress, profile/check-data, profile/check-data-mysekai, profile/verify/list, profile/suite/hide, profile/suite/show, profile/mysekai/hide, profile/mysekai/show, profile/visibility/hide, profile/visibility/show, sk/speed, sk/check-room, sk/rank-trace
+
+❌ 失败（25）：与第五轮相同减去 music/bpm 和 music/cover
+
+### Censor 配置状态
+
+`.env` 中已添加 Baidu 和 Tencent 内容审核密钥：
+- **Baidu 文本审核**：API Key + Secret 已配置 ✅
+- **Tencent 图片审核**：SecretID + SecretKey + Region 已配置，但 **BizType 为空** ⚠️
+  - BizType 是腾讯云内容安全控制台中创建的自定义审核策略标识，可选参数，留空时使用默认策略
+  - 如需自定义审核策略，需登录腾讯云控制台 → 内容安全 → 图片内容安全 → 策略管理 → 创建策略后获取
+
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**31/58**（第五轮，2026-03-27）
+> 当前集成测试通过率：**33/58**（第六轮，2026-03-27）
 
 ### 11.1 P0：剩余失败端点修复
 
@@ -1143,7 +1189,7 @@ honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径�
 
 ### 11.2 ✅ 集成测试覆盖率扩展（已完成）
 
-第五轮已将测试从 23 扩展至 58 个端点（覆盖率 83%），其中 31 个通过。详见 10.6 节。
+第六轮已将测试从 23 扩展至 58 个端点（覆盖率 83%），其中 33 个通过（57%通过率）。详见 10.7 节。
 
 ### 11.2.1 Toolbox 用户快照配置（12 个端点）
 
@@ -1186,7 +1232,10 @@ deck/\*、mysekai/\* 共 12 个端点因 "local user snapshot is not configured"
 | `alias` 数据导入 | ✅ 已完成 | 12,976 music + 1,230 character alias 已导入 `haruki_pjsk.alias` 表（commit `c151c96`）|
 | `tmp/` gitignore | ✅ 已完成 | `tmp/*.db` 已移除追踪，`tmp/` 已加入 `.gitignore`（commit `c151c96`）|
 | `sshkey` gitignore | ✅ 已完成 | SSH 私钥已加入 `.gitignore`（commit `c151c96`）|
+| `music/` gitignore | ✅ 已完成 | CWD 下 `music/` 符号链接目录已加入 `.gitignore` |
 | ondemand/startapp 布局文档化 | ✅ 已完成 | 远程服务器实际目录布局已记录于 10.3 节 |
+| Censor Baidu 文本审核 | ✅ 已配置 | API Key + Secret 已写入 .env |
+| Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | education/area、education/power | ⏸ 待排期 | master 数据驱动实现，工作量大 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
 

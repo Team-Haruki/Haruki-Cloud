@@ -26,7 +26,7 @@ import (
 // ─── Test Configuration ─────────────────────────────────────────────
 
 const (
-	baseURL        = "http://localhost:6666"
+	baseURL        = "http://127.0.0.1:6666"
 	botID          = "12345678"
 	credentialB64  = "CREDENTIAL_VALUE_REDACTED_PLACEHOLDER_00000000000="
 	platform       = "qq"

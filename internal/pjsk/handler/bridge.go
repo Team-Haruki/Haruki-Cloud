@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
+	bonddb "haruki-cloud/database/sekai/bond"
+	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
+	leveldb "haruki-cloud/database/sekai/level"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -459,7 +462,15 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	if detail, _ := buildPublicMusicProfiles(r, app); detail != nil {
 		q.Profile = detail
 	}
-	data, err = app.Decks.RenderAutoRecommend(q)
+
+	// Try to inject live Toolbox snapshot so the deck controller can operate
+	// on real user data even when no local snapshot file is configured.
+	deckCtrl := app.Decks
+	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+		deckCtrl = deckCtrl.WithSnapshot(snapshot)
+	}
+
+	data, err = deckCtrl.RenderAutoRecommend(q)
 	if err != nil {
 		return nil, err
 	}
@@ -621,6 +632,51 @@ func buildEducationSnapshotFromSuite(
 	return snapshot, nil
 }
 
+// resolveLiveSnapshot resolves the requester's Toolbox binding and fetches a
+// live snapshot. If needMySekai is true it also fetches mysekai data and merges
+// it into the snapshot. Returns nil if the user has no usable binding or if any
+// API call fails (callers fall back to the controller-level static snapshot).
+func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return nil
+	}
+
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+
+	_, binding, resolveErr := app.Bindings.ResolveUserBinding(
+		context.Background(), platform, platformUserID, regionStr)
+	if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
+		return nil
+	}
+	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
+	if convErr != nil {
+		return nil
+	}
+
+	tc := sekaiutils.GetToolboxClient()
+	suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
+	if suiteErr != nil || len(suiteJSON) == 0 {
+		return nil
+	}
+
+	var mysekaiJSON []byte
+	if needMySekai && hasUsableMySekaiData(binding) {
+		mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
+	}
+
+	region := renderregion.Normalize(regionStr)
+	snapshot, err := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil)
+	if err != nil {
+		return nil
+	}
+	return snapshot
+}
+
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
 func buildBondsRequestFromSuite(
 	app *renderapp.App, region string, uid int64, platform, platformUserID string,
@@ -640,6 +696,7 @@ func buildBondsRequestFromSuite(
 	var suiteBonds []struct {
 		BondsGroupID int `json:"bondsGroupId"`
 		Rank         int `json:"rank"`
+		Exp          int `json:"exp"`
 	}
 	if err := json.Unmarshal(bondsRaw, &suiteBonds); err != nil {
 		return nil, fmt.Errorf("decode userBonds: %w", err)
@@ -660,7 +717,14 @@ func buildBondsRequestFromSuite(
 
 	// Look up bonds master data to map group IDs to character pairs.
 	ctx := context.Background()
-	bondsMaster, err := app.Sekai.Bond.Query().All(ctx)
+	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
+	if normalizedRegion == "" {
+		normalizedRegion = "jp"
+	}
+
+	bondsMaster, err := app.Sekai.Bond.Query().
+		Where(bonddb.ServerRegionEQ(normalizedRegion)).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query bonds master: %w", err)
 	}
@@ -673,23 +737,75 @@ func buildBondsRequestFromSuite(
 		groupToPair[int(b.GroupID)] = bondPair{CharID1: int(b.CharacterId1), CharID2: int(b.CharacterId2)}
 	}
 
-	bonds := make([]drawing.BondInfo, 0, len(suiteBonds))
+	bondLevels, err := app.Sekai.Level.Query().
+		Where(
+			leveldb.ServerRegionEQ(normalizedRegion),
+			leveldb.LevelTypeEQ("bonds"),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query bonds levels: %w", err)
+	}
+	levelTotalExp := make(map[int]int, len(bondLevels))
 	maxLevel := 0
+	for _, item := range bondLevels {
+		levelValue := int(item.Level)
+		levelTotalExp[levelValue] = int(item.TotalExp)
+		if levelValue > maxLevel {
+			maxLevel = levelValue
+		}
+	}
+
+	requiredCharIDs := make(map[int]struct{}, len(suiteBonds)*2)
 	for _, sb := range suiteBonds {
 		pair, ok := groupToPair[sb.BondsGroupID]
 		if !ok {
 			continue
 		}
-		// Skip bonds for characters without known icon files.
-		_, hasIcon1 := assets.CharacterIDToNickname[pair.CharID1]
-		_, hasIcon2 := assets.CharacterIDToNickname[pair.CharID2]
-		if !hasIcon1 || !hasIcon2 {
+		requiredCharIDs[pair.CharID1] = struct{}{}
+		requiredCharIDs[pair.CharID2] = struct{}{}
+	}
+
+	charColorMap := make(map[int][]int, len(requiredCharIDs))
+	if len(requiredCharIDs) > 0 {
+		charIDs := make([]int64, 0, len(requiredCharIDs))
+		for charID := range requiredCharIDs {
+			charIDs = append(charIDs, int64(charID))
+		}
+		sort.Slice(charIDs, func(i, j int) bool { return charIDs[i] < charIDs[j] })
+
+		colorRows, err := app.Sekai.Gamecharacterunit.Query().
+			Where(
+				gamecharacterunitdb.ServerRegionEQ(normalizedRegion),
+				gamecharacterunitdb.GameCharacterIDIn(charIDs...),
+			).
+			Order(gamecharacterunitdb.ByID()).
+			All(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("query gamecharacterunit colors: %w", err)
+		}
+		for _, row := range colorRows {
+			charID := int(row.GameCharacterID)
+			if _, ok := charColorMap[charID]; ok {
+				continue
+			}
+			charColorMap[charID] = parseBondColorCode(row.ColorCode)
+		}
+	}
+
+	bonds := make([]drawing.BondInfo, 0, len(suiteBonds))
+	userMaxLevel := 0
+	for _, sb := range suiteBonds {
+		pair, ok := groupToPair[sb.BondsGroupID]
+		if !ok {
 			continue
 		}
-		if sb.Rank > maxLevel {
-			maxLevel = sb.Rank
+
+		if sb.Rank > userMaxLevel {
+			userMaxLevel = sb.Rank
 		}
-		bonds = append(bonds, drawing.BondInfo{
+
+		info := drawing.BondInfo{
 			CharaID1:       pair.CharID1,
 			CharaID2:       pair.CharID2,
 			CharaIconPath1: charaIconPath(app.Assets, pair.CharID1),
@@ -698,9 +814,40 @@ func buildBondsRequestFromSuite(
 			CharaRank2:     charRankMap[pair.CharID2],
 			BondLevel:      sb.Rank,
 			HasBond:        true,
-		})
+			Color1:         defaultBondColor(),
+			Color2:         defaultBondColor(),
+		}
+		if color, ok := charColorMap[pair.CharID1]; ok {
+			info.Color1 = color
+		}
+		if color, ok := charColorMap[pair.CharID2]; ok {
+			info.Color2 = color
+		}
+		if sb.Rank > 0 && sb.Rank < maxLevel {
+			currentTotalExp, okCurrent := levelTotalExp[sb.Rank]
+			nextTotalExp, okNext := levelTotalExp[sb.Rank+1]
+			if okCurrent && okNext {
+				needExp := nextTotalExp - currentTotalExp - sb.Exp
+				if needExp < 0 {
+					needExp = 0
+				}
+				info.NeedExp = &needExp
+			}
+		}
+		bonds = append(bonds, info)
 	}
-	sort.Slice(bonds, func(i, j int) bool { return bonds[i].BondLevel > bonds[j].BondLevel })
+	if maxLevel == 0 {
+		maxLevel = userMaxLevel
+	}
+	sort.Slice(bonds, func(i, j int) bool {
+		if bonds[i].BondLevel != bonds[j].BondLevel {
+			return bonds[i].BondLevel > bonds[j].BondLevel
+		}
+		if bonds[i].CharaID1 != bonds[j].CharaID1 {
+			return bonds[i].CharaID1 < bonds[j].CharaID1
+		}
+		return bonds[i].CharaID2 < bonds[j].CharaID2
+	})
 
 	req := &drawing.BondsRequest{
 		Bonds:    bonds,
@@ -786,6 +933,27 @@ func charaIconPath(helper *assets.AssetHelper, charID int) string {
 	}
 	return assets.ResolveAssetPath(helper, assets.StaticImagesDir,
 		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
+}
+
+func defaultBondColor() []int {
+	return []int{100, 100, 100}
+}
+
+func parseBondColorCode(code string) []int {
+	colorCode := strings.TrimSpace(strings.TrimPrefix(code, "#"))
+	if len(colorCode) != 6 {
+		return defaultBondColor()
+	}
+
+	result := make([]int, 3)
+	for idx := 0; idx < 3; idx++ {
+		value, err := strconv.ParseInt(colorCode[idx*2:idx*2+2], 16, 64)
+		if err != nil {
+			return defaultBondColor()
+		}
+		result[idx] = int(value)
+	}
+	return result
 }
 
 func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -1150,35 +1318,42 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
 	var data []byte
 	_, publicProfileCard := buildPublicMusicProfiles(r, app)
+
+	// Inject live Toolbox snapshot (suite + mysekai merged).
+	msCtrl := app.MySekai
+	if snapshot := resolveLiveSnapshot(r, app, true); snapshot != nil {
+		msCtrl = msCtrl.WithSnapshot(snapshot)
+	}
+
 	switch r.Mode {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderResource(q)
+		data, err = msCtrl.RenderResource(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderFixtureList(q)
+		data, err = msCtrl.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
 		q := mysekai.FixtureDetailQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
-		data, err = app.MySekai.RenderFixtureDetail(q)
+		data, err = msCtrl.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderDoorUpgrade(q)
+		data, err = msCtrl.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
 		q := mysekai.MusicRecordQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderMusicRecord(q)
+		data, err = msCtrl.RenderMusicRecord(q)
 	case "mysekai-photo":
 		q := mysekai.PhotoQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
-		result, resolveErr := app.MySekai.ResolvePhoto(q)
+		result, resolveErr := msCtrl.ResolvePhoto(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -1199,7 +1374,7 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
-		data, err = app.MySekai.RenderTalkList(q)
+		data, err = msCtrl.RenderTalkList(q)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported mysekai mode %q", r.Mode)
 	}

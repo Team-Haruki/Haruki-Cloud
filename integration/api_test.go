@@ -445,7 +445,7 @@ func TestBotCommands(t *testing.T) {
 
 		// MySEKAI
 		{"mysekai/resource", "mysekai/resource", "/mysekai资源", "/mysekai资源", true},
-		{"mysekai/talk-list", "mysekai/talk-list", "/mysekai对话列表", "/mysekai对话列表", true},
+		{"mysekai/talk-list", "mysekai/talk-list", "/mysekai对话列表", "/mysekai对话列表 みのり", true},
 		{"mysekai/fixture-list", "mysekai/fixture-list", "/mysekai家具列表", "/mysekai家具列表", true},
 		{"mysekai/fixture-detail", "mysekai/fixture-detail", "/msf", "/msf 1", true},
 		{"mysekai/door-upgrade", "mysekai/door-upgrade", "/mysekai大门升级", "/mysekai大门升级", true},

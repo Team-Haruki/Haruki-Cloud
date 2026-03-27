@@ -1461,11 +1461,46 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 **验证结果**：
 - `bridge_test.go` 中新增 `TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress`
 
-### 11.6 P3：其他待处理事项（当前剩余）
+### 11.6 ✅ Drawing API 集成修复与全量集成测试（已完成）
+
+协作者在远程推送了 Drawing API 相关的大量功能新增后，合并并进行了系统性集成修复。
+
+**修复内容汇总**：
+
+| 修复项 | 根因 | 解决方案 |
+|--------|------|----------|
+| deck 全系 500 `{"detail":"None"}` | Go `*string` omitempty → Python `DIFF_COLORS[None]` KeyError | Drawing API 侧添加 None 守卫 |
+| event 500 | `bonus_chara_path` 为 None 时迭代报错 | Drawing API 侧修正条件判断 |
+| education/power 图标为空 | `normalizeUnit()` 返回短名，`UnitIconFilename()` 不接受短名 | 补齐短名映射（light_sound, idol, street 等） |
+| education/area 422 | Go nil slice → JSON `null`，Pydantic 要求 `list` | 初始化为 `[]drawing.AreaItemMaterial{}` |
+| education/bonds 图标缺失 | 查询用 `GameIDIn` 但角色 ID≥46 的 game_id≠game_character_id | 改为 `GameIDIn` 查询 + gameID→gameCharacterID 映射 |
+| misc/birthday 路径错误 | `chara_rip` 应为 `chara`，缺少 `ResolveRegionAssetPath` | 修正路径前缀，包裹 ResolveRegionAssetPath |
+| card/list 400 | 测试用 `/查牌` 非注册指令 | 改为 `/卡牌列表` |
+| card/list 500（特训卡缩略图） | `initial_special_training_status='done'` 的卡无 `_normal.png` | 检测预训练状态，使用 `_after_training.png` |
+| material 路径 | `material_rip` / `common_material_rip` 不存在 | 改为 `material` / `common_material`，使用 ResolveRegionAssetPath |
+
+**全量集成测试最终结果（2026-03-28）**：
+
+76 个测试路径（TestBotCommands 59 + TestExpandedCoverage 17），**70/76 通过（92.1%）**，6 个⚠️均为已知数据/功能限制：
+
+| 端点 | 状态 | 原因分类 |
+|------|------|----------|
+| card/box | ⚠️ HTTP 500 | Drawing API 渲染超时（用户卡牌数量大，canvas 渲染耗时 >90s） |
+| education/area | ⚠️ HTTP 500 | Canvas 过大（26441×819）——Go 端缺少过滤参数透传，需实现 |
+| score | ⚠️ HTTP 500 | 测试用户 PT 不满足控分条件（数据限制） |
+| score/custom-room | ⚠️ HTTP 500 | 测试用户 PT < 100，不满足自定义房间控分要求（数据限制） |
+| sk/player-trace | ⚠️ HTTP 500 | 测试用户不在 top 100（代码正确，已用排名第一的 UID 验证通过） |
+| sk/winrate | ⚠️ HTTP 500 | 当前无 5v5 赛事数据（游戏侧暂停，非代码问题） |
+
+**待实现功能**：
+- `education/area` 过滤参数透传：Handler 已正确提取 `r.Query`（如"树"/"miku"/"25h"），但 Bridge 层未读取、Builder 未过滤。需在 `AreaItemQuery` 增加 Filter 字段，按 `TargetUnit`/`TargetGameCharacterID`/`TargetCardAttr` 过滤后再发送给 Drawing API。
+
+### 11.7 P3：其他待处理事项（当前剩余）
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
-| 全量集成测试重跑 | ⏸ 待执行 | 当前 57/76 与后续代码修复并非完全同一快照，需重新回归刷新 warning 数量与分类 |
+| education/area 过滤透传 | ⏸ 待实现 | Go 端需解析过滤参数（团名/角色名/属性/树/花）并在构建请求前过滤 area items |
+| card/box 渲染超时 | ⏸ 待优化 | Drawing API 渲染大量卡牌耗时过长，需优化或分页 |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |

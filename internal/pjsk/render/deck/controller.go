@@ -253,7 +253,7 @@ func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequ
 		CanvasThumbnailPath: drawing.StringPtr(assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")),
 	}
 
-	c.applyOptionRequestFields(request, option)
+	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
 }
@@ -438,7 +438,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 		CanvasThumbnailPath: drawing.StringPtr(assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")),
 	}
 
-	c.applyOptionRequestFields(request, option)
+	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
 }
@@ -677,8 +677,8 @@ func toSingleCardConfigInterfaces(cfgs []SingleCardConfigPatch) []interface{} {
 	return result
 }
 
-func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]interface{}) {
-	if request == nil || option == nil {
+func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]interface{}, query AutoQuery) {
+	if request == nil {
 		return
 	}
 	if target := optionString(option, "target"); target != "" {
@@ -691,8 +691,17 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
 		}
 	}
+	if strings.TrimSpace(query.MusicTitle) != "" && request.MusicTitle == nil {
+		request.MusicTitle = drawing.StringPtr(query.MusicTitle)
+	}
+	if strings.TrimSpace(query.MusicCoverPath) != "" && request.MusicCoverPath == nil {
+		request.MusicCoverPath = drawing.StringPtr(query.MusicCoverPath)
+	}
 	if diff := optionString(option, "music_diff"); diff != "" {
 		request.MusicDiff = drawing.StringPtr(diff)
+	}
+	if option == nil {
+		return
 	}
 	if teammatePower := optionInt(option, "multi_live_teammate_power"); teammatePower > 0 {
 		request.MultiLiveTeammatePower = drawing.IntPtr(teammatePower)

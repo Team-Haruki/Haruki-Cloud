@@ -56,7 +56,7 @@ func TestMiscBirthdayHandleBuildsResolvedCommand(t *testing.T) {
 				if err := json.Unmarshal(raw, &params); err != nil {
 					t.Fatalf("unmarshal params: %v", err)
 				}
-				if params.Cid != 21 || params.UpcomingIndex != 0 {
+				if params.Query != "miku" || params.Cid != 0 || params.UpcomingIndex != 0 {
 					t.Fatalf("unexpected params: %+v", params)
 				}
 			},

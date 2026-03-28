@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	sekaidb "haruki-cloud/database/sekai"
 	sekaicard "haruki-cloud/database/sekai/card"
+	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -18,8 +21,9 @@ import (
 )
 
 type miscBirthdaySelection struct {
-	Cid           int `json:"cid,omitempty"`
-	UpcomingIndex int `json:"upcoming_index,omitempty"`
+	Cid           int    `json:"cid,omitempty"`
+	UpcomingIndex int    `json:"upcoming_index,omitempty"`
+	Query         string `json:"query,omitempty"`
 }
 
 type birthdayDate struct {
@@ -81,6 +85,34 @@ var (
 		25: {Month: 11, Day: 5},
 		26: {Month: 2, Day: 17},
 	}
+	miscBirthdayDefaultNicknames = map[string]int{
+		"ick": 1, "ichika": 1, "星乃一歌": 1,
+		"saki": 2, "咲希": 2, "天马咲希": 2,
+		"hnm": 3, "honami": 3, "穗波": 3,
+		"shiho": 4, "志步": 4, "日野森志步": 4,
+		"mnr": 5, "minori": 5, "实乃理": 5, "花里みのり": 5,
+		"hrk": 6, "haruka": 6, "遥": 6,
+		"airi": 7, "爱莉": 7, "桃井爱莉": 7,
+		"szk": 8, "shizuku": 8, "雫": 8,
+		"kohane": 9, "小豆泽心羽": 9,
+		"an": 10, "杏": 10, "白石杏": 10,
+		"akito": 11, "彰人": 11, "青柳彰人": 11,
+		"toya": 12, "冬弥": 12, "天马冬弥": 12,
+		"tsks": 13, "tsukasa": 13, "司": 13,
+		"emu": 14, "笑梦": 14, "天马笑梦": 14,
+		"nene": 15, "宁宁": 15, "楠宁宁": 15,
+		"rui": 16, "类": 16, "神代类": 16,
+		"knd": 17, "kanade": 17, "奏": 17,
+		"mfy": 18, "mafuyu": 18, "真冬": 18,
+		"ena": 19, "绘名": 19, "朝比奈绘名": 19,
+		"mzk": 20, "mizuki": 20, "瑞希": 20, "晓山瑞希": 20,
+		"miku": 21, "初音": 21, "初音未来": 21,
+		"rin": 22, "镜音铃": 22,
+		"len": 23, "镜音连": 23,
+		"luka": 24, "巡音流歌": 24,
+		"meiko": 25,
+		"kaito": 26,
+	}
 )
 
 func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
@@ -89,8 +121,16 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 	}
 
 	region := renderregion.WithDefault(renderregion.Normalize(r.Region))
-	selection := miscBirthdaySelection{}
-	mergeParams(r.Params, &selection)
+	selection, err := normalizeBirthdaySelection(r)
+	if err != nil {
+		return nil, err
+	}
+	if selection.Cid == 0 && strings.TrimSpace(selection.Query) != "" {
+		selection.Cid, err = resolveBirthdayCharacterID(app, region, selection.Query)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	infos := buildBirthdayInfos(region, time.Now())
 	info, err := selectBirthdayInfo(infos, selection)
@@ -127,12 +167,12 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 			region.String(),
 			fmt.Sprintf("character/label_horizontal/chr_h_lb_%d.png", info.Cid),
 		),
-		CardImagePath:     cardImagePath,
-		Cards:             cards,
-		IsFifthAnniv:      isFifthAnniv,
-		GachaTime:         buildBirthdayEventTime(now, gachaStart, gachaEnd),
-		LiveTime:          buildBirthdayEventTime(now, liveStart, liveEnd),
-		AllCharacters:     buildBirthdayCalendar(app, infos),
+		CardImagePath: cardImagePath,
+		Cards:         cards,
+		IsFifthAnniv:  isFifthAnniv,
+		GachaTime:     buildBirthdayEventTime(now, gachaStart, gachaEnd),
+		LiveTime:      buildBirthdayEventTime(now, liveStart, liveEnd),
+		AllCharacters: buildBirthdayCalendar(app, infos),
 	}
 
 	if isFifthAnniv {
@@ -150,6 +190,37 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 	}
 
 	return req, nil
+}
+
+func normalizeBirthdaySelection(r *parser.ResolvedCommand) (miscBirthdaySelection, error) {
+	selection := miscBirthdaySelection{}
+	if r != nil {
+		mergeParams(r.Params, &selection)
+	}
+	selection.Query = strings.TrimSpace(selection.Query)
+	if selection.Cid > 0 || selection.UpcomingIndex > 0 || selection.Query != "" {
+		return selection, nil
+	}
+
+	rawQuery := ""
+	if r != nil {
+		rawQuery = strings.TrimSpace(r.Query)
+	}
+	if rawQuery == "" {
+		selection.UpcomingIndex = 1
+		return selection, nil
+	}
+
+	if index, err := strconv.Atoi(rawQuery); err == nil {
+		if index <= 0 {
+			return miscBirthdaySelection{}, fmt.Errorf("角色生日索引超出范围")
+		}
+		selection.UpcomingIndex = index
+		return selection, nil
+	}
+
+	selection.Query = rawQuery
+	return selection, nil
 }
 
 func buildBirthdayInfos(region renderregion.Value, now time.Time) []birthdayCharacterInfo {
@@ -190,6 +261,123 @@ func selectBirthdayInfo(infos []birthdayCharacterInfo, selection miscBirthdaySel
 		return birthdayCharacterInfo{}, fmt.Errorf("角色生日索引超出范围")
 	}
 	return infos[index-1], nil
+}
+
+func resolveBirthdayCharacterID(app *renderapp.App, region renderregion.Value, query string) (int, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return 0, fmt.Errorf("请输入角色名")
+	}
+
+	extractor := parser.NewExtractor(miscBirthdayDefaultNicknames)
+	if result := extractor.ExtractCharacter(query); result.Found && strings.TrimSpace(result.Remaining) == "" {
+		return result.Value, nil
+	}
+
+	ids, err := lookupBirthdayCharacterIDs(app, region, query)
+	if err != nil {
+		return 0, err
+	}
+	switch len(ids) {
+	case 0:
+		return 0, fmt.Errorf("未找到对应角色: %s", query)
+	case 1:
+		return ids[0], nil
+	default:
+		return 0, fmt.Errorf("角色名存在歧义: %s", query)
+	}
+}
+
+func lookupBirthdayCharacterIDs(app *renderapp.App, region renderregion.Value, query string) ([]int, error) {
+	if app == nil || app.Sekai == nil {
+		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
+	}
+
+	rows, err := app.Sekai.Gamecharacter.Query().
+		Where(gamecharacter.ServerRegionEQ(region.String())).
+		All(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("query birthday characters failed: %w", err)
+	}
+	ids := matchBirthdayCharacterIDs(rows, query)
+	if len(ids) > 0 {
+		return ids, nil
+	}
+
+	rows, err = app.Sekai.Gamecharacter.Query().
+		Where(gamecharacter.GameIDGT(0)).
+		All(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("query birthday characters failed: %w", err)
+	}
+	return matchBirthdayCharacterIDs(rows, query), nil
+}
+
+func matchBirthdayCharacterIDs(rows []*sekaidb.Gamecharacter, query string) []int {
+	target := normalizeBirthdayCharacterText(query)
+	if target == "" {
+		return nil
+	}
+
+	matched := make(map[int]struct{})
+	for _, row := range rows {
+		if row == nil || row.GameID <= 0 {
+			continue
+		}
+		if !birthdayCharacterMatches(row, target) {
+			continue
+		}
+		matched[int(row.GameID)] = struct{}{}
+	}
+	if len(matched) == 0 {
+		return nil
+	}
+
+	ids := make([]int, 0, len(matched))
+	for id := range matched {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func birthdayCharacterMatches(row *sekaidb.Gamecharacter, target string) bool {
+	for _, candidate := range birthdayCharacterNames(row) {
+		if normalizeBirthdayCharacterText(candidate) == target {
+			return true
+		}
+	}
+	return false
+}
+
+func birthdayCharacterNames(row *sekaidb.Gamecharacter) []string {
+	values := make([]string, 0, 8)
+	appendBirthdayCharacterName(&values, strings.TrimSpace(row.FirstName+row.GivenName))
+	appendBirthdayCharacterName(&values, strings.TrimSpace(strings.TrimSpace(row.FirstName)+" "+strings.TrimSpace(row.GivenName)))
+	appendBirthdayCharacterName(&values, strings.TrimSpace(row.FirstNameEnglish+row.GivenNameEnglish))
+	appendBirthdayCharacterName(&values, strings.TrimSpace(strings.TrimSpace(row.FirstNameEnglish)+" "+strings.TrimSpace(row.GivenNameEnglish)))
+	appendBirthdayCharacterName(&values, row.FirstName)
+	appendBirthdayCharacterName(&values, row.GivenName)
+	appendBirthdayCharacterName(&values, row.FirstNameEnglish)
+	appendBirthdayCharacterName(&values, row.GivenNameEnglish)
+	return values
+}
+
+func appendBirthdayCharacterName(values *[]string, value string) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return
+	}
+	for _, existing := range *values {
+		if strings.EqualFold(existing, value) {
+			return
+		}
+	}
+	*values = append(*values, value)
+}
+
+func normalizeBirthdayCharacterText(text string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(text)), ""))
 }
 
 func loadBirthdayCards(app *renderapp.App, region renderregion.Value, cid int) ([]drawing.CharaBirthdayCard, string, error) {

@@ -12,8 +12,9 @@ import (
 )
 
 type miscBirthdayParams struct {
-	Cid           int `json:"cid,omitempty"`
-	UpcomingIndex int `json:"upcoming_index,omitempty"`
+	Cid           int    `json:"cid,omitempty"`
+	UpcomingIndex int    `json:"upcoming_index,omitempty"`
+	Query         string `json:"query,omitempty"`
 }
 
 func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
@@ -25,7 +26,7 @@ func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildMiscBirthdayParams(ctx.GetArgs(), ctx.originalTriggerCmd)
+			params, err := buildMiscBirthdayParams(ctx.GetArgs())
 			if err != nil {
 				return nil, err
 			}
@@ -34,31 +35,19 @@ func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 	}
 }
 
-func buildMiscBirthdayParams(args string, triggerCmd string) (miscBirthdayParams, error) {
+func buildMiscBirthdayParams(args string) (miscBirthdayParams, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
 		return miscBirthdayParams{UpcomingIndex: 1}, nil
 	}
 
 	if index, err := strconv.Atoi(args); err == nil {
-		if index <= 0 {
+		if index <= 0 || index > 26 {
 			return miscBirthdayParams{}, fmt.Errorf("角色生日索引超出范围")
 		}
 		return miscBirthdayParams{UpcomingIndex: index}, nil
 	}
-
-	cid, remaining := resolveNicknameArg(args)
-	if cid > 0 && strings.TrimSpace(remaining) == "" {
-		return miscBirthdayParams{Cid: cid}, nil
-	}
-
-	usage := fmt.Sprintf(
-		"使用方式:\n查询最近的角色生日: %q\n查询第二近的角色生日: %q 2\n查询指定角色下次生日: %q 角色名",
-		triggerCmd,
-		triggerCmd,
-		triggerCmd,
-	)
-	return miscBirthdayParams{}, fmt.Errorf("%s", usage)
+	return miscBirthdayParams{Query: args}, nil
 }
 
 func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {

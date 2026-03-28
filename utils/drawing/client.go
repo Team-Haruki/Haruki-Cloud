@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/utils/logger"
 	"net/http"
@@ -69,7 +70,8 @@ func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, e
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
 		Post(c.baseURL + endpoint)
-	c.logger.Debugf("POST %s: %v", c.baseURL+endpoint, body)
+	data, _ := json.Marshal(body)
+	c.logger.Debugf("POST %s: %s", c.baseURL+endpoint, string(data))
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +79,7 @@ func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, e
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
-	c.logger.Debugf("Response from %s: type %s, length %s", c.baseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("Content-Length"))
+	c.logger.Debugf("Response from %s: type %s, length %s", c.baseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
 	return resp.Body(), nil
 }
 

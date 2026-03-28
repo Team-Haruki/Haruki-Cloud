@@ -21,6 +21,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
@@ -217,6 +218,48 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 	if len(message) != 1 || message[0].Type != "text" {
 		t.Fatalf("unexpected note-count message: %+v", message)
+	}
+}
+
+func TestResolveDeckMusicSelection(t *testing.T) {
+	root := t.TempDir()
+	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")
+	if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
+		t.Fatalf("mkdir jacket: %v", err)
+	}
+	if err := os.WriteFile(jacketPath, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write jacket: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music: music.NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil),
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:     "jp",
+		MusicQuery: "Song A",
+	}
+	if err := resolveDeckMusicSelection(&query, app); err != nil {
+		t.Fatalf("resolveDeckMusicSelection: %v", err)
+	}
+	if query.MusicID == nil || *query.MusicID != 1 {
+		t.Fatalf("unexpected music id: %+v", query.MusicID)
+	}
+	if query.MusicTitle != "Song A" {
+		t.Fatalf("unexpected music title: %q", query.MusicTitle)
+	}
+	if !strings.Contains(query.MusicCoverPath, "jacket_test.png") {
+		t.Fatalf("unexpected music cover path: %q", query.MusicCoverPath)
 	}
 }
 

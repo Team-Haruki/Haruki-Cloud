@@ -682,6 +682,9 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	}
 	q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
 	mergeParams(r.Params, &q)
+	if err := resolveDeckMusicSelection(&q, app); err != nil {
+		return nil, err
+	}
 	if detail, _ := buildPublicMusicProfiles(r, app); detail != nil {
 		q.Profile = detail
 	}
@@ -698,6 +701,38 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		return nil, err
 	}
 	return imageMessage(data, app, BotModulePJSK)
+}
+
+func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
+	if q == nil {
+		return nil
+	}
+	if q.MusicID != nil && *q.MusicID > 0 {
+		return nil
+	}
+	query := strings.TrimSpace(q.MusicQuery)
+	if query == "" {
+		return nil
+	}
+	if app == nil || app.Music == nil {
+		return fmt.Errorf("deck music resolve requires music controller")
+	}
+
+	result, err := app.Music.ResolveMusicCover(music.Query{
+		Query:  query,
+		Region: q.Region,
+	})
+	if err != nil {
+		return err
+	}
+	if result == nil || result.Music == nil || result.Music.ID <= 0 {
+		return fmt.Errorf("failed to resolve deck music query %q", query)
+	}
+
+	q.MusicID = drawing.IntPtr(result.Music.ID)
+	q.MusicTitle = result.Music.Title
+	q.MusicCoverPath = result.JacketPath
+	return nil
 }
 
 func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -1932,7 +1967,7 @@ func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiu
 		if !ok {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("[%s] 谱面:%d FC:%d AP:%d\n",
+		sb.WriteString(fmt.Sprintf("[%s] Clear:%d FC:%d AP:%d\n",
 			diff, c.LiveClear, c.FullCombo, c.AllPerfect))
 	}
 

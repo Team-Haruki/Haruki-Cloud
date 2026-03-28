@@ -77,10 +77,10 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 	if req.ColorCode != "#33AAFF" {
 		t.Fatalf("unexpected color code: %q", req.ColorCode)
 	}
-	if req.SdImagePath != "character/character_sd_l/chr_sp_21.png" {
+	if !strings.Contains(req.SdImagePath, "character/character_sd_l/chr_sp_21.png") {
 		t.Fatalf("unexpected sd path: %q", req.SdImagePath)
 	}
-	if req.TitleImagePath != "character/label_horizontal/chr_h_lb_21.png" {
+	if !strings.Contains(req.TitleImagePath, "character/label_horizontal/chr_h_lb_21.png") {
 		t.Fatalf("unexpected title path: %q", req.TitleImagePath)
 	}
 	if !strings.Contains(req.CardImagePath, "birthday_card_test_2/card_normal.png") {
@@ -125,5 +125,46 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 	}
 	if !foundMiku {
 		t.Fatal("expected miku in birthday calendar")
+	}
+}
+
+func TestBuildMiscBirthdayRequestFromRawQuery(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_query_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacterunit.Create().
+		SetServerRegion("jp").
+		SetGameCharacterID(21).
+		SetColorCode("#33AAFF").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacterunit: %v", err)
+	}
+
+	if _, err := sekaiClient.Card.Create().
+		SetServerRegion("jp").
+		SetGameID(91001).
+		SetCharacterID(21).
+		SetCardRarityType("rarity_birthday").
+		SetAssetbundleName("birthday_card_test_1").
+		SetReleaseAt(1).
+		Save(ctx); err != nil {
+		t.Fatalf("create birthday card: %v", err)
+	}
+
+	req, err := BuildMiscBirthdayRequest(&parser.ResolvedCommand{
+		Module: parser.ModuleMisc,
+		Mode:   "misc-birthday",
+		Region: "jp",
+		Query:  "miku",
+	}, &renderapp.App{
+		Sekai:  sekaiClient,
+		Assets: assets.NewAssetHelper(t.TempDir(), nil),
+	})
+	if err != nil {
+		t.Fatalf("BuildMiscBirthdayRequest() error = %v", err)
+	}
+	if req.Cid != 21 {
+		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
 	}
 }

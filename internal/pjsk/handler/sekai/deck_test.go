@@ -3,6 +3,7 @@ package sekai
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
@@ -183,5 +184,44 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 	}
 	if len(params.FixedCharacters) != 1 || params.FixedCharacters[0] != 21 {
 		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	}
+}
+
+func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "Tell Your World ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.MusicQuery != "tell your world" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
+func TestEventDeckHandleRejectsDirectMusicID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "123 ex",
+	})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "不能直接指定歌曲ID") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

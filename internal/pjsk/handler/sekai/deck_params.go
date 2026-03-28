@@ -17,7 +17,7 @@ type deckAutoQueryParams struct {
 	Algorithm                    string                             `json:"algorithm,omitempty"`
 	LiveType                     string                             `json:"live_type,omitempty"`
 	Target                       string                             `json:"target,omitempty"`
-	MusicID                      *int                               `json:"music_id,omitempty"`
+	MusicQuery                   string                             `json:"music_query,omitempty"`
 	MusicDiff                    string                             `json:"music_diff,omitempty"`
 	EventAttr                    string                             `json:"event_attr,omitempty"`
 	EventUnit                    string                             `json:"event_unit,omitempty"`
@@ -138,24 +138,26 @@ func buildEventDeckParams(args string, params *deckAutoQueryParams, trigger stri
 		allowRandom:        true,
 		allowFixed:         true,
 		allowCardConfig:    true,
-		allowMusicAndDiff:  true,
 		defaultArgsTrigger: trigger,
 	})
 	if err != nil {
 		return "", err
 	}
-	return extractDeckEventSelection(args, params, trigger)
+	args, err = extractDeckEventSelection(args, params, trigger)
+	if err != nil {
+		return "", err
+	}
+	return extractDeckMusicQuery(args, params)
 }
 
 func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string, error) {
 	args, err := extractDeckCommonParams(args, params, deckCommonConfig{
-		allowLiveType:     true,
-		allowTarget:       true,
-		allowAlgorithm:    true,
-		allowRandom:       true,
-		allowFixed:        true,
-		allowCardConfig:   true,
-		allowMusicAndDiff: true,
+		allowLiveType:   true,
+		allowTarget:     true,
+		allowAlgorithm:  true,
+		allowRandom:     true,
+		allowFixed:      true,
+		allowCardConfig: true,
 	})
 	if err != nil {
 		return "", err
@@ -165,20 +167,23 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 		params.ChallengeLiveCharacterID = intPtr(charID)
 		args = remaining
 	}
-	return args, nil
+	return extractDeckMusicQuery(args, params)
 }
 
 func buildNoEventDeckParams(args string, params *deckAutoQueryParams) (string, error) {
-	return extractDeckCommonParams(args, params, deckCommonConfig{
-		allowLiveType:     true,
-		allowMultiLive:    true,
-		allowTarget:       true,
-		allowAlgorithm:    true,
-		allowRandom:       true,
-		allowFixed:        true,
-		allowCardConfig:   true,
-		allowMusicAndDiff: true,
+	args, err := extractDeckCommonParams(args, params, deckCommonConfig{
+		allowLiveType:   true,
+		allowMultiLive:  true,
+		allowTarget:     true,
+		allowAlgorithm:  true,
+		allowRandom:     true,
+		allowFixed:      true,
+		allowCardConfig: true,
 	})
+	if err != nil {
+		return "", err
+	}
+	return extractDeckMusicQuery(args, params)
 }
 
 func buildBonusDeckParams(args string, params *deckAutoQueryParams, trigger string) (string, error) {
@@ -225,7 +230,6 @@ type deckCommonConfig struct {
 	allowRandom        bool
 	allowFixed         bool
 	allowCardConfig    bool
-	allowMusicAndDiff  bool
 	defaultNoChange    bool
 	defaultArgsTrigger string
 }
@@ -258,9 +262,6 @@ func extractDeckCommonParams(args string, params *deckAutoQueryParams, cfg deckC
 	}
 	if cfg.allowTarget {
 		args = extractDeckTarget(args, params)
-	}
-	if cfg.allowMusicAndDiff {
-		args = extractDeckMusicAndDiff(args, params)
 	}
 	return strings.TrimSpace(args), nil
 }
@@ -667,25 +668,41 @@ func extractDeckTarget(args string, params *deckAutoQueryParams) string {
 	return normalizeDeckSpaces(args)
 }
 
-func extractDeckMusicAndDiff(args string, params *deckAutoQueryParams) string {
-	fields := strings.Fields(args)
-	remaining := make([]string, 0, len(fields))
-	for _, field := range fields {
-		if params.MusicDiff == "" {
-			if diff, ok := resolveMusicBoardDifficulty(field); ok {
-				params.MusicDiff = diff
-				continue
-			}
-		}
-		if params.MusicID == nil {
-			if value, err := strconv.Atoi(strings.TrimSpace(field)); err == nil && value > 0 {
-				params.MusicID = intPtr(value)
-				continue
-			}
-		}
-		remaining = append(remaining, field)
+func extractDeckMusicQuery(args string, params *deckAutoQueryParams) (string, error) {
+	args = normalizeDeckSpaces(args)
+	if args == "" {
+		return "", nil
 	}
-	return strings.TrimSpace(strings.Join(remaining, " "))
+
+	if diff, cleaned := extractMusicDifficulty(args); diff != "" {
+		params.MusicDiff = diff
+		args = cleaned
+	}
+	args = normalizeDeckSpaces(args)
+	if args == "" {
+		return "", nil
+	}
+	if isDeckDirectMusicIDQuery(args) {
+		return "", fmt.Errorf("组卡不能直接指定歌曲ID，请使用歌曲名称或别名")
+	}
+	params.MusicQuery = args
+	return "", nil
+}
+
+func isDeckDirectMusicIDQuery(args string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(args))
+	if normalized == "" {
+		return false
+	}
+	if _, err := strconv.Atoi(normalized); err == nil {
+		return true
+	}
+	if strings.HasPrefix(normalized, "id") {
+		if _, err := strconv.Atoi(strings.TrimPrefix(normalized, "id")); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {

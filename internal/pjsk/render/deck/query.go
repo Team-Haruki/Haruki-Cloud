@@ -31,8 +31,11 @@ type AutoQuery struct {
 	Algorithm                    string                              `json:"algorithm,omitempty"`
 	LiveType                     string                              `json:"live_type,omitempty"`
 	Target                       string                              `json:"target,omitempty"`
+	MusicQuery                   string                              `json:"music_query,omitempty"`
 	MusicID                      *int                                `json:"music_id,omitempty"`
 	MusicDiff                    string                              `json:"music_diff,omitempty"`
+	MusicTitle                   string                              `json:"music_title,omitempty"`
+	MusicCoverPath               string                              `json:"music_cover_path,omitempty"`
 	EventAttr                    string                              `json:"event_attr,omitempty"`
 	EventUnit                    string                              `json:"event_unit,omitempty"`
 	WorldBloomCharacterID        *int                                `json:"world_bloom_character_id,omitempty"`

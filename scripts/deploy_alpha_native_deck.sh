@@ -183,7 +183,7 @@ mv "${binary_path}.new" "${binary_path}"
 
 chmod +x "${binary_path}"
 
-pkill -f "${binary_path}" || true
+pkill -f "haruki-server" || true
 
 cd "${remote_dir}"
 export LD_LIBRARY_PATH="${remote_dir}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"

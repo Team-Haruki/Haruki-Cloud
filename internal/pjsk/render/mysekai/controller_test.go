@@ -278,8 +278,12 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
 		{"id": 6, "givenNameEnglish": "Haruka"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+		{"id": 179, "iconAssetbundleName": "birthday_drop_179", "mysekaiMaterialRarityType": "rarity_2"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{
+		{"id": 501, "iconAssetbundleName": "side_drop_501"},
+	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
 	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
 
@@ -310,6 +314,22 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
             "positionX": 3,
             "positionZ": 4,
             "quantity": 20
+          },
+          {
+            "resourceType": "mysekai_item",
+            "resourceId": 501,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 3,
+            "positionZ": 4,
+            "quantity": 1
+          },
+          {
+            "resourceType": "mysekai_item",
+            "resourceId": 501,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 3,
+            "positionZ": 4,
+            "quantity": 2
           }
         ]
       }
@@ -361,5 +381,31 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	}
 	if birthdayPoint.OffsetX != 7.5 || birthdayPoint.OffsetZ != 0 {
 		t.Fatalf("unexpected birthday point offsets: x=%v z=%v", birthdayPoint.OffsetX, birthdayPoint.OffsetZ)
+	}
+
+	if len(req.Maps[0].ResourceDrops) != 2 {
+		t.Fatalf("expected 2 grouped resource drops, got %+v", req.Maps[0].ResourceDrops)
+	}
+	var birthdayDrop, sideDrop *drawing.MysekaiMsrMapResourceDrop
+	for i := range req.Maps[0].ResourceDrops {
+		drop := &req.Maps[0].ResourceDrops[i]
+		if drop.Type == "mysekai_material" && drop.ID == 179 {
+			birthdayDrop = drop
+		}
+		if drop.Type == "mysekai_item" && drop.ID == 501 {
+			sideDrop = drop
+		}
+	}
+	if birthdayDrop == nil || sideDrop == nil {
+		t.Fatalf("missing expected resource drops: %+v", req.Maps[0].ResourceDrops)
+	}
+	if birthdayDrop.Hide {
+		t.Fatalf("birthday sapling drop should stay visible: %+v", birthdayDrop)
+	}
+	if sideDrop.Quantity != 3 {
+		t.Fatalf("expected grouped side-drop quantity 3, got %+v", sideDrop)
+	}
+	if sideDrop.SmallIcon == nil || !*sideDrop.SmallIcon {
+		t.Fatalf("expected side-drop to be rendered as small icon, got %+v", sideDrop.SmallIcon)
 	}
 }

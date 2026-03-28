@@ -316,7 +316,21 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			})
 		}
 
-		resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
+		type groupedMysekaiResourceDrop struct {
+			ID                  int
+			Type                string
+			ImagePath           string
+			PositionX           float64
+			PositionZ           float64
+			Quantity            int
+			Status              string
+			SmallIcon           *bool
+			Hide                bool
+			Rarity              int
+			AttachmentImagePath *string
+		}
+
+		resourceDropsByPos := make(map[string]map[string]*groupedMysekaiResourceDrop)
 		for _, raw := range rawDrops {
 			drop, ok := raw.(map[string]interface{})
 			if !ok {
@@ -361,17 +375,93 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				attachmentImagePath = &path
 			}
 
-			resourceDrops = append(resourceDrops, drawing.MysekaiMsrMapResourceDrop{
+			positionX := floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0))
+			positionZ := floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0))
+			posKey := mysekaiHarvestPosKey(positionX, positionZ)
+			if posKey == "" {
+				continue
+			}
+			resourceGroupKey := fmt.Sprintf("%s_%d", resourceType, resourceID)
+			if _, ok := resourceDropsByPos[posKey]; !ok {
+				resourceDropsByPos[posKey] = make(map[string]*groupedMysekaiResourceDrop)
+			}
+			if existing := resourceDropsByPos[posKey][resourceGroupKey]; existing != nil {
+				existing.Quantity += quantity
+				if existing.AttachmentImagePath == nil && attachmentImagePath != nil {
+					existing.AttachmentImagePath = attachmentImagePath
+				}
+				if existing.Status == "" {
+					existing.Status = status
+				}
+				continue
+			}
+			resourceDropsByPos[posKey][resourceGroupKey] = &groupedMysekaiResourceDrop{
 				ID:                  resourceID,
 				Type:                resourceType,
 				ImagePath:           imagePath,
-				PositionX:           floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0)),
-				PositionZ:           floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0)),
+				PositionX:           positionX,
+				PositionZ:           positionZ,
 				Quantity:            quantity,
 				Status:              status,
 				Rarity:              rarity,
 				AttachmentImagePath: attachmentImagePath,
-			})
+			}
+		}
+
+		resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
+		for _, grouped := range resourceDropsByPos {
+			hasMaterialDrop := false
+			isCottonFlower := false
+			isBirthdaySapling := false
+			for key, item := range grouped {
+				if (key == "mysekai_material_1" || key == "mysekai_material_6") && item.Quantity == 6 {
+					item.Hide = true
+				}
+				if key == "mysekai_material_21" || key == "mysekai_material_22" {
+					isCottonFlower = true
+				}
+				if strings.HasPrefix(key, "mysekai_material_") || item.Type == "material" {
+					hasMaterialDrop = true
+				}
+				if mysekaiIsBirthdayDrop(item.Type, item.ID) && item.Quantity > 16 {
+					isBirthdaySapling = true
+				}
+			}
+			for key, item := range grouped {
+				smallIcon := false
+				smallIconSet := false
+				if (!strings.HasPrefix(key, "mysekai_material_") && item.Type != "material") && hasMaterialDrop {
+					smallIcon = true
+					smallIconSet = true
+				}
+				if isCottonFlower && key != "mysekai_material_21" && key != "mysekai_material_22" {
+					smallIcon = true
+					smallIconSet = true
+				}
+				if isBirthdaySapling {
+					smallIcon = !mysekaiIsBirthdayDrop(item.Type, item.ID)
+					smallIconSet = true
+				} else if mysekaiIsBirthdayDrop(item.Type, item.ID) {
+					item.Hide = true
+				}
+				if smallIconSet {
+					iconCopy := smallIcon
+					item.SmallIcon = &iconCopy
+				}
+				resourceDrops = append(resourceDrops, drawing.MysekaiMsrMapResourceDrop{
+					ID:                  item.ID,
+					Type:                item.Type,
+					ImagePath:           item.ImagePath,
+					PositionX:           item.PositionX,
+					PositionZ:           item.PositionZ,
+					Quantity:            item.Quantity,
+					Status:              item.Status,
+					SmallIcon:           item.SmallIcon,
+					Hide:                item.Hide,
+					Rarity:              item.Rarity,
+					AttachmentImagePath: item.AttachmentImagePath,
+				})
+			}
 		}
 
 		maps = append(maps, drawing.MysekaiMsrMapData{
@@ -1654,6 +1744,10 @@ func mysekaiBirthdayCharacterImageName(item map[string]interface{}) string {
 		return ""
 	}
 	return strings.ToLower(strings.TrimSpace(stringValue(item["givenNameEnglish"])))
+}
+
+func mysekaiIsBirthdayDrop(resourceType string, resourceID int) bool {
+	return (resourceType == "material" || resourceType == "mysekai_material") && resourceID >= 174 && resourceID <= 199
 }
 
 func (c *Controller) loadMusicRecordJacketMap() map[int]string {

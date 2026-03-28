@@ -1544,7 +1544,7 @@ pjsk:
 
 | 事项 | 状态 | 说明 |
 |------|------|------|
-| education/area 过滤透传 | ⏸ 待实现 | Go 端需解析过滤参数（团名/角色名/属性/树/花）并在构建请求前过滤 area items |
+| education/area 过滤透传 | ✅ 已完成 | Go 端已支持解析团名/角色名/属性/树/花过滤参数，并在构建请求前按 master data 过滤 area items |
 | card/box 渲染超时 | ⏸ 待优化 | Drawing API 渲染大量卡牌耗时过长，需优化或分页 |
 | score/custom-room 布局溢出 | ⏸ 待修复 | Drawing API 返回 "Content size too large"，Python 端渲染布局问题 |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |

@@ -47,6 +47,17 @@ func (s *testSource) GetAreaItem(id int) *AreaItem {
 	return s.areaItems[id]
 }
 
+func (s *testSource) GetAreaItems() []*AreaItem {
+	if len(s.areaItems) == 0 {
+		return nil
+	}
+	out := make([]*AreaItem, 0, len(s.areaItems))
+	for _, item := range s.areaItems {
+		out = append(out, item)
+	}
+	return out
+}
+
 func (s *testSource) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 	levels := s.areaLevels[areaItemID]
 	if len(levels) == 0 {
@@ -255,14 +266,122 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 	}
 
 	second := req.AreaItems[1]
-	if second.ItemID != 102 || second.CurrentLevel != 2 || len(second.Levels) != 2 {
+	if second.ItemID != 102 || second.CurrentLevel != 2 || len(second.Levels) != 1 {
 		t.Fatalf("unexpected second area item: %+v", second)
 	}
-	if got := second.Levels[0]; got.Level != 2 || len(got.Materials) != 0 {
-		t.Fatalf("expected historical level to have no materials: %+v", got)
-	}
-	if got := second.Levels[1]; got.Level != 3 || !got.CanUpgrade || len(got.Materials) != 2 {
+	if got := second.Levels[0]; got.Level != 3 || !got.CanUpgrade || len(got.Materials) != 2 {
 		t.Fatalf("unexpected upgrade level payload: %+v", got)
+	}
+}
+
+func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+			"coin":   1000,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 2, "member3": 3, "member4": 4, "member5": 5},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userAreas": []map[string]any{
+			{"areaItems": []map[string]any{
+				{"areaItemId": 201, "level": 1},
+			}},
+		},
+		"userMaterials": []map[string]any{
+			{"materialId": 301, "quantity": 50},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		boxes: map[string]map[int]*ResourceBox{
+			"shop_item": {
+				31: {ID: 31, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 201, ResourceLevel: 2}}},
+				32: {ID: 32, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 202, ResourceLevel: 1}}},
+				33: {ID: 33, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 203, ResourceLevel: 1}}},
+				34: {ID: 34, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 204, ResourceLevel: 1}}},
+				35: {ID: 35, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 205, ResourceLevel: 1}}},
+				36: {ID: 36, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 206, ResourceLevel: 1}}},
+			},
+		},
+		areaItems: map[int]*AreaItem{
+			201: {ID: 201, AreaID: 1, AssetbundleName: "item_201"},
+			202: {ID: 202, AreaID: 8, AssetbundleName: "item_202"},
+			203: {ID: 203, AreaID: 2, AssetbundleName: "item_203"},
+			204: {ID: 204, AreaID: 11, AssetbundleName: "item_204"},
+			205: {ID: 205, AreaID: 13, AssetbundleName: "item_205"},
+			206: {ID: 206, AreaID: 3, AssetbundleName: "item_206"},
+		},
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			201: {
+				1: {AreaItemID: 201, Level: 1, TargetGameCharacterID: 21, Power1BonusRate: 1.0},
+				2: {AreaItemID: 201, Level: 2, TargetGameCharacterID: 21, Power1BonusRate: 2.0},
+			},
+			202: {
+				1: {AreaItemID: 202, Level: 1, TargetUnit: "street", Power1BonusRate: 1.0},
+			},
+			203: {
+				1: {AreaItemID: 203, Level: 1, TargetCardAttr: "cute", Power1BonusRate: 1.0},
+			},
+			204: {
+				1: {AreaItemID: 204, Level: 1, Power1BonusRate: 1.0},
+			},
+			205: {
+				1: {AreaItemID: 205, Level: 1, Power1BonusRate: 1.0},
+			},
+			206: {
+				1: {AreaItemID: 206, Level: 1, TargetUnit: "piapro", Power1BonusRate: 1.0},
+			},
+		},
+		shopItems: map[int]*ShopItem{
+			31: {ID: 20031, ResourceBoxID: 31, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+			32: {ID: 20032, ResourceBoxID: 32, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+			33: {ID: 20033, ResourceBoxID: 33, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+			34: {ID: 20034, ResourceBoxID: 34, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+			35: {ID: 20035, ResourceBoxID: 35, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+			36: {ID: 20036, ResourceBoxID: 36, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 301, Quantity: 1}}},
+		},
+	})
+
+	tests := []struct {
+		name        string
+		query       AreaItemQuery
+		wantItemIDs []int
+	}{
+		{name: "filter by unit", query: AreaItemQuery{Region: renderregion.JP, Unit: "street"}, wantItemIDs: []int{202}},
+		{name: "filter by character", query: AreaItemQuery{Region: renderregion.JP, Cid: 21}, wantItemIDs: []int{201}},
+		{name: "filter by attr", query: AreaItemQuery{Region: renderregion.JP, Attr: "cute"}, wantItemIDs: []int{203}},
+		{name: "filter by tree", query: AreaItemQuery{Region: renderregion.JP, Tree: true}, wantItemIDs: []int{204}},
+		{name: "filter by flower", query: AreaItemQuery{Region: renderregion.JP, Flower: true}, wantItemIDs: []int{205}},
+		{name: "filter by piapro", query: AreaItemQuery{Region: renderregion.JP, Unit: "piapro"}, wantItemIDs: []int{201, 206}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(tt.query)
+			if err != nil {
+				t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFromSnapshot() error = %v", err)
+			}
+			if len(req.AreaItems) != len(tt.wantItemIDs) {
+				t.Fatalf("unexpected area item count: got=%d want=%d payload=%+v", len(req.AreaItems), len(tt.wantItemIDs), req.AreaItems)
+			}
+			for idx, wantID := range tt.wantItemIDs {
+				if req.AreaItems[idx].ItemID != wantID {
+					t.Fatalf("unexpected item order at %d: got=%d want=%d", idx, req.AreaItems[idx].ItemID, wantID)
+				}
+			}
+		})
 	}
 }
 

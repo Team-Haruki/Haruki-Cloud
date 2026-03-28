@@ -14,6 +14,28 @@ import (
 
 const areaCoinMaterialID = -1
 
+const (
+	areaTreeAreaID   = 11
+	areaFlowerAreaID = 13
+)
+
+var areaFilterUnitAreaIDs = map[string]int{
+	"light_sound":    5,
+	"idol":           7,
+	"street":         8,
+	"theme_park":     9,
+	"school_refusal": 10,
+}
+
+var piaproCharacterIDs = map[int]struct{}{
+	21: {},
+	22: {},
+	23: {},
+	24: {},
+	25: {},
+	26: {},
+}
+
 var powerBonusUnitOrder = []string{
 	"light_sound",
 	"idol",
@@ -192,14 +214,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		userMaterials[item.MaterialID] = item.Quantity
 	}
 
-	itemIDs := make([]int, 0, len(userAreaLevels))
-	for itemID := range userAreaLevels {
-		if len(ctx.source.GetAreaItemLevels(itemID)) == 0 {
-			continue
-		}
-		itemIDs = append(itemIDs, itemID)
-	}
-	sort.Ints(itemIDs)
+	itemIDs := c.resolveAreaItemIDs(ctx.source, userAreaLevels, query)
 	if len(itemIDs) == 0 {
 		return nil, fmt.Errorf("area item masterdata is not available")
 	}
@@ -298,6 +313,43 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 	})
 }
 
+func (c *Controller) resolveAreaItemIDs(source Source, userAreaLevels map[int]int, query AreaItemQuery) []int {
+	if !hasAreaItemFilter(query) {
+		itemIDs := make([]int, 0, len(userAreaLevels))
+		for itemID := range userAreaLevels {
+			if len(source.GetAreaItemLevels(itemID)) == 0 {
+				continue
+			}
+			itemIDs = append(itemIDs, itemID)
+		}
+		sort.Ints(itemIDs)
+		return itemIDs
+	}
+
+	filterUnit := normalizeUnit(query.Unit)
+	filterAttr := normalizeAttr(query.Attr)
+	filterPiapro := filterUnit == "piapro"
+	if filterPiapro {
+		filterUnit = ""
+	}
+
+	matched := make([]int, 0, 16)
+	for _, item := range source.GetAreaItems() {
+		if item == nil || item.ID <= 0 {
+			continue
+		}
+		levels := source.GetAreaItemLevels(item.ID)
+		if len(levels) == 0 {
+			continue
+		}
+		if areaItemMatchesFilter(item, levels, filterUnit, filterAttr, query.Cid, query.Tree, query.Flower, filterPiapro) {
+			matched = append(matched, item.ID)
+		}
+	}
+	sort.Ints(matched)
+	return matched
+}
+
 func (c *Controller) resolveSnapshotContext(
 	region renderregion.Value,
 	profile *drawing.DetailedProfileCardRequest,
@@ -375,6 +427,75 @@ func (c *Controller) resolveAreaItemShopItems(source Source, itemIDs []int) map[
 		}
 	}
 	return result
+}
+
+func hasAreaItemFilter(query AreaItemQuery) bool {
+	return normalizeUnit(query.Unit) != "" ||
+		normalizeAttr(query.Attr) != "" ||
+		query.Cid > 0 ||
+		query.Tree ||
+		query.Flower
+}
+
+func areaItemMatchesFilter(
+	item *AreaItem,
+	levels []*AreaItemLevel,
+	filterUnit string,
+	filterAttr string,
+	filterCID int,
+	filterTree bool,
+	filterFlower bool,
+	filterPiapro bool,
+) bool {
+	if item == nil {
+		return false
+	}
+
+	matched := false
+	isVSItem := false
+
+	for _, level := range levels {
+		if level == nil {
+			continue
+		}
+
+		if normalized := normalizeUnit(level.TargetUnit); normalized == "piapro" {
+			isVSItem = true
+			if filterPiapro {
+				matched = true
+			}
+		}
+
+		if level.TargetGameCharacterID > 0 {
+			if _, ok := piaproCharacterIDs[level.TargetGameCharacterID]; ok {
+				isVSItem = true
+				if filterPiapro {
+					matched = true
+				}
+			}
+			if filterCID > 0 && level.TargetGameCharacterID == filterCID {
+				matched = true
+			}
+		}
+
+		if filterAttr != "" && normalizeAttr(level.TargetCardAttr) == filterAttr {
+			matched = true
+		}
+	}
+
+	if filterTree && item.AreaID == areaTreeAreaID {
+		matched = true
+	}
+	if filterFlower && item.AreaID == areaFlowerAreaID {
+		matched = true
+	}
+	if filterUnit != "" {
+		if areaID, ok := areaFilterUnitAreaIDs[filterUnit]; ok && item.AreaID == areaID && !isVSItem {
+			matched = true
+		}
+	}
+
+	return matched
 }
 
 func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {

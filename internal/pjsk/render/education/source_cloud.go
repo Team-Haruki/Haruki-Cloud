@@ -170,6 +170,21 @@ func (c *CloudSource) GetAreaItem(id int) *AreaItem {
 	return cloneAreaItem(c.areaByID[id])
 }
 
+func (c *CloudSource) GetAreaItems() []*AreaItem {
+	if !c.ensureAreaMasterLoaded() {
+		return nil
+	}
+
+	c.areaMu.RLock()
+	defer c.areaMu.RUnlock()
+
+	items := make([]*AreaItem, 0, len(c.areaByID))
+	for _, item := range c.areaByID {
+		items = append(items, cloneAreaItem(item))
+	}
+	return items
+}
+
 func (c *CloudSource) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 	if areaItemID <= 0 || !c.ensureAreaMasterLoaded() {
 		return nil

@@ -781,17 +781,19 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 		data, err = app.Edu.RenderPowerBonusDetail(req)
 
 	case "education-area":
-		req := drawing.AreaItemUpgradeMaterialsRequest{}
-		mergeParams(r.Params, &req)
-		if len(req.AreaItems) == 0 && suiteUID > 0 {
+		query := education.AreaItemQuery{Region: region}
+		mergeParams(r.Params, &query)
+		query.Profile = publicDetailedProfile
+		if suiteUID > 0 {
 			builtReq, buildErr := buildAreaItemUpgradeMaterialsRequestFromSuite(
-				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				app, query, regionStr, suiteUID, suitePlatform, suitePlatformUserID)
 			if buildErr != nil {
 				return nil, buildErr
 			}
-			req = *builtReq
+			data, err = app.Edu.RenderAreaItemUpgradeMaterials(*builtReq)
+			break
 		}
-		data, err = app.Edu.RenderAreaItemUpgradeMaterials(req)
+		data, err = app.Edu.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
 
 	default:
 		return nil, fmt.Errorf("bridge: unsupported education mode %q", r.Mode)
@@ -823,18 +825,14 @@ func buildPowerBonusRequestFromSuite(
 }
 
 func buildAreaItemUpgradeMaterialsRequestFromSuite(
-	app *renderapp.App, region renderregion.Value, regionStr string, uid int64, platform, platformUserID string,
-	profile *drawing.DetailedProfileCardRequest,
+	app *renderapp.App, query education.AreaItemQuery, regionStr string, uid int64, platform, platformUserID string,
 ) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
-	snapshot, err := buildEducationSnapshotFromSuite(app, region, regionStr, uid, platform, platformUserID)
+	snapshot, err := buildEducationSnapshotFromSuite(app, query.Region, regionStr, uid, platform, platformUserID)
 	if err != nil {
 		return nil, err
 	}
-	return app.Edu.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(education.AreaItemQuery{
-		Region:   region,
-		Profile:  profile,
-		Snapshot: snapshot,
-	})
+	query.Snapshot = snapshot
+	return app.Edu.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
 }
 
 func buildEducationSnapshotFromSuite(

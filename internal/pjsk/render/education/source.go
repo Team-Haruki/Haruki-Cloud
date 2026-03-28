@@ -7,6 +7,7 @@ type Source interface {
 	GetChallengeRewardsByCharacter(charID int) []*ChallengeReward
 	GetResourceBoxByPurpose(purpose string, id int) *ResourceBox
 	GetResourceBoxesByPurpose(purpose string) []*ResourceBox
+	GetAreaItems() []*AreaItem
 	GetAreaItem(id int) *AreaItem
 	GetAreaItemLevels(areaItemID int) []*AreaItemLevel
 	GetAreaItemLevel(areaItemID, level int) *AreaItemLevel

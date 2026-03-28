@@ -55,6 +55,6 @@ exports/
 Data/
 sshkey
 tmp/
-music/
-character/
+/music/
+/character/
 client.json

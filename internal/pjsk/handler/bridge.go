@@ -63,6 +63,11 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		}
 	}
 
+	// When no region was explicitly specified (no prefix like /jp, no -r flag),
+	// resolve it from the user's global default binding so e.g. a TW player
+	// doesn't always get JP results when typing bare commands.
+	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
+
 	switch resolved.Module {
 	case parser.ModuleCard:
 		message, err = executeCard(resolved, app)
@@ -2481,4 +2486,29 @@ func mergeParams(params json.RawMessage, target interface{}) {
 		return
 	}
 	_ = json.Unmarshal(params, target)
+}
+
+// resolveRegionFromDefaultBinding resolves the region for a command where the
+// user did not provide an explicit region prefix or -r flag. It looks up the
+// user's global default binding (server = "default") and returns the server of
+// the bound account (e.g. "jp", "tw", "kr", "en"). Falls back to "jp" if the
+// user has no global default binding or if any lookup fails.
+func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) string {
+	if r.RegionExplicit {
+		return r.Region
+	}
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return r.Region
+	}
+	_, binding, err := app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+	if err != nil || binding == nil || strings.TrimSpace(binding.Server) == "" {
+		return r.Region
+	}
+	normalized := renderregion.Normalize(binding.Server)
+	if normalized.IsZero() {
+		return r.Region
+	}
+	return normalized.String()
 }

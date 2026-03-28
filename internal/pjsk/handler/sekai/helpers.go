@@ -12,6 +12,7 @@ func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode s
 		Mode:              mode,
 		Query:             ctx.GetArgs(),
 		Region:            string(ctx.Region()),
+		RegionExplicit:    ctx.HasExplicitRegion(),
 		IsHelp:            ctx.Flags()["is_help"],
 		IsVerbose:         ctx.Flags()["is_verbose"],
 		IsPreview:         ctx.Flags()["is_preview"],

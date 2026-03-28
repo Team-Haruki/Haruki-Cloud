@@ -7,6 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 type ImageResult struct {
@@ -19,7 +20,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 		return nil, fmt.Errorf("card controller is not configured")
 	}
 
-	_, source, _, err := c.resolveBuilder(query.Region)
+	region, source, _, err := c.resolveBuilder(query.Region)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 		return nil, fmt.Errorf("failed to search card: %w", err)
 	}
 
-	paths := resolveCardOriginalImagePaths(c.assets, cardInfo)
+	paths := resolveCardOriginalImagePaths(c.assets, region, cardInfo)
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("card %d does not have original image assets", cardInfo.ID)
 	}
@@ -44,7 +45,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	}, nil
 }
 
-func resolveCardOriginalImagePaths(helper *assets.AssetHelper, card *masterdata.Card) []string {
+func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregion.Value, card *masterdata.Card) []string {
 	if card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return nil
 	}
@@ -72,16 +73,7 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, card *masterdata.
 	seen := make(map[string]struct{}, len(candidates))
 	paths := make([]string, 0, len(candidates))
 	for _, item := range candidates {
-		path := ""
-		if helper != nil {
-			if local := helper.FirstExisting(item.primary, item.fallback); local != "" {
-				path = filepath.ToSlash(local)
-			} else {
-				path = assets.ResolveAssetPath(helper, "", item.primary)
-			}
-		} else {
-			path = filepath.ToSlash(item.primary)
-		}
+		path := resolveCardOriginalImagePath(helper, region, item.primary, item.fallback)
 		if strings.TrimSpace(path) == "" {
 			continue
 		}
@@ -92,4 +84,25 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, card *masterdata.
 		paths = append(paths, path)
 	}
 	return paths
+}
+
+func resolveCardOriginalImagePath(helper *assets.AssetHelper, region renderregion.Value, relPaths ...string) string {
+	candidates := make([]string, 0, len(relPaths)*3)
+	for _, rel := range relPaths {
+		cleanRel := filepath.ToSlash(strings.TrimSpace(rel))
+		if cleanRel == "" {
+			continue
+		}
+		for _, base := range assets.RegionAssetDirs(region.String()) {
+			candidates = append(candidates, filepath.ToSlash(filepath.Join(base, cleanRel)))
+		}
+		// Keep compatibility with older local layouts used by tests and ad-hoc assets.
+		candidates = append(candidates, cleanRel)
+	}
+	if helper != nil {
+		if local := helper.FirstExisting(candidates...); local != "" {
+			return filepath.ToSlash(local)
+		}
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
 }

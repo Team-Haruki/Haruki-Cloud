@@ -65,10 +65,14 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled        bool
-	UseLocalEngine bool
-	Timeout        time.Duration
-	DefaultAlgs    []string
+	Enabled          bool
+	UseLocalEngine   bool
+	LocalPoolSize    int
+	LocalLibraryDirs []string
+	StaticDataDir    string
+	MasterdataDir    string
+	Timeout          time.Duration
+	DefaultAlgs      []string
 }
 
 type App struct {
@@ -129,7 +133,16 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	miscController := misc.NewController(drawingClient)
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion, assetHelper, cfg.SekaiDSN)
 	musicController := (*music.Controller)(nil)
-	deckController := deck.NewController(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
+	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
+		Enabled:          cfg.DeckRecommend.Enabled,
+		UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
+		LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
+		LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
+		StaticDataDir:    cfg.DeckRecommend.StaticDataDir,
+		MasterdataDir:    cfg.DeckRecommend.MasterdataDir,
+		Timeout:          cfg.DeckRecommend.Timeout,
+		DefaultAlgs:      append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
@@ -146,7 +159,16 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventSource, assetHelper)
-		deckController = deck.NewController(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
+		deckController = deck.NewControllerWithConfig(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
+			Enabled:          cfg.DeckRecommend.Enabled,
+			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
+			LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
+			LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
+			StaticDataDir:    cfg.DeckRecommend.StaticDataDir,
+			MasterdataDir:    cfg.DeckRecommend.MasterdataDir,
+			Timeout:          cfg.DeckRecommend.Timeout,
+			DefaultAlgs:      append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+		}, cfg.MetaLoader)
 		cardController = card.NewController(cardSource, eventSource, drawingClient, assetHelper)
 		educationController.RegisterSource(education.NewCloudSource(sekaiClient, cfg.DefaultRegion))
 		eventController = event.NewController(eventSource, drawingClient, assetHelper)

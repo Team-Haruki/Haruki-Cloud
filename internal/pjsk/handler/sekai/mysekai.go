@@ -13,7 +13,7 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/resource",
 			Commands: []string{
-				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msr", "/msmap", "/msa",
+				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msmap", "/msa",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
@@ -145,7 +145,7 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/music-record",
 			Commands: []string{
-				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/msm", "/mss", "/mssong",
+				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/msm", "/mss", "/msr", "/mssong",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {

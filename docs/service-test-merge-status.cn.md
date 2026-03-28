@@ -156,17 +156,23 @@
 - 现阶段已经可以运行
 - 但还不是完全 DB/source 驱动的最终形态
 
-### 4.3 deck auto recommend 是简化实现
+### 4.3 deck auto recommend 保留 fallback，并新增可选 native 引擎
 
-`deck` 当前已经可用，但只保留了稳定、可维护的基础能力：
+`deck` 当前已经具备两层能力：
 
 - typed `recommend` build/render
 - `recommend/auto` 的本地快照启发式回退实现
+- 显式 opt-in 的本地 CGo deck engine（`pjsk_deck_cgo`）
 
-当前没有迁入的内容：
+当前收口方式是：
 
-- 原 `Service-Test` 的 deck CGo 原生引擎
-- 独立 deck recommendation backend
+- 默认构建仍然不依赖原生 deck 库
+- 只有在显式 `CGO_ENABLED=1` 且带 `-tags pjsk_deck_cgo` 时才编译 native bindings
+- runtime 仍通过 `deck_recommend.enabled + use_local_engine` 决定是否走 native 路径
+
+当前仍未迁入的内容：
+
+- 旧的独立 deck recommendation HTTP backend
 
 ## 5. 后续事项，但不属于本轮任务
 

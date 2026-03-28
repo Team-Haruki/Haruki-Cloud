@@ -110,7 +110,7 @@ func formatBindResultText(result *BindResult) string {
 		return "绑定成功"
 	}
 
-	lines := []string{fmt.Sprintf("%s服绑定成功: %s (%s)", strings.ToUpper(result.Server), result.UserName, result.UserID)}
+	lines := []string{fmt.Sprintf("%s服绑定成功: %s (%s)", strings.ToUpper(result.Server), result.UserName, maskUID(result.UserID))}
 	if result.AlreadyBound {
 		lines = append(lines, "该账号此前已绑定，本次跳过重复写入")
 	}

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"haruki-cloud/utils/logger"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+
+	harukiConfig "haruki-cloud/config"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -16,6 +19,7 @@ type HarukiDrawingClient struct {
 	client  *resty.Client
 	baseURL string
 	cache   *RenderCacheClient
+	logger  *logger.Logger
 }
 
 func WithTimeout(timeout time.Duration) ClientOption {
@@ -38,9 +42,11 @@ func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDraw
 		}
 	}
 
+	logger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
 	return &HarukiDrawingClient{
 		client:  client,
 		baseURL: strings.TrimRight(baseURL, "/"),
+		logger:  logger,
 	}
 }
 
@@ -63,7 +69,7 @@ func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, e
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
 		Post(c.baseURL + endpoint)
-	logger.Debugf("POST %s: %v", c.baseURL+endpoint, body)
+	c.logger.Debugf("POST %s: %v", c.baseURL+endpoint, body)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +77,7 @@ func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, e
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
-
+	c.logger.Debugf("Response from %s: type %s, length %s", c.baseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("Content-Length"))
 	return resp.Body(), nil
 }
 

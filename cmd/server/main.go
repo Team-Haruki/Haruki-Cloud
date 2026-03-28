@@ -308,10 +308,14 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		},
 		MetaLoader: metaLoader,
 		DeckRecommend: renderapp.DeckRecommendConfig{
-			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
-			UseLocalEngine: harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,
-			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
-			DefaultAlgs:    harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
+			Enabled:          harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
+			UseLocalEngine:   harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,
+			LocalPoolSize:    harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalPoolSize,
+			LocalLibraryDirs: append([]string(nil), harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalLibraryDirs...),
+			StaticDataDir:    harukiConfig.Cfg.PJSKRender.DeckRecommend.StaticDataDir,
+			MasterdataDir:    harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
+			Timeout:          harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
+			DefaultAlgs:      harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
 		},
 	})
 

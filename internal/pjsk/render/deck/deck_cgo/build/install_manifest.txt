@@ -1,0 +1,1 @@
+/home/xmlq/codes/haruki/Haruki-Cloud/internal/pjsk/render/deck/deck_cgo/lib/linux_amd64/libsekai_deck_recommend_c.so

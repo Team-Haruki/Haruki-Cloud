@@ -145,11 +145,11 @@ type PJSKParserConfig struct {
 }
 
 type PJSKConfig struct {
-	Enabled            bool                      `yaml:"enabled"`
-	DBType             string                    `yaml:"db_type"`
-	DBURL              string                    `yaml:"db_url"`
-	Parser             PJSKParserConfig          `yaml:"parser"`
-	AllowCNMySekai     []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
+	Enabled        bool                      `yaml:"enabled"`
+	DBType         string                    `yaml:"db_type"`
+	DBURL          string                    `yaml:"db_url"`
+	Parser         PJSKParserConfig          `yaml:"parser"`
+	AllowCNMySekai []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
 }
 
 type SekaiConfig struct {
@@ -176,10 +176,13 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled        bool          `yaml:"enabled"`
-	UseLocalEngine bool          `yaml:"use_local_engine"`
-	Timeout        time.Duration `yaml:"timeout"`
-	DefaultAlgs    []string      `yaml:"default_algs"`
+	Enabled          bool          `yaml:"enabled"`
+	UseLocalEngine   bool          `yaml:"use_local_engine"`
+	LocalPoolSize    int           `yaml:"local_pool_size"`
+	LocalLibraryDirs []string      `yaml:"local_library_dirs"`
+	StaticDataDir    string        `yaml:"static_data_dir"`
+	Timeout          time.Duration `yaml:"timeout"`
+	DefaultAlgs      []string      `yaml:"default_algs"`
 }
 
 type RenderCacheConfig struct {

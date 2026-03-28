@@ -894,8 +894,8 @@ func (s *bridgeCardEventSource) GetCharacterByID(id int) (*masterdata.Character,
 func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 	root := t.TempDir()
 	for _, rel := range []string{
-		filepath.Join("character", "member", "card_test", "card_normal.png"),
-		filepath.Join("character", "member", "card_test_rip", "card_after_training.png"),
+		filepath.Join("asset", "jp-assets", "startapp", "character", "member", "card_test", "card_normal.png"),
+		filepath.Join("asset", "jp-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png"),
 	} {
 		full := filepath.Join(root, rel)
 		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {

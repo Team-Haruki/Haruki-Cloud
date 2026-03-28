@@ -172,6 +172,10 @@ func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequ
 	if err != nil {
 		return nil, err
 	}
+	option, err := c.buildRecommendOption(region, recType, query)
+	if err != nil {
+		return nil, err
+	}
 
 	type deckCandidate struct {
 		card     *masterdata.Card
@@ -249,7 +253,8 @@ func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequ
 		CanvasThumbnailPath: drawing.StringPtr(assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")),
 	}
 
-	c.applyCommonRecommendMetadata(request, region, recType, nil, query)
+	c.applyOptionRequestFields(request, option)
+	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
 }
 
@@ -328,6 +333,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		}
 	}
 
+	applyRecommendOptionOverrides(option, recType, query)
 	return option, nil
 }
 
@@ -432,40 +438,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 		CanvasThumbnailPath: drawing.StringPtr(assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")),
 	}
 
-	if musicID, ok := option["music_id"].(int); ok {
-		request.MusicID = drawing.IntPtr(musicID)
-		if musicID == 10000 {
-			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
-			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
-		}
-	} else if musicIDFloat, ok := option["music_id"].(float64); ok {
-		musicID := int(musicIDFloat)
-		request.MusicID = drawing.IntPtr(musicID)
-		if musicID == 10000 {
-			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
-			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
-		}
-	}
-
-	if teammatePower, ok := option["multi_live_teammate_power"].(int); ok {
-		request.MultiLiveTeammatePower = drawing.IntPtr(teammatePower)
-	} else if teammatePowerFloat, ok := option["multi_live_teammate_power"].(float64); ok {
-		request.MultiLiveTeammatePower = drawing.IntPtr(int(teammatePowerFloat))
-	}
-
-	if teammateScoreUp, ok := option["multi_live_teammate_score_up"].(int); ok {
-		request.MultiLiveTeammateScoreUp = float64Ptr(float64(teammateScoreUp))
-	} else if teammateScoreUpFloat, ok := option["multi_live_teammate_score_up"].(float64); ok {
-		request.MultiLiveTeammateScoreUp = float64Ptr(teammateScoreUpFloat)
-	}
-
-	if fixedCards, ok := option["fixed_cards"].([]int); ok {
-		request.FixedCardsID = append([]int(nil), fixedCards...)
-	}
-	if fixedCharacters, ok := option["fixed_characters"].([]int); ok {
-		request.FixedCharactersID = append([]int(nil), fixedCharacters...)
-	}
-
+	c.applyOptionRequestFields(request, option)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
 }
@@ -475,10 +448,24 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 		return
 	}
 
-	switch recType {
-	case "challenge":
-		request.LiveType = drawing.StringPtr("single")
+	liveType := optionString(option, "live_type")
+	if liveType == "" {
+		switch recType {
+		case "challenge":
+			liveType = "challenge"
+		case "mysekai":
+			liveType = "mysekai"
+		default:
+			liveType = "multi"
+		}
+	}
+	switch liveType {
+	case "solo", "challenge":
+		request.LiveType = drawing.StringPtr("solo")
 		request.LiveName = drawing.StringPtr("单人")
+	case "auto", "challenge_auto":
+		request.LiveType = drawing.StringPtr("auto")
+		request.LiveName = drawing.StringPtr("自动")
 	case "mysekai":
 		request.LiveType = drawing.StringPtr("mysekai")
 		request.LiveName = drawing.StringPtr("烤森")
@@ -489,18 +476,51 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 
 	finalEventID := 0
 	if option != nil {
-		switch value := option["event_id"].(type) {
-		case int:
-			finalEventID = value
-		case float64:
-			finalEventID = int(value)
-		}
+		finalEventID = optionInt(option, "event_id")
 	}
 	if finalEventID <= 0 && query.EventID != nil && *query.EventID > 0 {
 		finalEventID = *query.EventID
 	}
-	if finalEventID <= 0 && recType != "no_event" && recType != "challenge" {
+	if finalEventID <= 0 && shouldUseFallbackEventMetadata(recType, option) {
 		finalEventID = c.pickCurrentOrNextEventID()
+	}
+
+	if optionHasUnitAttrEvent(option) && recType == "event" {
+		request.RecommendType = "unit_attr"
+	}
+	if optionHasWorldBloom(option) {
+		request.IsWl = true
+		switch recType {
+		case "event":
+			request.RecommendType = "wl"
+		case "bonus":
+			request.RecommendType = "wl_bonus"
+		}
+		if cid := optionInt(option, "world_bloom_character_id"); cid > 0 {
+			if icon := c.resolveCharacterIconPath(cid); icon != "" {
+				request.WlCharaIconPath = &icon
+				if request.CharaIconPath == nil {
+					request.CharaIconPath = &icon
+				}
+			}
+		}
+	}
+	if recType == "challenge" {
+		if cid := optionInt(option, "challenge_live_character_id"); cid > 0 {
+			if icon := c.resolveCharacterIconPath(cid); icon != "" {
+				request.CharaIconPath = &icon
+			}
+		}
+	}
+	if unit := optionString(option, "event_unit"); unit != "" {
+		if path := c.resolveUnitIconPath(unit); path != "" {
+			request.UnitLogoPath = &path
+		}
+	}
+	if attr := optionString(option, "event_attr"); attr != "" {
+		if path := c.resolveAttrIconPath(attr); path != "" {
+			request.AttrIconPath = &path
+		}
 	}
 	if finalEventID > 0 {
 		request.EventID = drawing.IntPtr(finalEventID)
@@ -516,6 +536,364 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 			}
 		}
 	}
+}
+
+func applyRecommendOptionOverrides(option map[string]interface{}, recType string, query AutoQuery) {
+	if option == nil {
+		return
+	}
+	if algorithm := normalizeRecommendAlgorithm(query.Algorithm); algorithm != "" {
+		option["algorithm"] = algorithm
+	}
+	if liveType := normalizeRecommendLiveType(recType, query.LiveType); liveType != "" {
+		option["live_type"] = liveType
+	}
+	if target := normalizeRecommendTarget(query.Target); target != "" {
+		option["target"] = target
+	}
+	if query.MusicID != nil && *query.MusicID > 0 {
+		option["music_id"] = *query.MusicID
+	}
+	if diff := normalizeRecommendDifficulty(query.MusicDiff); diff != "" {
+		option["music_diff"] = diff
+	}
+	if len(query.TargetBonuses) > 0 {
+		option["target_bonus_list"] = append([]int(nil), query.TargetBonuses...)
+	}
+
+	explicitEventID := query.EventID != nil && *query.EventID > 0
+	if explicitEventID {
+		option["event_id"] = *query.EventID
+	}
+
+	fakeEvent := false
+	if attr := normalizeRecommendAttr(query.EventAttr); attr != "" {
+		option["event_attr"] = attr
+		fakeEvent = true
+	}
+	if unit := normalizeRecommendUnit(query.EventUnit); unit != "" {
+		option["event_unit"] = unit
+		fakeEvent = true
+	}
+	if query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0 {
+		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
+		option["event_type"] = "world_bloom"
+		fakeEvent = true
+	}
+	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
+		option["world_bloom_character_id"] = *query.WorldBloomCharacterID
+	}
+	if fakeEvent {
+		option["event_id"] = nil
+	}
+
+	if query.ChallengeLiveCharacterID != nil && *query.ChallengeLiveCharacterID > 0 {
+		option["challenge_live_character_id"] = *query.ChallengeLiveCharacterID
+	}
+	if len(query.FixedCards) > 0 {
+		option["fixed_cards"] = append([]int(nil), query.FixedCards...)
+	}
+	if len(query.FixedCharacters) > 0 {
+		option["fixed_characters"] = append([]int(nil), query.FixedCharacters...)
+	}
+
+	applyDeckConfigPatch(option, "rarity_1_config", query.Rarity1Config)
+	applyDeckConfigPatch(option, "rarity_2_config", query.Rarity2Config)
+	applyDeckConfigPatch(option, "rarity_3_config", query.Rarity3Config)
+	applyDeckConfigPatch(option, "rarity_4_config", query.Rarity4Config)
+	applyDeckConfigPatch(option, "rarity_birthday_config", query.RarityBirthdayConfig)
+	if len(query.SingleCardConfigs) > 0 {
+		option["single_card_configs"] = toSingleCardConfigInterfaces(query.SingleCardConfigs)
+	}
+
+	if query.MultiLiveTeammatePower != nil && *query.MultiLiveTeammatePower > 0 {
+		option["multi_live_teammate_power"] = *query.MultiLiveTeammatePower
+	}
+	if query.MultiLiveTeammateScoreUp != nil && *query.MultiLiveTeammateScoreUp >= 0 {
+		option["multi_live_teammate_score_up"] = *query.MultiLiveTeammateScoreUp
+	}
+	if query.MultiLiveScoreUpLowerBound != nil && *query.MultiLiveScoreUpLowerBound >= 0 {
+		option["multi_live_score_up_lower_bound"] = *query.MultiLiveScoreUpLowerBound
+	}
+	if strategy := normalizeRecommendStrategy(query.SkillOrderChooseStrategy); strategy != "" {
+		option["skill_order_choose_strategy"] = strategy
+	}
+	if strategy := normalizeRecommendStrategy(query.SkillReferenceChooseStrategy); strategy != "" {
+		option["skill_reference_choose_strategy"] = strategy
+	}
+	if query.KeepAfterTrainingState {
+		option["keep_after_training_state"] = true
+	}
+}
+
+func applyDeckConfigPatch(option map[string]interface{}, key string, patch *CardConfigPatch) {
+	if option == nil || patch == nil {
+		return
+	}
+	cfg, _ := option[key].(map[string]interface{})
+	if cfg == nil {
+		cfg = noChangeDeckConfig()
+	}
+	if patch.Disable {
+		cfg["disable"] = true
+	}
+	if patch.LevelMax {
+		cfg["level_max"] = true
+	}
+	if patch.EpisodeRead {
+		cfg["episode_read"] = true
+	}
+	if patch.MasterMax {
+		cfg["master_max"] = true
+	}
+	if patch.SkillMax {
+		cfg["skill_max"] = true
+	}
+	if patch.Canvas {
+		cfg["canvas"] = true
+	}
+	option[key] = cfg
+}
+
+func toSingleCardConfigInterfaces(cfgs []SingleCardConfigPatch) []interface{} {
+	if len(cfgs) == 0 {
+		return nil
+	}
+	result := make([]interface{}, 0, len(cfgs))
+	for _, cfg := range cfgs {
+		if cfg.CardID <= 0 {
+			continue
+		}
+		result = append(result, map[string]interface{}{
+			"card_id":      cfg.CardID,
+			"disable":      cfg.Disable,
+			"level_max":    cfg.LevelMax,
+			"episode_read": cfg.EpisodeRead,
+			"master_max":   cfg.MasterMax,
+			"skill_max":    cfg.SkillMax,
+			"canvas":       cfg.Canvas,
+		})
+	}
+	return result
+}
+
+func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]interface{}) {
+	if request == nil || option == nil {
+		return
+	}
+	if target := optionString(option, "target"); target != "" {
+		request.Target = drawing.StringPtr(target)
+	}
+	if musicID := optionInt(option, "music_id"); musicID > 0 {
+		request.MusicID = drawing.IntPtr(musicID)
+		if musicID == 10000 {
+			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
+			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
+		}
+	}
+	if diff := optionString(option, "music_diff"); diff != "" {
+		request.MusicDiff = drawing.StringPtr(diff)
+	}
+	if teammatePower := optionInt(option, "multi_live_teammate_power"); teammatePower > 0 {
+		request.MultiLiveTeammatePower = drawing.IntPtr(teammatePower)
+	}
+	if teammateScoreUp, ok := optionFloat(option, "multi_live_teammate_score_up"); ok {
+		request.MultiLiveTeammateScoreUp = float64Ptr(teammateScoreUp)
+	}
+	if lowerBound, ok := optionFloat(option, "multi_live_score_up_lower_bound"); ok {
+		request.MultiLiveScoreUpLowerBound = float64Ptr(lowerBound)
+	}
+	if fixedCards, ok := option["fixed_cards"].([]int); ok {
+		request.FixedCardsID = append([]int(nil), fixedCards...)
+	}
+	if fixedCharacters, ok := option["fixed_characters"].([]int); ok {
+		request.FixedCharactersID = append([]int(nil), fixedCharacters...)
+	}
+	if keepAfterTrainingState, ok := option["keep_after_training_state"].(bool); ok {
+		request.KeepAfterTrainingState = keepAfterTrainingState
+	}
+}
+
+func shouldUseFallbackEventMetadata(recType string, option map[string]interface{}) bool {
+	switch recType {
+	case "event", "bonus":
+		return !optionHasSimulatedEvent(option)
+	default:
+		return false
+	}
+}
+
+func optionHasSimulatedEvent(option map[string]interface{}) bool {
+	if option == nil {
+		return false
+	}
+	return optionHasUnitAttrEvent(option) || optionInt(option, "world_bloom_event_turn") > 0
+}
+
+func optionHasUnitAttrEvent(option map[string]interface{}) bool {
+	if option == nil {
+		return false
+	}
+	return optionString(option, "event_unit") != "" && optionString(option, "event_attr") != ""
+}
+
+func optionHasWorldBloom(option map[string]interface{}) bool {
+	if option == nil {
+		return false
+	}
+	return optionInt(option, "world_bloom_character_id") > 0 || optionInt(option, "world_bloom_event_turn") > 0
+}
+
+func optionString(option map[string]interface{}, key string) string {
+	if option == nil {
+		return ""
+	}
+	value, _ := option[key].(string)
+	return strings.TrimSpace(value)
+}
+
+func optionInt(option map[string]interface{}, key string) int {
+	if option == nil {
+		return 0
+	}
+	switch value := option[key].(type) {
+	case int:
+		return value
+	case float64:
+		return int(value)
+	case float32:
+		return int(value)
+	default:
+		return 0
+	}
+}
+
+func optionFloat(option map[string]interface{}, key string) (float64, bool) {
+	if option == nil {
+		return 0, false
+	}
+	switch value := option[key].(type) {
+	case float64:
+		return value, true
+	case float32:
+		return float64(value), true
+	case int:
+		return float64(value), true
+	default:
+		return 0, false
+	}
+}
+
+func normalizeRecommendAlgorithm(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "dfs", "sa", "ga", "all":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendLiveType(recType string, raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "":
+		return ""
+	case "multi", "solo", "auto":
+		switch recType {
+		case "challenge":
+			if strings.EqualFold(strings.TrimSpace(raw), "auto") {
+				return "challenge_auto"
+			}
+			return "challenge"
+		case "mysekai":
+			return "mysekai"
+		default:
+			return strings.ToLower(strings.TrimSpace(raw))
+		}
+	case "challenge", "challenge_auto", "mysekai":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendTarget(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "score", "power", "skill", "bonus":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendDifficulty(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "easy", "normal", "hard", "expert", "master", "append":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendAttr(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "cute", "cool", "pure", "happy", "mysterious":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendUnit(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "light_sound", "idol", "street", "theme_park", "school_refusal", "piapro":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func normalizeRecommendStrategy(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "max", "min", "average":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}
+
+func (c *Controller) resolveCharacterIconPath(characterID int) string {
+	if c == nil || c.assets == nil || characterID <= 0 {
+		return ""
+	}
+	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
+		return assets.ResolveAssetPath(
+			c.assets,
+			assets.StaticImagesDir,
+			filepath.Join("chara_icon", nickname+".png"),
+			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
+		)
+	}
+	return assets.ResolveAssetPath(
+		c.assets,
+		assets.StaticImagesDir,
+		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
+	)
+}
+
+func (c *Controller) resolveUnitIconPath(unit string) string {
+	icon := assets.UnitIconFilename(unit)
+	if icon == "" {
+		return ""
+	}
+	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, icon+".png")
+}
+
+func (c *Controller) resolveAttrIconPath(attr string) string {
+	attr = normalizeRecommendAttr(attr)
+	if attr == "" {
+		return ""
+	}
+	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", attr)))
 }
 
 func (c *Controller) resolveProfile(region renderregion.Value, override *drawing.DetailedProfileCardRequest, source string) *drawing.DetailedProfileCardRequest {

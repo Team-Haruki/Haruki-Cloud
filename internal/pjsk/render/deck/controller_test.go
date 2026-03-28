@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
 )
 
 type testCardSource struct {
@@ -126,6 +127,124 @@ func TestBuildRecommendOptionBonusTargets(t *testing.T) {
 	}
 	if len(targets) != 2 || targets[0] != 150 || targets[1] != 160 {
 		t.Fatalf("unexpected target bonus list: %+v", targets)
+	}
+}
+
+func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	eventID := 123
+	musicID := 456
+	worldBloomCharacterID := 21
+	teammatePower := 260000
+	teammateScoreUp := 210
+	scoreUpLowerBound := 180.0
+	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                       "jp",
+		RecommendType:                "event",
+		EventID:                      &eventID,
+		Algorithm:                    "sa",
+		LiveType:                     "auto",
+		Target:                       "skill",
+		MusicID:                      &musicID,
+		MusicDiff:                    "expert",
+		WorldBloomCharacterID:        &worldBloomCharacterID,
+		FixedCards:                   []int{1001},
+		FixedCharacters:              []int{21},
+		Rarity4Config:                &CardConfigPatch{MasterMax: true},
+		SingleCardConfigs:            []SingleCardConfigPatch{{CardID: 777, LevelMax: true, SkillMax: true}},
+		MultiLiveTeammatePower:       &teammatePower,
+		MultiLiveTeammateScoreUp:     &teammateScoreUp,
+		MultiLiveScoreUpLowerBound:   &scoreUpLowerBound,
+		SkillOrderChooseStrategy:     "max",
+		SkillReferenceChooseStrategy: "average",
+		KeepAfterTrainingState:       true,
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["algorithm"] != "sa" {
+		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
+	}
+	if option["live_type"] != "auto" {
+		t.Fatalf("unexpected live_type: %+v", option["live_type"])
+	}
+	if option["target"] != "skill" {
+		t.Fatalf("unexpected target: %+v", option["target"])
+	}
+	if option["music_id"] != 456 || option["music_diff"] != "expert" {
+		t.Fatalf("unexpected music fields: music_id=%+v music_diff=%+v", option["music_id"], option["music_diff"])
+	}
+	if option["event_id"] != 123 {
+		t.Fatalf("unexpected event id: %+v", option["event_id"])
+	}
+	if option["world_bloom_character_id"] != 21 {
+		t.Fatalf("unexpected world bloom character: %+v", option["world_bloom_character_id"])
+	}
+	if option["multi_live_teammate_power"] != 260000 || option["multi_live_teammate_score_up"] != 210 {
+		t.Fatalf("unexpected teammate values: power=%+v score_up=%+v", option["multi_live_teammate_power"], option["multi_live_teammate_score_up"])
+	}
+	if option["multi_live_score_up_lower_bound"] != 180.0 {
+		t.Fatalf("unexpected score up lower bound: %+v", option["multi_live_score_up_lower_bound"])
+	}
+	if option["skill_order_choose_strategy"] != "max" || option["skill_reference_choose_strategy"] != "average" {
+		t.Fatalf("unexpected skill strategies: %+v / %+v", option["skill_order_choose_strategy"], option["skill_reference_choose_strategy"])
+	}
+	if option["keep_after_training_state"] != true {
+		t.Fatalf("unexpected keep_after_training_state: %+v", option["keep_after_training_state"])
+	}
+
+	cfg, ok := option["rarity_4_config"].(map[string]interface{})
+	if !ok || cfg["master_max"] != true {
+		t.Fatalf("unexpected rarity_4_config: %+v", option["rarity_4_config"])
+	}
+	singleCardCfgs, ok := option["single_card_configs"].([]interface{})
+	if !ok || len(singleCardCfgs) != 1 {
+		t.Fatalf("unexpected single card configs: %+v", option["single_card_configs"])
+	}
+}
+
+func TestBuildRecommendOptionSimulatedWorldBloomClearsEventID(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	worldBloomCharacterID := 21
+	worldBloomTurn := 2
+	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                "jp",
+		RecommendType:         "event",
+		EventUnit:             "piapro",
+		WorldBloomCharacterID: &worldBloomCharacterID,
+		WorldBloomEventTurn:   &worldBloomTurn,
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if value, ok := option["event_id"]; ok && value != nil {
+		t.Fatalf("simulated world bloom should clear event_id: %+v", value)
+	}
+	if option["event_type"] != "world_bloom" {
+		t.Fatalf("unexpected event_type: %+v", option["event_type"])
+	}
+}
+
+func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	request := &drawing.DeckRequest{
+		Region:        "jp",
+		RecommendType: "mysekai",
+	}
+
+	controller.applyCommonRecommendMetadata(request, renderregion.JP, "mysekai", map[string]interface{}{
+		"live_type": "mysekai",
+	}, AutoQuery{
+		Region:        "jp",
+		RecommendType: "mysekai",
+	})
+
+	if request.EventID != nil {
+		t.Fatalf("mysekai should not auto-fill current event: %+v", request.EventID)
 	}
 }
 

@@ -114,4 +114,4 @@ pjsk_render:
     local_pool_size: 2
     static_data_dir: ""
     timeout: "10s"
-    default_algs: ["dfs", "sa", "ga"]
+    default_algs: ["dfs", "ga"]

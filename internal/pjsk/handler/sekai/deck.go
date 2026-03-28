@@ -22,7 +22,11 @@ func (sekaiHandlers) EventDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleDeck, "deck-event"), nil
+			params, err := buildDeckQueryParams(ctx, "deck-event")
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-event", params), nil
 		},
 	}
 }
@@ -37,7 +41,11 @@ func (sekaiHandlers) ChallengeDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleDeck, "deck-challenge"), nil
+			params, err := buildDeckQueryParams(ctx, "deck-challenge")
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-challenge", params), nil
 		},
 	}
 }
@@ -53,7 +61,11 @@ func (sekaiHandlers) NoEventDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleDeck, "deck-no-event"), nil
+			params, err := buildDeckQueryParams(ctx, "deck-no-event")
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-no-event", params), nil
 		},
 	}
 }
@@ -69,7 +81,11 @@ func (sekaiHandlers) BonusDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleDeck, "deck-bonus"), nil
+			params, err := buildDeckQueryParams(ctx, "deck-bonus")
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-bonus", params), nil
 		},
 	}
 }
@@ -85,7 +101,11 @@ func (sekaiHandlers) MysekaiDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleDeck, "deck-mysekai"), nil
+			params, err := buildDeckQueryParams(ctx, "deck-mysekai")
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-mysekai", params), nil
 		},
 	}
 }

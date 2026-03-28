@@ -2,6 +2,7 @@ package drawing
 
 import (
 	"fmt"
+	"haruki-cloud/utils/logger"
 	"net/http"
 	"strings"
 	"time"
@@ -62,7 +63,7 @@ func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, e
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
 		Post(c.baseURL + endpoint)
-
+	logger.Debugf("POST %s: %v", c.baseURL+endpoint, body)
 	if err != nil {
 		return nil, err
 	}

@@ -178,18 +178,11 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return []byte(fmt.Sprintf("已验证%s服账号 %s", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeVerifyList:
-		server := params.Server
-		if !params.RegionExplicit {
-			entity, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, GlobalDefaultBindingScope)
-			if err == nil {
-				server = entity.Server
-			}
-		}
-		items, err := service.ListVerifiedBindings(ctx, params.Platform, params.PlatformUserID, server)
+		items, err := service.List(ctx, params.Platform, params.PlatformUserID)
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatVerifiedBindingListText(server, items)), nil
+		return []byte(formatVerifyListText(items)), nil
 	case ProfileModeBGUpload:
 		item, err := service.SetCurrentBindingProfileBG(ctx, params.Platform, params.PlatformUserID, params.Server, params.ImageURL)
 		if err != nil {
@@ -224,15 +217,28 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	}
 }
 
-func formatVerifiedBindingListText(server string, items []BindingListItem) string {
-	server = strings.ToUpper(strings.TrimSpace(server))
+func formatVerifyListText(items []BindingListItem) string {
 	if len(items) == 0 {
-		return fmt.Sprintf("你还没有验证过任何%s服游戏ID", server)
+		return "你还没有绑定任何PJSK账号"
 	}
-
-	lines := []string{fmt.Sprintf("你验证过的%s服游戏ID:", server)}
+	lines := []string{"已绑定账号验证状态:"}
 	for _, item := range items {
-		lines = append(lines, fmt.Sprintf("u%d %s", item.Index, formatBindingUID(item)))
+		status := "❌"
+		if item.Verified {
+			status = "✅"
+		}
+		line := fmt.Sprintf("u%d [%s] %s %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item), status)
+		marks := make([]string, 0, 2)
+		if item.IsGlobalDefault {
+			marks = append(marks, "全局默认")
+		}
+		if item.IsServerDefault {
+			marks = append(marks, strings.ToUpper(item.Server)+"服默认")
+		}
+		if len(marks) > 0 {
+			line += " (" + strings.Join(marks, "/") + ")"
+		}
+		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")
 }

@@ -41,6 +41,7 @@ func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
 
 func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
+		ParseUIDArg: boolPtr(true),
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/逮捕", "/pjsk逮捕", "/pjsk arrest",

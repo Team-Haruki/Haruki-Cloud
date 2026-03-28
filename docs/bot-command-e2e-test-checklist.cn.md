@@ -109,14 +109,14 @@
 | `profile/mysekai/show` | `/展示烤森抓包` | `/pjsk show mysekai` `/展示烤森抓包` | ✅ | `[u序号]` | 展示 MySekai 数据 |
 | `profile/visibility/hide` | `/隐藏ID` | `/pjsk hide id` `/隐藏id` `/隐藏ID` | ✅ | `[u序号]` | 隐藏 UID |
 | `profile/visibility/show` | `/显示ID` | `/pjsk show id` `/显示id` `/展示ID` | ✅ | `[u序号]` | 显示 UID |
-| `profile/check-data` | `/抓包数据` | `/pjsk check data` `/抓包数据` `/抓包状态` `/抓包信息` `/sud` | ✅ | `[u序号]` | 查 suite 抓包状态（仅自己） |
-| `profile/check-data-mysekai` | `/msd` | `/msd` `/pjsk check mysekai data` `/烤森抓包` `/烤森抓包数据` | ✅ | `[u序号]` | 查 MySekai 抓包状态（仅自己） |
-| `profile/verify` | `/pjsk verify` | `/pjsk verify` `/pjsk验证` | ✅ | 无 | 账号验证 |
-| `profile/verify/list` | `/pjsk verify list` | `/pjsk verify list` `/pjsk验证列表` `/pjsk验证状态` | ✅ | 无 | 验证列表 |
+| `profile/check-data` | `/抓包数据` | `/pjsk check data` `/抓包数据` `/抓包状态` `/抓包信息` `/sud` | ✅ | `[u序号]` | 查 Suite 抓包更新时间（仅自己）；输出含时区 |
+| `profile/check-data-mysekai` | `/msd` | `/msd` `/pjsk check mysekai data` `/烤森抓包` `/烤森抓包数据` | ✅ | `[u序号]` | 查 MySekai 抓包更新时间（仅自己）；输出含时区 |
+| `profile/verify` | `/pjsk verify` | `/pjsk verify` `/pjsk验证` | ✅ | `[u序号]` | 账号验证；支持 u[i] 指定绑定 |
+| `profile/verify/list` | `/pjsk verify list` | `/pjsk verify list` `/pjsk验证列表` `/pjsk验证状态` | ✅ | 无 | 列出已验证账号；无前缀用全局默认绑定的区服 |
 | `profile/bg/upload` | `/上传个人信息背景` | `/pjsk upload profile bg` `/上传个人信息背景` `/上传个人背景` | ✅ | `[图片]` | 上传自定义背景图 |
 | `profile/bg/clear` | `/清空个人信息背景` | `/pjsk clear profile bg` `/清空个人信息背景` | ✅ | 无 | 清除背景图 |
 | `profile/bg/adjust` | `/调整个人信息背景` | `/pjsk adjust profile` `/调整个人信息背景` `/设置个人信息` | ✅ | `[横屏\|竖屏] [模糊 0~10] [透明 0~100]` | 调整背景图模糊/透明度 |
-| `profile/reg-time` | `/注册时间` | `/注册时间` `/pjsk reg time` `/查时间` | ✅ ⚠️ | `[@用户]` `[游戏ID]` `[u序号]` | 查账号注册时间 |
+| `profile/reg-time` | `/注册时间` | `/注册时间` `/pjsk reg time` `/查时间` | ✅ | `[u序号]` | 查自己账号注册时间；仅自己 + u[i]；输出含时区（默认 UTC+8）|
 
 ---
 
@@ -193,8 +193,9 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 多绑定用户可通过 `u[i]` 参数指定操作哪个绑定账号（i 为绑定列表序号）。
 
 支持 u[i] 的指令：
-- **查询类**：`/个人中心 u1`、`/逮捕 u2`、`/注册时间 u1`
-- **抓包查询**：`/sud u1`、`/msd u2`（仅自己的账号）
+- **查询类**：`/个人中心 u1`（+ @用户/游戏ID）、`/逮捕 u2`（+ @用户/游戏ID）、`/注册时间 u1`（仅自己 + u[i]）
+- **抓包查询**：`/sud u1`、`/msd u2`（仅自己 + u[i]）
+- **验证**：`/pjsk verify u1`（仅自己 + u[i]）
 - **设置类**：`/隐藏id u1`、`/显示id u2`、`/隐藏抓包 u1`、`/展示抓包 u2`、`/隐藏烤森抓包 u1`、`/展示烤森抓包 u2`
 - **清除默认**：`/清除默认绑定`（无参数清除全局/区域默认）、`/清除默认绑定 u1`（指定账号）
 
@@ -202,7 +203,9 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 - `/绑定`（直接提供游戏ID）
 - `/解绑`（u序号或游戏ID）
 - `/设置主账号`（u序号或游戏ID）
-- `/sud`、`/msd` 不支持 @他人和直接游戏ID（仅自己 + u[i]）
+- `/sud`、`/msd`、`/注册时间`、`/pjsk verify` 不支持 @他人和直接游戏ID（仅自己 + u[i]）
+
+时区说明：`/注册时间`、`/sud`、`/msd` 输出时间默认使用 **UTC+8**，用户可在 UserSettings 中通过 `TimeZoneOffset`（如 `+09:00`）自定义时区。
 
 ---
 

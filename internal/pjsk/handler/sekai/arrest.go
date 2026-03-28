@@ -109,7 +109,7 @@ func (sekaiHandlers) RegTimeHandle() SekaiCommandHandler {
 			Path: "profile/reg-time",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			p, err := resolveUserQueryParams(ctx)
+			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
 			}

@@ -46,6 +46,7 @@ type Config struct {
 	AssetPrimaryDir   string
 	AssetLegacyDirs   []string
 	LocalMasterdata   LocalMasterdataConfig
+	SekaiDSN          string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
 	UserSnapshot      UserSnapshotConfig
 	MetaLoader        *meta.Loader
 	DeckRecommend     DeckRecommendConfig
@@ -126,7 +127,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
-	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion, assetHelper)
+	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion, assetHelper, cfg.SekaiDSN)
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewController(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)

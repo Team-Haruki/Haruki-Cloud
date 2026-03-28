@@ -40,7 +40,15 @@ haruki-db-configs.yaml
 
 # Build artifacts
 server
+server-local
+server.gz
 test_auth
+
+# Drawing API subproject (separate repo)
+drawing/
+
+# Images
+*.png
 
 # Database exports and game data
 exports/

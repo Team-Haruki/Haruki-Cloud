@@ -2,6 +2,7 @@ package mysekai
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -250,5 +251,115 @@ func TestResolveMysekaiMapSiteIDs(t *testing.T) {
 
 	if got, want := resolveMysekaiMapSiteIDs([]int{9, 10}), []int{}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("resolveMysekaiMapSiteIDs(invalid) = %+v, want %+v", got, want)
+	}
+}
+
+func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+		{
+			"id":                                  1001,
+			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+			"mysekaiSiteHarvestFixtureType":       "wood",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+		{
+			"id":                                  8001,
+			"assetbundleName":                     "mdl_site_dewdrop_birthday_plant106",
+			"mysekaiSiteHarvestFixtureType":       "birthday_plant",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_2",
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
+		{"id": 6, "givenNameEnglish": "Haruka"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 5,
+        "userMysekaiSiteHarvestFixtures": [
+          {
+            "mysekaiSiteHarvestFixtureId": 1001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 1,
+            "positionZ": 2
+          },
+          {
+            "mysekaiSiteHarvestFixtureId": 8001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 3,
+            "positionZ": 4
+          }
+        ],
+        "userMysekaiSiteHarvestResourceDrops": [
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 179,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 3,
+            "positionZ": 4,
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  }
+}`
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	if len(req.Maps) != 1 {
+		t.Fatalf("expected 1 map, got %d", len(req.Maps))
+	}
+	if len(req.Maps[0].HarvestPoints) != 2 {
+		t.Fatalf("expected 2 harvest points, got %+v", req.Maps[0].HarvestPoints)
+	}
+
+	var normalPoint, birthdayPoint *drawing.MysekaiMsrMapHarvestPoint
+	for i := range req.Maps[0].HarvestPoints {
+		point := &req.Maps[0].HarvestPoints[i]
+		if point.ID != nil && *point.ID == 1001 {
+			normalPoint = point
+		}
+		if point.ID != nil && *point.ID == 8001 {
+			birthdayPoint = point
+		}
+	}
+	if normalPoint == nil || birthdayPoint == nil {
+		t.Fatalf("missing expected harvest points: %+v", req.Maps[0].HarvestPoints)
+	}
+
+	if normalPoint.ImagePath != "static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png" {
+		t.Fatalf("unexpected normal point image path: %q", normalPoint.ImagePath)
+	}
+	if normalPoint.Size != nil {
+		t.Fatalf("expected normal point size nil, got %+v", normalPoint.Size)
+	}
+	if normalPoint.OffsetZ != -48 {
+		t.Fatalf("unexpected normal point offset_z: %v", normalPoint.OffsetZ)
+	}
+
+	if birthdayPoint.ImagePath != fmt.Sprintf("static_images/mysekai/birthday/haruka_%d/icon_refresh.png", time.Now().Year()) {
+		t.Fatalf("unexpected birthday point image path: %q", birthdayPoint.ImagePath)
+	}
+	if birthdayPoint.Size == nil || *birthdayPoint.Size != 50 {
+		t.Fatalf("unexpected birthday point size: %+v", birthdayPoint.Size)
+	}
+	if birthdayPoint.OffsetX != 7.5 || birthdayPoint.OffsetZ != 0 {
+		t.Fatalf("unexpected birthday point offsets: x=%v z=%v", birthdayPoint.OffsetX, birthdayPoint.OffsetZ)
 	}
 }

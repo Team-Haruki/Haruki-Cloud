@@ -234,6 +234,30 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		}
 
 		harvestPoints := make([]drawing.MysekaiMsrMapHarvestPoint, 0, 16)
+		characterMap := c.masterdata.loadMapByID("gameCharacters.json")
+		birthdayCharacterByPos := make(map[string]int)
+		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]interface{})
+		for _, raw := range rawDrops {
+			drop, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
+			if resourceID < 174 || resourceID > 199 {
+				continue
+			}
+			posKey := mysekaiHarvestPosKey(
+				floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0)),
+				floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0)),
+			)
+			if posKey == "" {
+				continue
+			}
+			if _, exists := birthdayCharacterByPos[posKey]; !exists {
+				birthdayCharacterByPos[posKey] = resourceID - 173
+			}
+		}
+
 		rawHarvestPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]interface{})
 		for _, raw := range rawHarvestPoints {
 			point, ok := raw.(map[string]interface{})
@@ -244,6 +268,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			meta := harvestFixtureMap[fixtureID]
 			rarityType := stringValue(meta["mysekaiSiteHarvestFixtureRarityType"])
 			assetbundleName := stringValue(meta["assetbundleName"])
+			fixtureType := stringValue(meta["mysekaiSiteHarvestFixtureType"])
 			if rarityType == "" || assetbundleName == "" {
 				continue
 			}
@@ -259,17 +284,39 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				pointID = &idCopy
 			}
 
+			positionX := floatNumber(point["positionX"], floatNumber(point["position_x"], 0))
+			positionZ := floatNumber(point["positionZ"], floatNumber(point["position_z"], 0))
+			posKey := mysekaiHarvestPosKey(positionX, positionZ)
+
+			imagePath := c.staticPath(fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName))
+			var size *int
+			var offsetX float64
+			offsetZ := -48.0
+			if fixtureType == "birthday_plant" {
+				if characterID := birthdayCharacterByPos[posKey]; characterID > 0 {
+					if imageName := mysekaiBirthdayCharacterImageName(characterMap[characterID]); imageName != "" {
+						imagePath = c.staticPath(fmt.Sprintf("mysekai/birthday/%s_%d/icon_refresh.png", imageName, time.Now().Year()))
+					}
+				}
+				sizeValue := 50
+				size = &sizeValue
+				offsetX = 7.5
+				offsetZ = 0
+			}
+
 			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{
 				ID:        pointID,
-				ImagePath: c.staticPath(fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)),
-				PositionX: floatNumber(point["positionX"], floatNumber(point["position_x"], 0)),
-				PositionZ: floatNumber(point["positionZ"], floatNumber(point["position_z"], 0)),
+				ImagePath: imagePath,
+				PositionX: positionX,
+				PositionZ: positionZ,
 				Status:    status,
+				Size:      size,
+				OffsetX:   offsetX,
+				OffsetZ:   offsetZ,
 			})
 		}
 
 		resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
-		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]interface{})
 		for _, raw := range rawDrops {
 			drop, ok := raw.(map[string]interface{})
 			if !ok {
@@ -1596,6 +1643,17 @@ func (c *Controller) loadFieldMap(filename, field string) map[int]string {
 		}
 	}
 	return result
+}
+
+func mysekaiHarvestPosKey(x, z float64) string {
+	return fmt.Sprintf("%.3f_%.3f", x, z)
+}
+
+func mysekaiBirthdayCharacterImageName(item map[string]interface{}) string {
+	if len(item) == 0 {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(stringValue(item["givenNameEnglish"])))
 }
 
 func (c *Controller) loadMusicRecordJacketMap() map[int]string {

@@ -678,6 +678,43 @@ func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T
 	}
 }
 
+func TestFormatArrestTextUsesResolvedChallengeCharacterName(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_arrest?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("ミク").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	app := &renderapp.App{Sekai: sekaiClient}
+	resp := &sekaiapi.GetAnotherProfileResponse{
+		User: sekaiapi.AnotherUser{
+			UserID: 123456789,
+			Name:   "ArrestUser",
+			Rank:   88,
+		},
+		UserChallengeLiveSoloResult: sekaiapi.UserChallengeLiveSoloResult{
+			CharacterID: 21,
+			HighScore:   123456,
+		},
+	}
+
+	text := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), true)
+	if !strings.Contains(text, "挑战Live(初音ミク): 123,456分") {
+		t.Fatalf("unexpected arrest text: %s", text)
+	}
+	masked := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), false)
+	if !strings.Contains(masked, "UID: 123***789") {
+		t.Fatalf("expected masked uid, got: %s", masked)
+	}
+}
+
 func TestExecuteMysekaiPhoto(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/image/jp/mysekai/photos/test" {

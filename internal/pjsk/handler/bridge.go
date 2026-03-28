@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
 	bonddb "haruki-cloud/database/sekai/bond"
+	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
 	leveldb "haruki-cloud/database/sekai/level"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
@@ -1879,7 +1880,7 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 		region = string(renderregion.JP)
 	}
 
-	harukiUserID, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
+	harukiUserID, pjskUserID, visible, err := resolveGameUID(ctx, p, region, app)
 	if err != nil {
 		return nil, err
 	}
@@ -1894,18 +1895,17 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 			resp.User.Name = ""
 		}
 	}
-
+	queryClient := query.NewClient(nil, nil, app.PJSK, nil)
 	// Load the caller's enabled difficulties for self-mode; default for others.
 	enabledDiffs := defaultEnabledDiffs()
 	if p.Mode == "self" && harukiUserID > 0 && app.PJSK != nil {
-		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, harukiUserID); sErr == nil && settings != nil {
+		if settings, sErr := queryClient.GetPJSKSettings(ctx, harukiUserID); sErr == nil && settings != nil {
 			if len(settings.PJSKEnabledDifficulties) > 0 {
 				enabledDiffs = settings.PJSKEnabledDifficulties
 			}
 		}
 	}
-
-	text := formatArrestText(resp, enabledDiffs)
+	text := formatArrestText(resp, enabledDiffs, resolveArrestChallengeCharacterName(ctx, app, resp.UserChallengeLiveSoloResult.CharacterID), visible)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
@@ -1916,11 +1916,10 @@ func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
 	}
 }
 
-func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType) string {
+func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
 	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %d) Lv.%d\n",
-		resp.User.Name, resp.User.UserID, resp.User.Rank))
+	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %s) Lv.%d\n",
+		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
 
 	// Index clear counts by difficulty.
 	countByDiff := make(map[sekaiutils.MusicDifficultyType]sekaiutils.AnotherUserMusicDifficultyClearCount)
@@ -1938,12 +1937,80 @@ func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiu
 	}
 
 	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
-		sb.WriteString(fmt.Sprintf("挑战Live(角色#%d): %s分",
-			resp.UserChallengeLiveSoloResult.CharacterID,
+		sb.WriteString(fmt.Sprintf("挑战Live(%s): %s分",
+			arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName),
 			formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
 	}
 
 	return strings.TrimRight(sb.String(), "\n")
+}
+
+func resolveArrestChallengeCharacterName(ctx context.Context, app *renderapp.App, characterID int) string {
+	if characterID <= 0 || app == nil || app.Sekai == nil {
+		return ""
+	}
+
+	rows, err := app.Sekai.Gamecharacter.Query().
+		Where(gamecharacterdb.GameIDEQ(int64(characterID))).
+		All(ctx)
+	if err != nil || len(rows) == 0 {
+		return ""
+	}
+
+	bestName := ""
+	bestRank := 999
+	for _, row := range rows {
+		candidates := []string{
+			strings.TrimSpace(row.FirstName + row.GivenName),
+			strings.TrimSpace(strings.TrimSpace(row.FirstName) + " " + strings.TrimSpace(row.GivenName)),
+			strings.TrimSpace(row.FirstNameEnglish + row.GivenNameEnglish),
+			strings.TrimSpace(strings.TrimSpace(row.FirstNameEnglish) + " " + strings.TrimSpace(row.GivenNameEnglish)),
+		}
+		for _, candidate := range candidates {
+			if candidate == "" {
+				continue
+			}
+			rank := arrestCharacterRegionRank(row.ServerRegion)
+			if rank < bestRank {
+				bestRank = rank
+				bestName = candidate
+				break
+			}
+		}
+	}
+	return strings.TrimSpace(bestName)
+}
+
+func arrestChallengeCharacterLabel(characterID int, resolvedName string) string {
+	if name := strings.TrimSpace(resolvedName); name != "" {
+		return name
+	}
+	return fmt.Sprintf("角色#%d", characterID)
+}
+
+func arrestDisplayUID(uid int64, visible bool) string {
+	raw := strconv.FormatInt(uid, 10)
+	if visible || len(raw) <= 6 {
+		return raw
+	}
+	return raw[:3] + strings.Repeat("*", len(raw)-6) + raw[len(raw)-3:]
+}
+
+func arrestCharacterRegionRank(region string) int {
+	switch strings.ToLower(strings.TrimSpace(region)) {
+	case "jp":
+		return 0
+	case "cn":
+		return 1
+	case "tw":
+		return 2
+	case "en":
+		return 3
+	case "kr":
+		return 4
+	default:
+		return 999
+	}
 }
 
 // formatInt formats an integer with comma separators (e.g. 3011947 → "3,011,947").

@@ -95,27 +95,28 @@
 
 ## 7. 个人资料 / 绑定 (profile)
 
-| 路径 | 代表指令 | 全部触发词 | 状态 | 备注 |
-|------|---------|-----------|------|------|
-| `profile` | `/个人中心` | `/个人中心` `/profile` | ✅ ⚠️ | 个人信息渲染 |
-| `profile/bind` | `/绑定` | `/pjsk bind` `/pjsk id` `/绑定` `/绑定列表` | ✅ | 绑定 PJSK 账号 |
-| `profile/unbind` | `/解绑` | `/pjsk unbind` `/解绑` `/取消绑定` | ✅ | 解除绑定 |
-| `profile/default` | `/设置主账号` | `/pjsk set main` `/pjsk主账号` `/设置主账号` `/设置默认绑定` | ✅ | 设置默认绑定 |
-| `profile/default/clear` | `/取消默认绑定` | `/取消默认绑定` `/清除默认绑定` `/取消主账号` | ✅ | 清除默认绑定 |
-| `profile/suite/hide` | `/隐藏抓包` | `/pjsk hide suite` `/pjsk隐藏抓包` `/隐藏抓包` | ✅ | 隐藏 suite 数据 |
-| `profile/suite/show` | `/展示抓包` | `/pjsk show suite` `/展示抓包` | ✅ | 展示 suite 数据 |
-| `profile/mysekai/hide` | `/隐藏烤森抓包` | `/pjsk hide mysekai` `/隐藏烤森抓包` | ✅ | 隐藏 MySekai 数据 |
-| `profile/mysekai/show` | `/展示烤森抓包` | `/pjsk show mysekai` `/展示烤森抓包` | ✅ | 展示 MySekai 数据 |
-| `profile/visibility/hide` | `/隐藏ID` | `/pjsk hide id` `/隐藏id` `/隐藏ID` | ✅ | 隐藏 UID |
-| `profile/visibility/show` | `/显示ID` | `/pjsk show id` `/显示id` `/展示ID` | ✅ | 显示 UID |
-| `profile/check-data` | `/抓包数据` | `/pjsk check data` `/抓包数据` `/抓包状态` `/抓包信息` `/sud` | ✅ | 查 suite 抓包状态 |
-| `profile/check-data-mysekai` | `/msd` | `/msd` `/pjsk check mysekai data` `/烤森抓包` `/烤森抓包数据` | ✅ | 查 MySekai 抓包状态 |
-| `profile/verify` | `/pjsk verify` | `/pjsk verify` `/pjsk验证` | ✅ | 账号验证 |
-| `profile/verify/list` | `/pjsk verify list` | `/pjsk verify list` `/pjsk验证列表` `/pjsk验证状态` | ✅ | 验证列表 |
-| `profile/bg/upload` | `/上传个人信息背景` | `/pjsk upload profile bg` `/上传个人信息背景` `/上传个人背景` | ✅ | 上传自定义背景图 |
-| `profile/bg/clear` | `/清空个人信息背景` | `/pjsk clear profile bg` `/清空个人信息背景` | ✅ | 清除背景图 |
-| `profile/bg/adjust` | `/调整个人信息背景` | `/pjsk adjust profile` `/调整个人信息背景` `/设置个人信息` | ✅ | 调整背景图模糊/透明度 |
-| `profile/reg-time` | `/注册时间` | `/注册时间` `/pjsk reg time` `/查时间` | ✅ ⚠️ | 查账号注册时间 |
+| 路径 | 代表指令 | 全部触发词 | 状态 | 参数 | 备注 |
+|------|---------|-----------|------|------|------|
+| `profile` | `/个人中心` | `/个人中心` `/profile` | ✅ ⚠️ | `[@用户]` `[游戏ID]` `[u序号]` | 个人信息渲染；支持 u[i] 查指定绑定 |
+| `profile/bind` | `/绑定` | `/pjsk bind` `/pjsk id` `/绑定` `/pjsk 绑定` | ✅ | `<账号ID>` | 绑定 PJSK 账号 |
+| `profile/bind/list` | `/绑定列表` | `/绑定列表` `/pjsk bind list` `/pjsk绑定列表` | ✅ | 无 | 列出所有已绑定账号 |
+| `profile/unbind` | `/解绑` | `/pjsk unbind` `/解绑` `/取消绑定` | ✅ | `<账号ID \| u序号>` | 解除绑定 |
+| `profile/default` | `/设置主账号` | `/pjsk set main` `/pjsk主账号` `/设置主账号` `/设置默认绑定` | ✅ | `<账号ID \| u序号>` | 设置默认绑定；带区域前缀设置区服默认 |
+| `profile/default/clear` | `/清除默认绑定` | `/取消默认绑定` `/清除默认绑定` `/取消主账号` `/清除主账号` | ✅ | `[账号ID \| u序号]` | 无参数时清除当前scope默认；带区域前缀指定区服 |
+| `profile/suite/hide` | `/隐藏抓包` | `/pjsk hide suite` `/pjsk隐藏抓包` `/隐藏抓包` | ✅ | `[u序号]` | 隐藏 suite 数据 |
+| `profile/suite/show` | `/展示抓包` | `/pjsk show suite` `/展示抓包` | ✅ | `[u序号]` | 展示 suite 数据 |
+| `profile/mysekai/hide` | `/隐藏烤森抓包` | `/pjsk hide mysekai` `/隐藏烤森抓包` | ✅ | `[u序号]` | 隐藏 MySekai 数据 |
+| `profile/mysekai/show` | `/展示烤森抓包` | `/pjsk show mysekai` `/展示烤森抓包` | ✅ | `[u序号]` | 展示 MySekai 数据 |
+| `profile/visibility/hide` | `/隐藏ID` | `/pjsk hide id` `/隐藏id` `/隐藏ID` | ✅ | `[u序号]` | 隐藏 UID |
+| `profile/visibility/show` | `/显示ID` | `/pjsk show id` `/显示id` `/展示ID` | ✅ | `[u序号]` | 显示 UID |
+| `profile/check-data` | `/抓包数据` | `/pjsk check data` `/抓包数据` `/抓包状态` `/抓包信息` `/sud` | ✅ | `[u序号]` | 查 suite 抓包状态（仅自己） |
+| `profile/check-data-mysekai` | `/msd` | `/msd` `/pjsk check mysekai data` `/烤森抓包` `/烤森抓包数据` | ✅ | `[u序号]` | 查 MySekai 抓包状态（仅自己） |
+| `profile/verify` | `/pjsk verify` | `/pjsk verify` `/pjsk验证` | ✅ | 无 | 账号验证 |
+| `profile/verify/list` | `/pjsk verify list` | `/pjsk verify list` `/pjsk验证列表` `/pjsk验证状态` | ✅ | 无 | 验证列表 |
+| `profile/bg/upload` | `/上传个人信息背景` | `/pjsk upload profile bg` `/上传个人信息背景` `/上传个人背景` | ✅ | `[图片]` | 上传自定义背景图 |
+| `profile/bg/clear` | `/清空个人信息背景` | `/pjsk clear profile bg` `/清空个人信息背景` | ✅ | 无 | 清除背景图 |
+| `profile/bg/adjust` | `/调整个人信息背景` | `/pjsk adjust profile` `/调整个人信息背景` `/设置个人信息` | ✅ | `[横屏\|竖屏] [模糊 0~10] [透明 0~100]` | 调整背景图模糊/透明度 |
+| `profile/reg-time` | `/注册时间` | `/注册时间` `/pjsk reg time` `/查时间` | ✅ ⚠️ | `[@用户]` `[游戏ID]` `[u序号]` | 查账号注册时间 |
 
 ---
 
@@ -165,7 +166,7 @@
 | `misc/birthday` | `/生日` | `/pjsk chara birthday` `/角色生日` `/生日` `/查生日` | ✅ | 角色生日查询 |
 | `stamp` | `/贴纸` | `/贴纸` `/查贴纸` `/pjsk贴纸` `/pjsk表情` `/pjsk stamp` `/stamp` | ✅ | 贴纸查询 |
 | `vlive` | `/虚拟live` | `/pjsk live` `/虚拟live` `/pjsk vlive` `/vlive` | ✅ | 虚拟 Live 信息 |
-| `arrest` | `/逮捕` | `/逮捕` `/pjsk逮捕` `/pjsk arrest` | ✅ | 逮捕功能 |
+| `arrest` | `/逮捕` | `/逮捕` `/pjsk逮捕` `/pjsk arrest` | ✅ | 逮捕功能；支持 `[@用户]` `[游戏ID]` `[u序号]` |
 | `gacha` | `/卡池` | `/pjsk gacha` `/卡池列表` `/卡池一览` `/卡池` `/查卡池` | ✅ | 卡池列表 |
 | *(gacha/record)* | `/抽卡记录` | `/pjsk gacha record` `/抽卡记录` `/抽卡历史` | 🚫 | 未实现 |
 | *(help)* | `/帮助` | `/help` `/帮助` | 🚫 | 未实现 |
@@ -177,7 +178,7 @@
 ## 12. 区域支持说明
 
 大部分指令支持区域前缀，使用方式：
-- 无前缀 → 默认 JP
+- 无前缀 → 使用用户的全局默认绑定区服（无默认绑定时 fallback 为 JP）
 - `/jp查曲` → JP 区
 - `/tw查曲` → TW 区  
 - `/kr查曲` → KR 区
@@ -186,6 +187,22 @@
 Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 
 **例外（仅 JP）**：`card/story`、`event/story`、部分 MySekai 功能。
+
+## 13. u[i] 绑定选择器说明
+
+多绑定用户可通过 `u[i]` 参数指定操作哪个绑定账号（i 为绑定列表序号）。
+
+支持 u[i] 的指令：
+- **查询类**：`/个人中心 u1`、`/逮捕 u2`、`/注册时间 u1`
+- **抓包查询**：`/sud u1`、`/msd u2`（仅自己的账号）
+- **设置类**：`/隐藏id u1`、`/显示id u2`、`/隐藏抓包 u1`、`/展示抓包 u2`、`/隐藏烤森抓包 u1`、`/展示烤森抓包 u2`
+- **清除默认**：`/清除默认绑定`（无参数清除全局/区域默认）、`/清除默认绑定 u1`（指定账号）
+
+不支持 u[i] 的指令：
+- `/绑定`（直接提供游戏ID）
+- `/解绑`（u序号或游戏ID）
+- `/设置主账号`（u序号或游戏ID）
+- `/sud`、`/msd` 不支持 @他人和直接游戏ID（仅自己 + u[i]）
 
 ---
 

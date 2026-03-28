@@ -1976,6 +1976,7 @@ type userQueryParams struct {
 	PlatformUserID string `json:"platform_user_id"`
 	AtUserID       string `json:"at_user_id"`
 	PJSKUserID     string `json:"pjsk_user_id"`
+	Selector       string `json:"selector,omitempty"`
 }
 
 type resolvedGameTarget struct {
@@ -1992,7 +1993,14 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, ap
 	}
 	switch p.Mode {
 	case "self":
-		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		var hid int
+		var binding *accountdata.ResolvedBinding
+		var err error
+		if p.Selector != "" {
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else {
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		}
 		if err != nil {
 			return resolvedGameTarget{}, fmt.Errorf("未找到绑定账号：%w", err)
 		}
@@ -2392,14 +2400,30 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	var uid int64
 	var platform string
 	var platformUserID string
+
+	// Helper to resolve user binding, supporting u[i] selector
+	resolveCheckDataBinding := func() (*accountdata.ResolvedBinding, error) {
+		var binding *accountdata.ResolvedBinding
+		var err error
+		if p.Selector != "" {
+			_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else {
+			_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		return binding, nil
+	}
+
 	switch r.Mode {
 	case "mysekai":
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		binding, err := resolveCheckDataBinding()
 		if err != nil {
-			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
@@ -2416,9 +2440,9 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
 		}
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		binding, err := resolveCheckDataBinding()
 		if err != nil {
-			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")

@@ -14,24 +14,35 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk bind", "/pjsk id",
-				"/绑定", "/pjsk 绑定", "/绑定列表",
+				"/绑定", "/pjsk 绑定",
 			},
 			Path: "profile/bind",
 		},
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-
 			args := strings.TrimSpace(ctx.GetArgs())
-			if isProfileBindingListCommand(ctx.GetTriggerCmd()) {
-				if args != "" {
-					return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
-				}
-				return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, newProfileBindingParams(ctx, "", "")), nil
-			}
 			if args == "" {
 				return nil, fmt.Errorf("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBind, newProfileBindingParams(ctx, args, "")), nil
+		},
+	}
+}
+
+func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/绑定列表", "/pjsk bind list", "/pjsk绑定列表",
+			},
+			Path: "profile/bind/list",
+		},
+		ParseUIDArg: boolPtr(false),
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, newProfileBindingParams(ctx, "", "")), nil
 		},
 	}
 }
@@ -45,12 +56,34 @@ func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) ac
 	}
 }
 
-func newProfileSettingsParams(ctx SekaiHandlerContext) accountdata.ProfileSettingsCommandParams {
-	return accountdata.ProfileSettingsCommandParams{
+func newProfileSettingsParams(ctx SekaiHandlerContext, selector ...string) accountdata.ProfileSettingsCommandParams {
+	params := accountdata.ProfileSettingsCommandParams{
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
 		Server:         ctx.Region().String(),
 	}
+	if len(selector) > 0 && selector[0] != "" {
+		params.Selector = selector[0]
+	}
+	return params
+}
+
+// resolveSettingsSelector extracts a u[i] binding selector from the handler context.
+// Returns empty string when no selector is specified (use default binding for region).
+// Returns error if args are present but not a valid u[i] selector.
+func resolveSettingsSelector(ctx SekaiHandlerContext) (string, error) {
+	args := strings.TrimSpace(ctx.GetArgs())
+	if args != "" {
+		return "", fmt.Errorf("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
+	}
+	uidArg := ctx.UIDArg()
+	if uidArg == "" {
+		return "", nil
+	}
+	if isBindingSelector(uidArg) {
+		return uidArg, nil
+	}
+	return "", fmt.Errorf("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
 func extractFirstImageURL(ctx SekaiHandlerContext) string {
@@ -151,15 +184,6 @@ func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
 	return n, nil
 }
 
-func isProfileBindingListCommand(triggerCmd string) bool {
-	switch strings.TrimSpace(strings.ToLower(triggerCmd)) {
-	case "/绑定列表":
-		return true
-	default:
-		return false
-	}
-}
-
 func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -215,9 +239,6 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			if args == "" {
-				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
-			}
 
 			scope := ""
 			if ctx.HasExplicitRegion() {
@@ -236,12 +257,12 @@ func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
 			},
 			Path: "profile/suite/hide",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideSuite, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideSuite, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -254,12 +275,12 @@ func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
 			},
 			Path: "profile/suite/show",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowSuite, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowSuite, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -272,12 +293,12 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() SekaiCommandHandler {
 			},
 			Path: "profile/mysekai/hide",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("浣跨敤鏂瑰紡:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideMySekai, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideMySekai, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -290,12 +311,12 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() SekaiCommandHandler {
 			},
 			Path: "profile/mysekai/show",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("浣跨敤鏂瑰紡:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowMySekai, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowMySekai, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -308,12 +329,12 @@ func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
 			},
 			Path: "profile/visibility/hide",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideID, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideID, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -327,12 +348,12 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 			},
 			Path: "profile/visibility/show",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -347,7 +368,7 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 			Path: "profile/check-data",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			p, err := resolveUserQueryParams(ctx)
+			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -367,7 +388,7 @@ func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 			Path: "profile/check-data-mysekai",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			p, err := resolveUserQueryParams(ctx)
+			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
 			}

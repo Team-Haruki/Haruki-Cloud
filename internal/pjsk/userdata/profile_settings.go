@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	pjskdb "haruki-cloud/database/pjsk"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
@@ -27,6 +28,7 @@ type ProfileSettingsCommandParams struct {
 	Platform       string `json:"platform"`
 	PlatformUserID string `json:"platform_user_id"`
 	Server         string `json:"server"`
+	Selector       string `json:"selector,omitempty"`
 	ImageURL       string `json:"image_url,omitempty"`
 	Blur           *int   `json:"blur,omitempty"`
 	Alpha          *int   `json:"alpha,omitempty"`
@@ -61,43 +63,95 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		return nil, ErrBindingServiceUnavailable
 	}
 
+	// When a u[i] selector is provided, resolve it to a specific binding entity
+	// instead of using server-based lookup. This supports users with multiple
+	// bindings on the same server.
+	resolveBinding := func() (*pjskdb.UserBinding, error) {
+		if params.Selector != "" {
+			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, params.Selector)
+		}
+		return service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, params.Server)
+	}
+
 	switch mode {
 	case ProfileModeHideID:
-		item, err := service.SetBindingVisible(ctx, params.Platform, params.PlatformUserID, params.Server, false)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已隐藏%s服ID信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetVisible(false).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的ID信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeShowID:
-		item, err := service.SetBindingVisible(ctx, params.Platform, params.PlatformUserID, params.Server, true)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已展示%s服ID信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetVisible(true).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已展示 [%s] %s 的ID信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeHideSuite:
-		item, err := service.SetBindingSuiteVisible(ctx, params.Platform, params.PlatformUserID, params.Server, false)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已隐藏%s服抓包信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetSuiteVisible(false).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeShowSuite:
-		item, err := service.SetBindingSuiteVisible(ctx, params.Platform, params.PlatformUserID, params.Server, true)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已展示%s服抓包信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetSuiteVisible(true).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已展示 [%s] %s 的抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeHideMySekai:
-		item, err := service.SetBindingMySekaiVisible(ctx, params.Platform, params.PlatformUserID, params.Server, false)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已隐藏%s服烤森抓包信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetMysekaiVisible(false).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的烤森抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeShowMySekai:
-		item, err := service.SetBindingMySekaiVisible(ctx, params.Platform, params.PlatformUserID, params.Server, true)
+		binding, err := resolveBinding()
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已展示%s服烤森抓包信息", strings.ToUpper(item.Server))), nil
+		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetMysekaiVisible(true).Save(ctx); err != nil {
+			return nil, err
+		}
+		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已展示 [%s] %s 的烤森抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeVerify:
 		item, alreadyVerified, err := service.VerifyCurrentBinding(ctx, params.Platform, params.PlatformUserID, params.Server)
 		if err != nil {

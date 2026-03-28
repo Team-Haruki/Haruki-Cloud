@@ -568,7 +568,7 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		Platform:       strings.TrimSpace(r.RequesterPlatform),
 		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 	}
-	target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+	target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, nil
 	}
@@ -619,7 +619,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 			Platform:       strings.TrimSpace(r.RequesterPlatform),
 			PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 		}
-		target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+		target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 		if err == nil && target.Binding != nil {
 			if !hasUsableSuiteData(target.Binding) {
 				reason = "当前已关闭 Suite 抓包数据，以下为基于公开信息的估算结果。"
@@ -1744,7 +1744,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 			region = string(renderregion.JP)
 		}
 
-		target, err := resolveGameTarget(ctx, p, region, app)
+		target, err := resolveGameTarget(ctx, p, region, r.RegionExplicit, app)
 		if err != nil {
 			return nil, err
 		}
@@ -1987,7 +1987,7 @@ type resolvedGameTarget struct {
 	Binding      *accountdata.ResolvedBinding
 }
 
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (resolvedGameTarget, error) {
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
 		return resolvedGameTarget{}, fmt.Errorf("绑定服务未就绪")
 	}
@@ -1998,6 +1998,14 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, ap
 		var err error
 		if p.Selector != "" {
 			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else if !regionExplicit {
+			// No explicit region prefix → use global default binding directly,
+			// so the user's global default account is picked instead of a
+			// potentially different server-specific default.
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			if err != nil {
+				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			}
 		} else {
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
@@ -2041,8 +2049,8 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, ap
 //
 // Returns (harukiUserID, pjskUserID, visible, error).
 // harukiUserID is 0 and visible is true when the mode is "uid".
-func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, bool, error) {
-	target, err := resolveGameTarget(ctx, p, region, app)
+func resolveGameUID(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (int, string, bool, error) {
+	target, err := resolveGameTarget(ctx, p, region, regionExplicit, app)
 	if err != nil {
 		return 0, "", false, err
 	}
@@ -2082,7 +2090,7 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 		region = string(renderregion.JP)
 	}
 
-	harukiUserID, pjskUserID, visible, err := resolveGameUID(ctx, p, region, app)
+	harukiUserID, pjskUserID, visible, err := resolveGameUID(ctx, p, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, err
 	}
@@ -2365,7 +2373,7 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		region = string(renderregion.JP)
 	}
 
-	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
+	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, err
 	}
@@ -2407,6 +2415,11 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		var err error
 		if p.Selector != "" {
 			_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else if !r.RegionExplicit {
+			_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			if err != nil {
+				_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			}
 		} else {
 			_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}

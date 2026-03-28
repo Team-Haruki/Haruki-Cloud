@@ -87,7 +87,7 @@ func formatBindingListText(items []BindingListItem) string {
 		return "你还没有绑定任何PJSK账号"
 	}
 
-	lines := []string{"已绑定账号列表（按账号ID升序）:"}
+	lines := []string{"已绑定账号列表（按账号绑定先后顺序）:"}
 	for _, item := range items {
 		line := fmt.Sprintf("u%d [%s] %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item))
 		marks := make([]string, 0, 2)

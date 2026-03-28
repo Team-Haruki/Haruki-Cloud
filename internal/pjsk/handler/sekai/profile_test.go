@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
@@ -22,7 +21,7 @@ func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
 		Platform:   "qq",
 		UserId:     "42",
 		TriggerCmd: "/上传个人背景",
-		Message: []zeromessage.Segment{
+		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/上传个人背景"}},
 			{Type: "image", Data: map[string]string{"url": "https://example.com/bg.png"}},
 		},

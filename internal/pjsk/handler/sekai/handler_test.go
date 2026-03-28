@@ -2,11 +2,10 @@ package sekai
 
 import (
 	"context"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"log"
 	"testing"
-
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 func TestRegisterCommandHandler(t *testing.T) {
@@ -15,13 +14,13 @@ func TestRegisterCommandHandler(t *testing.T) {
 
 	handler.PrintTree()
 	v, e := handler.Dispatch(context.Background(), handler.Event{
-		Message: []zeromessage.Segment{
+		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/cn查谱面 虾"}},
 		},
 	})
 	log.Println(v, e)
 	v, e = handler.Dispatch(context.Background(), handler.Event{
-		Message: []zeromessage.Segment{
+		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/card 1"}},
 		},
 	})

@@ -2,17 +2,16 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/api/bot/onebot11"
 	"reflect"
 	"testing"
-
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 func TestBuildContextPreservesEventFieldsAndExtractsAtIDs(t *testing.T) {
 	event := Event{
 		Platform:    "qq",
 		MessageType: MessageTypeGroup,
-		Message: []zeromessage.Segment{
+		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/sk "}},
 			{Type: "at", Data: map[string]string{"qq": "12345"}},
 			{Type: "text", Data: map[string]string{"text": " 20"}},

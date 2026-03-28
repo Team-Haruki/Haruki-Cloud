@@ -14,6 +14,7 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/logger"
 	"slices"
 	"strings"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/shamaton/msgpack/v3"
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
 )
 
 const botRouteBase = "/api/v2/bot"
@@ -102,9 +102,8 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 		if !slices.Contains(commands, req.MatchedCommand) {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
-		message := toZeroSegments(req.Message)
 
-		resolved, err := resolveBotCommand(message, expectedPath, req)
+		resolved, err := resolveBotCommand(req.Message, expectedPath, req)
 		if err != nil {
 			var validationErr *botValidationError
 			if errors.As(err, &validationErr) {
@@ -148,12 +147,47 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 		if err := msgpack.Unmarshal(c.Body(), &req); err != nil {
 			return BotCommandRequest{}, err
 		}
-		return req, nil
-	}
-	if err := c.Bind().Body(&req); err != nil {
+	} else if err := c.Bind().Body(&req); err != nil {
 		return BotCommandRequest{}, err
 	}
+	logger.Infof("before parse: %+v", req.Message)
+	req.Message = parseOnebot11Message(req.Message)
+	logger.Infof("after parse: %+v", req.Message)
 	return req, nil
+}
+
+func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
+	segs := make([]onebot11.Segment, 0, len(msg))
+	for _, s := range msg {
+		data := make(map[string]string)
+		switch d := s.Data.(type) {
+		case map[string]interface{}:
+			for k, v := range d {
+				if sv, ok := v.(string); ok {
+					data[k] = sv
+				}
+			}
+		case map[interface{}]interface{}:
+			for k, v := range d {
+				ks, _ := k.(string)
+				vs, _ := v.(string)
+				if ks != "" {
+					data[ks] = vs
+				}
+			}
+		case map[string]string:
+			data = d
+		}
+		switch s.Type {
+		case onebot11.TYPE_TEXT:
+			segs = append(segs, onebot11.Text(data[onebot11.KEY_TEXT]))
+		case onebot11.TYPE_IMAGE:
+			segs = append(segs, onebot11.Image(data[onebot11.KEY_FILE], data[onebot11.KEY_URL]))
+		case onebot11.TYPE_AT:
+			segs = append(segs, onebot11.At(data[onebot11.KEY_QQ]))
+		}
+	}
+	return segs
 }
 
 // botResponse sends a response using MsgPack when the request came through the
@@ -173,7 +207,7 @@ func (e *botValidationError) Error() string {
 	return e.msg
 }
 
-func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+func resolveBotCommand(message onebot11.Message, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
 
 	matchedCommand := req.MatchedCommand
 	messageType := commandhandler.MessageTypePrivate
@@ -226,45 +260,14 @@ func resolveBotCommand(message []zeromessage.Segment, expectedPath string, req B
 	return resolved, nil
 }
 
-// toZeroSegments converts an onebot11.Message to the ZeroBot Segment slice
-// expected by internal command handlers. JSON deserialization produces
-// map[string]interface{} for the Data field; MsgPack produces
-// map[interface{}]interface{}. This normalises all values to string.
-func toZeroSegments(msg onebot11.Message) []zeromessage.Segment {
-	segs := make([]zeromessage.Segment, 0, len(msg))
-	for _, s := range msg {
-		data := make(map[string]string)
-		switch d := s.Data.(type) {
-		case map[string]interface{}:
-			for k, v := range d {
-				if sv, ok := v.(string); ok {
-					data[k] = sv
-				}
-			}
-		case map[interface{}]interface{}:
-			for k, v := range d {
-				ks, _ := k.(string)
-				vs, _ := v.(string)
-				if ks != "" {
-					data[ks] = vs
-				}
-			}
-		case map[string]string:
-			data = d
-		}
-		segs = append(segs, zeromessage.Segment{Type: s.Type, Data: data})
-	}
-	return segs
-}
-
-func flattenOneBotSegments(segments []zeromessage.Segment) string {
+func flattenOneBotSegments(segments onebot11.Message) string {
 	var sb strings.Builder
 	for _, seg := range segments {
 		switch seg.Type {
 		case "text":
-			sb.WriteString(seg.Data["text"])
+			sb.WriteString(seg.Data.(onebot11.TextData).Text)
 		case "at":
-			qq := strings.TrimSpace(seg.Data["qq"])
+			qq := strings.TrimSpace(seg.Data.(onebot11.AtData).QQ)
 			if qq == "" {
 				continue
 			}

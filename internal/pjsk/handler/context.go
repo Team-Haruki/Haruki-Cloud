@@ -2,8 +2,7 @@ package handler
 
 import (
 	"context"
-
-	zeromessage "github.com/wdvxdr1123/ZeroBot/message"
+	"haruki-cloud/api/bot/onebot11"
 )
 
 type MessageType string
@@ -16,7 +15,7 @@ const (
 type Event struct {
 	Platform    string
 	MessageType MessageType
-	Message     []zeromessage.Segment
+	Message     onebot11.Message
 	MessageId   string
 	UserId      string
 	SenderName  string
@@ -30,7 +29,7 @@ type Context interface {
 	GetPlatform() string
 	GetMessageType() MessageType
 	GetEvent() Event
-	GetMessage() []zeromessage.Segment
+	GetMessage() onebot11.Message
 	GetMessageId() string
 	GetUserId() string
 	GetSenderName() string
@@ -63,7 +62,7 @@ type HandlerContext struct {
 	ArgText     string
 	MessageType MessageType
 	Event       Event
-	Message     []zeromessage.Segment
+	Message     onebot11.Message
 	MessageId   string
 	UserId      string
 	SenderName  string
@@ -86,7 +85,7 @@ func (h *HandlerContext) GetMessageType() MessageType {
 func (h *HandlerContext) GetEvent() Event {
 	return h.Event
 }
-func (h *HandlerContext) GetMessage() []zeromessage.Segment {
+func (h *HandlerContext) GetMessage() onebot11.Message {
 	return h.Message
 }
 func (h *HandlerContext) GetMessageId() string {
@@ -105,12 +104,12 @@ func (h *HandlerContext) GetAtIds() []string {
 	return h.AtIds
 }
 
-func extractAtIds(segments []zeromessage.Segment) []string {
+func extractAtIds(segments onebot11.Message) []string {
 	var atIds []string
 	for _, seg := range segments {
 		if seg.Type == "at" {
-			if id, ok := seg.Data["qq"]; ok && id != "" {
-				atIds = append(atIds, id)
+			if atData, ok := seg.Data.(onebot11.AtData); ok && atData.QQ != "" {
+				atIds = append(atIds, atData.QQ)
 				continue
 			}
 		}
@@ -118,12 +117,12 @@ func extractAtIds(segments []zeromessage.Segment) []string {
 	return atIds
 }
 
-func extractText(segments []zeromessage.Segment) string {
+func extractText(segments onebot11.Message) string {
 	var text string
 	for _, seg := range segments {
 		if seg.Type == "text" {
-			if content, ok := seg.Data["text"]; ok {
-				text += content
+			if textData, ok := seg.Data.(onebot11.TextData); ok && textData.Text != "" {
+				text += " " + textData.Text
 			}
 		}
 	}

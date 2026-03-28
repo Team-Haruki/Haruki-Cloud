@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
@@ -19,6 +20,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 		},
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+
 			args := strings.TrimSpace(ctx.GetArgs())
 			if isProfileBindingListCommand(ctx.GetTriggerCmd()) {
 				if args != "" {
@@ -56,10 +58,15 @@ func extractFirstImageURL(ctx SekaiHandlerContext) string {
 		if segment.Type != "image" {
 			continue
 		}
-		if imageURL := strings.TrimSpace(segment.Data["url"]); imageURL != "" {
+		imgData, ok := segment.Data.(onebot11.ImageData)
+		if !ok {
+			continue
+		}
+
+		if imageURL := strings.TrimSpace(imgData.Url); imageURL != "" {
 			return imageURL
 		}
-		if fileURL := strings.TrimSpace(segment.Data["file"]); strings.HasPrefix(strings.ToLower(fileURL), "http://") || strings.HasPrefix(strings.ToLower(fileURL), "https://") {
+		if fileURL := strings.TrimSpace(imgData.File); strings.HasPrefix(strings.ToLower(fileURL), "http://") || strings.HasPrefix(strings.ToLower(fileURL), "https://") {
 			return fileURL
 		}
 	}

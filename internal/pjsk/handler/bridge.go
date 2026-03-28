@@ -113,7 +113,7 @@ func imageMessage(img []byte, app *renderapp.App, group string) (onebot11.Messag
 	if err != nil {
 		return nil, err
 	}
-	return onebot11.Message{onebot11.Image(url)}, nil
+	return onebot11.Message{onebot11.Image(url, "")}, nil
 }
 
 func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -164,7 +164,7 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		return
 	}
 	url, err = app.ImageCache.StoreAndGetURL(data, BotModulePJSK)
-	return onebot11.Message{onebot11.Image(url)}, err
+	return onebot11.Message{onebot11.Image(url, "")}, err
 }
 
 func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -518,7 +518,7 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 		return nil, fmt.Errorf("asset path is empty")
 	}
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-		return onebot11.Message{onebot11.Image(path)}, nil
+		return onebot11.Message{onebot11.Image(path, "")}, nil
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

@@ -211,19 +211,19 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 
 ## 测试状态追踪
 
-| 功能组 | 已测试 | 通过 | 失败 | 备注 |
-|--------|--------|------|------|------|
-| card | | | | |
-| music | | | | |
-| deck | | | | |
-| event | | | | |
-| sk | | | | |
-| mysekai | | | | |
-| profile | | | | |
-| education | | | | |
-| score | | | | |
-| alias | | | | |
-| misc/gacha/stamp/vlive | | | | |
+| 功能组 | 已测试 | 通过 | 失败 | 备注 | 测试人 |
+|--------|--------|------|------|------|------|
+| card | | | | | |
+| music | | | | | |
+| deck | | | | | |
+| event | | | | | |
+| sk | | | | | |
+| mysekai | | | | | |
+| profile | 18/20 | 17 | 1 | bg相关需要处理client实现 | 锡纸 |
+| education | | | | | |
+| score | 4/4 | 0 | 4 | 全部提示类似于未实现的报错 | 锡纸 |
+| alias | | | | | |
+| misc/gacha/stamp/vlive | | | | | |
 
 ---
 

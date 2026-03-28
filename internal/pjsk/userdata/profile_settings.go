@@ -28,6 +28,7 @@ type ProfileSettingsCommandParams struct {
 	Platform       string `json:"platform"`
 	PlatformUserID string `json:"platform_user_id"`
 	Server         string `json:"server"`
+	RegionExplicit bool   `json:"region_explicit,omitempty"`
 	Selector       string `json:"selector,omitempty"`
 	ImageURL       string `json:"image_url,omitempty"`
 	Blur           *int   `json:"blur,omitempty"`
@@ -66,9 +67,17 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	// When a u[i] selector is provided, resolve it to a specific binding entity
 	// instead of using server-based lookup. This supports users with multiple
 	// bindings on the same server.
+	// When no selector and no explicit region prefix, try global default binding
+	// first so the user's "default" account is targeted, not a server-specific one.
 	resolveBinding := func() (*pjskdb.UserBinding, error) {
 		if params.Selector != "" {
 			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, params.Selector)
+		}
+		if !params.RegionExplicit {
+			entity, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, GlobalDefaultBindingScope)
+			if err == nil {
+				return entity, nil
+			}
 		}
 		return service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, params.Server)
 	}

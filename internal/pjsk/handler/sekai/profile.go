@@ -61,6 +61,7 @@ func newProfileSettingsParams(ctx SekaiHandlerContext, selector ...string) accou
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
 		Server:         ctx.Region().String(),
+		RegionExplicit: ctx.HasExplicitRegion(),
 	}
 	if len(selector) > 0 && selector[0] != "" {
 		params.Selector = selector[0]

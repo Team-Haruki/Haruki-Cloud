@@ -436,14 +436,14 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 		request.MusicID = drawing.IntPtr(musicID)
 		if musicID == 10000 {
 			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
-			request.MusicCoverPath = drawing.StringPtr("omakase.png")
+			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
 		}
 	} else if musicIDFloat, ok := option["music_id"].(float64); ok {
 		musicID := int(musicIDFloat)
 		request.MusicID = drawing.IntPtr(musicID)
 		if musicID == 10000 {
 			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
-			request.MusicCoverPath = drawing.StringPtr("omakase.png")
+			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
 		}
 	}
 

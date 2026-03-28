@@ -10,10 +10,6 @@ import (
 )
 
 func TestMiscBirthdayHandleBuildsResolvedCommand(t *testing.T) {
-	originalNicknames := currentNicknames
-	currentNicknames = map[string]int{"miku": 21}
-	t.Cleanup(func() { currentNicknames = originalNicknames })
-
 	tests := []struct {
 		name      string
 		args      string

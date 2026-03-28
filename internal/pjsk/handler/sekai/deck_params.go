@@ -22,10 +22,13 @@ type deckAutoQueryParams struct {
 	EventAttr                    string                             `json:"event_attr,omitempty"`
 	EventUnit                    string                             `json:"event_unit,omitempty"`
 	WorldBloomCharacterID        *int                               `json:"world_bloom_character_id,omitempty"`
+	WorldBloomCharacterQuery     string                             `json:"world_bloom_character_query,omitempty"`
 	WorldBloomEventTurn          *int                               `json:"world_bloom_event_turn,omitempty"`
 	ChallengeLiveCharacterID     *int                               `json:"challenge_live_character_id,omitempty"`
+	ChallengeLiveCharacterQuery  string                             `json:"challenge_live_character_query,omitempty"`
 	FixedCards                   []int                              `json:"fixed_cards,omitempty"`
 	FixedCharacters              []int                              `json:"fixed_characters,omitempty"`
+	FixedCharacterQueries        []string                           `json:"fixed_character_queries,omitempty"`
 	Rarity1Config                *renderdeck.CardConfigPatch        `json:"rarity_1_config,omitempty"`
 	Rarity2Config                *renderdeck.CardConfigPatch        `json:"rarity_2_config,omitempty"`
 	Rarity3Config                *renderdeck.CardConfigPatch        `json:"rarity_3_config,omitempty"`
@@ -162,9 +165,12 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 	if err != nil {
 		return "", err
 	}
-	charID, remaining := extractDeckCharacter(args)
+	charID, charQuery, remaining := extractDeckCharacterCandidate(args, true)
 	if charID > 0 {
 		params.ChallengeLiveCharacterID = intPtr(charID)
+		args = remaining
+	} else if charQuery != "" {
+		params.ChallengeLiveCharacterQuery = charQuery
 		args = remaining
 	}
 	return extractDeckMusicQuery(args, params)
@@ -416,17 +422,31 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 	}
 
 	fixedCharacters := make([]int, 0, len(fields))
+	fixedCharacterQueries := make([]string, 0, len(fields))
 	for _, field := range fields {
-		charID := resolveDeckCharacterToken(field)
+		charID, charQuery := resolveDeckCharacterToken(field)
 		if charID <= 0 {
-			return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色昵称")
+			if charQuery == "" {
+				return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+			}
+			fixedCharacterQueries = append(fixedCharacterQueries, charQuery)
+			continue
 		}
 		fixedCharacters = append(fixedCharacters, charID)
 	}
-	if err := validateDeckUniqueIDs(fixedCharacters, 5, "固定角色"); err != nil {
-		return "", err
+	if len(fixedCharacters)+len(fixedCharacterQueries) > 5 {
+		return "", fmt.Errorf("固定角色数量不能超过5个")
+	}
+	if len(fixedCharacterQueries) == 0 {
+		if err := validateDeckUniqueIDs(fixedCharacters, 5, "固定角色"); err != nil {
+			return "", err
+		}
+	}
+	if len(fixedCharacters) == 0 && len(fixedCharacterQueries) == 0 {
+		return "", fmt.Errorf("固定角色不能为空")
 	}
 	params.FixedCharacters = fixedCharacters
+	params.FixedCharacterQueries = fixedCharacterQueries
 	return strings.TrimSpace(prefix), nil
 }
 
@@ -706,17 +726,16 @@ func isDeckDirectMusicIDQuery(args string) bool {
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	if turn, charID, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && charID > 0 {
+	if turn, _, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && charQuery != "" {
 		params.WorldBloomEventTurn = intPtr(turn)
-		params.WorldBloomCharacterID = intPtr(charID)
-		params.EventUnit = deckCharacterUnit(charID)
+		params.WorldBloomCharacterQuery = charQuery
 		return remaining, nil
 	}
 
 	if eventID, remaining := extractDeckEventID(args); eventID != nil {
 		params.EventID = eventID
-		if charID, next := extractDeckCharacter(remaining); charID > 0 {
-			params.WorldBloomCharacterID = intPtr(charID)
+		if _, charQuery, next := extractDeckCharacterCandidate(remaining, true); charQuery != "" {
+			params.WorldBloomCharacterQuery = charQuery
 			return next, nil
 		}
 		return remaining, nil
@@ -735,22 +754,22 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 	}
 }
 
-func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, remaining string) {
+func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string) {
 	matches := deckWlTurnRegex.FindStringSubmatch(args)
 	if len(matches) < 2 {
-		return 0, 0, strings.TrimSpace(args)
+		return 0, 0, "", strings.TrimSpace(args)
 	}
 	turnValue, err := strconv.Atoi(matches[1])
 	if err != nil || turnValue <= 0 {
-		return 0, 0, strings.TrimSpace(args)
+		return 0, 0, "", strings.TrimSpace(args)
 	}
 
-	charID, args = extractDeckCharacter(args)
-	if charID <= 0 {
-		return 0, 0, strings.TrimSpace(args)
-	}
 	args = deckWlTurnRegex.ReplaceAllString(args, " ")
-	return turnValue, charID, normalizeDeckSpaces(args)
+	charID, charQuery, args = extractDeckCharacterCandidate(args, true)
+	if charID <= 0 && charQuery == "" {
+		return 0, 0, "", strings.TrimSpace(args)
+	}
+	return turnValue, charID, charQuery, normalizeDeckSpaces(args)
 }
 
 func extractDeckEventID(args string) (*int, string) {
@@ -776,7 +795,7 @@ func extractDeckSimulatedEvent(args string) (attr string, unit string, remaining
 }
 
 func extractDeckAttribute(args string) (string, string) {
-	ext := parser.NewExtractor(currentNicknames)
+	ext := parser.NewExtractor(nil)
 	result := ext.ExtractAttribute(args)
 	if !result.Found {
 		return "", strings.TrimSpace(args)
@@ -796,31 +815,30 @@ func extractDeckUnit(args string) (string, string) {
 }
 
 func extractDeckCharacter(args string) (int, string) {
-	if len(currentNicknames) == 0 {
-		return 0, strings.TrimSpace(args)
-	}
-	ext := parser.NewExtractor(currentNicknames)
-	result := ext.ExtractCharacter(args)
-	if !result.Found {
-		return 0, strings.TrimSpace(args)
-	}
-	return result.Value, normalizeDeckSpaces(result.Remaining)
+	return 0, normalizeDeckSpaces(args)
 }
 
-func resolveDeckCharacterToken(token string) int {
-	token = strings.ToLower(strings.TrimSpace(token))
-	if token == "" {
-		return 0
+func extractDeckCharacterCandidate(args string, allowSingleFieldFallback bool) (int, string, string) {
+	charID, remaining := extractDeckCharacter(args)
+	if charID > 0 {
+		return charID, "", remaining
 	}
-	if charID, ok := currentNicknames[token]; ok {
-		return charID
+	args = normalizeDeckSpaces(args)
+	if !allowSingleFieldFallback || args == "" {
+		return 0, "", args
 	}
-	ext := parser.NewExtractor(currentNicknames)
-	result := ext.ExtractCharacter(token)
-	if result.Found && strings.TrimSpace(result.Remaining) == "" {
-		return result.Value
+	if len(strings.Fields(args)) != 1 {
+		return 0, "", args
 	}
-	return 0
+	return 0, args, ""
+}
+
+func resolveDeckCharacterToken(token string) (int, string) {
+	raw := strings.TrimSpace(token)
+	if raw == "" {
+		return 0, ""
+	}
+	return 0, raw
 }
 
 func extractDeckKeywordNumber(field string, keywords []string, parserFn func(string) (int, error)) (int, bool, error) {

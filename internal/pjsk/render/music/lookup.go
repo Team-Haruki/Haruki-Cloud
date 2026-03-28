@@ -131,7 +131,7 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	searcher := NewSearchService(source, NewParser(c.nicknames))
+	searcher := c.newSearchService(source)
 	musicInfo, err := searcher.Search(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
@@ -171,7 +171,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	if c == nil {
 		return nil, fmt.Errorf("music controller is not configured")
 	}
-	parser := NewParser(c.nicknames)
+	parser := NewParser(c.banCharacterNicknames)
 	if preferred, cleaned := parser.extractDiff(query.Query); preferred != "" && strings.TrimSpace(query.Difficulty) == "" {
 		query.Difficulty = preferred
 		query.Query = cleaned
@@ -181,7 +181,8 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	searcher := NewSearchService(source, parser)
+	searcher := c.newSearchService(source)
+	searcher.parser = parser
 	musicInfo, err := searcher.Search(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)

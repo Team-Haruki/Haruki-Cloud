@@ -135,3 +135,54 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
 	}
 }
+
+func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{ArgText: "初音未来 100 500"},
+		region:         renderregion.JP,
+		prefixArg:      "wl",
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if _, ok := params["wl_character_id"]; ok {
+		t.Fatalf("expected wl_character_id to be omitted: %#v", params["wl_character_id"])
+	}
+	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	ranks, ok := params["ranks"].([]int)
+	if !ok {
+		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
+	}
+	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
+		t.Fatalf("unexpected ranks: %#v", ranks)
+	}
+}
+
+func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{ArgText: "wl初音未来 100"},
+		region:         renderregion.JP,
+		prefixArg:      "wl",
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	ranks, ok := params["ranks"].([]int)
+	if !ok {
+		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
+	}
+	if len(ranks) != 1 || ranks[0] != 100 {
+		t.Fatalf("unexpected ranks: %#v", ranks)
+	}
+}

@@ -46,6 +46,7 @@ type TrackerRankQuery struct {
 	TargetPlatform   string  `json:"target_platform,omitempty"`
 	TargetUserID     string  `json:"target_user_id,omitempty"`
 	WlCharacterID    *int    `json:"wl_character_id,omitempty"`
+	WlCharacterQuery string  `json:"wl_character_query,omitempty"`
 	Full             bool    `json:"full,omitempty"`
 	EventName        *string `json:"event_name,omitempty"`
 	EventStartAt     *int64  `json:"event_start_at,omitempty"`

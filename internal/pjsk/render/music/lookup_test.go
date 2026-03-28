@@ -1,6 +1,7 @@
 package music
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +17,23 @@ type lookupTestSource struct {
 	difficulties map[int][]*masterdata.MusicDifficulty
 }
 
+type lookupTestAliasResolver struct {
+	ids map[string]int
+	err error
+}
+
 func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+
+func (r *lookupTestAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
+	if r == nil {
+		return 0, false, nil
+	}
+	if r.err != nil {
+		return 0, false, r.err
+	}
+	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
+	return id, ok, nil
+}
 
 func (s *lookupTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
@@ -173,6 +190,27 @@ func TestResolveMusicCoverAndBPM(t *testing.T) {
 	}
 	if len(bpm.Events) != 2 || bpm.Events[0].BPM != 120 || bpm.Events[1].BPM != 180 {
 		t.Fatalf("unexpected events: %+v", bpm.Events)
+	}
+}
+
+func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&lookupTestAliasResolver{
+		ids: map[string]int{"blue song": 1},
+	})
+
+	cover, err := controller.ResolveMusicCover(Query{Query: "blue song", Region: "jp"})
+	if err != nil {
+		t.Fatalf("ResolveMusicCover() error = %v", err)
+	}
+	if cover.Music.ID != 1 || cover.Music.Title != "Song A" {
+		t.Fatalf("unexpected music from alias: %+v", cover.Music)
 	}
 }
 

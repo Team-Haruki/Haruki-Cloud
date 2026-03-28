@@ -31,11 +31,11 @@ type QueryInfo struct {
 }
 
 type Parser struct {
-	nicknames map[string]int
+	banCharacterNicknames map[string]int
 }
 
-func NewParser(nicknames map[string]int) *Parser {
-	return &Parser{nicknames: cloneNicknames(nicknames)}
+func NewParser(banCharacterNicknames map[string]int) *Parser {
+	return &Parser{banCharacterNicknames: cloneNicknames(banCharacterNicknames)}
 }
 
 func (p *Parser) Parse(args string) (*QueryInfo, error) {
@@ -166,7 +166,7 @@ func (p *Parser) tryParseEvent(args string) *QueryInfo {
 
 func (p *Parser) tryParseBan(args string) *QueryInfo {
 	normalized := strings.ToLower(strings.TrimSpace(args))
-	for nickname, characterID := range p.nicknames {
+	for nickname, characterID := range p.banCharacterNicknames {
 		if !strings.HasPrefix(normalized, nickname) {
 			continue
 		}

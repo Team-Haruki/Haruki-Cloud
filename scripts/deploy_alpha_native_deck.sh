@@ -131,8 +131,8 @@ upload_binary_and_lib() {
 	echo "[upload] binary"
 	scp "${LOCAL_BINARY_PATH}" "${REMOTE_HOST}:${REMOTE_BINARY_PATH}.new"
 
-	echo "[upload] libsekai_deck_recommend_c.so"
-	scp "${LOCAL_LIB_PATH}" "${REMOTE_HOST}:${REMOTE_LIB_PATH}"
+	# echo "[upload] libsekai_deck_recommend_c.so"
+	# scp "${LOCAL_LIB_PATH}" "${REMOTE_HOST}:${REMOTE_LIB_PATH}"
 }
 
 upload_masterdata() {

@@ -4,14 +4,7 @@ import (
 	"encoding/json"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"strings"
 )
-
-var currentNicknames map[string]int
-
-func SetNicknames(nicknames map[string]int) {
-	currentNicknames = nicknames
-}
 
 func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode string) *parser.ResolvedCommand {
 	return &parser.ResolvedCommand{
@@ -36,18 +29,6 @@ func makeResolvedCmdWithParams(ctx SekaiHandlerContext, module parser.TargetModu
 		resolved.Params = data
 	}
 	return resolved
-}
-
-func resolveNicknameArg(args string) (int, string) {
-	if len(currentNicknames) == 0 {
-		return 0, strings.TrimSpace(args)
-	}
-	ext := parser.NewExtractor(currentNicknames)
-	res := ext.ExtractCharacter(args)
-	if res.Found {
-		return res.Value, strings.TrimSpace(res.Remaining)
-	}
-	return 0, strings.TrimSpace(args)
 }
 
 // AllRegions returns all supported region values.

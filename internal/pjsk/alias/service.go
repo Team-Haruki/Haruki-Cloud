@@ -176,6 +176,60 @@ func (s *Service) Query(ctx context.Context, aliasType, target string) (*QueryRe
 	}, nil
 }
 
+func (s *Service) TryResolveMusicID(ctx context.Context, token string) (int, bool, error) {
+	if !s.IsReady() {
+		return 0, false, nil
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return 0, false, nil
+	}
+
+	if ref, ok, err := s.tryResolveMusicByID(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	if ref, ok, err := s.tryResolveMusicByTitle(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	if ref, ok, err := s.tryResolveMusicByApprovedAlias(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	return 0, false, nil
+}
+
+func (s *Service) TryResolveCharacterID(ctx context.Context, token string) (int, bool, error) {
+	if !s.IsReady() {
+		return 0, false, nil
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return 0, false, nil
+	}
+
+	if ref, ok, err := s.tryResolveCharacterByID(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	if ref, ok, err := s.tryResolveCharacterByName(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	if ref, ok, err := s.tryResolveCharacterByApprovedAlias(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	return 0, false, nil
+}
+
 func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToDelete []string) ([]ApprovedAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")

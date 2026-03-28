@@ -11,10 +11,6 @@ import (
 )
 
 func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
-	originalNicknames := currentNicknames
-	currentNicknames = map[string]int{"miku": 21}
-	t.Cleanup(func() { currentNicknames = originalNicknames })
-
 	tests := []struct {
 		name      string
 		args      string
@@ -25,7 +21,7 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 			args: "",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Unit != "" || query.Cid != 0 || query.Attr != "" || query.Tree || query.Flower {
+				if query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
 					t.Fatalf("unexpected query: %+v", query)
 				}
 			},
@@ -35,7 +31,7 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 			args: "25h miku 可爱 树 花",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Unit != "school_refusal" || query.Cid != 21 || query.Attr != "cute" || !query.Tree || !query.Flower {
+				if query.Unit != "school_refusal" || query.Cid != 0 || query.CharacterQuery != "miku" || query.Attr != "cute" || !query.Tree || !query.Flower {
 					t.Fatalf("unexpected query: %+v", query)
 				}
 			},
@@ -46,6 +42,16 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
 				if query.Unit != "piapro" {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
+			name: "unknown nickname is preserved as character query",
+			args: "初音未来",
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if query.Cid != 0 || query.CharacterQuery != "初音未来" {
 					t.Fatalf("unexpected query: %+v", query)
 				}
 			},

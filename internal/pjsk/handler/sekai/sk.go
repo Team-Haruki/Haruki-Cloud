@@ -208,7 +208,11 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 }
 
 func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool) (map[string]any, error) {
-	eventID, wlCharacterID, full, rankArgs := extractSKMetaArgs(strings.TrimSpace(ctx.GetArgs()), defaultFull)
+	eventID, wlCharacterID, wlCharacterQuery, full, rankArgs := extractSKMetaArgs(
+		strings.TrimSpace(ctx.GetArgs()),
+		defaultFull,
+		ctx.PrefixArg() == "wl",
+	)
 
 	effectiveRankArgs := rankArgs
 	targetUserID := ""
@@ -231,8 +235,8 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if len(ranks) == 0 && userID == nil {
 		return nil, fmt.Errorf("请至少提供一个排名或UID")
 	}
-	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 {
-		return nil, fmt.Errorf("wl 模式需要角色ID，例如: /wlsk cid5 100 500")
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		return nil, fmt.Errorf("wl 模式需要角色ID或角色名，例如: /wlsk 初音未来 100 500")
 	}
 
 	params := map[string]any{
@@ -244,6 +248,9 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	}
 	if wlCharacterID > 0 {
 		params["wl_character_id"] = wlCharacterID
+	}
+	if strings.TrimSpace(wlCharacterQuery) != "" {
+		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
 	}
 	if userID != nil && *userID > 0 {
 		params["user_id"] = *userID
@@ -258,7 +265,7 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	return params, nil
 }
 
-func extractSKMetaArgs(args string, defaultFull bool) (eventID int, wlCharacterID int, full bool, rankArgs string) {
+func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int, wlCharacterID int, wlCharacterQuery string, full bool, rankArgs string) {
 	full = defaultFull
 	fields := strings.Fields(strings.TrimSpace(args))
 	remaining := make([]string, 0, len(fields))
@@ -274,27 +281,90 @@ func extractSKMetaArgs(args string, defaultFull bool) (eventID int, wlCharacterI
 		case strings.HasPrefix(token, "e") && len(token) > 1 && isDigits(token[1:]):
 			eventID, _ = strconv.Atoi(token[1:])
 			continue
-		case strings.HasPrefix(token, "wl:") && isDigits(token[3:]):
-			wlCharacterID, _ = strconv.Atoi(token[3:])
-			continue
-		case strings.HasPrefix(token, "wl") && len(token) > 2 && isDigits(token[2:]):
-			wlCharacterID, _ = strconv.Atoi(token[2:])
-			continue
-		case strings.HasPrefix(token, "cid") && len(token) > 3 && isDigits(token[3:]):
-			wlCharacterID, _ = strconv.Atoi(token[3:])
-			continue
-		case strings.HasPrefix(token, "chara") && len(token) > 5 && isDigits(token[5:]):
-			wlCharacterID, _ = strconv.Atoi(token[5:])
-			continue
-		case strings.HasPrefix(token, "char") && len(token) > 4 && isDigits(token[4:]):
-			wlCharacterID, _ = strconv.Atoi(token[4:])
-			continue
-		default:
-			remaining = append(remaining, raw)
+		case wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "":
+			if id, query, ok := parseSKWorldBloomCharacterToken(raw); ok {
+				wlCharacterID = id
+				wlCharacterQuery = query
+				continue
+			}
 		}
+		remaining = append(remaining, raw)
+	}
+	if wlMode && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		wlCharacterQuery, rankArgs = splitSKWorldBloomCharacterAndRanks(remaining)
+		return
 	}
 	rankArgs = strings.TrimSpace(strings.Join(remaining, " "))
 	return
+}
+
+func parseSKWorldBloomCharacterToken(raw string) (int, string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, "", false
+	}
+
+	type prefixRule struct {
+		prefix     string
+		allowQuery bool
+	}
+
+	rules := []prefixRule{
+		{prefix: "wl:", allowQuery: true},
+		{prefix: "wl", allowQuery: true},
+		{prefix: "cid:", allowQuery: false},
+		{prefix: "cid", allowQuery: false},
+		{prefix: "chara:", allowQuery: true},
+		{prefix: "chara", allowQuery: true},
+		{prefix: "char:", allowQuery: true},
+		{prefix: "char", allowQuery: true},
+	}
+
+	lower := strings.ToLower(raw)
+	for _, rule := range rules {
+		if !strings.HasPrefix(lower, rule.prefix) || len(raw) <= len(rule.prefix) {
+			continue
+		}
+		value := strings.TrimSpace(raw[len(rule.prefix):])
+		if value == "" {
+			return 0, "", false
+		}
+		if isDigits(value) {
+			id, _ := strconv.Atoi(value)
+			return id, "", true
+		}
+		if rule.allowQuery {
+			return 0, value, true
+		}
+		return 0, "", false
+	}
+	return 0, "", false
+}
+
+func splitSKWorldBloomCharacterAndRanks(fields []string) (string, string) {
+	remaining := strings.TrimSpace(strings.Join(fields, " "))
+	if remaining == "" {
+		return "", ""
+	}
+	if isValidSKRankExpression(remaining) {
+		return "", remaining
+	}
+	for i := 1; i < len(fields); i++ {
+		charQuery := strings.TrimSpace(strings.Join(fields[:i], " "))
+		rankArgs := strings.TrimSpace(strings.Join(fields[i:], " "))
+		if charQuery == "" || rankArgs == "" {
+			continue
+		}
+		if isValidSKRankExpression(rankArgs) {
+			return charQuery, rankArgs
+		}
+	}
+	return remaining, ""
+}
+
+func isValidSKRankExpression(args string) bool {
+	_, err := parser.NewCommandParser().Parse(strings.TrimSpace(args))
+	return err == nil
 }
 
 func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {

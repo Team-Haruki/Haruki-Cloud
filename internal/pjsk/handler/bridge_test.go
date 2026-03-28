@@ -17,6 +17,7 @@ import (
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -27,6 +28,7 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
+	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
@@ -103,7 +105,19 @@ type bridgeMusicSource struct {
 	difficulties map[int][]*masterdata.MusicDifficulty
 }
 
+type bridgeMusicAliasResolver struct {
+	ids map[string]int
+}
+
 func (s *bridgeMusicSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+
+func (r *bridgeMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
+	if r == nil {
+		return 0, false, nil
+	}
+	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
+	return id, ok, nil
+}
 
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
@@ -218,6 +232,69 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 	if len(message) != 1 || message[0].Type != "text" {
 		t.Fatalf("unexpected note-count message: %+v", message)
+	}
+}
+
+func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/music/list" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req drawing.MusicListRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if len(req.MusicList) != 1 {
+			t.Fatalf("expected 1 music item, got %d", len(req.MusicList))
+		}
+		if id, ok := req.MusicList[0]["id"].(float64); !ok || int(id) != 1 {
+			t.Fatalf("unexpected music list item: %+v", req.MusicList[0])
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 30},
+			},
+		},
+	}
+	controller := music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&bridgeMusicAliasResolver{
+		ids: map[string]int{"blue song": 1},
+	})
+
+	app := &renderapp.App{
+		Music:      controller,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]string{"difficulty": "master"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(&parser.ResolvedCommand{
+		Module: parser.ModuleMusic,
+		Mode:   "music-list",
+		Query:  "blue song",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeMusic list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected list message: %+v", message)
 	}
 }
 
@@ -755,6 +832,230 @@ func TestFormatArrestTextUsesResolvedChallengeCharacterName(t *testing.T) {
 	masked := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), false)
 	if !strings.Contains(masked, "UID: 123***789") {
 		t.Fatalf("expected masked uid, got: %s", masked)
+	}
+}
+
+func TestResolveEducationAreaCharacterIDUsesMasterdataName(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_education_area_char?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	id, err := resolveEducationAreaCharacterID(ctx, &renderapp.App{Sekai: sekaiClient}, renderregion.JP, "初音未来")
+	if err != nil {
+		t.Fatalf("resolveEducationAreaCharacterID() error = %v", err)
+	}
+	if id != 21 {
+		t.Fatalf("unexpected character id: %d", id)
+	}
+
+	id, err = resolveEducationAreaCharacterID(ctx, &renderapp.App{Sekai: sekaiClient}, renderregion.JP, "Hatsune Miku")
+	if err != nil {
+		t.Fatalf("resolveEducationAreaCharacterID() english error = %v", err)
+	}
+	if id != 21 {
+		t.Fatalf("unexpected english character id: %d", id)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsUsesMasterdataQueries(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_char?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	createCharacter := func(id int, firstName, givenName, firstNameEN, givenNameEN string) {
+		t.Helper()
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(int64(id)).
+			SetFirstName(firstName).
+			SetGivenName(givenName).
+			SetFirstNameEnglish(firstNameEN).
+			SetGivenNameEnglish(givenNameEN).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", id, err)
+		}
+	}
+	createCharacter(21, "初音", "未来", "Hatsune", "Miku")
+	createCharacter(24, "巡音", "流歌", "Megurine", "Luka")
+
+	query := renderdeck.AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "event",
+		WorldBloomEventTurn:         drawing.IntPtr(2),
+		WorldBloomCharacterQuery:    "初音未来",
+		ChallengeLiveCharacterQuery: "Hatsune Miku",
+		FixedCharacterQueries:       []string{"巡音流歌"},
+	}
+
+	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventUnit != "piapro" {
+		t.Fatalf("unexpected world bloom event unit: %q", query.EventUnit)
+	}
+	if query.ChallengeLiveCharacterID == nil || *query.ChallengeLiveCharacterID != 21 {
+		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
+	}
+	if len(query.FixedCharacters) != 1 || query.FixedCharacters[0] != 24 {
+		t.Fatalf("unexpected fixed character ids: %+v", query.FixedCharacters)
+	}
+	if query.WorldBloomCharacterQuery != "" || query.ChallengeLiveCharacterQuery != "" || len(query.FixedCharacterQueries) != 0 {
+		t.Fatalf("expected character queries to be consumed: %+v", query)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_challenge_fallback?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "challenge",
+		ChallengeLiveCharacterQuery: "neo",
+	}
+
+	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
+	}
+	if query.MusicQuery != "neo" {
+		t.Fatalf("unexpected fallback music query: %q", query.MusicQuery)
+	}
+	if query.ChallengeLiveCharacterQuery != "" {
+		t.Fatalf("expected challenge query to be cleared: %q", query.ChallengeLiveCharacterQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsFallsBackWorldBloomQueryToMusic(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_fallback?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  drawing.IntPtr(123),
+		WorldBloomCharacterQuery: "neo",
+	}
+
+	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.MusicQuery != "neo" {
+		t.Fatalf("unexpected fallback music query: %q", query.MusicQuery)
+	}
+	if query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected world bloom query to be cleared: %q", query.WorldBloomCharacterQuery)
+	}
+}
+
+func TestResolveTrackerCharacterSelectionUsesMasterdataQuery(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_tracker_character?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:           "jp",
+		EventID:          101,
+		Ranks:            []int{100},
+		WlCharacterQuery: "Hatsune Miku",
+	}
+
+	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
+		t.Fatalf("resolveTrackerCharacterSelection() error = %v", err)
+	}
+	if req.WlCharacterID == nil || *req.WlCharacterID != 21 {
+		t.Fatalf("unexpected wl character id: %+v", req.WlCharacterID)
+	}
+	if req.WlCharacterQuery != "" {
+		t.Fatalf("expected wl character query to be cleared: %q", req.WlCharacterQuery)
+	}
+}
+
+func TestResolveGameCharacterIDByQueryUsesApprovedAlias(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_character_alias_sekai?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	pjskClient := pjskenttest.Open(t, "sqlite3", "file:bridge_test_character_alias_pjsk?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = pjskClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	if _, err := pjskClient.Alias.Create().
+		SetAliasType(pjskalias.AliasTypeCharacter).
+		SetAliasTypeID(21).
+		SetAlias("葱").
+		Save(ctx); err != nil {
+		t.Fatalf("create alias: %v", err)
+	}
+
+	app := &renderapp.App{
+		Sekai:   sekaiClient,
+		Aliases: pjskalias.NewService(sekaiClient, pjskClient, nil),
+	}
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, renderregion.JP, "葱", "bridge test")
+	if err != nil {
+		t.Fatalf("resolveGameCharacterIDByQuery() error = %v", err)
+	}
+	if charID != 21 {
+		t.Fatalf("unexpected character id: %d", charID)
 	}
 }
 

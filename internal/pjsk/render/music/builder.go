@@ -144,10 +144,12 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 	susRelative := filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", music.ID), diff+".txt")
 	susPath := assets.ResolveRegionAssetPath(b.assets, region.String(), susRelative)
 
-	var stylePath *string
+	var stylePath string
 	if trimmed := strings.TrimSpace(query.Style); trimmed != "" {
-		resolved := assets.ResolveAssetPath(b.assets, "", trimmed)
-		stylePath = &resolved
+		stylePath = assets.ResolveAssetPath(b.assets, "", trimmed)
+	}
+	if stylePath == "" {
+		stylePath = assets.StaticImagesDir + "/chart_asset/css/black.css"
 	}
 
 	assetBase := b.assets.Primary()
@@ -160,7 +162,7 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 		Skill:      query.Skill,
 		JacketPath: assets.MakeRelative(assetBase, jacketPath),
 		SusPath:    assets.MakeRelative(assetBase, susPath),
-		StylePath:  stylePath,
+		StylePath:  &stylePath,
 		NoteHost:   assets.StaticImagesDir + "/chart_asset/notes",
 	}, nil
 }

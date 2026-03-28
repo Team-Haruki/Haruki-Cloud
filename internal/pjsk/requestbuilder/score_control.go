@@ -43,6 +43,9 @@ func BuildScoreControlRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 	if app == nil || app.Music == nil {
 		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
 	}
+	if app.Aliases != nil {
+		app.Music.SetAliasResolver(app.Aliases)
+	}
 
 	params, err := resolveScoreControlSelection(r)
 	if err != nil {

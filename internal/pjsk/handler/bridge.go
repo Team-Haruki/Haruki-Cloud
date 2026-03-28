@@ -14,6 +14,7 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
+	sekaidb "haruki-cloud/database/sekai"
 	bonddb "haruki-cloud/database/sekai/bond"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
@@ -416,6 +417,12 @@ func intVal(m map[string]interface{}, key string) int {
 }
 
 func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app == nil || app.Music == nil {
+		return nil, fmt.Errorf("music service unavailable: music controller is not configured")
+	}
+	if app.Aliases != nil {
+		app.Music.SetAliasResolver(app.Aliases)
+	}
 	publicDetailedProfile, publicProfileCard := buildPublicMusicProfiles(r, app)
 	var data []byte
 	switch r.Mode {
@@ -426,6 +433,9 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	case "music-list":
 		q := music.ListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)
+		if strings.TrimSpace(q.Keyword) == "" {
+			q.Keyword = strings.TrimSpace(r.Query)
+		}
 		q.DetailedProfile = publicDetailedProfile
 		data, err = app.Music.RenderMusicList(q)
 	case "music-chart":
@@ -682,6 +692,9 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	}
 	q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
 	mergeParams(r.Params, &q)
+	if err := resolveDeckCharacterSelections(&q, app); err != nil {
+		return nil, err
+	}
 	if err := resolveDeckMusicSelection(&q, app); err != nil {
 		return nil, err
 	}
@@ -733,6 +746,106 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	q.MusicTitle = result.Music.Title
 	q.MusicCoverPath = result.JacketPath
 	return nil
+}
+
+func resolveDeckCharacterSelections(q *deck.AutoQuery, app *renderapp.App) error {
+	if q == nil {
+		return nil
+	}
+
+	region := renderregion.WithDefault(renderregion.Normalize(q.Region))
+
+	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
+		charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, q.WorldBloomCharacterQuery, "deck")
+		if err != nil {
+			if q.WorldBloomEventTurn == nil && strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
+				q.MusicQuery = strings.TrimSpace(q.WorldBloomCharacterQuery)
+				q.WorldBloomCharacterQuery = ""
+			} else {
+				return err
+			}
+		} else {
+			q.WorldBloomCharacterID = drawing.IntPtr(charID)
+			q.WorldBloomCharacterQuery = ""
+			if strings.TrimSpace(q.EventUnit) == "" {
+				q.EventUnit = resolveDeckCharacterUnit(charID)
+			}
+		}
+	}
+
+	if q.ChallengeLiveCharacterID == nil && strings.TrimSpace(q.ChallengeLiveCharacterQuery) != "" {
+		charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, q.ChallengeLiveCharacterQuery, "deck")
+		if err != nil {
+			if strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
+				q.MusicQuery = strings.TrimSpace(q.ChallengeLiveCharacterQuery)
+				q.ChallengeLiveCharacterQuery = ""
+			} else {
+				return err
+			}
+		} else {
+			q.ChallengeLiveCharacterID = drawing.IntPtr(charID)
+			q.ChallengeLiveCharacterQuery = ""
+		}
+	}
+
+	if len(q.FixedCharacterQueries) > 0 {
+		for _, raw := range q.FixedCharacterQueries {
+			charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, raw, "deck")
+			if err != nil {
+				return err
+			}
+			q.FixedCharacters = append(q.FixedCharacters, charID)
+		}
+		q.FixedCharacterQueries = nil
+	}
+
+	if err := validateDeckCharacterIDs(q.FixedCharacters); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateDeckCharacterIDs(values []int) error {
+	if len(values) == 0 {
+		return nil
+	}
+	if len(values) > 5 {
+		return fmt.Errorf("固定角色数量不能超过5个")
+	}
+	seen := make(map[int]struct{}, len(values))
+	for _, value := range values {
+		if value <= 0 {
+			return fmt.Errorf("固定角色不能为空")
+		}
+		if _, ok := seen[value]; ok {
+			return fmt.Errorf("固定角色不能重复")
+		}
+		seen[value] = struct{}{}
+	}
+	return nil
+}
+
+func isCharacterNotFoundError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "未找到对应角色")
+}
+
+func resolveDeckCharacterUnit(charID int) string {
+	switch {
+	case charID >= 1 && charID <= 4:
+		return "light_sound"
+	case charID >= 5 && charID <= 8:
+		return "idol"
+	case charID >= 9 && charID <= 12:
+		return "street"
+	case charID >= 13 && charID <= 16:
+		return "theme_park"
+	case charID >= 17 && charID <= 20:
+		return "school_refusal"
+	case charID >= 21 && charID <= 26:
+		return "piapro"
+	default:
+		return ""
+	}
 }
 
 func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
@@ -819,6 +932,12 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 	case "education-area":
 		query := education.AreaItemQuery{Region: region}
 		mergeParams(r.Params, &query)
+		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
+			query.Cid, err = resolveEducationAreaCharacterID(context.Background(), app, region, query.CharacterQuery)
+			if err != nil {
+				return nil, err
+			}
+		}
 		query.Profile = publicDetailedProfile
 		if suiteUID > 0 {
 			builtReq, buildErr := buildAreaItemUpgradeMaterialsRequestFromSuite(
@@ -1265,7 +1384,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 	switch r.Mode {
 	case "sk-line":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildLineRequestFromTracker(trackerReq)
@@ -1280,7 +1399,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderLine(req)
 	case "sk-query":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildQueryRequestFromTracker(trackerReq)
@@ -1295,7 +1414,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderQuery(req)
 	case "sk-check-room":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildCheckRoomRequestFromTracker(trackerReq)
@@ -1310,7 +1429,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderCheckRoom(req)
 	case "sk-speed":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildSpeedRequestFromTracker(trackerReq)
@@ -1331,6 +1450,9 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 			if trackerReq.Region == "" {
 				trackerReq.Region = "jp"
 			}
+		}
+		if err := resolveTrackerCharacterSelection(ctx, app, &trackerReq); err != nil {
+			return nil, err
 		}
 		// Resolve user ID if not provided
 		if trackerReq.UserID == nil {
@@ -1353,7 +1475,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderPlayerTrace(req)
 	case "sk-rank-trace":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildRankTraceRequestFromTracker(trackerReq)
@@ -1394,6 +1516,31 @@ func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery,
 		return sk.TrackerRankQuery{}, false
 	}
 	return req, true
+}
+
+func prepareTrackerRankQuery(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
+	if err := resolveTrackerCharacterSelection(ctx, app, req); err != nil {
+		return err
+	}
+	return resolveTrackerTargetUser(ctx, app, req)
+}
+
+func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
+	if req == nil || req.WlCharacterID != nil {
+		return nil
+	}
+	query := strings.TrimSpace(req.WlCharacterQuery)
+	if query == "" {
+		return nil
+	}
+	region := renderregion.WithDefault(renderregion.Normalize(req.Region))
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, query, "sk")
+	if err != nil {
+		return err
+	}
+	req.WlCharacterID = drawing.IntPtr(charID)
+	req.WlCharacterQuery = ""
+	return nil
 }
 
 // resolveRequesterGameUID resolves the game user ID from the requester's binding.
@@ -1497,6 +1644,9 @@ func pickTrackerBindingByRegion(bindings []accountdata.BindingListItem, region s
 }
 
 func executeScore(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+	if app != nil && app.Music != nil && app.Aliases != nil {
+		app.Music.SetAliasResolver(app.Aliases)
+	}
 	var data []byte
 	switch r.Mode {
 	case "score-control":
@@ -2021,6 +2171,124 @@ func arrestChallengeCharacterLabel(characterID int, resolvedName string) string 
 		return name
 	}
 	return fmt.Sprintf("角色#%d", characterID)
+}
+
+func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
+	return resolveGameCharacterIDByQuery(ctx, app, region, query, "education area")
+}
+
+func resolveGameCharacterIDByQuery(
+	ctx context.Context,
+	app *renderapp.App,
+	region renderregion.Value,
+	query string,
+	serviceLabel string,
+) (int, error) {
+	if app == nil || app.Sekai == nil {
+		return 0, fmt.Errorf("%s service unavailable: sekai client not configured", serviceLabel)
+	}
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return 0, fmt.Errorf("请输入角色名")
+	}
+
+	target := normalizeGameCharacterText(query)
+	if target == "" {
+		return 0, fmt.Errorf("请输入角色名")
+	}
+	if app.Aliases != nil {
+		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
+			return 0, err
+		} else if ok && charID > 0 {
+			return charID, nil
+		}
+	}
+
+	rows, err := app.Sekai.Gamecharacter.Query().
+		Where(gamecharacterdb.ServerRegionEQ(region.String())).
+		All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("query %s characters failed: %w", serviceLabel, err)
+	}
+	ids := matchGameCharacterIDs(rows, target)
+	if len(ids) == 0 {
+		rows, err = app.Sekai.Gamecharacter.Query().
+			Where(gamecharacterdb.GameIDGT(0)).
+			All(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("query %s characters failed: %w", serviceLabel, err)
+		}
+		ids = matchGameCharacterIDs(rows, target)
+	}
+
+	switch len(ids) {
+	case 0:
+		return 0, fmt.Errorf("未找到对应角色: %s", query)
+	case 1:
+		return ids[0], nil
+	default:
+		return 0, fmt.Errorf("角色名存在歧义: %s", query)
+	}
+}
+
+func matchGameCharacterIDs(rows []*sekaidb.Gamecharacter, target string) []int {
+	if target == "" {
+		return nil
+	}
+
+	matched := make(map[int]struct{})
+	for _, row := range rows {
+		if row == nil || row.GameID <= 0 {
+			continue
+		}
+		for _, candidate := range gameCharacterNames(row) {
+			if normalizeGameCharacterText(candidate) != target {
+				continue
+			}
+			matched[int(row.GameID)] = struct{}{}
+			break
+		}
+	}
+	if len(matched) == 0 {
+		return nil
+	}
+
+	ids := make([]int, 0, len(matched))
+	for id := range matched {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func gameCharacterNames(row *sekaidb.Gamecharacter) []string {
+	values := make([]string, 0, 8)
+	appendGameCharacterName(&values, strings.TrimSpace(row.FirstName+row.GivenName))
+	appendGameCharacterName(&values, strings.TrimSpace(strings.TrimSpace(row.FirstName)+" "+strings.TrimSpace(row.GivenName)))
+	appendGameCharacterName(&values, strings.TrimSpace(row.FirstNameEnglish+row.GivenNameEnglish))
+	appendGameCharacterName(&values, strings.TrimSpace(strings.TrimSpace(row.FirstNameEnglish)+" "+strings.TrimSpace(row.GivenNameEnglish)))
+	appendGameCharacterName(&values, row.FirstName)
+	appendGameCharacterName(&values, row.GivenName)
+	appendGameCharacterName(&values, row.FirstNameEnglish)
+	appendGameCharacterName(&values, row.GivenNameEnglish)
+	return values
+}
+
+func appendGameCharacterName(values *[]string, value string) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return
+	}
+	for _, existing := range *values {
+		if strings.EqualFold(existing, value) {
+			return
+		}
+	}
+	*values = append(*values, value)
+}
+
+func normalizeGameCharacterText(text string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(text)), ""))
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {

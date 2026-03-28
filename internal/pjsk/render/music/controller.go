@@ -1,6 +1,7 @@
 package music
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -23,12 +24,17 @@ var hiddenMusicIDs = map[int]struct{}{
 }
 
 type Controller struct {
-	sources    *regionsource.Registry[DataSource]
-	drawing    *drawing.HarukiDrawingClient
-	assets     *assets.AssetHelper
-	nicknames  map[string]int
-	snapshot   *userdata.Service
-	metaLoader *meta.Loader
+	sources               *regionsource.Registry[DataSource]
+	drawing               *drawing.HarukiDrawingClient
+	assets                *assets.AssetHelper
+	banCharacterNicknames map[string]int
+	aliases               musicAliasResolver
+	snapshot              *userdata.Service
+	metaLoader            *meta.Loader
+}
+
+type musicAliasResolver interface {
+	TryResolveMusicID(ctx context.Context, token string) (int, bool, error)
 }
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, metaLoader *meta.Loader) *Controller {
@@ -36,12 +42,12 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
 	controller := &Controller{
-		sources:    regionsource.NewRegistry[DataSource](renderregion.JP),
-		drawing:    drawingClient,
-		assets:     assetHelper,
-		nicknames:  cloneNicknames(defaultNicknames),
-		snapshot:   snapshot,
-		metaLoader: metaLoader,
+		sources:               regionsource.NewRegistry[DataSource](renderregion.JP),
+		drawing:               drawingClient,
+		assets:                assetHelper,
+		banCharacterNicknames: cloneNicknames(defaultBanCharacterNicknames),
+		snapshot:              snapshot,
+		metaLoader:            metaLoader,
 	}
 	controller.RegisterSource(defaultSource)
 	return controller
@@ -51,12 +57,63 @@ func (c *Controller) RegisterSource(source DataSource) {
 	c.sources.RegisterSource(source)
 }
 
+func (c *Controller) SetAliasResolver(resolver musicAliasResolver) {
+	if c == nil {
+		return
+	}
+	c.aliases = resolver
+}
+
+func (c *Controller) newSearchService(source DataSource) *SearchService {
+	return NewSearchService(source, NewParser(c.banCharacterNicknames)).WithTitleResolver(func(query string) (*masterdata.Music, error) {
+		return c.resolveMusicTitleQuery(source, query)
+	})
+}
+
+func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*masterdata.Music, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fmt.Errorf("music query is empty")
+	}
+
+	if c != nil && c.aliases != nil {
+		musicID, ok, err := c.aliases.TryResolveMusicID(context.Background(), query)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return source.GetMusicByID(musicID)
+		}
+	}
+
+	return source.SearchMusic(query)
+}
+
+func (c *Controller) resolveMusicListKeywordFilter(keyword string) (*int, string, error) {
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return nil, "", nil
+	}
+
+	if c != nil && c.aliases != nil {
+		musicID, ok, err := c.aliases.TryResolveMusicID(context.Background(), keyword)
+		if err != nil {
+			return nil, "", err
+		}
+		if ok {
+			return &musicID, "", nil
+		}
+	}
+
+	return nil, strings.ToLower(keyword), nil
+}
+
 func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailRequest, error) {
 	region, source, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
 		return nil, err
 	}
-	searcher := NewSearchService(source, NewParser(c.nicknames))
+	searcher := c.newSearchService(source)
 	musicInfo, err := searcher.Search(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
@@ -114,7 +171,10 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		minLevel, maxLevel = maxLevel, minLevel
 	}
 
-	keyword := strings.ToLower(strings.TrimSpace(query.Keyword))
+	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(query.Keyword)
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now().UnixMilli()
 	list := make([]map[string]interface{}, 0)
 	jackets := make(map[int]string)
@@ -129,7 +189,10 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		if !query.IncludeLeaks && musicInfo.PublishedAt > now {
 			continue
 		}
-		if keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
+		if filterMusicID != nil && musicInfo.ID != *filterMusicID {
+			continue
+		}
+		if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
 			continue
 		}
 
@@ -199,7 +262,7 @@ func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.Generate
 	if err != nil {
 		return nil, err
 	}
-	searcher := NewSearchService(source, NewParser(c.nicknames))
+	searcher := c.newSearchService(source)
 	info, musicInfo, err := searcher.SearchChart(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music chart: %w", err)

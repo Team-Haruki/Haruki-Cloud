@@ -9,12 +9,21 @@ import (
 )
 
 type SearchService struct {
-	source DataSource
-	parser *Parser
+	source        DataSource
+	parser        *Parser
+	titleResolver func(string) (*masterdata.Music, error)
 }
 
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
 	return &SearchService{source: source, parser: parser}
+}
+
+func (s *SearchService) WithTitleResolver(resolver func(string) (*masterdata.Music, error)) *SearchService {
+	if s == nil {
+		return nil
+	}
+	s.titleResolver = resolver
+	return s
 }
 
 func (s *SearchService) Search(query string) (*masterdata.Music, error) {
@@ -89,6 +98,9 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		keyword := strings.TrimSpace(info.Keyword)
 		if keyword == "" && info.MusicID != 0 {
 			return s.source.GetMusicByID(info.MusicID)
+		}
+		if s.titleResolver != nil {
+			return s.titleResolver(keyword)
 		}
 		return s.source.SearchMusic(keyword)
 

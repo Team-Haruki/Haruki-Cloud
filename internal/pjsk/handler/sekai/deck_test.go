@@ -11,11 +11,6 @@ import (
 )
 
 func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
-	SetNicknames(map[string]int{
-		"miku": 21,
-		"rin":  22,
-	})
-
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
@@ -41,8 +36,11 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	if params.EventID == nil || *params.EventID != 123 {
 		t.Fatalf("unexpected event id: %+v", params.EventID)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
+	if params.WorldBloomCharacterID != nil {
 		t.Fatalf("unexpected world bloom character: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "miku" {
+		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
 	}
 	if params.LiveType != "auto" {
 		t.Fatalf("unexpected live type: %q", params.LiveType)
@@ -83,8 +81,6 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 }
 
 func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
-	SetNicknames(map[string]int{"miku": 21})
-
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
@@ -103,11 +99,65 @@ func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 2 {
 		t.Fatalf("unexpected world bloom turn: %+v", params.WorldBloomEventTurn)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
+	if params.WorldBloomCharacterID != nil {
 		t.Fatalf("unexpected world bloom character: %+v", params.WorldBloomCharacterID)
 	}
-	if params.EventUnit != "piapro" {
-		t.Fatalf("unexpected event unit: %q", params.EventUnit)
+	if params.WorldBloomCharacterQuery != "miku" {
+		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+	}
+}
+
+func TestEventDeckHandlePreservesSimulatedWorldBloomCharacterQuery(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "初音未来 wl2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 2 {
+		t.Fatalf("unexpected world bloom turn: %+v", params.WorldBloomEventTurn)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "初音未来" {
+		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+	}
+}
+
+func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 初音未来",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "初音未来" {
+		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
 	}
 }
 
@@ -136,8 +186,6 @@ func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 }
 
 func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
-	SetNicknames(map[string]int{"miku": 21})
-
 	h := sekaiHandlers{}.ChallengeDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
@@ -153,8 +201,38 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
+	if params.ChallengeLiveCharacterID != nil {
 		t.Fatalf("unexpected challenge character: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.ChallengeLiveCharacterQuery != "miku" {
+		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	}
+	if params.LiveType != "auto" {
+		t.Fatalf("unexpected live type: %q", params.LiveType)
+	}
+}
+
+func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "初音未来 auto",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.ChallengeLiveCharacterQuery != "初音未来" {
+		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
 	}
 	if params.LiveType != "auto" {
 		t.Fatalf("unexpected live type: %q", params.LiveType)
@@ -162,8 +240,6 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 }
 
 func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
-	SetNicknames(map[string]int{"miku": 21})
-
 	h := sekaiHandlers{}.MysekaiDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
@@ -182,8 +258,38 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 	if params.EventID == nil || *params.EventID != 123 {
 		t.Fatalf("unexpected event id: %+v", params.EventID)
 	}
-	if len(params.FixedCharacters) != 1 || params.FixedCharacters[0] != 21 {
+	if len(params.FixedCharacters) != 0 {
 		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	}
+	if len(params.FixedCharacterQueries) != 1 || params.FixedCharacterQueries[0] != "miku" {
+		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
+func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/ms组卡",
+		ArgText:    "event123 #初音未来 巡音流歌",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if len(params.FixedCharacters) != 0 {
+		t.Fatalf("unexpected fixed character ids: %+v", params.FixedCharacters)
+	}
+	if len(params.FixedCharacterQueries) != 2 || params.FixedCharacterQueries[0] != "初音未来" || params.FixedCharacterQueries[1] != "巡音流歌" {
+		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
 	}
 }
 

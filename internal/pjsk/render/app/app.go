@@ -180,6 +180,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		vliveController = vlive.NewController(vlive.NewCloudSource(sekaiClient, cfg.DefaultRegion), cfg.DefaultRegion)
 	}
 
+	aliasService := pjskalias.NewService(sekaiClient, pjskClient, nil)
+	if musicController != nil {
+		musicController.SetAliasResolver(aliasService)
+	}
+
 	var imgStore *imagecache.PGStore
 	if cfg.ImageCachePGURL != "" {
 		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
@@ -210,6 +215,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Misc:       miscController,
 		MySekai:    mysekaiController,
 		Music:      musicController,
+		Aliases:    aliasService,
 		Profiles:   profileController,
 		Score:      scoreController,
 		SK:         skController,

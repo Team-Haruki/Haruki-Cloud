@@ -39,10 +39,13 @@ type AutoQuery struct {
 	EventAttr                    string                              `json:"event_attr,omitempty"`
 	EventUnit                    string                              `json:"event_unit,omitempty"`
 	WorldBloomCharacterID        *int                                `json:"world_bloom_character_id,omitempty"`
+	WorldBloomCharacterQuery     string                              `json:"world_bloom_character_query,omitempty"`
 	WorldBloomEventTurn          *int                                `json:"world_bloom_event_turn,omitempty"`
 	ChallengeLiveCharacterID     *int                                `json:"challenge_live_character_id,omitempty"`
+	ChallengeLiveCharacterQuery  string                              `json:"challenge_live_character_query,omitempty"`
 	FixedCards                   []int                               `json:"fixed_cards,omitempty"`
 	FixedCharacters              []int                               `json:"fixed_characters,omitempty"`
+	FixedCharacterQueries        []string                            `json:"fixed_character_queries,omitempty"`
 	Rarity1Config                *CardConfigPatch                    `json:"rarity_1_config,omitempty"`
 	Rarity2Config                *CardConfigPatch                    `json:"rarity_2_config,omitempty"`
 	Rarity3Config                *CardConfigPatch                    `json:"rarity_3_config,omitempty"`

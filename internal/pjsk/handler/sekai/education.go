@@ -129,8 +129,7 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	flower, args := extractEducationAreaFlag(args, "花", "flower")
 	unit, args := extractEducationAreaUnit(args)
 	attr, args := extractEducationAreaAttr(args)
-	cid, args := resolveNicknameArg(args)
-	args = strings.TrimSpace(args)
+	cid, characterQuery, args := extractEducationAreaCharacter(args)
 
 	if args != "" {
 		return education.AreaItemQuery{}, fmt.Errorf(
@@ -140,12 +139,21 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	}
 
 	return education.AreaItemQuery{
-		Unit:   unit,
-		Cid:    cid,
-		Attr:   attr,
-		Tree:   tree,
-		Flower: flower,
+		Unit:           unit,
+		Cid:            cid,
+		CharacterQuery: characterQuery,
+		Attr:           attr,
+		Tree:           tree,
+		Flower:         flower,
 	}, nil
+}
+
+func extractEducationAreaCharacter(args string) (int, string, string) {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return 0, "", ""
+	}
+	return 0, args, ""
 }
 
 func extractEducationAreaFlag(args string, aliases ...string) (bool, string) {
@@ -191,7 +199,7 @@ func extractEducationAreaUnit(args string) (string, string) {
 }
 
 func extractEducationAreaAttr(args string) (string, string) {
-	ext := parser.NewExtractor(currentNicknames)
+	ext := parser.NewExtractor(nil)
 	res := ext.ExtractAttribute(args)
 	if !res.Found {
 		return "", strings.TrimSpace(args)

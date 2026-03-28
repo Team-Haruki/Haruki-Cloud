@@ -765,24 +765,17 @@ func (s *BindingService) SetBindingMySekaiVisible(ctx context.Context, platform,
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
-func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
-	if s == nil || s.fastVerifier == nil {
-		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
-	}
-	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
-	if err != nil {
-		return nil, false, err
-	}
+// verifyBindingEntity performs the actual verification check on an already-resolved
+// binding entity. Called by VerifyCurrentBinding and ExecuteProfileSettingsCommand.
+func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, bool, error) {
 	if binding.Verified {
 		item, itemErr := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 		return item, true, itemErr
 	}
-
 	records, err := s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
 	if err != nil {
 		return nil, false, err
 	}
-
 	matched := false
 	for _, record := range records {
 		if strings.EqualFold(strings.TrimSpace(record.Server), binding.Server) &&
@@ -794,7 +787,6 @@ func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, pla
 	if !matched {
 		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(binding.Server))
 	}
-
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
 		SetVerified(true).
 		Save(ctx); err != nil {
@@ -802,6 +794,17 @@ func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, pla
 	}
 	item, err := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 	return item, false, err
+}
+
+func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
+	if s == nil || s.fastVerifier == nil {
+		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
+	}
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, false, err
+	}
+	return s.verifyBindingEntity(ctx, platform, platformUserID, binding)
 }
 
 func (s *BindingService) ListVerifiedBindings(ctx context.Context, platform, platformUserID, server string) ([]BindingListItem, error) {

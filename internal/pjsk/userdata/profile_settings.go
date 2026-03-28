@@ -162,7 +162,14 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return []byte(fmt.Sprintf("已展示 [%s] %s 的烤森抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeVerify:
-		item, alreadyVerified, err := service.VerifyCurrentBinding(ctx, params.Platform, params.PlatformUserID, params.Server)
+		if service.fastVerifier == nil {
+			return nil, fmt.Errorf("pjsk: fast verification provider is not configured")
+		}
+		entity, err := resolveBinding()
+		if err != nil {
+			return nil, err
+		}
+		item, alreadyVerified, err := service.verifyBindingEntity(ctx, params.Platform, params.PlatformUserID, entity)
 		if err != nil {
 			return nil, err
 		}
@@ -171,11 +178,18 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return []byte(fmt.Sprintf("已验证%s服账号 %s", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
 	case ProfileModeVerifyList:
-		items, err := service.ListVerifiedBindings(ctx, params.Platform, params.PlatformUserID, params.Server)
+		server := params.Server
+		if !params.RegionExplicit {
+			entity, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, GlobalDefaultBindingScope)
+			if err == nil {
+				server = entity.Server
+			}
+		}
+		items, err := service.ListVerifiedBindings(ctx, params.Platform, params.PlatformUserID, server)
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatVerifiedBindingListText(params.Server, items)), nil
+		return []byte(formatVerifiedBindingListText(server, items)), nil
 	case ProfileModeBGUpload:
 		item, err := service.SetCurrentBindingProfileBG(ctx, params.Platform, params.PlatformUserID, params.Server, params.ImageURL)
 		if err != nil {

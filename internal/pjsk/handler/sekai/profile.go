@@ -406,12 +406,12 @@ func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
 			},
 			Path: "profile/verify",
 		},
-		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerify, newProfileSettingsParams(ctx)), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerify, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }

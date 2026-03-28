@@ -19,6 +19,10 @@ type UserSettings struct {
 	// a profile background upload for this user. Once it reaches 3, BG upload
 	// is permanently disabled at the user level (across all bindings).
 	NoncompliantBGCount int `json:"noncompliant_bg_count,omitempty"`
+
+	// TimeZoneOffset is the user's preferred UTC offset for time display,
+	// formatted as "+HH:MM" or "-HH:MM" (e.g. "+09:00"). Empty = UTC+8.
+	TimeZoneOffset string `json:"time_zone_offset,omitempty"`
 }
 
 type UserPreference struct {

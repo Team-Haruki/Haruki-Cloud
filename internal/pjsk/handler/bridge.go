@@ -2373,24 +2373,34 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		region = string(renderregion.JP)
 	}
 
-	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, r.RegionExplicit, app)
+	target, err := resolveGameTarget(ctx, p, region, r.RegionExplicit, app)
+	if err != nil {
+		return nil, err
+	}
+	pjskUserID := target.PJSKUserID
+	bindingServer := region
+	if target.Binding != nil && target.Binding.Server != "" {
+		bindingServer = target.Binding.Server
+	}
+
+	ts, err := calcRegistrationTime(pjskUserID, bindingServer)
 	if err != nil {
 		return nil, err
 	}
 
-	ts, err := calcRegistrationTime(pjskUserID, region)
-	if err != nil {
-		return nil, err
+	var tzOffset string
+	if app.PJSK != nil && target.HarukiUserID > 0 {
+		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, target.HarukiUserID); sErr == nil && settings != nil {
+			tzOffset = settings.TimeZoneOffset
+		}
 	}
+	tz, tzLabel := parseUserTimeZone(tzOffset)
+	regTime := time.Unix(ts, 0).In(tz)
+	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
+	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
 
-	regTime := time.Unix(ts, 0).UTC()
-	duration := time.Since(regTime)
-	days := int(math.Floor(duration.Hours() / 24))
-
-	text := fmt.Sprintf("UID %s 的注册时间\n%s UTC\n（约 %d 天前）",
-		pjskUserID,
-		regTime.Format("2006-01-02 15:04:05"),
-		days)
+	text := fmt.Sprintf("UID %s 的注册时间:\n%s (%s) (%s)",
+		maskedUID, regTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
@@ -2408,25 +2418,31 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	var uid int64
 	var platform string
 	var platformUserID string
+	var pjskUID string
+	var bindingVisible bool
+	var resolvedHarukiID int
+	var bindingServer string
 
-	// Helper to resolve user binding, supporting u[i] selector
-	resolveCheckDataBinding := func() (*accountdata.ResolvedBinding, error) {
+	// Helper to resolve user binding, supporting u[i] selector.
+	// Returns (binding, harukiUserID, error).
+	resolveCheckDataBinding := func() (*accountdata.ResolvedBinding, int, error) {
+		var hid int
 		var binding *accountdata.ResolvedBinding
 		var err error
 		if p.Selector != "" {
-			_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
 		} else if !r.RegionExplicit {
-			_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
 			if err != nil {
-				_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 			}
 		} else {
-			_, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+			return nil, 0, fmt.Errorf("未找到绑定账号：%w", err)
 		}
-		return binding, nil
+		return binding, hid, nil
 	}
 
 	switch r.Mode {
@@ -2434,7 +2450,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
-		binding, err := resolveCheckDataBinding()
+		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
 			return nil, err
 		}
@@ -2449,11 +2465,15 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeMySekai
 		label = "MySekai"
+		pjskUID = binding.PJSKUserID
+		bindingVisible = binding.Visible
+		resolvedHarukiID = hid
+		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
 		}
-		binding, err := resolveCheckDataBinding()
+		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
 			return nil, err
 		}
@@ -2467,10 +2487,18 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeSuite
-		label = "套件"
+		label = "Suite"
+		pjskUID = binding.PJSKUserID
+		bindingVisible = binding.Visible
+		resolvedHarukiID = hid
+		bindingServer = binding.Server
 	}
 
-	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(region, dataType, uid, platform, platformUserID)
+	if bindingServer == "" {
+		bindingServer = region
+	}
+
+	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}
@@ -2480,12 +2508,91 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		return nil, fmt.Errorf("解析更新时间失败：%w", err)
 	}
 
-	uploadTime := time.Unix(ts, 0).UTC()
-	duration := time.Since(uploadTime)
-	days := int(math.Floor(duration.Hours() / 24))
+	var tzOffset string
+	if app.PJSK != nil && resolvedHarukiID > 0 {
+		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, resolvedHarukiID); sErr == nil && settings != nil {
+			tzOffset = settings.TimeZoneOffset
+		}
+	}
+	tz, tzLabel := parseUserTimeZone(tzOffset)
+	uploadTime := time.Unix(ts, 0).In(tz)
+	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
+	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
 
-	text := fmt.Sprintf("%s 数据更新时间\n%s UTC\n（约 %d 天前）", label, uploadTime.Format("2006-01-02 15:04:05"), days)
+	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
+		maskedUID, label, uploadTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
+}
+
+// maskPJSKUID masks the middle digits of a PJSK user ID when visible is false.
+// Shows first 3 and last 3 digits with asterisks in between.
+func maskPJSKUID(uid string, visible bool) string {
+	if visible || len(uid) <= 6 {
+		return uid
+	}
+	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
+}
+
+// parseUserTimeZone parses a timezone offset string (e.g. "+09:00") into a
+// time.Location and human-readable label. Empty string defaults to UTC+8.
+func parseUserTimeZone(offset string) (*time.Location, string) {
+	offset = strings.TrimSpace(offset)
+	if offset == "" {
+		return time.FixedZone("UTC+8", 8*3600), "UTC+8"
+	}
+	sign := 1
+	raw := offset
+	if strings.HasPrefix(raw, "-") {
+		sign = -1
+		raw = raw[1:]
+	} else if strings.HasPrefix(raw, "+") {
+		raw = raw[1:]
+	}
+	parts := strings.SplitN(raw, ":", 2)
+	hours, err := strconv.Atoi(parts[0])
+	if err != nil || hours < 0 || hours > 14 {
+		return time.FixedZone("UTC+8", 8*3600), "UTC+8"
+	}
+	minutes := 0
+	if len(parts) == 2 {
+		minutes, _ = strconv.Atoi(parts[1])
+	}
+	totalSecs := sign * (hours*3600 + minutes*60)
+	var label string
+	if sign < 0 {
+		label = fmt.Sprintf("UTC-%d", hours)
+	} else {
+		label = fmt.Sprintf("UTC+%d", hours)
+	}
+	if minutes != 0 {
+		label = fmt.Sprintf("%s:%02d", label, minutes)
+	}
+	return time.FixedZone(label, totalSecs), label
+}
+
+// formatRelativeDuration formats a duration as a human-readable Chinese relative time.
+// Only shows units starting from the largest non-zero unit down to minutes.
+// e.g. "约2天5小时30分钟前", "约5小时30分钟前", "约30分钟前", "刚刚"
+func formatRelativeDuration(d time.Duration) string {
+	if d < time.Minute {
+		return "刚刚"
+	}
+	mins := int(d.Minutes()) % 60
+	hrs := int(d.Hours()) % 24
+	days := int(d.Hours()) / 24
+	if days > 0 {
+		if hrs == 0 && mins == 0 {
+			return fmt.Sprintf("约%d天前", days)
+		}
+		return fmt.Sprintf("约%d天%d小时%d分钟前", days, hrs, mins)
+	}
+	if hrs > 0 {
+		if mins == 0 {
+			return fmt.Sprintf("约%d小时前", hrs)
+		}
+		return fmt.Sprintf("约%d小时%d分钟前", hrs, mins)
+	}
+	return fmt.Sprintf("约%d分钟前", mins)
 }
 
 // calcRegistrationTime derives the approximate Unix registration timestamp from

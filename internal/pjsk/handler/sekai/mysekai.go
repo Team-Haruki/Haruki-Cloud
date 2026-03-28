@@ -11,8 +11,8 @@ import (
 
 var mysekaiMapIndexToID = map[int]int{
 	1: 5,
-	2: 6,
-	3: 7,
+	2: 7,
+	3: 6,
 	4: 8,
 }
 

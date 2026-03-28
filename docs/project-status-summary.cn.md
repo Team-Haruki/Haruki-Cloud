@@ -27,7 +27,7 @@ MySekai 指令在本轮补齐了地图路由和快捷别名对齐，当前约定
 1. `msa` -> `mysekai/resource`
 2. `msm` -> `mysekai/map`
 3. `msr` -> `mysekai/music-record`
-4. `/msm <1|2|3|4>` 支持按顺序编号选图，映射地图 ID `5/6/7/8`
+4. `/msm <1|2|3|4>` 支持按顺序编号选图，映射地图 ID `5/7/6/8`（其中 `2` 对应花园）
 5. `/msm 13` 支持紧凑组合写法（等价于 `1 3`）
 6. `/msm ... all` 可开启 `show_harvested=true`
 

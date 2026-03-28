@@ -112,6 +112,37 @@ func TestMysekaiMapHandleBuildsSingleMapParams(t *testing.T) {
 	}
 }
 
+func TestMysekaiMapHandleBuildsGardenMapParams(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiMapHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msm",
+		ArgText:    "2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Mode != "mysekai-map" {
+		t.Fatalf("unexpected mode: %s", resolved.Mode)
+	}
+
+	var params struct {
+		MapIDs []int `json:"map_ids"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !reflect.DeepEqual(params.MapIDs, []int{7}) {
+		t.Fatalf("params.MapIDs = %+v", params.MapIDs)
+	}
+}
+
 func TestMysekaiMapHandleParsesCompactMapIndices(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
@@ -136,7 +167,7 @@ func TestMysekaiMapHandleParsesCompactMapIndices(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if !reflect.DeepEqual(params.MapIDs, []int{5, 7}) {
+	if !reflect.DeepEqual(params.MapIDs, []int{5, 6}) {
 		t.Fatalf("params.MapIDs = %+v", params.MapIDs)
 	}
 	if !params.ShowHarvested {

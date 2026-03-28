@@ -420,7 +420,7 @@ MySekai 快捷命令约定（2026-03-28）：
 - `msa` -> `mysekai/resource`
 - `msm` -> `mysekai/map`
 - `msr` -> `mysekai/music-record`
-- `/msm <编号>` 支持按顺序编号选图：`1/2/3/4` 分别映射地图 ID `5/6/7/8`
+- `/msm <编号>` 支持按顺序编号选图：`1/2/3/4` 分别映射地图 ID `5/7/6/8`（其中 `2` 对应花园）
 - `/msm 13` 支持紧凑组合写法（等价于 `1 3`）
 - 追加 `all`（如 `/msm 1 all`）会显示已采集内容（`show_harvested=true`）
 

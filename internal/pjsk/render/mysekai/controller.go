@@ -25,58 +25,58 @@ type Controller struct {
 }
 
 type mysekaiMapSiteConfig struct {
-	MapImageID int
-	GridSize   float64
-	OffsetX    float64
-	OffsetZ    float64
-	DirX       float64
-	DirZ       float64
-	RevXZ      bool
-	CropBBox   []int
+	SiteImageName string
+	GridSize      float64
+	OffsetX       float64
+	OffsetZ       float64
+	DirX          float64
+	DirZ          float64
+	RevXZ         bool
+	CropBBox      []int
 }
 
 var (
 	mysekaiMapSiteOrder   = []int{5, 6, 7, 8}
 	mysekaiMapSiteConfigs = map[int]mysekaiMapSiteConfig{
 		5: {
-			MapImageID: 5,
-			GridSize:   33.333,
-			OffsetX:    0,
-			OffsetZ:    -60,
-			DirX:       -1,
-			DirZ:       -1,
-			RevXZ:      true,
-			CropBBox:   []int{300, 0, 1280, 1080},
+			SiteImageName: "grassland",
+			GridSize:      33.333,
+			OffsetX:       0,
+			OffsetZ:       -60,
+			DirX:          -1,
+			DirZ:          -1,
+			RevXZ:         true,
+			CropBBox:      []int{300, 0, 1280, 1080},
 		},
 		6: {
-			MapImageID: 7,
-			GridSize:   20.513,
-			OffsetX:    0,
-			OffsetZ:    80,
-			DirX:       1,
-			DirZ:       -1,
-			RevXZ:      false,
-			CropBBox:   []int{300, 0, 1280, 1080},
+			SiteImageName: "beach",
+			GridSize:      20.513,
+			OffsetX:       0,
+			OffsetZ:       80,
+			DirX:          1,
+			DirZ:          -1,
+			RevXZ:         false,
+			CropBBox:      []int{300, 0, 1280, 1080},
 		},
 		7: {
-			MapImageID: 6,
-			GridSize:   24.806,
-			OffsetX:    -62.015,
-			OffsetZ:    20.672,
-			DirX:       -1,
-			DirZ:       -1,
-			RevXZ:      true,
-			CropBBox:   []int{350, 0, 1280, 1080},
+			SiteImageName: "flowergarden",
+			GridSize:      24.806,
+			OffsetX:       -62.015,
+			OffsetZ:       20.672,
+			DirX:          -1,
+			DirZ:          -1,
+			RevXZ:         true,
+			CropBBox:      []int{350, 0, 1280, 1080},
 		},
 		8: {
-			MapImageID: 8,
-			GridSize:   21.333,
-			OffsetX:    0,
-			OffsetZ:    -130,
-			DirX:       1,
-			DirZ:       -1,
-			RevXZ:      false,
-			CropBBox:   []int{200, 0, 1280, 1080},
+			SiteImageName: "memorialplace",
+			GridSize:      21.333,
+			OffsetX:       0,
+			OffsetZ:       -130,
+			DirX:          1,
+			DirZ:          -1,
+			RevXZ:         false,
+			CropBBox:      []int{200, 0, 1280, 1080},
 		},
 	}
 )
@@ -220,7 +220,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		}
 
 		site := drawing.MysekaiMsrMapSiteInfo{
-			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/site/sitemap/texture/img_map_site_%d.png", config.MapImageID)),
+			ImagePath: c.staticPath(fmt.Sprintf("mysekai/site/%s.png", config.SiteImageName)),
 			GridSize:  config.GridSize,
 			OffsetX:   config.OffsetX,
 			OffsetZ:   config.OffsetZ,

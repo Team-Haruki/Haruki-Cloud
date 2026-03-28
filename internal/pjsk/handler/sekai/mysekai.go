@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	"strconv"
 	"strings"
 )
@@ -302,6 +303,45 @@ func cleanMysekaiArgs(args string) string {
 	return strings.TrimSpace(strings.Join(kept, " "))
 }
 
+var mysekaiBlueprintUnitAliases = map[string]string{
+	"l/n":                    "light_sound",
+	"ln":                     "light_sound",
+	"leoneed":                "light_sound",
+	"light_sound":            "light_sound",
+	"lightsound":             "light_sound",
+	"light_sound_club":       "light_sound",
+	"leo/need":               "light_sound",
+	"mmj":                    "idol",
+	"moremorejump":           "idol",
+	"more_more_jump":         "idol",
+	"idol":                   "idol",
+	"vbs":                    "street",
+	"vividbadsquad":          "street",
+	"vivid_bad_squad":        "street",
+	"street":                 "street",
+	"ws":                     "theme_park",
+	"wxs":                    "theme_park",
+	"wonderlands":            "theme_park",
+	"wonderlandsxshowtime":   "theme_park",
+	"wonderlands_x_showtime": "theme_park",
+	"theme_park":             "theme_park",
+	"themepark":              "theme_park",
+	"25":                     "school_refusal",
+	"25h":                    "school_refusal",
+	"25ji":                   "school_refusal",
+	"niigo":                  "school_refusal",
+	"nightcord":              "school_refusal",
+	"school_refusal":         "school_refusal",
+	"schoolrefusal":          "school_refusal",
+	"25_ji_night_cord_de":    "school_refusal",
+}
+
+var mysekaiBlueprintDiscardedUnitTokens = map[string]struct{}{
+	"vs":            {},
+	"piapro":        {},
+	"virtualsinger": {},
+}
+
 func extractMysekaiGateID(args string) (int, string) {
 	lower := strings.ToLower(strings.TrimSpace(args))
 	unitMap := map[string]int{
@@ -340,9 +380,14 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			showAllTalks := strings.Contains(strings.ToLower(args), "all")
-			cleaned := cleanMysekaiArgs(args)
-			if cleaned == "" {
+			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
+			if query == "" {
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
+					"show_id":        true,
+					"only_craftable": true,
+				}), nil
+			}
+			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
 					"show_id":        true,
 					"only_craftable": true,
@@ -352,10 +397,52 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 				"show_id":        true,
 				"show_all_talks": showAllTalks,
 			})
-			resolved.Query = cleaned
+			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
 		},
 	}
+}
+
+func parseMysekaiBlueprintArgs(args string) (string, string, bool) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return "", "", false
+	}
+
+	showAllTalks := false
+	unit := ""
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		lower := strings.ToLower(strings.TrimSpace(field))
+		switch lower {
+		case "", "id":
+			continue
+		case "all":
+			showAllTalks = true
+			continue
+		}
+		if resolved, ok := mysekaiBlueprintUnitAliases[lower]; ok && unit == "" {
+			unit = resolved
+			continue
+		}
+		if _, ok := mysekaiBlueprintDiscardedUnitTokens[lower]; ok {
+			continue
+		}
+		remaining = append(remaining, field)
+	}
+	return strings.TrimSpace(strings.Join(remaining, " ")), unit, showAllTalks
+}
+
+func buildMysekaiTalkQuery(unit, query string) string {
+	query = strings.TrimSpace(query)
+	unit = strings.TrimSpace(unit)
+	if query == "" {
+		return ""
+	}
+	if unit == "" {
+		return query
+	}
+	return unit + " " + query
 }
 
 func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {

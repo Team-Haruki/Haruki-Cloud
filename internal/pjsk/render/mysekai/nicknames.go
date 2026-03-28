@@ -1,5 +1,7 @@
 package mysekai
 
+import "strings"
+
 var defaultNicknames = map[string]int{
 	"ick": 1, "ichika": 1, "星乃一歌": 1,
 	"saki": 2, "咲希": 2, "天马咲希": 2,
@@ -35,4 +37,24 @@ func cloneNicknames(items map[string]int) map[string]int {
 		result[key] = value
 	}
 	return result
+}
+
+func ResolveNicknameCharacterID(query string) (int, bool) {
+	normalized := normalizeNicknameQuery(query)
+	if normalized == "" {
+		return 0, false
+	}
+	if characterID, ok := defaultNicknames[normalized]; ok {
+		return characterID, true
+	}
+	for _, token := range strings.Fields(strings.ToLower(strings.TrimSpace(query))) {
+		if characterID, ok := defaultNicknames[normalizeNicknameQuery(token)]; ok {
+			return characterID, true
+		}
+	}
+	return 0, false
+}
+
+func normalizeNicknameQuery(query string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(query)), ""))
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -175,6 +176,52 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 	}
 	if fixtures[0].ID != 2001 || !fixtures[0].Obtained {
 		t.Fatalf("unexpected craftable fixture: %+v", fixtures[0])
+	}
+}
+
+func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
+		{"id": 1, "firstName": "星乃", "givenName": "一歌", "firstNameEnglish": "Hoshino", "givenNameEnglish": "Ichika"},
+		{"id": 21, "firstName": "初音", "givenName": "未来", "firstNameEnglish": "Hatsune", "givenNameEnglish": "Miku"},
+		{"id": 22, "firstName": "镜音", "givenName": "铃", "firstNameEnglish": "Kagamine", "givenNameEnglish": "Rin"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]interface{}{
+		{"id": 1, "gameCharacterId": 1, "unit": "light_sound"},
+		{"id": 21, "gameCharacterId": 21, "unit": "piapro"},
+		{"id": 27, "gameCharacterId": 21, "unit": "light_sound"},
+		{"id": 28, "gameCharacterId": 21, "unit": "idol"},
+		{"id": 32, "gameCharacterId": 22, "unit": "piapro"},
+		{"id": 33, "gameCharacterId": 22, "unit": "light_sound"},
+		{"id": 34, "gameCharacterId": 22, "unit": "idol"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateCharacterLotteries.json"), []map[string]interface{}{
+		{"id": 1, "gameCharacterUnitId": 27},
+		{"id": 2, "gameCharacterUnitId": 28},
+		{"id": 3, "gameCharacterUnitId": 34},
+	})
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil)
+
+	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || !strings.Contains(err.Error(), "需要同时指定组合") {
+		t.Fatalf("resolveTalkCharacter(miku) error = %v", err)
+	}
+
+	characterID, unitID, err := controller.resolveTalkCharacter("light_sound miku")
+	if err != nil {
+		t.Fatalf("resolveTalkCharacter(light_sound miku): %v", err)
+	}
+	if characterID != 21 || unitID != 27 {
+		t.Fatalf("unexpected light_sound miku result: characterID=%d unitID=%d", characterID, unitID)
+	}
+
+	characterID, unitID, err = controller.resolveTalkCharacter("rin")
+	if err != nil {
+		t.Fatalf("resolveTalkCharacter(rin): %v", err)
+	}
+	if characterID != 22 || unitID != 34 {
+		t.Fatalf("unexpected rin result: characterID=%d unitID=%d", characterID, unitID)
 	}
 }
 

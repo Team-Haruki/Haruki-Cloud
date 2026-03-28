@@ -234,7 +234,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 	result, err = h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
-		ArgText:    "miku all",
+		ArgText:    "miku ln all",
 	})
 	if err != nil {
 		t.Fatalf("Handle() talk error = %v", err)
@@ -247,7 +247,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-talk-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
 	}
-	if resolved.Query != "miku" {
+	if resolved.Query != "light_sound miku" {
 		t.Fatalf("resolved.Query = %q", resolved.Query)
 	}
 
@@ -260,5 +260,22 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 	}
 	if !talkParams.ShowID || !talkParams.ShowAllTalks {
 		t.Fatalf("unexpected talk params: %+v", talkParams)
+	}
+
+	result, err = h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msb",
+		ArgText:    "not-a-character",
+	})
+	if err != nil {
+		t.Fatalf("Handle() fallback list error = %v", err)
+	}
+
+	resolved, ok = result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected fallback resolved command: %+v", resolved)
 	}
 }

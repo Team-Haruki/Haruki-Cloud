@@ -299,6 +299,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 			Enabled: harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			Dir:     harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 		},
+		SekaiDSN: harukiConfig.Cfg.Sekai.DBURL,
 		UserSnapshot: renderapp.UserSnapshotConfig{
 			Provider:      harukiConfig.Cfg.PJSKRender.UserSnapshot.Provider,
 			UserJSON:      harukiConfig.Cfg.PJSKRender.UserSnapshot.UserJSON,

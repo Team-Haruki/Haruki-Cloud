@@ -17,18 +17,29 @@ import (
 type Controller struct {
 	drawing       *drawing.HarukiDrawingClient
 	snapshot      *userdata.Service
-	masterdata    *localMasterdataStore
+	masterdata    masterdataSource
 	defaultRegion renderregion.Value
 	nicknames     map[string]int
 	assets        *assets.AssetHelper
 }
 
-func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdata.Service, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper) *Controller {
+// NewController creates a mysekai Controller. If sekaiDSN is non-empty the
+// controller queries the sekai database for masterdata; otherwise it falls
+// back to reading JSON files from masterdataDir.
+func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdata.Service, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, sekaiDSN ...string) *Controller {
+	region := renderregion.WithDefault(defaultRegion)
+	var md masterdataSource
+	if len(sekaiDSN) > 0 && strings.TrimSpace(sekaiDSN[0]) != "" {
+		md = newDBMasterdataStore(sekaiDSN[0], region.String())
+	}
+	if md == nil || !md.Configured() {
+		md = newLocalMasterdataStore(masterdataDir)
+	}
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
-		masterdata:    newLocalMasterdataStore(masterdataDir),
-		defaultRegion: renderregion.WithDefault(defaultRegion),
+		masterdata:    md,
+		defaultRegion: region,
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
 	}
@@ -988,7 +999,7 @@ func (c *Controller) ensure() error {
 		return err
 	}
 	if c.masterdata == nil || !c.masterdata.Configured() {
-		return fmt.Errorf("local mysekai masterdata is not configured")
+		return fmt.Errorf("mysekai masterdata is not configured")
 	}
 	return nil
 }

@@ -612,6 +612,10 @@ func (s *routeEducationSource) GetResourceBoxesByPurpose(purpose string) []*rend
 	return nil
 }
 
+func (s *routeEducationSource) GetAreaItems() []*rendereducation.AreaItem {
+	return nil
+}
+
 func (s *routeEducationSource) GetAreaItem(id int) *rendereducation.AreaItem {
 	return nil
 }
@@ -1752,10 +1756,10 @@ func TestPJSKMysekaiResourceBuildRouteReturnsBuiltPayload(t *testing.T) {
 	if data.Payload.Profile.MysekaiLevel == nil || *data.Payload.Profile.MysekaiLevel != 15 {
 		t.Fatalf("unexpected mysekai level: %+v", data.Payload.Profile)
 	}
-	if len(data.Payload.VisitCharacters) != 1 || data.Payload.VisitCharacters[0].SdImagePath != "character/character_sd_l/chr_sp_1.png" {
+	if len(data.Payload.VisitCharacters) != 1 || data.Payload.VisitCharacters[0].SdImagePath != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
 		t.Fatalf("unexpected visit characters: %+v", data.Payload.VisitCharacters)
 	}
-	if len(data.Payload.SiteResourceNumbers) != 1 || data.Payload.SiteResourceNumbers[0].ImagePath != "mysekai/site/sitemap/texture/img_harvest_site_5.png" {
+	if len(data.Payload.SiteResourceNumbers) != 1 || data.Payload.SiteResourceNumbers[0].ImagePath != "asset/jp-assets/ondemand/mysekai/site/sitemap/texture/img_harvest_site_5.png" {
 		t.Fatalf("unexpected site resources: %+v", data.Payload.SiteResourceNumbers)
 	}
 }
@@ -1794,6 +1798,88 @@ func TestPJSKMysekaiResourceRenderRouteReturnsDrawingBytes(t *testing.T) {
 		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
 	}
 	if string(body) != "MYSEKAIPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
+func TestPJSKMysekaiMapBuildRouteReturnsBuiltPayload(t *testing.T) {
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, nil)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/mysekai/map/build", `{"region":"jp","show_harvested":false}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+		Payload  struct {
+			ShowHarvested bool `json:"show_harvested"`
+			Maps          []struct {
+				MapID int `json:"map_id"`
+				Site  struct {
+					ImagePath string  `json:"image_path"`
+					GridSize  float64 `json:"grid_size"`
+				} `json:"site"`
+			} `json:"maps"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != mysekaiMapEndpoint {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Method != http.MethodPost {
+		t.Fatalf("unexpected method: %s", data.Method)
+	}
+	if data.Payload.ShowHarvested {
+		t.Fatalf("unexpected show_harvested: %+v", data.Payload)
+	}
+	if len(data.Payload.Maps) != 1 || data.Payload.Maps[0].MapID != 5 {
+		t.Fatalf("unexpected maps payload: %+v", data.Payload.Maps)
+	}
+	if data.Payload.Maps[0].Site.ImagePath == "" || data.Payload.Maps[0].Site.GridSize <= 0 {
+		t.Fatalf("unexpected map site payload: %+v", data.Payload.Maps[0].Site)
+	}
+}
+
+func TestPJSKMysekaiMapRenderRouteReturnsDrawingBytes(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != mysekaiMapEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("MYSEKAIMAPPNG"))
+	}))
+	defer drawingServer.Close()
+
+	app := fiber.New()
+	runtime := mysekaiRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/mysekai/map/render", strings.NewReader(`{"region":"jp","show_harvested":true}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "MYSEKAIMAPPNG" {
 		t.Fatalf("unexpected render body: %s", string(body))
 	}
 }
@@ -1987,7 +2073,7 @@ func TestPJSKMysekaiTalkListBuildRouteReturnsBuiltPayload(t *testing.T) {
 	if data.Endpoint != mysekaiTalkListEndpoint {
 		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
 	}
-	if data.Payload.SdImagePath != "character/character_sd_l/chr_sp_1.png" {
+	if data.Payload.SdImagePath != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
 		t.Fatalf("unexpected sd image path: %s", data.Payload.SdImagePath)
 	}
 	if !strings.Contains(data.Payload.ProgressMessage, "0/2") {
@@ -2422,7 +2508,7 @@ func TestPJSKMusicRewardsDetailBuildRouteReturnsSnapshotPayload(t *testing.T) {
 	if data.Payload.RankRewards != 50 || data.Payload.Profile.Profile.Nickname != "Snapshot User" {
 		t.Fatalf("unexpected payload: %+v", data.Payload)
 	}
-	if data.Payload.JewelIconPath != "lunabot_static_images/jewel.png" || data.Payload.ShardIconPath != "lunabot_static_images/shard.png" {
+	if data.Payload.JewelIconPath != "static_images/jewel.png" || data.Payload.ShardIconPath != "static_images/shard.png" {
 		t.Fatalf("unexpected reward icon paths: jewel=%s shard=%s", data.Payload.JewelIconPath, data.Payload.ShardIconPath)
 	}
 	if len(data.Payload.ComboRewards["master"]) != 1 || len(data.Payload.ComboRewards["hard"]) != 0 || len(data.Payload.ComboRewards["append"]) != 0 {

@@ -80,6 +80,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-28 | 客户端对接指南 / 项目进展总结 | 同步 MySekai 指令别名约定（`msa/msm/msr`）与地图编号选图规则（`/msm 1-4`） |
 | 2026-03-26 | PJSK Virtual Live 文本版实现方案 / README 索引 / 架构文档 / 项目进展总结 | 同步 `vlive` 文本功能落地、render 模块数量与 disabled stub 清单 |
 | 2026-03-26 | PJSK 指令系统设计 / 项目进展总结 / 数据库 Schema 文档 | 将歌曲别名独立到 Alias 模块，并补充角色别名、审核与删除指令说明 |
 | 2026-03-25 | PJSK 账号绑定实现说明 | 补充 Profile 设置能力、`suite_visible` / `mysekai_visible` 语义、验证现状与背景图存储规则 |
@@ -95,4 +96,4 @@ X-Haruki-Bot-Matched-Command: /卡面
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-03-26
+**最后更新**：2026-03-28

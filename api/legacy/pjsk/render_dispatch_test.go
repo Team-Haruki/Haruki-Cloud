@@ -84,6 +84,44 @@ func TestPJSKRenderDispatchRenderRouteReturnsDrawingBytes(t *testing.T) {
 	}
 }
 
+func TestPJSKRenderDispatchRenderRouteSupportsMysekaiMap(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != mysekaiMapEndpoint {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("DISPATCHMAPPNG"))
+	}))
+	defer drawingServer.Close()
+
+	appServer := fiber.New()
+	runtime := mysekaiRenderApp(t, drawing.NewHarukiDrawingClient(drawingServer.URL))
+	RegisterPJSKRenderRoutes(appServer, runtime)
+
+	req, err := http.NewRequest(http.MethodPost, "/internal/pjsk/render", strings.NewReader(`{"target":"mysekai/map","operation":"render","payload":{"region":"jp","show_harvested":true}}`))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := appServer.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read response body: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("unexpected http status: %d body=%s", resp.StatusCode, string(body))
+	}
+	if string(body) != "DISPATCHMAPPNG" {
+		t.Fatalf("unexpected render body: %s", string(body))
+	}
+}
+
 func TestPJSKRenderDispatchRejectsUnsupportedTarget(t *testing.T) {
 	appServer := fiber.New()
 	runtime := testRenderApp(t, nil)

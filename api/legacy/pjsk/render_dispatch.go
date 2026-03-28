@@ -61,6 +61,7 @@ func newRenderDispatchRegistry(runtime *renderapp.App) renderDispatchRegistry {
 	registry.add(runtime != nil && runtime.Profiles != nil, "profile", "/internal/pjsk/profile")
 	registry.add(runtime != nil && runtime.Misc != nil, "misc/chara-birthday", "/internal/pjsk/misc/chara-birthday")
 	registry.add(runtime != nil && runtime.MySekai != nil, "mysekai/resource", "/internal/pjsk/mysekai/resource")
+	registry.add(runtime != nil && runtime.MySekai != nil, "mysekai/map", "/internal/pjsk/mysekai/map")
 	registry.add(runtime != nil && runtime.MySekai != nil, "mysekai/fixture-list", "/internal/pjsk/mysekai/fixture-list")
 	registry.add(runtime != nil && runtime.MySekai != nil, "mysekai/fixture-detail", "/internal/pjsk/mysekai/fixture-detail")
 	registry.add(runtime != nil && runtime.MySekai != nil, "mysekai/door-upgrade", "/internal/pjsk/mysekai/door-upgrade")

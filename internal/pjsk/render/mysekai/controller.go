@@ -24,6 +24,63 @@ type Controller struct {
 	assets         *assets.AssetHelper
 }
 
+type mysekaiMapSiteConfig struct {
+	MapImageID int
+	GridSize   float64
+	OffsetX    float64
+	OffsetZ    float64
+	DirX       float64
+	DirZ       float64
+	RevXZ      bool
+	CropBBox   []int
+}
+
+var (
+	mysekaiMapSiteOrder   = []int{5, 6, 7, 8}
+	mysekaiMapSiteConfigs = map[int]mysekaiMapSiteConfig{
+		5: {
+			MapImageID: 5,
+			GridSize:   33.333,
+			OffsetX:    0,
+			OffsetZ:    -60,
+			DirX:       -1,
+			DirZ:       -1,
+			RevXZ:      true,
+			CropBBox:   []int{300, 0, 1280, 1080},
+		},
+		6: {
+			MapImageID: 7,
+			GridSize:   20.513,
+			OffsetX:    0,
+			OffsetZ:    80,
+			DirX:       1,
+			DirZ:       -1,
+			RevXZ:      false,
+			CropBBox:   []int{300, 0, 1280, 1080},
+		},
+		7: {
+			MapImageID: 6,
+			GridSize:   24.806,
+			OffsetX:    -62.015,
+			OffsetZ:    20.672,
+			DirX:       -1,
+			DirZ:       -1,
+			RevXZ:      true,
+			CropBBox:   []int{350, 0, 1280, 1080},
+		},
+		8: {
+			MapImageID: 8,
+			GridSize:   21.333,
+			OffsetX:    0,
+			OffsetZ:    -130,
+			DirX:       1,
+			DirZ:       -1,
+			RevXZ:      false,
+			CropBBox:   []int{200, 0, 1280, 1080},
+		},
+	}
+)
+
 // NewController creates a mysekai Controller. If sekaiDSN is non-empty the
 // controller queries the sekai database for masterdata; otherwise it falls
 // back to reading JSON files from masterdataDir.
@@ -115,6 +172,207 @@ func (c *Controller) RenderResource(query ResourceQuery) ([]byte, error) {
 		return nil, err
 	}
 	return c.drawing.GenerateMysekaiResource(payload)
+}
+
+func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequest, error) {
+	merged, region, err := c.prepareSnapshot(query.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	showHarvested := false
+	if query.ShowHarvested != nil {
+		showHarvested = *query.ShowHarvested
+	}
+
+	harvestMapsBySite := make(map[int]map[string]interface{}, 4)
+	for _, raw := range nestedList(merged, "userMysekaiHarvestMaps") {
+		item, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		siteID := intNumber(item["mysekaiSiteId"], 0)
+		if siteID != 0 {
+			harvestMapsBySite[siteID] = item
+		}
+	}
+
+	materialMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
+	materialRarityMap := c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType")
+	itemMap := c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName")
+	musicRecordMap := c.loadMusicRecordJacketMap()
+	harvestFixtureMap := c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json")
+
+	siteOrder := resolveMysekaiMapSiteIDs(query.MapIDs)
+	if len(siteOrder) == 0 {
+		return nil, fmt.Errorf("mysekai map query contains no valid map ids")
+	}
+
+	maps := make([]drawing.MysekaiMsrMapData, 0, len(siteOrder))
+	for _, siteID := range siteOrder {
+		siteMap := harvestMapsBySite[siteID]
+		if len(siteMap) == 0 {
+			continue
+		}
+		config, ok := mysekaiMapSiteConfigs[siteID]
+		if !ok {
+			continue
+		}
+
+		site := drawing.MysekaiMsrMapSiteInfo{
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/site/sitemap/texture/img_map_site_%d.png", config.MapImageID)),
+			GridSize:  config.GridSize,
+			OffsetX:   config.OffsetX,
+			OffsetZ:   config.OffsetZ,
+			DirX:      config.DirX,
+			DirZ:      config.DirZ,
+			RevXZ:     config.RevXZ,
+			Scale:     0.8,
+		}
+		if len(config.CropBBox) > 0 {
+			site.CropBbox = append([]int(nil), config.CropBBox...)
+		}
+
+		harvestPoints := make([]drawing.MysekaiMsrMapHarvestPoint, 0, 16)
+		rawHarvestPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]interface{})
+		for _, raw := range rawHarvestPoints {
+			point, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			fixtureID := intNumber(point["mysekaiSiteHarvestFixtureId"], 0)
+			meta := harvestFixtureMap[fixtureID]
+			rarityType := stringValue(meta["mysekaiSiteHarvestFixtureRarityType"])
+			assetbundleName := stringValue(meta["assetbundleName"])
+			if rarityType == "" || assetbundleName == "" {
+				continue
+			}
+
+			status := stringValue(point["userMysekaiSiteHarvestFixtureStatus"])
+			if status == "" {
+				status = "spawned"
+			}
+
+			var pointID *int
+			if fixtureID > 0 {
+				idCopy := fixtureID
+				pointID = &idCopy
+			}
+
+			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{
+				ID:        pointID,
+				ImagePath: c.staticPath(fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)),
+				PositionX: floatNumber(point["positionX"], floatNumber(point["position_x"], 0)),
+				PositionZ: floatNumber(point["positionZ"], floatNumber(point["position_z"], 0)),
+				Status:    status,
+			})
+		}
+
+		resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
+		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]interface{})
+		for _, raw := range rawDrops {
+			drop, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			resourceType := stringValue(drop["resourceType"])
+			if resourceType == "" {
+				resourceType = stringValue(drop["type"])
+			}
+			resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
+			if resourceType == "" || resourceID == 0 {
+				continue
+			}
+
+			resourceKey := fmt.Sprintf("%s_%d", resourceType, resourceID)
+			imagePath, hasRecord := c.resourceImagePath(region, resourceKey, materialMap, itemMap, musicRecordMap, merged)
+			if imagePath == "" {
+				continue
+			}
+
+			status := stringValue(drop["mysekaiSiteHarvestResourceDropStatus"])
+			if status == "" {
+				status = stringValue(drop["status"])
+			}
+			if status == "" {
+				status = "before_drop"
+			}
+
+			quantity := intNumber(drop["quantity"], 1)
+			if quantity <= 0 {
+				quantity = 1
+			}
+
+			rarity := resourceRarity(resourceKey, materialRarityMap)
+			if rarity < 1 {
+				rarity = 1
+			}
+
+			var attachmentImagePath *string
+			if hasRecord {
+				path := c.staticPath("mysekai/music_record.png")
+				attachmentImagePath = &path
+			}
+
+			resourceDrops = append(resourceDrops, drawing.MysekaiMsrMapResourceDrop{
+				ID:                  resourceID,
+				Type:                resourceType,
+				ImagePath:           imagePath,
+				PositionX:           floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0)),
+				PositionZ:           floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0)),
+				Quantity:            quantity,
+				Status:              status,
+				Rarity:              rarity,
+				AttachmentImagePath: attachmentImagePath,
+			})
+		}
+
+		maps = append(maps, drawing.MysekaiMsrMapData{
+			MapID:         siteID,
+			Site:          site,
+			HarvestPoints: harvestPoints,
+			ResourceDrops: resourceDrops,
+		})
+	}
+
+	if len(maps) == 0 {
+		return nil, fmt.Errorf("mysekai map contains no harvest map data")
+	}
+
+	return &drawing.MysekaiMsrMapRequest{
+		Maps:          maps,
+		ShowHarvested: showHarvested,
+	}, nil
+}
+
+func (c *Controller) RenderMap(query MapQuery) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMapRequest(query)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateMysekaiMap(payload)
+}
+
+func resolveMysekaiMapSiteIDs(requested []int) []int {
+	if len(requested) == 0 {
+		return append([]int(nil), mysekaiMapSiteOrder...)
+	}
+	result := make([]int, 0, len(requested))
+	seen := make(map[int]struct{}, len(requested))
+	for _, siteID := range requested {
+		if _, ok := mysekaiMapSiteConfigs[siteID]; !ok {
+			continue
+		}
+		if _, ok := seen[siteID]; ok {
+			continue
+		}
+		seen[siteID] = struct{}{}
+		result = append(result, siteID)
+	}
+	return result
 }
 
 func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.MysekaiFixtureListRequest, error) {

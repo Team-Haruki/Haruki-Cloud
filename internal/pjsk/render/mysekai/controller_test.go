@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -188,5 +189,19 @@ func writeTestJSON(t *testing.T, path string, value interface{}) {
 	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		t.Fatalf("write fixture json: %v", err)
+	}
+}
+
+func TestResolveMysekaiMapSiteIDs(t *testing.T) {
+	if got, want := resolveMysekaiMapSiteIDs(nil), []int{5, 6, 7, 8}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("resolveMysekaiMapSiteIDs(nil) = %+v, want %+v", got, want)
+	}
+
+	if got, want := resolveMysekaiMapSiteIDs([]int{5, 7, 5, 8}), []int{5, 7, 8}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("resolveMysekaiMapSiteIDs(valid) = %+v, want %+v", got, want)
+	}
+
+	if got, want := resolveMysekaiMapSiteIDs([]int{9, 10}), []int{}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("resolveMysekaiMapSiteIDs(invalid) = %+v, want %+v", got, want)
 	}
 }

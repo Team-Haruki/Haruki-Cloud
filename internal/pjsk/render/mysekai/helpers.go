@@ -33,6 +33,26 @@ func intNumber(value interface{}, fallback int) int {
 	return fallback
 }
 
+func floatNumber(value interface{}, fallback float64) float64 {
+	switch v := value.(type) {
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	case int:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case string:
+		if n, err := strconv.ParseFloat(strings.TrimSpace(v), 64); err == nil {
+			return n
+		}
+	}
+	return fallback
+}
+
 func int64Number(value interface{}, fallback int64) int64 {
 	switch v := value.(type) {
 	case float64:

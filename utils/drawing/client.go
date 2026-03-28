@@ -201,6 +201,10 @@ func (c *HarukiDrawingClient) GenerateMysekaiResource(req *MysekaiResourceReques
 	return c.post("/api/pjsk/mysekai/resource", req)
 }
 
+func (c *HarukiDrawingClient) GenerateMysekaiMap(req *MysekaiMsrMapRequest) ([]byte, error) {
+	return c.post("/api/pjsk/mysekai/map", req)
+}
+
 func (c *HarukiDrawingClient) GenerateMysekaiFixtureList(req *MysekaiFixtureListRequest) ([]byte, error) {
 	return c.post("/api/pjsk/mysekai/fixture-list", req)
 }

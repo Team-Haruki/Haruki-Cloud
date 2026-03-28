@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-27（v17.0）
+> 最后更新：2026-03-28（v17.1）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -19,6 +19,17 @@
 4. 命中的端点在云端内部先校验 `matched_command -> handler.path`，再解析原文、提取参数，并进入统一执行链路返回 `onebot11.Message`。
 
 也就是说，客户端负责“命中哪个端点”，云端端点负责“这个端点到底怎么解释原文”。
+
+### 1.1 v17.1 增量更新（2026-03-28）
+
+MySekai 指令在本轮补齐了地图路由和快捷别名对齐，当前约定如下：
+
+1. `msa` -> `mysekai/resource`
+2. `msm` -> `mysekai/map`
+3. `msr` -> `mysekai/music-record`
+4. `/msm <1|2|3|4>` 支持按顺序编号选图，映射地图 ID `5/6/7/8`
+5. `/msm 13` 支持紧凑组合写法（等价于 `1 3`）
+6. `/msm ... all` 可开启 `show_harvested=true`
 
 ## 2. 已完成的合并内容
 
@@ -532,7 +543,7 @@ ban_state              → 全平台禁用
 | **Education** | 挑战信息 / 加成信息 / 区域道具 / 羁绊 / 队长统计 | education/challenge · power · area · bonds · leader |
 | **Score** | 分数计算 / 自定义房间 / 歌曲 meta / 歌曲排行 | score · custom-room · music-meta · music-board |
 | **SK** | 档线 / 查询 / 时速 / 查房 / 玩家轨迹 / 档线轨迹 / 胜率预测 / 日速 / SK 预测 / 水表 | sk/line · query · speed · check-room · player-trace · rank-trace · winrate · (日速/预测/水表→复用) |
-| **MySekai** | 资源 / 对话列表 / 家具列表 / 家具详情 / 大门升级 / 唱片 / 蓝图 / 照片下载 | mysekai/resource · talk-list · fixture-list · fixture-detail · door-upgrade · music-record · photo |
+| **MySekai** | 资源 / 地图 / 对话列表 / 家具列表 / 家具详情 / 大门升级 / 唱片 / 蓝图 / 照片下载 | mysekai/resource · map · talk-list · fixture-list · fixture-detail · door-upgrade · music-record · photo |
 | **Stamp** | 贴纸列表 | stamp |
 | **Misc** | 角色生日 | misc/birthday |
 | **Virtual Live** | 近期 Virtual Live 文本查询 | vlive |
@@ -975,6 +986,7 @@ honor 6833 对应 honor group 544（HAPPY BIRTHDAY 遥 2025.10.5），其路径�
 | `score` | `/分数 Tell Your World` | 需用户分数数据 |
 | `score/custom-room` | `/自定义房间控分` | 自定义参数计算 |
 | `mysekai/resource` | `/烤森资源` | 需用户 mysekai 数据 |
+| `mysekai/map` | `/msm 1` | 需用户 mysekai 数据；可用 `1/2/3/4` 选图 |
 | `mysekai/talk-list` | `/mysekai对话` | 同上 |
 | `mysekai/fixture-list` | `/家具列表` | 同上 |
 | `mysekai/fixture-detail` | `/家具详情` | 同上 |

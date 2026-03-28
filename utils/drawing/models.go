@@ -781,6 +781,69 @@ type MysekaiResourceRequest struct {
 	SiteResourceNumbers []MysekaiSiteResourceNumber `json:"site_resource_numbers,omitempty"`
 }
 
+type MysekaiMsrMapSiteInfo struct {
+	ImagePath string  `json:"image_path"`
+	GridSize  float64 `json:"grid_size"`
+	OffsetX   float64 `json:"offset_x,omitempty"`
+	OffsetZ   float64 `json:"offset_z,omitempty"`
+	DirX      float64 `json:"dir_x,omitempty"`
+	DirZ      float64 `json:"dir_z,omitempty"`
+	RevXZ     bool    `json:"rev_xz,omitempty"`
+	Scale     float64 `json:"scale,omitempty"`
+	CropBbox  []int   `json:"crop_bbox,omitempty"`
+}
+
+type MysekaiMsrMapHarvestPoint struct {
+	ID        *int    `json:"id,omitempty"`
+	ImagePath string  `json:"image_path"`
+	PositionX float64 `json:"position_x"`
+	PositionZ float64 `json:"position_z"`
+	Status    string  `json:"status,omitempty"`
+	Size      *int    `json:"size,omitempty"`
+	OffsetX   float64 `json:"offset_x,omitempty"`
+	OffsetZ   float64 `json:"offset_z,omitempty"`
+	Alpha     float64 `json:"alpha,omitempty"`
+}
+
+type MysekaiMsrMapResourceDrop struct {
+	ID                  int     `json:"id"`
+	Type                string  `json:"type"`
+	ImagePath           string  `json:"image_path"`
+	PositionX           float64 `json:"position_x"`
+	PositionZ           float64 `json:"position_z"`
+	Quantity            int     `json:"quantity,omitempty"`
+	Status              string  `json:"status,omitempty"`
+	SmallIcon           *bool   `json:"small_icon,omitempty"`
+	Hide                bool    `json:"hide,omitempty"`
+	Rarity              int     `json:"rarity,omitempty"`
+	AttachmentImagePath *string `json:"attachment_image_path,omitempty"`
+	OutlineColor        []int   `json:"outline_color,omitempty"`
+	OutlineWidth        *int    `json:"outline_width,omitempty"`
+	LightSize           *int    `json:"light_size,omitempty"`
+}
+
+type MysekaiMsrMapData struct {
+	MapID         int                         `json:"map_id"`
+	Site          MysekaiMsrMapSiteInfo       `json:"site"`
+	HarvestPoints []MysekaiMsrMapHarvestPoint `json:"harvest_points,omitempty"`
+	ResourceDrops []MysekaiMsrMapResourceDrop `json:"resource_drops,omitempty"`
+}
+
+type MysekaiMsrMapRequest struct {
+	Maps                 []MysekaiMsrMapData `json:"maps"`
+	ShowHarvested        bool                `json:"show_harvested"`
+	PhenomenaGroundColor []int               `json:"phenomena_ground_color,omitempty"`
+	SpawnPositionX       float64             `json:"spawn_position_x,omitempty"`
+	SpawnPositionZ       float64             `json:"spawn_position_z,omitempty"`
+	SpawnImagePath       *string             `json:"spawn_image_path,omitempty"`
+	SpawnSize            int                 `json:"spawn_size,omitempty"`
+	RareLightImagePath   *string             `json:"rare_light_image_path,omitempty"`
+	LargeIconSize        int                 `json:"large_icon_size,omitempty"`
+	SmallIconSize        int                 `json:"small_icon_size,omitempty"`
+	IconZOffset          int                 `json:"icon_zoffset,omitempty"`
+	DrawBgFill           []int               `json:"draw_bg_fill,omitempty"`
+}
+
 type MysekaiFixture struct {
 	ID            int     `json:"id"`
 	ImagePath     string  `json:"image_path"`

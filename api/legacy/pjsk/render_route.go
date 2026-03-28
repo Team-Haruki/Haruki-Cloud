@@ -36,6 +36,7 @@ const (
 	profileDrawingEndpoint       = "/api/pjsk/profile"
 	charaBirthdayEndpoint        = "/api/pjsk/misc/chara-birthday"
 	mysekaiResourceEndpoint      = "/api/pjsk/mysekai/resource"
+	mysekaiMapEndpoint           = "/api/pjsk/mysekai/map"
 	mysekaiFixtureListEndpoint   = "/api/pjsk/mysekai/fixture-list"
 	mysekaiFixtureDetailEndpoint = "/api/pjsk/mysekai/fixture-detail"
 	mysekaiDoorUpgradeEndpoint   = "/api/pjsk/mysekai/door-upgrade"
@@ -265,6 +266,8 @@ func registerMysekaiRenderRoutes(router fiber.Router, runtime *renderapp.App) {
 	group := router.Group("/mysekai")
 	group.Post("/resource/build", handler.BuildMysekaiResource)
 	group.Post("/resource/render", handler.RenderMysekaiResource)
+	group.Post("/map/build", handler.BuildMysekaiMap)
+	group.Post("/map/render", handler.RenderMysekaiMap)
 	group.Post("/fixture-list/build", handler.BuildMysekaiFixtureList)
 	group.Post("/fixture-list/render", handler.RenderMysekaiFixtureList)
 	group.Post("/fixture-detail/build", handler.BuildMysekaiFixtureDetail)
@@ -688,6 +691,29 @@ func (h *RenderHandler) BuildMysekaiResource(c fiber.Ctx) error {
 func (h *RenderHandler) RenderMysekaiResource(c fiber.Ctx) error {
 	return renderBuiltPNG(h, c, mysekaiResourceEndpoint, h.app.MySekai.BuildResourceRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.ResourceQuery, payload *drawing.MysekaiResourceRequest) ([]byte, error) {
 		return client.GenerateMysekaiResource(payload)
+	})
+}
+
+func (h *RenderHandler) BuildMysekaiMap(c fiber.Ctx) error {
+	var query rendermysekai.MapQuery
+	if err := c.Bind().Body(&query); err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+
+	payload, err := h.app.MySekai.BuildMapRequest(query)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return api.JSONResponse(c, fiber.StatusOK, "ok", BuildResponse{
+		Endpoint: mysekaiMapEndpoint,
+		Method:   http.MethodPost,
+		Payload:  payload,
+	})
+}
+
+func (h *RenderHandler) RenderMysekaiMap(c fiber.Ctx) error {
+	return renderBuiltPNG(h, c, mysekaiMapEndpoint, h.app.MySekai.BuildMapRequest, func(client *drawing.HarukiDrawingClient, _ rendermysekai.MapQuery, payload *drawing.MysekaiMsrMapRequest) ([]byte, error) {
+		return client.GenerateMysekaiMap(payload)
 	})
 }
 

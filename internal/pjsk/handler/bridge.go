@@ -1851,6 +1851,10 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		mergeParams(r.Params, &q)
 		q.Profile = publicProfileCard
 		data, err = msCtrl.RenderResource(q)
+	case "mysekai-map":
+		q := mysekai.MapQuery{Region: r.Region}
+		mergeParams(r.Params, &q)
+		data, err = msCtrl.RenderMap(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: r.Region}
 		mergeParams(r.Params, &q)

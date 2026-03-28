@@ -8,12 +8,19 @@ import (
 	"strings"
 )
 
+var mysekaiMapIndexToID = map[int]int{
+	1: 5,
+	2: 6,
+	3: 7,
+	4: 8,
+}
+
 func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/resource",
 			Commands: []string{
-				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msmap", "/msa",
+				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msa",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
@@ -31,6 +38,35 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-resource", params), nil
 			}
 			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-resource"), nil
+		},
+	}
+}
+
+func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/map",
+			Commands: []string{
+				"/pjsk mysekai map", "/mysekai-map", "/mysekai地图", "/烤森地图", "/msm", "/msmap",
+			},
+		},
+		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if strings.Contains(strings.ToLower(args), "all") {
+				params["show_harvested"] = true
+			}
+			mapIDs, parseErr := parseMysekaiMapIDs(args)
+			if parseErr != nil {
+				return nil, parseErr
+			}
+			if len(mapIDs) > 0 {
+				params["map_ids"] = mapIDs
+			}
+			if len(params) > 0 {
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-map", params), nil
+			}
+			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-map"), nil
 		},
 	}
 }
@@ -145,7 +181,7 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/music-record",
 			Commands: []string{
-				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/msm", "/mss", "/msr", "/mssong",
+				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/mss", "/msr", "/mssong",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
@@ -177,6 +213,71 @@ func parseMysekaiFixtureIDs(args string) []int {
 		ids = append(ids, value)
 	}
 	return ids
+}
+
+func parseMysekaiMapIDs(args string) ([]int, error) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return nil, nil
+	}
+	result := make([]int, 0, len(fields))
+	seen := make(map[int]struct{}, len(fields))
+	for _, field := range fields {
+		lower := strings.ToLower(strings.TrimSpace(field))
+		if lower == "" || lower == "all" {
+			continue
+		}
+		if !isASCIIInt(lower) {
+			continue
+		}
+
+		// 支持紧凑写法，例如 "13" -> [1, 3]
+		if len(lower) > 1 {
+			splittable := true
+			for _, ch := range lower {
+				if ch < '1' || ch > '4' {
+					splittable = false
+					break
+				}
+			}
+			if splittable {
+				for _, ch := range lower {
+					index := int(ch - '0')
+					mapID := mysekaiMapIndexToID[index]
+					if _, ok := seen[mapID]; ok {
+						continue
+					}
+					seen[mapID] = struct{}{}
+					result = append(result, mapID)
+				}
+				continue
+			}
+		}
+
+		index, _ := strconv.Atoi(lower)
+		mapID, ok := mysekaiMapIndexToID[index]
+		if !ok {
+			return nil, fmt.Errorf("地图编号仅支持 1-4（对应地图ID 5-8）")
+		}
+		if _, ok := seen[mapID]; ok {
+			continue
+		}
+		seen[mapID] = struct{}{}
+		result = append(result, mapID)
+	}
+	return result, nil
+}
+
+func isASCIIInt(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, ch := range s {
+		if ch < '0' || ch > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func cleanMysekaiArgs(args string) string {

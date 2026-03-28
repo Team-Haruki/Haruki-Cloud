@@ -119,11 +119,12 @@ func init() {
 		{regexp.MustCompile(`(?i)^/(sk-winrate|sk胜率|胜率预测|pjsk winrate predict|5v5预测|5v5胜率)\s*(.*)`), ModuleSK, "sk-winrate"},
 
 		// ── Mysekai ──────────────────────────────────────────────────────────────
-		{regexp.MustCompile(`(?i)^/(mysekai-resource|mysekai资源|烤森资源|msr|msmap|msa)\s*(.*)`), ModuleMysekai, "mysekai-resource"},
+		{regexp.MustCompile(`(?i)^/(mysekai-resource|mysekai资源|烤森资源|msa)\s*(.*)`), ModuleMysekai, "mysekai-resource"},
+		{regexp.MustCompile(`(?i)^/(mysekai-map|mysekai地图|烤森地图|msm|msmap)\s*(.*)`), ModuleMysekai, "mysekai-map"},
 		{regexp.MustCompile(`(?i)^/(mysekai-fixture-list|mysekai家具列表|烤森家具列表|msf)\s*(.*)`), ModuleMysekai, "mysekai-fixture-list"},
 		{regexp.MustCompile(`(?i)^/(mysekai-fixture-detail|mysekai家具详情|烤森家具详情)\s*(.*)`), ModuleMysekai, "mysekai-fixture-detail"},
 		{regexp.MustCompile(`(?i)^/(mysekai-door-upgrade|mysekai大门升级|烤森大门升级|msg|msgate)\s*(.*)`), ModuleMysekai, "mysekai-door-upgrade"},
-		{regexp.MustCompile(`(?i)^/(mysekai-music-record|mysekai唱片|烤森唱片|msm|mss)\s*(.*)`), ModuleMysekai, "mysekai-music-record"},
+		{regexp.MustCompile(`(?i)^/(mysekai-music-record|mysekai唱片|烤森唱片|msr|mss)\s*(.*)`), ModuleMysekai, "mysekai-music-record"},
 		{regexp.MustCompile(`(?i)^/(mysekai-talk-list|mysekai对话列表|烤森对话列表)\s*(.*)`), ModuleMysekai, "mysekai-talk-list"},
 
 		// ── Help ─────────────────────────────────────────────────────────────────

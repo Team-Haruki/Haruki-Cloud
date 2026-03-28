@@ -149,6 +149,10 @@ func TestGlobalResolver_Resolution(t *testing.T) {
 		{"Player Trace With Extraneous Text", "/sk玩家轨迹 a b c", "sk-player-trace", false},
 		{"Line", "/sk线", "sk-line", false},
 		{"Event List with JP region", "/jp/event-list", "event-list", false},
+		{"Mysekai Resource Alias", "/msa", "mysekai-resource", false},
+		{"Mysekai Map Alias", "/msm", "mysekai-map", false},
+		{"Mysekai Music Record Alias", "/msr", "mysekai-music-record", false},
+		{"Mysekai Map Legacy Alias", "/msmap", "mysekai-map", false},
 	}
 
 	for _, tt := range tests {

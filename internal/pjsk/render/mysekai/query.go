@@ -11,6 +11,12 @@ type ResourceQuery struct {
 	Profile *drawing.ProfileCardRequest `json:"-"`
 }
 
+type MapQuery struct {
+	Region        string `json:"region,omitempty"`
+	ShowHarvested *bool  `json:"show_harvested,omitempty"`
+	MapIDs        []int  `json:"map_ids,omitempty"`
+}
+
 type FixtureListQuery struct {
 	Region        string                      `json:"region,omitempty"`
 	ShowID        *bool                       `json:"show_id,omitempty"`

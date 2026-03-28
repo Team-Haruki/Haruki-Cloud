@@ -87,8 +87,8 @@ tracker:
   user_agent: "HarukiCloud/1.0"
 
 pjsk_render:
-  enabled: false
-  drawing_base_url: "http://localhost:3001"
+  enabled: true
+  drawing_base_url: "http://INTERNAL_IP_1:28000"
   drawing_timeout: "30s"
   drawing_retry_count: 2
   music_meta:
@@ -103,3 +103,15 @@ pjsk_render:
     uri: ""    # CDN base URL, e.g. "https://image-cache.example.com"
     dir: ""    # local filesystem directory for cached images
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+  
+  local_masterdata:
+    enabled: true
+    dir: "/data/HarukiServices/alpha/deckrec/masterdata"
+
+  deck_recommend:
+    enabled: true
+    use_local_engine: true
+    local_pool_size: 2
+    static_data_dir: ""
+    timeout: "10s"
+    default_algs: ["dfs", "sa", "ga"]

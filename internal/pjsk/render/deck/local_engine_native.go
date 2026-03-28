@@ -61,7 +61,10 @@ type LocalDeckRecommender struct {
 }
 
 func newLocalDeckRecommender(cfg RecommendConfig, region string) (*LocalDeckRecommender, error) {
-	masterdataDir := strings.TrimSpace(cfg.MasterdataDir)
+	masterdataDir, err := resolveDeckMasterdataDir(cfg.MasterdataDir, region)
+	if err != nil {
+		return nil, err
+	}
 	if masterdataDir == "" {
 		return nil, fmt.Errorf("deck local engine requires local masterdata dir")
 	}
@@ -83,7 +86,7 @@ func newLocalDeckRecommender(cfg RecommendConfig, region string) (*LocalDeckReco
 		return nil, fmt.Errorf("deck local engine: set library dirs: %w", err)
 	}
 
-	if staticDataDir := resolveDeckStaticDataDir(cfg.StaticDataDir); staticDataDir != "" {
+	if staticDataDir := resolveDeckStaticDataDir(cfg.StaticDataDir, cfg.MasterdataDir); staticDataDir != "" {
 		if err := deck_cgo.SetStaticDataDir(staticDataDir); err != nil {
 			return nil, fmt.Errorf("deck local engine: set static data dir: %w", err)
 		}
@@ -107,37 +110,6 @@ func newLocalDeckRecommender(cfg RecommendConfig, region string) (*LocalDeckReco
 		timeout:     cfg.Timeout,
 		region:      region,
 	}, nil
-}
-
-func resolveDeckStaticDataDir(configured string) string {
-	if configured = strings.TrimSpace(configured); configured != "" && dirExists(configured) {
-		return configured
-	}
-
-	candidates := []string{
-		filepath.Join("data", "sekai_deck_recommend"),
-		"data",
-	}
-
-	if wd, err := os.Getwd(); err == nil {
-		for _, suffix := range candidates {
-			candidate := filepath.Join(wd, suffix)
-			if dirExists(candidate) {
-				return candidate
-			}
-		}
-	}
-
-	if exePath, err := os.Executable(); err == nil {
-		for _, suffix := range candidates {
-			candidate := filepath.Join(filepath.Dir(exePath), suffix)
-			if dirExists(candidate) {
-				return candidate
-			}
-		}
-	}
-
-	return ""
 }
 
 func prependDeckLibraryDirs(configured []string) error {
@@ -195,14 +167,6 @@ func prependDeckLibraryDirs(configured []string) error {
 	}
 
 	return os.Setenv(envKey, strings.Join(parts, sep))
-}
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
 }
 
 func (l *LocalDeckRecommender) Enabled() bool {

@@ -1,7 +1,6 @@
 package sekai
 
 import (
-	"errors"
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
@@ -116,28 +115,31 @@ func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/实效", "/倍率", "/时效", "/pjsk score up",
 			},
-			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(parts) != 5 {
-				return nil, fmt.Errorf("使用方式: %s 100 100 100 100 100", ctx.GetTriggerCmd())
+				return nil, fmt.Errorf("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
 			}
 
 			values := make([]float64, 0, 5)
 			for _, p := range parts {
 				v, err := strconv.ParseFloat(p, 64)
-				if err != nil {
-					return nil, fmt.Errorf("使用方式: %s 100 100 100 100 100", ctx.GetTriggerCmd())
+				if err != nil || v < 0 {
+					return nil, fmt.Errorf("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
 				}
 				values = append(values, v)
 			}
 
-			res := values[0] + (values[1]+values[2]+values[3]+values[4])/5.0
-			if res < 0 {
-				return nil, errors.New("实效计算结果异常")
-			}
-			return fmt.Sprintf("实效: %.1f%%", res), nil
+			leader := values[0]
+			others := values[1] + values[2] + values[3] + values[4]
+			scoreUp := leader + others*0.2
+			multiplier := scoreUp/100.0 + 1.0
+
+			return fmt.Sprintf(
+				"队长技能加成: %.4g%%\n实效: %.4g%%\n倍率: %.4g",
+				leader, scoreUp, multiplier,
+			), nil
 		},
 	}
 }

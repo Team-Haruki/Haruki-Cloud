@@ -1546,7 +1546,7 @@ pjsk:
 |------|------|------|
 | education/area 过滤透传 | ✅ 已完成 | Go 端已支持解析团名/角色名/属性/树/花过滤参数，并在构建请求前按 master data 过滤 area items |
 | card/box 渲染超时 | ⏸ 待优化 | Drawing API 渲染大量卡牌耗时过长，需优化或分页 |
-| score/custom-room 布局溢出 | ⏸ 待修复 | Drawing API 返回 "Content size too large"，Python 端渲染布局问题 |
+| score/custom-room 布局溢出 | ✅ 已完成 | Drawing 端已扩大歌曲列宽度，并按行内可用宽度裁切歌曲标题，避免 `Content size too large` |
 | `origin/test` force push | ⚠️ 待操作 | 本地 `test` 分支历史已重写（credential cleanup），需 `git push --force-with-lease origin test` 才能同步 |
 | Censor Tencent 图片审核 | ⚠️ BizType 待填 | SecretID/Key/Region 已配置，BizType 留空使用默认策略 |
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |

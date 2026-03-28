@@ -899,6 +899,40 @@ func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySe
 	return snapshot
 }
 
+// resolveMySekaiOnly fetches only the mysekai data from Toolbox, without
+// requiring suite data. This is the lightweight fallback when the full
+// merged snapshot is unavailable (e.g. the user has mysekai data uploaded
+// but GetSuiteData fails). Returns nil on any error.
+func resolveMySekaiOnly(r *parser.ResolvedCommand, app *renderapp.App) []byte {
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return nil
+	}
+
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+
+	_, binding, resolveErr := app.Bindings.ResolveUserBinding(
+		context.Background(), platform, platformUserID, regionStr)
+	if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
+		return nil
+	}
+	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
+	if convErr != nil {
+		return nil
+	}
+
+	tc := sekaiutils.GetToolboxClient()
+	data, err := tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
+	if err != nil || len(data) == 0 {
+		return nil
+	}
+	return data
+}
+
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
 func buildBondsRequestFromSuite(
 	app *renderapp.App, region string, uid int64, platform, platformUserID string,
@@ -1617,10 +1651,14 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 	var data []byte
 	_, publicProfileCard := buildPublicMusicProfiles(r, app)
 
-	// Inject live Toolbox snapshot (suite + mysekai merged).
+	// Inject live Toolbox data. Prefer the full snapshot (suite + mysekai
+	// merged); fall back to mysekai-only data which is sufficient for all
+	// mysekai render modes (profile card comes from the public API override).
 	msCtrl := app.MySekai
 	if snapshot := resolveLiveSnapshot(r, app, true); snapshot != nil {
 		msCtrl = msCtrl.WithSnapshot(snapshot)
+	} else if mysekaiData := resolveMySekaiOnly(r, app); mysekaiData != nil {
+		msCtrl = msCtrl.WithMySekaiData(mysekaiData)
 	}
 
 	switch r.Mode {

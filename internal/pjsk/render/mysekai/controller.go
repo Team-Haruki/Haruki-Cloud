@@ -15,12 +15,13 @@ import (
 )
 
 type Controller struct {
-	drawing       *drawing.HarukiDrawingClient
-	snapshot      *userdata.Service
-	masterdata    masterdataSource
-	defaultRegion renderregion.Value
-	nicknames     map[string]int
-	assets        *assets.AssetHelper
+	drawing        *drawing.HarukiDrawingClient
+	snapshot       *userdata.Service
+	rawMySekaiJSON []byte // direct mysekai JSON (bypasses snapshot merge)
+	masterdata     masterdataSource
+	defaultRegion  renderregion.Value
+	nicknames      map[string]int
+	assets         *assets.AssetHelper
 }
 
 // NewController creates a mysekai Controller. If sekaiDSN is non-empty the
@@ -66,6 +67,19 @@ func (c *Controller) WithSnapshot(s *userdata.Service) *Controller {
 	}
 	clone := *c
 	clone.snapshot = s
+	return &clone
+}
+
+// WithMySekaiData returns a shallow copy that uses raw mysekai JSON bytes
+// directly, without going through the userdata.Service merge path. This is
+// the preferred injection for mysekai-only commands: suite data is not needed
+// because the profile card comes from the public API via query.Profile.
+func (c *Controller) WithMySekaiData(data []byte) *Controller {
+	if c == nil || len(data) == 0 {
+		return nil
+	}
+	clone := *c
+	clone.rawMySekaiJSON = data
 	return &clone
 }
 
@@ -1008,8 +1022,12 @@ func (c *Controller) ensureSnapshot() error {
 	if c == nil {
 		return fmt.Errorf("mysekai controller is not initialized")
 	}
+	// Direct mysekai JSON takes priority (no suite data required).
+	if len(c.rawMySekaiJSON) > 0 {
+		return nil
+	}
 	if c.snapshot == nil {
-		return fmt.Errorf("local user snapshot is not configured")
+		return fmt.Errorf("user snapshot is not available (bind Toolbox or provide snapshot)")
 	}
 	if err := c.snapshot.Require(); err != nil {
 		return err
@@ -1043,14 +1061,34 @@ func (c *Controller) prepareSnapshotOnly(region string) (map[string]interface{},
 }
 
 func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, renderregion.Value, error) {
-	rawBytes, err := c.snapshot.RawBytes()
-	if err != nil {
-		return nil, renderregion.Unknown, err
+	var rawBytes []byte
+	var err error
+
+	if len(c.rawMySekaiJSON) > 0 {
+		rawBytes = c.rawMySekaiJSON
+	} else {
+		rawBytes, err = c.snapshot.RawBytes()
+		if err != nil {
+			return nil, renderregion.Unknown, err
+		}
 	}
+
 	var merged map[string]interface{}
 	if err := json.Unmarshal(rawBytes, &merged); err != nil {
-		return nil, renderregion.Unknown, fmt.Errorf("decode merged mysekai snapshot: %w", err)
+		return nil, renderregion.Unknown, fmt.Errorf("decode mysekai data: %w", err)
 	}
+
+	// When using raw mysekai JSON directly (not merged via userdata.Service),
+	// flatten updatedResources so that keys like userMysekaiFixtures are
+	// accessible at the top level, matching the merged-snapshot layout.
+	if len(c.rawMySekaiJSON) > 0 {
+		if updated, ok := merged["updatedResources"].(map[string]interface{}); ok {
+			for key, value := range updated {
+				merged[key] = value
+			}
+		}
+	}
+
 	return merged, c.resolveRegion(region), nil
 }
 

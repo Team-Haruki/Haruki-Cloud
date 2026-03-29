@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -143,6 +144,7 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	logProfilePayloadDebug("snapshot", payload)
 	return c.drawing.GenerateProfile(payload)
 }
 
@@ -287,7 +289,53 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 	if err != nil {
 		return nil, err
 	}
+	logProfilePayloadDebug("sekai_api_public", payload)
 	return c.drawing.GenerateProfile(payload)
+}
+
+func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {
+	if payload == nil {
+		slog.Info("profile payload debug", "source", source, "payload_nil", true)
+		return
+	}
+
+	honors := make([]any, 0, len(payload.Honors))
+	for i, honor := range payload.Honors {
+		honors = append(honors, map[string]any{
+			"index":                   i,
+			"honor_type":              stringPtrLogValue(honor.HonorType),
+			"group_type":              stringPtrLogValue(honor.GroupType),
+			"honor_rarity":            stringPtrLogValue(honor.HonorRarity),
+			"honor_level":             honor.HonorLevel,
+			"is_main_honor":           honor.IsMainHonor,
+			"honor_img_path":          stringPtrLogValue(honor.HonorImgPath),
+			"frame_img_path":          stringPtrLogValue(honor.FrameImgPath),
+			"frame_degree_level_path": stringPtrLogValue(honor.FrameDegreeLevelImgPath),
+			"rank_img_path":           stringPtrLogValue(honor.RankImgPath),
+		})
+	}
+
+	slog.Info(
+		"profile payload debug",
+		"source", source,
+		"profile_id", payload.Profile.ID,
+		"region", payload.Profile.Region,
+		"nickname", payload.Profile.Nickname,
+		"leader_image_path", payload.Profile.LeaderImagePath,
+		"lv_rank_bg_path", payload.LvRankBgPath,
+		"x_icon_path", payload.XIconPath,
+		"icon_clear_path", payload.IconClearPath,
+		"icon_fc_path", payload.IconFcPath,
+		"icon_ap_path", payload.IconApPath,
+		"honors", honors,
+	)
+}
+
+func stringPtrLogValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.ProfileBgSettings {

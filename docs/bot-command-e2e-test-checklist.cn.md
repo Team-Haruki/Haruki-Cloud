@@ -221,7 +221,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | mysekai | | | | | |
 | profile | 18/20 | 17 | 1 | bg相关需要处理client实现 | 锡纸 |
 | education | | | | | |
-| score | 4/4 | 0 | 4 | 全部提示类似于未实现的报错 | 锡纸 |
+| score | 4/4 | 3 | 1 | 已通过三项：/控分 /自定义控分 /歌曲meta <br> 未通过一项：/歌曲比较 有参数提取问题| LQ |
 | alias | | | | | |
 | misc/gacha/stamp/vlive | | | | | |
 

@@ -43,9 +43,22 @@ func NewParser(nicknames map[string]int) *Parser {
 }
 
 func (p *Parser) Parse(args string) (*CardQueryInfo, error) {
+	return p.parse(args, false)
+}
+
+func (p *Parser) ParsePreferFilter(args string) (*CardQueryInfo, error) {
+	return p.parse(args, true)
+}
+
+func (p *Parser) parse(args string, preferFilter bool) (*CardQueryInfo, error) {
 	args = strings.TrimSpace(args)
 	if info := p.tryParseNicknameSeq(args); info != nil {
 		return info, nil
+	}
+	if preferFilter {
+		if info := p.tryParseFilter(args); info != nil {
+			return info, nil
+		}
 	}
 	if info := p.tryParseID(args); info != nil {
 		return info, nil
@@ -58,6 +71,14 @@ func (p *Parser) Parse(args string) (*CardQueryInfo, error) {
 
 func LooksLikeSingleCardQuery(args string) bool {
 	info, err := NewParser(defaultNicknames).Parse(strings.TrimSpace(args))
+	if err != nil || info == nil {
+		return false
+	}
+	return info.Type == QueryTypeID || info.Type == QueryTypeSeq
+}
+
+func LooksLikeSingleCardQueryPreferFilter(args string) bool {
+	info, err := NewParser(defaultNicknames).ParsePreferFilter(strings.TrimSpace(args))
 	if err != nil || info == nil {
 		return false
 	}

@@ -43,7 +43,7 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 }
 
 func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
-	info, err := s.parser.Parse(query)
+	info, err := s.parser.ParsePreferFilter(query)
 	if err != nil || info == nil {
 		return nil, fmt.Errorf("无法解析的列表查询指令: %s", query)
 	}

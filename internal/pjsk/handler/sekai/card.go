@@ -35,7 +35,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 			Helper: cardSearchHelp,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return resolveCardDetailOrList(ctx), nil
+			return resolveCardDetailOrList(ctx, false), nil
 		},
 	}
 }
@@ -50,21 +50,28 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 			Helper: cardSearchHelp,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return resolveCardDetailOrList(ctx), nil
+			return resolveCardDetailOrList(ctx, true), nil
 		},
 	}
 }
 
-func resolveCardDetailOrList(ctx SekaiHandlerContext) *parser.ResolvedCommand {
+func resolveCardDetailOrList(ctx SekaiHandlerContext, preferFilter bool) *parser.ResolvedCommand {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if isCardBoxQuery(args) {
 		ctx.SetArgs(cleanCardBoxArgs(args))
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args))
 	}
-	if card.LooksLikeSingleCardQuery(args) {
+	if looksLikeSingleCardQuery(args, preferFilter) {
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-detail", card.Query{Query: args, Region: ctx.Region().String()})
 	}
 	return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-list", card.ListRequest{Query: args, Region: ctx.Region().String()})
+}
+
+func looksLikeSingleCardQuery(args string, preferFilter bool) bool {
+	if preferFilter {
+		return card.LooksLikeSingleCardQueryPreferFilter(args)
+	}
+	return card.LooksLikeSingleCardQuery(args)
 }
 
 func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {

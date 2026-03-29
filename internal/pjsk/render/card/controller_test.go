@@ -91,3 +91,41 @@ func TestBuildCardListRequestResolvesAdvancedFiltersFromQuery(t *testing.T) {
 		t.Fatalf("unexpected cards: %+v", req.Cards)
 	}
 }
+
+func TestBuildCardListRequestPrefers25UnitAliasOverCardID(t *testing.T) {
+	cardInfo := &masterdata.Card{
+		ID:              1025,
+		CharacterID:     26,
+		CardRarityType:  "rarity_4",
+		Attr:            "cool",
+		Prefix:          "Card 25",
+		AssetBundleName: "card_25",
+	}
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{cardInfo},
+		filterFunc: func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+			if info == nil {
+				t.Fatal("expected query info")
+			}
+			if info.Type != QueryTypeFilter {
+				t.Fatalf("expected filter query, got %+v", info)
+			}
+			if info.Unit != "school_refusal" {
+				t.Fatalf("unexpected unit filter: %+v", info)
+			}
+			return []*masterdata.Card{cardInfo}, nil
+		},
+	}
+
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardListRequest(ListRequest{
+		Query:  "25",
+		Region: "jp",
+	})
+	if err != nil {
+		t.Fatalf("BuildCardListRequest() error = %v", err)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].CardID != 1025 {
+		t.Fatalf("unexpected cards: %+v", req.Cards)
+	}
+}

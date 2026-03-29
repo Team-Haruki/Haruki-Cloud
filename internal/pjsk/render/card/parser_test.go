@@ -14,6 +14,21 @@ func TestLooksLikeSingleCardQuerySupportsIDAndNicknameSequence(t *testing.T) {
 	}
 }
 
+func TestParserPreferFilterTreats25AsUnitFilter(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("25")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter() error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Unit != "school_refusal" {
+		t.Fatalf("unexpected unit filter: %+v", info)
+	}
+}
+
 func TestParserExtractsAdvancedCardFilters(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 

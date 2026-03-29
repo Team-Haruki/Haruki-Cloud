@@ -141,6 +141,46 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 	}
 }
 
+func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_birthday_01_06", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_s_4.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_level_4.png"))
+
+	bg := "honor_bg_birthday_01_06"
+	frame := "honor_frame_birthday_01_06"
+	source := newTestHonorSource(renderregion.JP)
+	source.honors[6833] = &masterdata.Honor{
+		ID:              6833,
+		GroupID:         544,
+		HonorRarity:     "highest",
+		AssetBundleName: "honor_6833",
+	}
+	source.groups[544] = &masterdata.HonorGroup{
+		ID:                        544,
+		HonorType:                 "birthday",
+		BackgroundAssetBundleName: &bg,
+		FrameName:                 &frame,
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.JP,
+		HonorID:    6833,
+		HonorLevel: 3,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.HonorType == nil || *req.HonorType != "birthday" {
+		t.Fatalf("unexpected honor type: %#v", req.HonorType)
+	}
+	if req.FrameDegreeLevelImgPath == nil || *req.FrameDegreeLevelImgPath == "" {
+		t.Fatalf("expected birthday level frame path, got %#v", req.FrameDegreeLevelImgPath)
+	}
+}
+
 func mustWriteHonorAsset(t *testing.T, root, rel string) {
 	t.Helper()
 	full := filepath.Join(root, rel)

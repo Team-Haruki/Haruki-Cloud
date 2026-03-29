@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/bondshonor"
+	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -31,6 +34,16 @@ type CloudSource struct {
 
 	gcuMu    sync.RWMutex
 	gcuCache map[int]*masterdata.GameCharacterUnit
+
+	birthdayMu      sync.RWMutex
+	birthdayByGroup map[int]birthdayHonorAssets
+	birthdayChars   []*sekaiDB.Gamecharacter
+	birthdayLoaded  bool
+}
+
+type birthdayHonorAssets struct {
+	background string
+	frame      string
 }
 
 func NewCloudSource(client *sekaiDB.Client, defaultRegion renderregion.Value) *CloudSource {
@@ -39,13 +52,14 @@ func NewCloudSource(client *sekaiDB.Client, defaultRegion renderregion.Value) *C
 	}
 	region := renderregion.WithDefault(defaultRegion)
 	return &CloudSource{
-		client:      client,
-		region:      region,
-		queryRegion: region,
-		honorCache:  make(map[int]*masterdata.Honor),
-		groupCache:  make(map[int]*masterdata.HonorGroup),
-		bondsCache:  make(map[int]*masterdata.BondsHonor),
-		gcuCache:    make(map[int]*masterdata.GameCharacterUnit),
+		client:          client,
+		region:          region,
+		queryRegion:     region,
+		honorCache:      make(map[int]*masterdata.Honor),
+		groupCache:      make(map[int]*masterdata.HonorGroup),
+		bondsCache:      make(map[int]*masterdata.BondsHonor),
+		gcuCache:        make(map[int]*masterdata.GameCharacterUnit),
+		birthdayByGroup: make(map[int]birthdayHonorAssets),
 	}
 }
 
@@ -110,6 +124,18 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 	}
 	if value := entity.FrameName; value != "" {
 		model.FrameName = &value
+	}
+	if model.HonorType == "birthday" && (model.BackgroundAssetBundleName == nil || model.FrameName == nil) {
+		if derived, ok := c.deriveBirthdayAssetsForGroup(int(entity.GameID), model.Name); ok {
+			if model.BackgroundAssetBundleName == nil && derived.background != "" {
+				value := derived.background
+				model.BackgroundAssetBundleName = &value
+			}
+			if model.FrameName == nil && derived.frame != "" {
+				value := derived.frame
+				model.FrameName = &value
+			}
+		}
 	}
 
 	c.groupMu.Lock()
@@ -207,6 +233,78 @@ func cloneHonor(src *masterdata.Honor) *masterdata.Honor {
 		copy.Levels = append([]masterdata.HonorLevel(nil), src.Levels...)
 	}
 	return &copy
+}
+
+func (c *CloudSource) deriveBirthdayAssetsForGroup(groupID int, groupName string) (birthdayHonorAssets, bool) {
+	c.birthdayMu.RLock()
+	if assets, ok := c.birthdayByGroup[groupID]; ok {
+		c.birthdayMu.RUnlock()
+		return assets, true
+	}
+	c.birthdayMu.RUnlock()
+
+	c.birthdayMu.Lock()
+	defer c.birthdayMu.Unlock()
+	if assets, ok := c.birthdayByGroup[groupID]; ok {
+		return assets, true
+	}
+
+	if !c.birthdayLoaded {
+		rows, err := c.client.Gamecharacter.Query().
+			Where(gamecharacter.ServerRegionEQ(c.queryRegion.String())).
+			All(context.Background())
+		if err == nil {
+			c.birthdayChars = rows
+		}
+		c.birthdayLoaded = true
+	}
+
+	for _, row := range c.birthdayChars {
+		gameID := int(row.GameID)
+		if gameID <= 0 {
+			continue
+		}
+		if !birthdayGroupMatchesCharacter(groupName, row) {
+			continue
+		}
+		suffix := fmt.Sprintf("01_%02d", gameID)
+		assets := birthdayHonorAssets{
+			background: "honor_bg_birthday_" + suffix,
+			frame:      "honor_frame_birthday_" + suffix,
+		}
+		c.birthdayByGroup[groupID] = assets
+		return assets, true
+	}
+	return birthdayHonorAssets{}, false
+}
+
+func birthdayGroupMatchesCharacter(groupName string, row *sekaiDB.Gamecharacter) bool {
+	if row == nil {
+		return false
+	}
+	name := strings.TrimSpace(groupName)
+	if name == "" {
+		return false
+	}
+	candidates := []string{
+		strings.TrimSpace(row.FirstName),
+		strings.TrimSpace(row.GivenName),
+		strings.TrimSpace(row.FirstName + row.GivenName),
+		strings.TrimSpace(row.FirstNameEnglish),
+		strings.TrimSpace(row.GivenNameEnglish),
+		strings.TrimSpace(row.FirstNameEnglish + row.GivenNameEnglish),
+	}
+	for _, candidate := range candidates {
+		if candidate != "" && strings.Contains(name, candidate) {
+			return true
+		}
+	}
+	if nickname, ok := assets.CharacterIDToNickname[int(row.GameID)]; ok && nickname != "" {
+		if strings.Contains(strings.ToLower(name), strings.ToLower(strings.TrimSpace(nickname))) {
+			return true
+		}
+	}
+	return false
 }
 
 func cloneHonorGroup(src *masterdata.HonorGroup) *masterdata.HonorGroup {

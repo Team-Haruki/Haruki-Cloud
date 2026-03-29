@@ -148,7 +148,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		frameName = *group.FrameName
 	}
 	honorType := "normal"
-	if strings.HasPrefix(frameName, "honor_frame_birthday") || strings.HasPrefix(bgAssetName, "honor_bg_birthday") || strings.HasPrefix(assetName, "honor_bg_birthday") {
+	if groupType == "birthday" || strings.HasPrefix(frameName, "honor_frame_birthday") || strings.HasPrefix(bgAssetName, "honor_bg_birthday") || strings.HasPrefix(assetName, "honor_bg_birthday") {
 		honorType = "birthday"
 	}
 	req.HonorType = &honorType
@@ -181,8 +181,8 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 
 	if groupType == "character" || groupType == "achievement" || strings.HasPrefix(*req.GroupType, "fc_ap") {
-		lvImg := filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png")
-		lv6Img := filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png")
+		lvImg := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png"))
+		lv6Img := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png"))
 		req.LvImgPath = &lvImg
 		req.Lv6ImgPath = &lv6Img
 	}
@@ -258,8 +258,8 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		req.WordImgPath = &wordPath
 	}
 
-	lvImg := filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png")
-	lv6Img := filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png")
+	lvImg := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png"))
+	lv6Img := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png"))
 	req.LvImgPath = &lvImg
 	req.Lv6ImgPath = &lv6Img
 	return nil

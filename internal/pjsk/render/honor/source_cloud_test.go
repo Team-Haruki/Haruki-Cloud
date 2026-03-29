@@ -36,3 +36,23 @@ func TestConvertCloudHonorDecodesLevels(t *testing.T) {
 		t.Fatalf("unexpected levels: %+v", model.Levels)
 	}
 }
+
+func TestBirthdayGroupMatchesCharacter(t *testing.T) {
+	row := &sekaiDB.Gamecharacter{
+		GameID:           6,
+		FirstName:        "桐谷",
+		GivenName:        "遥",
+		FirstNameEnglish: "Kiratani",
+		GivenNameEnglish: "Haruka",
+	}
+
+	if !birthdayGroupMatchesCharacter("HAPPY BIRTHDAY 遥 2025.10.5", row) {
+		t.Fatal("expected Japanese given name to match birthday group")
+	}
+	if !birthdayGroupMatchesCharacter("HAPPY BIRTHDAY Haruka 2025.10.5", row) {
+		t.Fatal("expected English given name to match birthday group")
+	}
+	if birthdayGroupMatchesCharacter("HAPPY BIRTHDAY 奏 2026.2.10", row) {
+		t.Fatal("did not expect unrelated birthday group to match")
+	}
+}

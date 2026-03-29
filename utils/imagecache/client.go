@@ -12,6 +12,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,7 +53,7 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 
 	digest := sha256.Sum256(data)
 	hashHex := hex.EncodeToString(digest[:])
-	name := hashHex + ".png"
+	name := hashHex + extFromData(data)
 
 	// Fast path: return cached URL from PostgreSQL without touching the filesystem.
 	ctx := context.Background()
@@ -82,4 +83,22 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 	}
 
 	return cdnURL, nil
+}
+
+// extFromData sniffs the first 512 bytes of data to determine the file extension.
+func extFromData(data []byte) string {
+	sniff := data
+	if len(sniff) > 512 {
+		sniff = sniff[:512]
+	}
+	switch http.DetectContentType(sniff) {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	default:
+		return ".png"
+	}
 }

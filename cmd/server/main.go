@@ -295,6 +295,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		ImageCachePGURL: harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
 		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
+		AssetsBaseURL:   harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled: harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			Dir:     harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,

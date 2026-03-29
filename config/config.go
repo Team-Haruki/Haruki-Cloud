@@ -111,6 +111,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
+	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 }
 
 type BackendConfig struct {
@@ -159,8 +160,9 @@ type SekaiConfig struct {
 }
 
 type AssetDirsConfig struct {
-	Primary string   `yaml:"primary"`
-	Legacy  []string `yaml:"legacy"`
+	Primary       string   `yaml:"primary"`
+	Legacy        []string `yaml:"legacy"`
+	AssetsBaseURL string   `yaml:"assets_base_url"` // CDN/static base URL for direct asset serving (no imagecache)
 }
 
 type LocalMasterdataConfig struct {

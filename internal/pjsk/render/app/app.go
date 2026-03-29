@@ -45,6 +45,7 @@ type Config struct {
 	CensorService     *censor.Service
 	AssetPrimaryDir   string
 	AssetLegacyDirs   []string
+	AssetsBaseURL     string // CDN base URL for direct asset serving; skips imagecache for region assets
 	LocalMasterdata   LocalMasterdataConfig
 	SekaiDSN          string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
 	UserSnapshot      UserSnapshotConfig

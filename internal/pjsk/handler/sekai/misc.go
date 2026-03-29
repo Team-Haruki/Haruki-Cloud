@@ -55,7 +55,7 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "profile",
 			Commands: []string{
-				"/个人中心", "/profile",
+				"/个人中心", "/profile", "/个人信息",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {

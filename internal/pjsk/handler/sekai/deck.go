@@ -112,6 +112,7 @@ func (sekaiHandlers) MysekaiDeckHandle() SekaiCommandHandler {
 func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "deck/score-up",
 			Commands: []string{
 				"/实效", "/倍率", "/时效", "/pjsk score up",
 			},

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	onebot11 "haruki-cloud/api/bot/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -41,7 +42,7 @@ func (s *botCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 			},
 		}, nil
 	}
-	return nil, fmt.Errorf("card %d not found", id)
+	return nil, onebot11.NewReplayError("card %d not found", id)
 }
 
 func (s *botCardSource) GetCardByCharacterAndSeq(_, _ int) (*masterdata.Card, error) {
@@ -56,7 +57,7 @@ func (s *botCardSource) GetCharacterByID(id int) (*masterdata.Character, error) 
 	if id == 5 {
 		return &masterdata.Character{ID: 5, FirstName: "花里", GivenName: "实乃理", Unit: "idol"}, nil
 	}
-	return nil, fmt.Errorf("character %d not found", id)
+	return nil, onebot11.NewReplayError("character %d not found", id)
 }
 
 func (s *botCardSource) GetUnitByCardID(_ int) (string, error)       { return "idol", nil }
@@ -66,7 +67,7 @@ func (s *botCardSource) GetSkillByID(id int) (*masterdata.Skill, error) {
 	if id == 9001 {
 		return &masterdata.Skill{ID: 9001, DescriptionSpriteName: "score_up"}, nil
 	}
-	return nil, fmt.Errorf("skill %d not found", id)
+	return nil, onebot11.NewReplayError("skill %d not found", id)
 }
 
 func (s *botCardSource) FormatSkillDescription(_ *masterdata.Skill, _ int) string { return "" }

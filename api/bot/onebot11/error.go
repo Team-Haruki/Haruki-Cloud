@@ -1,7 +1,12 @@
 package onebot11
 
-type ReplayError TextData
+import "fmt"
+
+type ReplayError string
 
 func (r ReplayError) Error() string {
-	return r.Text
+	return string(r)
+}
+func NewReplayError(format string, a ...any) ReplayError {
+	return ReplayError(fmt.Sprintf(format, a...))
 }

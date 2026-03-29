@@ -22,7 +22,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, fmt.Errorf("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBind, newProfileBindingParams(ctx, args, "")), nil
 		},
@@ -40,7 +40,7 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, newProfileBindingParams(ctx, "", "")), nil
 		},
@@ -75,7 +75,7 @@ func newProfileSettingsParams(ctx SekaiHandlerContext, selector ...string) accou
 func resolveSettingsSelector(ctx SekaiHandlerContext) (string, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args != "" {
-		return "", fmt.Errorf("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
+		return "", onebot11.NewReplayError("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
 	}
 	uidArg := ctx.UIDArg()
 	if uidArg == "" {
@@ -84,7 +84,7 @@ func resolveSettingsSelector(ctx SekaiHandlerContext) (string, error) {
 	if isBindingSelector(uidArg) {
 		return uidArg, nil
 	}
-	return "", fmt.Errorf("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
 func extractFirstImageURL(ctx SekaiHandlerContext) string {
@@ -126,7 +126,7 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 			params.Vertical = &v
 		case "模糊", "blur":
 			if i+1 >= len(tokens) {
-				return params, fmt.Errorf("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+				return params, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
 			}
 			value, err := parseProfileBGInt(tokens[i+1], 0, 10)
 			if err != nil {
@@ -136,7 +136,7 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 			i++
 		case "透明", "alpha":
 			if i+1 >= len(tokens) {
-				return params, fmt.Errorf("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+				return params, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
 			}
 			value, err := parseProfileBGInt(tokens[i+1], 0, 100)
 			if err != nil {
@@ -197,7 +197,7 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeUnbind, newProfileBindingParams(ctx, args, "")), nil
 		},
@@ -217,7 +217,7 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, fmt.Errorf("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
 			}
 
 			scope := ""
@@ -427,7 +427,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerifyList, newProfileSettingsParams(ctx)), nil
 		},
@@ -446,11 +446,11 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
 			}
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
-				return nil, fmt.Errorf("请在命令中附带一张个人信息背景图片")
+				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
 			}
 			params := newProfileSettingsParams(ctx)
 			params.ImageURL = imageURL
@@ -471,7 +471,7 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGClear, newProfileSettingsParams(ctx)), nil
 		},

@@ -114,6 +114,12 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 						MatchedCommand: req.MatchedCommand,
 					})
 			}
+			var replyErr onebot11.ReplayError
+			if errors.As(err, &replyErr) {
+				return botResponse(c, fiber.StatusOK, "ok",
+					[]onebot11.Segment{onebot11.Text(string(replyErr))},
+				)
+			}
 			return botResponse(c, fiber.StatusBadRequest, err.Error(), BotCommandErrorResponse{
 				Error:          err.Error(),
 				ExpectedPath:   expectedPath,
@@ -127,6 +133,12 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 
 		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)
 		if err != nil {
+			var replyErr onebot11.ReplayError
+			if errors.As(err, &replyErr) {
+				return botResponse(c, fiber.StatusOK, "ok",
+					[]onebot11.Segment{onebot11.Text(string(replyErr))},
+				)
+			}
 			return botResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
 				Error: err.Error(),
 				Mode:  resolved.Mode,

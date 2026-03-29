@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"regexp"
@@ -201,13 +202,13 @@ func buildBonusDeckParams(args string, params *deckAutoQueryParams, trigger stri
 
 	fields := strings.Fields(args)
 	if len(fields) == 0 {
-		return "", fmt.Errorf("使用方式:\n%s event123 120 160", trigger)
+		return "", onebot11.NewReplayError("使用方式:\n%s event123 120 160", trigger)
 	}
 	bonuses := make([]int, 0, len(fields))
 	for _, field := range fields {
 		value, err := strconv.Atoi(strings.TrimSpace(field))
 		if err != nil || value <= 0 {
-			return "", fmt.Errorf("使用方式:\n%s event123 120 160", trigger)
+			return "", onebot11.NewReplayError("使用方式:\n%s event123 120 160", trigger)
 		}
 		bonuses = append(bonuses, value)
 	}
@@ -748,7 +749,7 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		params.EventUnit = unit
 		return remaining, nil
 	case attr != "" || unit != "":
-		return "", fmt.Errorf("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
+		return "", onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
 	default:
 		return normalizeDeckSpaces(args), nil
 	}

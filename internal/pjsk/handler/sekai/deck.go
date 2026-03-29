@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"strconv"
@@ -120,14 +121,14 @@ func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(parts) != 5 {
-				return nil, fmt.Errorf("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
+				return nil, onebot11.NewReplayError("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
 			}
 
 			values := make([]float64, 0, 5)
 			for _, p := range parts {
 				v, err := strconv.ParseFloat(p, 64)
 				if err != nil || v < 0 {
-					return nil, fmt.Errorf("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
+					return nil, onebot11.NewReplayError("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
 				}
 				values = append(values, v)
 			}

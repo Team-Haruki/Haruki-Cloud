@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
@@ -49,12 +50,12 @@ func buildScoreControlParams(ctx SekaiHandlerContext) (scoreControlParams, error
 	args := strings.TrimSpace(ctx.GetArgs())
 	parts := strings.SplitN(args, " ", 2)
 	if len(parts) == 0 {
-		return scoreControlParams{}, fmt.Errorf("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
+		return scoreControlParams{}, onebot11.NewReplayError("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
 	}
 
 	targetPT, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 	if err != nil || targetPT <= 0 {
-		return scoreControlParams{}, fmt.Errorf("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
+		return scoreControlParams{}, onebot11.NewReplayError("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
 	}
 
 	params := scoreControlParams{
@@ -82,7 +83,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			targetPT, err := strconv.Atoi(args)
 			if err != nil || targetPT <= 0 {
-				return nil, fmt.Errorf("使用方式: %s 目标PT", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("使用方式: %s 目标PT", ctx.originalTriggerCmd)
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleScore, "score-custom-room", customRoomScoreParams{
 				TargetPoint: targetPT,

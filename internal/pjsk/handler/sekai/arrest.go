@@ -1,9 +1,9 @@
 package sekai
 
 import (
-	"fmt"
 	"strings"
 
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/utils/logger"
@@ -12,12 +12,12 @@ import (
 // UserQueryParams holds the resolved identity context for commands that query
 // another user's data (arrest, registration time, etc.).
 type UserQueryParams struct {
-	Mode           string `json:"mode"`                        // "self", "at_user", "uid"
-	Platform       string `json:"platform"`                    // caller's IM platform
-	PlatformUserID string `json:"platform_user_id"`            // caller's platform UID (self mode)
-	AtUserID       string `json:"at_user_id"`                  // @-mentioned platform UID (at_user mode)
-	PJSKUserID     string `json:"pjsk_user_id"`                // direct game UID (uid mode)
-	Selector       string `json:"selector,omitempty"`           // u[i] binding selector (self mode only)
+	Mode           string `json:"mode"`               // "self", "at_user", "uid"
+	Platform       string `json:"platform"`           // caller's IM platform
+	PlatformUserID string `json:"platform_user_id"`   // caller's platform UID (self mode)
+	AtUserID       string `json:"at_user_id"`         // @-mentioned platform UID (at_user mode)
+	PJSKUserID     string `json:"pjsk_user_id"`       // direct game UID (uid mode)
+	Selector       string `json:"selector,omitempty"` // u[i] binding selector (self mode only)
 }
 
 // isBindingSelector returns true if the value is a u[i] binding selector (e.g. "u1", "u2").
@@ -55,7 +55,7 @@ func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
 		p.Mode = "uid"
 		p.PJSKUserID = uidArg
 	default:
-		return p, fmt.Errorf("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID | u序号]", uidArg, ctx.originalTriggerCmd)
+		return p, onebot11.NewReplayError("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID | u序号]", uidArg, ctx.originalTriggerCmd)
 	}
 	return p, nil
 }
@@ -77,7 +77,7 @@ func resolveSelfOnlyQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error
 		p.Selector = uidArg
 		return p, nil
 	}
-	return p, fmt.Errorf("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return p, onebot11.NewReplayError("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
 func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {

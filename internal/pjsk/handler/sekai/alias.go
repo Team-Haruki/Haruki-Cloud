@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
@@ -76,7 +77,7 @@ func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
 		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, fmt.Errorf("使用方式:\n/待审核别名")
+				return nil, onebot11.NewReplayError("使用方式:\n/待审核别名")
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleAlias, aliases.ModePendingList, aliases.ReviewListCommandParams{
 				Platform:       ctx.GetPlatform(),
@@ -146,7 +147,7 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
-				return nil, fmt.Errorf("%s", aliasQueryHelp(aliasType, sampleCommand))
+				return nil, onebot11.NewReplayError(aliasQueryHelp(aliasType, sampleCommand))
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleAlias, aliases.ModeQuery, aliases.QueryCommandParams{
 				AliasType: aliasType,
@@ -266,13 +267,13 @@ func aliasQueryTokenPrompt(aliasType string) string {
 func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 	args = strings.TrimSpace(strings.ReplaceAll(args, "\r\n", "\n"))
 	if args == "" {
-		return "", nil, fmt.Errorf("%s", usage)
+		return "", nil, onebot11.NewReplayError(usage)
 	}
 
 	lines := strings.Split(args, "\n")
 	target := strings.TrimSpace(lines[0])
 	if target == "" {
-		return "", nil, fmt.Errorf("%s", usage)
+		return "", nil, onebot11.NewReplayError(usage)
 	}
 
 	aliasValues := make([]string, 0, len(lines)-1)
@@ -284,7 +285,7 @@ func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 		aliasValues = append(aliasValues, aliasText)
 	}
 	if len(aliasValues) == 0 {
-		return "", nil, fmt.Errorf("请至少提供一个非空别名\n\n%s", usage)
+		return "", nil, onebot11.NewReplayError("请至少提供一个非空别名\n\n%s", usage)
 	}
 	return target, aliasValues, nil
 }
@@ -292,13 +293,13 @@ func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 func parseAliasReviewIDs(args string) ([]int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {
-		return nil, fmt.Errorf("使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
+		return nil, onebot11.NewReplayError("使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
 	}
 	result := make([]int64, 0, len(fields))
 	for _, field := range fields {
 		reviewID, err := strconv.ParseInt(field, 10, 64)
 		if err != nil || reviewID <= 0 {
-			return nil, fmt.Errorf("待审核ID必须为正整数")
+			return nil, onebot11.NewReplayError("待审核ID必须为正整数")
 		}
 		result = append(result, reviewID)
 	}
@@ -308,19 +309,19 @@ func parseAliasReviewIDs(args string) ([]int64, error) {
 func parseAliasRejectArgs(args string) (int64, string, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return 0, "", fmt.Errorf("使用方式:\n/拒绝别名 待审核ID 原因")
+		return 0, "", onebot11.NewReplayError("使用方式:\n/拒绝别名 待审核ID 原因")
 	}
 	parts := strings.Fields(args)
 	if len(parts) < 2 {
-		return 0, "", fmt.Errorf("使用方式:\n/拒绝别名 待审核ID 原因")
+		return 0, "", onebot11.NewReplayError("使用方式:\n/拒绝别名 待审核ID 原因")
 	}
 	reviewID, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil || reviewID <= 0 {
-		return 0, "", fmt.Errorf("待审核ID必须为正整数")
+		return 0, "", onebot11.NewReplayError("待审核ID必须为正整数")
 	}
 	reason := strings.TrimSpace(strings.TrimPrefix(args, parts[0]))
 	if reason == "" {
-		return 0, "", fmt.Errorf("请输入拒绝原因")
+		return 0, "", onebot11.NewReplayError("请输入拒绝原因")
 	}
 	return reviewID, reason, nil
 }

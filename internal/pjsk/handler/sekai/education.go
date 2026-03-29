@@ -1,7 +1,7 @@
 package sekai
 
 import (
-	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/education"
@@ -132,7 +132,7 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	cid, characterQuery, args := extractEducationAreaCharacter(args)
 
 	if args != "" {
-		return education.AreaItemQuery{}, fmt.Errorf(
+		return education.AreaItemQuery{}, onebot11.NewReplayError(
 			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花",
 			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
 		)

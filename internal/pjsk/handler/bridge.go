@@ -692,6 +692,13 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		recommendType = "bonus"
 	case "deck-mysekai":
 		recommendType = "mysekai"
+	case "deck-score-up":
+		var msg string
+		err := json.Unmarshal(r.Params, &msg)
+		if err != nil {
+			return nil, err
+		}
+		return onebot11.Message{onebot11.Text(msg)}, nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported deck mode %q", r.Mode)
 	}

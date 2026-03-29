@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"context"
@@ -476,7 +476,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		}
 		lines := make([]string, 0, len(matches))
 		for _, item := range matches {
-			lines = append(lines, fmt.Sprintf("銆?d銆?s - %s %d", item.Music.ID, item.Music.Title, strings.ToUpper(item.Difficulty), item.PlayLevel))
+			lines = append(lines, fmt.Sprintf("【%d】%s - %s %d", item.Music.ID, item.Music.Title, strings.ToUpper(item.Difficulty), item.PlayLevel))
 		}
 		return onebot11.Message{onebot11.Text(strings.Join(lines, "\n"))}, nil
 	case "music-cover":
@@ -490,7 +490,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		if imageErr != nil {
 			return nil, imageErr
 		}
-		text := fmt.Sprintf("銆?d銆?s", result.Music.ID, result.Music.Title)
+		text := fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title)
 		return append(image, onebot11.Text(text)), nil
 	case "music-bpm":
 		q := music.Query{Query: r.Query, Region: r.Region}
@@ -504,10 +504,10 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 			return nil, imageErr
 		}
 		textLines := []string{
-			fmt.Sprintf("銆?d銆?s", result.Music.ID, result.Music.Title),
-			fmt.Sprintf("涓?BPM: %s", formatMusicBPM(result.MainBPM)),
-			fmt.Sprintf("BPM 鍙樺寲: %s", formatBPMEvents(result.Events)),
-			fmt.Sprintf("璋遍潰鏉ユ簮: %s", strings.ToUpper(result.Difficulty)),
+			fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title),
+			fmt.Sprintf("主 BPM: %s", formatMusicBPM(result.MainBPM)),
+			fmt.Sprintf("BPM 变化: %s", formatBPMEvents(result.Events)),
+			fmt.Sprintf("谱面来源: %s", strings.ToUpper(result.Difficulty)),
 		}
 		return append(image, onebot11.Text(strings.Join(textLines, "\n"))), nil
 	default:
@@ -521,7 +521,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 
 func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	if app == nil || app.Aliases == nil {
-		return nil, fmt.Errorf("鍒悕鏈嶅姟鏈氨缁紝璇风◢鍚庡啀璇?)
+		return nil, fmt.Errorf("閸掝偄鎮曢張宥呭閺堫亜姘ㄧ紒顏庣礉鐠囬鈼㈤崥搴″晙鐠?")
 	}
 	data, err := pjskalias.ExecuteCommand(ctx, app.Aliases, r.Mode, r.Params)
 	if err != nil {
@@ -559,7 +559,7 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 
 func formatBPMEvents(events []music.BPMEvent) string {
 	if len(events) == 0 {
-		return "鏃犳暟鎹?
+		return "无数据"
 	}
 	parts := make([]string, 0, len(events))
 	for _, item := range events {
@@ -665,7 +665,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 		target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 		if err == nil && target.Binding != nil {
 			if !hasUsableSuiteData(target.Binding) {
-				reason = "褰撳墠宸插叧闂?Suite 鎶撳寘鏁版嵁锛屼互涓嬩负鍩轰簬鍏紑淇℃伅鐨勪及绠楃粨鏋溿€?
+				reason = "瑜版挸澧犲鎻掑彠闂?Suite 閹舵挸瀵橀弫鐗堝祦閿涘奔浜掓稉瀣╄礋閸╄桨绨崗顒€绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
 			} else if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
 				raw, toolboxErr := sekaiutils.GetToolboxClient().GetPrivateDataValue(
 					region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userMusicAchievements")
@@ -681,9 +681,9 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 					if _, buildErr := app.Music.BuildMusicRewardsDetailRequestFromAchievements(detailQuery, raw); buildErr == nil {
 						return app.Music.RenderMusicRewardsDetailFromAchievements(detailQuery, raw)
 					}
-					reason = "Suite 鎶撳寘鏁版嵁鍙敤锛屼絾濂栧姳鏄庣粏鏋勫缓澶辫触锛屼互涓嬩负鍩轰簬鍏紑淇℃伅鐨勪及绠楃粨鏋溿€?
+					reason = "Suite 閹舵挸瀵橀弫鐗堝祦閸欘垳鏁ら敍灞肩稻婵傛牕濮抽弰搴ｇ矎閺嬪嫬缂撴径杈Е閿涘奔浜掓稉瀣╄礋閸╄桨绨崗顒€绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
 				} else {
-					reason = "褰撳墠鏃犳硶璇诲彇 Suite 鎶撳寘濂栧姳鏄庣粏锛屼互涓嬩负鍩轰簬鍏紑淇℃伅鐨勪及绠楃粨鏋溿€?
+					reason = "瑜版挸澧犻弮鐘崇《鐠囪褰?Suite 閹舵挸瀵樻總鏍уС閺勫海绮忛敍灞间簰娑撳璐熼崺杞扮艾閸忣剙绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
 				}
 			}
 		}
@@ -873,15 +873,15 @@ func validateDeckCharacterIDs(values []int) error {
 		return nil
 	}
 	if len(values) > 5 {
-		return fmt.Errorf("鍥哄畾瑙掕壊鏁伴噺涓嶈兘瓒呰繃5涓?)
+		return fmt.Errorf("閸ュ搫鐣剧憴鎺曞閺佷即鍣烘稉宥堝厴鐡掑懓绻?娑?")
 	}
 	seen := make(map[int]struct{}, len(values))
 	for _, value := range values {
 		if value <= 0 {
-			return fmt.Errorf("鍥哄畾瑙掕壊涓嶈兘涓虹┖")
+			return fmt.Errorf("閸ュ搫鐣剧憴鎺曞娑撳秷鍏樻稉铏光敄")
 		}
 		if _, ok := seen[value]; ok {
-			return fmt.Errorf("鍥哄畾瑙掕壊涓嶈兘閲嶅")
+			return fmt.Errorf("閸ュ搫鐣剧憴鎺曞娑撳秷鍏橀柌宥咁槻")
 		}
 		seen[value] = struct{}{}
 	}
@@ -889,7 +889,7 @@ func validateDeckCharacterIDs(values []int) error {
 }
 
 func isCharacterNotFoundError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "鏈壘鍒板搴旇鑹?)
+	return err != nil && strings.Contains(err.Error(), "閺堫亝澹橀崚鏉款嚠鎼存棁顫楅懝?")
 }
 
 func resolveDeckCharacterUnit(charID int) string {
@@ -1238,7 +1238,7 @@ func buildBondsRequestFromSuite(
 		requiredCharIDs[pair.CharID2] = struct{}{}
 	}
 
-	// Map game_id 鈫?game_character_id for icon paths (e.g., 46 鈫?actual 1-26 range ID)
+	// Map game_id 閳?game_character_id for icon paths (e.g., 46 閳?actual 1-26 range ID)
 	gameIDToCharID := make(map[int]int, len(requiredCharIDs))
 	charColorMap := make(map[int][]int, len(requiredCharIDs))
 	if len(requiredCharIDs) > 0 {
@@ -1640,7 +1640,7 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 	}
 
 	if app == nil || app.Bindings == nil || !app.Bindings.IsReady() {
-		return fmt.Errorf("鏆備笉鏀寔@鐢ㄦ埛鏌ヨ锛氱粦瀹氭湇鍔℃湭灏辩华锛岃鏀圭敤娓告垙UID")
+		return fmt.Errorf("閺嗗倷绗夐弨顖涘瘮@閻劍鍩涢弻銉嚄閿涙氨绮︾€规碍婀囬崝鈩冩弓鐏忚京鍗庨敍宀冾嚞閺€鍦暏濞撳憡鍨橴ID")
 	}
 
 	bindings, err := app.Bindings.List(ctx, targetPlatform, targetUserID)
@@ -1650,7 +1650,7 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 
 	selected, ok := pickTrackerBindingByRegion(bindings, req.Region)
 	if !ok {
-		return fmt.Errorf("@鐢ㄦ埛 %s 鍦?%s 鏈嶆病鏈夊彲鐢ㄧ粦瀹?, targetUserID, strings.ToUpper(strings.TrimSpace(req.Region)))
+		return fmt.Errorf("@用户 %s 在 %s 服没有可用绑定", targetUserID, strings.ToUpper(strings.TrimSpace(req.Region)))
 	}
 
 	uid, parseErr := strconv.ParseInt(strings.TrimSpace(selected.UserID), 10, 64)
@@ -1809,7 +1809,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 
 		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
-			return nil, fmt.Errorf("鑾峰彇鐜╁淇℃伅澶辫触锛?w", err)
+			return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 		}
 
 		if app.Censor != nil {
@@ -1845,7 +1845,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		return imageMessage(data, app, BotModulePJSK)
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if app.Bindings == nil {
-			return nil, fmt.Errorf("缁戝畾鏈嶅姟鏈氨缁紝璇风◢鍚庡啀璇?)
+			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
 		}
 		params, err := accountdata.DecodeProfileBindingParams(r.Params)
 		if err != nil {
@@ -1862,7 +1862,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if app.Bindings == nil {
-			return nil, fmt.Errorf("缁戝畾鏈嶅姟鏈氨缁紝璇风◢鍚庡啀璇?)
+			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
 		}
 		params, err := accountdata.DecodeProfileSettingsParams(r.Params)
 		if err != nil {
@@ -1891,7 +1891,7 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 			}
 		}
 		if !allowed {
-			return onebot11.Message{onebot11.Text("MySekai 鍔熻兘鏆備笉鏀寔鍥芥湇鍖哄煙")}, nil
+			return onebot11.Message{onebot11.Text("MySekai 閸旂喕鍏橀弳鍌欑瑝閺€顖涘瘮閸ヨ姤婀囬崠鍝勭厵")}, nil
 		}
 	}
 
@@ -1946,17 +1946,17 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		}
 		data, err = sekaiutils.GetSekaiAPIClient().GetMySekaiImage(result.Region, result.ImagePath)
 		if err != nil {
-			return nil, fmt.Errorf("鑾峰彇 MySekai 鐓х墖澶辫触锛?w", err)
+			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
 		}
 		image, imageErr := imageMessage(data, app, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
-		photoTime := "鏈煡"
+		photoTime := "未知"
 		if !result.ObtainedAt.IsZero() {
 			photoTime = result.ObtainedAt.Format("2006-01-02 15:04")
 		}
-		return append(image, onebot11.Text(fmt.Sprintf("鎷嶆憚鏃堕棿: %s", photoTime))), nil
+		return append(image, onebot11.Text(fmt.Sprintf("閹峰秵鎲氶弮鍫曟？: %s", photoTime))), nil
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)
@@ -2065,7 +2065,7 @@ type resolvedGameTarget struct {
 
 func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
-		return resolvedGameTarget{}, fmt.Errorf("缁戝畾鏈嶅姟鏈氨缁?)
+		return resolvedGameTarget{}, fmt.Errorf("绑定服务未就绪")
 	}
 	switch p.Mode {
 	case "self":
@@ -2075,7 +2075,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 		if p.Selector != "" {
 			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
 		} else if !regionExplicit {
-			// No explicit region prefix 鈫?use global default binding directly,
+			// No explicit region prefix 閳?use global default binding directly,
 			// so the user's global default account is picked instead of a
 			// potentially different server-specific default.
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
@@ -2086,7 +2086,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return resolvedGameTarget{}, fmt.Errorf("鏈壘鍒扮粦瀹氳处鍙凤細%w", err)
+			return resolvedGameTarget{}, fmt.Errorf("閺堫亝澹橀崚鎵拨鐎规俺澶勯崣鍑ょ窗%w", err)
 		}
 		return resolvedGameTarget{
 			HarukiUserID: hid,
@@ -2098,10 +2098,10 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 	case "at_user":
 		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
 		if err != nil {
-			return resolvedGameTarget{}, fmt.Errorf("鏈壘鍒拌鐢ㄦ埛鐨勭粦瀹氳处鍙凤細%w", err)
+			return resolvedGameTarget{}, fmt.Errorf("未找到该用户的绑定账号：%w", err)
 		}
 		if !binding.Visible {
-			return resolvedGameTarget{}, fmt.Errorf("璇ョ敤鎴峰凡闅愯棌涓汉淇℃伅")
+			return resolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
 		}
 		return resolvedGameTarget{
 			PJSKUserID: binding.PJSKUserID,
@@ -2115,7 +2115,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			Visible:    true,
 		}, nil
 	default:
-		return resolvedGameTarget{}, fmt.Errorf("鏈煡鐨勬煡璇㈡ā寮忥細%q", p.Mode)
+		return resolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
 	}
 }
 
@@ -2172,7 +2172,7 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 	}
 	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
 	if err != nil {
-		return nil, fmt.Errorf("鑾峰彇鐜╁淇℃伅澶辫触锛?w", err)
+		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}
 
 	// Censor user-controlled text (name shown in text output).
@@ -2204,7 +2204,7 @@ func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
 
 func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("閫崟: %s (UID: %s) Lv.%d\n",
+	sb.WriteString(fmt.Sprintf("闁喗宕? %s (UID: %s) Lv.%d\n",
 		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
 
 	// Index clear counts by difficulty.
@@ -2223,7 +2223,7 @@ func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiu
 	}
 
 	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
-		sb.WriteString(fmt.Sprintf("鎸戞垬Live(%s): %s鍒?,
+		sb.WriteString(fmt.Sprintf("挑战Live(%s): %s分",
 			arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName),
 			formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
 	}
@@ -2271,7 +2271,7 @@ func arrestChallengeCharacterLabel(characterID int, resolvedName string) string 
 	if name := strings.TrimSpace(resolvedName); name != "" {
 		return name
 	}
-	return fmt.Sprintf("瑙掕壊#%d", characterID)
+	return fmt.Sprintf("鐟欐帟澹?%d", characterID)
 }
 
 func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
@@ -2290,12 +2290,12 @@ func resolveGameCharacterIDByQuery(
 	}
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return 0, fmt.Errorf("璇疯緭鍏ヨ鑹插悕")
+		return 0, fmt.Errorf("请输入角色名")
 	}
 
 	target := normalizeGameCharacterText(query)
 	if target == "" {
-		return 0, fmt.Errorf("璇疯緭鍏ヨ鑹插悕")
+		return 0, fmt.Errorf("请输入角色名")
 	}
 	if app.Aliases != nil {
 		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
@@ -2324,11 +2324,11 @@ func resolveGameCharacterIDByQuery(
 
 	switch len(ids) {
 	case 0:
-		return 0, fmt.Errorf("鏈壘鍒板搴旇鑹? %s", query)
+		return 0, fmt.Errorf("閺堫亝澹橀崚鏉款嚠鎼存棁顫楅懝? %s", query)
 	case 1:
 		return ids[0], nil
 	default:
-		return 0, fmt.Errorf("瑙掕壊鍚嶅瓨鍦ㄦ涔? %s", query)
+		return 0, fmt.Errorf("鐟欐帟澹婇崥宥呯摠閸︺劍顒犳稊? %s", query)
 	}
 }
 
@@ -2417,7 +2417,7 @@ func arrestCharacterRegionRank(region string) int {
 	}
 }
 
-// formatInt formats an integer with comma separators (e.g. 3011947 鈫?"3,011,947").
+// formatInt formats an integer with comma separators (e.g. 3011947 閳?"3,011,947").
 func formatInt(n int) string {
 	if n < 0 {
 		return "-" + formatInt(-n)
@@ -2475,7 +2475,7 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
 	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
 
-	text := fmt.Sprintf("UID %s 鐨勬敞鍐屾椂闂?\n%s (%s) (%s)",
+	text := fmt.Sprintf("UID %s 閻ㄥ嫭鏁為崘灞炬闂?\n%s (%s) (%s)",
 		maskedUID, regTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
@@ -2516,7 +2516,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return nil, 0, fmt.Errorf("鏈壘鍒扮粦瀹氳处鍙凤細%w", err)
+			return nil, 0, fmt.Errorf("閺堫亝澹橀崚鎵拨鐎规俺澶勯崣鍑ょ窗%w", err)
 		}
 		return binding, hid, nil
 	}
@@ -2524,18 +2524,18 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	switch r.Mode {
 	case "mysekai":
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("MySekai鎶撳寘鐩稿叧鍐呭浠呮敮鎸佹煡璇㈣嚜宸辩殑鏁版嵁")
+			return nil, fmt.Errorf("MySekai閹舵挸瀵橀惄绋垮彠閸愬懎顔愭禒鍛暜閹镐焦鐓＄拠銏ｅ殰瀹歌京娈戦弫鐗堝祦")
 		}
 		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
 			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
-			return nil, fmt.Errorf("褰撳墠璐﹀彿娌℃湁鍙敤鐨?MySekai 鎶撳寘鏁版嵁")
+			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("鏃犳晥鐨勮处鍙稩D锛?w", err)
+			return nil, fmt.Errorf("无效的账号ID：%w", err)
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
@@ -2547,18 +2547,18 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("Suite鎶撳寘鐩稿叧鍐呭浠呮敮鎸佹煡璇㈣嚜宸辩殑鏁版嵁")
+			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
 		}
 		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
 			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
-			return nil, fmt.Errorf("褰撳墠璐﹀彿娌℃湁鍙敤鐨?Suite 鎶撳寘鏁版嵁")
+			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("鏃犳晥鐨勮处鍙稩D锛?w", err)
+			return nil, fmt.Errorf("无效的账号ID：%w", err)
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
@@ -2576,12 +2576,12 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 
 	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
-		return nil, fmt.Errorf("鑾峰彇%s鏇存柊鏃堕棿澶辫触锛?w", label, err)
+		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}
 
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("瑙ｆ瀽鏇存柊鏃堕棿澶辫触锛?w", err)
+		return nil, fmt.Errorf("解析更新时间失败：%w", err)
 	}
 
 	var tzOffset string
@@ -2595,7 +2595,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
 	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
 
-	text := fmt.Sprintf("UID %s 鐨?s鏁版嵁鏇存柊鏃堕棿:\n%s (%s) (%s)",
+	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
 		maskedUID, label, uploadTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
@@ -2648,27 +2648,27 @@ func parseUserTimeZone(offset string) (*time.Location, string) {
 
 // formatRelativeDuration formats a duration as a human-readable Chinese relative time.
 // Only shows units starting from the largest non-zero unit down to minutes.
-// e.g. "绾?澶?灏忔椂30鍒嗛挓鍓?, "绾?灏忔椂30鍒嗛挓鍓?, "绾?0鍒嗛挓鍓?, "鍒氬垰"
+// e.g. "约2天5小时30分钟前", "约5小时30分钟前", "约30分钟前", "刚刚"
 func formatRelativeDuration(d time.Duration) string {
 	if d < time.Minute {
-		return "鍒氬垰"
+		return "刚刚"
 	}
 	mins := int(d.Minutes()) % 60
 	hrs := int(d.Hours()) % 24
 	days := int(d.Hours()) / 24
 	if days > 0 {
 		if hrs == 0 && mins == 0 {
-			return fmt.Sprintf("绾?d澶╁墠", days)
+			return fmt.Sprintf("约%d天前", days)
 		}
-		return fmt.Sprintf("绾?d澶?d灏忔椂%d鍒嗛挓鍓?, days, hrs, mins)
+		return fmt.Sprintf("约%d天%d小时%d分钟前", days, hrs, mins)
 	}
 	if hrs > 0 {
 		if mins == 0 {
-			return fmt.Sprintf("绾?d灏忔椂鍓?, hrs)
+			return fmt.Sprintf("约%d小时前", hrs)
 		}
-		return fmt.Sprintf("绾?d灏忔椂%d鍒嗛挓鍓?, hrs, mins)
+		return fmt.Sprintf("约%d小时%d分钟前", hrs, mins)
 	}
-	return fmt.Sprintf("绾?d鍒嗛挓鍓?, mins)
+	return fmt.Sprintf("约%d分钟前", mins)
 }
 
 // calcRegistrationTime derives the approximate Unix registration timestamp from
@@ -2680,21 +2680,21 @@ func calcRegistrationTime(userID string, server string) (int64, error) {
 	switch strings.ToLower(server) {
 	case "jp", "en":
 		if len(userID) <= 3 {
-			return 0, fmt.Errorf("璐﹀彿ID鏍煎紡涓嶆纭?)
+			return 0, fmt.Errorf("账号ID格式不正确")
 		}
 		n, err := strconv.ParseInt(userID[:len(userID)-3], 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("鏃犳晥鐨勮处鍙稩D锛?w", err)
+			return 0, fmt.Errorf("无效的账号ID：%w", err)
 		}
 		return 1600218000 + int64(float64(n)/(1024*4096)), nil
 	case "tw", "kr", "cn":
 		n, err := strconv.ParseInt(userID, 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("鏃犳晥鐨勮处鍙稩D锛?w", err)
+			return 0, fmt.Errorf("无效的账号ID：%w", err)
 		}
 		return int64(float64(n) / (1024 * 1024 * 4096)), nil
 	default:
-		return 0, fmt.Errorf("涓嶆敮鎸佺殑鏈嶅姟鍣細%s", server)
+		return 0, fmt.Errorf("不支持的服务器：%s", server)
 	}
 }
 
@@ -2732,5 +2732,3 @@ func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedComm
 	}
 	return normalized.String()
 }
-
-

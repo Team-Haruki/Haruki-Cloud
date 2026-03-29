@@ -163,17 +163,17 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 			return nil, fmt.Errorf("failed to search card box: %w", err)
 		}
 	}
-	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile, queries[0].ShowID, queries[0].ShowBox, queries[0].UseAfterTraining)
+	useAfterTraining := true
+	if queries[0].UseAfterTraining != nil {
+		useAfterTraining = *queries[0].UseAfterTraining
+	}
+	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile, queries[0].ShowID, queries[0].ShowBox, useAfterTraining)
 	if err != nil {
 		return nil, err
 	}
 	req.ShowID = queries[0].ShowID
 	req.ShowBox = queries[0].ShowBox
-	useAfterTraining := true
-	if queries[0].UseAfterTraining != nil {
-		useAfterTraining = *queries[0].UseAfterTraining
-	}
-	userCardStates := extractUserCardDisplayStates(queries[0].DetailedProfile)
+	userCardStates := extractOwnedCards(queries[0].DetailedProfile)
 	for i := range req.Cards {
 		state, ok := userCardStates[req.Cards[i].Card.CardID]
 		req.Cards[i].Card.IsAfterTraining = boolPtr(resolveCardBoxAfterTraining(req.Cards[i].Card, state, useAfterTraining, ok))

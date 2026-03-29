@@ -223,7 +223,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | education |       |    |    |                          |       |
 | score | 4/4   | 4  | 0  |                          | LQ、锡纸 |
 | alias |       |    |    |                          |       |
-| misc/gacha/stamp/vlive |       |    |    |                          |       |
+| misc/gacha/stamp/vlive | 1/1   | 1  | 1  | 测的逮捕                     | 锡纸    |
 
 ---
 

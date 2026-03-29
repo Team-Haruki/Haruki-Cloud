@@ -60,5 +60,5 @@ tmp/
 client.json
 
 build/
-
+haruki-server
 deploy_alpha_native_deck.sh

@@ -1058,6 +1058,7 @@ type StampData struct {
 
 type StampListRequest struct {
 	PromptMessage *string     `json:"prompt_message,omitempty"`
+	PageMessage   *string     `json:"page_message,omitempty"`
 	Stamps        []StampData `json:"stamps"`
 }
 

@@ -78,6 +78,56 @@ func TestControllerBuildStampListRequestFiltersAndUsesPrompt(t *testing.T) {
 	}
 }
 
+func TestControllerBuildStampListRequestPaginatesAtFiveByFive(t *testing.T) {
+	dir := t.TempDir()
+	source := newTestStampSource(renderregion.JP)
+	for i := 1; i <= 26; i++ {
+		bundle := fmt.Sprintf("stamp_%02d", i)
+		mustWriteNamedStampAsset(t, dir, bundle)
+		source.stamps = append(source.stamps, masterdata.Stamp{ID: i, AssetBundleName: bundle})
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(dir, nil))
+	req, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest failed: %v", err)
+	}
+	if len(req.Stamps) != 25 {
+		t.Fatalf("expected first page size 25, got %d", len(req.Stamps))
+	}
+	if req.PageMessage == nil || *req.PageMessage != "第 1 / 2 页" {
+		t.Fatalf("unexpected first page message: %#v", req.PageMessage)
+	}
+}
+
+func TestControllerBuildStampListRequestsSupportsSpecificPageAndAll(t *testing.T) {
+	dir := t.TempDir()
+	source := newTestStampSource(renderregion.JP)
+	for i := 1; i <= 30; i++ {
+		bundle := fmt.Sprintf("stamp_page_%02d", i)
+		mustWriteNamedStampAsset(t, dir, bundle)
+		source.stamps = append(source.stamps, masterdata.Stamp{ID: i, AssetBundleName: bundle})
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(dir, nil))
+
+	secondPage, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP, Page: 2})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest(page=2) failed: %v", err)
+	}
+	if len(secondPage.Stamps) != 5 || secondPage.Stamps[0].ID != 26 {
+		t.Fatalf("unexpected second page content: %+v", secondPage.Stamps)
+	}
+
+	allPages, err := controller.BuildStampListRequests(ListQuery{Region: renderregion.JP, All: true})
+	if err != nil {
+		t.Fatalf("BuildStampListRequests(all) failed: %v", err)
+	}
+	if len(allPages) != 2 {
+		t.Fatalf("expected 2 pages in all mode, got %d", len(allPages))
+	}
+}
+
 func mustWriteStampAsset(t *testing.T, root, bundle string) {
 	t.Helper()
 	var rel string
@@ -90,6 +140,17 @@ func mustWriteStampAsset(t *testing.T, root, bundle string) {
 		t.Fatalf("unknown bundle: %s", bundle)
 	}
 	full := filepath.Join(root, rel)
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(full, []byte("png"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+}
+
+func mustWriteNamedStampAsset(t *testing.T, root, bundle string) {
+	t.Helper()
+	full := filepath.Join(root, "asset", "jp-assets", "startapp", "stamp", bundle, bundle+".png")
 	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}

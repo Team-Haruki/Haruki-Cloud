@@ -1917,20 +1917,38 @@ func executeStamp(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	if app.Stamps == nil {
 		return nil, fmt.Errorf("stamp service unavailable: sekai client not configured")
 	}
-	var data []byte
 	region := renderregion.Value(r.Region)
 	switch r.Mode {
 	case "stamp-list":
 		q := stamp.ListQuery{Region: region}
 		mergeParams(r.Params, &q)
-		data, err = app.Stamps.RenderStampList(q)
+		if q.All {
+			images, renderErr := app.Stamps.RenderStampListPages(q)
+			if renderErr != nil {
+				return nil, renderErr
+			}
+			message = make(onebot11.Message, 0, len(images))
+			for _, img := range images {
+				segment, imageErr := imageMessage(img, app, BotModulePJSK)
+				if imageErr != nil {
+					return nil, imageErr
+				}
+				message = append(message, segment...)
+			}
+			if len(message) == 0 {
+				return nil, fmt.Errorf("stamp all mode did not produce any images")
+			}
+			return message, nil
+		}
+		data, renderErr := app.Stamps.RenderStampList(q)
+		if renderErr != nil {
+			return nil, renderErr
+		}
+		return imageMessage(data, app, BotModulePJSK)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported stamp mode %q", r.Mode)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return imageMessage(data, app, BotModulePJSK)
+	return nil, fmt.Errorf("bridge: unsupported stamp mode %q", r.Mode)
 }
 
 func executeMisc(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {

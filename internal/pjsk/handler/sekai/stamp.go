@@ -17,6 +17,18 @@ func (sekaiHandlers) StampHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			if page, ok := parseStampPage(args); ok {
+				ctx.SetArgs("")
+				return makeResolvedCmdWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
+					"page": page,
+				}), nil
+			}
+			if parseStampAll(args) {
+				ctx.SetArgs("")
+				return makeResolvedCmdWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
+					"all": true,
+				}), nil
+			}
 			if params := parseStampIDs(args); len(params) > 0 {
 				ctx.SetArgs("")
 				return makeResolvedCmdWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
@@ -42,4 +54,31 @@ func parseStampIDs(args string) []int {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+func parseStampPage(args string) (int, bool) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) != 2 {
+		return 0, false
+	}
+	switch strings.ToLower(fields[0]) {
+	case "page", "p", "页":
+	default:
+		return 0, false
+	}
+	page, err := strconv.Atoi(fields[1])
+	if err != nil || page <= 0 {
+		return 0, false
+	}
+	return page, true
+}
+
+func parseStampAll(args string) bool {
+	value := strings.TrimSpace(strings.ToLower(args))
+	switch value {
+	case "all", "全部", "所有":
+		return true
+	default:
+		return false
+	}
 }

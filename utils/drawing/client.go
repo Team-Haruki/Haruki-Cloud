@@ -17,10 +17,11 @@ import (
 type ClientOption func(*resty.Client)
 
 type HarukiDrawingClient struct {
-	client  *resty.Client
-	baseURL string
-	cache   *RenderCacheClient
-	logger  *logger.Logger
+	client     *resty.Client
+	baseURL    string
+	cache      *RenderCacheClient
+	localCache *localRenderCache
+	logger     *logger.Logger
 }
 
 func WithTimeout(timeout time.Duration) ClientOption {
@@ -45,9 +46,10 @@ func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDraw
 
 	logger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
 	return &HarukiDrawingClient{
-		client:  client,
-		baseURL: strings.TrimRight(baseURL, "/"),
-		logger:  logger,
+		client:     client,
+		baseURL:    strings.TrimRight(baseURL, "/"),
+		logger:     logger,
+		localCache: newLocalRenderCache(0),
 	}
 }
 
@@ -59,10 +61,16 @@ func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
 }
 
 func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
-	if c == nil || c.cache == nil {
+	if c == nil {
 		return render()
 	}
-	return c.cache.Render(endpoint, request, render)
+	if c.cache != nil {
+		return c.cache.Render(endpoint, request, render)
+	}
+	if c.localCache != nil {
+		return c.localCache.Render(endpoint, request, render)
+	}
+	return render()
 }
 
 func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, error) {
@@ -114,7 +122,9 @@ func (c *HarukiDrawingClient) GenerateBasicMusicRewards(req *BasicMusicRewardsRe
 // =========================== Profile API ===========================
 
 func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, error) {
-	return c.post("/api/pjsk/profile", req)
+	return c.RenderWithCache("/api/pjsk/profile", req, func() ([]byte, error) {
+		return c.post("/api/pjsk/profile", req)
+	})
 }
 
 // =========================== Card API ===========================

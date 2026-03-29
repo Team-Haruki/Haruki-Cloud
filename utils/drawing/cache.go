@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -22,7 +23,95 @@ const (
 	renderCacheFileExt    = "png"
 	renderCachePublic     = "public"
 	renderCacheKeyVersion = 2
+
+	defaultLocalRenderCacheTTL = 10 * time.Minute
 )
+
+// localRenderCache is an in-process TTL cache for rendered images.
+// It is keyed by a stable hash of (endpoint, sanitized request payload) and
+// avoids repeated Drawing API calls when the request has not changed.
+type localRenderCache struct {
+	mu      sync.RWMutex
+	entries map[string]*localRenderEntry
+	ttl     time.Duration
+}
+
+type localRenderEntry struct {
+	data      []byte
+	expiresAt time.Time
+}
+
+func newLocalRenderCache(ttl time.Duration) *localRenderCache {
+	if ttl <= 0 {
+		ttl = defaultLocalRenderCacheTTL
+	}
+	return &localRenderCache{
+		entries: make(map[string]*localRenderEntry),
+		ttl:     ttl,
+	}
+}
+
+func (lc *localRenderCache) buildKey(endpoint string, request interface{}) (string, error) {
+	payload, err := normalizeRenderCachePayload(request)
+	if err != nil {
+		return "", err
+	}
+	sanitizeRenderCachePayload(endpoint, payload)
+
+	b, err := json.Marshal(map[string]interface{}{
+		"v":        renderCacheKeyVersion,
+		"endpoint": endpoint,
+		"payload":  payload,
+	})
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:]), nil
+}
+
+func (lc *localRenderCache) get(key string) ([]byte, bool) {
+	lc.mu.RLock()
+	entry, ok := lc.entries[key]
+	lc.mu.RUnlock()
+	if !ok {
+		return nil, false
+	}
+	if time.Now().After(entry.expiresAt) {
+		lc.mu.Lock()
+		delete(lc.entries, key)
+		lc.mu.Unlock()
+		return nil, false
+	}
+	return entry.data, true
+}
+
+func (lc *localRenderCache) set(key string, data []byte) {
+	entry := &localRenderEntry{
+		data:      data,
+		expiresAt: time.Now().Add(lc.ttl),
+	}
+	lc.mu.Lock()
+	lc.entries[key] = entry
+	lc.mu.Unlock()
+}
+
+// Render returns cached bytes for identical requests; otherwise calls render() and stores the result.
+func (lc *localRenderCache) Render(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+	key, err := lc.buildKey(endpoint, request)
+	if err != nil {
+		return render()
+	}
+	if cached, ok := lc.get(key); ok {
+		return cached, nil
+	}
+	data, err := render()
+	if err != nil {
+		return nil, err
+	}
+	lc.set(key, data)
+	return data, nil
+}
 
 type RenderCacheConfig struct {
 	BaseURL    string

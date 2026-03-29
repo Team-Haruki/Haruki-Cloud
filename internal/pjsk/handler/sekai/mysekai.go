@@ -35,10 +35,10 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 			} else {
 				params["check_time"] = false
 			}
-			if len(params) > 0 {
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-resource", params), nil
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-resource"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-resource", params), nil
 		},
 	}
 }
@@ -64,10 +64,10 @@ func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
 			if len(mapIDs) > 0 {
 				params["map_ids"] = mapIDs
 			}
-			if len(params) > 0 {
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-map", params), nil
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-map"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-map", params), nil
 		},
 	}
 }
@@ -84,10 +84,14 @@ func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAllTalks := strings.Contains(strings.ToLower(args), "all")
 			cleaned := cleanMysekaiArgs(args)
-			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", map[string]any{
+			params := map[string]any{
 				"show_id":        true,
 				"show_all_talks": showAllTalks,
-			})
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", params)
 			resolved.Query = cleaned
 			return resolved, nil
 		},
@@ -109,10 +113,14 @@ func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "craft") {
 				onlyCraftable = true
 			}
-			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
+			params := map[string]any{
 				"show_id":        showID,
 				"only_craftable": onlyCraftable,
-			})
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", params)
 			return resolved, nil
 		},
 	}
@@ -129,8 +137,14 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+
+			selfParams := map[string]any{}
+			if err := embedSelfQuery(selfParams, ctx); err != nil {
+				return nil, err
+			}
+
 			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
-				resolved := makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-fixture-detail")
+				resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-detail", selfParams)
 				resolved.Query = strings.Join(strings.Fields(args), " ")
 				return resolved, nil
 			}
@@ -138,16 +152,14 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 			showAllTalks := strings.Contains(strings.ToLower(args), "all")
 			cleaned := cleanMysekaiArgs(args)
 			if cleaned == "" {
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
-					"show_id":        true,
-					"only_craftable": false,
-				}), nil
+				selfParams["show_id"] = true
+				selfParams["only_craftable"] = false
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 
-			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", map[string]any{
-				"show_id":        true,
-				"show_all_talks": showAllTalks,
-			})
+			selfParams["show_id"] = true
+			selfParams["show_all_talks"] = showAllTalks
+			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
 			resolved.Query = cleaned
 			return resolved, nil
 		},
@@ -164,15 +176,19 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
 			if gateID, cleaned := extractMysekaiGateID(args); gateID != 0 {
-				resolved := makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-door-upgrade")
+				resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-door-upgrade", params)
 				resolved.Query = strconv.Itoa(gateID)
 				if cleaned != "" {
 					resolved.Query = strings.TrimSpace(resolved.Query + " " + cleaned)
 				}
 				return resolved, nil
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-door-upgrade"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-door-upgrade", params), nil
 		},
 	}
 }
@@ -187,15 +203,17 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
 			showID := strings.Contains(strings.ToLower(args), "id")
 			if showID {
 				cleaned := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(args), "id", ""))
 				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-music-record", map[string]bool{
-					"show_id": true,
-				}), nil
+				params["show_id"] = true
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMysekai, "mysekai-music-record"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-music-record", params), nil
 		},
 	}
 }
@@ -379,24 +397,26 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			selfParams := map[string]any{}
+			if err := embedSelfQuery(selfParams, ctx); err != nil {
+				return nil, err
+			}
+
 			args := strings.TrimSpace(ctx.GetArgs())
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
-					"show_id":        true,
-					"only_craftable": true,
-				}), nil
+				selfParams["show_id"] = true
+				selfParams["only_craftable"] = true
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", map[string]any{
-					"show_id":        true,
-					"only_craftable": true,
-				}), nil
+				selfParams["show_id"] = true
+				selfParams["only_craftable"] = true
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
-			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", map[string]any{
-				"show_id":        true,
-				"show_all_talks": showAllTalks,
-			})
+			selfParams["show_id"] = true
+			selfParams["show_all_talks"] = showAllTalks
+			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
 			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
 		},
@@ -460,9 +480,13 @@ func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
 			if err != nil || seq == 0 {
 				return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-photo", map[string]any{
+			params := map[string]any{
 				"seq": seq,
-			}), nil
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-photo", params), nil
 		},
 	}
 }

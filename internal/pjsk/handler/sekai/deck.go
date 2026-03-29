@@ -105,7 +105,14 @@ func (sekaiHandlers) MysekaiDeckHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-mysekai", params), nil
+			p, pErr := resolveSelfOnlyQueryParams(ctx)
+			if pErr != nil {
+				return nil, pErr
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-mysekai", mysekaiDeckCombinedParams{
+				Deck:  params,
+				Query: p,
+			}), nil
 		},
 	}
 }

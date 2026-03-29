@@ -627,6 +627,39 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 	return detail, card
 }
 
+// buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
+// game target. Used by mysekai commands where the target is already resolved
+// through userQueryParams (supporting u[i] selectors and region binding).
+func buildPublicProfileCardForTarget(target resolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
+	if app == nil || app.Profiles == nil {
+		return nil
+	}
+
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	if err != nil {
+		return nil
+	}
+
+	var framesJSON []byte
+	if hasUsableSuiteData(target.Binding) {
+		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
+			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
+				region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
+		}
+	}
+
+	q := profile.Query{
+		Region:     region,
+		Visible:    target.Visible,
+		BgSettings: target.BgSettings,
+	}
+	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
+	if err != nil {
+		return nil
+	}
+	return card
+}
+
 func resolveCardBoxDetailedProfile(r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
 	if r == nil || app == nil {
 		return nil
@@ -735,6 +768,75 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		recommendType = "bonus"
 	case "deck-mysekai":
 		recommendType = "mysekai"
+
+		// deck-mysekai sends combined params: {deck: ..., query: ...}
+		var combined struct {
+			Deck  json.RawMessage `json:"deck"`
+			Query userQueryParams `json:"query"`
+		}
+		mergeParams(r.Params, &combined)
+
+		regionStr := strings.TrimSpace(r.Region)
+		if regionStr == "" {
+			regionStr = "jp"
+		}
+
+		// Resolve target binding from user query params.
+		p := combined.Query
+		if p.Mode == "" {
+			p.Mode = "self"
+			p.Platform = strings.TrimSpace(r.RequesterPlatform)
+			p.PlatformUserID = strings.TrimSpace(r.RequesterUserID)
+		}
+		target, targetErr := resolveGameTarget(context.Background(), p, regionStr, r.RegionExplicit, app)
+		if targetErr != nil {
+			return nil, targetErr
+		}
+
+		platform, platformUserID := platformCredentials(p)
+		uid, _ := strconv.ParseInt(target.PJSKUserID, 10, 64)
+
+		q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
+		mergeParams(combined.Deck, &q)
+		if err := resolveDeckCharacterSelections(&q, app); err != nil {
+			return nil, err
+		}
+		if err := resolveDeckMusicSelection(&q, app); err != nil {
+			return nil, err
+		}
+
+		// Build detailed profile for deck rendering from the resolved target.
+		if app.Profiles != nil {
+			if resp, apiErr := sekaiutils.GetSekaiAPIClient().GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
+				var framesJSON []byte
+				if hasUsableSuiteData(target.Binding) {
+					framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
+						regionStr, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
+				}
+				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
+				if detail, buildErr := app.Profiles.BuildDetailedProfileCardFromAPI(pq, resp, framesJSON); buildErr == nil {
+					q.Profile = detail
+				}
+			}
+		}
+
+		deckCtrl := app.Decks
+		tc := sekaiutils.GetToolboxClient()
+		if target.Binding != nil && hasUsableSuiteData(target.Binding) {
+			suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
+			if suiteErr == nil && len(suiteJSON) > 0 {
+				region := renderregion.Normalize(regionStr)
+				if snapshot, snapErr := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, nil, nil); snapErr == nil {
+					deckCtrl = deckCtrl.WithSnapshot(snapshot)
+				}
+			}
+		}
+
+		data, err = deckCtrl.RenderAutoRecommend(q)
+		if err != nil {
+			return nil, err
+		}
+		return imageMessage(data, app, BotModulePJSK)
 	case "deck-score-up":
 		var msg string
 		err := json.Unmarshal(r.Params, &msg)
@@ -1891,23 +1993,76 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 			}
 		}
 		if !allowed {
-			return onebot11.Message{onebot11.Text("MySekai 閸旂喕鍏橀弳鍌欑瑝閺€顖涘瘮閸ヨ姤婀囬崠鍝勭厵")}, nil
+			return onebot11.Message{onebot11.Text("MySekai 功能在此区服暂未开放")}, nil
 		}
 	}
 
-	var data []byte
-	_, publicProfileCard := buildPublicMusicProfiles(r, app)
+	// Resolve the target binding from params (supports u[i] selector and
+	// region-specific vs global default bindings).
+	var p userQueryParams
+	mergeParams(r.Params, &p)
+	if p.Mode == "" {
+		p.Mode = "self"
+		p.Platform = strings.TrimSpace(r.RequesterPlatform)
+		p.PlatformUserID = strings.TrimSpace(r.RequesterUserID)
+	}
+
+	regionStr := strings.TrimSpace(r.Region)
+	if regionStr == "" {
+		regionStr = "jp"
+	}
+
+	// When binding service is available, resolve target through it.
+	// Otherwise fall back to old behavior (use local snapshot as-is).
+	var target *resolvedGameTarget
+	var uid int64
+	var platform, platformUserID string
+
+	if app.Bindings != nil && p.Platform != "" && p.PlatformUserID != "" {
+		ctx := context.Background()
+		t, targetErr := resolveGameTarget(ctx, p, regionStr, r.RegionExplicit, app)
+		if targetErr != nil {
+			return nil, targetErr
+		}
+		target = &t
+		uid, _ = strconv.ParseInt(target.PJSKUserID, 10, 64)
+		platform, platformUserID = platformCredentials(p)
+	}
+
+	// Build public profile card for the resolved target.
+	var publicProfileCard *drawing.ProfileCardRequest
+	if target != nil {
+		publicProfileCard = buildPublicProfileCardForTarget(*target, regionStr, platform, platformUserID, app)
+	}
 
 	// Inject live Toolbox data. Prefer the full snapshot (suite + mysekai
 	// merged); fall back to mysekai-only data which is sufficient for all
 	// mysekai render modes (profile card comes from the public API override).
 	msCtrl := app.MySekai
-	if snapshot := resolveLiveSnapshot(r, app, true); snapshot != nil {
-		msCtrl = msCtrl.WithSnapshot(snapshot)
-	} else if mysekaiData := resolveMySekaiOnly(r, app); mysekaiData != nil {
-		msCtrl = msCtrl.WithMySekaiData(mysekaiData)
+	if target != nil {
+		tc := sekaiutils.GetToolboxClient()
+
+		if target.Binding != nil && hasUsableSuiteData(target.Binding) {
+			suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
+			if suiteErr == nil && len(suiteJSON) > 0 {
+				var mysekaiJSON []byte
+				if hasUsableMySekaiData(target.Binding) {
+					mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
+				}
+				region := renderregion.Normalize(regionStr)
+				if snapshot, snapErr := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil); snapErr == nil {
+					msCtrl = msCtrl.WithSnapshot(snapshot)
+				}
+			}
+		}
+		if msCtrl == app.MySekai && target.Binding != nil && hasUsableMySekaiData(target.Binding) {
+			if data, dataErr := tc.GetMySekaiData(regionStr, uid, platform, platformUserID); dataErr == nil && len(data) > 0 {
+				msCtrl = msCtrl.WithMySekaiData(data)
+			}
+		}
 	}
 
+	var data []byte
 	switch r.Mode {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: r.Region}
@@ -1956,7 +2111,7 @@ func executeMysekai(r *parser.ResolvedCommand, app *renderapp.App) (message oneb
 		if !result.ObtainedAt.IsZero() {
 			photoTime = result.ObtainedAt.Format("2006-01-02 15:04")
 		}
-		return append(image, onebot11.Text(fmt.Sprintf("閹峰秵鎲氶弮鍫曟？: %s", photoTime))), nil
+		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: r.Region, Query: r.Query}
 		mergeParams(r.Params, &q)

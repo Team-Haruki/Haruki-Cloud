@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+// mysekaiDeckCombinedParams wraps deck params with user query params for mysekai deck.
+type mysekaiDeckCombinedParams struct {
+	Deck  deckAutoQueryParams `json:"deck"`
+	Query UserQueryParams     `json:"query"`
+}
+
 type deckAutoQueryParams struct {
 	EventID                      *int                               `json:"event_id,omitempty"`
 	TargetBonuses                []int                              `json:"target_bonuses,omitempty"`

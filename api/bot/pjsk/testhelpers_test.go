@@ -60,6 +60,10 @@ func (s *botCardSource) GetCharacterByID(id int) (*masterdata.Character, error) 
 	return nil, onebot11.NewReplayError("character %d not found", id)
 }
 
+func (s *botCardSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
+
 func (s *botCardSource) GetUnitByCardID(_ int) (string, error)       { return "idol", nil }
 func (s *botCardSource) GetCardSupplyType(_ *masterdata.Card) string { return "normal" }
 

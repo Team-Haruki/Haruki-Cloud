@@ -374,6 +374,10 @@ func (s *routeCardSource) GetCharacterByID(id int) (*masterdata.Character, error
 	return nil, fiber.ErrNotFound
 }
 
+func (s *routeCardSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
+
 func (s *routeCardSource) GetUnitByCardID(cardID int) (string, error) {
 	cardInfo, ok := s.cards[cardID]
 	if !ok {

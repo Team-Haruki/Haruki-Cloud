@@ -358,6 +358,7 @@ type CardBoxRequest struct {
 	ShowBox             bool                        `json:"show_box"`
 	BackgroundImgPath   *string                     `json:"background_img_path,omitempty"`
 	CharacterIconPaths  map[int]string              `json:"character_icon_paths"`
+	CharacterColorCodes map[int]string              `json:"character_color_codes,omitempty"`
 	TermLimitedIconPath *string                     `json:"term_limited_icon_path,omitempty"`
 	FesLimitedIconPath  *string                     `json:"fes_limited_icon_path,omitempty"`
 }

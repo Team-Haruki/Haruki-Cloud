@@ -111,7 +111,7 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 		return nil, err
 	}
 	if len(cards) >= cardListAutoBoxThreshold {
-		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile)
+		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile, false, false, true)
 		if buildErr != nil {
 			return nil, buildErr
 		}
@@ -163,7 +163,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 			return nil, fmt.Errorf("failed to search card box: %w", err)
 		}
 	}
-	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile)
+	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile, queries[0].ShowID, queries[0].ShowBox, queries[0].UseAfterTraining)
 	if err != nil {
 		return nil, err
 	}

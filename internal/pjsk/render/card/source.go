@@ -10,6 +10,7 @@ type DataSource interface {
 	GetCardByID(id int) (*masterdata.Card, error)
 	GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error)
 	FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error)
+	GetCharacterColorCode(id int) (string, bool)
 	GetCharacterByID(id int) (*masterdata.Character, error)
 	GetUnitByCardID(cardID int) (string, error)
 	GetCardSupplyType(card *masterdata.Card) string

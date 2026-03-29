@@ -99,6 +99,10 @@ func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, erro
 	return nil, fmt.Errorf("character %d not found", id)
 }
 
+func (s *lookupTestSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
+
 func (s *lookupTestSource) GetUnitByCardID(cardID int) (string, error) { return "", nil }
 
 func (s *lookupTestSource) GetCardSupplyType(card *masterdata.Card) string { return "" }

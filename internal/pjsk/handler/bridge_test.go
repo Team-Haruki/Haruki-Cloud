@@ -1230,6 +1230,10 @@ func (s *bridgeCardSource) GetCharacterByID(id int) (*masterdata.Character, erro
 	return nil, os.ErrNotExist
 }
 
+func (s *bridgeCardSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
+
 func (s *bridgeCardSource) GetUnitByCardID(cardID int) (string, error) { return "", nil }
 
 func (s *bridgeCardSource) GetCardSupplyType(card *masterdata.Card) string { return "" }

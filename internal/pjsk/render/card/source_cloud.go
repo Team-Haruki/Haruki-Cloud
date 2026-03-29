@@ -21,6 +21,7 @@ import (
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/gacha"
 	"haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/predicate"
 	"haruki-cloud/database/sekai/skill"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -39,6 +40,8 @@ type CloudSource struct {
 
 	charMu    sync.RWMutex
 	charCache map[int]*masterdata.Character
+	colorMu   sync.RWMutex
+	colorByID map[int]string
 
 	supplyMu   sync.RWMutex
 	supplyByID map[int]string
@@ -65,6 +68,7 @@ func NewCloudSource(client *sekaiDB.Client, defaultRegion renderregion.Value) *C
 		queryRegion:   region,
 		cardCache:     make(map[int]*masterdata.Card),
 		charCache:     make(map[int]*masterdata.Character),
+		colorByID:     make(map[int]string),
 		supplyByID:    make(map[int]string),
 		skillCache:    make(map[int]*masterdata.Skill),
 		gachaByCard:   make(map[int]*masterdata.Gacha),
@@ -144,6 +148,30 @@ func (c *CloudSource) GetCardByCharacterAndSeq(characterID, seq int) (*masterdat
 	c.cardCache[model.ID] = model
 	c.cardMu.Unlock()
 	return cloneCard(model), nil
+}
+
+func (c *CloudSource) GetCharacterColorCode(id int) (string, bool) {
+	if id == 0 {
+		return "", false
+	}
+	c.colorMu.RLock()
+	if value, ok := c.colorByID[id]; ok {
+		c.colorMu.RUnlock()
+		return value, value != ""
+	}
+	c.colorMu.RUnlock()
+
+	entity, err := c.client.Gamecharacterunit.Query().
+		Where(gamecharacterunit.ServerRegionEQ(c.queryRegion.String()), gamecharacterunit.GameIDEQ(int64(id))).
+		Only(context.Background())
+	if err != nil {
+		return "", false
+	}
+	value := strings.TrimSpace(entity.ColorCode)
+	c.colorMu.Lock()
+	c.colorByID[id] = value
+	c.colorMu.Unlock()
+	return value, value != ""
 }
 
 func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {

@@ -134,7 +134,7 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 			continue
 		}
 		cardInfo := b.BuildCardBasic(card, region)
-		if cardInfo.SupplyType != nil && *cardInfo.SupplyType == "常驻" {
+		if cardInfo.SupplyType != nil && *cardInfo.SupplyType == "甯搁┗" {
 			normal := "normal"
 			cardInfo.SupplyType = &normal
 		}
@@ -150,124 +150,89 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 	}, nil
 }
 
-func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest) (*drawing.CardBoxRequest, error) {
+func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest, showID, showBox, useAfterTraining bool) (*drawing.CardBoxRequest, error) {
 	if len(cards) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
 
-	ownedCardIDs := extractOwnedCardIDs(detailedProfile)
+	ownedCards := extractOwnedCards(detailedProfile)
 	items := make([]drawing.UserCard, 0, len(cards))
 	characterIconPaths := make(map[int]string)
+	characterColorCodes := make(map[int]string)
 	for _, card := range cards {
 		if card == nil {
 			continue
 		}
 		cardInfo := b.BuildCardBasic(card, region)
-		if len(cardInfo.ThumbnailInfo) > 1 {
-			cardInfo.IsAfterTraining = boolPtr(true)
+		if userCard, ok := ownedCards[card.ID]; ok {
+			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, &userCard, useAfterTraining)
+			cardInfo.IsAfterTraining = boolPtr(strings.EqualFold(userCard.DefaultImage, "special_training"))
+		} else {
+			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, nil, useAfterTraining)
+			cardInfo.IsAfterTraining = boolPtr(useAfterTraining && hasAfterTrainingCard(card) && !onlyHasAfterTrainingCard(card))
+			if onlyHasAfterTrainingCard(card) {
+				cardInfo.IsAfterTraining = boolPtr(true)
+			}
 		}
 		items = append(items, drawing.UserCard{
 			Card:    cardInfo,
-			HasCard: ownedCardIDs[card.ID],
+			HasCard: ownedCards[card.ID].CardID != 0,
 		})
 		characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
+		if colorCode, ok := b.source.GetCharacterColorCode(card.CharacterID); ok {
+			characterColorCodes[card.CharacterID] = colorCode
+		}
 	}
 	if len(items) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
 
 	return &drawing.CardBoxRequest{
-		Cards:              items,
-		Region:             region.String(),
-		ShowID:             false,
-		ShowBox:            false,
-		CharacterIconPaths: characterIconPaths,
+		Cards:               items,
+		Region:              region.String(),
+		ShowID:              showID,
+		ShowBox:             showBox,
+		CharacterIconPaths:  characterIconPaths,
+		CharacterColorCodes: characterColorCodes,
 	}, nil
 }
 
-func extractOwnedCardIDs(detailedProfile *drawing.DetailedProfileCardRequest) map[int]bool {
-	states := extractUserCardDisplayStates(detailedProfile)
-	if len(states) == 0 {
+func hasOwnedCardData(detailedProfile *drawing.DetailedProfileCardRequest) bool {
+	return len(extractOwnedCards(detailedProfile)) > 0
+}
+
+type ownedCardState struct {
+	CardID                int
+	Level                 int
+	MasterRank            int
+	SpecialTrainingStatus string
+	DefaultImage          string
+}
+
+func extractOwnedCards(detailedProfile *drawing.DetailedProfileCardRequest) map[int]ownedCardState {
+	if detailedProfile == nil || len(detailedProfile.UserCards) == 0 {
 		return nil
 	}
-	owned := make(map[int]bool, len(states))
-	for id := range states {
-		owned[id] = true
+	owned := make(map[int]ownedCardState, len(detailedProfile.UserCards))
+	for _, raw := range detailedProfile.UserCards {
+		switch item := raw.(type) {
+		case map[string]interface{}:
+			state := ownedCardState{
+				CardID:                intValue(item["cardId"], item["card_id"]),
+				Level:                 intValue(item["level"]),
+				MasterRank:            intValue(item["masterRank"], item["master_rank"]),
+				SpecialTrainingStatus: stringValueAny(item["specialTrainingStatus"], item["special_training_status"]),
+				DefaultImage:          stringValueAny(item["defaultImage"], item["default_image"]),
+			}
+			if state.CardID > 0 {
+				owned[state.CardID] = state
+			}
+		}
 	}
 	return owned
 }
 
-func hasOwnedCardData(detailedProfile *drawing.DetailedProfileCardRequest) bool {
-	return len(extractUserCardDisplayStates(detailedProfile)) > 0
-}
-
-type userCardDisplayState struct {
-	DefaultImage          string
-	SpecialTrainingStatus string
-}
-
-func extractUserCardDisplayStates(detailedProfile *drawing.DetailedProfileCardRequest) map[int]userCardDisplayState {
-	if detailedProfile == nil || len(detailedProfile.UserCards) == 0 {
-		return nil
-	}
-	states := make(map[int]userCardDisplayState, len(detailedProfile.UserCards))
-	for _, raw := range detailedProfile.UserCards {
-		item, ok := raw.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		cardID := readUserCardEntryID(item)
-		if cardID <= 0 {
-			continue
-		}
-		states[cardID] = userCardDisplayState{
-			DefaultImage:          readUserCardEntryString(item, "defaultImage", "default_image"),
-			SpecialTrainingStatus: readUserCardEntryString(item, "specialTrainingStatus", "special_training_status"),
-		}
-	}
-	if len(states) == 0 {
-		return nil
-	}
-	return states
-}
-
-func readUserCardEntryID(item map[string]interface{}) int {
-	for _, key := range []string{"cardId", "card_id"} {
-		value, ok := item[key]
-		if !ok {
-			continue
-		}
-		switch v := value.(type) {
-		case int:
-			return v
-		case int64:
-			return int(v)
-		case float64:
-			return int(v)
-		case string:
-			id, _ := strconv.Atoi(strings.TrimSpace(v))
-			if id > 0 {
-				return id
-			}
-		}
-	}
-	return 0
-}
-
-func readUserCardEntryString(item map[string]interface{}, keys ...string) string {
-	for _, key := range keys {
-		value, ok := item[key]
-		if !ok {
-			continue
-		}
-		if text, ok := value.(string); ok {
-			return strings.TrimSpace(text)
-		}
-	}
-	return ""
-}
-
-func resolveCardBoxAfterTraining(card drawing.CardBasic, state userCardDisplayState, useAfterTraining bool, hasOwnedState bool) bool {
+func resolveCardBoxAfterTraining(card drawing.CardBasic, state ownedCardState, useAfterTraining bool, hasOwnedState bool) bool {
 	if len(card.ThumbnailInfo) <= 1 {
 		return false
 	}
@@ -281,6 +246,88 @@ func resolveCardBoxAfterTraining(card drawing.CardBasic, state userCardDisplaySt
 		return false
 	}
 	return strings.EqualFold(strings.TrimSpace(state.DefaultImage), "special_training")
+}
+func (b *Builder) buildBoxThumbnailInfo(card *masterdata.Card, region renderregion.Value, userCard *ownedCardState, useAfterTraining bool) []drawing.CardFullThumbnailRequest {
+	if card == nil {
+		return nil
+	}
+
+	if userCard != nil {
+		afterTraining := strings.EqualFold(userCard.DefaultImage, "special_training") && hasAfterTrainingCard(card)
+		rareImageType := "normal"
+		if strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
+			rareImageType = "after_training"
+		}
+		fileSuffix := "_normal.png"
+		memberFile := "card_normal.png"
+		if afterTraining {
+			fileSuffix = "_after_training.png"
+			memberFile = "card_after_training.png"
+		}
+		thumbnailPath := assets.ResolveRegionAssetPath(b.assets, region.String(),
+			filepath.Join("thumbnail", "chara", card.AssetBundleName+fileSuffix),
+			filepath.Join("character", "member", card.AssetBundleName, memberFile),
+		)
+		rareImgPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "rare_star_"+rareImageType+".png"))
+		if card.CardRarityType == "rarity_birthday" {
+			rareImgPath = assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "rare_birthday.png"))
+		}
+		return []drawing.CardFullThumbnailRequest{
+			common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{
+				AfterTraining: afterTraining,
+				ThumbnailPath: thumbnailPath,
+				RareImgPath:   rareImgPath,
+				TrainRank:     drawing.IntPtr(userCard.MasterRank),
+				Level:         drawing.IntPtr(userCard.Level),
+				IsPcard:       true,
+			}),
+		}
+	}
+
+	afterTraining := useAfterTraining && hasAfterTrainingCard(card)
+	if onlyHasAfterTrainingCard(card) {
+		afterTraining = true
+	}
+	return []drawing.CardFullThumbnailRequest{
+		common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{
+			AfterTraining: afterTraining,
+			TrainedArt:    afterTraining,
+		}),
+	}
+}
+
+func hasAfterTrainingCard(card *masterdata.Card) bool {
+	if card == nil {
+		return false
+	}
+	return card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4"
+}
+
+func onlyHasAfterTrainingCard(card *masterdata.Card) bool {
+	return card != nil && strings.EqualFold(card.InitialSpecialTrainingStatus, "done")
+}
+
+func intValue(values ...interface{}) int {
+	for _, raw := range values {
+		switch value := raw.(type) {
+		case int:
+			return value
+		case int64:
+			return int(value)
+		case float64:
+			return int(value)
+		}
+	}
+	return 0
+}
+
+func stringValueAny(values ...interface{}) string {
+	for _, raw := range values {
+		if value, ok := raw.(string); ok {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {

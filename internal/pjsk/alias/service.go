@@ -203,6 +203,28 @@ func (s *Service) TryResolveMusicID(ctx context.Context, token string) (int, boo
 	return 0, false, nil
 }
 
+func (s *Service) TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error) {
+	if !s.IsReady() {
+		return 0, false, nil
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return 0, false, nil
+	}
+
+	if ref, ok, err := s.tryResolveMusicByTitle(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	if ref, ok, err := s.tryResolveMusicByApprovedAlias(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
+	return 0, false, nil
+}
+
 func (s *Service) TryResolveCharacterID(ctx context.Context, token string) (int, bool, error) {
 	if !s.IsReady() {
 		return 0, false, nil

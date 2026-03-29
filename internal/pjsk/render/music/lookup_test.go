@@ -35,6 +35,17 @@ func (r *lookupTestAliasResolver) TryResolveMusicID(_ context.Context, token str
 	return id, ok, nil
 }
 
+func (r *lookupTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Context, token string) (int, bool, error) {
+	if r == nil {
+		return 0, false, nil
+	}
+	if r.err != nil {
+		return 0, false, r.err
+	}
+	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
+	return id, ok, nil
+}
+
 func (s *lookupTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {

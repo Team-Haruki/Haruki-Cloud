@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 
@@ -135,6 +136,13 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 				value := derived.frame
 				model.FrameName = &value
 			}
+			slog.Info(
+				"honor birthday derive trace",
+				"group_id", entity.GameID,
+				"group_name", model.Name,
+				"derived_background_assetbundle_name", derived.background,
+				"derived_frame_name", derived.frame,
+			)
 		}
 	}
 
@@ -273,6 +281,18 @@ func (c *CloudSource) deriveBirthdayAssetsForGroup(groupID int, groupName string
 			frame:      "honor_frame_birthday_" + suffix,
 		}
 		c.birthdayByGroup[groupID] = assets
+		slog.Info(
+			"honor birthday match trace",
+			"group_id", groupID,
+			"group_name", groupName,
+			"character_id", row.GameID,
+			"first_name", row.FirstName,
+			"given_name", row.GivenName,
+			"first_name_english", row.FirstNameEnglish,
+			"given_name_english", row.GivenNameEnglish,
+			"background_assetbundle_name", assets.background,
+			"frame_name", assets.frame,
+		)
 		return assets, true
 	}
 	return birthdayHonorAssets{}, false

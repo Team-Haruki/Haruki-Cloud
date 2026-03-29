@@ -56,7 +56,21 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 
 	switch info.Type {
 	case QueryTypeID:
-		return s.source.GetMusicByID(info.Value)
+		musicInfo, err := s.source.GetMusicByID(info.Value)
+		if err == nil && musicInfo != nil {
+			return musicInfo, nil
+		}
+		if info.AllowTitleFallback {
+			if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
+				if resolved, fallbackErr := s.resolveTitle(fallback); fallbackErr == nil && resolved != nil {
+					return resolved, nil
+				}
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("music not found: %d", info.Value)
 
 	case QueryTypeSeq:
 		musics := append([]*masterdata.Music(nil), s.source.GetMusics()...)
@@ -99,12 +113,20 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		if keyword == "" && info.MusicID != 0 {
 			return s.source.GetMusicByID(info.MusicID)
 		}
-		if s.titleResolver != nil {
-			return s.titleResolver(keyword)
-		}
-		return s.source.SearchMusic(keyword)
+		return s.resolveTitle(keyword)
 
 	default:
 		return nil, fmt.Errorf("unsupported music query type: %d", info.Type)
 	}
+}
+
+func (s *SearchService) resolveTitle(query string) (*masterdata.Music, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fmt.Errorf("music title query is empty")
+	}
+	if s.titleResolver != nil {
+		return s.titleResolver(query)
+	}
+	return s.source.SearchMusic(query)
 }

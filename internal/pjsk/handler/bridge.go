@@ -751,26 +751,34 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	if q == nil {
 		return nil
 	}
-	if q.MusicID != nil && *q.MusicID > 0 {
-		return nil
-	}
-	query := strings.TrimSpace(q.MusicQuery)
-	if query == "" {
-		return nil
-	}
 	if app == nil || app.Music == nil {
 		return fmt.Errorf("deck music resolve requires music controller")
 	}
 
-	result, err := app.Music.ResolveMusicCover(music.Query{
-		Query:  query,
-		Region: q.Region,
-	})
+	var (
+		result *music.CoverResult
+		err    error
+	)
+	if q.MusicID != nil && *q.MusicID > 0 {
+		result, err = app.Music.ResolveMusicCover(music.Query{
+			Query:  fmt.Sprintf("music%d", *q.MusicID),
+			Region: q.Region,
+		})
+	} else {
+		query := strings.TrimSpace(q.MusicQuery)
+		if query == "" {
+			return nil
+		}
+		result, err = app.Music.ResolveMusicCoverByTitleOrAlias(music.Query{
+			Query:  query,
+			Region: q.Region,
+		})
+	}
 	if err != nil {
 		return err
 	}
 	if result == nil || result.Music == nil || result.Music.ID <= 0 {
-		return fmt.Errorf("failed to resolve deck music query %q", query)
+		return fmt.Errorf("failed to resolve deck music selection")
 	}
 
 	q.MusicID = drawing.IntPtr(result.Music.ID)

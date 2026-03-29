@@ -3,6 +3,7 @@ package mysekai
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -112,16 +113,47 @@ func (c *Controller) regionPath(region renderregion.Value, relPath string) strin
 
 // staticPath resolves a path under the Drawing API's static_images directory.
 func (c *Controller) staticPath(relPath string) string {
-	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, relPath)
-}
-
-func (c *Controller) hasStaticAsset(relPath string) bool {
 	relPath = strings.TrimSpace(strings.TrimPrefix(relPath, "/"))
-	if relPath == "" || c.assets == nil {
-		return true
+	if relPath == "" {
+		return ""
 	}
-	staticRelPath := fmt.Sprintf("%s/%s", assets.StaticImagesDir, relPath)
-	return c.assets.FirstExisting(relPath, staticRelPath) != ""
+
+	resolved := filepath.ToSlash(strings.TrimSpace(assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, relPath)))
+	if resolved == "" {
+		return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, relPath))
+	}
+	if strings.HasPrefix(resolved, "http://") || strings.HasPrefix(resolved, "https://") {
+		return resolved
+	}
+	if strings.HasPrefix(resolved, assets.StaticImagesDir+"/") {
+		return resolved
+	}
+
+	if c.assets != nil {
+		for _, root := range c.assets.Roots() {
+			root = strings.TrimSpace(root)
+			if root == "" {
+				continue
+			}
+			if strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
+				continue
+			}
+
+			rel := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, resolved), "./"))
+			if strings.HasPrefix(rel, assets.StaticImagesDir+"/") {
+				return rel
+			}
+
+			// Local roots may point directly at "static_images". Normalize those
+			// back to "static_images/..." payload paths.
+			base := filepath.Base(filepath.ToSlash(root))
+			if rel != resolved && rel != "" && base == assets.StaticImagesDir {
+				return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, strings.TrimPrefix(rel, "/")))
+			}
+		}
+	}
+
+	return resolved
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given
@@ -314,9 +346,6 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				size = &sizeValue
 				offsetX = 7.5
 				offsetZ = 0
-			}
-			if !c.hasStaticAsset(imageRelPath) {
-				continue
 			}
 
 			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{

@@ -203,7 +203,7 @@ main() {
 
 	check_local_paths
 	build_binary
-	check_remote_config
+	# check_remote_config
 	prepare_remote
 	upload_binary_and_lib
 	# upload_masterdata

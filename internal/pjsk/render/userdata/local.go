@@ -510,7 +510,11 @@ func buildUserCardEntries(cards []RawUserCard) []interface{} {
 			continue
 		}
 		seen[card.CardID] = struct{}{}
-		entries = append(entries, map[string]interface{}{"cardId": card.CardID})
+		entries = append(entries, map[string]interface{}{
+			"cardId":                card.CardID,
+			"defaultImage":          card.DefaultImage,
+			"specialTrainingStatus": card.SpecialTrainingStatus,
+		})
 	}
 	return entries
 }

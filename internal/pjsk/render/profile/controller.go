@@ -148,6 +148,13 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 	return c.drawing.GenerateProfile(payload)
 }
 
+func (c *Controller) SnapshotDetailedProfile(region renderregion.Value) *drawing.DetailedProfileCardRequest {
+	if c == nil || c.snapshot == nil {
+		return nil
+	}
+	return c.snapshot.DetailedProfile(region)
+}
+
 // BuildProfileRequestFromAPI builds a ProfileRequest from a live GetUserProfile API response.
 // framesJSON is the optional raw bytes from a ?key=userPlayerFrames toolbox key-query; pass nil
 // to render without a player frame.

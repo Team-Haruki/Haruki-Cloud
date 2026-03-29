@@ -146,7 +146,15 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		q.DetailedProfile = publicDetailedProfile
 		data, err = app.Cards.RenderCardList(q)
 	case "card-box":
-		queries := []card.Query{{Query: r.Query, Region: r.Region, DetailedProfile: publicDetailedProfile}}
+		useAfterTraining := true
+		q := card.Query{
+			Query:            r.Query,
+			Region:           r.Region,
+			UseAfterTraining: &useAfterTraining,
+			DetailedProfile:  resolveCardBoxDetailedProfile(r, app),
+		}
+		mergeParams(r.Params, &q)
+		queries := []card.Query{q}
 		data, err = app.Cards.RenderCardBox(queries)
 	case "card-image":
 		q := card.Query{Query: r.Query, Region: r.Region}
@@ -539,7 +547,7 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 				start := strings.LastIndex(rel[:idx], "/") + 1
 				rel = rel[start:]
 			}
-			return onebot11.Message{onebot11.Image(base + "/" + rel, "")}, nil
+			return onebot11.Message{onebot11.Image(base+"/"+rel, "")}, nil
 		}
 	}
 	data, err := os.ReadFile(path)
@@ -617,6 +625,24 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		return detail, nil
 	}
 	return detail, card
+}
+
+func resolveCardBoxDetailedProfile(r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
+	if r == nil || app == nil {
+		return nil
+	}
+	region := renderregion.Normalize(r.Region)
+	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+		if detail := snapshot.DetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
+			return detail
+		}
+	}
+	if app.Profiles != nil {
+		if detail := app.Profiles.SnapshotDetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
+			return detail
+		}
+	}
+	return nil
 }
 
 func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicProfileCard *drawing.ProfileCardRequest) ([]byte, error) {

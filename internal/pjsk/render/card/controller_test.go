@@ -3,6 +3,7 @@ package card
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -131,6 +132,107 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	}
 	if req.Cards[1].Card.CardID != 1002 || !req.Cards[1].HasCard {
 		t.Fatalf("unexpected second card state: %+v", req.Cards[1])
+	}
+}
+
+func TestBuildCardBoxRequestAppliesDisplayFlagsAndBeforeSetting(t *testing.T) {
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{
+				ID:              1001,
+				CharacterID:     5,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				Prefix:          "Card A",
+				AssetBundleName: "card_a",
+			},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	useAfterTraining := false
+
+	req, err := controller.BuildCardBoxRequest([]Query{{
+		Query:            "1001",
+		Region:           "jp",
+		ShowID:           true,
+		UseAfterTraining: &useAfterTraining,
+	}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if !req.ShowID || req.ShowBox {
+		t.Fatalf("unexpected request flags: %+v", req)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].Card.IsAfterTraining == nil || *req.Cards[0].Card.IsAfterTraining {
+		t.Fatalf("unexpected after-training state: %+v", req.Cards)
+	}
+}
+
+func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *testing.T) {
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{
+				ID:              1001,
+				CharacterID:     5,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				Prefix:          "Card A",
+				AssetBundleName: "card_a",
+			},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	useAfterTraining := false
+
+	req, err := controller.BuildCardBoxRequest([]Query{{
+		Query:            "1001",
+		Region:           "jp",
+		UseAfterTraining: &useAfterTraining,
+		DetailedProfile: &drawing.DetailedProfileCardRequest{
+			UserCards: []interface{}{
+				map[string]interface{}{
+					"cardId":                1001,
+					"defaultImage":          "special_training",
+					"specialTrainingStatus": "done",
+				},
+			},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].Card.IsAfterTraining == nil || !*req.Cards[0].Card.IsAfterTraining {
+		t.Fatalf("expected owned card to keep special_training default image: %+v", req.Cards)
+	}
+}
+
+func TestBuildCardBoxRequestRejectsShowBoxWithoutOwnedCardData(t *testing.T) {
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{
+				ID:              1001,
+				CharacterID:     5,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				Prefix:          "Card A",
+				AssetBundleName: "card_a",
+			},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	useAfterTraining := true
+
+	_, err := controller.BuildCardBoxRequest([]Query{{
+		Query:            "1001",
+		Region:           "jp",
+		ShowBox:          true,
+		UseAfterTraining: &useAfterTraining,
+	}})
+	if err == nil {
+		t.Fatal("expected show_box without owned-card data to fail")
+	}
+	if !strings.Contains(err.Error(), "box 模式需要用户卡牌持有数据") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

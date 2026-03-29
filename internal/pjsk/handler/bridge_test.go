@@ -1317,3 +1317,78 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 		}
 	}
 }
+
+func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
+	root := t.TempDir()
+	var captured drawing.CardBoxRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/box" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+	params, err := json.Marshal(map[string]any{
+		"show_id":            true,
+		"show_box":           false,
+		"use_after_training": false,
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeCard(&parser.ResolvedCommand{
+		Module: parser.ModuleCard,
+		Mode:   "card-box",
+		Query:  "1001",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err != nil {
+		t.Fatalf("executeCard box: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if !captured.ShowID || captured.ShowBox {
+		t.Fatalf("unexpected box flags: %+v", captured)
+	}
+	if len(captured.Cards) != 1 || captured.Cards[0].Card.IsAfterTraining == nil || *captured.Cards[0].Card.IsAfterTraining {
+		t.Fatalf("unexpected card payload: %+v", captured.Cards)
+	}
+}
+
+func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
+	root := t.TempDir()
+	app := &renderapp.App{
+		Cards: rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient("https://drawing.invalid"), assets.NewAssetHelper(root, nil)),
+	}
+	params, err := json.Marshal(map[string]any{
+		"show_box": true,
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	_, err = executeCard(&parser.ResolvedCommand{
+		Module: parser.ModuleCard,
+		Mode:   "card-box",
+		Query:  "1001",
+		Region: "jp",
+		Params: params,
+	}, app)
+	if err == nil {
+		t.Fatal("expected missing owned-card data to fail")
+	}
+	if !strings.Contains(err.Error(), "box 模式需要用户卡牌持有数据") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

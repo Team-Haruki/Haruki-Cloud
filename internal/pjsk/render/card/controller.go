@@ -128,6 +128,9 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("no card query provided")
 	}
+	if queries[0].ShowBox && !hasOwnedCardData(queries[0].DetailedProfile) {
+		return nil, fmt.Errorf("box 模式需要用户卡牌持有数据，请先提供 Suite 抓包或本地快照")
+	}
 
 	region, source, builder, err := c.resolveBuilder(queries[0].Region)
 	if err != nil {
@@ -163,6 +166,17 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile)
 	if err != nil {
 		return nil, err
+	}
+	req.ShowID = queries[0].ShowID
+	req.ShowBox = queries[0].ShowBox
+	useAfterTraining := true
+	if queries[0].UseAfterTraining != nil {
+		useAfterTraining = *queries[0].UseAfterTraining
+	}
+	userCardStates := extractUserCardDisplayStates(queries[0].DetailedProfile)
+	for i := range req.Cards {
+		state, ok := userCardStates[req.Cards[i].Card.CardID]
+		req.Cards[i].Card.IsAfterTraining = boolPtr(resolveCardBoxAfterTraining(req.Cards[i].Card, state, useAfterTraining, ok))
 	}
 	if queries[0].DetailedProfile != nil {
 		req.UserInfo = queries[0].DetailedProfile

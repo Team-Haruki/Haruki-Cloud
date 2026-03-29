@@ -3,6 +3,7 @@ package card
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -185,30 +186,101 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 }
 
 func extractOwnedCardIDs(detailedProfile *drawing.DetailedProfileCardRequest) map[int]bool {
+	states := extractUserCardDisplayStates(detailedProfile)
+	if len(states) == 0 {
+		return nil
+	}
+	owned := make(map[int]bool, len(states))
+	for id := range states {
+		owned[id] = true
+	}
+	return owned
+}
+
+func hasOwnedCardData(detailedProfile *drawing.DetailedProfileCardRequest) bool {
+	return len(extractUserCardDisplayStates(detailedProfile)) > 0
+}
+
+type userCardDisplayState struct {
+	DefaultImage          string
+	SpecialTrainingStatus string
+}
+
+func extractUserCardDisplayStates(detailedProfile *drawing.DetailedProfileCardRequest) map[int]userCardDisplayState {
 	if detailedProfile == nil || len(detailedProfile.UserCards) == 0 {
 		return nil
 	}
-	owned := make(map[int]bool, len(detailedProfile.UserCards))
+	states := make(map[int]userCardDisplayState, len(detailedProfile.UserCards))
 	for _, raw := range detailedProfile.UserCards {
-		switch item := raw.(type) {
-		case map[string]interface{}:
-			for _, key := range []string{"cardId", "card_id"} {
-				value, ok := item[key]
-				if !ok {
-					continue
-				}
-				switch v := value.(type) {
-				case int:
-					owned[v] = true
-				case int64:
-					owned[int(v)] = true
-				case float64:
-					owned[int(v)] = true
-				}
+		item, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		cardID := readUserCardEntryID(item)
+		if cardID <= 0 {
+			continue
+		}
+		states[cardID] = userCardDisplayState{
+			DefaultImage:          readUserCardEntryString(item, "defaultImage", "default_image"),
+			SpecialTrainingStatus: readUserCardEntryString(item, "specialTrainingStatus", "special_training_status"),
+		}
+	}
+	if len(states) == 0 {
+		return nil
+	}
+	return states
+}
+
+func readUserCardEntryID(item map[string]interface{}) int {
+	for _, key := range []string{"cardId", "card_id"} {
+		value, ok := item[key]
+		if !ok {
+			continue
+		}
+		switch v := value.(type) {
+		case int:
+			return v
+		case int64:
+			return int(v)
+		case float64:
+			return int(v)
+		case string:
+			id, _ := strconv.Atoi(strings.TrimSpace(v))
+			if id > 0 {
+				return id
 			}
 		}
 	}
-	return owned
+	return 0
+}
+
+func readUserCardEntryString(item map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		value, ok := item[key]
+		if !ok {
+			continue
+		}
+		if text, ok := value.(string); ok {
+			return strings.TrimSpace(text)
+		}
+	}
+	return ""
+}
+
+func resolveCardBoxAfterTraining(card drawing.CardBasic, state userCardDisplayState, useAfterTraining bool, hasOwnedState bool) bool {
+	if len(card.ThumbnailInfo) <= 1 {
+		return false
+	}
+	if !hasOwnedState {
+		return useAfterTraining
+	}
+	if strings.TrimSpace(state.DefaultImage) == "" && strings.TrimSpace(state.SpecialTrainingStatus) == "" {
+		return useAfterTraining
+	}
+	if !strings.EqualFold(strings.TrimSpace(state.SpecialTrainingStatus), "done") {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(state.DefaultImage), "special_training")
 }
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {

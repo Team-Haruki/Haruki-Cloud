@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
@@ -386,7 +387,8 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	if len(req.Maps[0].ResourceDrops) != 2 {
 		t.Fatalf("expected 2 grouped resource drops, got %+v", req.Maps[0].ResourceDrops)
 	}
-	var birthdayDrop, sideDrop *drawing.MysekaiMsrMapResourceDrop
+	var birthdayDrop *drawing.MysekaiMsrMapResourceDrop
+	var sideDrop *drawing.MysekaiMsrMapResourceDrop
 	for i := range req.Maps[0].ResourceDrops {
 		drop := &req.Maps[0].ResourceDrops[i]
 		if drop.Type == "mysekai_material" && drop.ID == 179 {
@@ -407,5 +409,132 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	}
 	if sideDrop.SmallIcon == nil || !*sideDrop.SmallIcon {
 		t.Fatalf("expected side-drop to be rendered as small icon, got %+v", sideDrop.SmallIcon)
+	}
+}
+
+func TestBuildMapRequestSkipsHarvestPointWhenStaticIconMissing(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	assetRoot := filepath.Join(root, "assets")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(assetRoot, "static_images", "mysekai", "harvest_fixture_icon", "rarity_1"), 0o755); err != nil {
+		t.Fatalf("mkdir static icon dir: %v", err)
+	}
+	// Keep one normal icon so we can assert only the missing-icon fixture is skipped.
+	if err := os.WriteFile(
+		filepath.Join(assetRoot, "static_images", "mysekai", "harvest_fixture_icon", "rarity_1", "mdl_site_wood_common_fieldtree01.png"),
+		[]byte("ok"),
+		0o644,
+	); err != nil {
+		t.Fatalf("write static icon: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+		{
+			"id":                                  1001,
+			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+			"mysekaiSiteHarvestFixtureType":       "wood",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+		{
+			"id":                                  7001,
+			"assetbundleName":                     "tone_gust",
+			"mysekaiSiteHarvestFixtureType":       "tone",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_2",
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+		{"id": 1, "iconAssetbundleName": "wood_mat", "mysekaiMaterialRarityType": "rarity_1"},
+		{"id": 24, "iconAssetbundleName": "item_tone_8", "mysekaiMaterialRarityType": "rarity_1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 8,
+        "userMysekaiSiteHarvestFixtures": [
+          {
+            "mysekaiSiteHarvestFixtureId": 1001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 1,
+            "positionZ": 2
+          },
+          {
+            "mysekaiSiteHarvestFixtureId": 7001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 6,
+            "positionZ": 13
+          }
+        ],
+        "userMysekaiSiteHarvestResourceDrops": [
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 1,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 1,
+            "positionZ": 2,
+            "quantity": 1
+          },
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 24,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 6,
+            "positionZ": 13,
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  }
+}`
+
+	controller := NewController(
+		nil,
+		nil,
+		masterdataDir,
+		renderregion.JP,
+		assets.NewAssetHelper(assetRoot, nil),
+	).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{8}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	if len(req.Maps) != 1 {
+		t.Fatalf("expected 1 map, got %d", len(req.Maps))
+	}
+
+	has1001 := false
+	for _, point := range req.Maps[0].HarvestPoints {
+		if point.ID == nil {
+			continue
+		}
+		if *point.ID == 7001 {
+			t.Fatalf("tone fixture should be skipped when icon file is missing, got %+v", point)
+		}
+		if *point.ID == 1001 {
+			has1001 = true
+		}
+	}
+	if !has1001 {
+		t.Fatalf("expected normal fixture point to remain, got %+v", req.Maps[0].HarvestPoints)
+	}
+
+	hasToneDrop := false
+	for _, drop := range req.Maps[0].ResourceDrops {
+		if drop.Type == "mysekai_material" && drop.ID == 24 {
+			hasToneDrop = true
+			break
+		}
+	}
+	if !hasToneDrop {
+		t.Fatalf("expected tone material drop to remain, got %+v", req.Maps[0].ResourceDrops)
 	}
 }

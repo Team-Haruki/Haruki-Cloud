@@ -115,6 +115,15 @@ func (c *Controller) staticPath(relPath string) string {
 	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, relPath)
 }
 
+func (c *Controller) hasStaticAsset(relPath string) bool {
+	relPath = strings.TrimSpace(strings.TrimPrefix(relPath, "/"))
+	if relPath == "" || c.assets == nil {
+		return true
+	}
+	staticRelPath := fmt.Sprintf("%s/%s", assets.StaticImagesDir, relPath)
+	return c.assets.FirstExisting(relPath, staticRelPath) != ""
+}
+
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
@@ -275,6 +284,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 
 			status := stringValue(point["userMysekaiSiteHarvestFixtureStatus"])
 			if status == "" {
+				status = stringValue(point["mysekaiSiteHarvestFixtureStatus"])
+			}
+			if status == "" {
 				status = "spawned"
 			}
 
@@ -288,14 +300,14 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			positionZ := floatNumber(point["positionZ"], floatNumber(point["position_z"], 0))
 			posKey := mysekaiHarvestPosKey(positionX, positionZ)
 
-			imagePath := c.staticPath(fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName))
+			imageRelPath := fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)
 			var size *int
 			var offsetX float64
 			offsetZ := -48.0
 			if fixtureType == "birthday_plant" {
 				if characterID := birthdayCharacterByPos[posKey]; characterID > 0 {
 					if imageName := mysekaiBirthdayCharacterImageName(characterMap[characterID]); imageName != "" {
-						imagePath = c.staticPath(fmt.Sprintf("mysekai/birthday/%s_%d/icon_refresh.png", imageName, time.Now().Year()))
+						imageRelPath = fmt.Sprintf("mysekai/birthday/%s_%d/icon_refresh.png", imageName, time.Now().Year())
 					}
 				}
 				sizeValue := 50
@@ -303,10 +315,13 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				offsetX = 7.5
 				offsetZ = 0
 			}
+			if !c.hasStaticAsset(imageRelPath) {
+				continue
+			}
 
 			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{
 				ID:        pointID,
-				ImagePath: imagePath,
+				ImagePath: c.staticPath(imageRelPath),
 				PositionX: positionX,
 				PositionZ: positionZ,
 				Status:    status,
@@ -340,6 +355,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			if resourceType == "" {
 				resourceType = stringValue(drop["type"])
 			}
+			resourceType = mysekaiNormalizeResourceType(resourceType)
 			resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
 			if resourceType == "" || resourceID == 0 {
 				continue
@@ -1634,11 +1650,28 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 			if !ok {
 				continue
 			}
-			if stringValue(drop["mysekaiSiteHarvestResourceDropStatus"]) != "before_drop" {
+			status := stringValue(drop["mysekaiSiteHarvestResourceDropStatus"])
+			if status == "" {
+				status = stringValue(drop["status"])
+			}
+			if status != "before_drop" {
 				continue
 			}
-			key := fmt.Sprintf("%s_%d", drop["resourceType"], intNumber(drop["resourceId"], 0))
-			counts[siteID][key] += intNumber(drop["quantity"], 0)
+			resourceType := stringValue(drop["resourceType"])
+			if resourceType == "" {
+				resourceType = stringValue(drop["type"])
+			}
+			resourceType = mysekaiNormalizeResourceType(resourceType)
+			resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
+			if resourceType == "" || resourceID == 0 {
+				continue
+			}
+			quantity := intNumber(drop["quantity"], 1)
+			if quantity <= 0 {
+				quantity = 1
+			}
+			key := fmt.Sprintf("%s_%d", resourceType, resourceID)
+			counts[siteID][key] += quantity
 		}
 	}
 
@@ -1737,6 +1770,21 @@ func (c *Controller) loadFieldMap(filename, field string) map[int]string {
 
 func mysekaiHarvestPosKey(x, z float64) string {
 	return fmt.Sprintf("%.3f_%.3f", x, z)
+}
+
+func mysekaiNormalizeResourceType(resourceType string) string {
+	switch strings.ToLower(strings.TrimSpace(resourceType)) {
+	case "material", "mysekai_material":
+		return "mysekai_material"
+	case "item", "mysekai_item":
+		return "mysekai_item"
+	case "fixture", "mysekai_fixture":
+		return "mysekai_fixture"
+	case "music_record", "mysekai_music_record":
+		return "mysekai_music_record"
+	default:
+		return strings.TrimSpace(resourceType)
+	}
 }
 
 func mysekaiBirthdayCharacterImageName(item map[string]interface{}) string {

@@ -47,22 +47,22 @@ func (s *PGStore) Init(ctx context.Context) error {
 	return err
 }
 
-// Lookup returns the CDN URL for a previously stored image hash.
-// Returns ("", false) on miss or any error.
-func (s *PGStore) Lookup(ctx context.Context, hash string) (string, bool) {
+// Lookup returns the CDN URL and stored file path for a previously stored image hash.
+// Returns ("", "", false) on miss or any error.
+func (s *PGStore) Lookup(ctx context.Context, hash string) (cdnURL, filePath string, ok bool) {
 	if s == nil {
-		return "", false
+		return "", "", false
 	}
-	var url string
 	err := s.db.QueryRowContext(ctx,
-		`SELECT cdn_url FROM image_cache_entries WHERE hash = $1`, hash).Scan(&url)
+		`SELECT cdn_url, file_path FROM image_cache_entries WHERE hash = $1`, hash).Scan(&cdnURL, &filePath)
 	if err != nil {
-		return "", false
+		return "", "", false
 	}
-	return url, true
+	return cdnURL, filePath, true
 }
 
-// Insert records a new image cache entry. Silently ignores conflicts (same hash stored twice).
+// Insert records a new image cache entry.
+// If the same hash already exists, the file_path, cdn_url and size_bytes are updated in place.
 func (s *PGStore) Insert(ctx context.Context, hash, groupName, cdnURL, filePath string, sizeBytes int64) {
 	if s == nil {
 		return
@@ -70,7 +70,10 @@ func (s *PGStore) Insert(ctx context.Context, hash, groupName, cdnURL, filePath 
 	_, _ = s.db.ExecContext(ctx, `
 		INSERT INTO image_cache_entries (hash, group_name, cdn_url, file_path, size_bytes)
 		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (hash) DO NOTHING`,
+		ON CONFLICT (hash) DO UPDATE
+			SET cdn_url    = EXCLUDED.cdn_url,
+			    file_path  = EXCLUDED.file_path,
+			    size_bytes = EXCLUDED.size_bytes`,
 		hash, groupName, cdnURL, filePath, sizeBytes)
 }
 

@@ -55,11 +55,14 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 	hashHex := hex.EncodeToString(digest[:])
 	name := hashHex + extFromData(data)
 
-	// Fast path: return cached URL from PostgreSQL without touching the filesystem.
+	// Fast path: return cached URL from PostgreSQL — but only if the file still exists on disk.
 	ctx := context.Background()
 	if c.store != nil {
-		if cachedURL, ok := c.store.Lookup(ctx, hashHex); ok {
-			return cachedURL, nil
+		if cachedURL, cachedPath, ok := c.store.Lookup(ctx, hashHex); ok {
+			if _, err := os.Stat(cachedPath); err == nil {
+				return cachedURL, nil
+			}
+			// File was deleted; fall through to re-write it below.
 		}
 	}
 

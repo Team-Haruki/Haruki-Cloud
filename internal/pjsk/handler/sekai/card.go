@@ -7,9 +7,23 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"strconv"
 	"strings"
 )
+
+const searchSingleCardHelp = `查单张卡的方式:
+1. 直接使用卡牌ID
+2. 角色昵称+负数 代表角色新卡，例如 mnr-1 代表 mnr 最新一张卡`
+
+const searchMultiCardHelp = `查询多张卡牌的筛选参数:
+角色昵称：miku
+团/团oc/团vs/纯vs：mmj mmjoc mmjv 纯v
+稀有度/属性/技能：4 四星 生日 蓝 蓝星 判 分 p分
+限定类型：非限 限定 期间限定 fes
+年份：25年 去年
+活动id或者箱活缩写：event123 mnr1
+以上参数可以混合使用，用空格分隔`
+
+const cardSearchHelp = searchSingleCardHelp + "\n\n" + searchMultiCardHelp
 
 func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
@@ -18,6 +32,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
 			},
+			Helper: cardSearchHelp,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			return resolveCardDetailOrList(ctx), nil
@@ -32,6 +47,7 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 			Commands: []string{
 				"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
 			},
+			Helper: cardSearchHelp,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			return resolveCardDetailOrList(ctx), nil
@@ -45,7 +61,7 @@ func resolveCardDetailOrList(ctx SekaiHandlerContext) *parser.ResolvedCommand {
 		ctx.SetArgs(cleanCardBoxArgs(args))
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args))
 	}
-	if isSingleCardIDQuery(args) {
+	if card.LooksLikeSingleCardQuery(args) {
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-detail", card.Query{Query: args, Region: ctx.Region().String()})
 	}
 	return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-list", card.ListRequest{Query: args, Region: ctx.Region().String()})
@@ -65,15 +81,6 @@ func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
 			return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args)), nil
 		},
 	}
-}
-
-func isSingleCardIDQuery(args string) bool {
-	fields := strings.Fields(strings.TrimSpace(args))
-	if len(fields) != 1 {
-		return false
-	}
-	value, err := strconv.Atoi(fields[0])
-	return err == nil && value > 0
 }
 
 func isCardBoxQuery(args string) bool {

@@ -17,6 +17,8 @@ import (
 	"haruki-cloud/database/sekai/cardcostume3d"
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/costume3d"
+	"haruki-cloud/database/sekai/event"
+	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/gacha"
 	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/predicate"
@@ -150,6 +152,13 @@ func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, erro
 	}
 
 	query := c.client.Card.Query().Where(card.ServerRegionEQ(c.queryRegion.String()))
+	if eventCardIDs, err := c.resolveFilterEventCardIDs(info); err != nil {
+		return nil, err
+	} else if len(eventCardIDs) == 0 && (info.EventID != 0 || info.BanCharID != 0) {
+		return nil, nil
+	} else if len(eventCardIDs) > 0 {
+		query = query.Where(card.GameIDIn(eventCardIDs...))
+	}
 	if info.CharacterID != 0 {
 		query = query.Where(card.CharacterIDEQ(int64(info.CharacterID)))
 	}
@@ -176,6 +185,9 @@ func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, erro
 		if err != nil {
 			return nil, err
 		}
+		if !c.matchesUnitFilter(info, model) {
+			continue
+		}
 		if info.SkillType != "" {
 			skillInfo, err := c.GetSkillByID(model.SkillID)
 			if err != nil || skillInfo == nil || skillInfo.DescriptionSpriteName != info.SkillType {
@@ -188,6 +200,241 @@ func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, erro
 		results = append(results, cloneCard(model))
 	}
 	return results, nil
+}
+
+func (c *CloudSource) resolveFilterEventCardIDs(info *CardQueryInfo) ([]int64, error) {
+	eventIDs := make([]int, 0, 2)
+	if info == nil {
+		return nil, nil
+	}
+	if info.EventID != 0 {
+		eventIDs = append(eventIDs, info.EventID)
+	}
+	if info.BanCharID != 0 && info.BanSeq != 0 {
+		eventID, err := c.resolveBanEventID(info.BanCharID, info.BanSeq)
+		if err != nil {
+			return nil, err
+		}
+		eventIDs = append(eventIDs, eventID)
+	}
+	if len(eventIDs) == 0 {
+		return nil, nil
+	}
+
+	var allowed map[int64]struct{}
+	for _, eventID := range eventIDs {
+		items, err := c.getEventCardIDs(eventID)
+		if err != nil {
+			return nil, err
+		}
+		if allowed == nil {
+			allowed = items
+			continue
+		}
+		for cardID := range allowed {
+			if _, ok := items[cardID]; !ok {
+				delete(allowed, cardID)
+			}
+		}
+	}
+	if len(allowed) == 0 {
+		return nil, nil
+	}
+
+	result := make([]int64, 0, len(allowed))
+	for cardID := range allowed {
+		result = append(result, cardID)
+	}
+	return result, nil
+}
+
+func (c *CloudSource) getEventCardIDs(eventID int) (map[int64]struct{}, error) {
+	if eventID <= 0 {
+		return nil, fmt.Errorf("invalid event id")
+	}
+
+	links, err := c.client.Eventcard.Query().
+		Where(eventcard.ServerRegionEQ(c.queryRegion.String()), eventcard.EventIDEQ(int64(eventID))).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	if len(links) == 0 {
+		return nil, fmt.Errorf("no cards found for event %d", eventID)
+	}
+
+	result := make(map[int64]struct{}, len(links))
+	for _, link := range links {
+		result[link.CardID] = struct{}{}
+	}
+	return result, nil
+}
+
+func (c *CloudSource) resolveBanEventID(charID, seq int) (int, error) {
+	if charID <= 0 {
+		return 0, fmt.Errorf("invalid ban character id")
+	}
+	if seq <= 0 {
+		return 0, fmt.Errorf("invalid ban sequence")
+	}
+
+	events, err := c.getBanEventsByCharacter(charID)
+	if err != nil {
+		return 0, err
+	}
+	if len(events) == 0 {
+		return 0, fmt.Errorf("character %d does not have ban events", charID)
+	}
+	if seq > len(events) {
+		return 0, fmt.Errorf("character %d only has %d ban events", charID, len(events))
+	}
+	return events[seq-1].ID, nil
+}
+
+func (c *CloudSource) getBanEventsByCharacter(charID int) ([]*masterdata.Event, error) {
+	entities, err := c.client.Event.Query().
+		Where(event.ServerRegionEQ(c.queryRegion.String())).
+		Order(event.ByStartAt()).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*masterdata.Event, 0, len(entities))
+	for _, entity := range entities {
+		eventInfo := &masterdata.Event{
+			ID:              int(entity.GameID),
+			EventType:       entity.EventType,
+			Name:            entity.Name,
+			AssetBundleName: entity.AssetbundleName,
+			StartAt:         entity.StartAt,
+			AggregateAt:     entity.AggregateAt,
+			ClosedAt:        entity.ClosedAt,
+		}
+		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
+			continue
+		}
+		bannerCID, err := c.getEventBannerCharacterID(eventInfo.ID)
+		if err != nil || bannerCID != charID {
+			continue
+		}
+		copy := *eventInfo
+		result = append(result, &copy)
+	}
+	return result, nil
+}
+
+func (c *CloudSource) getEventBannerCharacterID(eventID int) (int, error) {
+	cardIDs, err := c.getEventCardIDs(eventID)
+	if err != nil {
+		return 0, err
+	}
+
+	minCardID := 0
+	selected := 0
+	for cardID := range cardIDs {
+		model, err := c.GetCardByID(int(cardID))
+		if err != nil || model == nil {
+			continue
+		}
+		if c.isFestivalCard(model.CardSupplyID) {
+			continue
+		}
+		if minCardID == 0 || model.ID < minCardID {
+			minCardID = model.ID
+			selected = model.CharacterID
+		}
+	}
+	if selected == 0 {
+		return 0, fmt.Errorf("no valid banner card found for event %d", eventID)
+	}
+	return selected, nil
+}
+
+func (c *CloudSource) matchesUnitFilter(info *CardQueryInfo, cardInfo *masterdata.Card) bool {
+	if info == nil || cardInfo == nil {
+		return false
+	}
+	if info.Unit == "" && info.MainUnit == "" && info.SupportUnit == "" {
+		return true
+	}
+
+	character, err := c.GetCharacterByID(cardInfo.CharacterID)
+	if err != nil || character == nil {
+		return false
+	}
+	mainUnit := normalizeCardUnit(character.Unit)
+	supportUnit := normalizeCardSupportUnit(cardInfo.SupportUnit)
+
+	if info.Unit != "" && info.Unit != mainUnit && info.Unit != supportUnit {
+		return false
+	}
+	if info.MainUnit != "" && info.MainUnit != mainUnit {
+		return false
+	}
+	if info.SupportUnit != "" && info.SupportUnit != supportUnit {
+		return false
+	}
+	return true
+}
+
+func normalizeCardSupportUnit(raw string) string {
+	value := normalizeCardUnit(raw)
+	if value == "" {
+		return "none"
+	}
+	return value
+}
+
+func normalizeCardUnit(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "light_sound", "light_sound_club":
+		return "light_sound"
+	case "idol", "more_more_jump":
+		return "idol"
+	case "street", "vivid_bad_squad":
+		return "street"
+	case "theme_park", "wonderlands_x_showtime":
+		return "theme_park"
+	case "school_refusal", "25_ji_night_cord_de":
+		return "school_refusal"
+	case "piapro":
+		return "piapro"
+	case "", "none":
+		return ""
+	default:
+		return strings.ToLower(strings.TrimSpace(raw))
+	}
+}
+
+func (c *CloudSource) isFestivalCard(supplyID int) bool {
+	typ := c.getRawCardSupplyType(supplyID)
+	return typ == "colorful_festival_limited" || typ == "bloom_festival_limited"
+}
+
+func (c *CloudSource) getRawCardSupplyType(id int) string {
+	if id == 0 {
+		return ""
+	}
+	c.supplyMu.RLock()
+	if cached, ok := c.supplyByID[id]; ok {
+		c.supplyMu.RUnlock()
+		return cached
+	}
+	c.supplyMu.RUnlock()
+
+	supply, err := c.client.Cardsupplie.Query().
+		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(id)).
+		Only(context.Background())
+	if err != nil {
+		return ""
+	}
+
+	value := supply.CardSupplyType
+	c.supplyMu.Lock()
+	c.supplyByID[id] = value
+	c.supplyMu.Unlock()
+	return value
 }
 
 func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {

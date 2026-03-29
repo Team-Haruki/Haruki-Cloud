@@ -20,11 +20,17 @@ type CardQueryInfo struct {
 	Value       int
 	Sequence    int
 	CharacterID int
+	Unit        string
+	MainUnit    string
+	SupportUnit string
 	Rarity      string
 	Attr        string
 	SkillType   string
 	SupplyType  string
 	Year        int
+	EventID     int
+	BanCharID   int
+	BanSeq      int
 	Original    string
 }
 
@@ -48,6 +54,14 @@ func (p *Parser) Parse(args string) (*CardQueryInfo, error) {
 		return info, nil
 	}
 	return nil, fmt.Errorf("无法解析的指令: %s", args)
+}
+
+func LooksLikeSingleCardQuery(args string) bool {
+	info, err := NewParser(defaultNicknames).Parse(strings.TrimSpace(args))
+	if err != nil || info == nil {
+		return false
+	}
+	return info.Type == QueryTypeID || info.Type == QueryTypeSeq
 }
 
 func (p *Parser) tryParseNicknameSeq(args string) *CardQueryInfo {
@@ -92,13 +106,14 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	info := &CardQueryInfo{Type: QueryTypeFilter, Original: args}
 	matched := false
 
-	if result := p.extractor.ExtractCharacter(current); result.Found {
-		info.CharacterID = result.Value
+	if result := p.extractor.ExtractEventID(current); result.Found {
+		info.EventID = result.Value
 		current = result.Remaining
 		matched = true
 	}
-	if result := p.extractor.ExtractRarity(current); result.Found {
-		info.Rarity = result.Value
+	if result := p.extractor.ExtractBanEvent(current); result.Found {
+		info.BanCharID = result.Value.CharacterID
+		info.BanSeq = result.Value.Sequence
 		current = result.Remaining
 		matched = true
 	}
@@ -112,6 +127,35 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 		current = result.Remaining
 		matched = true
 	}
+	if result := p.extractor.ExtractVSUnit(current); result.Found {
+		info.MainUnit = "piapro"
+		if result.Value == "piapro" {
+			info.SupportUnit = "none"
+		} else {
+			info.SupportUnit = result.Value
+		}
+		current = result.Remaining
+		matched = true
+	} else if result := p.extractor.ExtractOCUnit(current); result.Found {
+		info.MainUnit = result.Value
+		info.SupportUnit = "none"
+		current = result.Remaining
+		matched = true
+	} else if result := p.extractor.ExtractUnit(current); result.Found {
+		info.Unit = result.Value
+		current = result.Remaining
+		matched = true
+	}
+	if result := p.extractor.ExtractRarity(current); result.Found {
+		info.Rarity = result.Value
+		current = result.Remaining
+		matched = true
+	}
+	if result := p.extractor.ExtractCharacter(current); result.Found {
+		info.CharacterID = result.Value
+		current = result.Remaining
+		matched = true
+	}
 	if result := p.extractor.ExtractSupply(current); result.Found {
 		info.SupplyType = result.Value
 		current = result.Remaining
@@ -119,6 +163,7 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	}
 	if result := p.extractor.ExtractYear(current); result.Found {
 		info.Year = result.Value
+		current = result.Remaining
 		matched = true
 	}
 	if matched {

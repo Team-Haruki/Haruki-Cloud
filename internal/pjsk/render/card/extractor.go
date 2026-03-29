@@ -59,6 +59,11 @@ type Extractor struct {
 	nicknames map[string]int
 }
 
+type BanEventRef struct {
+	CharacterID int
+	Sequence    int
+}
+
 type ExtractResult[T any] struct {
 	Value     T
 	Remaining string
@@ -100,11 +105,11 @@ func (e *Extractor) ExtractRarity(text string) ExtractResult[string] {
 }
 
 var attrRules = buildRules(map[string]string{
-	"cute": "cute", "可爱": "cute", "粉": "cute",
-	"cool": "cool", "帅气": "cool", "蓝": "cool",
-	"pure": "pure", "纯真": "pure", "草": "pure", "绿": "pure",
-	"happy": "happy", "快乐": "happy", "橙": "happy",
-	"mysterious": "mysterious", "神秘": "mysterious", "紫": "mysterious",
+	"cute": "cute", "可爱": "cute", "粉花": "cute", "粉": "cute",
+	"cool": "cool", "帅气": "cool", "蓝星": "cool", "蓝": "cool",
+	"pure": "pure", "纯真": "pure", "绿草": "pure", "草": "pure", "绿": "pure",
+	"happy": "happy", "快乐": "happy", "橙心": "happy", "橙": "happy", "黄": "happy",
+	"mysterious": "mysterious", "神秘": "mysterious", "紫月": "mysterious", "紫": "mysterious",
 })
 
 func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
@@ -120,6 +125,7 @@ const (
 
 var skillRules = buildRules(map[string]string{
 	"p分": "perfect_score_up",
+	"判分": "judgment_accuracy_up",
 	"大分": "great_score_up",
 	"分":  "score_up",
 	"判定": "judgment_accuracy_up",
@@ -133,14 +139,149 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 }
 
 var supplyRules = buildRules(map[string]string{
-	"fes": "festival",
-	"限定":  "limited", "limit": "limited",
+	"期间限定": "limited",
+	"fes":  "festival",
+	"限定":   "limited", "limit": "limited",
 	"常驻": "normal", "非限": "normal",
 	"生日": "birthday",
 })
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {
 	return extractByRules(text, supplyRules)
+}
+
+var unitRules = buildRules(map[string]string{
+	"light_sound":    "light_sound",
+	"ln":             "light_sound",
+	"idol":           "idol",
+	"mmj":            "idol",
+	"street":         "street",
+	"vbs":            "street",
+	"theme_park":     "theme_park",
+	"ws":             "theme_park",
+	"school_refusal": "school_refusal",
+	"25h":            "school_refusal",
+	"25时":            "school_refusal",
+	"25":             "school_refusal",
+	"piapro":         "piapro",
+	"vs":             "piapro",
+	"v":              "piapro",
+})
+
+func (e *Extractor) ExtractUnit(text string) ExtractResult[string] {
+	return extractByRules(text, unitRules)
+}
+
+var vsUnitRules = buildRules(map[string]string{
+	"lnvs":  "light_sound",
+	"lnv":   "light_sound",
+	"mmjvs": "idol",
+	"mmjv":  "idol",
+	"vbsvs": "street",
+	"vbsv":  "street",
+	"wsvs":  "theme_park",
+	"wsv":   "theme_park",
+	"25hvs": "school_refusal",
+	"25hv":  "school_refusal",
+	"25时vs": "school_refusal",
+	"25时v":  "school_refusal",
+	"25vs":  "school_refusal",
+	"25v":   "school_refusal",
+})
+
+func (e *Extractor) ExtractVSUnit(text string) ExtractResult[string] {
+	return extractByRules(text, vsUnitRules)
+}
+
+var ocUnitRules = buildRules(map[string]string{
+	"lnoc":  "light_sound",
+	"纯ln":   "light_sound",
+	"mmjoc": "idol",
+	"纯mmj":  "idol",
+	"vbsoc": "street",
+	"纯vbs":  "street",
+	"wsoc":  "theme_park",
+	"纯ws":   "theme_park",
+	"25hoc": "school_refusal",
+	"纯25h":  "school_refusal",
+	"25时oc": "school_refusal",
+	"纯25时":  "school_refusal",
+	"25oc":  "school_refusal",
+	"纯25":   "school_refusal",
+	"vsoc":  "piapro",
+	"voc":   "piapro",
+	"纯vs":   "piapro",
+	"纯v":    "piapro",
+})
+
+func (e *Extractor) ExtractOCUnit(text string) ExtractResult[string] {
+	return extractByRules(text, ocUnitRules)
+}
+
+var reEventID = regexp.MustCompile(`(?i)\bevent(\d+)\b`)
+
+func (e *Extractor) ExtractEventID(text string) ExtractResult[int] {
+	matches := reEventID.FindStringSubmatch(text)
+	if len(matches) < 2 {
+		return ExtractResult[int]{Remaining: text}
+	}
+	value, err := strconv.Atoi(matches[1])
+	if err != nil || value <= 0 {
+		return ExtractResult[int]{Remaining: text}
+	}
+	remaining := reEventID.ReplaceAllString(text, "")
+	return ExtractResult[int]{Value: value, Remaining: strings.TrimSpace(remaining), Found: true}
+}
+
+func (e *Extractor) ExtractBanEvent(text string) ExtractResult[BanEventRef] {
+	bestToken := ""
+	best := BanEventRef{}
+	for nickname, id := range e.nicknames {
+		for seq := 1; seq <= 9; seq++ {
+			token := nickname + strconv.Itoa(seq)
+			pattern := "(?i)"
+			isASCII := true
+			for _, ch := range token {
+				if ch > 127 {
+					isASCII = false
+					break
+				}
+			}
+			if isASCII {
+				pattern += `\b` + regexp.QuoteMeta(token) + `\b`
+			} else {
+				pattern += regexp.QuoteMeta(token)
+			}
+			re := regexp.MustCompile(pattern)
+			if !re.MatchString(text) {
+				continue
+			}
+			if len(token) <= len(bestToken) {
+				continue
+			}
+			bestToken = token
+			best = BanEventRef{CharacterID: id, Sequence: seq}
+		}
+	}
+	if bestToken == "" {
+		return ExtractResult[BanEventRef]{Remaining: text}
+	}
+	pattern := "(?i)"
+	isASCII := true
+	for _, ch := range bestToken {
+		if ch > 127 {
+			isASCII = false
+			break
+		}
+	}
+	if isASCII {
+		pattern += `\b` + regexp.QuoteMeta(bestToken) + `\b`
+	} else {
+		pattern += regexp.QuoteMeta(bestToken)
+	}
+	re := regexp.MustCompile(pattern)
+	remaining := strings.TrimSpace(re.ReplaceAllString(text, ""))
+	return ExtractResult[BanEventRef]{Value: best, Remaining: remaining, Found: true}
 }
 
 var (
@@ -162,6 +303,10 @@ func (e *Extractor) ExtractYear(text string) ExtractResult[int] {
 	if strings.Contains(text, "去年") {
 		remaining := strings.Replace(text, "去年", "", 1)
 		return ExtractResult[int]{Value: time.Now().Year() - 1, Remaining: strings.TrimSpace(remaining), Found: true}
+	}
+	if strings.Contains(text, "前年") {
+		remaining := strings.Replace(text, "前年", "", 1)
+		return ExtractResult[int]{Value: time.Now().Year() - 2, Remaining: strings.TrimSpace(remaining), Found: true}
 	}
 	if strings.Contains(text, "今年") {
 		remaining := strings.Replace(text, "今年", "", 1)

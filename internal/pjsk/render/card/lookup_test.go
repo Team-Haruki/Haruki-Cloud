@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -12,8 +13,10 @@ import (
 )
 
 type lookupTestSource struct {
-	card  *masterdata.Card
-	cards []*masterdata.Card
+	card       *masterdata.Card
+	cards      []*masterdata.Card
+	characters map[int]*masterdata.Character
+	filterFunc func(*CardQueryInfo) ([]*masterdata.Card, error)
 }
 
 func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
@@ -39,10 +42,36 @@ func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
 }
 
 func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
-	return nil, fmt.Errorf("card not found: %d/%d", characterID, seq)
+	items := make([]*masterdata.Card, 0, len(s.cards))
+	for _, item := range s.cards {
+		if item != nil && item.CharacterID == characterID {
+			copy := *item
+			items = append(items, &copy)
+		}
+	}
+	if len(items) == 0 {
+		return nil, fmt.Errorf("card not found: %d/%d", characterID, seq)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].ReleaseAt == items[j].ReleaseAt {
+			return items[i].ID < items[j].ID
+		}
+		return items[i].ReleaseAt < items[j].ReleaseAt
+	})
+	if seq >= 0 {
+		return nil, fmt.Errorf("card sequence must be negative: %d", seq)
+	}
+	index := len(items) + seq
+	if index < 0 || index >= len(items) {
+		return nil, fmt.Errorf("card not found: %d/%d", characterID, seq)
+	}
+	return items[index], nil
 }
 
 func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+	if s.filterFunc != nil {
+		return s.filterFunc(info)
+	}
 	if info == nil {
 		return nil, fmt.Errorf("filter not supported: %+v", info)
 	}
@@ -61,6 +90,12 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 }
 
 func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	if s.characters != nil {
+		if item := s.characters[id]; item != nil {
+			copy := *item
+			return &copy, nil
+		}
+	}
 	return nil, fmt.Errorf("character %d not found", id)
 }
 

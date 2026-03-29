@@ -273,7 +273,7 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 		IsHideUID:       true,
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        false,
-		UserCards:       buildUserCardEntries(activeDeck),
+		UserCards:       buildUserCardEntries(raw.UserCards),
 	}
 	service.musicResult = buildMusicResultMap(raw.UserMusicStats)
 	service.challenge = &ChallengeLiveData{
@@ -499,19 +499,18 @@ func makeRelativeAsset(assetHelper *assets.AssetHelper, target string) string {
 	return filepath.ToSlash(filepath.Clean(target))
 }
 
-func buildUserCardEntries(deck RawUserDeck) []interface{} {
-	cardIDs := []int{deck.Leader, deck.SubLeader, deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5}
-	seen := make(map[int]struct{})
-	entries := make([]interface{}, 0, len(cardIDs))
-	for _, cardID := range cardIDs {
-		if cardID == 0 {
+func buildUserCardEntries(cards []RawUserCard) []interface{} {
+	seen := make(map[int]struct{}, len(cards))
+	entries := make([]interface{}, 0, len(cards))
+	for _, card := range cards {
+		if card.CardID == 0 {
 			continue
 		}
-		if _, ok := seen[cardID]; ok {
+		if _, ok := seen[card.CardID]; ok {
 			continue
 		}
-		seen[cardID] = struct{}{}
-		entries = append(entries, map[string]interface{}{"card_id": cardID})
+		seen[card.CardID] = struct{}{}
+		entries = append(entries, map[string]interface{}{"cardId": card.CardID})
 	}
 	return entries
 }

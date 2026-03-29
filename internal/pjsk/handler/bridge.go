@@ -130,6 +130,11 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		url  string
 	)
 	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
+	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+		if detail := snapshot.DetailedProfile(renderregion.Normalize(r.Region)); detail != nil {
+			publicDetailedProfile = detail
+		}
+	}
 	switch r.Mode {
 	case "card-detail":
 		q := card.Query{Query: r.Query, Region: r.Region}

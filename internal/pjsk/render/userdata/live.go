@@ -73,7 +73,7 @@ func NewFromBytes(
 		IsHideUID:       true,
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        false,
-		UserCards:       buildUserCardEntries(activeDeck),
+		UserCards:       buildUserCardEntries(raw.UserCards),
 	}
 	service.musicResult = buildMusicResultMap(raw.UserMusicStats)
 	service.challenge = &ChallengeLiveData{

@@ -13,6 +13,8 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
+const cardListAutoBoxThreshold = 90
+
 type Controller struct {
 	sources   *regionsource.Registry[DataSource]
 	events    *regionsource.Registry[event.DataSource]
@@ -70,40 +72,26 @@ func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
 }
 
 func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListRequest, error) {
-	region, source, builder, err := c.resolveBuilder(query.Region)
+	region, _, builder, cards, err := c.resolveCardsForListRequest(query)
 	if err != nil {
 		return nil, err
 	}
 
-	cardIDs := append([]int(nil), query.CardIDs...)
-	if len(cardIDs) == 0 {
-		rawQuery := strings.TrimSpace(query.Query)
-		if rawQuery == "" {
-			return nil, fmt.Errorf("card ids are required")
+	cardIDs := make([]int, 0, len(cards))
+	seen := make(map[int]struct{}, len(cards))
+	for _, item := range cards {
+		if item == nil || item.ID <= 0 {
+			continue
 		}
-
-		searcher := NewSearchService(source, NewParser(c.nicknames))
-		cards, err := searcher.SearchList(rawQuery)
-		if err != nil {
-			return nil, fmt.Errorf("failed to search card list: %w", err)
+		if _, ok := seen[item.ID]; ok {
+			continue
 		}
-
-		seen := make(map[int]struct{}, len(cards))
-		for _, item := range cards {
-			if item == nil || item.ID <= 0 {
-				continue
-			}
-			if _, ok := seen[item.ID]; ok {
-				continue
-			}
-			seen[item.ID] = struct{}{}
-			cardIDs = append(cardIDs, item.ID)
-		}
-		if len(cardIDs) == 0 {
-			return nil, fmt.Errorf("card ids are required")
-		}
+		seen[item.ID] = struct{}{}
+		cardIDs = append(cardIDs, item.ID)
 	}
-
+	if len(cardIDs) == 0 {
+		return nil, fmt.Errorf("card ids are required")
+	}
 	req, err := builder.BuildCardListRequest(cardIDs, region)
 	if err != nil {
 		return nil, err
@@ -117,6 +105,17 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	region, _, builder, cards, err := c.resolveCardsForListRequest(query)
+	if err != nil {
+		return nil, err
+	}
+	if len(cards) >= cardListAutoBoxThreshold {
+		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile)
+		if buildErr != nil {
+			return nil, buildErr
+		}
+		return c.drawing.GenerateCardBox(req)
 	}
 	req, err := c.BuildCardListRequest(query)
 	if err != nil {
@@ -161,7 +160,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 			return nil, fmt.Errorf("failed to search card box: %w", err)
 		}
 	}
-	req, err := builder.BuildCardBoxRequest(cards, region)
+	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +192,51 @@ func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSour
 		eventSource = resolvedEventSource
 	}
 	return resolved, source, NewBuilder(source, c.translationSource(resolved), eventSource, c.assets), nil
+}
+
+func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion.Value, DataSource, *Builder, []*masterdata.Card, error) {
+	region, source, builder, err := c.resolveBuilder(query.Region)
+	if err != nil {
+		return region, nil, nil, nil, err
+	}
+
+	if len(query.CardIDs) > 0 {
+		cards := make([]*masterdata.Card, 0, len(query.CardIDs))
+		seen := make(map[int]struct{}, len(query.CardIDs))
+		for _, cardID := range query.CardIDs {
+			if cardID <= 0 {
+				continue
+			}
+			if _, ok := seen[cardID]; ok {
+				continue
+			}
+			seen[cardID] = struct{}{}
+			card, getErr := source.GetCardByID(cardID)
+			if getErr != nil || card == nil {
+				continue
+			}
+			cards = append(cards, card)
+		}
+		if len(cards) == 0 {
+			return region, nil, nil, nil, fmt.Errorf("card ids are required")
+		}
+		return region, source, builder, cards, nil
+	}
+
+	rawQuery := strings.TrimSpace(query.Query)
+	if rawQuery == "" {
+		return region, nil, nil, nil, fmt.Errorf("card ids are required")
+	}
+
+	searcher := NewSearchService(source, NewParser(c.nicknames))
+	cards, err := searcher.SearchList(rawQuery)
+	if err != nil {
+		return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
+	}
+	if len(cards) == 0 {
+		return region, nil, nil, nil, fmt.Errorf("card ids are required")
+	}
+	return region, source, builder, cards, nil
 }
 
 func (c *Controller) translationSource(region renderregion.Value) DataSource {

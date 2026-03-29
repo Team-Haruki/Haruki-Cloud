@@ -149,11 +149,12 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 	}, nil
 }
 
-func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value) (*drawing.CardBoxRequest, error) {
+func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest) (*drawing.CardBoxRequest, error) {
 	if len(cards) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
 
+	ownedCardIDs := extractOwnedCardIDs(detailedProfile)
 	items := make([]drawing.UserCard, 0, len(cards))
 	characterIconPaths := make(map[int]string)
 	for _, card := range cards {
@@ -166,7 +167,7 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		}
 		items = append(items, drawing.UserCard{
 			Card:    cardInfo,
-			HasCard: false,
+			HasCard: ownedCardIDs[card.ID],
 		})
 		characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
 	}
@@ -181,6 +182,33 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		ShowBox:            false,
 		CharacterIconPaths: characterIconPaths,
 	}, nil
+}
+
+func extractOwnedCardIDs(detailedProfile *drawing.DetailedProfileCardRequest) map[int]bool {
+	if detailedProfile == nil || len(detailedProfile.UserCards) == 0 {
+		return nil
+	}
+	owned := make(map[int]bool, len(detailedProfile.UserCards))
+	for _, raw := range detailedProfile.UserCards {
+		switch item := raw.(type) {
+		case map[string]interface{}:
+			for _, key := range []string{"cardId", "card_id"} {
+				value, ok := item[key]
+				if !ok {
+					continue
+				}
+				switch v := value.(type) {
+				case int:
+					owned[v] = true
+				case int64:
+					owned[int(v)] = true
+				case float64:
+					owned[int(v)] = true
+				}
+			}
+		}
+	}
+	return owned
 }
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {

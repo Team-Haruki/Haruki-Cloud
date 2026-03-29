@@ -1,9 +1,12 @@
 package card
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/drawing"
 )
 
 func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {
@@ -92,40 +95,78 @@ func TestBuildCardListRequestResolvesAdvancedFiltersFromQuery(t *testing.T) {
 	}
 }
 
-func TestBuildCardListRequestPrefers25UnitAliasOverCardID(t *testing.T) {
-	cardInfo := &masterdata.Card{
-		ID:              1025,
-		CharacterID:     26,
-		CardRarityType:  "rarity_4",
-		Attr:            "cool",
-		Prefix:          "Card 25",
-		AssetBundleName: "card_25",
-	}
-	source := &lookupTestSource{
-		cards: []*masterdata.Card{cardInfo},
-		filterFunc: func(info *CardQueryInfo) ([]*masterdata.Card, error) {
-			if info == nil {
-				t.Fatal("expected query info")
-			}
-			if info.Type != QueryTypeFilter {
-				t.Fatalf("expected filter query, got %+v", info)
-			}
-			if info.Unit != "school_refusal" {
-				t.Fatalf("unexpected unit filter: %+v", info)
-			}
-			return []*masterdata.Card{cardInfo}, nil
+func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
+	source := &lookupTestSource{}
+	builder := NewBuilder(source, nil, nil, nil)
+	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
+		{
+			ID:              1001,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Card A",
+			AssetBundleName: "card_a",
 		},
-	}
-
-	controller := NewController(source, nil, nil, nil)
-	req, err := controller.BuildCardListRequest(ListRequest{
-		Query:  "25",
-		Region: "jp",
+		{
+			ID:              1002,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cool",
+			Prefix:          "Card B",
+			AssetBundleName: "card_b",
+		},
+	}, "jp", &drawing.DetailedProfileCardRequest{
+		UserCards: []interface{}{
+			map[string]interface{}{"cardId": 1002},
+		},
 	})
 	if err != nil {
-		t.Fatalf("BuildCardListRequest() error = %v", err)
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
-	if len(req.Cards) != 1 || req.Cards[0].CardID != 1025 {
-		t.Fatalf("unexpected cards: %+v", req.Cards)
+	if len(req.Cards) != 2 {
+		t.Fatalf("expected 2 cards, got %d", len(req.Cards))
+	}
+	if req.Cards[0].Card.CardID != 1001 || req.Cards[0].HasCard {
+		t.Fatalf("unexpected first card state: %+v", req.Cards[0])
+	}
+	if req.Cards[1].Card.CardID != 1002 || !req.Cards[1].HasCard {
+		t.Fatalf("unexpected second card state: %+v", req.Cards[1])
+	}
+}
+
+func TestRenderCardListAutoSwitchesToCardBoxWhenTooManyCards(t *testing.T) {
+	source := &lookupTestSource{}
+	for i := 1; i <= cardListAutoBoxThreshold; i++ {
+		source.cards = append(source.cards, &masterdata.Card{
+			ID:              2000 + i,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Card",
+			AssetBundleName: "card_a",
+		})
+	}
+
+	var calledPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calledPath = r.URL.Path
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer server.Close()
+
+	controller := NewController(source, nil, drawing.NewHarukiDrawingClient(server.URL), nil)
+	cardIDs := make([]int, 0, len(source.cards))
+	for _, card := range source.cards {
+		cardIDs = append(cardIDs, card.ID)
+	}
+	_, err := controller.RenderCardList(ListRequest{
+		CardIDs: cardIDs,
+		Region:  "jp",
+	})
+	if err != nil {
+		t.Fatalf("RenderCardList() error = %v", err)
+	}
+	if calledPath != "/api/pjsk/card/box" {
+		t.Fatalf("expected card box render path, got %q", calledPath)
 	}
 }

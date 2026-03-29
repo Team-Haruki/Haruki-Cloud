@@ -1110,6 +1110,13 @@ func ambiguousEntityError(aliasType, sourceName string, ids []int, names map[int
 	for _, id := range ids {
 		parts = append(parts, fmt.Sprintf("%d/%s", id, names[id]))
 	}
+	if aliasType == AliasTypeMusic {
+		lines := make([]string, 0, len(ids))
+		for _, id := range ids {
+			lines = append(lines, fmt.Sprintf("music%d/%s", id, names[id]))
+		}
+		return fmt.Errorf("%s匹配到多个%s，请改用 music<id> 查询：\n%s", sourceName, aliasTypeLabel(aliasType), strings.Join(lines, "\n"))
+	}
 	return fmt.Errorf("%s匹配到多个%s，请改用%s：\n%s", sourceName, aliasTypeLabel(aliasType), aliasTypeIDLabel(aliasType), strings.Join(parts, "\n"))
 }
 

@@ -66,53 +66,7 @@ func (c *CloudSource) SearchMusic(query string) (*masterdata.Music, error) {
 		return c.GetMusicByID(id)
 	}
 
-	musics := c.GetMusics()
-	if len(musics) == 0 {
-		return nil, fmt.Errorf("music not found: %s", query)
-	}
-
-	queryLower := strings.ToLower(query)
-	for _, musicInfo := range musics {
-		if strings.EqualFold(strings.TrimSpace(musicInfo.Title), query) {
-			return cloneMusic(musicInfo), nil
-		}
-	}
-
-	var best *masterdata.Music
-	for _, musicInfo := range musics {
-		if strings.Contains(strings.ToLower(musicInfo.Title), queryLower) {
-			if best == nil || len(musicInfo.Title) < len(best.Title) {
-				best = musicInfo
-			}
-		}
-	}
-	if best != nil {
-		return cloneMusic(best), nil
-	}
-
-	for _, musicInfo := range musics {
-		titles, err := c.GetMusicLocalizedTitles(musicInfo.ID)
-		if err != nil {
-			continue
-		}
-		for _, title := range titles {
-			if strings.EqualFold(strings.TrimSpace(title), query) {
-				return cloneMusic(musicInfo), nil
-			}
-		}
-	}
-	for _, musicInfo := range musics {
-		titles, err := c.GetMusicLocalizedTitles(musicInfo.ID)
-		if err != nil {
-			continue
-		}
-		for _, title := range titles {
-			if strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower) {
-				return cloneMusic(musicInfo), nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("music not found: %s", query)
+	return resolveUniqueMusicQuery(c, query)
 }
 
 func (c *CloudSource) GetMusicByID(id int) (*masterdata.Music, error) {

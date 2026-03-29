@@ -18,6 +18,10 @@
   - 整理歌曲查询、难度提取、排行参数抽取与 `deck` 指定歌曲的统一方向
   - 适合：后续继续修 `music/score/deck` 相关参数语义时对照
 
+- **[PJSK 卡牌查询语义整理](pjsk-card-query-semantics.cn.md)** ⭐
+  - 整理 `card/detail`、`card/list`、`card/image` 的分流规则与参数边界
+  - 适合：继续修卡牌查询、补帮助文本或排查卡牌入口语义时对照
+
 - **[PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)** ⭐
   - 详细记录 2026-03-24 ~ 2026-03-25 这轮账号绑定、Profile 设置、Execute 返回类型、`handler`/`userdata` 分层收口
   - 适合：查看今天这轮代码修改的完整背景和落地结果
@@ -84,6 +88,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-29 | PJSK 卡牌查询语义整理 / README 索引 | 新增卡牌查询专题文档，整理 `card/detail` `card/list` `card/image` 的入口分流与参数边界 |
 | 2026-03-29 | PJSK 歌曲查询统一改造方案 / README 索引 | 新增歌曲查询统一方案文档，整理 `music` `score/music-board` `score/music-meta` `deck` 的统一改造方向 |
 | 2026-03-28 | 客户端对接指南 / 项目进展总结 | 同步 MySekai 指令别名约定（`msa/msm/msr`）与地图编号选图规则（`/msm 1-4`） |
 | 2026-03-26 | PJSK Virtual Live 文本版实现方案 / README 索引 / 架构文档 / 项目进展总结 | 同步 `vlive` 文本功能落地、render 模块数量与 disabled stub 清单 |

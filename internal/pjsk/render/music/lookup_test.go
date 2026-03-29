@@ -225,6 +225,27 @@ func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
 	}
 }
 
+func TestResolveMusicCoverRejectsAmbiguousTitleQuery(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song Alpha", AssetBundleName: "jacket_b"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	_, err := controller.ResolveMusicCover(Query{Query: "Song", Region: "jp"})
+	if err == nil {
+		t.Fatal("expected ambiguous title query to fail")
+	}
+	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+		t.Fatalf("expected ambiguous error, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "music1/Song A") || !strings.Contains(err.Error(), "music2/Song Alpha") {
+		t.Fatalf("expected music id hints in error, got %v", err)
+	}
+}
+
 func errNotFound(kind string) error {
 	return &lookupTestError{kind: kind}
 }

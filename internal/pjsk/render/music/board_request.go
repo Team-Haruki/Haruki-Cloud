@@ -642,7 +642,13 @@ func (c *Controller) resolveMusicBoardSpecs(source DataSource, rows []musicBoard
 			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
 		}
 		musicInfo, err := searcher.SearchInfo(info)
-		if err != nil || musicInfo == nil {
+		if err != nil {
+			if isMusicAmbiguousError(err) {
+				return nil, err
+			}
+			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
+		}
+		if musicInfo == nil {
 			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
 		}
 

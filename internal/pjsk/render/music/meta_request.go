@@ -63,24 +63,21 @@ func (c *Controller) resolveMusicMetaQuery(source DataSource, query string) (*ma
 	if parseErr == nil && info != nil && info.Type != QueryTypeTitle {
 		return nil, err
 	}
+	if isMusicAmbiguousError(err) {
+		return nil, err
+	}
 
 	lower := strings.ToLower(strings.TrimSpace(query))
 	if lower == "" {
 		return nil, fmt.Errorf("music query is empty")
 	}
 
-	var best *masterdata.Music
-	for _, item := range source.GetMusics() {
-		if item == nil || !matchesMusicKeyword(source, item, lower) {
-			continue
-		}
-		if best == nil || len(strings.TrimSpace(item.Title)) < len(strings.TrimSpace(best.Title)) {
-			best = item
-		}
+	musicInfo, keywordErr := resolveUniqueMusicKeyword(source, lower)
+	if keywordErr != nil {
+		return nil, keywordErr
 	}
-	if best != nil {
-		copy := *best
-		return &copy, nil
+	if musicInfo != nil {
+		return musicInfo, nil
 	}
 
 	return nil, err

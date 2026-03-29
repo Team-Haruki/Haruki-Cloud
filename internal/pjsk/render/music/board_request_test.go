@@ -3,6 +3,7 @@ package music
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -239,5 +240,61 @@ func TestResolveMusicBoardRequestReturnsErrorForMissingExplicitDiff(t *testing.T
 		SpecQueries: []string{"music1append"},
 	}); err == nil {
 		t.Fatal("expected explicit missing diff to fail")
+	}
+}
+
+func TestResolveMusicBoardRequestReturnsAmbiguousSpecError(t *testing.T) {
+	root := t.TempDir()
+	userJSON := filepath.Join(root, "user.json")
+	metaJSON := filepath.Join(root, "music_meta.json")
+
+	if err := os.WriteFile(userJSON, []byte(`{
+		"now": 1700000000,
+		"userGamedata": {"userId": 123, "name": "Tester", "deck": 1},
+		"userProfile": {},
+		"userDecks": [{"deckId": 1}],
+		"userCards": []
+	}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaJSON, []byte(`[
+		{"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70},
+		{"music_id": 2, "difficulty": "master", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.00, "base_score_auto": 0.95, "skill_score_solo": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_auto": [0.09,0.08,0.07,0.06,0.05,0.04], "skill_score_multi": [0.12,0.11,0.10,0.09,0.08,0.07], "fever_score": 0.60}
+	]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song Alpha", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 30},
+			},
+		},
+	}
+	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSON,
+		MusicMetaJSON: metaJSON,
+	})
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
+	_, err := controller.ResolveMusicBoardRequest("jp", BoardQuery{
+		SpecQueries: []string{"Song"},
+	})
+	if err == nil {
+		t.Fatal("expected ambiguous spec query to fail")
+	}
+	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+		t.Fatalf("expected ambiguous error, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "music1/Song A") || !strings.Contains(err.Error(), "music2/Song Alpha") {
+		t.Fatalf("expected music id hints in error, got %v", err)
 	}
 }

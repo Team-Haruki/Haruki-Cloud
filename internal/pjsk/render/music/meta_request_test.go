@@ -3,6 +3,7 @@ package music
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -185,5 +186,51 @@ func TestResolveMusicMetaRequestsRejectsMissingExplicitMusicID(t *testing.T) {
 	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
 	if _, err := controller.ResolveMusicMetaRequests("jp", []string{"music999"}); err == nil {
 		t.Fatal("expected missing explicit music id to fail")
+	}
+}
+
+func TestResolveMusicMetaRequestsRejectsAmbiguousKeywordQuery(t *testing.T) {
+	root := t.TempDir()
+	userJSON := filepath.Join(root, "user.json")
+	metaJSON := filepath.Join(root, "music_meta.json")
+
+	if err := os.WriteFile(userJSON, []byte(`{
+		"now": 1700000000,
+		"userGamedata": {"userId": 123, "name": "Tester", "deck": 1},
+		"userProfile": {},
+		"userDecks": [{"deckId": 1}],
+		"userCards": []
+	}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaJSON, []byte(`[
+		{"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.2, "base_score_auto": 1.1, "skill_score_solo": [0.1,0.2], "skill_score_auto": [0.3,0.4], "skill_score_multi": [0.5,0.6], "fever_score": 0.7},
+		{"music_id": 2, "difficulty": "master", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.0, "base_score_auto": 0.9, "skill_score_solo": [0.11,0.22], "skill_score_auto": [0.33,0.44], "skill_score_multi": [0.55,0.66], "fever_score": 0.77}
+	]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Alpha", Pronunciation: "shared"},
+			2: {ID: 2, Title: "Beta", Pronunciation: "shared"},
+		},
+	}
+	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSON,
+		MusicMetaJSON: metaJSON,
+	})
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
+	_, err := controller.ResolveMusicMetaRequests("jp", []string{"shared"})
+	if err == nil {
+		t.Fatal("expected ambiguous keyword query to fail")
+	}
+	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+		t.Fatalf("expected ambiguous error, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "music1/Alpha") || !strings.Contains(err.Error(), "music2/Beta") {
+		t.Fatalf("expected music id hints in error, got %v", err)
 	}
 }

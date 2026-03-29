@@ -93,7 +93,7 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 		}
 	}
 
-	return source.SearchMusic(query)
+	return resolveUniqueMusicQuery(source, query)
 }
 
 func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string) (*int, string, error) {

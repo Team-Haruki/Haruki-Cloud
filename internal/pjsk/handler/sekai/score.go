@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -117,15 +118,7 @@ func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
 }
 
 func splitMusicMetaQueries(args string) []string {
-	segments := strings.Split(strings.ReplaceAll(strings.TrimSpace(args), "/", "|"), "|")
-	clean := make([]string, 0, len(segments))
-	for _, seg := range segments {
-		seg = strings.TrimSpace(seg)
-		if seg != "" {
-			clean = append(clean, seg)
-		}
-	}
-	return clean
+	return rendermusic.SplitMusicQueries(args)
 }
 
 func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
@@ -156,59 +149,292 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 	}
 
 	params := rendermusic.BoardQuery{}
-	tokens := strings.Fields(args)
-	remaining := make([]string, 0, len(tokens))
 
-	for _, token := range tokens {
-		lower := strings.ToLower(strings.TrimSpace(token))
-		if lower == "" {
-			continue
-		}
-		if page, ok := parseMusicBoardPage(lower); ok {
-			params.Page = page
-			continue
-		}
-		if liveType, ok := resolveMusicBoardLiveType(lower); ok {
-			params.LiveType = liveType
-			continue
-		}
-		if target, ok := resolveMusicBoardTarget(lower); ok {
-			params.Target = target
-			continue
-		}
-		if ascend, ok := resolveMusicBoardOrder(lower); ok {
-			params.Ascend = ascend
-			continue
-		}
-		if strategy, ok := resolveMusicBoardStrategy(lower); ok {
-			params.SkillStrategy = strategy
-			continue
-		}
-		if power, ok := parseMusicBoardPower(lower); ok {
-			params.Power = power
-			continue
-		}
-		if deckBonus, ok := parseMusicBoardDeckBonus(lower); ok {
-			params.DeckBonus = deckBonus
-			continue
-		}
-		if interval, ok := parseMusicBoardInterval(lower); ok {
-			params.PlayInterval = interval
-			continue
-		}
-		if isMusicBoardLevelFilter(lower) {
-			params.LevelFilter = lower
-			continue
-		}
-		if diff, ok := resolveMusicBoardDifficulty(lower); ok {
-			params.DiffFilter = append(params.DiffFilter, diff)
-			continue
-		}
-		remaining = append(remaining, token)
+	if page, remaining, ok := extractMusicBoardPageArg(args); ok {
+		params.Page = page
+		args = remaining
 	}
 
-	params.SpecQueries = splitMusicMetaQueries(strings.TrimSpace(strings.Join(remaining, " ")))
+	liveType, remaining := extractMusicBoardMappedArg(args, map[string][]string{
+		"solo":  {"单人", "solo", "挑战"},
+		"multi": {"多人", "multi"},
+		"auto":  {"自动", "auto"},
+	}, "solo")
+	params.LiveType = liveType
+	args = remaining
+
+	defaultTarget := "score"
+	if liveType == "multi" {
+		defaultTarget = "pt/time"
+	}
+	target, remaining := extractMusicBoardMappedArg(args, map[string][]string{
+		"score":   {"live分数", "分数", "score"},
+		"pt/time": {"时间效率", "pt/h", "pt时间", "时速"},
+		"pt":      {"火效率", "pt/火", "pt"},
+		"tps":     {"每秒点击", "tps"},
+		"time":    {"时长", "时间"},
+	}, defaultTarget)
+	params.Target = target
+	args = remaining
+
+	order, remaining := extractMusicBoardMappedArg(args, map[string][]string{
+		"asc":  {"升序", "从低到高", "从小到大"},
+		"desc": {"降序", "从高到低", "从大到小"},
+	}, "desc")
+	params.Ascend = order == "asc"
+	args = remaining
+
+	defaultStrategy := "avg"
+	if liveType == "solo" {
+		defaultStrategy = "max"
+	}
+	strategy, remaining := extractMusicBoardMappedArg(args, map[string][]string{
+		"max": {"最优", "最高", "最大", "最强", "max"},
+		"min": {"最差", "最低", "最小", "最弱", "min"},
+		"avg": {"平均", "期望", "随机", "均值", "avg"},
+	}, defaultStrategy)
+	params.SkillStrategy = strategy
+	args = remaining
+
+	skills, remaining, err := extractMusicBoardSkills(args, liveType)
+	if err != nil {
+		return rendermusic.BoardQuery{}, err
+	}
+	params.Skills = skills
+	args = remaining
+
+	if target == "pt" || target == "pt/time" {
+		power, remaining, err := extractMusicBoardPower(args)
+		if err != nil {
+			return rendermusic.BoardQuery{}, err
+		}
+		if power > 0 {
+			params.Power = power
+		}
+		args = remaining
+
+		deckBonus, remaining, err := extractMusicBoardDeckBonus(args)
+		if err != nil {
+			return rendermusic.BoardQuery{}, err
+		}
+		if deckBonus > 0 {
+			params.DeckBonus = deckBonus
+		}
+		args = remaining
+	}
+
+	if target == "pt/time" || target == "time" {
+		interval, remaining, err := extractMusicBoardInterval(args)
+		if err != nil {
+			return rendermusic.BoardQuery{}, err
+		}
+		if interval > 0 {
+			params.PlayInterval = interval
+		}
+		args = remaining
+	}
+
+	levelFilter, diffFilter, remaining := extractLeadingMusicBoardFilters(args)
+	params.LevelFilter = levelFilter
+	params.DiffFilter = diffFilter
+	args = remaining
+
+	params.SpecQueries = splitMusicMetaQueries(args)
 	return params, nil
+}
+
+func extractMusicBoardPageArg(args string) (int, string, bool) {
+	for _, token := range strings.Fields(args) {
+		page, ok := parseMusicBoardPage(strings.ToLower(strings.TrimSpace(token)))
+		if !ok {
+			continue
+		}
+		return page, removeMusicBoardToken(args, token), true
+	}
+	return 0, args, false
+}
+
+func extractMusicBoardMappedArg(args string, aliasMap map[string][]string, defaultValue string) (string, string) {
+	type candidate struct {
+		value string
+		alias string
+	}
+
+	candidates := make([]candidate, 0, len(aliasMap))
+	for value, aliases := range aliasMap {
+		for _, alias := range aliases {
+			candidates = append(candidates, candidate{value: value, alias: alias})
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		return len(candidates[i].alias) > len(candidates[j].alias)
+	})
+
+	lowerArgs := strings.ToLower(args)
+	for _, item := range candidates {
+		lowerAlias := strings.ToLower(item.alias)
+		index := strings.Index(lowerArgs, lowerAlias)
+		if index < 0 {
+			continue
+		}
+		return item.value, removeMusicBoardSpan(args, index, len(lowerAlias))
+	}
+
+	return defaultValue, strings.TrimSpace(args)
+}
+
+func extractMusicBoardSkills(args, liveType string) ([]float64, string, error) {
+	hadKeyword := strings.Contains(args, "技能") || strings.Contains(args, "实效")
+	cleaned := strings.ReplaceAll(args, "技能", "")
+	cleaned = strings.ReplaceAll(cleaned, "实效", "")
+	cleaned = strings.TrimSpace(cleaned)
+
+	required := 5
+	if liveType == "multi" {
+		required = 1
+	}
+
+	fields := strings.Fields(cleaned)
+	numbers := make([]float64, 0, required)
+	numberTokens := make([]string, 0, required)
+	for _, field := range fields {
+		value, ok := parseMusicBoardSkillNumber(field)
+		if !ok {
+			break
+		}
+		numbers = append(numbers, value/100.0)
+		numberTokens = append(numberTokens, field)
+		if len(numbers) >= required {
+			break
+		}
+	}
+
+	shouldTreatAsSkills := hadKeyword || (required > 1 && len(numbers) == required)
+	if !shouldTreatAsSkills || len(numbers) == 0 {
+		return nil, cleaned, nil
+	}
+	if len(numbers) != required {
+		return nil, "", fmt.Errorf("解析技能加分失败")
+	}
+
+	remaining := cleaned
+	for _, token := range numberTokens {
+		remaining = removeMusicBoardToken(remaining, token)
+	}
+
+	if liveType == "multi" {
+		return []float64{numbers[0], numbers[0], numbers[0], numbers[0], numbers[0]}, remaining, nil
+	}
+	return numbers, remaining, nil
+}
+
+func parseMusicBoardSkillNumber(token string) (float64, bool) {
+	raw := strings.TrimSpace(strings.TrimSuffix(token, "%"))
+	if raw == "" {
+		return 0, false
+	}
+	value, err := strconv.ParseFloat(raw, 64)
+	return value, err == nil && value > 0
+}
+
+func extractMusicBoardPower(args string) (int, string, error) {
+	for _, token := range strings.Fields(args) {
+		if !strings.Contains(token, "综合") {
+			continue
+		}
+		value, err := parseMusicBoardLargeNumber(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "综合", ""))
+		if err != nil || value <= 0 {
+			return 0, "", fmt.Errorf("解析综合力失败: %q", token)
+		}
+		return value, removeMusicBoardToken(args, token), nil
+	}
+	return 0, args, nil
+}
+
+func extractMusicBoardDeckBonus(args string) (float64, string, error) {
+	for _, token := range strings.Fields(args) {
+		if !strings.Contains(token, "加成") {
+			continue
+		}
+		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "加成", ""), "%")
+		value, err := strconv.ParseFloat(raw, 64)
+		if err != nil || value <= 0 {
+			return 0, "", fmt.Errorf("解析活动加成失败: %q", token)
+		}
+		return value, removeMusicBoardToken(args, token), nil
+	}
+	return 0, args, nil
+}
+
+func extractMusicBoardInterval(args string) (float64, string, error) {
+	for _, token := range strings.Fields(args) {
+		if !strings.Contains(token, "间隔") {
+			continue
+		}
+		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "间隔", ""), "秒s")
+		value, err := strconv.ParseFloat(raw, 64)
+		if err != nil || value <= 0 {
+			return 0, "", fmt.Errorf("解析游玩间隔失败: %q", token)
+		}
+		return value, removeMusicBoardToken(args, token), nil
+	}
+	return 0, args, nil
+}
+
+func extractLeadingMusicBoardFilters(args string) (string, []string, string) {
+	levelFilter := ""
+	diffFilter := make([]string, 0, 2)
+	remaining := strings.TrimSpace(args)
+
+	for {
+		fields := strings.Fields(remaining)
+		if len(fields) == 0 {
+			break
+		}
+
+		token := fields[0]
+		lower := strings.ToLower(strings.TrimSpace(token))
+		switch {
+		case levelFilter == "" && isMusicBoardLevelFilter(lower):
+			levelFilter = lower
+			remaining = removeMusicBoardToken(remaining, token)
+		default:
+			diff, rest := rendermusic.ExtractMusicDifficulty(token)
+			if diff == "" || strings.TrimSpace(rest) != "" {
+				return levelFilter, diffFilter, strings.TrimSpace(remaining)
+			}
+			if !containsMusicBoardString(diffFilter, diff) {
+				diffFilter = append(diffFilter, diff)
+			}
+			remaining = removeMusicBoardToken(remaining, token)
+		}
+	}
+
+	return levelFilter, diffFilter, strings.TrimSpace(remaining)
+}
+
+func removeMusicBoardToken(args, token string) string {
+	index := strings.Index(args, token)
+	if index < 0 {
+		return strings.TrimSpace(args)
+	}
+	return removeMusicBoardSpan(args, index, len(token))
+}
+
+func removeMusicBoardSpan(args string, start, length int) string {
+	if start < 0 || length <= 0 || start+length > len(args) {
+		return strings.TrimSpace(args)
+	}
+	return strings.TrimSpace(args[:start] + args[start+length:])
+}
+
+func containsMusicBoardString(values []string, target string) bool {
+	for _, value := range values {
+		if strings.EqualFold(value, target) {
+			return true
+		}
+	}
+	return false
 }
 
 func parseMusicBoardPage(token string) (int, bool) {
@@ -307,11 +533,11 @@ func parseMusicBoardInterval(token string) (float64, bool) {
 }
 
 func parseMusicBoardLargeNumber(raw string) (int, error) {
-	raw = strings.TrimSpace(raw)
+	raw = strings.ToLower(strings.TrimSpace(raw))
 	if raw == "" {
 		return 0, fmt.Errorf("empty power")
 	}
-	multiplier := 1
+	multiplier := 1.0
 	switch {
 	case strings.HasSuffix(raw, "万"):
 		raw = strings.TrimSuffix(raw, "万")
@@ -323,11 +549,11 @@ func parseMusicBoardLargeNumber(raw string) (int, error) {
 		raw = strings.TrimSuffix(raw, "k")
 		multiplier = 1000
 	}
-	value, err := strconv.Atoi(raw)
+	value, err := strconv.ParseFloat(raw, 64)
 	if err != nil {
 		return 0, err
 	}
-	return value * multiplier, nil
+	return int(value * multiplier), nil
 }
 
 func isMusicBoardLevelFilter(token string) bool {

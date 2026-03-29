@@ -9,10 +9,11 @@ import (
 
 const MUSIC_SEARCH_HELP = `请输入要查询的曲目，支持以下查询方式:
 1. 直接使用曲目名称或别名
-2. 曲目ID: id123
-3. 曲目负数索引: 例如 -1 表示最新的曲目，-1leak 则会包含未公开的曲目
-4. 活动id: event123
-5. 箱活: ick1`
+2. 显式曲目ID: music123
+3. 纯歌曲入口兼容歌曲ID: 123 / id123
+4. 曲目负数索引: 例如 -1 表示最新的曲目
+5. 活动id: event123
+6. 箱活: ick1`
 
 func (sekaiHandlers) ChartHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{

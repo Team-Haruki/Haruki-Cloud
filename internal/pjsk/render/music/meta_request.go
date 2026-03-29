@@ -59,6 +59,11 @@ func (c *Controller) resolveMusicMetaQuery(source DataSource, query string) (*ma
 		return musicInfo, nil
 	}
 
+	info, parseErr := searcher.parser.Parse(query)
+	if parseErr == nil && info != nil && info.Type != QueryTypeTitle {
+		return nil, err
+	}
+
 	lower := strings.ToLower(strings.TrimSpace(query))
 	if lower == "" {
 		return nil, fmt.Errorf("music query is empty")

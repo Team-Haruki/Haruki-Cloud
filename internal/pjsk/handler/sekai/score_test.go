@@ -68,6 +68,32 @@ func TestMusicMetaHandleBuildsResolvedCommand(t *testing.T) {
 	}
 }
 
+func TestMusicMetaHandleSplitsQueriesByNewline(t *testing.T) {
+	h := sekaiHandlers{}.MusicMetaHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲meta",
+		ArgText:    "Tell Your World\n初音未来的消失",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params musicMetaQueriesParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.Queries) != 2 || params.Queries[0] != "Tell Your World" || params.Queries[1] != "初音未来的消失" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestCustomRoomScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.CustomRoomScoreControlHandle()
 
@@ -131,6 +157,110 @@ func TestMusicBoardHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("unexpected diff filter: %+v", params)
 	}
 	if len(params.SpecQueries) != 2 || params.SpecQueries[0] != "Song A" || params.SpecQueries[1] != "Song B" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
+func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "solo max 技能 120 110 100 90 80 Song A ex / music2ma",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LiveType != "solo" || params.SkillStrategy != "max" {
+		t.Fatalf("unexpected board mode: %+v", params)
+	}
+	if len(params.Skills) != 5 {
+		t.Fatalf("unexpected skills: %+v", params.Skills)
+	}
+	expectedSkills := []float64{1.2, 1.1, 1.0, 0.9, 0.8}
+	for idx, expected := range expectedSkills {
+		if params.Skills[idx] != expected {
+			t.Fatalf("unexpected skills: %+v", params.Skills)
+		}
+	}
+	if len(params.SpecQueries) != 2 || params.SpecQueries[0] != "Song A ex" || params.SpecQueries[1] != "music2ma" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
+func TestMusicBoardHandleKeepsBareNumericSpecQuery(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "多人 123",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LiveType != "multi" {
+		t.Fatalf("unexpected live type: %+v", params)
+	}
+	if len(params.Skills) != 0 {
+		t.Fatalf("unexpected skills: %+v", params.Skills)
+	}
+	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "123" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
+func TestMusicBoardHandleParsesMultiSkillWithKeyword(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "多人 200实效 Song A",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.Skills) != 5 {
+		t.Fatalf("unexpected skills: %+v", params.Skills)
+	}
+	for _, skill := range params.Skills {
+		if skill != 2.0 {
+			t.Fatalf("unexpected skills: %+v", params.Skills)
+		}
+	}
+	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "Song A" {
 		t.Fatalf("unexpected spec queries: %+v", params)
 	}
 }

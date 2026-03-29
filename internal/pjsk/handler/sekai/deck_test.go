@@ -3,7 +3,6 @@ package sekai
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
@@ -317,17 +316,56 @@ func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 	}
 }
 
-func TestEventDeckHandleRejectsDirectMusicID(t *testing.T) {
+func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "music123 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.MusicID == nil || *params.MusicID != 123 {
+		t.Fatalf("unexpected music id: %+v", params.MusicID)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
+func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "123 ex",
 	})
-	if err == nil {
-		t.Fatal("expected error")
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "不能直接指定歌曲ID") {
-		t.Fatalf("unexpected error: %v", err)
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.MusicID != nil {
+		t.Fatalf("unexpected music id: %+v", params.MusicID)
+	}
+	if params.MusicQuery != "123" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
 	}
 }

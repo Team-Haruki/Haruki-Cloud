@@ -37,6 +37,7 @@ type Controller struct {
 
 type musicAliasResolver interface {
 	TryResolveMusicID(ctx context.Context, token string) (int, bool, error)
+	TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error)
 }
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, metaLoader *meta.Loader) *Controller {
@@ -78,8 +79,12 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 		return nil, fmt.Errorf("music query is empty")
 	}
 
+	if musicID, ok := ParseExplicitMusicID(query); ok {
+		return source.GetMusicByID(musicID)
+	}
+
 	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicID(context.Background(), query)
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(context.Background(), query)
 		if err != nil {
 			return nil, err
 		}
@@ -91,14 +96,32 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 	return source.SearchMusic(query)
 }
 
-func (c *Controller) resolveMusicListKeywordFilter(keyword string) (*int, string, error) {
+func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string) (*int, string, error) {
 	keyword = strings.TrimSpace(keyword)
 	if keyword == "" {
 		return nil, "", nil
 	}
 
+	if musicID, ok := ParseExplicitMusicID(keyword); ok {
+		if source == nil {
+			return nil, "", fmt.Errorf("music data source is not configured")
+		}
+		if _, err := source.GetMusicByID(musicID); err != nil {
+			return nil, "", err
+		}
+		return &musicID, "", nil
+	}
+
+	if musicID, ok := ParseImplicitMusicID(keyword); ok {
+		if source != nil {
+			if _, err := source.GetMusicByID(musicID); err == nil {
+				return &musicID, "", nil
+			}
+		}
+	}
+
 	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicID(context.Background(), keyword)
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(context.Background(), keyword)
 		if err != nil {
 			return nil, "", err
 		}
@@ -108,6 +131,49 @@ func (c *Controller) resolveMusicListKeywordFilter(keyword string) (*int, string
 	}
 
 	return nil, strings.ToLower(keyword), nil
+}
+
+func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult, error) {
+	if c == nil {
+		return nil, fmt.Errorf("music controller is not configured")
+	}
+	region, source, builder, err := c.resolveBuilder(query.Region)
+	if err != nil {
+		return nil, err
+	}
+	musicInfo, err := c.resolveMusicTitleQuery(source, query.Query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search music by title or alias: %w", err)
+	}
+
+	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
+		jacketPath = localPath
+	}
+	if strings.TrimSpace(jacketPath) == "" {
+		return nil, fmt.Errorf("music %d does not have jacket asset", musicInfo.ID)
+	}
+
+	return &CoverResult{
+		Music: &masterdata.Music{
+			ID:                 musicInfo.ID,
+			Seq:                musicInfo.Seq,
+			ReleaseConditionID: musicInfo.ReleaseConditionID,
+			Categories:         append([]string(nil), musicInfo.Categories...),
+			Title:              builder.buildDisplayMusicTitle(musicInfo, region),
+			Pronunciation:      musicInfo.Pronunciation,
+			Lyricist:           musicInfo.Lyricist,
+			Composer:           musicInfo.Composer,
+			Arranger:           musicInfo.Arranger,
+			DancerCount:        musicInfo.DancerCount,
+			SelfDancerCount:    musicInfo.SelfDancerCount,
+			AssetBundleName:    musicInfo.AssetBundleName,
+			PublishedAt:        musicInfo.PublishedAt,
+			DigitizedAt:        musicInfo.DigitizedAt,
+			IsFullLength:       musicInfo.IsFullLength,
+		},
+		JacketPath: jacketPath,
+	}, nil
 }
 
 func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailRequest, error) {
@@ -173,7 +239,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		minLevel, maxLevel = maxLevel, minLevel
 	}
 
-	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(query.Keyword)
+	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword)
 	if err != nil {
 		return nil, err
 	}

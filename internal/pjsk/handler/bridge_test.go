@@ -119,6 +119,14 @@ func (r *bridgeMusicAliasResolver) TryResolveMusicID(_ context.Context, token st
 	return id, ok, nil
 }
 
+func (r *bridgeMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Context, token string) (int, bool, error) {
+	if r == nil {
+		return 0, false, nil
+	}
+	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
+	return id, ok, nil
+}
+
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {

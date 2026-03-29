@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"strconv"
 	"strings"
 )
@@ -192,23 +193,5 @@ func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 }
 
 func extractMusicDifficulty(args string) (string, string) {
-	fields := strings.Fields(strings.TrimSpace(args))
-	if len(fields) == 0 {
-		return "", strings.TrimSpace(args)
-	}
-	diffMap := map[string]string{
-		"easy": "easy", "ez": "easy", "绿谱": "easy",
-		"normal": "normal", "nm": "normal", "蓝谱": "normal",
-		"hard": "hard", "hd": "hard", "黄谱": "hard",
-		"expert": "expert", "ex": "expert", "红谱": "expert",
-		"master": "master", "mas": "master", "紫谱": "master",
-		"append": "append", "app": "append", "粉谱": "append",
-	}
-	for i, field := range fields {
-		if diff, ok := diffMap[strings.ToLower(field)]; ok {
-			fields = append(fields[:i], fields[i+1:]...)
-			return diff, strings.TrimSpace(strings.Join(fields, " "))
-		}
-	}
-	return "", strings.TrimSpace(args)
+	return rendermusic.ExtractMusicDifficulty(args)
 }

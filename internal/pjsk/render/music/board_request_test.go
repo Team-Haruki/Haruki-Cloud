@@ -141,3 +141,103 @@ func TestResolveMusicBoardRequestBuildsItemsFromAlias(t *testing.T) {
 		t.Fatalf("unexpected board alias resolution: %+v", req.SpecMidDiffs)
 	}
 }
+
+func TestResolveMusicBoardRequestExpandsWildcardSpecDiffs(t *testing.T) {
+	root := t.TempDir()
+	userJSON := filepath.Join(root, "user.json")
+	metaJSON := filepath.Join(root, "music_meta.json")
+
+	if err := os.WriteFile(userJSON, []byte(`{
+		"now": 1700000000,
+		"userGamedata": {"userId": 123, "name": "Tester", "deck": 1},
+		"userProfile": {},
+		"userDecks": [{"deckId": 1}],
+		"userCards": []
+	}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaJSON, []byte(`[
+		{"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70},
+		{"music_id": 1, "difficulty": "expert", "music_time": 118, "tap_count": 550, "event_rate": 90, "base_score": 1.00, "base_score_auto": 0.95, "skill_score_solo": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_auto": [0.09,0.08,0.07,0.06,0.05,0.04], "skill_score_multi": [0.12,0.11,0.10,0.09,0.08,0.07], "fever_score": 0.60}
+	]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+		},
+	}
+	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSON,
+		MusicMetaJSON: metaJSON,
+	})
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
+	req, err := controller.ResolveMusicBoardRequest("jp", BoardQuery{
+		SpecQueries: []string{"music1*"},
+	})
+	if err != nil {
+		t.Fatalf("ResolveMusicBoardRequest() error = %v", err)
+	}
+	if len(req.SpecMidDiffs) != 2 {
+		t.Fatalf("unexpected wildcard spec resolution: %+v", req.SpecMidDiffs)
+	}
+	if len(req.SpecMidDiffs[0]) != 2 || req.SpecMidDiffs[0][0] != 1 || req.SpecMidDiffs[0][1] != "master" {
+		t.Fatalf("unexpected wildcard spec resolution: %+v", req.SpecMidDiffs)
+	}
+	if len(req.SpecMidDiffs[1]) != 2 || req.SpecMidDiffs[1][0] != 1 || req.SpecMidDiffs[1][1] != "expert" {
+		t.Fatalf("unexpected wildcard spec resolution: %+v", req.SpecMidDiffs)
+	}
+}
+
+func TestResolveMusicBoardRequestReturnsErrorForMissingExplicitDiff(t *testing.T) {
+	root := t.TempDir()
+	userJSON := filepath.Join(root, "user.json")
+	metaJSON := filepath.Join(root, "music_meta.json")
+
+	if err := os.WriteFile(userJSON, []byte(`{
+		"now": 1700000000,
+		"userGamedata": {"userId": 123, "name": "Tester", "deck": 1},
+		"userProfile": {},
+		"userDecks": [{"deckId": 1}],
+		"userCards": []
+	}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaJSON, []byte(`[
+		{"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70}
+	]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSON,
+		MusicMetaJSON: metaJSON,
+	})
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
+	if _, err := controller.ResolveMusicBoardRequest("jp", BoardQuery{
+		SpecQueries: []string{"music1append"},
+	}); err == nil {
+		t.Fatal("expected explicit missing diff to fail")
+	}
+}

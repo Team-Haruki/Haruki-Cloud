@@ -5,6 +5,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"regexp"
 	"sort"
 	"strconv"
@@ -19,6 +20,7 @@ type deckAutoQueryParams struct {
 	LiveType                     string                             `json:"live_type,omitempty"`
 	Target                       string                             `json:"target,omitempty"`
 	MusicQuery                   string                             `json:"music_query,omitempty"`
+	MusicID                      *int                               `json:"music_id,omitempty"`
 	MusicDiff                    string                             `json:"music_diff,omitempty"`
 	EventAttr                    string                             `json:"event_attr,omitempty"`
 	EventUnit                    string                             `json:"event_unit,omitempty"`
@@ -695,7 +697,7 @@ func extractDeckMusicQuery(args string, params *deckAutoQueryParams) (string, er
 		return "", nil
 	}
 
-	if diff, cleaned := extractMusicDifficulty(args); diff != "" {
+	if diff, cleaned := rendermusic.ExtractMusicDifficulty(args); diff != "" {
 		params.MusicDiff = diff
 		args = cleaned
 	}
@@ -703,27 +705,13 @@ func extractDeckMusicQuery(args string, params *deckAutoQueryParams) (string, er
 	if args == "" {
 		return "", nil
 	}
-	if isDeckDirectMusicIDQuery(args) {
-		return "", fmt.Errorf("组卡不能直接指定歌曲ID，请使用歌曲名称或别名")
+	if musicID, ok := rendermusic.ParseExplicitMusicID(args); ok {
+		params.MusicID = intPtr(musicID)
+		params.MusicQuery = ""
+		return "", nil
 	}
 	params.MusicQuery = args
 	return "", nil
-}
-
-func isDeckDirectMusicIDQuery(args string) bool {
-	normalized := strings.ToLower(strings.TrimSpace(args))
-	if normalized == "" {
-		return false
-	}
-	if _, err := strconv.Atoi(normalized); err == nil {
-		return true
-	}
-	if strings.HasPrefix(normalized, "id") {
-		if _, err := strconv.Atoi(strings.TrimPrefix(normalized, "id")); err == nil {
-			return true
-		}
-	}
-	return false
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {

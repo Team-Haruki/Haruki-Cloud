@@ -629,17 +629,28 @@ func (c *Controller) resolveMusicBoardSpecs(source DataSource, rows []musicBoard
 			continue
 		}
 
+		expandAllDiffs := strings.Contains(query, "*")
+		if expandAllDiffs {
+			query = strings.TrimSpace(strings.Replace(query, "*", "", 1))
+		}
+		if query == "" {
+			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
+		}
+
 		info, err := searcher.parser.Parse(query)
 		if err != nil {
-			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", query)
+			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
 		}
 		musicInfo, err := searcher.SearchInfo(info)
 		if err != nil || musicInfo == nil {
-			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", query)
+			return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
 		}
 
-		if rawDiff := strings.TrimSpace(info.Diff); rawDiff != "" {
+		if rawDiff := strings.TrimSpace(info.Diff); rawDiff != "" && !expandAllDiffs {
 			diff := normalizeDifficulty(rawDiff)
+			if !containsString(available[musicInfo.ID], diff) {
+				return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
+			}
 			key := musicBoardKey(musicInfo.ID, diff)
 			if _, ok := seen[key]; !ok {
 				seen[key] = struct{}{}

@@ -19,15 +19,16 @@ const (
 )
 
 type QueryInfo struct {
-	Type       QueryType
-	Value      int
-	Diff       string
-	Difficulty string
-	MusicID    int
-	Keyword    string
-	BanCharID  int
-	BanSeq     int
-	Original   string
+	Type               QueryType
+	Value              int
+	Diff               string
+	Difficulty         string
+	MusicID            int
+	Keyword            string
+	BanCharID          int
+	BanSeq             int
+	Original           string
+	AllowTitleFallback bool
 }
 
 type Parser struct {
@@ -40,7 +41,14 @@ func NewParser(banCharacterNicknames map[string]int) *Parser {
 
 func (p *Parser) Parse(args string) (*QueryInfo, error) {
 	args = strings.TrimSpace(args)
-	diff, cleanArgs := p.extractDiff(args)
+	diff, cleanArgs := ExtractMusicDifficulty(args)
+
+	if info := p.tryParseExplicitID(cleanArgs); info != nil {
+		info.Diff = diff
+		info.Difficulty = diff
+		info.Original = args
+		return info, nil
+	}
 
 	if info := p.tryParseID(cleanArgs); info != nil {
 		info.Diff = diff
@@ -93,52 +101,30 @@ func (p *Parser) ParseChart(args string) (*QueryInfo, error) {
 }
 
 func (p *Parser) extractDiff(args string) (string, string) {
-	aliases := map[string]string{
-		"easy":   "easy",
-		"ez":     "easy",
-		"normal": "normal",
-		"nm":     "normal",
-		"hard":   "hard",
-		"hd":     "hard",
-		"expert": "expert",
-		"ex":     "expert",
-		"exp":    "expert",
-		"爷":      "expert",
-		"master": "master",
-		"ma":     "master",
-		"mas":    "master",
-		"红":      "master",
-		"紫":      "master",
-		"append": "append",
-		"apd":    "append",
-	}
+	return ExtractMusicDifficulty(args)
+}
 
-	parts := strings.Fields(args)
-	remaining := make([]string, 0, len(parts))
-	var diff string
-	for _, part := range parts {
-		normalized := strings.ToLower(strings.TrimSpace(part))
-		if mapped, ok := aliases[normalized]; ok {
-			diff = mapped
-			continue
+func (p *Parser) tryParseExplicitID(args string) *QueryInfo {
+	if id, ok := ParseExplicitMusicID(args); ok {
+		return &QueryInfo{
+			Type:    QueryTypeID,
+			Value:   id,
+			MusicID: id,
+			Keyword: strings.TrimSpace(args),
 		}
-		remaining = append(remaining, part)
 	}
-	return diff, strings.TrimSpace(strings.Join(remaining, " "))
+	return nil
 }
 
 func (p *Parser) tryParseID(args string) *QueryInfo {
-	normalized := strings.ToLower(strings.TrimSpace(args))
-	if strings.HasPrefix(normalized, "id") {
-		raw := strings.TrimPrefix(normalized, "id")
-		if isNumeric(raw) {
-			id, _ := strconv.Atoi(raw)
-			return &QueryInfo{Type: QueryTypeID, Value: id, MusicID: id}
+	if id, ok := ParseImplicitMusicID(args); ok {
+		return &QueryInfo{
+			Type:               QueryTypeID,
+			Value:              id,
+			MusicID:            id,
+			Keyword:            strings.TrimSpace(args),
+			AllowTitleFallback: true,
 		}
-	}
-	if isNumeric(normalized) {
-		id, _ := strconv.Atoi(normalized)
-		return &QueryInfo{Type: QueryTypeID, Value: id, MusicID: id}
 	}
 	return nil
 }

@@ -525,19 +525,16 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return onebot11.Message{onebot11.Image(path, "")}, nil
 	}
-	// When a CDN base URL is configured, build a direct URL for region assets instead
-	// of reading from disk and uploading through imagecache.
-	// The path may be absolute (resolved against AssetPrimaryDir) or relative; strip
-	// the primary dir prefix so the CDN-relative path is "{region}-assets/{mode}/...".
+	// When a CDN base URL is configured, build a direct URL by extracting the
+	// "{region}-assets/..." portion of the path (e.g. "jp-assets/startapp/...").
 	if app != nil {
 		if base := strings.TrimRight(app.Config.AssetsBaseURL, "/"); base != "" {
 			rel := filepath.ToSlash(path)
-			if primaryDir := strings.TrimRight(filepath.ToSlash(app.Config.AssetPrimaryDir), "/"); primaryDir != "" && primaryDir != "." {
-				if strings.HasPrefix(rel, primaryDir+"/") {
-					rel = rel[len(primaryDir)+1:]
-				}
+			if idx := strings.Index(rel, "-assets/"); idx > 0 {
+				start := strings.LastIndex(rel[:idx], "/") + 1
+				rel = rel[start:]
 			}
-			return onebot11.Message{onebot11.Image(base+"/"+rel, "")}, nil
+			return onebot11.Message{onebot11.Image(base + "/" + rel, "")}, nil
 		}
 	}
 	data, err := os.ReadFile(path)

@@ -113,8 +113,8 @@ var onDemandPreferredTopLevel = map[string]struct{}{
 	"mysekai":     {},
 }
 
-// RegionAssetDir returns the region-specific startapp asset subdirectory prefix,
-// e.g. "jp-assets/startapp" for "jp".
+// RegionAssetDir returns the region-specific startapp asset subdirectory prefix
+// used by the Haruki Drawing API, e.g. "asset/jp-assets/startapp" for "jp".
 func RegionAssetDir(region string) string {
 	return RegionAssetDirByMode(region, RegionAssetStartApp)
 }
@@ -128,7 +128,7 @@ func RegionAssetDirByMode(region, mode string) string {
 	if normalizedMode == "" {
 		normalizedMode = RegionAssetStartApp
 	}
-	return normalizedRegion + "-assets/" + normalizedMode
+	return "asset/" + normalizedRegion + "-assets/" + normalizedMode
 }
 
 func RegionAssetDirs(region string) []string {
@@ -171,7 +171,17 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	if len(candidates) == 0 {
 		return ""
 	}
-	return ResolveAssetPath(helper, "", candidates...)
+	// Try to find the file locally (e.g. when primary is the Drawing API data dir
+	// and assets follow the expected "asset/{region}-assets/{mode}/..." layout).
+	if helper != nil {
+		if resolved := helper.FirstExisting(candidates...); resolved != "" {
+			return filepath.ToSlash(resolved)
+		}
+	}
+	// Fall back to the first candidate as a relative path so that callers forwarding
+	// the result to the Drawing API always receive a relative path, not an absolute
+	// local path that the Drawing API container cannot access.
+	return candidates[0]
 }
 
 // StaticImagesDir is the base directory for Drawing API static UI images

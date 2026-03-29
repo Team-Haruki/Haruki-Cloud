@@ -1756,10 +1756,10 @@ func TestPJSKMysekaiResourceBuildRouteReturnsBuiltPayload(t *testing.T) {
 	if data.Payload.Profile.MysekaiLevel == nil || *data.Payload.Profile.MysekaiLevel != 15 {
 		t.Fatalf("unexpected mysekai level: %+v", data.Payload.Profile)
 	}
-	if len(data.Payload.VisitCharacters) != 1 || data.Payload.VisitCharacters[0].SdImagePath != "jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
+	if len(data.Payload.VisitCharacters) != 1 || data.Payload.VisitCharacters[0].SdImagePath != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
 		t.Fatalf("unexpected visit characters: %+v", data.Payload.VisitCharacters)
 	}
-	if len(data.Payload.SiteResourceNumbers) != 1 || data.Payload.SiteResourceNumbers[0].ImagePath != "jp-assets/ondemand/mysekai/site/sitemap/texture/img_harvest_site_5.png" {
+	if len(data.Payload.SiteResourceNumbers) != 1 || data.Payload.SiteResourceNumbers[0].ImagePath != "asset/jp-assets/ondemand/mysekai/site/sitemap/texture/img_harvest_site_5.png" {
 		t.Fatalf("unexpected site resources: %+v", data.Payload.SiteResourceNumbers)
 	}
 }
@@ -2073,7 +2073,7 @@ func TestPJSKMysekaiTalkListBuildRouteReturnsBuiltPayload(t *testing.T) {
 	if data.Endpoint != mysekaiTalkListEndpoint {
 		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
 	}
-	if data.Payload.SdImagePath != "jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
+	if data.Payload.SdImagePath != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_1.png" {
 		t.Fatalf("unexpected sd image path: %s", data.Payload.SdImagePath)
 	}
 	if !strings.Contains(data.Payload.ProgressMessage, "0/2") {

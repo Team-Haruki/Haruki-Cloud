@@ -58,3 +58,7 @@ tmp/
 music/
 character/
 client.json
+
+build/
+
+deploy_alpha_native_deck.sh

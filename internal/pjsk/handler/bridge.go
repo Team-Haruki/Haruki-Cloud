@@ -527,18 +527,14 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 	}
 	// When a CDN base URL is configured, build a direct URL for region assets instead
 	// of reading from disk and uploading through imagecache.
-	// RegionAssetDirByMode always embeds "asset/{region}-assets/{mode}" so we strip
-	// the leading "asset/" component to match the CDN path structure.
+	// The path may be absolute (resolved against AssetPrimaryDir) or relative; strip
+	// the primary dir prefix so the CDN-relative path is "{region}-assets/{mode}/...".
 	if app != nil {
 		if base := strings.TrimRight(app.Config.AssetsBaseURL, "/"); base != "" {
 			rel := filepath.ToSlash(path)
-			const assetSeg = "asset/"
-			switch {
-			case strings.HasPrefix(rel, assetSeg):
-				rel = rel[len(assetSeg):]
-			default:
-				if idx := strings.Index(rel, "/"+assetSeg); idx >= 0 {
-					rel = rel[idx+1+len(assetSeg):]
+			if primaryDir := strings.TrimRight(filepath.ToSlash(app.Config.AssetPrimaryDir), "/"); primaryDir != "" && primaryDir != "." {
+				if strings.HasPrefix(rel, primaryDir+"/") {
+					rel = rel[len(primaryDir)+1:]
 				}
 			}
 			return onebot11.Message{onebot11.Image(base+"/"+rel, "")}, nil

@@ -68,7 +68,7 @@ func (s *testHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameChar
 
 func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	dir := t.TempDir()
-	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
 
 	source := newTestHonorSource(renderregion.JP)
 	bg := "honor_bg_001"
@@ -100,7 +100,7 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	if req.GroupType == nil || *req.GroupType != "wl_event" {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
-	expectedHonorPath := filepath.ToSlash(filepath.Join(dir, "asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
+	expectedHonorPath := filepath.ToSlash(filepath.Join(dir, "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
 	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
@@ -143,9 +143,9 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 
 func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
 	dir := t.TempDir()
-	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_birthday_01_06", "degree_sub.png"))
-	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_s_4.png"))
-	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_level_4.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("jp-assets", "ondemand", "honor", "honor_bg_birthday_01_06", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_s_4.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_level_4.png"))
 
 	bg := "honor_bg_birthday_01_06"
 	frame := "honor_frame_birthday_01_06"

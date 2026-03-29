@@ -113,8 +113,8 @@ var onDemandPreferredTopLevel = map[string]struct{}{
 	"mysekai":     {},
 }
 
-// RegionAssetDir returns the region-specific startapp asset subdirectory prefix
-// used by the Haruki Drawing API, e.g. "asset/jp-assets/startapp" for "jp".
+// RegionAssetDir returns the region-specific startapp asset subdirectory prefix,
+// e.g. "jp-assets/startapp" for "jp".
 func RegionAssetDir(region string) string {
 	return RegionAssetDirByMode(region, RegionAssetStartApp)
 }
@@ -128,7 +128,7 @@ func RegionAssetDirByMode(region, mode string) string {
 	if normalizedMode == "" {
 		normalizedMode = RegionAssetStartApp
 	}
-	return "asset/" + normalizedRegion + "-assets/" + normalizedMode
+	return normalizedRegion + "-assets/" + normalizedMode
 }
 
 func RegionAssetDirs(region string) []string {

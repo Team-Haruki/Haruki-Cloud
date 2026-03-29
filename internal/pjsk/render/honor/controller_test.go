@@ -28,7 +28,7 @@ func TestControllerBuildHonorRequestUsesRequestedRegionSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	if req.HonorImgPath == nil || *req.HonorImgPath != "asset/jp-assets/startapp/honor/jp_honor/degree_sub.png" {
+	if req.HonorImgPath == nil || *req.HonorImgPath != "jp-assets/startapp/honor/jp_honor/degree_sub.png" {
 		t.Fatalf("expected JP honor path, got %#v", req.HonorImgPath)
 	}
 }

@@ -1803,8 +1803,10 @@ func mysekaiHarvestPosKey(x, z float64) string {
 
 func mysekaiNormalizeResourceType(resourceType string) string {
 	switch strings.ToLower(strings.TrimSpace(resourceType)) {
-	case "material", "mysekai_material":
+	case "mysekai_material":
 		return "mysekai_material"
+	case "material":
+		return "material"
 	case "item", "mysekai_item":
 		return "mysekai_item"
 	case "fixture", "mysekai_fixture":

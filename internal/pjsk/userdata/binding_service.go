@@ -338,7 +338,56 @@ func (s *BindingService) SetDefault(ctx context.Context, platform, platformUserI
 }
 
 func (s *BindingService) ClearDefault(ctx context.Context, platform, platformUserID, selector, serverScope string) (*DefaultBindingResult, error) {
+	if selector == "" {
+		return s.clearDefaultByScope(ctx, platform, platformUserID, serverScope)
+	}
 	return s.updateDefault(ctx, platform, platformUserID, selector, serverScope, true)
+}
+
+// clearDefaultByScope clears the default binding for a scope without requiring
+// a specific binding selector. Used when user calls /清除默认绑定 with no arguments.
+func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, platformUserID, serverScope string) (*DefaultBindingResult, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	scope, scopeLabel, err := normalizeDefaultScope(serverScope)
+	if err != nil {
+		return nil, err
+	}
+	existing, err := s.pjskDB.UserDefaultBinding.Query().
+		Where(
+			userdefaultbinding.HarukiUserID(harukiUserID),
+			userdefaultbinding.Server(scope),
+		).
+		WithBinding().
+		Only(ctx)
+	if err != nil {
+		if pjskdb.IsNotFound(err) {
+			return nil, fmt.Errorf("你当前没有设置%s默认绑定", scopeLabel)
+		}
+		return nil, err
+	}
+	if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
+		return nil, err
+	}
+	// Build a BindingListItem for the cleared binding from the current list.
+	items, _ := s.List(ctx, platform, platformUserID)
+	var target BindingListItem
+	for _, item := range items {
+		if item.BindingID == existing.BindingID {
+			target = item
+			break
+		}
+	}
+	return &DefaultBindingResult{
+		Scope:   defaultScopeType(scope),
+		Server:  scope,
+		Binding: target,
+	}, nil
 }
 
 func (s *BindingService) updateDefault(ctx context.Context, platform, platformUserID, selector, serverScope string, clear bool) (*DefaultBindingResult, error) {
@@ -716,24 +765,17 @@ func (s *BindingService) SetBindingMySekaiVisible(ctx context.Context, platform,
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
-func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
-	if s == nil || s.fastVerifier == nil {
-		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
-	}
-	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
-	if err != nil {
-		return nil, false, err
-	}
+// verifyBindingEntity performs the actual verification check on an already-resolved
+// binding entity. Called by VerifyCurrentBinding and ExecuteProfileSettingsCommand.
+func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, bool, error) {
 	if binding.Verified {
 		item, itemErr := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 		return item, true, itemErr
 	}
-
 	records, err := s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
 	if err != nil {
 		return nil, false, err
 	}
-
 	matched := false
 	for _, record := range records {
 		if strings.EqualFold(strings.TrimSpace(record.Server), binding.Server) &&
@@ -745,7 +787,6 @@ func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, pla
 	if !matched {
 		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(binding.Server))
 	}
-
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
 		SetVerified(true).
 		Save(ctx); err != nil {
@@ -753,6 +794,17 @@ func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, pla
 	}
 	item, err := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 	return item, false, err
+}
+
+func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
+	if s == nil || s.fastVerifier == nil {
+		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
+	}
+	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
+	if err != nil {
+		return nil, false, err
+	}
+	return s.verifyBindingEntity(ctx, platform, platformUserID, binding)
 }
 
 func (s *BindingService) ListVerifiedBindings(ctx context.Context, platform, platformUserID, server string) ([]BindingListItem, error) {
@@ -920,4 +972,47 @@ func (s *BindingService) ResolveUserBinding(ctx context.Context, platform, platf
 		return harukiUserID, nil, err
 	}
 	return harukiUserID, binding, nil
+}
+
+// ResolveUserBindingBySelector resolves a binding using a u[i] selector (e.g. "u1", "u2")
+// or a raw game UID. This looks up all bindings for the user, builds the ordered list,
+// and selects the one matching the selector.
+func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platform, platformUserID, selector string) (int, *ResolvedBinding, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return 0, nil, err
+	}
+	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return 0, nil, err
+	}
+	items, err := s.List(ctx, platform, platformUserID)
+	if err != nil {
+		return harukiUserID, nil, err
+	}
+	item, err := selectBinding(items, selector)
+	if err != nil {
+		return harukiUserID, nil, err
+	}
+	return harukiUserID, &ResolvedBinding{
+		BindingID:      item.BindingID,
+		PJSKUserID:     item.UserID,
+		Server:         item.Server,
+		Visible:        item.Visible,
+		SuiteVisible:   item.SuiteVisible,
+		MySekaiVisible: item.MySekaiVisible,
+		Verified:       item.Verified,
+		Bg:             item.Bg,
+	}, nil
+}
+
+// currentBindingEntityBySelector resolves a binding entity by u[i] selector.
+func (s *BindingService) currentBindingEntityBySelector(ctx context.Context, platform, platformUserID, selector string) (*pjskdb.UserBinding, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	_, resolved, err := s.ResolveUserBindingBySelector(ctx, platform, platformUserID, selector)
+	if err != nil {
+		return nil, err
+	}
+	return s.pjskDB.UserBinding.Get(ctx, resolved.BindingID)
 }

@@ -38,6 +38,7 @@ type ResolvedCommand struct {
 	Mode              string
 	Query             string
 	Region            string
+	RegionExplicit    bool // true when the region was set by a prefix (/jp…) or -r flag
 	Params            json.RawMessage
 	IsHelp            bool
 	IsVerbose         bool

@@ -63,6 +63,11 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		}
 	}
 
+	// When no region was explicitly specified (no prefix like /jp, no -r flag),
+	// resolve it from the user's global default binding so e.g. a TW player
+	// doesn't always get JP results when typing bare commands.
+	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
+
 	switch resolved.Module {
 	case parser.ModuleCard:
 		message, err = executeCard(resolved, app)
@@ -563,7 +568,7 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		Platform:       strings.TrimSpace(r.RequesterPlatform),
 		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 	}
-	target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+	target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, nil
 	}
@@ -614,7 +619,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 			Platform:       strings.TrimSpace(r.RequesterPlatform),
 			PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 		}
-		target, err := resolveGameTarget(context.Background(), queryParams, region, app)
+		target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 		if err == nil && target.Binding != nil {
 			if !hasUsableSuiteData(target.Binding) {
 				reason = "当前已关闭 Suite 抓包数据，以下为基于公开信息的估算结果。"
@@ -1739,7 +1744,7 @@ func executeProfile(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 			region = string(renderregion.JP)
 		}
 
-		target, err := resolveGameTarget(ctx, p, region, app)
+		target, err := resolveGameTarget(ctx, p, region, r.RegionExplicit, app)
 		if err != nil {
 			return nil, err
 		}
@@ -1971,6 +1976,7 @@ type userQueryParams struct {
 	PlatformUserID string `json:"platform_user_id"`
 	AtUserID       string `json:"at_user_id"`
 	PJSKUserID     string `json:"pjsk_user_id"`
+	Selector       string `json:"selector,omitempty"`
 }
 
 type resolvedGameTarget struct {
@@ -1981,13 +1987,28 @@ type resolvedGameTarget struct {
 	Binding      *accountdata.ResolvedBinding
 }
 
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (resolvedGameTarget, error) {
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
 		return resolvedGameTarget{}, fmt.Errorf("绑定服务未就绪")
 	}
 	switch p.Mode {
 	case "self":
-		hid, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		var hid int
+		var binding *accountdata.ResolvedBinding
+		var err error
+		if p.Selector != "" {
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else if !regionExplicit {
+			// No explicit region prefix → use global default binding directly,
+			// so the user's global default account is picked instead of a
+			// potentially different server-specific default.
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			if err != nil {
+				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			}
+		} else {
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		}
 		if err != nil {
 			return resolvedGameTarget{}, fmt.Errorf("未找到绑定账号：%w", err)
 		}
@@ -2028,8 +2049,8 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, ap
 //
 // Returns (harukiUserID, pjskUserID, visible, error).
 // harukiUserID is 0 and visible is true when the mode is "uid".
-func resolveGameUID(ctx context.Context, p userQueryParams, region string, app *renderapp.App) (int, string, bool, error) {
-	target, err := resolveGameTarget(ctx, p, region, app)
+func resolveGameUID(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (int, string, bool, error) {
+	target, err := resolveGameTarget(ctx, p, region, regionExplicit, app)
 	if err != nil {
 		return 0, "", false, err
 	}
@@ -2069,7 +2090,7 @@ func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderap
 		region = string(renderregion.JP)
 	}
 
-	harukiUserID, pjskUserID, visible, err := resolveGameUID(ctx, p, region, app)
+	harukiUserID, pjskUserID, visible, err := resolveGameUID(ctx, p, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, err
 	}
@@ -2352,24 +2373,34 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 		region = string(renderregion.JP)
 	}
 
-	_, pjskUserID, _, err := resolveGameUID(ctx, p, region, app)
+	target, err := resolveGameTarget(ctx, p, region, r.RegionExplicit, app)
+	if err != nil {
+		return nil, err
+	}
+	pjskUserID := target.PJSKUserID
+	bindingServer := region
+	if target.Binding != nil && target.Binding.Server != "" {
+		bindingServer = target.Binding.Server
+	}
+
+	ts, err := calcRegistrationTime(pjskUserID, bindingServer)
 	if err != nil {
 		return nil, err
 	}
 
-	ts, err := calcRegistrationTime(pjskUserID, region)
-	if err != nil {
-		return nil, err
+	var tzOffset string
+	if app.PJSK != nil && target.HarukiUserID > 0 {
+		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, target.HarukiUserID); sErr == nil && settings != nil {
+			tzOffset = settings.TimeZoneOffset
+		}
 	}
+	tz, tzLabel := parseUserTimeZone(tzOffset)
+	regTime := time.Unix(ts, 0).In(tz)
+	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
+	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
 
-	regTime := time.Unix(ts, 0).UTC()
-	duration := time.Since(regTime)
-	days := int(math.Floor(duration.Hours() / 24))
-
-	text := fmt.Sprintf("UID %s 的注册时间\n%s UTC\n（约 %d 天前）",
-		pjskUserID,
-		regTime.Format("2006-01-02 15:04:05"),
-		days)
+	text := fmt.Sprintf("UID %s 的注册时间:\n%s (%s) (%s)",
+		maskedUID, regTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
@@ -2387,14 +2418,41 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	var uid int64
 	var platform string
 	var platformUserID string
+	var pjskUID string
+	var bindingVisible bool
+	var resolvedHarukiID int
+	var bindingServer string
+
+	// Helper to resolve user binding, supporting u[i] selector.
+	// Returns (binding, harukiUserID, error).
+	resolveCheckDataBinding := func() (*accountdata.ResolvedBinding, int, error) {
+		var hid int
+		var binding *accountdata.ResolvedBinding
+		var err error
+		if p.Selector != "" {
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
+		} else if !r.RegionExplicit {
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			if err != nil {
+				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			}
+		} else {
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		}
+		if err != nil {
+			return nil, 0, fmt.Errorf("未找到绑定账号：%w", err)
+		}
+		return binding, hid, nil
+	}
+
 	switch r.Mode {
 	case "mysekai":
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
-			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
@@ -2407,13 +2465,17 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeMySekai
 		label = "MySekai"
+		pjskUID = binding.PJSKUserID
+		bindingVisible = binding.Visible
+		resolvedHarukiID = hid
+		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
 		}
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {
-			return nil, fmt.Errorf("未找到绑定账号：%w", err)
+			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
 			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")
@@ -2425,10 +2487,18 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiutils.ToolboxDataTypeSuite
-		label = "套件"
+		label = "Suite"
+		pjskUID = binding.PJSKUserID
+		bindingVisible = binding.Visible
+		resolvedHarukiID = hid
+		bindingServer = binding.Server
 	}
 
-	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(region, dataType, uid, platform, platformUserID)
+	if bindingServer == "" {
+		bindingServer = region
+	}
+
+	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}
@@ -2438,12 +2508,91 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 		return nil, fmt.Errorf("解析更新时间失败：%w", err)
 	}
 
-	uploadTime := time.Unix(ts, 0).UTC()
-	duration := time.Since(uploadTime)
-	days := int(math.Floor(duration.Hours() / 24))
+	var tzOffset string
+	if app.PJSK != nil && resolvedHarukiID > 0 {
+		if settings, sErr := query.NewClient(nil, nil, app.PJSK, nil).GetPJSKSettings(ctx, resolvedHarukiID); sErr == nil && settings != nil {
+			tzOffset = settings.TimeZoneOffset
+		}
+	}
+	tz, tzLabel := parseUserTimeZone(tzOffset)
+	uploadTime := time.Unix(ts, 0).In(tz)
+	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
+	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
 
-	text := fmt.Sprintf("%s 数据更新时间\n%s UTC\n（约 %d 天前）", label, uploadTime.Format("2006-01-02 15:04:05"), days)
+	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
+		maskedUID, label, uploadTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
+}
+
+// maskPJSKUID masks the middle digits of a PJSK user ID when visible is false.
+// Shows first 3 and last 3 digits with asterisks in between.
+func maskPJSKUID(uid string, visible bool) string {
+	if visible || len(uid) <= 6 {
+		return uid
+	}
+	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
+}
+
+// parseUserTimeZone parses a timezone offset string (e.g. "+09:00") into a
+// time.Location and human-readable label. Empty string defaults to UTC+8.
+func parseUserTimeZone(offset string) (*time.Location, string) {
+	offset = strings.TrimSpace(offset)
+	if offset == "" {
+		return time.FixedZone("UTC+8", 8*3600), "UTC+8"
+	}
+	sign := 1
+	raw := offset
+	if strings.HasPrefix(raw, "-") {
+		sign = -1
+		raw = raw[1:]
+	} else if strings.HasPrefix(raw, "+") {
+		raw = raw[1:]
+	}
+	parts := strings.SplitN(raw, ":", 2)
+	hours, err := strconv.Atoi(parts[0])
+	if err != nil || hours < 0 || hours > 14 {
+		return time.FixedZone("UTC+8", 8*3600), "UTC+8"
+	}
+	minutes := 0
+	if len(parts) == 2 {
+		minutes, _ = strconv.Atoi(parts[1])
+	}
+	totalSecs := sign * (hours*3600 + minutes*60)
+	var label string
+	if sign < 0 {
+		label = fmt.Sprintf("UTC-%d", hours)
+	} else {
+		label = fmt.Sprintf("UTC+%d", hours)
+	}
+	if minutes != 0 {
+		label = fmt.Sprintf("%s:%02d", label, minutes)
+	}
+	return time.FixedZone(label, totalSecs), label
+}
+
+// formatRelativeDuration formats a duration as a human-readable Chinese relative time.
+// Only shows units starting from the largest non-zero unit down to minutes.
+// e.g. "约2天5小时30分钟前", "约5小时30分钟前", "约30分钟前", "刚刚"
+func formatRelativeDuration(d time.Duration) string {
+	if d < time.Minute {
+		return "刚刚"
+	}
+	mins := int(d.Minutes()) % 60
+	hrs := int(d.Hours()) % 24
+	days := int(d.Hours()) / 24
+	if days > 0 {
+		if hrs == 0 && mins == 0 {
+			return fmt.Sprintf("约%d天前", days)
+		}
+		return fmt.Sprintf("约%d天%d小时%d分钟前", days, hrs, mins)
+	}
+	if hrs > 0 {
+		if mins == 0 {
+			return fmt.Sprintf("约%d小时前", hrs)
+		}
+		return fmt.Sprintf("约%d小时%d分钟前", hrs, mins)
+	}
+	return fmt.Sprintf("约%d分钟前", mins)
 }
 
 // calcRegistrationTime derives the approximate Unix registration timestamp from
@@ -2481,4 +2630,29 @@ func mergeParams(params json.RawMessage, target interface{}) {
 		return
 	}
 	_ = json.Unmarshal(params, target)
+}
+
+// resolveRegionFromDefaultBinding resolves the region for a command where the
+// user did not provide an explicit region prefix or -r flag. It looks up the
+// user's global default binding (server = "default") and returns the server of
+// the bound account (e.g. "jp", "tw", "kr", "en"). Falls back to "jp" if the
+// user has no global default binding or if any lookup fails.
+func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) string {
+	if r.RegionExplicit {
+		return r.Region
+	}
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return r.Region
+	}
+	_, binding, err := app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+	if err != nil || binding == nil || strings.TrimSpace(binding.Server) == "" {
+		return r.Region
+	}
+	normalized := renderregion.Normalize(binding.Server)
+	if normalized.IsZero() {
+		return r.Region
+	}
+	return normalized.String()
 }

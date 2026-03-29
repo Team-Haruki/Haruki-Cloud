@@ -12,11 +12,28 @@ import (
 // UserQueryParams holds the resolved identity context for commands that query
 // another user's data (arrest, registration time, etc.).
 type UserQueryParams struct {
-	Mode           string `json:"mode"`             // "self", "at_user", "uid"
-	Platform       string `json:"platform"`         // caller's IM platform
-	PlatformUserID string `json:"platform_user_id"` // caller's platform UID (self mode)
-	AtUserID       string `json:"at_user_id"`       // @-mentioned platform UID (at_user mode)
-	PJSKUserID     string `json:"pjsk_user_id"`     // direct game UID (uid mode)
+	Mode           string `json:"mode"`                        // "self", "at_user", "uid"
+	Platform       string `json:"platform"`                    // caller's IM platform
+	PlatformUserID string `json:"platform_user_id"`            // caller's platform UID (self mode)
+	AtUserID       string `json:"at_user_id"`                  // @-mentioned platform UID (at_user mode)
+	PJSKUserID     string `json:"pjsk_user_id"`                // direct game UID (uid mode)
+	Selector       string `json:"selector,omitempty"`           // u[i] binding selector (self mode only)
+}
+
+// isBindingSelector returns true if the value is a u[i] binding selector (e.g. "u1", "u2").
+func isBindingSelector(value string) bool {
+	if len(value) < 2 {
+		return false
+	}
+	if value[0] != 'u' && value[0] != 'U' {
+		return false
+	}
+	for _, r := range value[1:] {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
@@ -28,6 +45,9 @@ func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
 	switch {
 	case uidArg == "":
 		p.Mode = "self"
+	case isBindingSelector(uidArg):
+		p.Mode = "self"
+		p.Selector = uidArg
 	case strings.HasPrefix(uidArg, "@"):
 		p.Mode = "at_user"
 		p.AtUserID = uidArg[1:] // strip "@"
@@ -35,9 +55,29 @@ func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
 		p.Mode = "uid"
 		p.PJSKUserID = uidArg
 	default:
-		return p, fmt.Errorf("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID]", uidArg, ctx.originalTriggerCmd)
+		return p, fmt.Errorf("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID | u序号]", uidArg, ctx.originalTriggerCmd)
 	}
 	return p, nil
+}
+
+// resolveSelfOnlyQueryParams is like resolveUserQueryParams but restricts to
+// self-mode only (with optional u[i] selector). Used by commands that should
+// not support @mention or direct UID queries (e.g. sud, msd).
+func resolveSelfOnlyQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
+	p := UserQueryParams{
+		Platform:       ctx.GetPlatform(),
+		PlatformUserID: ctx.GetUserId(),
+		Mode:           "self",
+	}
+	uidArg := ctx.UIDArg()
+	if uidArg == "" {
+		return p, nil
+	}
+	if isBindingSelector(uidArg) {
+		p.Selector = uidArg
+		return p, nil
+	}
+	return p, fmt.Errorf("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
 func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
@@ -69,7 +109,7 @@ func (sekaiHandlers) RegTimeHandle() SekaiCommandHandler {
 			Path: "profile/reg-time",
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			p, err := resolveUserQueryParams(ctx)
+			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
 			}

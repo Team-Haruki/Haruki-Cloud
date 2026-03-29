@@ -714,3 +714,22 @@ func matchesMusicKeyword(source DataSource, musicInfo *masterdata.Music, keyword
 	}
 	return false
 }
+
+// ResolveMusicMetaRequests resolves music meta info for the given region and queries.
+// TODO: Implement full music-meta resolution; returns error until implemented.
+func (c *Controller) ResolveMusicMetaRequests(_ string, _ []string) ([]drawing.MusicMetaRequest, error) {
+	return nil, fmt.Errorf("music meta requests not yet implemented")
+}
+
+// ResolveCustomRoomMusicList resolves the list of eligible songs per event rate
+// for custom room score control.
+// TODO: Implement full custom-room music list resolution; returns error until implemented.
+func (c *Controller) ResolveCustomRoomMusicList(_ string, _ []int, _ int) (map[int][]map[string]interface{}, error) {
+	return nil, fmt.Errorf("custom room music list not yet implemented")
+}
+
+// ResolveMusicBoardRequest resolves a music board render request from a BoardQuery.
+// TODO: Implement full music-board resolution; returns error until implemented.
+func (c *Controller) ResolveMusicBoardRequest(_ string, _ BoardQuery) (*drawing.MusicBoardRequest, error) {
+return nil, fmt.Errorf("music board request not yet implemented")
+}

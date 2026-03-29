@@ -74,7 +74,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("execute bind list: %v", err)
 	}
 
-	expectedList := "已绑定账号列表（按账号ID升序）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
+	expectedList := "已绑定账号列表（按账号绑定先后顺序）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected list text:\n%s", string(listText))
 	}

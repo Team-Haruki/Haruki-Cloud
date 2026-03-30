@@ -517,13 +517,13 @@ func (c *CloudSource) GetUnitByCardID(cardID int) (string, error) {
 
 func (c *CloudSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
 	if cardInfo == nil {
-		return formatSupplyType("")
+		return ""
 	}
 	if cardInfo.CardRarityType == "rarity_birthday" {
 		return formatSupplyType("birthday")
 	}
 	if cardInfo.CardSupplyID == 0 {
-		return formatSupplyType("")
+		return ""
 	}
 
 	c.supplyMu.RLock()
@@ -537,7 +537,7 @@ func (c *CloudSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
 		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(cardInfo.CardSupplyID)).
 		Only(context.Background())
 	if err != nil {
-		return formatSupplyType("")
+		return ""
 	}
 
 	value := formatSupplyType(entity.CardSupplyType)

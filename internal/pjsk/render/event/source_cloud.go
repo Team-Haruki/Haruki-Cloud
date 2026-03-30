@@ -187,7 +187,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 	c.gcuMu.RUnlock()
 
 	entity, err := c.client.Gamecharacterunit.Query().
-		Where(gamecharacterunit.ServerRegionEQ(c.queryRegion.String()), gamecharacterunit.IDEQ(id)).
+		Where(gamecharacterunit.ServerRegionEQ(c.queryRegion.String()), gamecharacterunit.GameIDEQ(int64(id))).
 		Only(context.Background())
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.charMu.RUnlock()
 
 	entity, err := c.client.Gamecharacter.Query().
-		Where(gamecharacter.ServerRegionEQ(c.queryRegion.String()), gamecharacter.IDEQ(id)).
+		Where(gamecharacter.ServerRegionEQ(c.queryRegion.String()), gamecharacter.GameIDEQ(int64(id))).
 		Only(context.Background())
 	if err != nil {
 		return nil, err

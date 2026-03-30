@@ -99,3 +99,25 @@ func TestBuildContextExtractsAtFromInterfaceMap(t *testing.T) {
 		t.Fatalf("GetArgs() = %q", ctx.GetArgs())
 	}
 }
+
+func TestBuildContextStripsInlineCQTagsFromText(t *testing.T) {
+	event := Event{
+		Platform:    "qq",
+		MessageType: MessageTypeGroup,
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/sk[CQ:at,qq=1000000001]"}},
+			{Type: "at", Data: onebot11.AtData{QQ: "1000000001"}},
+		},
+	}
+
+	ctx, err := BuildContext(context.Background(), event)
+	if err != nil {
+		t.Fatalf("BuildContext() error = %v", err)
+	}
+	if ctx.GetArgs() != "/sk " {
+		t.Fatalf("GetArgs() = %q", ctx.GetArgs())
+	}
+	if !reflect.DeepEqual(ctx.GetAtIds(), []string{"1000000001"}) {
+		t.Fatalf("GetAtIds() = %#v", ctx.GetAtIds())
+	}
+}

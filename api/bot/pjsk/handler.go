@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/logger"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -127,7 +128,7 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 			})
 		}
 
-		if req.Server != "" {
+		if req.Server != "" && !resolved.RegionExplicit {
 			resolved.Region = req.Server
 		}
 
@@ -190,7 +191,7 @@ func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
 		}
 		switch s.Type {
 		case onebot11.TYPE_TEXT:
-			segs = append(segs, onebot11.Text(data[onebot11.KEY_TEXT]))
+			segs = append(segs, onebot11.Text(stripInlineCQTags(data[onebot11.KEY_TEXT])))
 		case onebot11.TYPE_IMAGE:
 			segs = append(segs, onebot11.Image(data[onebot11.KEY_FILE], data[onebot11.KEY_URL]))
 		case onebot11.TYPE_AT:
@@ -198,6 +199,15 @@ func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
 		}
 	}
 	return segs
+}
+
+var inlineCQPattern = regexp.MustCompile(`(?i)\[cq:[^\]]+\]`)
+
+func stripInlineCQTags(text string) string {
+	if strings.TrimSpace(text) == "" {
+		return text
+	}
+	return inlineCQPattern.ReplaceAllString(text, " ")
 }
 
 // botResponse sends a response using MsgPack when the request came through the
@@ -241,10 +251,6 @@ func resolveBotCommand(message onebot11.Message, expectedPath string, req BotCom
 	if matched.Handler == nil || matched.Handler.IsDisabled() {
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
 	}
-	if matched.Command != matchedCommand {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command does not match handler command: %s", matchedCommand)}
-	}
-
 	if matched.Handler.GetPath() == "" {
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
 	}
@@ -253,7 +259,7 @@ func resolveBotCommand(message onebot11.Message, expectedPath string, req BotCom
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
-	ctx.TriggerCmd = matchedCommand
+	ctx.TriggerCmd = matched.Command
 	ctx.ArgText = strings.TrimSpace(string(matched.ArgText))
 	ctx.MessageType = messageType
 	result, err := matched.Handler.Handle(ctx)

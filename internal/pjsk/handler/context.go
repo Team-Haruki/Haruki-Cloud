@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"haruki-cloud/api/bot/onebot11"
+	"regexp"
 	"strings"
 )
 
@@ -133,15 +134,24 @@ func extractText(segments onebot11.Message) string {
 		}
 
 		if textData, ok := seg.Data.(onebot11.TextData); ok {
-			text += textData.Text
+			text += stripInlineCQTags(textData.Text)
 			continue
 		}
 
 		if raw, ok := extractSegmentDataField(seg.Data, onebot11.KEY_TEXT); ok {
-			text += raw
+			text += stripInlineCQTags(raw)
 		}
 	}
 	return text
+}
+
+var inlineCQPattern = regexp.MustCompile(`(?i)\[cq:[^\]]+\]`)
+
+func stripInlineCQTags(text string) string {
+	if strings.TrimSpace(text) == "" {
+		return text
+	}
+	return inlineCQPattern.ReplaceAllString(text, " ")
 }
 
 func extractSegmentDataField(data any, key string) (string, bool) {

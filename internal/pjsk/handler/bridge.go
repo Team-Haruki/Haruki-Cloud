@@ -1023,14 +1023,24 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
 
 	// Resolve user binding and fetch suite data from Toolbox.
+	// Try global default binding first when no explicit region prefix.
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
 	var suiteUID int64
 	var suitePlatform, suitePlatformUserID string
 
 	if platform != "" && platformUserID != "" && app.Bindings != nil {
-		_, binding, resolveErr := app.Bindings.ResolveUserBinding(
-			context.Background(), platform, platformUserID, regionStr)
+		ctx := context.Background()
+		var binding *accountdata.ResolvedBinding
+		var resolveErr error
+		if !r.RegionExplicit {
+			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+			if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
+				_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+			}
+		} else {
+			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		}
 		if resolveErr == nil && binding != nil && hasUsableSuiteData(binding) {
 			if uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64); convErr == nil {
 				suiteUID = uid
@@ -1188,8 +1198,19 @@ func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySe
 		regionStr = "jp"
 	}
 
-	_, binding, resolveErr := app.Bindings.ResolveUserBinding(
-		context.Background(), platform, platformUserID, regionStr)
+	// Try global default binding first when no explicit region prefix,
+	// then fall back to region-specific binding.
+	ctx := context.Background()
+	var binding *accountdata.ResolvedBinding
+	var resolveErr error
+	if !r.RegionExplicit {
+		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+		if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
+			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		}
+	} else {
+		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+	}
 	if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
 		return nil
 	}
@@ -1233,8 +1254,17 @@ func resolveMySekaiOnly(r *parser.ResolvedCommand, app *renderapp.App) []byte {
 		regionStr = "jp"
 	}
 
-	_, binding, resolveErr := app.Bindings.ResolveUserBinding(
-		context.Background(), platform, platformUserID, regionStr)
+	ctx := context.Background()
+	var binding *accountdata.ResolvedBinding
+	var resolveErr error
+	if !r.RegionExplicit {
+		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+		if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
+			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		}
+	} else {
+		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+	}
 	if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
 		return nil
 	}
@@ -1719,7 +1749,17 @@ func resolveRequesterGameUID(r *parser.ResolvedCommand, app *renderapp.App) int6
 	if regionStr == "" {
 		regionStr = "jp"
 	}
-	_, binding, err := app.Bindings.ResolveUserBinding(context.Background(), platform, platformUserID, regionStr)
+	ctx := context.Background()
+	var binding *accountdata.ResolvedBinding
+	var err error
+	if !r.RegionExplicit {
+		_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+		if err != nil || binding == nil {
+			_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		}
+	} else {
+		_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+	}
 	if err != nil || binding == nil {
 		return 0
 	}

@@ -117,6 +117,107 @@ func (lineNameTrackerSource) TraceWorldBloomRankingByUser(server string, eventID
 	return nil, fmt.Errorf("not implemented")
 }
 
+type rankNameFallbackTrackerSource struct {
+	testTrackerSource
+}
+
+func (rankNameFallbackTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    "",
+			Score:     1234567,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "34567890123456",
+			Name:   "",
+		},
+	}, nil
+}
+
+func (rankNameFallbackTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	return &sekaiapi.UserEventData{
+		UserID: strconv.FormatInt(userID, 10),
+		Name:   "EventFallbackName",
+	}, nil
+}
+
+func (rankNameFallbackTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    "34567890123456",
+				Score:     1234000,
+				Rank:      rank,
+				Timestamp: 1704060000,
+			},
+			{
+				UserID:    "34567890123456",
+				Score:     1234567,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "34567890123456",
+			Name:   "",
+		},
+	}, nil
+}
+
+type traceUserIDNameFallbackTrackerSource struct {
+	testTrackerSource
+}
+
+func (traceUserIDNameFallbackTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    "",
+			Score:     2233445,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "",
+			Name:   "",
+		},
+	}, nil
+}
+
+func (traceUserIDNameFallbackTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	if userID == 55667788990011 {
+		return &sekaiapi.UserEventData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "TracePointFallbackName",
+		}, nil
+	}
+	return nil, fmt.Errorf("user not found")
+}
+
+func (traceUserIDNameFallbackTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    "55667788990011",
+				Score:     2233000,
+				Rank:      rank,
+				Timestamp: 1704060000,
+			},
+			{
+				UserID:    "55667788990011",
+				Score:     2233445,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "",
+			Name:   "",
+		},
+	}, nil
+}
+
 type testEventSource struct {
 	region renderregion.Value
 	events []*masterdata.Event
@@ -230,5 +331,65 @@ func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 		if rank.Name != "" {
 			t.Fatalf("expected line payload name to be empty, got %+v", rank)
 		}
+	}
+}
+
+func TestBuildQueryRequestFromTrackerPreservesResolvedNameWhenTraceNameMissing(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(rankNameFallbackTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Name != "EventFallbackName" {
+		t.Fatalf("expected fallback name to be preserved, got %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildQueryRequestFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(traceUserIDNameFallbackTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Name != "TracePointFallbackName" {
+		t.Fatalf("expected trace-point fallback name, got %+v", payload.Ranks[0])
 	}
 }

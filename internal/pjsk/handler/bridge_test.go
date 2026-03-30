@@ -198,7 +198,7 @@ func TestResolveTrackerTargetUserNoPrefixUsesGlobalDefaultBinding(t *testing.T) 
 		TargetPlatform: "qq",
 		TargetUserID:   "9001",
 	}
-	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "someone"); err != nil {
 		t.Fatalf("resolve target: %v", err)
 	}
 	if req.UserID == nil || *req.UserID != 11111111111111 {
@@ -227,7 +227,7 @@ func TestResolveTrackerTargetUserNoPrefixFallsBackToJPWhenNoGlobalDefault(t *tes
 		TargetPlatform: "qq",
 		TargetUserID:   "9002",
 	}
-	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "someone"); err != nil {
 		t.Fatalf("resolve target: %v", err)
 	}
 	if req.UserID == nil || *req.UserID != 12345678901234 {
@@ -256,7 +256,7 @@ func TestResolveTrackerTargetUserRejectsHiddenAtTarget(t *testing.T) {
 		TargetPlatform: "qq",
 		TargetUserID:   "9003",
 	}
-	err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req)
+	err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "another-user")
 	if err == nil {
 		t.Fatal("expected hidden-target error, got nil")
 	}
@@ -265,6 +265,32 @@ func TestResolveTrackerTargetUserRejectsHiddenAtTarget(t *testing.T) {
 	}
 	if req.UserID != nil {
 		t.Fatalf("expected unresolved user id, got %+v", req.UserID)
+	}
+}
+
+func TestResolveTrackerTargetUserAllowsHiddenSelfTarget(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "9005", "12345678901234"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9005", "jp", false); err != nil {
+		t.Fatalf("hide binding: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: true,
+		EventID:        101,
+		TargetPlatform: "qq",
+		TargetUserID:   "9005",
+	}
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "9005"); err != nil {
+		t.Fatalf("resolve hidden self target: %v", err)
+	}
+	if req.UserID == nil || *req.UserID != 12345678901234 {
+		t.Fatalf("unexpected resolved uid: %+v", req.UserID)
 	}
 }
 
@@ -292,7 +318,7 @@ func TestResolveTrackerTargetUserSupportsSelector(t *testing.T) {
 		TargetUserID:   "9004",
 		TargetSelector: "u1",
 	}
-	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "someone"); err != nil {
 		t.Fatalf("resolve target: %v", err)
 	}
 	if req.UserID == nil || *req.UserID != 11111111111111 {

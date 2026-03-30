@@ -615,7 +615,11 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		score := latest.RankData.Score
 		name := strings.TrimSpace(latest.UserData.Name)
 		if name == "" {
-			name = c.resolveTrackerNameByUserID(server, eventID, latest.RankData.UserID, wlCharacterID)
+			userID := strings.TrimSpace(latest.RankData.UserID)
+			if userID == "" {
+				userID = strings.TrimSpace(latest.UserData.UserID)
+			}
+			name = c.resolveTrackerNameByUserID(server, eventID, userID, wlCharacterID)
 		}
 		info := drawing.RankInfo{
 			Rank:  rankValue,
@@ -637,7 +641,11 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 	score := latest.RankData.Score
 	name := strings.TrimSpace(latest.UserData.Name)
 	if name == "" {
-		name = c.resolveTrackerNameByUserID(server, eventID, latest.RankData.UserID, wlCharacterID)
+		userID := strings.TrimSpace(latest.RankData.UserID)
+		if userID == "" {
+			userID = strings.TrimSpace(latest.UserData.UserID)
+		}
+		name = c.resolveTrackerNameByUserID(server, eventID, userID, wlCharacterID)
 	}
 	info := drawing.RankInfo{
 		Rank:  rankValue,
@@ -683,9 +691,17 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 			rankValue = 1
 		}
 		score := latest.RankData.Score
+		name := strings.TrimSpace(latest.UserData.Name)
+		if name == "" {
+			lookupUserID := strings.TrimSpace(latest.RankData.UserID)
+			if lookupUserID == "" {
+				lookupUserID = strconv.FormatInt(userID, 10)
+			}
+			name = c.resolveTrackerNameByUserID(server, eventID, lookupUserID, wlCharacterID)
+		}
 		info := drawing.RankInfo{
 			Rank:  rankValue,
-			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
+			Name:  pickTrackerDisplayName(c.censorTrackerName(name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}
@@ -701,9 +717,17 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 		rankValue = 1
 	}
 	score := latest.RankData.Score
+	name := strings.TrimSpace(latest.UserData.Name)
+	if name == "" {
+		lookupUserID := strings.TrimSpace(latest.RankData.UserID)
+		if lookupUserID == "" {
+			lookupUserID = strconv.FormatInt(userID, 10)
+		}
+		name = c.resolveTrackerNameByUserID(server, eventID, lookupUserID, wlCharacterID)
+	}
 	info := drawing.RankInfo{
 		Rank:  rankValue,
-		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
+		Name:  pickTrackerDisplayName(c.censorTrackerName(name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}
@@ -725,8 +749,17 @@ func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCh
 		if err != nil || trace == nil {
 			return
 		}
-		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
-		if strings.TrimSpace(name) != "" {
+		name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
+		if name == "" {
+			ids := make([]string, 0, len(trace.RankData)+1)
+			ids = append(ids, trace.UserData.UserID)
+			for _, point := range trace.RankData {
+				ids = append(ids, point.UserID)
+			}
+			resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
+			name = strings.TrimSpace(c.censorTrackerName(resolved, server))
+		}
+		if name != "" {
 			info.Name = name
 		}
 		samples := make([]trackerScoreSample, 0, len(trace.RankData))
@@ -744,8 +777,17 @@ func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCh
 	if err != nil || trace == nil {
 		return
 	}
-	name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
-	if strings.TrimSpace(name) != "" {
+	name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
+	if name == "" {
+		ids := make([]string, 0, len(trace.RankData)+1)
+		ids = append(ids, trace.UserData.UserID)
+		for _, point := range trace.RankData {
+			ids = append(ids, point.UserID)
+		}
+		resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
+		name = strings.TrimSpace(c.censorTrackerName(resolved, server))
+	}
+	if name != "" {
 		info.Name = name
 	}
 	samples := make([]trackerScoreSample, 0, len(trace.RankData))
@@ -767,8 +809,17 @@ func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int
 		if err != nil || trace == nil {
 			return
 		}
-		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), info.Rank)
-		if strings.TrimSpace(name) != "" {
+		name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
+		if name == "" {
+			ids := make([]string, 0, len(trace.RankData)+2)
+			ids = append(ids, strconv.FormatInt(userID, 10), trace.UserData.UserID)
+			for _, point := range trace.RankData {
+				ids = append(ids, point.UserID)
+			}
+			resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
+			name = strings.TrimSpace(c.censorTrackerName(resolved, server))
+		}
+		if name != "" {
 			info.Name = name
 		}
 		samples := make([]trackerScoreSample, 0, len(trace.RankData))
@@ -786,8 +837,17 @@ func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int
 	if err != nil || trace == nil {
 		return
 	}
-	name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), info.Rank)
-	if strings.TrimSpace(name) != "" {
+	name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
+	if name == "" {
+		ids := make([]string, 0, len(trace.RankData)+2)
+		ids = append(ids, strconv.FormatInt(userID, 10), trace.UserData.UserID)
+		for _, point := range trace.RankData {
+			ids = append(ids, point.UserID)
+		}
+		resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
+		name = strings.TrimSpace(c.censorTrackerName(resolved, server))
+	}
+	if name != "" {
 		info.Name = name
 	}
 	samples := make([]trackerScoreSample, 0, len(trace.RankData))
@@ -798,6 +858,27 @@ func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int
 		})
 	}
 	applyRankInfoMetrics(info, samples)
+}
+
+func (c *Controller) resolveTrackerNameByUserIDs(server string, eventID int, wlCharacterID *int, userIDs ...string) string {
+	if c == nil {
+		return ""
+	}
+	seen := map[string]struct{}{}
+	for _, raw := range userIDs {
+		uid := strings.TrimSpace(raw)
+		if uid == "" {
+			continue
+		}
+		if _, ok := seen[uid]; ok {
+			continue
+		}
+		seen[uid] = struct{}{}
+		if name := strings.TrimSpace(c.resolveTrackerNameByUserID(server, eventID, uid, wlCharacterID)); name != "" {
+			return name
+		}
+	}
+	return ""
 }
 
 func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) {

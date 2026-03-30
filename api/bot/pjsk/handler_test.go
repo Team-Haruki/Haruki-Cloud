@@ -1043,6 +1043,58 @@ func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {
 	assertSingleTextMessageContains(t, body, "已隐藏个人信息")
 }
 
+func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/query" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.SKRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.ID != 101 {
+			t.Fatalf("unexpected event id: %d", req.ID)
+		}
+		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 777 {
+			t.Fatalf("expected self-bound rank payload, got %+v", req.Ranks)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKHIDDENSELFPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+	if _, err := bindingService.SetBindingVisible(context.Background(), "qq", "12345", "jp", false); err != nil {
+		t.Fatalf("set requester binding invisible: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
 func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/speed" {

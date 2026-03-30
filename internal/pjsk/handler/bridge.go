@@ -1593,7 +1593,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 	switch r.Mode {
 	case "sk-line":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildLineRequestFromTracker(trackerReq)
@@ -1608,7 +1608,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderLine(req)
 	case "sk-query":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildQueryRequestFromTracker(trackerReq)
@@ -1623,7 +1623,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderQuery(req)
 	case "sk-check-room":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildCheckRoomRequestFromTracker(trackerReq)
@@ -1638,7 +1638,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderCheckRoom(req)
 	case "sk-speed":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildSpeedRequestFromTracker(trackerReq)
@@ -1666,7 +1666,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		hasExplicitTarget := strings.TrimSpace(trackerReq.TargetUserID) != ""
 		// Resolve user ID if not provided.
 		if trackerReq.UserID == nil {
-			targetErr := resolveTrackerTargetUser(ctx, app, &trackerReq)
+			targetErr := resolveTrackerTargetUser(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID)
 			if targetErr != nil && hasExplicitTarget {
 				return nil, targetErr
 			}
@@ -1690,7 +1690,7 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		data, err = app.SK.RenderPlayerTrace(req)
 	case "sk-rank-trace":
 		if trackerReq, ok := trackerRankQueryFromParams(r); ok {
-			if err := prepareTrackerRankQuery(ctx, app, &trackerReq); err != nil {
+			if err := prepareTrackerRankQuery(ctx, app, &trackerReq, r.RequesterPlatform, r.RequesterUserID); err != nil {
 				return nil, err
 			}
 			payload, err := app.SK.BuildRankTraceRequestFromTracker(trackerReq)
@@ -1740,11 +1740,11 @@ func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery,
 	return req, true
 }
 
-func prepareTrackerRankQuery(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
+func prepareTrackerRankQuery(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery, requesterPlatform, requesterUserID string) error {
 	if err := resolveTrackerCharacterSelection(ctx, app, req); err != nil {
 		return err
 	}
-	return resolveTrackerTargetUser(ctx, app, req)
+	return resolveTrackerTargetUser(ctx, app, req, requesterPlatform, requesterUserID)
 }
 
 func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
@@ -1797,7 +1797,7 @@ func resolveRequesterGameUID(r *parser.ResolvedCommand, app *renderapp.App) int6
 	return uid
 }
 
-func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery) error {
+func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.TrackerRankQuery, requesterPlatform, requesterUserID string) error {
 	if req == nil || req.UserID != nil {
 		return nil
 	}
@@ -1845,8 +1845,12 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
 	}
 
-	// @target should respect visible=false and deny query.
-	if targetSelector == "" && !binding.Visible {
+	isSelfTarget := strings.EqualFold(strings.TrimSpace(targetPlatform), strings.TrimSpace(requesterPlatform)) &&
+		strings.TrimSpace(targetUserID) != "" &&
+		strings.TrimSpace(targetUserID) == strings.TrimSpace(requesterUserID)
+
+	// @target should respect visible=false and deny query, except self query.
+	if targetSelector == "" && !binding.Visible && !isSelfTarget {
 		return fmt.Errorf("@用户 %s 已隐藏个人信息，无法查询", targetUserID)
 	}
 

@@ -429,6 +429,14 @@ func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
 
 	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]interface{}); ok {
 		for key, value := range updatedResources {
+			// Don't overwrite a non-empty suite array with an empty mysekai delta.
+			if existing, exists := baseMap[key]; exists {
+				if existingSlice, ok := existing.([]interface{}); ok && len(existingSlice) > 0 {
+					if newSlice, ok := value.([]interface{}); ok && len(newSlice) == 0 {
+						continue
+					}
+				}
+			}
 			baseMap[key] = value
 		}
 	}

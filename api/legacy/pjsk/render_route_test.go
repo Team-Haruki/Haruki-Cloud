@@ -3647,6 +3647,7 @@ func mysekaiRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) 
 		"userChallengeLiveSoloResults":          []interface{}{},
 		"userChallengeLiveSoloStages":           []interface{}{},
 		"userChallengeLiveSoloHighScoreRewards": []interface{}{},
+		"userMysekaiCharacterTalks":             []map[string]interface{}{},
 	}
 	userJSONPath := filepath.Join(tempDir, "user.json")
 	writeJSONFixture(t, userJSONPath, userJSON)
@@ -3692,7 +3693,6 @@ func mysekaiRenderApp(t *testing.T, drawingClient *drawing.HarukiDrawingClient) 
 			"userMysekaiMusicRecords": []map[string]interface{}{
 				{"mysekaiMusicRecordId": 3001, "obtainedAt": 1700000000000},
 			},
-			"userMysekaiCharacterTalks": []map[string]interface{}{},
 		},
 	}
 	mysekaiJSONPath := filepath.Join(tempDir, "mysekai.json")

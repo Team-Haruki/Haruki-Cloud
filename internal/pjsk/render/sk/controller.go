@@ -27,6 +27,7 @@ type TrackerSource interface {
 	GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error)
 	GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error)
 	GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error)
+	GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error)
 	GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
 	GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
 	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
@@ -147,6 +148,10 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID)
 	if err != nil {
 		return nil, err
+	}
+	// SK line focuses on score borders; omit player names to keep output compact.
+	for i := range rankInfos {
+		rankInfos[i].Name = ""
 	}
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
@@ -648,6 +653,10 @@ func (c *Controller) resolveTrackerNameByUserID(server string, eventID int, user
 	uid, err := strconv.ParseInt(strings.TrimSpace(userID), 10, 64)
 	if err != nil || uid <= 0 {
 		return ""
+	}
+	userData, userErr := c.tracker.GetUserEventData(server, eventID, uid)
+	if userErr == nil && userData != nil && strings.TrimSpace(userData.Name) != "" {
+		return strings.TrimSpace(userData.Name)
 	}
 	if wlCharacterID != nil && *wlCharacterID > 0 {
 		latest, latestErr := c.tracker.GetLatestWorldBloomRankingByUser(server, eventID, *wlCharacterID, uid)

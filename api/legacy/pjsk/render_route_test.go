@@ -173,6 +173,13 @@ func (routeTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventI
 	}, nil
 }
 
+func (routeTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	return &sekaiapi.UserEventData{
+		UserID: strconv.FormatInt(userID, 10),
+		Name:   "TrackerEventUser",
+	}, nil
+}
+
 func (routeTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
 	earlier := int64(1704067200)
 	diff := int64(interval)
@@ -2915,6 +2922,53 @@ func TestPJSKSKQueryTrackerBuildRouteSupportsUID(t *testing.T) {
 	}
 	if len(data.Payload.Ranks) != 1 || data.Payload.Ranks[0].Rank != 321 {
 		t.Fatalf("unexpected uid rank payload: %+v", data.Payload.Ranks)
+	}
+}
+
+func TestPJSKSKLineTrackerBuildRouteOmitsNames(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.SK.SetTrackerIntegration(
+		routeTrackerSource{},
+		&routeEventSource{
+			region: renderregion.JP,
+			events: []*masterdata.Event{
+				{ID: 101, Name: "Tracker Event", StartAt: 111, AggregateAt: 222, AssetBundleName: "event_101"},
+			},
+		},
+		assets.NewAssetHelper("", nil),
+	)
+	RegisterPJSKRenderRoutes(app, runtime)
+
+	resp := requestRenderRoute(t, app, http.MethodPost, "/internal/pjsk/sk/line/tracker/build", `{"event_id":101,"region":"jp","ranks":[100,1]}`)
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected status=%d message=%s", resp.Status, resp.Message)
+	}
+
+	var data struct {
+		Endpoint string `json:"endpoint"`
+		Payload  struct {
+			ID    int `json:"id"`
+			Ranks []struct {
+				Rank int    `json:"rank"`
+				Name string `json:"name"`
+			} `json:"ranks"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode response data: %v", err)
+	}
+	if data.Endpoint != skLineEndpoint(false) {
+		t.Fatalf("unexpected endpoint: %s", data.Endpoint)
+	}
+	if data.Payload.ID != 101 {
+		t.Fatalf("unexpected event id: %d", data.Payload.ID)
+	}
+	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+	if strings.TrimSpace(data.Payload.Ranks[0].Name) != "" || strings.TrimSpace(data.Payload.Ranks[1].Name) != "" {
+		t.Fatalf("expected line payload names to be empty, got %+v", data.Payload.Ranks)
 	}
 }
 

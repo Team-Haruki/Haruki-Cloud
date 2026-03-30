@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -117,6 +118,13 @@ func (botTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID,
 			UserID: "20002",
 			Name:   "BotWLTrackerUIDUser",
 		},
+	}, nil
+}
+
+func (botTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	return &sekaiapi.UserEventData{
+		UserID: strconv.FormatInt(userID, 10),
+		Name:   "BotTrackerEventUser",
 	}, nil
 }
 
@@ -453,6 +461,9 @@ func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
 		if len(req.Ranks) != 2 || req.Ranks[0].Rank != 1 || req.Ranks[1].Rank != 100 {
 			t.Fatalf("unexpected ranks: %+v", req.Ranks)
 		}
+		if strings.TrimSpace(req.Ranks[0].Name) == "" {
+			t.Fatalf("expected rank 1 name to be present, got %+v", req.Ranks[0])
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("SKTRACKERPNG"))
 	}))
@@ -582,6 +593,9 @@ func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 		if len(req.Ranks) != 2 || req.Ranks[0].Rank != 1 || req.Ranks[1].Rank != 100 {
 			t.Fatalf("unexpected ranks: %+v", req.Ranks)
 		}
+		if strings.TrimSpace(req.Ranks[0].Name) != "" || strings.TrimSpace(req.Ranks[1].Name) != "" {
+			t.Fatalf("expected line request to omit names, got %+v", req.Ranks)
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("SKLINEPNG"))
 	}))
@@ -656,6 +670,52 @@ func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
+func TestBotEndpointSKQueryRankOneShowsPlayerName(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/query" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.SKRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.ID != 101 {
+			t.Fatalf("unexpected event id: %d", req.ID)
+		}
+		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 1 {
+			t.Fatalf("unexpected ranks: %+v", req.Ranks)
+		}
+		if strings.TrimSpace(req.Ranks[0].Name) == "" {
+			t.Fatalf("expected rank name to be present, got %+v", req.Ranks[0])
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKRANK1PNG"))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101 1"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
 func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/line" {
@@ -674,6 +734,9 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 		if req.Ranks[0].Rank != 777 {
 			t.Fatalf("unexpected rank: %+v", req.Ranks[0])
 		}
+		if strings.TrimSpace(req.Ranks[0].Name) != "" {
+			t.Fatalf("expected line request to omit names, got %+v", req.Ranks[0])
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("SKLUIDPNG"))
 	}))
@@ -688,6 +751,54 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/skl",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/skl event101 1234567890"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKLineDefaultsToExpandedRanksAndOmitsNames(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/line" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.SklRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.ID != 101 {
+			t.Fatalf("unexpected event id: %d", req.ID)
+		}
+		if len(req.Ranks) != 34 {
+			t.Fatalf("unexpected default line count: %d", len(req.Ranks))
+		}
+		for _, rank := range req.Ranks {
+			if strings.TrimSpace(rank.Name) != "" {
+				t.Fatalf("expected line request names to be omitted, got %+v", rank)
+			}
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKLDEFAULTPNG"))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/skl",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/skl event101"}}},
 	})
 	resp, err := app.Test(req)
 	if err != nil {
@@ -1011,6 +1122,9 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 		}
 		if len(req.Ranks) != 2 || req.Ranks[0].Rank != 1 || req.Ranks[1].Rank != 100 {
 			t.Fatalf("unexpected ranks: %+v", req.Ranks)
+		}
+		if strings.TrimSpace(req.Ranks[0].Name) == "" || strings.TrimSpace(req.Ranks[1].Name) == "" {
+			t.Fatalf("expected rank names to be present, got %+v", req.Ranks)
 		}
 		if req.AggregateAt <= 0 {
 			t.Fatalf("aggregate_at should be set")

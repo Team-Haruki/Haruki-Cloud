@@ -2,6 +2,7 @@ package sk
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -28,6 +29,10 @@ func (testTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (testTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (testTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
 	return nil, fmt.Errorf("not implemented")
 }
@@ -49,6 +54,66 @@ func (testTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, ch
 }
 
 func (testTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+type lineNameTrackerSource struct{}
+
+func (lineNameTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.Itoa(10000 + rank),
+			Score:     1000000 + rank,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(10000 + rank),
+			Name:   "LineNameUser",
+		},
+	}, nil
+}
+
+func (lineNameTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	return &sekaiapi.UserEventData{
+		UserID: strconv.FormatInt(userID, 10),
+		Name:   "LineEventUser",
+	}, nil
+}
+
+func (lineNameTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (lineNameTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -133,5 +198,37 @@ func TestValidateTrackerQuerySelectsCurrentEventByRegion(t *testing.T) {
 	}
 	if normalized.EventID != cnEvent.ID {
 		t.Fatalf("expected cn current event %d, got %d", cnEvent.ID, normalized.EventID)
+	}
+}
+
+func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1, 100},
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	for _, rank := range payload.Ranks {
+		if rank.Name != "" {
+			t.Fatalf("expected line payload name to be empty, got %+v", rank)
+		}
 	}
 }

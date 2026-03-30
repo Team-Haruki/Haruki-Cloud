@@ -13,7 +13,7 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 		region:         renderregion.JP,
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -27,13 +27,34 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 	}
 }
 
+func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{ArgText: "初音未来"},
+		region:         renderregion.JP,
+		prefixArg:      "wl",
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true, false)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	ranks, ok := params["ranks"].([]int)
+	if !ok {
+		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
+	}
+	if len(ranks) != len(defaultSKRanksWorldLink) {
+		t.Fatalf("expected world link default ranks len=%d got=%d", len(defaultSKRanksWorldLink), len(ranks))
+	}
+}
+
 func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 	ctx := SekaiHandlerContext{
 		HandlerContext: handler.HandlerContext{ArgText: "event101 500 100"},
 		region:         renderregion.JP,
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -58,7 +79,7 @@ func TestBuildSKTrackerParamsWlRequiresCharacter(t *testing.T) {
 		prefixArg:      "wl",
 	}
 
-	_, err := buildSKTrackerParams(ctx, false, true)
+	_, err := buildSKTrackerParams(ctx, false, true, false)
 	if err == nil {
 		t.Fatalf("expected error when wl character is missing")
 	}
@@ -70,13 +91,13 @@ func TestBuildSKTrackerParamsParsesUIDWhenAllowed(t *testing.T) {
 		region:         renderregion.JP,
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
 
-	if _, ok := params["ranks"]; !ok {
-		t.Fatalf("expected ranks key to exist")
+	if _, ok := params["ranks"]; ok {
+		t.Fatalf("expected ranks key to be omitted for uid query")
 	}
 	if got, ok := params["user_id"].(int64); !ok || got != 1234567890 {
 		t.Fatalf("unexpected user_id: %#v", params["user_id"])
@@ -89,7 +110,7 @@ func TestBuildSKTrackerParamsRejectsUIDWhenDisallowed(t *testing.T) {
 		region:         renderregion.JP,
 	}
 
-	_, err := buildSKTrackerParams(ctx, false, false)
+	_, err := buildSKTrackerParams(ctx, false, false, false)
 	if err == nil {
 		t.Fatalf("expected error when uid is disallowed")
 	}
@@ -102,7 +123,7 @@ func TestBuildSKTrackerParamsUsesUIDArgWhenArgsEmpty(t *testing.T) {
 		uidArg:         "1234567890",
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -123,7 +144,7 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 		uidArg: "@987654321",
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -136,6 +157,30 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 	}
 	if got, ok := params["region_explicit"].(bool); !ok || got {
 		t.Fatalf("unexpected region_explicit: %#v", params["region_explicit"])
+	}
+}
+
+func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{
+			ArgText:    "",
+			Platform:   "qq",
+			UserId:     "24680",
+			TriggerCmd: "/sk",
+		},
+		region: renderregion.JP,
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true, true)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if _, ok := params["ranks"]; ok {
+		t.Fatalf("expected no default ranks when selfWhenEmpty=true: %#v", params["ranks"])
+	}
+	if got, ok := params["target_user_id"].(string); !ok || got != "24680" {
+		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
 	}
 }
 
@@ -152,7 +197,7 @@ func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
 		explicitRegion: true,
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -178,7 +223,7 @@ func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 		prefixArg:      "wl",
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}
@@ -205,7 +250,7 @@ func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 		prefixArg:      "wl",
 	}
 
-	params, err := buildSKTrackerParams(ctx, false, true)
+	params, err := buildSKTrackerParams(ctx, false, true, false)
 	if err != nil {
 		t.Fatalf("build params: %v", err)
 	}

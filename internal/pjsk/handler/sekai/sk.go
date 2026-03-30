@@ -220,8 +220,10 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 		defaultFull,
 		ctx.PrefixArg() == "wl",
 	)
+	wlMode := ctx.PrefixArg() == "wl"
 
 	effectiveRankArgs := rankArgs
+	rankArgsProvided := strings.TrimSpace(effectiveRankArgs) != ""
 	targetUserID := ""
 	targetSelector := ""
 	if allowUID {
@@ -257,6 +259,10 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	}
 	if len(ranks) == 0 && userID == nil && targetUserID == "" {
 		return nil, fmt.Errorf("请至少提供一个排名或UID")
+	}
+	// Empty rank query should use mode-specific default lines.
+	if !rankArgsProvided && userID == nil && targetUserID == "" {
+		ranks = defaultSKRanksByMode(wlMode)
 	}
 	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
 		return nil, fmt.Errorf("wl 模式需要角色ID或角色名，例如: /wlsk 初音未来 100 500")
@@ -531,7 +537,29 @@ func normalizeRanks(values []int) []int {
 	return out
 }
 
-var defaultSKRanks = []int{100, 500, 1000, 2000, 5000, 10000}
+var defaultSKRanksNormal = []int{
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	20, 30, 40, 50, 100, 200, 300, 400, 500,
+	1000, 1500, 2000, 2500, 3000, 4000, 5000,
+	10000, 20000, 30000, 40000, 50000,
+	100000, 200000, 300000,
+}
+
+var defaultSKRanksWorldLink = []int{
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	20, 30, 40, 50, 100, 200, 300, 400, 500,
+	1000, 2000, 3000, 4000, 5000, 7000,
+	10000, 20000, 30000, 40000, 50000, 70000, 100000,
+}
+
+var defaultSKRanks = defaultSKRanksNormal
+
+func defaultSKRanksByMode(wlMode bool) []int {
+	if wlMode {
+		return append([]int(nil), defaultSKRanksWorldLink...)
+	}
+	return append([]int(nil), defaultSKRanksNormal...)
+}
 
 func isDigits(value string) bool {
 	if value == "" {

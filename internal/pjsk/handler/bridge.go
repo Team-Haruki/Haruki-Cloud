@@ -1663,15 +1663,21 @@ func executeSK(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.Ap
 		if err := resolveTrackerCharacterSelection(ctx, app, &trackerReq); err != nil {
 			return nil, err
 		}
-		// Resolve user ID if not provided
+		hasExplicitTarget := strings.TrimSpace(trackerReq.TargetUserID) != ""
+		// Resolve user ID if not provided.
 		if trackerReq.UserID == nil {
-			if err := resolveTrackerTargetUser(ctx, app, &trackerReq); err != nil || trackerReq.UserID == nil {
+			targetErr := resolveTrackerTargetUser(ctx, app, &trackerReq)
+			if targetErr != nil && hasExplicitTarget {
+				return nil, targetErr
+			}
+			// Fallback to requester's own UID only when command does not explicitly target user/rank.
+			if trackerReq.UserID == nil && len(trackerReq.Ranks) == 0 && !hasExplicitTarget {
 				if uid := resolveRequesterGameUID(r, app); uid > 0 {
 					trackerReq.UserID = &uid
 				}
 			}
 		}
-		if trackerReq.UserID != nil {
+		if trackerReq.UserID != nil || len(trackerReq.Ranks) > 0 {
 			payload, buildErr := app.SK.BuildPlayerTraceFromTracker(trackerReq)
 			if buildErr != nil {
 				return nil, buildErr
@@ -1724,7 +1730,11 @@ func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery,
 	} else if req.Region == "" {
 		req.Region = resolvedRegion
 	}
-	if len(req.Ranks) == 0 && req.EventID == 0 && req.WlCharacterID == nil && req.UserID == nil {
+	if len(req.Ranks) == 0 &&
+		req.EventID == 0 &&
+		req.WlCharacterID == nil &&
+		req.UserID == nil &&
+		strings.TrimSpace(req.TargetUserID) == "" {
 		return sk.TrackerRankQuery{}, false
 	}
 	return req, true

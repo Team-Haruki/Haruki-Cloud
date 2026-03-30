@@ -153,6 +153,13 @@ func (c *Controller) staticPath(relPath string) string {
 		}
 	}
 
+	// Never return local absolute filesystem paths to Drawing API. Cloud and
+	// Drawing may run in different containers, so absolute paths here are often
+	// unreadable on the Drawing side.
+	if filepath.IsAbs(resolved) {
+		return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, relPath))
+	}
+
 	return resolved
 }
 
@@ -467,7 +474,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				if key == "mysekai_material_21" || key == "mysekai_material_22" {
 					isCottonFlower = true
 				}
-				if strings.HasPrefix(key, "mysekai_material_") || item.Type == "material" {
+				if strings.HasPrefix(key, "mysekai_material_") {
 					hasMaterialDrop = true
 				}
 				if item.Type == "mysekai_fixture" {
@@ -490,7 +497,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 						smallIcon = true
 						smallIconSet = true
 					}
-				} else if (!strings.HasPrefix(key, "mysekai_material_") && item.Type != "material") && hasMaterialDrop {
+				} else if !strings.HasPrefix(key, "mysekai_material_") && hasMaterialDrop {
 					smallIcon = true
 					smallIconSet = true
 				}
@@ -539,6 +546,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	return &drawing.MysekaiMsrMapRequest{
 		Maps:          maps,
 		ShowHarvested: showHarvested,
+		SpawnImagePath: drawing.StringPtr(
+			c.staticPath("mysekai/mark.png"),
+		),
 	}, nil
 }
 
@@ -1775,7 +1785,15 @@ func (c *Controller) resourceImagePath(region renderregion.Value, key string, ma
 		}
 	case "mysekai_fixture":
 		if assetbundleName := fixtureMap[id]; assetbundleName != "" {
-			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName)), false
+			// Some plant seeds/saplings share the same base assetbundleName and
+			// require an id-suffixed thumbnail to distinguish icon variants.
+			// Prefer "<name>_<id>_1.png", then fall back to "<name>_1.png".
+			return assets.ResolveRegionAssetPath(
+				c.assets,
+				region.String(),
+				fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d_1.png", assetbundleName, id),
+				fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName),
+			), false
 		}
 	case "mysekai_music_record":
 		if jacket := musicRecordMap[id]; jacket != "" {

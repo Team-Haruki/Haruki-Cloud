@@ -510,6 +510,11 @@ func sortKeysByResource(counts map[string]int, materialRarityMap map[int]string)
 		keys = append(keys, key)
 	}
 	sort.Slice(keys, func(i, j int) bool {
+		leftPriority := resourceSortPriority(keys[i])
+		rightPriority := resourceSortPriority(keys[j])
+		if leftPriority != rightPriority {
+			return leftPriority < rightPriority
+		}
 		leftRarity := resourceRarity(keys[i], materialRarityMap)
 		rightRarity := resourceRarity(keys[j], materialRarityMap)
 		if leftRarity != rightRarity {
@@ -521,4 +526,11 @@ func sortKeysByResource(counts map[string]int, materialRarityMap map[int]string)
 		return keys[i] < keys[j]
 	})
 	return keys
+}
+
+func resourceSortPriority(key string) int {
+	if strings.HasPrefix(key, "mysekai_music_record_") {
+		return 0
+	}
+	return 1
 }

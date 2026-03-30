@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/database/sekai/musicdifficultie"
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
+	"haruki-cloud/database/sekai/outsidecharacter"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -33,6 +34,7 @@ type CloudSource struct {
 	musicByID     map[int]*masterdata.Music
 	musicList     []*masterdata.Music
 	characterByID map[int]*masterdata.Character
+	outsideByID   map[int]string
 	localizedByID map[int][]string
 }
 
@@ -48,6 +50,7 @@ func NewCloudSource(client *sekaiDB.Client, defaultRegion renderregion.Value) *C
 		queryRegion:   region.String(),
 		musicByID:     make(map[int]*masterdata.Music),
 		characterByID: make(map[int]*masterdata.Character),
+		outsideByID:   make(map[int]string),
 		localizedByID: make(map[int][]string),
 	}
 }
@@ -345,6 +348,37 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.characterByID[id] = model
 	c.mu.Unlock()
 	return cloneCharacter(model), nil
+}
+
+func (c *CloudSource) GetOutsideCharacterByID(id int) (string, error) {
+	if id <= 0 {
+		return "", fmt.Errorf("invalid outside character id: %d", id)
+	}
+
+	c.mu.RLock()
+	if cached, ok := c.outsideByID[id]; ok {
+		c.mu.RUnlock()
+		return cached, nil
+	}
+	c.mu.RUnlock()
+
+	entity, err := c.client.Outsidecharacter.Query().
+		Where(outsidecharacter.ServerRegionEQ(c.queryRegion), outsidecharacter.GameIDEQ(int64(id))).
+		Only(context.Background())
+	if err != nil {
+		entity, err = c.client.Outsidecharacter.Query().
+			Where(outsidecharacter.ServerRegionEQ(c.queryRegion), outsidecharacter.IDEQ(id)).
+			Only(context.Background())
+		if err != nil {
+			return "", err
+		}
+	}
+
+	name := strings.TrimSpace(entity.Name)
+	c.mu.Lock()
+	c.outsideByID[id] = name
+	c.mu.Unlock()
+	return name, nil
 }
 
 func (c *CloudSource) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {

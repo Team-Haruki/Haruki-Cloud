@@ -189,10 +189,10 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 	}
 	candidates := append([]string(nil), relCandidates...)
 	for _, rel := range relCandidates {
-		candidates = append(candidates,
-			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetStartApp), rel)),
-			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetOnDemand), rel)),
-		)
+		for _, mode := range []string{assets.RegionAssetStartApp, assets.RegionAssetOnDemand} {
+			drawingPath := filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), mode), rel))
+			candidates = append(candidates, drawingPath, strings.TrimPrefix(drawingPath, "asset/"))
+		}
 	}
 	if c.assets != nil {
 		if existing := c.assets.FirstExisting(candidates...); existing != "" {
@@ -209,13 +209,27 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 
 func (c *Controller) makeRelativeAsset(target string) string {
 	if c.assets == nil {
-		return filepath.ToSlash(target)
+		return normalizeStampRelativeAsset(target)
 	}
 	for _, root := range c.assets.Roots() {
-		relative := assets.MakeRelative(root, target)
-		if relative != target {
-			return relative
+		relative := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, target), "./"))
+		if relative != target && relative != "" {
+			return normalizeStampRelativeAsset(relative)
 		}
 	}
-	return filepath.ToSlash(filepath.Clean(target))
+	return normalizeStampRelativeAsset(target)
+}
+
+func normalizeStampRelativeAsset(path string) string {
+	clean := filepath.ToSlash(strings.TrimPrefix(filepath.Clean(path), "./"))
+	if clean == "." {
+		return ""
+	}
+	for _, region := range []string{"jp", "cn", "tw", "kr", "en"} {
+		prefix := region + "-assets/"
+		if strings.HasPrefix(clean, prefix) {
+			return filepath.ToSlash(filepath.Join("asset", clean))
+		}
+	}
+	return clean
 }

@@ -287,12 +287,12 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 
 		characters := make([]map[string]string, 0, len(vocal.Characters))
 		for _, character := range vocal.Characters {
-			name := b.lookupCharacterName(character.CharacterID)
+			name, useAvatar := b.lookupVocalCharacter(character)
 			if name == "" {
 				name = "VS"
 			}
 			characters = append(characters, map[string]string{"characterName": name})
-			if character.CharacterID != 0 {
+			if useAvatar && character.CharacterID != 0 {
 				assetsMap[name] = b.BuildCharacterIconPath(character.CharacterID, region)
 			}
 		}
@@ -311,6 +311,23 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 		VocalInfo:   info,
 		VocalAssets: assetsMap,
 	}, nil
+}
+
+func (b *Builder) lookupVocalCharacter(character masterdata.MusicVocalCharacter) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(character.CharacterType)) {
+	case "outside_character":
+		if name, err := b.source.GetOutsideCharacterByID(character.CharacterID); err == nil && strings.TrimSpace(name) != "" {
+			return strings.TrimSpace(name), false
+		}
+		if b.fallback != nil {
+			if name, err := b.fallback.GetOutsideCharacterByID(character.CharacterID); err == nil && strings.TrimSpace(name) != "" {
+				return strings.TrimSpace(name), false
+			}
+		}
+		return "", false
+	default:
+		return b.lookupCharacterName(character.CharacterID), true
+	}
 }
 
 func (b *Builder) lookupCharacterName(characterID int) string {

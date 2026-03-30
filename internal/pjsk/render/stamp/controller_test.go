@@ -182,6 +182,30 @@ func TestControllerBuildStampListRequestSupportsLegacyRegionAssetLayout(t *testi
 	}
 }
 
+func TestControllerBuildStampListRequestSupportsDirectAssetRootLayout(t *testing.T) {
+	dir := t.TempDir()
+	full := filepath.Join(dir, "jp-assets", "startapp", "stamp", "direct_stamp", "direct_stamp.png")
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(full, []byte("png"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	source := newTestStampSource(renderregion.JP)
+	source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "direct_stamp"}}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(dir, nil))
+	req, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest failed: %v", err)
+	}
+	want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", "stamp", "direct_stamp", "direct_stamp.png"))
+	if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != want {
+		t.Fatalf("unexpected stamps: %+v", req.Stamps)
+	}
+}
+
 func TestControllerBuildStampListRequestFailsWhenNoMatch(t *testing.T) {
 	source := newTestStampSource(renderregion.JP)
 	source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "missing"}}

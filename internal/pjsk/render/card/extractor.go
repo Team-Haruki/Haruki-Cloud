@@ -96,10 +96,10 @@ func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
 }
 
 var rarityRules = buildRules(map[string]string{
-	"4星": "rarity_4", "4star": "rarity_4", "四星": "rarity_4",
-	"3星": "rarity_3", "3star": "rarity_3", "三星": "rarity_3",
-	"2星": "rarity_2", "2star": "rarity_2", "二星": "rarity_2",
-	"1星": "rarity_1", "1star": "rarity_1", "一星": "rarity_1",
+	"4星": "rarity_4", "4star": "rarity_4", "4x": "rarity_4", "4": "rarity_4", "四星": "rarity_4",
+	"3星": "rarity_3", "3star": "rarity_3", "3x": "rarity_3", "3": "rarity_3", "三星": "rarity_3",
+	"2星": "rarity_2", "2star": "rarity_2", "2x": "rarity_2", "2": "rarity_2", "二星": "rarity_2",
+	"1星": "rarity_1", "1star": "rarity_1", "1x": "rarity_1", "1": "rarity_1", "一星": "rarity_1",
 	"生日": "rarity_birthday", "birthday": "rarity_birthday",
 })
 

@@ -153,3 +153,63 @@ func TestCardListHandlePrefers25UnitAliasOverCardID(t *testing.T) {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
+
+func TestCardListHandlePrefersBare4RarityOverSingleCardID(t *testing.T) {
+	h := sekaiHandlers{}.CardListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/卡牌列表",
+		ArgText:    "4",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params card.ListRequest
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Query != "4" || params.Region != "jp" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
+	h := sekaiHandlers{}.CardListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/卡牌列表",
+		ArgText:    "tks 4",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params card.ListRequest
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Query != "tks 4" || params.Region != "jp" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

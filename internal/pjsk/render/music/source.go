@@ -17,6 +17,7 @@ type DataSource interface {
 	GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error)
 	GetMusicTags(musicID int) ([]string, error)
 	GetCharacterByID(id int) (*masterdata.Character, error)
+	GetOutsideCharacterByID(id int) (string, error)
 	GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error)
 	GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic
 }

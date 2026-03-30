@@ -29,6 +29,24 @@ func TestParserPreferFilterTreats25AsUnitFilter(t *testing.T) {
 	}
 }
 
+func TestParserPreferFilterTreatsBare4AsRarityFilter(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("4")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter() error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Rarity != "rarity_4" {
+		t.Fatalf("unexpected rarity filter: %+v", info)
+	}
+	if LooksLikeSingleCardQueryPreferFilter("4") {
+		t.Fatal("did not expect bare 4 list query to be treated as single-card query")
+	}
+}
+
 func TestParserExtractsAdvancedCardFilters(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
@@ -74,5 +92,31 @@ func TestParserExtractsBanEventOCUnitSkillAndAttr(t *testing.T) {
 	}
 	if info.Attr != "cool" {
 		t.Fatalf("unexpected attr filter: %+v", info)
+	}
+}
+
+func TestParserSupportsLunabotCharacterAliases(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	tests := []struct {
+		query       string
+		characterID int
+	}{
+		{query: "tks-1", characterID: 13},
+		{query: "khn-1", characterID: 9},
+		{query: "akt-1", characterID: 11},
+		{query: "青柳冬弥-1", characterID: 12},
+		{query: "凤笑梦-1", characterID: 14},
+		{query: "草薙宁宁-1", characterID: 15},
+	}
+
+	for _, tt := range tests {
+		info, err := parser.Parse(tt.query)
+		if err != nil {
+			t.Fatalf("Parse(%q) error = %v", tt.query, err)
+		}
+		if info.Type != QueryTypeSeq || info.CharacterID != tt.characterID || info.Sequence != -1 {
+			t.Fatalf("unexpected parse result for %q: %+v", tt.query, info)
+		}
 	}
 }

@@ -100,6 +100,10 @@ func (s *lookupTestSource) GetCharacterByID(int) (*masterdata.Character, error) 
 	return nil, errNotFound("character")
 }
 
+func (s *lookupTestSource) GetOutsideCharacterByID(int) (string, error) {
+	return "", errNotFound("outside character")
+}
+
 func (s *lookupTestSource) GetPrimaryEventByMusicID(int) (*masterdata.Event, error) {
 	return nil, errNotFound("event")
 }

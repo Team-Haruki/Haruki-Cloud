@@ -133,23 +133,29 @@ func parseIntTokens(query string) []int {
 }
 
 func extractMysekaiGate(merged map[string]interface{}) (int, int) {
+	gateID, gateLevel, _ := extractMysekaiGateInfo(merged)
+	return gateID, gateLevel
+}
+
+func extractMysekaiGateInfo(merged map[string]interface{}) (int, int, int) {
 	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]interface{})
 	if !ok {
-		return 1, 1
+		return 1, 1, 0
 	}
 	gate, ok := visit["userMysekaiGate"].(map[string]interface{})
 	if !ok {
-		return 1, 1
+		return 1, 1, 0
 	}
 	gateID := intNumber(gate["mysekaiGateId"], 1)
 	gateLevel := intNumber(gate["mysekaiGateLevel"], 1)
+	gateSkinID := intNumber(gate["mysekaiGateSkinId"], 0)
 	if gateID <= 0 {
 		gateID = 1
 	}
 	if gateLevel <= 0 {
 		gateLevel = 1
 	}
-	return gateID, gateLevel
+	return gateID, gateLevel, gateSkinID
 }
 
 func extractMysekaiPhenoms(resolve pathResolver, merged map[string]interface{}) []drawing.MysekaiPhenomRequest {

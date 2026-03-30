@@ -241,6 +241,84 @@ func writeTestJSON(t *testing.T, path string, value interface{}) {
 	}
 }
 
+func TestBuildResourceRequestUsesGateLargeThumbnailPath(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]interface{}{
+		{"id": 4, "assetbundleName": "mdl_non0006_gate_wns1"},
+	})
+
+	mysekaiJSON := `{
+  "userMysekaiGateCharacterVisit": {
+    "userMysekaiGate": {
+      "mysekaiGateId": 4,
+      "mysekaiGateSkinId": 0,
+      "mysekaiGateLevel": 30
+    }
+  }
+}`
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildResourceRequest(ResourceQuery{
+		Region:  "jp",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildResourceRequest() error = %v", err)
+	}
+
+	want := "asset/jp-assets/ondemand/mysekai/thumbnail/gate_large/mdl_non0006_gate_wns1.png"
+	if req.GateIconPath != want {
+		t.Fatalf("unexpected gate icon path: got=%q want=%q", req.GateIconPath, want)
+	}
+}
+
+func TestBuildResourceRequestGateSkinOverridesGateDefaultIcon(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]interface{}{
+		{"id": 1, "assetbundleName": "mdl_non0006_gate_lon1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateSkins.json"), []map[string]interface{}{
+		{"id": 7, "mysekaiGateSkinType": "unit", "mysekaiGateSkinTypeId": 4},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateUnitSkins.json"), []map[string]interface{}{
+		{"id": 4, "assetbundleName": "mdl_non0006_gate_wns1"},
+	})
+
+	mysekaiJSON := `{
+  "userMysekaiGateCharacterVisit": {
+    "userMysekaiGate": {
+      "mysekaiGateId": 1,
+      "mysekaiGateSkinId": 7,
+      "mysekaiGateLevel": 30
+    }
+  }
+}`
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildResourceRequest(ResourceQuery{
+		Region:  "jp",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildResourceRequest() error = %v", err)
+	}
+
+	want := "asset/jp-assets/ondemand/mysekai/thumbnail/gate_large/mdl_non0006_gate_wns1.png"
+	if req.GateIconPath != want {
+		t.Fatalf("unexpected gate icon path with skin: got=%q want=%q", req.GateIconPath, want)
+	}
+}
+
 func TestResolveMysekaiMapSiteIDs(t *testing.T) {
 	if got, want := resolveMysekaiMapSiteIDs(nil), []int{5, 6, 7, 8}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("resolveMysekaiMapSiteIDs(nil) = %+v, want %+v", got, want)

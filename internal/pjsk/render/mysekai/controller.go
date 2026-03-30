@@ -199,16 +199,60 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 		return nil, fmt.Errorf("mysekai resource requires profile data")
 	}
 
-	gateID, gateLevel := extractMysekaiGate(merged)
+	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
 	return &drawing.MysekaiResourceRequest{
 		Profile:             *profile,
 		Phenoms:             extractMysekaiPhenoms(func(p string) string { return c.regionPath(region, p) }, merged),
 		GateID:              gateID,
 		GateLevel:           gateLevel,
-		GateIconPath:        c.staticPath(fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID)),
+		GateIconPath:        c.resolveGateIconPath(region, gateID, gateSkinID),
 		VisitCharacters:     c.extractVisitCharacters(region, merged),
 		SiteResourceNumbers: c.extractSiteResourceNumbers(region, merged),
 	}, nil
+}
+
+func (c *Controller) resolveGateIconPath(region renderregion.Value, gateID, gateSkinID int) string {
+	if assetbundleName := c.resolveGateAssetbundleName(gateID, gateSkinID); assetbundleName != "" {
+		return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/gate_large/%s.png", assetbundleName))
+	}
+	return c.staticPath(fmt.Sprintf("mysekai/gate_icon/gate_%d.png", gateID))
+}
+
+func (c *Controller) resolveGateAssetbundleName(gateID, gateSkinID int) string {
+	if gateSkinID > 0 {
+		skins := c.masterdata.loadMapByID("mysekaiGateSkins.json")
+		skin := skins[gateSkinID]
+		if len(skin) > 0 {
+			skinType := stringValue(skin["mysekaiGateSkinType"])
+			skinTypeID := intNumber(skin["mysekaiGateSkinTypeId"], 0)
+			if skinTypeID > 0 {
+				switch skinType {
+				case "unit":
+					if unitSkin := c.masterdata.loadMapByID("mysekaiGateUnitSkins.json")[skinTypeID]; len(unitSkin) > 0 {
+						if name := stringValue(unitSkin["assetbundleName"]); name != "" {
+							return name
+						}
+					}
+				case "common":
+					if commonSkin := c.masterdata.loadMapByID("mysekaiGateCommonSkins.json")[skinTypeID]; len(commonSkin) > 0 {
+						if name := stringValue(commonSkin["assetbundleName"]); name != "" {
+							return name
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if gateID <= 0 {
+		return ""
+	}
+	gates := c.masterdata.loadMapByID("mysekaiGates.json")
+	gate := gates[gateID]
+	if len(gate) == 0 {
+		return ""
+	}
+	return stringValue(gate["assetbundleName"])
 }
 
 func (c *Controller) RenderResource(query ResourceQuery) ([]byte, error) {

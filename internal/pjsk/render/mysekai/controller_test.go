@@ -616,3 +616,72 @@ func TestBuildMapRequestSkipsHarvestPointWhenStaticIconMissing(t *testing.T) {
 		t.Fatalf("expected tone material drop to remain, got %+v", req.Maps[0].ResourceDrops)
 	}
 }
+
+func TestBuildMapRequestSkipsToneGustHarvestPoint(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+		{
+			"id":                                  1001,
+			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+			"mysekaiSiteHarvestFixtureType":       "wood",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+		{
+			"id":                                  9001,
+			"assetbundleName":                     "mdl_site_rock_tone_gust01",
+			"mysekaiSiteHarvestFixtureType":       "tone_gust",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 5,
+        "userMysekaiSiteHarvestFixtures": [
+          {
+            "mysekaiSiteHarvestFixtureId": 1001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 1,
+            "positionZ": 2
+          },
+          {
+            "mysekaiSiteHarvestFixtureId": 9001,
+            "userMysekaiSiteHarvestFixtureStatus": "spawned",
+            "positionX": 3,
+            "positionZ": 4
+          }
+        ],
+        "userMysekaiSiteHarvestResourceDrops": []
+      }
+    ]
+  }
+}`
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	if len(req.Maps) != 1 {
+		t.Fatalf("expected 1 map, got %d", len(req.Maps))
+	}
+
+	if len(req.Maps[0].HarvestPoints) != 1 {
+		t.Fatalf("expected 1 harvest point after tone_gust skip, got %+v", req.Maps[0].HarvestPoints)
+	}
+	if req.Maps[0].HarvestPoints[0].ID == nil || *req.Maps[0].HarvestPoints[0].ID != 1001 {
+		t.Fatalf("unexpected remaining harvest point: %+v", req.Maps[0].HarvestPoints[0])
+	}
+}

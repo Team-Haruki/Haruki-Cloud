@@ -365,6 +365,11 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			if rarityType == "" || assetbundleName == "" {
 				continue
 			}
+			// Special-case: tone_gust harvest point should be skipped in msp map output.
+			lowerAssetbundle := strings.ToLower(assetbundleName)
+			if fixtureType == "tone_gust" || lowerAssetbundle == "tone_gust" || strings.Contains(lowerAssetbundle, "tone_gust") {
+				continue
+			}
 
 			status := stringValue(point["userMysekaiSiteHarvestFixtureStatus"])
 			if status == "" {

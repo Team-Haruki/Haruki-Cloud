@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -107,16 +108,17 @@ func (c *Controller) SetCensor(svc CensorService) {
 	c.censor = svc
 }
 
-// censorTrackerName runs the name through CensorService (fire-and-forget logging)
-// and returns an empty string if non-compliant, preserving public tracker context.
+// censorTrackerName runs the name through CensorService for logging only and
+// always returns the original tracker name so ranking outputs keep in-game names.
 func (c *Controller) censorTrackerName(name, server string) string {
-	if c.censor == nil || strings.TrimSpace(name) == "" {
-		return name
-	}
-	if !c.censor.CensorName(context.Background(), 0, "", name, server) {
+	clean := strings.TrimSpace(name)
+	if clean == "" {
 		return ""
 	}
-	return name
+	if c.censor != nil {
+		_ = c.censor.CensorName(context.Background(), 0, "", clean, server)
+	}
+	return clean
 }
 
 func (c *Controller) BuildLineRequest(req LineRequest) (*LineRequest, error) {
@@ -606,9 +608,13 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 			rankValue = latest.RankData.Rank
 		}
 		score := latest.RankData.Score
+		name := strings.TrimSpace(latest.UserData.Name)
+		if name == "" {
+			name = c.resolveTrackerNameByUserID(server, eventID, latest.RankData.UserID, wlCharacterID)
+		}
 		info := drawing.RankInfo{
 			Rank:  rankValue,
-			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
+			Name:  pickTrackerDisplayName(c.censorTrackerName(name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}
@@ -624,14 +630,37 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		rankValue = latest.RankData.Rank
 	}
 	score := latest.RankData.Score
+	name := strings.TrimSpace(latest.UserData.Name)
+	if name == "" {
+		name = c.resolveTrackerNameByUserID(server, eventID, latest.RankData.UserID, wlCharacterID)
+	}
 	info := drawing.RankInfo{
 		Rank:  rankValue,
-		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
+		Name:  pickTrackerDisplayName(c.censorTrackerName(name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}
 	c.enrichRankInfoByRank(server, eventID, rankValue, wlCharacterID, &info)
 	return info, nil
+}
+
+func (c *Controller) resolveTrackerNameByUserID(server string, eventID int, userID string, wlCharacterID *int) string {
+	uid, err := strconv.ParseInt(strings.TrimSpace(userID), 10, 64)
+	if err != nil || uid <= 0 {
+		return ""
+	}
+	if wlCharacterID != nil && *wlCharacterID > 0 {
+		latest, latestErr := c.tracker.GetLatestWorldBloomRankingByUser(server, eventID, *wlCharacterID, uid)
+		if latestErr == nil && latest != nil {
+			return strings.TrimSpace(latest.UserData.Name)
+		}
+		return ""
+	}
+	latest, latestErr := c.tracker.GetLatestRankingByUser(server, eventID, uid)
+	if latestErr == nil && latest != nil {
+		return strings.TrimSpace(latest.UserData.Name)
+	}
+	return ""
 }
 
 func (c *Controller) buildSingleUserFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {

@@ -20,7 +20,7 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, true, true)
+			params, err := buildSKTrackerParams(ctx, true, true, false)
 			if err != nil {
 				return nil, err
 			}
@@ -37,7 +37,7 @@ func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, true)
+			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
 			}
@@ -57,7 +57,7 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -75,7 +75,7 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -116,7 +116,7 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -148,7 +148,7 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -167,7 +167,7 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -186,7 +186,7 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, true)
+			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +205,7 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			params, err := buildSKTrackerParams(ctx, false, false)
+			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -214,7 +214,7 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 	}
 }
 
-func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool) (map[string]any, error) {
+func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool) (map[string]any, error) {
 	eventID, wlCharacterID, wlCharacterQuery, full, rankArgs := extractSKMetaArgs(
 		strings.TrimSpace(ctx.GetArgs()),
 		defaultFull,
@@ -239,13 +239,23 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 				effectiveRankArgs = uidArg
 			}
 		}
+		if selfWhenEmpty && strings.TrimSpace(effectiveRankArgs) == "" && targetUserID == "" {
+			targetUserID = strings.TrimSpace(ctx.GetUserId())
+		}
 	}
 
-	ranks, userID, err := parseSKRanks(effectiveRankArgs, allowUID)
-	if err != nil {
-		return nil, err
+	var (
+		ranks  []int
+		userID *int64
+	)
+	if strings.TrimSpace(effectiveRankArgs) != "" || targetUserID == "" {
+		var err error
+		ranks, userID, err = parseSKRanks(effectiveRankArgs, allowUID)
+		if err != nil {
+			return nil, err
+		}
 	}
-	if len(ranks) == 0 && userID == nil {
+	if len(ranks) == 0 && userID == nil && targetUserID == "" {
 		return nil, fmt.Errorf("请至少提供一个排名或UID")
 	}
 	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
@@ -255,7 +265,9 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	params := map[string]any{
 		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
 		"region_explicit": ctx.HasExplicitRegion(),
-		"ranks":           ranks,
+	}
+	if len(ranks) > 0 {
+		params["ranks"] = ranks
 	}
 	if eventID > 0 {
 		params["event_id"] = eventID

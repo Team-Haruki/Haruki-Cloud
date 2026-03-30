@@ -2995,6 +2995,7 @@ func TestPJSKSKCheckRoomTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
 			Eid   int `json:"eid"`
 			Ranks []struct {
 				Rank          int    `json:"rank"`
+				Name          string `json:"name"`
 				AverageRound  *int   `json:"average_round,omitempty"`
 				AveragePt     *int   `json:"average_pt,omitempty"`
 				LatestPt      *int   `json:"latest_pt,omitempty"`
@@ -3015,6 +3016,9 @@ func TestPJSKSKCheckRoomTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
 	}
 	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
 		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+	if strings.TrimSpace(data.Payload.Ranks[0].Name) == "" {
+		t.Fatalf("expected rank name to be present, got %+v", data.Payload.Ranks[0])
 	}
 	if data.Payload.Ranks[0].AverageRound == nil || data.Payload.Ranks[0].AveragePt == nil ||
 		data.Payload.Ranks[0].LatestPt == nil || data.Payload.Ranks[0].Speed == nil ||

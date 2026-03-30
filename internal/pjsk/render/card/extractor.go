@@ -19,7 +19,10 @@ func buildRules(items map[string]string) []dictRule {
 		keys = append(keys, key)
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		return len(keys[i]) > len(keys[j])
+		if len(keys[i]) != len(keys[j]) {
+			return len(keys[i]) > len(keys[j])
+		}
+		return keys[i] > keys[j]
 	})
 
 	rules := make([]dictRule, 0, len(keys))
@@ -139,11 +142,14 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 }
 
 var supplyRules = buildRules(map[string]string{
-	"期间限定": "limited",
-	"fes":  "festival",
-	"限定":   "limited", "limit": "limited",
-	"常驻": "normal", "非限": "normal",
-	"生日": "birthday",
+	"期间限定":  "limited",
+	"fes":   "festival",
+	"非限定":   "normal",
+	"限定":    "limited",
+	"limit": "limited",
+	"常驻":    "normal",
+	"非限":    "normal",
+	"生日":    "birthday",
 })
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {

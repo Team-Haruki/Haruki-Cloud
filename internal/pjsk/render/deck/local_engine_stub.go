@@ -6,7 +6,7 @@ import "fmt"
 
 type stubLocalEngineProvider struct{}
 
-func newLocalEngineProvider(RecommendConfig) localEngineProvider {
+func newLocalEngineProvider(RecommendConfig) engineProvider {
 	return stubLocalEngineProvider{}
 }
 

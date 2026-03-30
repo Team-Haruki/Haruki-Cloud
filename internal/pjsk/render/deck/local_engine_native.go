@@ -22,7 +22,7 @@ type nativeLocalEngineProvider struct {
 	recommenders map[string]DeckRecommender
 }
 
-func newLocalEngineProvider(cfg RecommendConfig) localEngineProvider {
+func newLocalEngineProvider(cfg RecommendConfig) engineProvider {
 	return &nativeLocalEngineProvider{
 		cfg:          cfg,
 		recommenders: make(map[string]DeckRecommender),
@@ -254,11 +254,15 @@ func (l *LocalDeckRecommender) Recommend(req RecommendRequest) (*RecommendResult
 	}
 	seen := make(map[string]*RecommendDeck)
 	var order []string
+	var firstErr error
 
 	for range req.BatchOption {
 		p := <-results
 		if p.err != nil {
 			slog.Warn("deck local engine failed", "region", req.Region, "algorithm", p.alg, "error", p.err)
+			if firstErr == nil {
+				firstErr = p.err
+			}
 			continue
 		}
 		if p.alg != "" {
@@ -280,6 +284,9 @@ func (l *LocalDeckRecommender) Recommend(req RecommendRequest) (*RecommendResult
 			seen[h] = &deckCopy
 			order = append(order, h)
 		}
+	}
+	if len(order) == 0 && firstErr != nil {
+		return nil, firstErr
 	}
 
 	type pair struct {

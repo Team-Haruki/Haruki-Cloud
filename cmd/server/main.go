@@ -311,6 +311,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:          harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			UseLocalEngine:   harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,
+			ServiceBaseURL:   harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
 			LocalPoolSize:    harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalPoolSize,
 			LocalLibraryDirs: append([]string(nil), harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalLibraryDirs...),
 			StaticDataDir:    harukiConfig.Cfg.PJSKRender.DeckRecommend.StaticDataDir,

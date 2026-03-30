@@ -14,6 +14,10 @@
   - 当前状态、已完成工作、待办事项
   - 适合：快速了解项目全貌
 
+- **[PJSK Deck-Service HTTP 联调测试记录](pjsk-deck-service-http-integration-test.cn.md)** ⭐
+  - 记录这轮 `deck-service <-> Haruki-Cloud` 接线、兼容层验证、真实服务调用结果与当前结论
+  - 适合：继续排查 `deck recommend auto` 远程推荐失败，或查看这轮接入的边界与验证结果
+
 - **[PJSK 歌曲查询统一改造方案](pjsk-music-query-unification-plan.cn.md)** ⭐
   - 整理歌曲查询、难度提取、排行参数抽取与 `deck` 指定歌曲的统一方向
   - 适合：后续继续修 `music/score/deck` 相关参数语义时对照
@@ -88,6 +92,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-03-31 | PJSK Deck-Service HTTP 联调测试记录 / README 索引 | 新增 deck-service HTTP 联调测试文档，记录 Cloud 接线、真实服务验证与当前结论 |
 | 2026-03-29 | PJSK 卡牌查询语义整理 / README 索引 | 新增卡牌查询专题文档，整理 `card/detail` `card/list` `card/image` 的入口分流与参数边界 |
 | 2026-03-29 | PJSK 歌曲查询统一改造方案 / README 索引 | 新增歌曲查询统一方案文档，整理 `music` `score/music-board` `score/music-meta` `deck` 的统一改造方向 |
 | 2026-03-28 | 客户端对接指南 / 项目进展总结 | 同步 MySekai 指令别名约定（`msa/msm/msr`）与地图编号选图规则（`/msm 1-4`） |
@@ -106,4 +111,4 @@ X-Haruki-Bot-Matched-Command: /卡面
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-03-29
+**最后更新**：2026-03-31

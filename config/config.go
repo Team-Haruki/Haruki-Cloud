@@ -180,6 +180,7 @@ type UserSnapshotConfig struct {
 type DeckRecommendConfig struct {
 	Enabled          bool          `yaml:"enabled"`
 	UseLocalEngine   bool          `yaml:"use_local_engine"`
+	ServiceBaseURL   string        `yaml:"service_base_url"`
 	LocalPoolSize    int           `yaml:"local_pool_size"`
 	LocalLibraryDirs []string      `yaml:"local_library_dirs"`
 	StaticDataDir    string        `yaml:"static_data_dir"`

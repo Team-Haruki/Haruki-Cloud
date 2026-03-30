@@ -68,6 +68,7 @@ type UserSnapshotConfig struct {
 type DeckRecommendConfig struct {
 	Enabled          bool
 	UseLocalEngine   bool
+	ServiceBaseURL   string
 	LocalPoolSize    int
 	LocalLibraryDirs []string
 	StaticDataDir    string
@@ -137,6 +138,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 		Enabled:          cfg.DeckRecommend.Enabled,
 		UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
+		ServiceBaseURL:   cfg.DeckRecommend.ServiceBaseURL,
 		LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
 		LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
 		StaticDataDir:    cfg.DeckRecommend.StaticDataDir,
@@ -175,6 +177,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		deckController = deck.NewControllerWithConfig(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:          cfg.DeckRecommend.Enabled,
 			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
+			ServiceBaseURL:   cfg.DeckRecommend.ServiceBaseURL,
 			LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
 			LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
 			StaticDataDir:    cfg.DeckRecommend.StaticDataDir,

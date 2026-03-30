@@ -35,7 +35,7 @@ type Controller struct {
 	defaultRegion renderregion.Value
 	recommendCfg  RecommendConfig
 	metaLoader    MusicMetaSource
-	localEngine   localEngineProvider
+	engine        engineProvider
 }
 
 func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, defaultRegion renderregion.Value) *Controller {
@@ -56,6 +56,7 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		recommendCfg: RecommendConfig{
 			Enabled:          cfg.Enabled,
 			UseLocalEngine:   cfg.UseLocalEngine,
+			ServiceBaseURL:   strings.TrimSpace(cfg.ServiceBaseURL),
 			LocalPoolSize:    cfg.LocalPoolSize,
 			LocalLibraryDirs: append([]string(nil), cfg.LocalLibraryDirs...),
 			StaticDataDir:    cfg.StaticDataDir,
@@ -65,8 +66,12 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		},
 		metaLoader: metaLoader,
 	}
-	if cfg.Enabled && cfg.UseLocalEngine {
-		controller.localEngine = newLocalEngineProvider(controller.recommendCfg)
+	if cfg.Enabled {
+		if controller.recommendCfg.ServiceBaseURL != "" {
+			controller.engine = newRemoteEngineProvider(controller.recommendCfg)
+		} else if cfg.UseLocalEngine {
+			controller.engine = newLocalEngineProvider(controller.recommendCfg)
+		}
 	}
 	return controller
 }
@@ -118,15 +123,15 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 		return nil, err
 	}
 
-	if c.recommendCfg.Enabled && c.recommendCfg.UseLocalEngine {
+	if c.recommendCfg.Enabled && c.engine != nil {
 		return c.buildAutoRecommendWithEngine(query)
 	}
 	return c.buildAutoRecommendLocal(query)
 }
 
 func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.DeckRequest, error) {
-	if c.localEngine == nil {
-		return nil, fmt.Errorf("deck local engine is not configured")
+	if c.engine == nil {
+		return nil, fmt.Errorf("deck recommend engine is not configured")
 	}
 
 	region, recType, err := c.normalizeAutoQuery(query)
@@ -139,9 +144,15 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		return nil, err
 	}
 
-	recommender, err := c.localEngine.Get(region.String())
+	recommender, err := c.engine.Get(region.String())
 	if err != nil {
 		return nil, err
+	}
+
+	musicMeta := c.resolveMusicMeta(region)
+	musicMetaPath := c.resolveMusicMetaFilePath()
+	if len(musicMeta) == 0 && musicMetaPath == "" {
+		return nil, fmt.Errorf("deck recommend requires music meta data")
 	}
 
 	option, err := c.buildRecommendOption(region, recType, query)
@@ -150,10 +161,12 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	}
 
 	result, err := recommender.Recommend(RecommendRequest{
-		Region:      region.String(),
-		UserData:    userBytes,
-		MusicMeta:   c.resolveMusicMeta(region),
-		BatchOption: recommender.ExpandAlgorithms(option),
+		Region:            region.String(),
+		UserData:          userBytes,
+		UserDataFilePath:  c.resolveUserDataFilePath(),
+		MusicMeta:         musicMeta,
+		MusicMetaFilePath: musicMetaPath,
+		BatchOption:       recommender.ExpandAlgorithms(option),
 	})
 	if err != nil {
 		return nil, err
@@ -275,27 +288,23 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 	}
 
 	option := map[string]interface{}{
-		"region":                       region.String(),
-		"algorithm":                    "all",
-		"timeout_ms":                   60000,
-		"limit":                        limit,
-		"target":                       "score",
-		"live_type":                    "multi",
-		"music_id":                     10000,
-		"music_diff":                   "master",
-		"member":                       5,
-		"multi_live_teammate_power":    250000,
-		"multi_live_teammate_score_up": 200,
-		"rarity_1_config":              defaultDeckConfig12(),
-		"rarity_2_config":              defaultDeckConfig12(),
-		"rarity_3_config":              defaultDeckConfig34bd(),
-		"rarity_4_config":              defaultDeckConfig34bd(),
-		"rarity_birthday_config":       defaultDeckConfig34bd(),
-		"single_card_configs":          []interface{}{},
-		"fixed_cards":                  []int{},
-		"fixed_characters":             []int{},
-		"best_skill_as_leader":         true,
-		"keep_after_training_state":    false,
+		"region":                    region.String(),
+		"algorithm":                 "all",
+		"timeout_ms":                c.recommendTimeoutMs(),
+		"limit":                     limit,
+		"target":                    "score",
+		"live_type":                 "multi",
+		"music_id":                  10000,
+		"music_diff":                "master",
+		"member":                    5,
+		"rarity_1_config":           defaultDeckConfig12(),
+		"rarity_2_config":           defaultDeckConfig12(),
+		"rarity_3_config":           defaultDeckConfig34bd(),
+		"rarity_4_config":           defaultDeckConfig34bd(),
+		"rarity_birthday_config":    defaultDeckConfig34bd(),
+		"single_card_configs":       []interface{}{},
+		"best_skill_as_leader":      true,
+		"keep_after_training_state": false,
 	}
 
 	switch recType {
@@ -334,7 +343,15 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 	}
 
 	applyRecommendOptionOverrides(option, recType, query)
+	normalizeRecommendLiveOptions(option)
 	return option, nil
+}
+
+func (c *Controller) recommendTimeoutMs() int {
+	if c == nil || c.recommendCfg.Timeout <= 0 {
+		return 60000
+	}
+	return int(c.recommendCfg.Timeout / time.Millisecond)
 }
 
 func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]interface{}, result *RecommendResult) (*drawing.DeckRequest, error) {
@@ -624,6 +641,24 @@ func applyRecommendOptionOverrides(option map[string]interface{}, recType string
 	if query.KeepAfterTrainingState {
 		option["keep_after_training_state"] = true
 	}
+}
+
+func normalizeRecommendLiveOptions(option map[string]interface{}) {
+	if option == nil {
+		return
+	}
+	if optionString(option, "live_type") == "multi" {
+		if _, ok := option["multi_live_teammate_power"]; !ok {
+			option["multi_live_teammate_power"] = 250000
+		}
+		if _, ok := option["multi_live_teammate_score_up"]; !ok {
+			option["multi_live_teammate_score_up"] = 200
+		}
+		return
+	}
+	delete(option, "multi_live_teammate_power")
+	delete(option, "multi_live_teammate_score_up")
+	delete(option, "multi_live_score_up_lower_bound")
 }
 
 func applyDeckConfigPatch(option map[string]interface{}, key string, patch *CardConfigPatch) {
@@ -937,6 +972,20 @@ func (c *Controller) resolveMusicMeta(region renderregion.Value) []byte {
 		return c.snapshot.MusicMetaBytes()
 	}
 	return nil
+}
+
+func (c *Controller) resolveUserDataFilePath() string {
+	if c == nil || c.snapshot == nil {
+		return ""
+	}
+	return c.snapshot.RawFilePath()
+}
+
+func (c *Controller) resolveMusicMetaFilePath() string {
+	if c == nil || c.snapshot == nil {
+		return ""
+	}
+	return c.snapshot.MusicMetaPath()
 }
 
 func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {

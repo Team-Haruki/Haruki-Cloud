@@ -33,6 +33,8 @@ type Service struct {
 	challenge      *ChallengeLiveData
 	rawData        *RawUserData
 	musicMetaBytes []byte
+	rawFilePath    string
+	musicMetaPath  string
 	rawJSON        []byte
 }
 
@@ -235,6 +237,11 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 		service.initErr = fmt.Errorf("read user snapshot: %w", err)
 		return service
 	}
+	data, err = normalizeSnapshotJSON(data)
+	if err != nil {
+		service.initErr = err
+		return service
+	}
 
 	if strings.TrimSpace(cfg.MySekaiJSON) != "" {
 		data, err = mergeMySekaiJSON(data, cfg.MySekaiJSON)
@@ -283,6 +290,11 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 	}
 	service.rawData = &raw
 	service.rawJSON = data
+	service.rawFilePath, err = writeNormalizedSnapshotFile("haruki-pjsk-user-*.json", data)
+	if err != nil {
+		service.initErr = err
+		return service
+	}
 
 	if strings.TrimSpace(cfg.MusicMetaJSON) != "" {
 		musicMetaBytes, err := os.ReadFile(filepath.Clean(cfg.MusicMetaJSON))
@@ -291,6 +303,7 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 			return service
 		}
 		service.musicMetaBytes = meta.InjectOmakase(musicMetaBytes)
+		service.musicMetaPath = filepath.Clean(cfg.MusicMetaJSON)
 	}
 
 	return service
@@ -397,6 +410,13 @@ func (s *Service) RawBytes() ([]byte, error) {
 	return append([]byte(nil), s.rawJSON...), nil
 }
 
+func (s *Service) RawFilePath() string {
+	if s == nil {
+		return ""
+	}
+	return strings.TrimSpace(s.rawFilePath)
+}
+
 func (s *Service) RawData() *RawUserData {
 	if s == nil {
 		return nil
@@ -411,10 +431,25 @@ func (s *Service) MusicMetaBytes() []byte {
 	return append([]byte(nil), s.musicMetaBytes...)
 }
 
+func (s *Service) MusicMetaPath() string {
+	if s == nil {
+		return ""
+	}
+	return strings.TrimSpace(s.musicMetaPath)
+}
+
 func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
 	mySekaiData, err := os.ReadFile(filepath.Clean(mySekaiPath))
 	if err != nil {
 		return nil, fmt.Errorf("read mysekai snapshot: %w", err)
+	}
+	userData, err = normalizeSnapshotJSON(userData)
+	if err != nil {
+		return nil, err
+	}
+	mySekaiData, err = normalizeSnapshotJSON(mySekaiData)
+	if err != nil {
+		return nil, err
 	}
 
 	var baseMap map[string]interface{}

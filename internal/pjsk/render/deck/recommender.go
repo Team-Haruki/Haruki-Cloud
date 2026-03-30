@@ -8,6 +8,7 @@ import (
 type RecommendConfig struct {
 	Enabled          bool
 	UseLocalEngine   bool
+	ServiceBaseURL   string
 	LocalPoolSize    int
 	LocalLibraryDirs []string
 	StaticDataDir    string
@@ -28,10 +29,12 @@ type DeckRecommender interface {
 }
 
 type RecommendRequest struct {
-	Region      string
-	UserData    []byte
-	MusicMeta   []byte
-	BatchOption []map[string]interface{}
+	Region            string
+	UserData          []byte
+	UserDataFilePath  string
+	MusicMeta         []byte
+	MusicMetaFilePath string
+	BatchOption       []map[string]interface{}
 }
 
 type RecommendResult struct {
@@ -68,7 +71,7 @@ type RecommendCard struct {
 	HasCanvasBonus  bool    `json:"has_canvas_bonus"`
 }
 
-type localEngineProvider interface {
+type engineProvider interface {
 	Get(region string) (DeckRecommender, error)
 }
 

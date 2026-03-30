@@ -1,9 +1,13 @@
 package deck
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -26,6 +30,14 @@ func (s *testCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 
 type testEventSource struct {
 	events map[int]*masterdata.Event
+}
+
+type testMusicMetaSource struct {
+	data []byte
+}
+
+func (s *testMusicMetaSource) Get(string) []byte {
+	return append([]byte(nil), s.data...)
 }
 
 func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
@@ -144,7 +156,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		RecommendType:                "event",
 		EventID:                      &eventID,
 		Algorithm:                    "sa",
-		LiveType:                     "auto",
+		LiveType:                     "multi",
 		Target:                       "skill",
 		MusicID:                      &musicID,
 		MusicDiff:                    "expert",
@@ -167,7 +179,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	if option["algorithm"] != "sa" {
 		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
 	}
-	if option["live_type"] != "auto" {
+	if option["live_type"] != "multi" {
 		t.Fatalf("unexpected live_type: %+v", option["live_type"])
 	}
 	if option["target"] != "skill" {
@@ -248,7 +260,174 @@ func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
 	}
 }
 
+func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
+	var masterdataCalls atomic.Int32
+	var musicMetaCalls atomic.Int32
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata":
+			masterdataCalls.Add(1)
+			var payload map[string]interface{}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode masterdata request: %v", err)
+			}
+			if payload["region"] != "jp" {
+				t.Fatalf("unexpected masterdata region: %+v", payload["region"])
+			}
+			if strings.TrimSpace(payload["base_dir"].(string)) == "" {
+				t.Fatalf("expected masterdata base_dir")
+			}
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+
+		case "/update/musicmetas/string":
+			musicMetaCalls.Add(1)
+			var payload map[string]interface{}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode music meta request: %v", err)
+			}
+			data, _ := payload["data"].(string)
+			var metas []map[string]interface{}
+			if err := json.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
+				http.Error(w, "invalid music meta payload", http.StatusBadRequest)
+				return
+			}
+			if musicID, ok := metas[0]["music_id"].(float64); !ok || int(musicID) != 10000 {
+				http.Error(w, "unexpected music meta payload", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payload map[string]interface{}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode recommend request: %v", err)
+			}
+			if payload["algorithm"] != "ga" {
+				t.Fatalf("unexpected algorithm: %+v", payload["algorithm"])
+			}
+			if path, _ := payload["user_data_file_path"].(string); strings.TrimSpace(path) == "" {
+				if raw, _ := payload["user_data_str"].(string); strings.TrimSpace(raw) == "" {
+					t.Fatalf("expected user_data_file_path or user_data_str in recommend payload")
+				}
+			}
+			_, _ = w.Write([]byte(`{
+				"decks": [{
+					"score": 1234567,
+					"live_score": 1234567,
+					"mysekai_event_point": 0,
+					"total_power": 345678,
+					"event_bonus_rate": 25,
+					"support_deck_bonus_rate": 10,
+					"multi_live_score_up": 120,
+					"cards": [
+						{
+							"card_id": 1002,
+							"level": 60,
+							"master_rank": 5,
+							"skill_level": 4,
+							"skill_score_up": 120,
+							"event_bonus_rate": 25,
+							"episode1_read": true,
+							"episode2_read": true,
+							"after_training": true,
+							"default_image": "special_training",
+							"has_canvas_bonus": false
+						},
+						{
+							"card_id": 1001,
+							"level": 50,
+							"master_rank": 1,
+							"skill_level": 4,
+							"skill_score_up": 100,
+							"event_bonus_rate": 20,
+							"episode1_read": true,
+							"episode2_read": true,
+							"after_training": false,
+							"default_image": "normal",
+							"has_canvas_bonus": false
+						}
+					]
+				}]
+			}`))
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+	}, &testMusicMetaSource{
+		data: []byte(`[{
+			"music_id": 10000,
+			"difficulty": "master",
+			"music_time": 100,
+			"event_rate": 120,
+			"base_score": 1,
+			"base_score_auto": 1,
+			"skill_score_solo": [1,1,1,1,1,1],
+			"skill_score_auto": [1,1,1,1,1,1],
+			"skill_score_multi": [1,1,1,1,1,1],
+			"fever_score": 1,
+			"fever_end_time": 1,
+			"tap_count": 100
+		}]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		Algorithm:     "ga",
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 2 {
+		t.Fatalf("unexpected deck payload: %+v", request.DeckData)
+	}
+	if request.DeckData[0].CardData[0].CardThumbnail.CardID != 1002 {
+		t.Fatalf("unexpected remote card order: %+v", request.DeckData[0].CardData)
+	}
+	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 1 {
+		t.Fatalf("unexpected call counts: masterdata=%d musicmeta=%d recommend=%d", masterdataCalls.Load(), musicMetaCalls.Load(), recommendCalls.Load())
+	}
+
+	_, err = controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		Algorithm:     "ga",
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("second BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 2 {
+		t.Fatalf("unexpected cached call counts: masterdata=%d musicmeta=%d recommend=%d", masterdataCalls.Load(), musicMetaCalls.Load(), recommendCalls.Load())
+	}
+}
+
 func newTestDeckController(t *testing.T, cfg RecommendConfig) *Controller {
+	return newTestDeckControllerWithMeta(t, cfg, nil)
+}
+
+func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
 	t.Helper()
 
 	tempDir := t.TempDir()
@@ -315,5 +494,5 @@ func newTestDeckController(t *testing.T, cfg RecommendConfig) *Controller {
 		},
 	}
 
-	return NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, nil)
+	return NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, metaLoader)
 }

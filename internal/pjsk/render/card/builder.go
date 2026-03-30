@@ -82,7 +82,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 				if len(units) == 1 {
 					for unit := range units {
 						eventInfo.Unit = &unit
-						if iconName := b.getUnitIconName(unit); iconName != "" {
+						if iconName := assets.UnitIconFilename(unit); iconName != "" {
 							path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png")
 							eventUnitIconPath = &path
 						}
@@ -563,25 +563,6 @@ func (b *Builder) buildGachaBannerPath(gachaID int, region renderregion.Value) s
 		filepath.Join("home", "banner", fmt.Sprintf("banner_gacha%d", gachaID), fmt.Sprintf("banner_gacha%d.png", gachaID)),
 		filepath.Join("gacha", fmt.Sprintf("banner_gacha%d.png", gachaID)),
 	)
-}
-
-func (b *Builder) getUnitIconName(unit string) string {
-	switch unit {
-	case "light_sound":
-		return "light_sound"
-	case "idol":
-		return "idol"
-	case "street":
-		return "street"
-	case "theme_park":
-		return "theme_park"
-	case "school_refusal":
-		return "school_refusal"
-	case "piapro":
-		return "piapro"
-	default:
-		return ""
-	}
 }
 
 func boolPtr(value bool) *bool {

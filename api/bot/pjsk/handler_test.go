@@ -1034,6 +1034,52 @@ func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
+func TestBotEndpointSKPlayerTraceSupportsTwoRanks(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/player-trace" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.PlayerTraceRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.EventID != 101 {
+			t.Fatalf("unexpected event id: %d", req.EventID)
+		}
+		if len(req.Ranks) == 0 {
+			t.Fatalf("first rank trace should not be empty")
+		}
+		if len(req.Ranks2) == 0 {
+			t.Fatalf("second rank trace should not be empty")
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKPTRPNG"))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/player-trace"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/ptr",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/ptr event101 1 2"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 

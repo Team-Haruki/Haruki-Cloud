@@ -2994,7 +2994,13 @@ func TestPJSKSKCheckRoomTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
 		Payload  struct {
 			Eid   int `json:"eid"`
 			Ranks []struct {
-				Rank int `json:"rank"`
+				Rank          int    `json:"rank"`
+				AverageRound  *int   `json:"average_round,omitempty"`
+				AveragePt     *int   `json:"average_pt,omitempty"`
+				LatestPt      *int   `json:"latest_pt,omitempty"`
+				Speed         *int   `json:"speed,omitempty"`
+				HourRound     *int   `json:"hour_round,omitempty"`
+				RecordStartAt string `json:"record_start_at,omitempty"`
 			} `json:"ranks"`
 		} `json:"payload"`
 	}
@@ -3009,6 +3015,11 @@ func TestPJSKSKCheckRoomTrackerBuildRouteReturnsBuiltPayload(t *testing.T) {
 	}
 	if len(data.Payload.Ranks) != 2 || data.Payload.Ranks[0].Rank != 1 || data.Payload.Ranks[1].Rank != 100 {
 		t.Fatalf("unexpected ranks: %+v", data.Payload.Ranks)
+	}
+	if data.Payload.Ranks[0].AverageRound == nil || data.Payload.Ranks[0].AveragePt == nil ||
+		data.Payload.Ranks[0].LatestPt == nil || data.Payload.Ranks[0].Speed == nil ||
+		data.Payload.Ranks[0].HourRound == nil || data.Payload.Ranks[0].RecordStartAt == "" {
+		t.Fatalf("expected tracker metrics to be populated, got %+v", data.Payload.Ranks[0])
 	}
 }
 

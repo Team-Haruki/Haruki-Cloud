@@ -94,7 +94,14 @@ func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-player-trace"), nil
+			params, err := buildSKPlayerTraceParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if len(params) == 0 {
+				return makeResolvedCmd(ctx, parser.ModuleSK, "sk-player-trace"), nil
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-player-trace", params), nil
 		},
 	}
 }
@@ -272,6 +279,75 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if full {
 		params["full"] = true
 	}
+	return params, nil
+}
+
+func buildSKPlayerTraceParams(ctx SekaiHandlerContext) (map[string]any, error) {
+	eventID, wlCharacterID, wlCharacterQuery, _, rankArgs := extractSKMetaArgs(
+		strings.TrimSpace(ctx.GetArgs()),
+		false,
+		ctx.PrefixArg() == "wl",
+	)
+
+	params := map[string]any{
+		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
+		"region_explicit": ctx.HasExplicitRegion(),
+	}
+	if eventID > 0 {
+		params["event_id"] = eventID
+	}
+	if wlCharacterID > 0 {
+		params["wl_character_id"] = wlCharacterID
+	}
+	if strings.TrimSpace(wlCharacterQuery) != "" {
+		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
+	}
+
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		return nil, fmt.Errorf("wl 模式需要角色ID或角色名，例如: /wlptr 初音未来 100 500")
+	}
+
+	targetUserID := ""
+	targetSelector := ""
+	if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(rankArgs) == "" {
+		switch {
+		case strings.HasPrefix(uidArg, "@"):
+			candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
+			if isDigits(candidate) {
+				targetUserID = candidate
+			}
+		case isBindingSelector(uidArg):
+			targetUserID = strings.TrimSpace(ctx.GetUserId())
+			targetSelector = strings.ToLower(uidArg)
+		case isDigits(uidArg):
+			rankArgs = uidArg
+		}
+	}
+
+	if strings.TrimSpace(rankArgs) != "" {
+		ranks, userID, err := parseSKRanks(rankArgs, true)
+		if err != nil {
+			return nil, err
+		}
+		if len(ranks) > 2 {
+			return nil, fmt.Errorf("ptr 最多支持两个排名，例如: /ptr 1 2")
+		}
+		if len(ranks) > 0 {
+			params["ranks"] = ranks
+		}
+		if userID != nil && *userID > 0 {
+			params["user_id"] = *userID
+		}
+	}
+
+	if targetUserID != "" {
+		params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
+		params["target_user_id"] = targetUserID
+		if targetSelector != "" {
+			params["target_selector"] = targetSelector
+		}
+	}
+
 	return params, nil
 }
 

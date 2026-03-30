@@ -350,64 +350,92 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 }
 
 // BuildPlayerTraceFromTracker builds a player-trace request by fetching trace
-// data from the tracker API for a specific user.
+// data from the tracker API for a specific user or ranking line.
 func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing.PlayerTraceRequest, error) {
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
 	}
-	if normalized.UserID == nil {
-		return nil, fmt.Errorf("player-trace requires user_id")
-	}
-	userID := *normalized.UserID
-
-	var ranks []drawing.RankInfo
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		trace, err := c.tracker.TraceWorldBloomRankingByUser(normalized.Region, normalized.EventID, *normalized.WlCharacterID, userID)
-		if err != nil {
-			return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
-		}
-		name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
-		for _, point := range trace.RankData {
-			rankValue := point.Rank
-			score := point.Score
-			ranks = append(ranks, drawing.RankInfo{
-				Rank:  rankValue,
-				Name:  name,
-				Score: drawing.IntPtr(score),
-				Time:  formatTrackerTimestamp(point.Timestamp),
-			})
-		}
-	} else {
-		trace, err := c.tracker.TraceRankingByUser(normalized.Region, normalized.EventID, userID)
-		if err != nil {
-			return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
-		}
-		name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
-		for _, point := range trace.RankData {
-			rankValue := point.Rank
-			score := point.Score
-			ranks = append(ranks, drawing.RankInfo{
-				Rank:  rankValue,
-				Name:  name,
-				Score: drawing.IntPtr(score),
-				Time:  formatTrackerTimestamp(point.Timestamp),
-			})
-		}
-	}
-
-	sort.Slice(ranks, func(i, j int) bool {
-		return fmt.Sprintf("%v", ranks[i].Time) < fmt.Sprintf("%v", ranks[j].Time)
-	})
-
-	if len(ranks) == 0 {
-		return nil, fmt.Errorf("no trace data available for user %d", userID)
-	}
 
 	payload := drawing.PlayerTraceRequest{
 		EventID: normalized.EventID,
 		Region:  normalized.Region,
-		Ranks:   ranks,
+	}
+
+	switch {
+	case normalized.UserID != nil:
+		userID := *normalized.UserID
+		var ranks []drawing.RankInfo
+		if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+			trace, err := c.tracker.TraceWorldBloomRankingByUser(normalized.Region, normalized.EventID, *normalized.WlCharacterID, userID)
+			if err != nil {
+				return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
+			}
+			if trace == nil {
+				return nil, fmt.Errorf("tracker trace user %d returned empty data", userID)
+			}
+			name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
+			for _, point := range trace.RankData {
+				rankValue := point.Rank
+				score := point.Score
+				ranks = append(ranks, drawing.RankInfo{
+					Rank:  rankValue,
+					Name:  name,
+					Score: drawing.IntPtr(score),
+					Time:  formatTrackerTimestamp(point.Timestamp),
+				})
+			}
+		} else {
+			trace, err := c.tracker.TraceRankingByUser(normalized.Region, normalized.EventID, userID)
+			if err != nil {
+				return nil, fmt.Errorf("tracker trace user %d query failed: %w", userID, err)
+			}
+			if trace == nil {
+				return nil, fmt.Errorf("tracker trace user %d returned empty data", userID)
+			}
+			name := c.censorTrackerName(trace.UserData.Name, normalized.Region)
+			for _, point := range trace.RankData {
+				rankValue := point.Rank
+				score := point.Score
+				ranks = append(ranks, drawing.RankInfo{
+					Rank:  rankValue,
+					Name:  name,
+					Score: drawing.IntPtr(score),
+					Time:  formatTrackerTimestamp(point.Timestamp),
+				})
+			}
+		}
+
+		sort.Slice(ranks, func(i, j int) bool {
+			return fmt.Sprintf("%v", ranks[i].Time) < fmt.Sprintf("%v", ranks[j].Time)
+		})
+		if len(ranks) == 0 {
+			return nil, fmt.Errorf("no trace data available for user %d", userID)
+		}
+		payload.Ranks = ranks
+
+	case len(normalized.Ranks) > 0:
+		if len(normalized.Ranks) > 2 {
+			return nil, fmt.Errorf("player-trace 最多支持两个排名")
+		}
+		trace1, err := c.buildRankTraceFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+		if err != nil {
+			return nil, err
+		}
+		if len(trace1) == 0 {
+			return nil, fmt.Errorf("no trace data available for rank %d", normalized.Ranks[0])
+		}
+		payload.Ranks = trace1
+		if len(normalized.Ranks) > 1 {
+			trace2, err := c.buildRankTraceFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[1], normalized.WlCharacterID)
+			if err != nil {
+				return nil, err
+			}
+			payload.Ranks2 = trace2
+		}
+
+	default:
+		return nil, fmt.Errorf("player-trace requires user_id or rank")
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
@@ -578,12 +606,14 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 			rankValue = latest.RankData.Rank
 		}
 		score := latest.RankData.Score
-		return drawing.RankInfo{
+		info := drawing.RankInfo{
 			Rank:  rankValue,
 			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
-		}, nil
+		}
+		c.enrichRankInfoByRank(server, eventID, rankValue, wlCharacterID, &info)
+		return info, nil
 	}
 	latest, err := c.tracker.GetLatestRankingByRank(server, eventID, rank)
 	if err != nil {
@@ -594,12 +624,14 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		rankValue = latest.RankData.Rank
 	}
 	score := latest.RankData.Score
-	return drawing.RankInfo{
+	info := drawing.RankInfo{
 		Rank:  rankValue,
 		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
-	}, nil
+	}
+	c.enrichRankInfoByRank(server, eventID, rankValue, wlCharacterID, &info)
+	return info, nil
 }
 
 func (c *Controller) buildSingleUserFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
@@ -613,12 +645,14 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 			rankValue = 1
 		}
 		score := latest.RankData.Score
-		return drawing.RankInfo{
+		info := drawing.RankInfo{
 			Rank:  rankValue,
 			Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
-		}, nil
+		}
+		c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
+		return info, nil
 	}
 	latest, err := c.tracker.GetLatestRankingByUser(server, eventID, userID)
 	if err != nil {
@@ -629,12 +663,205 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 		rankValue = 1
 	}
 	score := latest.RankData.Score
-	return drawing.RankInfo{
+	info := drawing.RankInfo{
 		Rank:  rankValue,
 		Name:  pickTrackerDisplayName(c.censorTrackerName(latest.UserData.Name, server), rankValue),
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
-	}, nil
+	}
+	c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
+	return info, nil
+}
+
+type trackerScoreSample struct {
+	score     int
+	timestamp int64
+}
+
+func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
+	if c == nil || c.tracker == nil || info == nil || rank <= 0 {
+		return
+	}
+	if wlCharacterID != nil && *wlCharacterID > 0 {
+		trace, err := c.tracker.TraceWorldBloomRankingByRank(server, eventID, *wlCharacterID, rank)
+		if err != nil || trace == nil {
+			return
+		}
+		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
+		if strings.TrimSpace(name) != "" {
+			info.Name = name
+		}
+		samples := make([]trackerScoreSample, 0, len(trace.RankData))
+		for _, point := range trace.RankData {
+			samples = append(samples, trackerScoreSample{
+				score:     point.Score,
+				timestamp: point.Timestamp,
+			})
+		}
+		applyRankInfoMetrics(info, samples)
+		return
+	}
+
+	trace, err := c.tracker.TraceRankingByRank(server, eventID, rank)
+	if err != nil || trace == nil {
+		return
+	}
+	name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), rank)
+	if strings.TrimSpace(name) != "" {
+		info.Name = name
+	}
+	samples := make([]trackerScoreSample, 0, len(trace.RankData))
+	for _, point := range trace.RankData {
+		samples = append(samples, trackerScoreSample{
+			score:     point.Score,
+			timestamp: point.Timestamp,
+		})
+	}
+	applyRankInfoMetrics(info, samples)
+}
+
+func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int64, wlCharacterID *int, info *drawing.RankInfo) {
+	if c == nil || c.tracker == nil || info == nil || userID <= 0 {
+		return
+	}
+	if wlCharacterID != nil && *wlCharacterID > 0 {
+		trace, err := c.tracker.TraceWorldBloomRankingByUser(server, eventID, *wlCharacterID, userID)
+		if err != nil || trace == nil {
+			return
+		}
+		name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), info.Rank)
+		if strings.TrimSpace(name) != "" {
+			info.Name = name
+		}
+		samples := make([]trackerScoreSample, 0, len(trace.RankData))
+		for _, point := range trace.RankData {
+			samples = append(samples, trackerScoreSample{
+				score:     point.Score,
+				timestamp: point.Timestamp,
+			})
+		}
+		applyRankInfoMetrics(info, samples)
+		return
+	}
+
+	trace, err := c.tracker.TraceRankingByUser(server, eventID, userID)
+	if err != nil || trace == nil {
+		return
+	}
+	name := pickTrackerDisplayName(c.censorTrackerName(trace.UserData.Name, server), info.Rank)
+	if strings.TrimSpace(name) != "" {
+		info.Name = name
+	}
+	samples := make([]trackerScoreSample, 0, len(trace.RankData))
+	for _, point := range trace.RankData {
+		samples = append(samples, trackerScoreSample{
+			score:     point.Score,
+			timestamp: point.Timestamp,
+		})
+	}
+	applyRankInfoMetrics(info, samples)
+}
+
+func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) {
+	if info == nil || len(samples) == 0 {
+		return
+	}
+
+	normalized := make([]trackerScoreSample, 0, len(samples))
+	for _, sample := range samples {
+		if sample.timestamp <= 0 {
+			continue
+		}
+		normalized = append(normalized, sample)
+	}
+	if len(normalized) == 0 {
+		return
+	}
+
+	sort.Slice(normalized, func(i, j int) bool {
+		return normalizeTrackerUnixSeconds(normalized[i].timestamp) < normalizeTrackerUnixSeconds(normalized[j].timestamp)
+	})
+
+	info.RecordStartAt = formatTrackerTimestamp(normalized[0].timestamp)
+	if len(normalized) < 2 {
+		return
+	}
+
+	deltas := make([]int, 0, len(normalized)-1)
+	for i := 1; i < len(normalized); i++ {
+		diff := normalized[i].score - normalized[i-1].score
+		if diff > 0 {
+			deltas = append(deltas, diff)
+		}
+	}
+	if len(deltas) > 0 {
+		latest := deltas[len(deltas)-1]
+		info.LatestPt = drawing.IntPtr(latest)
+
+		avgWindow := deltas
+		if len(avgWindow) > 10 {
+			avgWindow = avgWindow[len(avgWindow)-10:]
+		}
+		sum := 0
+		for _, value := range avgWindow {
+			sum += value
+		}
+		roundCount := len(avgWindow)
+		if roundCount > 0 {
+			avg := sum / roundCount
+			info.AverageRound = drawing.IntPtr(roundCount)
+			info.AveragePt = drawing.IntPtr(avg)
+		}
+	}
+
+	first := normalized[0]
+	last := normalized[len(normalized)-1]
+	startSec := normalizeTrackerUnixSeconds(first.timestamp)
+	endSec := normalizeTrackerUnixSeconds(last.timestamp)
+	if endSec <= startSec {
+		return
+	}
+
+	scoreGain := last.score - first.score
+	elapsed := endSec - startSec
+	if scoreGain > 0 {
+		speed := int((int64(scoreGain) * 3600) / elapsed)
+		if speed > 0 {
+			info.Speed = drawing.IntPtr(speed)
+		}
+	}
+
+	if len(deltas) > 0 {
+		hourRound := int((int64(len(deltas)) * 3600) / elapsed)
+		if hourRound > 0 {
+			info.HourRound = drawing.IntPtr(hourRound)
+		}
+	}
+
+	windowStart := endSec - 20*60
+	baseIdx := 0
+	for i := 0; i < len(normalized)-1; i++ {
+		if normalizeTrackerUnixSeconds(normalized[i].timestamp) >= windowStart {
+			baseIdx = i
+			break
+		}
+		baseIdx = i + 1
+	}
+	base := normalized[baseIdx]
+	baseSec := normalizeTrackerUnixSeconds(base.timestamp)
+	if endSec > baseSec && last.score > base.score {
+		windowSpeed := int((int64(last.score-base.score) * 3600) / (endSec - baseSec))
+		if windowSpeed > 0 {
+			info.Min20Time3Speed = drawing.IntPtr(windowSpeed)
+		}
+	}
+}
+
+func normalizeTrackerUnixSeconds(ts int64) int64 {
+	if ts > 1_000_000_000_000 {
+		return ts / 1000
+	}
+	return ts
 }
 
 func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int) ([]drawing.SpeedInfo, error) {

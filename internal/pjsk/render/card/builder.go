@@ -189,7 +189,8 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 	if len(items) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
-
+	termLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))
+	fesLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))
 	return &drawing.CardBoxRequest{
 		Cards:               items,
 		Region:              region.String(),
@@ -197,6 +198,8 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		ShowBox:             showBox,
 		CharacterIconPaths:  characterIconPaths,
 		CharacterColorCodes: characterColorCodes,
+		TermLimitedIconPath: &termLimitedIconPath,
+		FesLimitedIconPath:  &fesLimitedIconPath,
 	}, nil
 }
 

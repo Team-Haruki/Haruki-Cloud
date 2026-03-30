@@ -24,20 +24,70 @@ func formatSupplyType(raw string) string {
 }
 
 func matchesSupplyFilter(filter, localized string) bool {
-	localized = strings.TrimSpace(localized)
-	if localized == "" {
-		return false
-	}
+	return matchesRawSupplyFilter(filter, localized)
+}
 
-	switch filter {
-	case SupplyFes:
-		return localized == formatSupplyType("colorful_festival_limited") || localized == formatSupplyType("bloom_festival_limited")
-	case SupplyLimited:
-		return localized != formatSupplyType("") && localized != formatSupplyType("birthday")
-	case SupplyNormal:
-		return localized == formatSupplyType("")
-	case SupplyBirthday:
-		return localized == formatSupplyType("birthday")
+func normalizeSupplyType(raw string) string {
+	switch strings.TrimSpace(raw) {
+	case "", "normal", "not_limited":
+		return "normal"
+	case "term_limited":
+		return "term_limited"
+	case "festival_limited", "colorful_festival_limited":
+		return "colorful_festival_limited"
+	case "bloom_festival_limited":
+		return "bloom_festival_limited"
+	case "unit_event_limited":
+		return "unit_event_limited"
+	case "collaboration_limited":
+		return "collaboration_limited"
+	case "birthday", "rarity_birthday":
+		return "birthday"
+	default:
+		return strings.TrimSpace(raw)
+	}
+}
+
+func formatSupplyTypeForList(raw string) string {
+	switch normalizeSupplyType(raw) {
+	case "normal", "":
+		return ""
+	case "term_limited":
+		return "期间限定"
+	case "colorful_festival_limited":
+		return "CFes限定"
+	case "bloom_festival_limited":
+		return "BFes限定"
+	case "unit_event_limited":
+		return "WL限定"
+	case "collaboration_limited":
+		return "联动限定"
+	case "birthday":
+		return "生日"
+	default:
+		return strings.TrimSpace(raw)
+	}
+}
+
+func formatSupplyTypeForDetail(raw string) string {
+	switch normalizeSupplyType(raw) {
+	case "normal", "":
+		return "常驻"
+	default:
+		return formatSupplyTypeForList(raw)
+	}
+}
+
+func matchesRawSupplyFilter(filter, raw string) bool {
+	switch normalizeSupplyType(raw) {
+	case "colorful_festival_limited", "bloom_festival_limited":
+		return filter == SupplyFes || filter == SupplyLimited
+	case "term_limited", "unit_event_limited", "collaboration_limited":
+		return filter == SupplyLimited
+	case "birthday":
+		return filter == SupplyBirthday
+	case "normal":
+		return filter == SupplyNormal
 	default:
 		return false
 	}

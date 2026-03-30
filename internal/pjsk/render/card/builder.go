@@ -38,6 +38,10 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 	}
 
 	cardInfo := b.BuildCardBasic(card, region)
+	supplyType := formatSupplyTypeForDetail(b.source.GetCardSupplyType(card))
+	if strings.TrimSpace(supplyType) != "" {
+		cardInfo.SupplyType = &supplyType
+	}
 
 	var eventInfo *drawing.CardEventInfo
 	var eventAttrIconPath *string
@@ -360,7 +364,7 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 		info.Unit = &unit
 	}
 
-	supplyType := b.source.GetCardSupplyType(card)
+	supplyType := formatSupplyTypeForList(b.source.GetCardSupplyType(card))
 	if strings.TrimSpace(supplyType) != "" {
 		info.SupplyType = &supplyType
 	}

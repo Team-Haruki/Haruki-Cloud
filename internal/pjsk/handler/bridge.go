@@ -521,7 +521,7 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 
 func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	if app == nil || app.Aliases == nil {
-		return nil, fmt.Errorf("閸掝偄鎮曢張宥呭閺堫亜姘ㄧ紒顏庣礉鐠囬鈼㈤崥搴″晙鐠?")
+		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
 	data, err := pjskalias.ExecuteCommand(ctx, app.Aliases, r.Mode, r.Params)
 	if err != nil {
@@ -698,7 +698,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 		target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
 		if err == nil && target.Binding != nil {
 			if !hasUsableSuiteData(target.Binding) {
-				reason = "瑜版挸澧犲鎻掑彠闂?Suite 閹舵挸瀵橀弫鐗堝祦閿涘奔浜掓稉瀣╄礋閸╄桨绨崗顒€绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
+				reason = "当前账号没有可用的 Suite 抓包数据"
 			} else if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
 				raw, toolboxErr := sekaiutils.GetToolboxClient().GetPrivateDataValue(
 					region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userMusicAchievements")
@@ -714,9 +714,9 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 					if _, buildErr := app.Music.BuildMusicRewardsDetailRequestFromAchievements(detailQuery, raw); buildErr == nil {
 						return app.Music.RenderMusicRewardsDetailFromAchievements(detailQuery, raw)
 					}
-					reason = "Suite 閹舵挸瀵橀弫鐗堝祦閸欘垳鏁ら敍灞肩稻婵傛牕濮抽弰搴ｇ矎閺嬪嫬缂撴径杈Е閿涘奔浜掓稉瀣╄礋閸╄桨绨崗顒€绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
+					reason = "Suite 抓包中的成绩数据无法解析"
 				} else {
-					reason = "瑜版挸澧犻弮鐘崇《鐠囪褰?Suite 閹舵挸瀵樻總鏍уС閺勫海绮忛敍灞间簰娑撳璐熼崺杞扮艾閸忣剙绱戞穱鈩冧紖閻ㄥ嫪鍙婄粻妤冪波閺嬫嚎鈧?"
+					reason = "无法获取 Suite 抓包中的成绩数据"
 				}
 			}
 		}
@@ -975,15 +975,15 @@ func validateDeckCharacterIDs(values []int) error {
 		return nil
 	}
 	if len(values) > 5 {
-		return fmt.Errorf("閸ュ搫鐣剧憴鎺曞閺佷即鍣烘稉宥堝厴鐡掑懓绻?娑?")
+		return fmt.Errorf("固定角色最多只能指定5个")
 	}
 	seen := make(map[int]struct{}, len(values))
 	for _, value := range values {
 		if value <= 0 {
-			return fmt.Errorf("閸ュ搫鐣剧憴鎺曞娑撳秷鍏樻稉铏光敄")
+			return fmt.Errorf("固定角色ID必须为正整数")
 		}
 		if _, ok := seen[value]; ok {
-			return fmt.Errorf("閸ュ搫鐣剧憴鎺曞娑撳秷鍏橀柌宥咁槻")
+			return fmt.Errorf("固定角色ID不能重复")
 		}
 		seen[value] = struct{}{}
 	}
@@ -991,7 +991,7 @@ func validateDeckCharacterIDs(values []int) error {
 }
 
 func isCharacterNotFoundError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "閺堫亝澹橀崚鏉款嚠鎼存棁顫楅懝?")
+	return err != nil && strings.Contains(err.Error(), "未找到角色")
 }
 
 func resolveDeckCharacterUnit(charID int) string {
@@ -2292,7 +2292,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return resolvedGameTarget{}, fmt.Errorf("閺堫亝澹橀崚鎵拨鐎规俺澶勯崣鍑ょ窗%w", err)
+			return resolvedGameTarget{}, fmt.Errorf("解析绑定账号失败：%w", err)
 		}
 		return resolvedGameTarget{
 			HarukiUserID: hid,
@@ -2410,10 +2410,9 @@ func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
 
 func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("闁喗宕? %s (UID: %s) Lv.%d\n",
+	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %s) Lv.%d\n",
 		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
 
-	// Index clear counts by difficulty.
 	countByDiff := make(map[sekaiutils.MusicDifficultyType]sekaiutils.AnotherUserMusicDifficultyClearCount)
 	for _, c := range resp.UserMusicDifficultyClearCount {
 		countByDiff[c.MusicDifficultyType] = c
@@ -2429,9 +2428,9 @@ func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiu
 	}
 
 	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
+		label := arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName)
 		sb.WriteString(fmt.Sprintf("挑战Live(%s): %s分",
-			arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName),
-			formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
+			label, formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
 	}
 
 	return strings.TrimRight(sb.String(), "\n")
@@ -2477,7 +2476,7 @@ func arrestChallengeCharacterLabel(characterID int, resolvedName string) string 
 	if name := strings.TrimSpace(resolvedName); name != "" {
 		return name
 	}
-	return fmt.Sprintf("鐟欐帟澹?%d", characterID)
+	return fmt.Sprintf("角色ID:%d", characterID)
 }
 
 func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
@@ -2530,11 +2529,11 @@ func resolveGameCharacterIDByQuery(
 
 	switch len(ids) {
 	case 0:
-		return 0, fmt.Errorf("閺堫亝澹橀崚鏉款嚠鎼存棁顫楅懝? %s", query)
+		return 0, fmt.Errorf("未找到角色：%s", query)
 	case 1:
 		return ids[0], nil
 	default:
-		return 0, fmt.Errorf("鐟欐帟澹婇崥宥呯摠閸︺劍顒犳稊? %s", query)
+		return 0, fmt.Errorf("匹配到多个角色：%s", query)
 	}
 }
 
@@ -2681,7 +2680,7 @@ func executeRegTime(ctx context.Context, r *parser.ResolvedCommand, app *rendera
 	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
 	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
 
-	text := fmt.Sprintf("UID %s 閻ㄥ嫭鏁為崘灞炬闂?\n%s (%s) (%s)",
+	text := fmt.Sprintf("UID %s 注册时间如下\n%s (%s) (%s)",
 		maskedUID, regTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
@@ -2722,7 +2721,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return nil, 0, fmt.Errorf("閺堫亝澹橀崚鎵拨鐎规俺澶勯崣鍑ょ窗%w", err)
+			return nil, 0, fmt.Errorf("解析绑定账号失败：%w", err)
 		}
 		return binding, hid, nil
 	}
@@ -2730,7 +2729,7 @@ func executeCheckData(ctx context.Context, r *parser.ResolvedCommand, app *rende
 	switch r.Mode {
 	case "mysekai":
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("MySekai閹舵挸瀵橀惄绋垮彠閸愬懎顔愭禒鍛暜閹镐焦鐓＄拠銏ｅ殰瀹歌京娈戦弫鐗堝祦")
+			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
 		binding, hid, err := resolveCheckDataBinding()
 		if err != nil {

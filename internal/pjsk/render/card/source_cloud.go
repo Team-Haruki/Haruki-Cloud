@@ -222,7 +222,7 @@ func (c *CloudSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, erro
 				continue
 			}
 		}
-		if info.SupplyType != "" && !matchesSupplyFilter(info.SupplyType, c.GetCardSupplyType(model)) {
+		if info.SupplyType != "" && !matchesRawSupplyFilter(info.SupplyType, c.GetCardSupplyType(model)) {
 			continue
 		}
 		results = append(results, cloneCard(model))
@@ -442,7 +442,7 @@ func (c *CloudSource) isFestivalCard(supplyID int) bool {
 
 func (c *CloudSource) getRawCardSupplyType(id int) string {
 	if id == 0 {
-		return ""
+		return normalizeSupplyType("")
 	}
 	c.supplyMu.RLock()
 	if cached, ok := c.supplyByID[id]; ok {
@@ -455,10 +455,10 @@ func (c *CloudSource) getRawCardSupplyType(id int) string {
 		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(id)).
 		Only(context.Background())
 	if err != nil {
-		return ""
+		return normalizeSupplyType("")
 	}
 
-	value := supply.CardSupplyType
+	value := normalizeSupplyType(supply.CardSupplyType)
 	c.supplyMu.Lock()
 	c.supplyByID[id] = value
 	c.supplyMu.Unlock()
@@ -517,13 +517,13 @@ func (c *CloudSource) GetUnitByCardID(cardID int) (string, error) {
 
 func (c *CloudSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
 	if cardInfo == nil {
-		return ""
+		return normalizeSupplyType("")
 	}
 	if cardInfo.CardRarityType == "rarity_birthday" {
-		return formatSupplyType("birthday")
+		return normalizeSupplyType("birthday")
 	}
 	if cardInfo.CardSupplyID == 0 {
-		return ""
+		return normalizeSupplyType("")
 	}
 
 	c.supplyMu.RLock()
@@ -537,10 +537,10 @@ func (c *CloudSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
 		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(cardInfo.CardSupplyID)).
 		Only(context.Background())
 	if err != nil {
-		return ""
+		return normalizeSupplyType("")
 	}
 
-	value := formatSupplyType(entity.CardSupplyType)
+	value := normalizeSupplyType(entity.CardSupplyType)
 	c.supplyMu.Lock()
 	c.supplyByID[cardInfo.CardSupplyID] = value
 	c.supplyMu.Unlock()

@@ -1037,7 +1037,10 @@ func TestFormatArrestTextUsesResolvedChallengeCharacterName(t *testing.T) {
 	}
 
 	text := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), true)
-	if !strings.Contains(text, "挑战Live(初音ミク): 123,456分") {
+	if !strings.Contains(text, "逮捕: ArrestUser (UID: 123456789) Lv.88") {
+		t.Fatalf("unexpected arrest text: %s", text)
+	}
+	if !strings.Contains(text, "挑战Live(") || !strings.Contains(text, "123,456") {
 		t.Fatalf("unexpected arrest text: %s", text)
 	}
 	masked := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), false)

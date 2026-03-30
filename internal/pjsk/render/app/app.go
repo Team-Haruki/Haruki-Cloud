@@ -160,6 +160,18 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
 		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventSource, assetHelper)
+		for _, region := range []renderregion.Value{
+			renderregion.JP,
+			renderregion.CN,
+			renderregion.TW,
+			renderregion.KR,
+			renderregion.EN,
+		} {
+			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
+				continue
+			}
+			skController.RegisterEventSource(event.NewCloudSource(sekaiClient, region))
+		}
 		deckController = deck.NewControllerWithConfig(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:          cfg.DeckRecommend.Enabled,
 			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,

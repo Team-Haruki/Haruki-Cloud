@@ -11,6 +11,7 @@ import (
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/drawing"
 	sekaiapi "haruki-cloud/utils/sekai"
 )
@@ -34,6 +35,7 @@ type TrackerSource interface {
 }
 
 type EventSource interface {
+	DefaultRegion() renderregion.Value
 	GetEventByID(id int) (*masterdata.Event, error)
 	GetEvents() []*masterdata.Event
 }
@@ -59,7 +61,7 @@ type TrackerRankQuery struct {
 type Controller struct {
 	drawing *drawing.HarukiDrawingClient
 	tracker TrackerSource
-	events  EventSource
+	events  *regionsource.Registry[EventSource]
 	assets  *renderassets.AssetHelper
 	censor  CensorService
 }
@@ -72,6 +74,7 @@ type CensorService interface {
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
 	return &Controller{
 		drawing: drawingClient,
+		events:  regionsource.NewRegistry[EventSource](renderregion.JP),
 		assets:  renderassets.NewAssetHelper("", nil),
 	}
 }
@@ -81,10 +84,20 @@ func (c *Controller) SetTrackerIntegration(tracker TrackerSource, events EventSo
 		return
 	}
 	c.tracker = tracker
-	c.events = events
+	c.RegisterEventSource(events)
 	if assetHelper != nil {
 		c.assets = assetHelper
 	}
+}
+
+func (c *Controller) RegisterEventSource(events EventSource) {
+	if c == nil || events == nil {
+		return
+	}
+	if c.events == nil {
+		c.events = regionsource.NewRegistry[EventSource](renderregion.JP)
+	}
+	c.events.RegisterSource(events)
 }
 
 func (c *Controller) SetCensor(svc CensorService) {
@@ -509,7 +522,7 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 		return TrackerRankQuery{}, fmt.Errorf("tracker ranks/user_id are empty")
 	}
 	if normalized.EventID <= 0 {
-		normalized.EventID = c.pickCurrentOrNextEventID()
+		normalized.EventID = c.pickCurrentOrNextEventID(normalized.Region)
 	}
 	if normalized.EventID <= 0 {
 		return TrackerRankQuery{}, fmt.Errorf("event_id is required when no current event can be inferred")
@@ -517,8 +530,8 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID <= 0 {
 		normalized.WlCharacterID = nil
 	}
-	if c.events != nil {
-		if eventInfo, err := c.events.GetEventByID(normalized.EventID); err == nil && eventInfo != nil {
+	if eventSource := c.eventSourceForRegion(normalized.Region); eventSource != nil {
+		if eventInfo, err := eventSource.GetEventByID(normalized.EventID); err == nil && eventInfo != nil {
 			if strings.EqualFold(eventInfo.EventType, "world_bloom") && normalized.WlCharacterID == nil {
 				return TrackerRankQuery{}, fmt.Errorf("world bloom event requires wl_character_id")
 			}
@@ -760,10 +773,11 @@ func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) ev
 		startAt:     now - defaultWindow,
 		aggregateAt: now + defaultWindow,
 	}
-	if c == nil || c.events == nil {
+	eventSource := c.eventSourceForRegion(region.String())
+	if c == nil || eventSource == nil {
 		return meta
 	}
-	eventInfo, err := c.events.GetEventByID(eventID)
+	eventInfo, err := eventSource.GetEventByID(eventID)
 	if err != nil || eventInfo == nil {
 		return meta
 	}
@@ -812,15 +826,16 @@ func (c *Controller) resolveCharacterIconPath(characterID int, _ renderregion.Va
 	)
 }
 
-func (c *Controller) pickCurrentOrNextEventID() int {
-	if c == nil || c.events == nil {
+func (c *Controller) pickCurrentOrNextEventID(region string) int {
+	eventSource := c.eventSourceForRegion(region)
+	if c == nil || eventSource == nil {
 		return 0
 	}
 	now := time.Now().UnixMilli()
 	var current *masterdata.Event
 	var next *masterdata.Event
 	var latest *masterdata.Event
-	for _, eventInfo := range c.events.GetEvents() {
+	for _, eventInfo := range eventSource.GetEvents() {
 		if eventInfo == nil {
 			continue
 		}
@@ -849,6 +864,17 @@ func (c *Controller) pickCurrentOrNextEventID() int {
 		return latest.ID
 	}
 	return 0
+}
+
+func (c *Controller) eventSourceForRegion(region string) EventSource {
+	if c == nil || c.events == nil {
+		return nil
+	}
+	src, ok := c.events.SourceForRegion(renderregion.Normalize(region))
+	if !ok {
+		return nil
+	}
+	return src
 }
 
 func normalizeTrackerServer(region string) string {

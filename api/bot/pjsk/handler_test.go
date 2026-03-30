@@ -806,6 +806,77 @@ func TestBotEndpointSKQueryHandlesInlineCQAtInTextSegment(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
+func TestBotEndpointSKQueryReturnsTextWhenTrackerQueryFails(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called on tracker validation error")
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	// Intentionally keep events=nil so /cnsk without event id triggers tracker-side validation error.
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cnsk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cnsk"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "event_id is required")
+}
+
+func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when target user is hidden")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "67890", "1234567890"); err != nil {
+		t.Fatalf("bind test account: %v", err)
+	}
+	if _, err := bindingService.SetBindingVisible(context.Background(), "qq", "67890", "jp", false); err != nil {
+		t.Fatalf("set binding invisible: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/sk [CQ:at,qq=67890]"}},
+			{Type: "at", Data: onebot11.AtData{QQ: "67890"}},
+		},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "已隐藏个人信息")
+}
+
 func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/speed" {
@@ -853,6 +924,22 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func assertSingleTextMessageContains(t *testing.T, body []byte, wantPart string) {
+	t.Helper()
+	message := decodeSuccessMessage(t, body)
+	if len(message) != 1 || message[0].Type != "text" {
+		t.Fatalf("expected single text message, got %+v", message)
+	}
+	data, ok := message[0].Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
+	}
+	text, _ := data["text"].(string)
+	if !strings.Contains(text, wantPart) {
+		t.Fatalf("expected text to contain %q, got %q", wantPart, text)
+	}
 }
 
 func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {

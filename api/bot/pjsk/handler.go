@@ -121,11 +121,10 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 					[]onebot11.Segment{onebot11.Text(string(replyErr))},
 				)
 			}
-			return botResponse(c, fiber.StatusBadRequest, err.Error(), BotCommandErrorResponse{
-				Error:          err.Error(),
-				ExpectedPath:   expectedPath,
-				MatchedCommand: req.MatchedCommand,
-			})
+			logger.Warnf("bot command resolve failed: path=%s matched_command=%s err=%v", expectedPath, req.MatchedCommand, err)
+			return botResponse(c, fiber.StatusOK, "ok",
+				[]onebot11.Segment{onebot11.Text(err.Error())},
+			)
 		}
 
 		if req.Server != "" && !resolved.RegionExplicit {
@@ -140,10 +139,10 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 					[]onebot11.Segment{onebot11.Text(string(replyErr))},
 				)
 			}
-			return botResponse(c, fiber.StatusInternalServerError, "render failed", BotCommandErrorResponse{
-				Error: err.Error(),
-				Mode:  resolved.Mode,
-			})
+			logger.Errorf("bot command render failed: mode=%s matched_command=%s err=%v", resolved.Mode, req.MatchedCommand, err)
+			return botResponse(c, fiber.StatusOK, "ok",
+				[]onebot11.Segment{onebot11.Text(err.Error())},
+			)
 		}
 		return botResponse(c, fiber.StatusOK, "ok", responseData)
 	}

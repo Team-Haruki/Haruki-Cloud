@@ -452,7 +452,7 @@ func (c *CloudSource) getRawCardSupplyType(id int) string {
 	c.supplyMu.RUnlock()
 
 	supply, err := c.client.Cardsupplie.Query().
-		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(id)).
+		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.GameIDEQ(int64(id))).
 		Only(context.Background())
 	if err != nil {
 		return normalizeSupplyType("")
@@ -534,7 +534,7 @@ func (c *CloudSource) GetCardSupplyType(cardInfo *masterdata.Card) string {
 	c.supplyMu.RUnlock()
 
 	entity, err := c.client.Cardsupplie.Query().
-		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(cardInfo.CardSupplyID)).
+		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.GameIDEQ(int64(cardInfo.CardSupplyID))).
 		Only(context.Background())
 	if err != nil {
 		return normalizeSupplyType("")

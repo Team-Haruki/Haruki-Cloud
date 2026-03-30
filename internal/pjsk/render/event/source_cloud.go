@@ -349,7 +349,7 @@ func (c *CloudSource) getCardSupplyType(id int) string {
 	c.supplyMu.RUnlock()
 
 	supply, err := c.client.Cardsupplie.Query().
-		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.IDEQ(id)).
+		Where(cardsupplie.ServerRegionEQ(c.queryRegion.String()), cardsupplie.GameIDEQ(int64(id))).
 		Only(context.Background())
 	if err != nil {
 		return ""

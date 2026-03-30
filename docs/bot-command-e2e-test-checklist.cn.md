@@ -220,7 +220,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | sk |       |    |    |                                    |       |
 | mysekai | 9/9   | 9  | 0  | 对话列表/唱片列表 数据解析存在问题需要修复，上传数据的信息需要完善 | 锡纸    |
 | profile | 18/20 | 17 | 1  | bg相关需要处理client实现                   | 锡纸    |
-| education |       |    |    |                                    |       |
+| education | 5/5   | 2  | 3  | 羁绊、队长缺图；区域道具canvas过大               | 锡纸    |
 | score | 4/4   | 4  | 0  |                                    | LQ、锡纸 |
 | alias |       |    |    |                                    |       |
 | misc/gacha/stamp/vlive | 1/1   | 1  | 1  | 测的逮捕                               | 锡纸    |

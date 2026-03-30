@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/api/bot/onebot11"
 	pjskdb "haruki-cloud/database/pjsk"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
@@ -343,7 +344,7 @@ func (s *Service) ListPending(ctx context.Context, platform, platformUserID stri
 
 func (s *Service) Approve(ctx context.Context, platform, platformUserID string, reviewIDs []int64) ([]AliasRecord, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
 	}
 	if _, _, err := s.requireAdmin(ctx, platform, platformUserID); err != nil {
 		return nil, err
@@ -384,7 +385,7 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 				missing = append(missing, strconv.FormatInt(reviewID, 10))
 			}
 		}
-		return nil, fmt.Errorf("未找到待审核别名ID: %s", strings.Join(missing, " "))
+		return nil, onebot11.NewReplayError("未找到待审核别名ID: %s", strings.Join(missing, " "))
 	}
 
 	reserved := make(map[string]int64, len(uniqueIDs))
@@ -398,11 +399,11 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 			return nil, err
 		}
 		if exists {
-			return nil, fmt.Errorf("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+			return nil, onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
 		}
 		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
 		if prevID, ok := reserved[key]; ok {
-			return nil, fmt.Errorf("待通过的审核ID %d 与 %d 使用了重复%s别名 %q", prevID, reviewID, aliasTypeLabel(row.AliasType), row.Alias)
+			return nil, onebot11.NewReplayError("待通过的审核ID %d 与 %d 使用了重复%s别名 %q", prevID, reviewID, aliasTypeLabel(row.AliasType), row.Alias)
 		}
 		reserved[key] = reviewID
 	}
@@ -415,7 +416,7 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 			SetAlias(row.Alias).
 			Save(ctx); err != nil {
 			if pjskdb.IsConstraintError(err) {
-				return nil, fmt.Errorf("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+				return nil, onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
 			}
 			return nil, err
 		}
@@ -433,18 +434,18 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 
 func (s *Service) Reject(ctx context.Context, platform, platformUserID string, reviewID int64, reason string) (*AliasRecord, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
 	}
 	admin, reviewer, err := s.requireAdmin(ctx, platform, platformUserID)
 	if err != nil {
 		return nil, err
 	}
 	if reviewID <= 0 {
-		return nil, fmt.Errorf("请输入正确的待审核ID")
+		return nil, onebot11.NewReplayError("请输入正确的待审核ID")
 	}
 	reason = strings.TrimSpace(reason)
 	if reason == "" {
-		return nil, fmt.Errorf("请输入拒绝原因")
+		return nil, onebot11.NewReplayError("请输入拒绝原因")
 	}
 	if strings.TrimSpace(admin.Name) != "" {
 		reviewer = strings.TrimSpace(admin.Name)
@@ -468,7 +469,7 @@ func (s *Service) Reject(ctx context.Context, platform, platformUserID string, r
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, fmt.Errorf("未找到待审核别名ID: %d", reviewID)
+			return nil, onebot11.NewReplayError("未找到待审核别名ID: %d", reviewID)
 		}
 		return nil, err
 	}
@@ -575,7 +576,7 @@ func pendingAliasExists(ctx context.Context, client *pjskdb.PendingAliasClient, 
 
 func (s *Service) requireAdmin(ctx context.Context, platform, platformUserID string) (*pjskdb.AliasAdmin, string, error) {
 	if s == nil || s.identity == nil {
-		return nil, "", fmt.Errorf("别名审核服务未就绪，请稍后再试")
+		return nil, "", onebot11.NewReplayError("别名审核服务未就绪，请稍后再试")
 	}
 	platform = strings.TrimSpace(platform)
 	platformUserID = strings.TrimSpace(platformUserID)
@@ -591,7 +592,7 @@ func (s *Service) requireAdmin(ctx context.Context, platform, platformUserID str
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, "", fmt.Errorf("你不是别名审核管理员")
+			return nil, "", onebot11.NewReplayError("你不是别名审核管理员")
 		}
 		return nil, "", err
 	}
@@ -605,7 +606,7 @@ func (s *Service) resolveEntityByToken(ctx context.Context, aliasType, token str
 	case AliasTypeCharacter:
 		return s.resolveCharacterByToken(ctx, token)
 	default:
-		return EntityRef{}, fmt.Errorf("不支持的别名类型: %s", aliasType)
+		return EntityRef{}, onebot11.NewReplayError("不支持的别名类型: %s", aliasType)
 	}
 }
 
@@ -727,7 +728,7 @@ func (s *Service) tryResolveCharacterByID(ctx context.Context, token string) (En
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, fmt.Errorf("未找到%s: %d", aliasTypeIDLabel(AliasTypeCharacter), id)
+		return EntityRef{}, true, onebot11.NewReplayError("未找到%s: %d", aliasTypeIDLabel(AliasTypeCharacter), id)
 	}
 	return EntityRef{AliasType: AliasTypeCharacter, ID: id, Name: preferredCharacterName(rows, id)}, true, nil
 }

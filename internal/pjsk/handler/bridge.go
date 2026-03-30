@@ -1028,6 +1028,7 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
 	var suiteUID int64
 	var suitePlatform, suitePlatformUserID string
+	var suiteBinding *accountdata.ResolvedBinding
 
 	if platform != "" && platformUserID != "" && app.Bindings != nil {
 		ctx := context.Background()
@@ -1046,6 +1047,7 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 				suiteUID = uid
 				suitePlatform = platform
 				suitePlatformUserID = platformUserID
+				suiteBinding = binding
 			}
 		}
 	}
@@ -1095,8 +1097,12 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(r.Params, &req)
 		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 && suiteUID > 0 {
+			var powerMysekaiJSON []byte
+			if hasUsableMySekaiData(suiteBinding) {
+				powerMysekaiJSON, _ = sekaiutils.GetToolboxClient().GetMySekaiData(regionStr, suiteUID, suitePlatform, suitePlatformUserID)
+			}
 			builtReq, buildErr := buildPowerBonusRequestFromSuite(
-				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, powerMysekaiJSON, publicDetailedProfile)
 			if buildErr != nil {
 				return nil, buildErr
 			}
@@ -1141,9 +1147,17 @@ func buildEducationSnapshot(app *renderapp.App, region renderregion.Value, suite
 
 func buildPowerBonusRequestFromSuite(
 	app *renderapp.App, region renderregion.Value, regionStr string, uid int64, platform, platformUserID string,
+	mysekaiJSON []byte,
 	profile *drawing.DetailedProfileCardRequest,
 ) (*drawing.PowerBonusDetailRequest, error) {
-	snapshot, err := buildEducationSnapshotFromSuite(app, region, regionStr, uid, platform, platformUserID)
+	suiteJSON, err := sekaiutils.GetToolboxClient().GetSuiteData(regionStr, uid, platform, platformUserID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch suite data: %w", err)
+	}
+	if len(suiteJSON) == 0 {
+		return nil, fmt.Errorf("suite data is empty")
+	}
+	snapshot, err := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil)
 	if err != nil {
 		return nil, err
 	}

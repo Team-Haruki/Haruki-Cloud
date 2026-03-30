@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"haruki-cloud/api/bot/onebot11"
+	"strings"
 )
 
 type MessageType string
@@ -107,11 +109,17 @@ func (h *HandlerContext) GetAtIds() []string {
 func extractAtIds(segments onebot11.Message) []string {
 	var atIds []string
 	for _, seg := range segments {
-		if seg.Type == "at" {
-			if atData, ok := seg.Data.(onebot11.AtData); ok && atData.QQ != "" {
-				atIds = append(atIds, atData.QQ)
-				continue
-			}
+		if seg.Type != onebot11.TYPE_AT {
+			continue
+		}
+
+		if atData, ok := seg.Data.(onebot11.AtData); ok && strings.TrimSpace(atData.QQ) != "" {
+			atIds = append(atIds, strings.TrimSpace(atData.QQ))
+			continue
+		}
+
+		if qq, ok := extractSegmentDataField(seg.Data, onebot11.KEY_QQ); ok && strings.TrimSpace(qq) != "" {
+			atIds = append(atIds, strings.TrimSpace(qq))
 		}
 	}
 	return atIds
@@ -120,11 +128,40 @@ func extractAtIds(segments onebot11.Message) []string {
 func extractText(segments onebot11.Message) string {
 	var text string
 	for _, seg := range segments {
-		if seg.Type == "text" {
-			if textData, ok := seg.Data.(onebot11.TextData); ok && textData.Text != "" {
-				text += " " + textData.Text
-			}
+		if seg.Type != onebot11.TYPE_TEXT {
+			continue
+		}
+
+		if textData, ok := seg.Data.(onebot11.TextData); ok {
+			text += textData.Text
+			continue
+		}
+
+		if raw, ok := extractSegmentDataField(seg.Data, onebot11.KEY_TEXT); ok {
+			text += raw
 		}
 	}
 	return text
+}
+
+func extractSegmentDataField(data any, key string) (string, bool) {
+	switch d := data.(type) {
+	case map[string]string:
+		v, ok := d[key]
+		return v, ok
+	case map[string]interface{}:
+		if v, ok := d[key]; ok {
+			return fmt.Sprint(v), true
+		}
+	case map[interface{}]interface{}:
+		if v, ok := d[key]; ok {
+			return fmt.Sprint(v), true
+		}
+		for k, v := range d {
+			if ks, ok := k.(string); ok && ks == key {
+				return fmt.Sprint(v), true
+			}
+		}
+	}
+	return "", false
 }

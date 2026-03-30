@@ -2,8 +2,10 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/parser"
 	"log"
 	"testing"
 )
@@ -76,5 +78,60 @@ func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 
 	if _, err := skh.Handle(baseCtx); err != nil {
 		t.Fatalf("Handle() error = %v", err)
+	}
+}
+
+func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
+	EnsureCommandHandlersRegistered(nil)
+
+	result, err := handler.Dispatch(context.Background(), handler.Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]interface{}{"text": "/cnsk event101 100"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok || resolved == nil {
+		t.Fatalf("expected resolved command, got %#v", result)
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-query" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+	if resolved.Region != "cn" {
+		t.Fatalf("unexpected region: %s", resolved.Region)
+	}
+}
+
+func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
+	EnsureCommandHandlersRegistered(nil)
+
+	result, err := handler.Dispatch(context.Background(), handler.Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]interface{}{"text": "/sk event101 "}},
+			{Type: "at", Data: map[string]interface{}{"qq": 67890}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok || resolved == nil {
+		t.Fatalf("expected resolved command, got %#v", result)
+	}
+
+	var params map[string]any
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if got, _ := params["target_user_id"].(string); got != "67890" {
+		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
 	}
 }

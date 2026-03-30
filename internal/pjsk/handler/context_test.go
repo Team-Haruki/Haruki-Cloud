@@ -54,3 +54,48 @@ func TestBuildContextPreservesEventFieldsAndExtractsAtIDs(t *testing.T) {
 		t.Fatalf("GetArgs() = %q", ctx.GetArgs())
 	}
 }
+
+func TestBuildContextHandlesTypedSegments(t *testing.T) {
+	event := Event{
+		Platform:    "qq",
+		MessageType: MessageTypeGroup,
+		Message: onebot11.Message{
+			{Type: "text", Data: onebot11.TextData{Text: "/cnsk "}},
+			{Type: "at", Data: onebot11.AtData{QQ: "67890"}},
+			{Type: "text", Data: onebot11.TextData{Text: " 100"}},
+		},
+	}
+
+	ctx, err := BuildContext(context.Background(), event)
+	if err != nil {
+		t.Fatalf("BuildContext() error = %v", err)
+	}
+	if !reflect.DeepEqual(ctx.GetAtIds(), []string{"67890"}) {
+		t.Fatalf("GetAtIds() = %#v", ctx.GetAtIds())
+	}
+	if ctx.GetArgs() != "/cnsk  100" {
+		t.Fatalf("GetArgs() = %q", ctx.GetArgs())
+	}
+}
+
+func TestBuildContextExtractsAtFromInterfaceMap(t *testing.T) {
+	event := Event{
+		Platform:    "qq",
+		MessageType: MessageTypeGroup,
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]interface{}{"text": "/sk "}},
+			{Type: "at", Data: map[string]interface{}{"qq": 1234567890}},
+		},
+	}
+
+	ctx, err := BuildContext(context.Background(), event)
+	if err != nil {
+		t.Fatalf("BuildContext() error = %v", err)
+	}
+	if !reflect.DeepEqual(ctx.GetAtIds(), []string{"1234567890"}) {
+		t.Fatalf("GetAtIds() = %#v", ctx.GetAtIds())
+	}
+	if ctx.GetArgs() != "/sk " {
+		t.Fatalf("GetArgs() = %q", ctx.GetArgs())
+	}
+}

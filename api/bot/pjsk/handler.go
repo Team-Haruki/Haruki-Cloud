@@ -175,14 +175,12 @@ func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
 		switch d := s.Data.(type) {
 		case map[string]interface{}:
 			for k, v := range d {
-				if sv, ok := v.(string); ok {
-					data[k] = sv
-				}
+				data[k] = fmt.Sprint(v)
 			}
 		case map[interface{}]interface{}:
 			for k, v := range d {
 				ks, _ := k.(string)
-				vs, _ := v.(string)
+				vs := fmt.Sprint(v)
 				if ks != "" {
 					data[ks] = vs
 				}

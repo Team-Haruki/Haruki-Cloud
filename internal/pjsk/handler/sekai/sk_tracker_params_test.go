@@ -134,6 +134,41 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 	if got, ok := params["target_user_id"].(string); !ok || got != "987654321" {
 		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
 	}
+	if got, ok := params["region_explicit"].(bool); !ok || got {
+		t.Fatalf("unexpected region_explicit: %#v", params["region_explicit"])
+	}
+}
+
+func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{
+			ArgText:    "",
+			Platform:   "qq",
+			UserId:     "24680",
+			TriggerCmd: "/sk",
+		},
+		region:         renderregion.TW,
+		uidArg:         "u2",
+		explicitRegion: true,
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["target_platform"].(string); !ok || got != "qq" {
+		t.Fatalf("unexpected target_platform: %#v", params["target_platform"])
+	}
+	if got, ok := params["target_user_id"].(string); !ok || got != "24680" {
+		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
+	}
+	if got, ok := params["target_selector"].(string); !ok || got != "u2" {
+		t.Fatalf("unexpected target_selector: %#v", params["target_selector"])
+	}
+	if got, ok := params["region_explicit"].(bool); !ok || !got {
+		t.Fatalf("unexpected region_explicit: %#v", params["region_explicit"])
+	}
 }
 
 func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {

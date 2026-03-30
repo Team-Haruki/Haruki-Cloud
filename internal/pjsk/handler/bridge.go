@@ -1718,8 +1718,11 @@ func trackerRankQueryFromParams(r *parser.ResolvedCommand) (sk.TrackerRankQuery,
 	if err := json.Unmarshal(r.Params, &req); err != nil {
 		return sk.TrackerRankQuery{}, false
 	}
-	if req.Region == "" {
-		req.Region = r.Region
+	resolvedRegion := strings.TrimSpace(r.Region)
+	if !req.RegionExplicit && resolvedRegion != "" {
+		req.Region = resolvedRegion
+	} else if req.Region == "" {
+		req.Region = resolvedRegion
 	}
 	if len(req.Ranks) == 0 && req.EventID == 0 && req.WlCharacterID == nil && req.UserID == nil {
 		return sk.TrackerRankQuery{}, false
@@ -1791,75 +1794,69 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 
 	targetPlatform := strings.TrimSpace(req.TargetPlatform)
 	targetUserID := strings.TrimSpace(req.TargetUserID)
+	targetSelector := strings.TrimSpace(req.TargetSelector)
 	if targetPlatform == "" || targetUserID == "" {
 		return nil
 	}
 
 	if app == nil || app.Bindings == nil || !app.Bindings.IsReady() {
-		return fmt.Errorf("閺嗗倷绗夐弨顖涘瘮@閻劍鍩涢弻銉嚄閿涙氨绮︾€规碍婀囬崝鈩冩弓鐏忚京鍗庨敍宀冾嚞閺€鍦暏濞撳憡鍨橴ID")
+		return fmt.Errorf("绑定服务未就绪，无法解析目标用户")
 	}
 
-	bindings, err := app.Bindings.List(ctx, targetPlatform, targetUserID)
-	if err != nil {
-		return fmt.Errorf("鏃犳硶瑙ｆ瀽@鐢ㄦ埛 %s 鐨勭粦瀹? %w", targetUserID, err)
+	var (
+		binding *accountdata.ResolvedBinding
+		err     error
+	)
+
+	// Selector mode: pick a specific bound account directly (u1/u2...).
+	if targetSelector != "" {
+		_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, targetSelector)
+		if err != nil {
+			return fmt.Errorf("无法解析账号选择器 %s: %w", targetSelector, err)
+		}
+	} else if req.RegionExplicit {
+		region := normalizeTrackerRegion(req.Region)
+		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, region)
+		if err != nil {
+			return fmt.Errorf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region))
+		}
+	} else {
+		// No explicit region prefix: use global default binding first, then JP.
+		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, accountdata.GlobalDefaultBindingScope)
+		if err != nil || binding == nil {
+			_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, string(renderregion.JP))
+			if err != nil {
+				return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
+			}
+		}
 	}
 
-	selected, ok := pickTrackerBindingByRegion(bindings, req.Region)
-	if !ok {
-		return fmt.Errorf("@用户 %s 在 %s 服没有可用绑定", targetUserID, strings.ToUpper(strings.TrimSpace(req.Region)))
+	if binding == nil {
+		return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
 	}
 
-	uid, parseErr := strconv.ParseInt(strings.TrimSpace(selected.UserID), 10, 64)
+	// @target should respect visible=false and deny query.
+	if targetSelector == "" && !binding.Visible {
+		return fmt.Errorf("@用户 %s 已隐藏个人信息，无法查询", targetUserID)
+	}
+
+	uid, parseErr := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)
 	if parseErr != nil || uid <= 0 {
-		return fmt.Errorf("@鐢ㄦ埛 %s 鐨勭粦瀹歎ID鏃犳晥: %s", targetUserID, selected.UserID)
+		return fmt.Errorf("@用户 %s 的绑定UID无效: %s", targetUserID, binding.PJSKUserID)
 	}
 	req.UserID = &uid
+	if !req.RegionExplicit {
+		req.Region = normalizeTrackerRegion(binding.Server)
+	}
 	return nil
 }
 
-func pickTrackerBindingByRegion(bindings []accountdata.BindingListItem, region string) (accountdata.BindingListItem, bool) {
-	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
-	var (
-		serverDefault accountdata.BindingListItem
-		hasServer     bool
-		globalDefault accountdata.BindingListItem
-		hasGlobal     bool
-		fallback      accountdata.BindingListItem
-		hasFallback   bool
-	)
-
-	for _, item := range bindings {
-		if !item.Visible {
-			continue
-		}
-		if strings.ToLower(strings.TrimSpace(item.Server)) != normalizedRegion {
-			continue
-		}
-		if item.IsServerDefault {
-			serverDefault = item
-			hasServer = true
-			continue
-		}
-		if item.IsGlobalDefault && !hasGlobal {
-			globalDefault = item
-			hasGlobal = true
-		}
-		if !hasFallback {
-			fallback = item
-			hasFallback = true
-		}
+func normalizeTrackerRegion(region string) string {
+	normalized := renderregion.Normalize(strings.TrimSpace(region))
+	if normalized.IsZero() {
+		return string(renderregion.JP)
 	}
-
-	switch {
-	case hasServer:
-		return serverDefault, true
-	case hasGlobal:
-		return globalDefault, true
-	case hasFallback:
-		return fallback, true
-	default:
-		return accountdata.BindingListItem{}, false
-	}
+	return normalized.String()
 }
 
 func executeScore(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {

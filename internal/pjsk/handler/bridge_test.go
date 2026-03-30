@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -53,7 +54,32 @@ func (bridgeTestBindingValidator) GetUserProfile(server, userID string) (*sekaia
 	return nil, sekaiapi.ErrUserNotFound
 }
 
-func newBridgeTestBindingService(t *testing.T) *accountdata.BindingService {
+type bridgeMultiRegionBindingValidator struct {
+	profiles map[string]map[string]string
+}
+
+func (v bridgeMultiRegionBindingValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
+	regionProfiles, ok := v.profiles[strings.ToLower(strings.TrimSpace(server))]
+	if !ok {
+		return nil, sekaiapi.ErrUserNotFound
+	}
+	name, ok := regionProfiles[strings.TrimSpace(userID)]
+	if !ok {
+		return nil, sekaiapi.ErrUserNotFound
+	}
+	uid, err := strconv.ParseInt(strings.TrimSpace(userID), 10, 64)
+	if err != nil || uid <= 0 {
+		return nil, sekaiapi.ErrUserNotFound
+	}
+	return &sekaiapi.GetAnotherProfileResponse{
+		User: sekaiapi.AnotherUser{
+			UserID: uid,
+			Name:   name,
+		},
+	}, nil
+}
+
+func newBridgeTestBindingServiceWithValidator(t *testing.T, validator accountdata.ProfileValidator) *accountdata.BindingService {
 	t.Helper()
 	pjskClient := pjskenttest.Open(t, "sqlite3", "file:bridge_test_bind?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = pjskClient.Close() })
@@ -62,8 +88,13 @@ func newBridgeTestBindingService(t *testing.T) *accountdata.BindingService {
 	return accountdata.NewBindingService(
 		pjskClient,
 		identity.NewResolver(usersClient),
-		bridgeTestBindingValidator{},
+		validator,
 	)
+}
+
+func newBridgeTestBindingService(t *testing.T) *accountdata.BindingService {
+	t.Helper()
+	return newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
 }
 
 func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
@@ -97,6 +128,178 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	}
 	if err.Error() != "当前账号没有可用的 MySekai 抓包数据" {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTrackerRankQueryFromParamsUsesResolvedRegionWhenImplicit(t *testing.T) {
+	raw, err := json.Marshal(rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: false,
+		Ranks:          []int{100},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	req, ok := trackerRankQueryFromParams(&parser.ResolvedCommand{
+		Region: "tw",
+		Params: raw,
+	})
+	if !ok {
+		t.Fatal("expected tracker request to be parsed")
+	}
+	if req.Region != "tw" {
+		t.Fatalf("expected region tw, got %q", req.Region)
+	}
+}
+
+func TestTrackerRankQueryFromParamsKeepsExplicitRegion(t *testing.T) {
+	raw, err := json.Marshal(rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: true,
+		Ranks:          []int{100},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	req, ok := trackerRankQueryFromParams(&parser.ResolvedCommand{
+		Region: "tw",
+		Params: raw,
+	})
+	if !ok {
+		t.Fatal("expected tracker request to be parsed")
+	}
+	if req.Region != "jp" {
+		t.Fatalf("expected region jp, got %q", req.Region)
+	}
+}
+
+func TestResolveTrackerTargetUserNoPrefixUsesGlobalDefaultBinding(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"tw": {"11111111111111": "TW User"},
+			"jp": {"22222222222222": "JP User"},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "9001", "11111111111111"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "9001", "22222222222222"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: false,
+		Ranks:          []int{100},
+		TargetPlatform: "qq",
+		TargetUserID:   "9001",
+	}
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+		t.Fatalf("resolve target: %v", err)
+	}
+	if req.UserID == nil || *req.UserID != 11111111111111 {
+		t.Fatalf("unexpected resolved uid: %+v", req.UserID)
+	}
+	if req.Region != "tw" {
+		t.Fatalf("expected region tw, got %q", req.Region)
+	}
+}
+
+func TestResolveTrackerTargetUserNoPrefixFallsBackToJPWhenNoGlobalDefault(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "9002", "12345678901234"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.ClearDefault(ctx, "qq", "9002", "", accountdata.GlobalDefaultBindingScope); err != nil {
+		t.Fatalf("clear global default: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:         "tw",
+		RegionExplicit: false,
+		Ranks:          []int{100},
+		TargetPlatform: "qq",
+		TargetUserID:   "9002",
+	}
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+		t.Fatalf("resolve target: %v", err)
+	}
+	if req.UserID == nil || *req.UserID != 12345678901234 {
+		t.Fatalf("unexpected resolved uid: %+v", req.UserID)
+	}
+	if req.Region != "jp" {
+		t.Fatalf("expected region jp fallback, got %q", req.Region)
+	}
+}
+
+func TestResolveTrackerTargetUserRejectsHiddenAtTarget(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "9003", "12345678901234"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9003", "jp", false); err != nil {
+		t.Fatalf("hide binding: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: true,
+		Ranks:          []int{100},
+		TargetPlatform: "qq",
+		TargetUserID:   "9003",
+	}
+	err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req)
+	if err == nil {
+		t.Fatal("expected hidden-target error, got nil")
+	}
+	if !strings.Contains(err.Error(), "已隐藏个人信息") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if req.UserID != nil {
+		t.Fatalf("expected unresolved user id, got %+v", req.UserID)
+	}
+}
+
+func TestResolveTrackerTargetUserSupportsSelector(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"tw": {"11111111111111": "TW User"},
+			"jp": {"33333333333333": "JP User"},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "9004", "33333333333333"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "9004", "11111111111111"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+
+	req := rendersk.TrackerRankQuery{
+		Region:         "jp",
+		RegionExplicit: false,
+		Ranks:          []int{100},
+		TargetPlatform: "qq",
+		TargetUserID:   "9004",
+		TargetSelector: "u1",
+	}
+	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req); err != nil {
+		t.Fatalf("resolve target: %v", err)
+	}
+	if req.UserID == nil || *req.UserID != 11111111111111 {
+		t.Fatalf("unexpected resolved uid: %+v", req.UserID)
+	}
+	if req.Region != "tw" {
+		t.Fatalf("expected selector region tw, got %q", req.Region)
 	}
 }
 

@@ -216,15 +216,21 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 
 	effectiveRankArgs := rankArgs
 	targetUserID := ""
-	if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(effectiveRankArgs) == "" {
-		switch {
-		case strings.HasPrefix(uidArg, "@"):
-			candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
-			if isDigits(candidate) {
-				targetUserID = candidate
+	targetSelector := ""
+	if allowUID {
+		if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(effectiveRankArgs) == "" {
+			switch {
+			case strings.HasPrefix(uidArg, "@"):
+				candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
+				if isDigits(candidate) {
+					targetUserID = candidate
+				}
+			case isBindingSelector(uidArg):
+				targetUserID = strings.TrimSpace(ctx.GetUserId())
+				targetSelector = strings.ToLower(uidArg)
+			case isDigits(uidArg):
+				effectiveRankArgs = uidArg
 			}
-		case isDigits(uidArg):
-			effectiveRankArgs = uidArg
 		}
 	}
 
@@ -240,8 +246,9 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	}
 
 	params := map[string]any{
-		"region": strings.ToLower(strings.TrimSpace(ctx.Region().String())),
-		"ranks":  ranks,
+		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
+		"region_explicit": ctx.HasExplicitRegion(),
+		"ranks":           ranks,
 	}
 	if eventID > 0 {
 		params["event_id"] = eventID
@@ -258,6 +265,9 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if targetUserID != "" {
 		params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
 		params["target_user_id"] = targetUserID
+		if targetSelector != "" {
+			params["target_selector"] = targetSelector
+		}
 	}
 	if full {
 		params["full"] = true

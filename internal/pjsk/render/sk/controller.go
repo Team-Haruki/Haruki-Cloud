@@ -41,10 +41,12 @@ type EventSource interface {
 type TrackerRankQuery struct {
 	EventID          int     `json:"event_id"`
 	Region           string  `json:"region"`
+	RegionExplicit   bool    `json:"region_explicit,omitempty"`
 	Ranks            []int   `json:"ranks"`
 	UserID           *int64  `json:"user_id,omitempty"`
 	TargetPlatform   string  `json:"target_platform,omitempty"`
 	TargetUserID     string  `json:"target_user_id,omitempty"`
+	TargetSelector   string  `json:"target_selector,omitempty"`
 	WlCharacterID    *int    `json:"wl_character_id,omitempty"`
 	WlCharacterQuery string  `json:"wl_character_query,omitempty"`
 	Full             bool    `json:"full,omitempty"`

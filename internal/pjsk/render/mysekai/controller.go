@@ -241,6 +241,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	materialMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	materialRarityMap := c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType")
 	itemMap := c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName")
+	fixtureMap := c.loadIconNameMap("mysekaiFixtures.json", "assetbundleName")
 	musicRecordMap := c.loadMusicRecordJacketMap()
 	harvestFixtureMap := c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json")
 
@@ -391,7 +392,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			}
 
 			resourceKey := fmt.Sprintf("%s_%d", resourceType, resourceID)
-			imagePath, hasRecord := c.resourceImagePath(region, resourceKey, materialMap, itemMap, musicRecordMap, merged)
+			imagePath, hasRecord := c.resourceImagePath(region, resourceKey, materialMap, itemMap, fixtureMap, musicRecordMap, merged)
 			if imagePath == "" {
 				continue
 			}
@@ -456,6 +457,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
 		for _, grouped := range resourceDropsByPos {
 			hasMaterialDrop := false
+			hasFixtureDrop := false
 			isCottonFlower := false
 			isBirthdaySapling := false
 			for key, item := range grouped {
@@ -468,6 +470,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				if strings.HasPrefix(key, "mysekai_material_") || item.Type == "material" {
 					hasMaterialDrop = true
 				}
+				if item.Type == "mysekai_fixture" {
+					hasFixtureDrop = true
+				}
 				if mysekaiIsBirthdayDrop(item.Type, item.ID) && item.Quantity > 16 {
 					isBirthdaySapling = true
 				}
@@ -475,7 +480,17 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			for key, item := range grouped {
 				smallIcon := false
 				smallIconSet := false
-				if (!strings.HasPrefix(key, "mysekai_material_") && item.Type != "material") && hasMaterialDrop {
+				if hasFixtureDrop {
+					if item.Type == "mysekai_fixture" {
+						// Keep seed/sapling drops as the primary large icon when they
+						// share a tile with materials/items.
+						smallIcon = false
+						smallIconSet = true
+					} else {
+						smallIcon = true
+						smallIconSet = true
+					}
+				} else if (!strings.HasPrefix(key, "mysekai_material_") && item.Type != "material") && hasMaterialDrop {
 					smallIcon = true
 					smallIconSet = true
 				}
@@ -1707,6 +1722,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 	materialMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	materialRarityMap := c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType")
 	itemMap := c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName")
+	fixtureMap := c.loadIconNameMap("mysekaiFixtures.json", "assetbundleName")
 	musicRecordMap := c.loadMusicRecordJacketMap()
 
 	order := []int{5, 7, 6, 8}
@@ -1716,7 +1732,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 		keys := sortKeysByResource(resMap, materialRarityMap)
 		resources := make([]drawing.MysekaiResourceNumber, 0, len(keys))
 		for _, key := range keys {
-			imagePath, hasRecord := c.resourceImagePath(region, key, materialMap, itemMap, musicRecordMap, merged)
+			imagePath, hasRecord := c.resourceImagePath(region, key, materialMap, itemMap, fixtureMap, musicRecordMap, merged)
 			if imagePath == "" {
 				continue
 			}
@@ -1739,7 +1755,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 	return result
 }
 
-func (c *Controller) resourceImagePath(region renderregion.Value, key string, materialMap, itemMap, musicRecordMap map[int]string, merged map[string]interface{}) (string, bool) {
+func (c *Controller) resourceImagePath(region renderregion.Value, key string, materialMap, itemMap, fixtureMap, musicRecordMap map[int]string, merged map[string]interface{}) (string, bool) {
 	parts := strings.Split(key, "_")
 	if len(parts) < 2 {
 		return "", false
@@ -1756,6 +1772,10 @@ func (c *Controller) resourceImagePath(region renderregion.Value, key string, ma
 	case "mysekai_item":
 		if icon := itemMap[id]; icon != "" {
 			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/item/%s.png", icon)), false
+		}
+	case "mysekai_fixture":
+		if assetbundleName := fixtureMap[id]; assetbundleName != "" {
+			return c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName)), false
 		}
 	case "mysekai_music_record":
 		if jacket := musicRecordMap[id]; jacket != "" {

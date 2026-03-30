@@ -133,9 +133,9 @@ func mustWriteStampAsset(t *testing.T, root, bundle string) {
 	var rel string
 	switch bundle {
 	case "stamp_a":
-		rel = filepath.Join("asset", "jp-assets", "startapp", "stamp", bundle, bundle+".png")
+		rel = filepath.Join("stamp", bundle, bundle+".png")
 	case "stamp_b_rip":
-		rel = filepath.Join("asset", "jp-assets", "startapp", "stamp", bundle, "stamp_b.png")
+		rel = filepath.Join("stamp", bundle, "stamp_b.png")
 	default:
 		t.Fatalf("unknown bundle: %s", bundle)
 	}
@@ -150,12 +150,35 @@ func mustWriteStampAsset(t *testing.T, root, bundle string) {
 
 func mustWriteNamedStampAsset(t *testing.T, root, bundle string) {
 	t.Helper()
-	full := filepath.Join(root, "asset", "jp-assets", "startapp", "stamp", bundle, bundle+".png")
+	full := filepath.Join(root, "stamp", bundle, bundle+".png")
 	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	if err := os.WriteFile(full, []byte("png"), 0644); err != nil {
 		t.Fatalf("write file: %v", err)
+	}
+}
+
+func TestControllerBuildStampListRequestSupportsLegacyRegionAssetLayout(t *testing.T) {
+	dir := t.TempDir()
+	full := filepath.Join(dir, "asset", "jp-assets", "startapp", "stamp", "legacy_stamp", "legacy_stamp.png")
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(full, []byte("png"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	source := newTestStampSource(renderregion.JP)
+	source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "legacy_stamp"}}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(dir, nil))
+	req, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest failed: %v", err)
+	}
+	if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", "stamp", "legacy_stamp", "legacy_stamp.png")) {
+		t.Fatalf("unexpected stamps: %+v", req.Stamps)
 	}
 }
 

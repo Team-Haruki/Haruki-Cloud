@@ -187,16 +187,16 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 		filepath.Join("stamp", item.AssetBundleName, item.AssetBundleName+".png"),
 		filepath.Join("stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png"),
 	}
-	expanded := make([]string, 0, len(relCandidates)*2)
+	candidates := append([]string(nil), relCandidates...)
 	for _, rel := range relCandidates {
-		expanded = append(expanded,
+		candidates = append(candidates,
 			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetStartApp), rel)),
 			filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), assets.RegionAssetOnDemand), rel)),
 		)
 	}
 	if c.assets != nil {
-		if existing := c.assets.FirstExisting(expanded...); existing != "" {
-			return filepath.ToSlash(existing), true
+		if existing := c.assets.FirstExisting(candidates...); existing != "" {
+			return c.makeRelativeAsset(existing), true
 		}
 		primary := c.assets.Primary()
 		if primary != "" && primary != "." {
@@ -204,5 +204,18 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 		}
 	}
 	// Runtime fallback when no local asset root is configured.
-	return expanded[0], true
+	return filepath.ToSlash(relCandidates[0]), true
+}
+
+func (c *Controller) makeRelativeAsset(target string) string {
+	if c.assets == nil {
+		return filepath.ToSlash(target)
+	}
+	for _, root := range c.assets.Roots() {
+		relative := assets.MakeRelative(root, target)
+		if relative != target {
+			return relative
+		}
+	}
+	return filepath.ToSlash(filepath.Clean(target))
 }

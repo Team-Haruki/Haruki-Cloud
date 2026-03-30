@@ -1,9 +1,11 @@
 package card
 
+import "strings"
+
 func formatSupplyType(raw string) string {
-	switch raw {
+	switch strings.TrimSpace(raw) {
 	case "", "normal":
-		return "常驻"
+		return "非限定"
 	case "term_limited":
 		return "期间限定"
 	case "colorful_festival_limited":
@@ -17,11 +19,16 @@ func formatSupplyType(raw string) string {
 	case "birthday", "rarity_birthday":
 		return "生日"
 	default:
-		return raw
+		return strings.TrimSpace(raw)
 	}
 }
 
 func matchesSupplyFilter(filter, localized string) bool {
+	localized = strings.TrimSpace(localized)
+	if localized == "" {
+		return false
+	}
+
 	switch filter {
 	case SupplyFes:
 		return localized == formatSupplyType("colorful_festival_limited") || localized == formatSupplyType("bloom_festival_limited")

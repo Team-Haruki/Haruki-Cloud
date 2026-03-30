@@ -148,11 +148,11 @@ func isAsciiLetter(ch byte) bool {
 // --- 属性提取 ---
 
 var attrMap = map[string]string{
-	"cute": "cute", "可爱": "cute", "粉": "cute",
-	"cool": "cool", "帅气": "cool", "蓝": "cool",
-	"pure": "pure", "纯真": "pure", "草": "pure", "绿": "pure",
-	"happy": "happy", "快乐": "happy", "橙": "happy",
-	"mysterious": "mysterious", "神秘": "mysterious", "紫": "mysterious",
+	"cute": "cute", "可爱": "cute", "粉": "cute", "pink": "cute",
+	"cool": "cool", "帅气": "cool", "蓝": "cool", "blue": "cool",
+	"pure": "pure", "纯真": "pure", "草": "pure", "绿": "pure", "green": "pure",
+	"happy": "happy", "快乐": "happy", "橙": "happy", "orange": "happy",
+	"mysterious": "mysterious", "神秘": "mysterious", "紫": "mysterious", "purple": "mysterious",
 }
 
 var attrRules = buildRules(attrMap)

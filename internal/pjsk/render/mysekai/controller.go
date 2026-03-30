@@ -537,9 +537,13 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				smallIcon := false
 				smallIconSet := false
 				if hasFixtureDrop {
-					if item.Type == "mysekai_fixture" {
-						// Keep seed/sapling drops as the primary large icon when they
-						// share a tile with materials/items.
+					if hasMaterialDrop {
+						// When fixture and material share the same tile, material
+						// should stay primary (large) and seed/sapling fixture should
+						// be secondary (small).
+						smallIcon = !strings.HasPrefix(key, "mysekai_material_")
+						smallIconSet = true
+					} else if item.Type == "mysekai_fixture" {
 						smallIcon = false
 						smallIconSet = true
 					} else {

@@ -685,3 +685,85 @@ func TestBuildMapRequestSkipsToneGustHarvestPoint(t *testing.T) {
 		t.Fatalf("unexpected remaining harvest point: %+v", req.Maps[0].HarvestPoints[0])
 	}
 }
+
+func TestBuildMapRequestMixedMaterialAndFixtureKeepsMaterialLarge(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+		{"id": 1, "iconAssetbundleName": "mat_1", "mysekaiMaterialRarityType": "rarity_1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]interface{}{
+		{"id": 118, "assetbundleName": "mdl_site_wood_common_conifer01"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 5,
+        "userMysekaiSiteHarvestFixtures": [],
+        "userMysekaiSiteHarvestResourceDrops": [
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 1,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 1,
+            "positionZ": 2,
+            "quantity": 2
+          },
+          {
+            "resourceType": "mysekai_fixture",
+            "resourceId": 118,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 1,
+            "positionZ": 2,
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  }
+}`
+
+	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	if len(req.Maps) != 1 {
+		t.Fatalf("expected 1 map, got %d", len(req.Maps))
+	}
+	if len(req.Maps[0].ResourceDrops) != 2 {
+		t.Fatalf("expected 2 resource drops, got %+v", req.Maps[0].ResourceDrops)
+	}
+
+	var materialDrop *drawing.MysekaiMsrMapResourceDrop
+	var fixtureDrop *drawing.MysekaiMsrMapResourceDrop
+	for i := range req.Maps[0].ResourceDrops {
+		drop := &req.Maps[0].ResourceDrops[i]
+		if drop.Type == "mysekai_material" && drop.ID == 1 {
+			materialDrop = drop
+		}
+		if drop.Type == "mysekai_fixture" && drop.ID == 118 {
+			fixtureDrop = drop
+		}
+	}
+	if materialDrop == nil || fixtureDrop == nil {
+		t.Fatalf("missing expected mixed drops: %+v", req.Maps[0].ResourceDrops)
+	}
+	if materialDrop.SmallIcon == nil || *materialDrop.SmallIcon {
+		t.Fatalf("expected material drop to stay large, got small=%+v", materialDrop.SmallIcon)
+	}
+	if fixtureDrop.SmallIcon == nil || !*fixtureDrop.SmallIcon {
+		t.Fatalf("expected fixture drop to be small, got small=%+v", fixtureDrop.SmallIcon)
+	}
+}

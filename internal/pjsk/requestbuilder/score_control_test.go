@@ -93,6 +93,10 @@ func (s *scoreControlTestSource) GetCharacterByID(int) (*masterdata.Character, e
 	return nil, os.ErrNotExist
 }
 
+func (s *scoreControlTestSource) GetOutsideCharacterByID(int) (string, error) {
+	return "", os.ErrNotExist
+}
+
 func (s *scoreControlTestSource) GetPrimaryEventByMusicID(int) (*masterdata.Event, error) {
 	return nil, os.ErrNotExist
 }

@@ -5,7 +5,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-type Source interface {
+type DataSource interface {
 	honor.DataSource
 	GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error)
 	GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error)

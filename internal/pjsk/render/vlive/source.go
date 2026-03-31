@@ -4,8 +4,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
-// Source provides VLive master data.
-type Source interface {
+// DataSource provides VLive master data.
+type DataSource interface {
 	DefaultRegion() renderregion.Value
 	GetLives(region renderregion.Value) ([]*Live, error)
 }

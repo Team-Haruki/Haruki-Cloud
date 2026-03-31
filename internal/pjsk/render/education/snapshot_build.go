@@ -63,7 +63,7 @@ var gateUnitByID = map[int]string{
 
 type resolvedSnapshotContext struct {
 	region   renderregion.Value
-	source   Source
+	source   DataSource
 	snapshot *userdata.Service
 	raw      *userdata.RawUserData
 	profile  *drawing.DetailedProfileCardRequest
@@ -313,7 +313,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 	})
 }
 
-func (c *Controller) resolveAreaItemIDs(source Source, userAreaLevels map[int]int, query AreaItemQuery) []int {
+func (c *Controller) resolveAreaItemIDs(source DataSource, userAreaLevels map[int]int, query AreaItemQuery) []int {
 	if !hasAreaItemFilter(query) {
 		itemIDs := make([]int, 0, len(userAreaLevels))
 		for itemID := range userAreaLevels {
@@ -396,7 +396,7 @@ func (c *Controller) resolveSnapshotContext(
 	}, nil
 }
 
-func (c *Controller) resolveAreaItemShopItems(source Source, itemIDs []int) map[int]map[int]*ShopItem {
+func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int) map[int]map[int]*ShopItem {
 	itemSet := make(map[int]struct{}, len(itemIDs))
 	for _, itemID := range itemIDs {
 		itemSet[itemID] = struct{}{}

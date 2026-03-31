@@ -5,7 +5,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
-// ProviderAdapter bridges provider.MasterDataProvider to education.Source.
+// ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.
 type ProviderAdapter struct {
 	p provider.MasterDataProvider
 }

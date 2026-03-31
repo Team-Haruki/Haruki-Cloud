@@ -15,7 +15,7 @@ import (
 type Controller struct {
 	drawing  *drawing.HarukiDrawingClient
 	assets   *assets.AssetHelper
-	sources  *rendersource.Registry[Source]
+	sources  *rendersource.Registry[DataSource]
 	snapshot *userdata.Service
 }
 
@@ -23,12 +23,12 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *asse
 	return &Controller{
 		drawing:  drawingClient,
 		assets:   assetHelper,
-		sources:  rendersource.NewRegistry[Source](defaultRegion),
+		sources:  rendersource.NewRegistry[DataSource](defaultRegion),
 		snapshot: snapshot,
 	}
 }
 
-func (c *Controller) RegisterSource(source Source) {
+func (c *Controller) RegisterSource(source DataSource) {
 	if c == nil || c.sources == nil {
 		return
 	}
@@ -204,7 +204,7 @@ func (c *Controller) RenderLeaderCount(req drawing.LeaderCountRequest) ([]byte, 
 	return c.drawing.GenerateLeaderCount(payload)
 }
 
-func (c *Controller) pickChallengeRewards(source Source, charID int, claimed map[int]struct{}) (int, int) {
+func (c *Controller) pickChallengeRewards(source DataSource, charID int, claimed map[int]struct{}) (int, int) {
 	rewards := source.GetChallengeRewardsByCharacter(charID)
 	jewelTotal := 0
 	shardTotal := 0
@@ -233,7 +233,7 @@ func (c *Controller) pickChallengeRewards(source Source, charID int, claimed map
 	return jewelTotal, shardTotal
 }
 
-func (c *Controller) estimateChallengeMaxScore(source Source) int {
+func (c *Controller) estimateChallengeMaxScore(source DataSource) int {
 	maxScore := 0
 	for characterID := 1; characterID <= 26; characterID++ {
 		for _, reward := range source.GetChallengeRewardsByCharacter(characterID) {

@@ -5,7 +5,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
-// ProviderAdapter bridges provider.MasterDataProvider to vlive.Source.
+// ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.
 type ProviderAdapter struct {
 	p provider.MasterDataProvider
 }

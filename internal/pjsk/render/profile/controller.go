@@ -24,19 +24,19 @@ import (
 var wordTagPattern = regexp.MustCompile(`<#.*?>`)
 
 type Controller struct {
-	sources  *regionsource.Registry[Source]
+	sources  *regionsource.Registry[DataSource]
 	drawing  *drawing.HarukiDrawingClient
 	assets   *assets.AssetHelper
 	snapshot *userdata.Service
 	censor   *censor.Service
 }
 
-func NewController(defaultSource Source, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
 	ctrl := &Controller{
-		sources:  regionsource.NewRegistry[Source](renderregion.JP),
+		sources:  regionsource.NewRegistry[DataSource](renderregion.JP),
 		drawing:  drawingClient,
 		assets:   assetHelper,
 		snapshot: snapshot,
@@ -45,7 +45,7 @@ func NewController(defaultSource Source, drawingClient *drawing.HarukiDrawingCli
 	return ctrl
 }
 
-func (c *Controller) RegisterSource(source Source) {
+func (c *Controller) RegisterSource(source DataSource) {
 	if c == nil || c.sources == nil {
 		return
 	}
@@ -393,10 +393,10 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 	return entries
 }
 
-// buildLeaderImagePathFromSource resolves the leader card thumbnail path using the Source's
+// buildLeaderImagePathFromSource resolves the leader card thumbnail path using the DataSource's
 // master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
-func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
+func buildLeaderImagePathFromSource(source DataSource, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
 	fallback := assets.ResolveAssetPath(helper, assets.StaticImagesDir, "unknown.jpg")
 	if cardID == 0 || source == nil {
 		return fallback
@@ -415,7 +415,7 @@ func buildLeaderImagePathFromSource(source Source, helper *assets.AssetHelper, c
 	)
 }
 
-func (c *Controller) buildFramePaths(source Source, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
+func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
 	equippedID := 0
 	for _, item := range userFrames {
 		if strings.EqualFold(item.PlayerFrameAttachStatus, "equipped") {
@@ -447,7 +447,7 @@ func (c *Controller) buildFramePaths(source Source, userFrames []userdata.RawUse
 	}, true
 }
 
-func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
+func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
 	activeDeck := findActiveDeck(decks, activeDeckID)
 	memberIDs := []int{activeDeck.Member1, activeDeck.Member2, activeDeck.Member3, activeDeck.Member4, activeDeck.Member5}
 	result := make([]drawing.CardFullThumbnailRequest, 0, len(memberIDs))
@@ -475,7 +475,7 @@ func (c *Controller) buildPCards(source Source, userCards []userdata.RawUserCard
 	return result
 }
 
-func (c *Controller) buildHonors(source Source, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
+func (c *Controller) buildHonors(source DataSource, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
 	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {

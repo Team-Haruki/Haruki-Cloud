@@ -10,11 +10,11 @@ import (
 )
 
 type Controller struct {
-	source        Source
+	source        DataSource
 	defaultRegion renderregion.Value
 }
 
-func NewController(source Source, defaultRegion renderregion.Value) *Controller {
+func NewController(source DataSource, defaultRegion renderregion.Value) *Controller {
 	return &Controller{
 		source:        source,
 		defaultRegion: renderregion.WithDefault(defaultRegion),

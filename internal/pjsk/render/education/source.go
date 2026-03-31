@@ -2,7 +2,7 @@ package education
 
 import renderregion "haruki-cloud/internal/pjsk/render/region"
 
-type Source interface {
+type DataSource interface {
 	DefaultRegion() renderregion.Value
 	GetChallengeRewardsByCharacter(charID int) []*ChallengeReward
 	GetResourceBoxByPurpose(purpose string, id int) *ResourceBox

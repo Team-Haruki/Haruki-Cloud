@@ -253,6 +253,77 @@ func executeSK(rc *RequestContext)
 
 ---
 
+### P9：文件拆分 - drawing/models.go + deck_params.go ✅
+
+**提交**：`f518b4b`
+
+将两个大型单文件拆分为领域模块：
+
+#### utils/drawing/models.go (1189 行) → 11 个文件
+| 文件 | 内容 |
+|------|------|
+| models_music.go | 音乐相关结构 |
+| models_card.go | 卡牌相关结构 |
+| models_profile.go | 档案相关结构 |
+| models_event.go | 活动相关结构 |
+| models_education.go | 育成相关结构 |
+| models_honor.go | 称号相关结构 |
+| models_gacha.go | 抽卡相关结构 |
+| models_sk.go | 冲榜相关结构 |
+| models_score.go | 分数相关结构 |
+| models_mysekai.go | MySekai相关结构 |
+| models_misc.go | 杂项结构 |
+
+#### deck_params.go (958 行) → 5 个文件
+| 文件 | 内容 |
+|------|------|
+| deck_types.go | 类型定义 |
+| deck_builder.go | 请求构建 |
+| deck_extractor.go | 数据提取 |
+| deck_config.go | 配置管理 |
+| deck_helpers.go | 辅助函数 |
+
+---
+
+### P10：binding_service.go 拆分 ✅
+
+**提交**：`6031c62`
+
+将 1018 行的 `binding_service.go` 拆分为 4 个模块：
+
+| 文件 | 行数 | 内容 |
+|------|------|------|
+| binding_types.go | 101 | 接口、类型、常量 |
+| binding_defaults.go | 244 | 默认绑定管理 |
+| binding_properties.go | 217 | 可见性、验证、背景 |
+| binding_service.go | 517 | 核心绑定操作 |
+
+**总计减少约 500 行分散重复代码。**
+
+---
+
+### P11：mysekai/controller.go 拆分（进行中）
+
+**提交**：`330077e`
+
+将 2251 行的 `controller.go` 开始拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| resource_builder.go | 90 | BuildResourceRequest, RenderResource |
+
+**当前 controller.go 为 2173 行。后续将继续提取：**
+- map_builder.go (~350 行)
+- fixture_builder.go (~250 行)
+- door_upgrade_builder.go (~150 行)
+- music_record_builder.go (~200 行)
+- talk_builder.go (~350 行)
+- photo_resolver.go (~60 行)
+- mysekai_snapshot.go (~150 行)
+- mysekai_helpers.go (~200 行)
+
+---
+
 ## 未做的工作
 
 ### 1. 快照 Provider（snapshot-schema / store）

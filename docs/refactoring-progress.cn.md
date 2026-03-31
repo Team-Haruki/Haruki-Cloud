@@ -302,25 +302,36 @@ func executeSK(rc *RequestContext)
 
 ---
 
-### P11：mysekai/controller.go 拆分（进行中）
+### P11：mysekai/controller.go 拆分 ✅
 
-**提交**：`330077e`
+**提交**：`ae804ce`
 
-将 2251 行的 `controller.go` 开始拆分：
+将 2251 行的 `controller.go` 拆分为 7 个模块文件：
 
 | 已提取文件 | 行数 | 内容 |
 |-----------|------|------|
 | resource_builder.go | 90 | BuildResourceRequest, RenderResource |
+| map_builder.go | 390 | BuildMapRequest, RenderMap |
+| fixture_builder.go | 364 | BuildFixtureListRequest, BuildFixtureDetailRequests |
+| door_upgrade_builder.go | 154 | BuildDoorUpgradeRequest |
+| music_record_builder.go | 189 | BuildMusicRecordRequest |
+| talk_builder.go | 287 | BuildTalkListRequest |
 
-**当前 controller.go 为 2173 行。后续将继续提取：**
-- map_builder.go (~350 行)
-- fixture_builder.go (~250 行)
-- door_upgrade_builder.go (~150 行)
-- music_record_builder.go (~200 行)
-- talk_builder.go (~350 行)
-- photo_resolver.go (~60 行)
-- mysekai_snapshot.go (~150 行)
-- mysekai_helpers.go (~200 行)
+**controller.go 从 2251 行降至 859 行**（减少 62%）
+
+---
+
+### P12：alias/service.go 拆分 ✅
+
+**提交**：`b1c6129`
+
+将 1258 行的 `service.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| service_resolver.go | 332 | TryResolveMusicID, TryResolveCharacterID, 所有 tryResolve* 方法 |
+
+**service.go 从 1258 行降至 944 行**（减少 25%）
 
 ---
 

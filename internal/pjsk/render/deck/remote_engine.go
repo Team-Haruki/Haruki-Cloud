@@ -105,7 +105,7 @@ type remoteRecommendCard struct {
 	Level          int     `json:"level"`
 	MasterRank     int     `json:"master_rank"`
 	SkillLevel     int     `json:"skill_level"`
-	SkillScoreUp   int     `json:"skill_score_up"`
+	SkillScoreUp   float64 `json:"skill_score_up"`
 	EventBonusRate float64 `json:"event_bonus_rate"`
 	Episode1Read   bool    `json:"episode1_read"`
 	Episode2Read   bool    `json:"episode2_read"`
@@ -312,10 +312,13 @@ func (r *RemoteDeckRecommender) recommendOption(req RecommendRequest, option map
 func (r *RemoteDeckRecommender) doRecommend(req RecommendRequest, option map[string]interface{}) ([]RecommendDeck, error) {
 	payload := cloneRecommendOption(option)
 	payload["region"] = strings.ToLower(strings.TrimSpace(req.Region))
-	if path := strings.TrimSpace(req.UserDataFilePath); path != "" {
+	// Always prefer sending bytes directly — the container cannot access host temp files.
+	if len(req.UserData) > 0 {
+		payload["user_data_str"] = string(req.UserData)
+	} else if path := strings.TrimSpace(req.UserDataFilePath); path != "" {
 		payload["user_data_file_path"] = path
 	} else {
-		payload["user_data_str"] = string(req.UserData)
+		return nil, fmt.Errorf("deck remote engine: no user data available")
 	}
 
 	var response remoteRecommendResult
@@ -354,14 +357,15 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 
 	if hash != "" && !musicReady {
 		req := map[string]interface{}{"region": region}
-		if musicMetaPath != "" {
-			req["file_path"] = musicMetaPath
-			if err := r.postJSON("/update/musicmetas", req, nil); err != nil {
-				return fmt.Errorf("deck remote engine: update music metas: %w", err)
-			}
-		} else {
+		// Prefer sending bytes directly — container cannot access host file paths.
+		if len(musicMeta) > 0 {
 			req["data"] = string(musicMeta)
 			if err := r.postJSON("/update/musicmetas/string", req, nil); err != nil {
+				return fmt.Errorf("deck remote engine: update music metas: %w", err)
+			}
+		} else if musicMetaPath != "" {
+			req["file_path"] = musicMetaPath
+			if err := r.postJSON("/update/musicmetas", req, nil); err != nil {
 				return fmt.Errorf("deck remote engine: update music metas: %w", err)
 			}
 		}
@@ -432,7 +436,7 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 				MasterRank:      c.MasterRank,
 				DefaultImage:    c.DefaultImage,
 				SkillLevel:      c.SkillLevel,
-				SkillRate:       float64(c.SkillScoreUp),
+				SkillRate:       c.SkillScoreUp,
 				EventBonusRate:  c.EventBonusRate,
 				IsAfterStory:    c.Episode2Read,
 				IsBeforeStory:   c.Episode1Read,

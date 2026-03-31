@@ -142,6 +142,7 @@ func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 
 			leader := values[0]
 			others := values[1] + values[2] + values[3] + values[4]
+			internalValue := values[0] + values[1] + values[2] + values[3] + values[4]
 			scoreUp := leader + others*0.2
 			multiplier := scoreUp/100.0 + 1.0
 			return makeResolvedCmdWithParams(
@@ -149,8 +150,8 @@ func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 				parser.ModuleDeck,
 				"deck-score-up",
 				fmt.Sprintf(
-					"队长技能加成: %.4g%%\n实效: %.4g%%\n倍率: %.4g",
-					leader, scoreUp, multiplier,
+					"队长技能加成: %.4g%%\n内部值: %.4g\n实效: %.4g%%\n倍率: %.4g",
+					leader, internalValue, scoreUp, multiplier,
 				)), nil
 		},
 	}

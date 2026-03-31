@@ -363,6 +363,20 @@ func executeSK(rc *RequestContext)
 
 ---
 
+### P15：music/board_request.go 拆分 ✅
+
+**提交**：`ee2b053`
+
+将 872 行的 `board_request.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| board_helpers.go | 449 | weightedMusicBoardSkill, populateMusicBoardLiveMetrics, sortMusicBoardRows, loadMusicBoardMetaMap, resolveMusicBoardSpecs, boardDifficultyPriority |
+
+**board_request.go 从 872 行降至 420 行**（减少 52%）
+
+---
+
 ## 未做的工作
 
 ### 1. 快照 Provider（snapshot-schema / store）

@@ -16,6 +16,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	sekaidb "haruki-cloud/database/sekai"
 	bonddb "haruki-cloud/database/sekai/bond"
+	eventdb "haruki-cloud/database/sekai/event"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
 	leveldb "haruki-cloud/database/sekai/level"
@@ -234,10 +235,24 @@ func buildEventRecordFromSnapshot(r *parser.ResolvedCommand, app *renderapp.App,
 		rankByEvent[result.EventID] = result.Rank
 	}
 
-	masterDir := app.Config.LocalMasterdata.Dir
-	eventMaster := loadMasterMapByID(masterDir, "events.json")
-	if len(eventMaster) == 0 {
+	eventEntities, err := app.Sekai.Event.Query().
+		Where(eventdb.ServerRegionEQ(region.String())).
+		All(context.Background())
+	if err != nil || len(eventEntities) == 0 {
 		return nil, fmt.Errorf("event master data not available")
+	}
+	type eventMasterEntry = map[string]interface{}
+	eventMaster := make(map[int]eventMasterEntry, len(eventEntities))
+	for _, e := range eventEntities {
+		id := int(e.GameID)
+		eventMaster[id] = eventMasterEntry{
+			"id":              id,
+			"eventType":       e.EventType,
+			"assetbundleName": e.AssetbundleName,
+			"name":            e.Name,
+			"startAt":         float64(e.StartAt),
+			"closedAt":        float64(e.ClosedAt),
+		}
 	}
 
 	// Identify world_bloom event IDs from master

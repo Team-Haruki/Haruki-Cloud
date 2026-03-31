@@ -117,12 +117,12 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	_, err = executeCheckData(ctx, &parser.ResolvedCommand{
+	_, err = executeCheckData(NewRequestContext(ctx, &parser.ResolvedCommand{
 		Module: parser.ModuleCheckData,
 		Mode:   "mysekai",
 		Region: "jp",
 		Params: params,
-	}, &renderapp.App{Bindings: service})
+	}, &renderapp.App{Bindings: service}))
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -646,12 +646,12 @@ func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeScore(&parser.ResolvedCommand{
+	message, err := executeScore(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleScore,
 		Mode:   "score-music-meta",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeScore music-meta: %v", err)
 	}
@@ -730,12 +730,12 @@ func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeScore(&parser.ResolvedCommand{
+	message, err := executeScore(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleScore,
 		Mode:   "score-control",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeScore score-control: %v", err)
 	}
@@ -814,12 +814,12 @@ func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeScore(&parser.ResolvedCommand{
+	message, err := executeScore(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleScore,
 		Mode:   "score-custom-room",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeScore custom-room: %v", err)
 	}
@@ -906,12 +906,12 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeScore(&parser.ResolvedCommand{
+	message, err := executeScore(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleScore,
 		Mode:   "score-music-board",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeScore music-board: %v", err)
 	}
@@ -1358,12 +1358,12 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
 	}
-	message, err := executeMysekai(&parser.ResolvedCommand{
+	message, err := executeMysekai(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMysekai,
 		Mode:   "mysekai-photo",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeMysekai photo: %v", err)
 	}
@@ -1413,12 +1413,12 @@ func TestExecuteVLiveReturnsText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
 	}
-	message, err := executeVLive(&parser.ResolvedCommand{
+	message, err := executeVLive(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleVLive,
 		Mode:   "vlive-list",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeVLive: %v", err)
 	}

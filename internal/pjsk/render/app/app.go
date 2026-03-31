@@ -187,7 +187,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
 				continue
 			}
-			skController.RegisterEventSource(event.NewCloudSource(sekaiClient, region))
+			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
+			skController.RegisterEventSource(event.NewProviderAdapter(regionProvider))
 		}
 
 		// Initialize controllers with provider adapters

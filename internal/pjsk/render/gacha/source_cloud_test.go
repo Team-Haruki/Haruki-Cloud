@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 func TestConvertGachaEntityDecodesNestedFields(t *testing.T) {
@@ -40,7 +41,7 @@ func TestConvertGachaEntityDecodesNestedFields(t *testing.T) {
 		GachaInformation:     json.RawMessage(informationJSON),
 	}
 
-	model, err := convertGachaEntity(entity)
+	model, err := common.ConvertGachaEntity(entity)
 	if err != nil {
 		t.Fatalf("convertGachaEntity failed: %v", err)
 	}

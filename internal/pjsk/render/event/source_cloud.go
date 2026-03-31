@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
@@ -16,6 +15,7 @@ import (
 	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -66,7 +66,7 @@ func (c *CloudSource) GetEventByID(id int) (*masterdata.Event, error) {
 	c.eventMu.RLock()
 	if cached, ok := c.eventCache[id]; ok {
 		c.eventMu.RUnlock()
-		return cloneEvent(cached), nil
+		return common.CloneEvent(cached), nil
 	}
 	c.eventMu.RUnlock()
 
@@ -77,11 +77,11 @@ func (c *CloudSource) GetEventByID(id int) (*masterdata.Event, error) {
 		return nil, err
 	}
 
-	model := convertEventEntity(entity)
+	model := common.ConvertEventEntity(entity)
 	c.eventMu.Lock()
 	c.eventCache[id] = model
 	c.eventMu.Unlock()
-	return cloneEvent(model), nil
+	return common.CloneEvent(model), nil
 }
 
 func (c *CloudSource) GetEventByCardID(cardID int) (*masterdata.Event, error) {
@@ -108,9 +108,9 @@ func (c *CloudSource) GetEvents() []*masterdata.Event {
 	c.eventMu.Lock()
 	defer c.eventMu.Unlock()
 	for _, entity := range entities {
-		model := convertEventEntity(entity)
+		model := common.ConvertEventEntity(entity)
 		c.eventCache[model.ID] = model
-		result = append(result, cloneEvent(model))
+		result = append(result, common.CloneEvent(model))
 	}
 	return result
 }
@@ -182,7 +182,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 	c.gcuMu.RLock()
 	if cached, ok := c.gcuCache[id]; ok {
 		c.gcuMu.RUnlock()
-		return cloneGameCharacterUnit(cached), nil
+		return common.CloneGameCharacterUnit(cached), nil
 	}
 	c.gcuMu.RUnlock()
 
@@ -202,7 +202,7 @@ func (c *CloudSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUni
 	c.gcuMu.Lock()
 	c.gcuCache[id] = model
 	c.gcuMu.Unlock()
-	return cloneGameCharacterUnit(model), nil
+	return common.CloneGameCharacterUnit(model), nil
 }
 
 func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
@@ -216,7 +216,7 @@ func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
 
 	result := make([]*masterdata.Event, 0, len(entities))
 	for _, entity := range entities {
-		eventInfo := convertEventEntity(entity)
+		eventInfo := common.ConvertEventEntity(entity)
 		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
 			continue
 		}
@@ -224,7 +224,7 @@ func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
 		if err != nil || bannerCID != charID {
 			continue
 		}
-		result = append(result, cloneEvent(eventInfo))
+		result = append(result, common.CloneEvent(eventInfo))
 	}
 	return result
 }
@@ -264,7 +264,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.charMu.RLock()
 	if cached, ok := c.charCache[id]; ok {
 		c.charMu.RUnlock()
-		return cloneCharacter(cached), nil
+		return common.CloneCharacter(cached), nil
 	}
 	c.charMu.RUnlock()
 
@@ -284,7 +284,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.charMu.Lock()
 	c.charCache[id] = model
 	c.charMu.Unlock()
-	return cloneCharacter(model), nil
+	return common.CloneCharacter(model), nil
 }
 
 func (c *CloudSource) getCardsByIDs(ids []int) ([]*masterdata.Card, error) {
@@ -295,7 +295,7 @@ func (c *CloudSource) getCardsByIDs(ids []int) ([]*masterdata.Card, error) {
 	c.cardMu.RLock()
 	for idx, id := range ids {
 		if cached, ok := c.cardCache[id]; ok {
-			result[idx] = cloneCard(cached)
+			result[idx] = common.CloneCard(cached)
 			continue
 		}
 		missing = append(missing, int64(id))
@@ -316,10 +316,14 @@ func (c *CloudSource) getCardsByIDs(ids []int) ([]*masterdata.Card, error) {
 
 	c.cardMu.Lock()
 	for _, entity := range entities {
-		model := convertCardEntity(entity)
+		model, err := common.ConvertCardEntity(entity)
+		if err != nil {
+			c.cardMu.Unlock()
+			return nil, err
+		}
 		c.cardCache[model.ID] = model
 		if idx, ok := missingIndex[model.ID]; ok {
-			result[idx] = cloneCard(model)
+			result[idx] = common.CloneCard(model)
 		}
 	}
 	c.cardMu.Unlock()
@@ -361,71 +365,6 @@ func (c *CloudSource) getCardSupplyType(id int) string {
 	return supply.CardSupplyType
 }
 
-func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
-	return &masterdata.Event{
-		ID:              int(entity.GameID),
-		EventType:       entity.EventType,
-		Name:            entity.Name,
-		AssetBundleName: entity.AssetbundleName,
-		StartAt:         entity.StartAt,
-		AggregateAt:     entity.AggregateAt,
-		ClosedAt:        entity.ClosedAt,
-	}
-}
-
-func convertCardEntity(entity *sekaiDB.Card) *masterdata.Card {
-	return &masterdata.Card{
-		ID:                              int(entity.GameID),
-		CharacterID:                     int(entity.CharacterID),
-		CardRarityType:                  entity.CardRarityType,
-		Attr:                            entity.Attr,
-		Prefix:                          entity.Prefix,
-		AssetBundleName:                 entity.AssetbundleName,
-		ReleaseAt:                       entity.ReleaseAt,
-		SkillID:                         int(entity.SkillID),
-		CardSkillName:                   entity.CardSkillName,
-		SupportUnit:                     entity.SupportUnit,
-		SpecialTrainingPower1BonusFixed: int(entity.SpecialTrainingPower1BonusFixed),
-		SpecialTrainingPower2BonusFixed: int(entity.SpecialTrainingPower2BonusFixed),
-		SpecialTrainingPower3BonusFixed: int(entity.SpecialTrainingPower3BonusFixed),
-		SpecialTrainingSkillID:          int(entity.SpecialTrainingSkillID),
-		SpecialTrainingSkillName:        entity.SpecialTrainingSkillName,
-		CardSupplyID:                    int(entity.CardSupplyID),
-	}
-}
-
-func cloneEvent(item *masterdata.Event) *masterdata.Event {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
-func cloneCard(item *masterdata.Card) *masterdata.Card {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
-func cloneGameCharacterUnit(item *masterdata.GameCharacterUnit) *masterdata.GameCharacterUnit {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
-func cloneCharacter(item *masterdata.Character) *masterdata.Character {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
 func sortUniqueInts(values []int) []int {
 	seen := make(map[int]struct{}, len(values))
 	result := make([]int, 0, len(values))
@@ -438,15 +377,4 @@ func sortUniqueInts(values []int) []int {
 	}
 	sort.Ints(result)
 	return result
-}
-
-func jsonString(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var s string
-	if err := json.Unmarshal(raw, &s); err != nil {
-		return string(raw)
-	}
-	return s
 }

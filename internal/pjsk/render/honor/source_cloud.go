@@ -15,6 +15,7 @@ import (
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -75,7 +76,7 @@ func (c *CloudSource) GetHonorByID(id int) (*masterdata.Honor, error) {
 	c.honorMu.RLock()
 	if cached, ok := c.honorCache[id]; ok {
 		c.honorMu.RUnlock()
-		return cloneHonor(cached), nil
+		return common.CloneHonor(cached), nil
 	}
 	c.honorMu.RUnlock()
 
@@ -93,7 +94,7 @@ func (c *CloudSource) GetHonorByID(id int) (*masterdata.Honor, error) {
 	c.honorMu.Lock()
 	c.honorCache[id] = model
 	c.honorMu.Unlock()
-	return cloneHonor(model), nil
+	return common.CloneHonor(model), nil
 }
 
 func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
@@ -103,7 +104,7 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 	c.groupMu.RLock()
 	if cached, ok := c.groupCache[id]; ok {
 		c.groupMu.RUnlock()
-		return cloneHonorGroup(cached), nil
+		return common.CloneHonorGroup(cached), nil
 	}
 	c.groupMu.RUnlock()
 
@@ -149,7 +150,7 @@ func (c *CloudSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) 
 	c.groupMu.Lock()
 	c.groupCache[id] = model
 	c.groupMu.Unlock()
-	return cloneHonorGroup(model), nil
+	return common.CloneHonorGroup(model), nil
 }
 
 func (c *CloudSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
@@ -159,7 +160,7 @@ func (c *CloudSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) 
 	c.bondsMu.RLock()
 	if cached, ok := c.bondsCache[id]; ok {
 		c.bondsMu.RUnlock()
-		return cloneBondsHonor(cached), nil
+		return common.CloneBondsHonor(cached), nil
 	}
 	c.bondsMu.RUnlock()
 
@@ -182,7 +183,7 @@ func (c *CloudSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) 
 	c.bondsMu.Lock()
 	c.bondsCache[id] = model
 	c.bondsMu.Unlock()
-	return cloneBondsHonor(model), nil
+	return common.CloneBondsHonor(model), nil
 }
 
 func (c *CloudSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
@@ -192,7 +193,7 @@ func (c *CloudSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacte
 	c.gcuMu.RLock()
 	if cached, ok := c.gcuCache[id]; ok {
 		c.gcuMu.RUnlock()
-		return cloneGameCharacterUnit(cached), true
+		return common.CloneGameCharacterUnit(cached), true
 	}
 	c.gcuMu.RUnlock()
 
@@ -212,7 +213,7 @@ func (c *CloudSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacte
 	c.gcuMu.Lock()
 	c.gcuCache[id] = model
 	c.gcuMu.Unlock()
-	return cloneGameCharacterUnit(model), true
+	return common.CloneGameCharacterUnit(model), true
 }
 
 func convertCloudHonor(entity *sekaiDB.Honor) (*masterdata.Honor, error) {
@@ -230,17 +231,6 @@ func convertCloudHonor(entity *sekaiDB.Honor) (*masterdata.Honor, error) {
 		}
 	}
 	return model, nil
-}
-
-func cloneHonor(src *masterdata.Honor) *masterdata.Honor {
-	if src == nil {
-		return nil
-	}
-	copy := *src
-	if src.Levels != nil {
-		copy.Levels = append([]masterdata.HonorLevel(nil), src.Levels...)
-	}
-	return &copy
 }
 
 func (c *CloudSource) deriveBirthdayAssetsForGroup(groupID int, groupName string) (birthdayHonorAssets, bool) {
@@ -325,40 +315,4 @@ func birthdayGroupMatchesCharacter(groupName string, row *sekaiDB.Gamecharacter)
 		}
 	}
 	return false
-}
-
-func cloneHonorGroup(src *masterdata.HonorGroup) *masterdata.HonorGroup {
-	if src == nil {
-		return nil
-	}
-	copy := *src
-	return &copy
-}
-
-func cloneBondsHonor(src *masterdata.BondsHonor) *masterdata.BondsHonor {
-	if src == nil {
-		return nil
-	}
-	copy := *src
-	return &copy
-}
-
-func cloneGameCharacterUnit(src *masterdata.GameCharacterUnit) *masterdata.GameCharacterUnit {
-	if src == nil {
-		return nil
-	}
-	copy := *src
-	return &copy
-}
-
-// jsonString extracts a plain string from a json.RawMessage value.
-func jsonString(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var s string
-	if err := json.Unmarshal(raw, &s); err != nil {
-		return string(raw)
-	}
-	return s
 }

@@ -19,6 +19,7 @@ import (
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
 	"haruki-cloud/database/sekai/outsidecharacter"
+	"haruki-cloud/internal/pjsk/render/common"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -80,7 +81,7 @@ func (c *CloudSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	c.mu.RLock()
 	if cached, ok := c.musicByID[id]; ok {
 		c.mu.RUnlock()
-		return cloneMusic(cached), nil
+		return common.CloneMusic(cached), nil
 	}
 	c.mu.RUnlock()
 
@@ -91,11 +92,11 @@ func (c *CloudSource) GetMusicByID(id int) (*masterdata.Music, error) {
 		return nil, err
 	}
 
-	model := convertMusicEntity(entity)
+	model := common.ConvertMusicEntity(entity)
 	c.mu.Lock()
 	c.musicByID[model.ID] = model
 	c.mu.Unlock()
-	return cloneMusic(model), nil
+	return common.CloneMusic(model), nil
 }
 
 func (c *CloudSource) GetMusicByEventID(eventID int) (*masterdata.Music, error) {
@@ -115,7 +116,7 @@ func (c *CloudSource) GetMusicByEventID(eventID int) (*masterdata.Music, error) 
 func (c *CloudSource) GetMusics() []*masterdata.Music {
 	c.mu.RLock()
 	if len(c.musicList) > 0 {
-		cached := cloneMusicList(c.musicList)
+		cached := common.CloneMusicList(c.musicList)
 		c.mu.RUnlock()
 		return cached
 	}
@@ -132,7 +133,7 @@ func (c *CloudSource) GetMusics() []*masterdata.Music {
 	list := make([]*masterdata.Music, 0, len(entities))
 	byID := make(map[int]*masterdata.Music, len(entities))
 	for _, entity := range entities {
-		model := convertMusicEntity(entity)
+		model := common.ConvertMusicEntity(entity)
 		list = append(list, model)
 		byID[model.ID] = model
 	}
@@ -149,7 +150,7 @@ func (c *CloudSource) GetMusics() []*masterdata.Music {
 		c.musicByID[id] = item
 	}
 	c.mu.Unlock()
-	return cloneMusicList(list)
+	return common.CloneMusicList(list)
 }
 
 func (c *CloudSource) GetBanEvents(charID int) []*masterdata.Event {
@@ -322,7 +323,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.mu.RLock()
 	if cached, ok := c.characterByID[id]; ok {
 		c.mu.RUnlock()
-		return cloneCharacter(cached), nil
+		return common.CloneCharacter(cached), nil
 	}
 	c.mu.RUnlock()
 
@@ -347,7 +348,7 @@ func (c *CloudSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	c.mu.Lock()
 	c.characterByID[id] = model
 	c.mu.Unlock()
-	return cloneCharacter(model), nil
+	return common.CloneCharacter(model), nil
 }
 
 func (c *CloudSource) GetOutsideCharacterByID(id int) (string, error) {
@@ -416,7 +417,7 @@ func (c *CloudSource) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, 
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no events found for music %d", musicID)
 	}
-	return cloneEvent(convertEventEntity(items[0])), nil
+	return common.CloneEvent(common.ConvertEventEntity(items[0])), nil
 }
 
 func (c *CloudSource) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
@@ -441,41 +442,6 @@ func (c *CloudSource) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTim
 		})
 	}
 	return result
-}
-
-func convertMusicEntity(entity *sekaiDB.Music) *masterdata.Music {
-	return &masterdata.Music{
-		ID:                 int(entity.GameID),
-		Seq:                int(entity.Seq),
-		ReleaseConditionID: int(entity.ReleaseConditionID),
-		Categories:         toStringSliceFromRaw(entity.Categories),
-		Title:              entity.Title,
-		Pronunciation:      entity.Pronunciation,
-		Lyricist:           entity.Lyricist,
-		Composer:           entity.Composer,
-		Arranger:           entity.Arranger,
-		DancerCount:        int(entity.DancerCount),
-		SelfDancerCount:    int(entity.SelfDancerPosition),
-		AssetBundleName:    entity.AssetbundleName,
-		PublishedAt:        entity.PublishedAt,
-		DigitizedAt:        entity.ReleasedAt,
-		IsFullLength:       entity.IsFullLength,
-	}
-}
-
-func convertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
-	if entity == nil {
-		return nil
-	}
-	return &masterdata.Event{
-		ID:              int(entity.GameID),
-		EventType:       entity.EventType,
-		Name:            entity.Name,
-		AssetBundleName: entity.AssetbundleName,
-		StartAt:         entity.StartAt,
-		AggregateAt:     entity.AggregateAt,
-		ClosedAt:        entity.ClosedAt,
-	}
 }
 
 func interfaceToInt(value interface{}) (int, bool) {
@@ -505,52 +471,6 @@ func interfaceToInt(value interface{}) (int, bool) {
 	}
 }
 
-func cloneMusic(item *masterdata.Music) *masterdata.Music {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	if item.Categories != nil {
-		copy.Categories = append([]string(nil), item.Categories...)
-	}
-	return &copy
-}
-
-func cloneMusicList(items []*masterdata.Music) []*masterdata.Music {
-	result := make([]*masterdata.Music, 0, len(items))
-	for _, item := range items {
-		result = append(result, cloneMusic(item))
-	}
-	return result
-}
-
-func cloneCharacter(item *masterdata.Character) *masterdata.Character {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
-func cloneEvent(item *masterdata.Event) *masterdata.Event {
-	if item == nil {
-		return nil
-	}
-	copy := *item
-	return &copy
-}
-
-func jsonString(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var s string
-	if err := json.Unmarshal(raw, &s); err != nil {
-		return string(raw)
-	}
-	return s
-}
-
 func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID int) []masterdata.MusicVocalCharacter {
 	if len(raw) == 0 {
 		return nil
@@ -577,23 +497,6 @@ func parseMusicVocalCharacters(raw []map[string]interface{}, vocalID int, musicI
 			CharacterType: characterType,
 			CharacterID:   characterID,
 		})
-	}
-	return result
-}
-
-func toStringSliceFromRaw(raw json.RawMessage) []string {
-	if len(raw) == 0 {
-		return nil
-	}
-	var items []string
-	if err := json.Unmarshal(raw, &items); err != nil {
-		return nil
-	}
-	result := make([]string, 0, len(items))
-	for _, item := range items {
-		if strings.TrimSpace(item) != "" {
-			result = append(result, item)
-		}
 	}
 	return result
 }

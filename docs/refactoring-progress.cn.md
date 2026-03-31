@@ -182,35 +182,88 @@ func executeSK(rc *RequestContext)
 | 指标 | 变化 |
 |------|------|
 | bridge.go 行数 | 2968 → 133（-95.5%） |
-| 消除重复代码 | ~585 行 |
+| 消除重复代码 | ~585 行（common 包） |
+| 删除冗余代码 | ~3220 行（source_cloud.go 文件） |
+| local_data.go 拆分 | 2007 行 → 12 个文件 |
 | 新增 Provider 接口方法 | 52 个 |
 | 新增单元测试 | 70 个 |
-| 新增文件 | ~35 个 |
+| 新增文件 | ~50 个 |
 | Handler 文件数 | 4 → 22（bridge.go + 17 个模块文件 + resolver.go + runtime.go + test） |
+
+---
+
+## 追加完成的工作
+
+### P6：删除冗余 CloudSource 实现 ✅
+
+**提交**：`2d01179`
+
+删除 9 个 `source_cloud.go` 文件，共计 3220 行冗余代码：
+
+| 模块 | 删除行数 |
+|------|----------|
+| card/source_cloud.go | 855 |
+| education/source_cloud.go | 541 |
+| music/source_cloud.go | 502 |
+| event/source_cloud.go | 380 |
+| honor/source_cloud.go | 318 |
+| profile/source_cloud.go | 218 |
+| gacha/source_cloud.go | 176 |
+| vlive/source_cloud.go | 102 |
+| stamp/source_cloud.go | 69 |
+
+所有模块现在统一使用 `ProviderAdapter` 桥接到 `MasterDataProvider`。
+
+---
+
+### P7：拆分 local_data.go ✅
+
+**提交**：`08551b6`
+
+将 2007 行的 `local_data.go` 拆分为 12 个模块文件：
+
+| 文件 | 行数 |
+|------|------|
+| local_cards.go | 359 |
+| local_musics.go | 359 |
+| local_education.go | 314 |
+| local_honors.go | 275 |
+| local_events.go | 243 |
+| local_skills.go | 104 |
+| local_characters.go | 103 |
+| local_gachas.go | 102 |
+| local_player_frames.go | 84 |
+| local_vlives.go | 76 |
+| local_mysekai.go | 51 |
+| local_stamps.go | 34 |
+
+---
+
+### P8：统一 DataSource 接口命名 ✅
+
+**提交**：`18c6d16`
+
+将 `Source` 重命名为 `DataSource`，统一所有模块的接口命名风格：
+
+- education/source.go: `Source` → `DataSource`
+- profile/source.go: `Source` → `DataSource`
+- vlive/source.go: `Source` → `DataSource`
+
+现在所有 9 个模块都使用 `DataSource` 作为接口名。
 
 ---
 
 ## 未做的工作
 
-### 1. 删除旧的 `source_cloud.go` 文件
-
-各模块仍保留原有的 `source_cloud.go`（直接访问 DB 的实现）。这些文件与新的 `adapter_provider.go` 并存。完全切换到 Provider 后可删除。
-
-**原因**：保持渐进式迁移，避免一次性破坏所有模块。
-
-### 2. Provider 接口命名规范化
-
-当前 sub-provider 接口方法命名风格不完全统一（如 `GetByID` vs `GetAllCards`）。建议统一为 `Get`/`List`/`Find` 前缀。
-
-### 3. 快照 Provider（snapshot-schema / store）
+### 1. 快照 Provider（snapshot-schema / store）
 
 用户快照的本地写入/读取 Provider 已标记为 `blocked`。当前架构通过 Toolbox API 实时获取用户数据，不经过本地 DB。
 
-### 4. 删除 bridge 命名
+### 2. 删除 bridge 命名
 
 虽然已拆分，但文件仍以 `bridge_` 为前缀。未来可考虑重命名为更直观的名称（如 `exec_card.go`、`exec_event.go`），但这是纯审美改动。
 
-### 5. Helper 函数签名统一
+### 3. Helper 函数签名统一
 
 部分辅助函数仍使用 `(r *parser.ResolvedCommand, app *renderapp.App)` 签名，而非 `*RequestContext`。这些函数的调用方已正确传递 `rc.Cmd` 和 `rc.App`，功能正确，但风格不统一。
 
@@ -225,8 +278,6 @@ func executeSK(rc *RequestContext)
    - `TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress`（handler 包，颜色值不匹配）
 
 2. **统一 Helper 函数签名**：将高频辅助函数（如 `renderMusicRewards`、`buildEventRecordFromSnapshot`）也迁移到 `*RequestContext`
-
-3. **删除冗余的 source_cloud.go**：确认 adapter 层完全覆盖后，移除各模块的 `source_cloud.go`
 
 ### 中期
 

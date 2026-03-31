@@ -62,3 +62,7 @@ client.json
 build/
 haruki-server
 deploy_alpha_native_deck.sh
+# Build artifacts and test data
+haruki-server-linux
+collections.suite.json
+music_metas.json

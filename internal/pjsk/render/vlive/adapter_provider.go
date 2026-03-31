@@ -1,0 +1,44 @@
+package vlive
+
+import (
+	"haruki-cloud/internal/pjsk/render/provider"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+)
+
+// ProviderAdapter bridges provider.MasterDataProvider to vlive.Source.
+type ProviderAdapter struct {
+	p provider.MasterDataProvider
+}
+
+func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
+	return &ProviderAdapter{p: p}
+}
+
+func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
+
+func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
+	pvLives, err := a.p.VLives().GetLives(region)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*Live, len(pvLives))
+	for i, pv := range pvLives {
+		live := &Live{
+			ID:      pv.ID,
+			Name:    pv.Name,
+			StartAt: pv.StartAt,
+			EndAt:   pv.EndAt,
+		}
+		if len(pv.Schedules) > 0 {
+			live.Schedules = make([]Schedule, len(pv.Schedules))
+			for j, s := range pv.Schedules {
+				live.Schedules[j] = Schedule{
+					StartAt: s.StartAt,
+					EndAt:   s.EndAt,
+				}
+			}
+		}
+		result[i] = live
+	}
+	return result, nil
+}

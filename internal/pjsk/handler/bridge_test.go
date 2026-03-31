@@ -416,6 +416,8 @@ func (s *bridgeMusicSource) GetPrimaryEventByMusicID(int) (*masterdata.Event, er
 
 func (s *bridgeMusicSource) GetLimitedTimeMusics(int) []*masterdata.LimitedTimeMusic { return nil }
 
+func (s *bridgeMusicSource) GetOutsideCharacterByID(int) (string, error) { return "", nil }
+
 func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	root := t.TempDir()
 	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")

@@ -20,6 +20,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/profile"
+	"haruki-cloud/internal/pjsk/render/provider"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/sk"
@@ -83,6 +84,7 @@ type App struct {
 	Drawing    *drawing.HarukiDrawingClient
 	Assets     *assets.AssetHelper
 	MetaLoader *meta.Loader
+	Provider   provider.MasterDataProvider
 	Cards      *card.Controller
 	Decks      *deck.Controller
 	Edu        *education.Controller
@@ -158,10 +160,23 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var profileController *profile.Controller
 	var stampController *stamp.Controller
 	var vliveController *vlive.Controller
+	var masterProvider provider.MasterDataProvider
 	if sekaiClient != nil {
-		cardSource := card.NewCloudSource(sekaiClient, cfg.DefaultRegion)
-		eventSource := event.NewCloudSource(sekaiClient, cfg.DefaultRegion)
-		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventSource, assetHelper)
+		masterProvider = provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
+
+		// Create module adapters from the unified provider
+		cardAdapter := card.NewProviderAdapter(masterProvider)
+		eventAdapter := event.NewProviderAdapter(masterProvider)
+		musicAdapter := music.NewProviderAdapter(masterProvider)
+		gachaAdapter := gacha.NewProviderAdapter(masterProvider)
+		honorAdapter := honor.NewProviderAdapter(masterProvider)
+		stampAdapter := stamp.NewProviderAdapter(masterProvider)
+		vliveAdapter := vlive.NewProviderAdapter(masterProvider)
+		profileAdapter := profile.NewProviderAdapter(masterProvider)
+		educationAdapter := education.NewProviderAdapter(masterProvider)
+
+		// SK event source for default region + multi-region registration
+		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventAdapter, assetHelper)
 		for _, region := range []renderregion.Value{
 			renderregion.JP,
 			renderregion.CN,
@@ -174,7 +189,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			}
 			skController.RegisterEventSource(event.NewCloudSource(sekaiClient, region))
 		}
-		deckController = deck.NewControllerWithConfig(cardSource, eventSource, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
+
+		// Initialize controllers with provider adapters
+		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:          cfg.DeckRecommend.Enabled,
 			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
 			ServiceBaseURL:   cfg.DeckRecommend.ServiceBaseURL,
@@ -185,15 +202,15 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			Timeout:          cfg.DeckRecommend.Timeout,
 			DefaultAlgs:      append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 		}, cfg.MetaLoader)
-		cardController = card.NewController(cardSource, eventSource, drawingClient, assetHelper)
-		educationController.RegisterSource(education.NewCloudSource(sekaiClient, cfg.DefaultRegion))
-		eventController = event.NewController(eventSource, drawingClient, assetHelper)
-		gachaController = gacha.NewController(gacha.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
-		honorController = honor.NewController(honor.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
-		musicController = music.NewController(music.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
-		profileController = profile.NewController(profile.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper, snapshotService)
-		stampController = stamp.NewController(stamp.NewCloudSource(sekaiClient, cfg.DefaultRegion), drawingClient, assetHelper)
-		vliveController = vlive.NewController(vlive.NewCloudSource(sekaiClient, cfg.DefaultRegion), cfg.DefaultRegion)
+		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
+		educationController.RegisterSource(educationAdapter)
+		eventController = event.NewController(eventAdapter, drawingClient, assetHelper)
+		gachaController = gacha.NewController(gachaAdapter, drawingClient, assetHelper)
+		honorController = honor.NewController(honorAdapter, drawingClient, assetHelper)
+		musicController = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
+		profileController = profile.NewController(profileAdapter, drawingClient, assetHelper, snapshotService)
+		stampController = stamp.NewController(stampAdapter, drawingClient, assetHelper)
+		vliveController = vlive.NewController(vliveAdapter, cfg.DefaultRegion)
 	}
 
 	aliasService := pjskalias.NewService(sekaiClient, pjskClient, nil)
@@ -222,6 +239,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Drawing:    drawingClient,
 		Assets:     assetHelper,
 		MetaLoader: cfg.MetaLoader,
+		Provider:   masterProvider,
 		Cards:      cardController,
 		Decks:      deckController,
 		Edu:        educationController,

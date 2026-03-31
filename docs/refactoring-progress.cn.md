@@ -335,6 +335,34 @@ func executeSK(rc *RequestContext)
 
 ---
 
+### P13：sk/controller.go 拆分 ✅
+
+**提交**：`d2c2f60`
+
+将 1271 行的 `controller.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| tracker_builder.go | 586 | validateTrackerQuery, buildRanksFromTracker, buildSingleRankFromTracker, enrichRankInfoByRank/User, buildSpeedInfosFromTracker, buildRankTraceFromTracker |
+
+**controller.go 从 1271 行降至 700 行**（减少 45%）
+
+---
+
+### P14：deck/controller.go 拆分 ✅
+
+**提交**：`ccc988f`
+
+将 1184 行的 `controller.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| helpers.go | 291 | optionString/Int/Float, normalizeRecommend*, resolveCharacterIconPath, resolveUnitIconPath, defaultDeckConfig*, toInterfaceSlice/Map, calculateDeckCardPower |
+
+**controller.go 从 1184 行降至 918 行**（减少 22%）
+
+---
+
 ## 未做的工作
 
 ### 1. 快照 Provider（snapshot-schema / store）

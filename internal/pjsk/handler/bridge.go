@@ -69,21 +69,24 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	// doesn't always get JP results when typing bare commands.
 	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
 
+	// Create request context for functions that support it.
+	rc := NewRequestContext(ctx, resolved, app)
+
 	switch resolved.Module {
 	case parser.ModuleCard:
-		message, err = executeCard(resolved, app)
+		message, err = executeCard(rc)
 	case parser.ModuleEvent:
-		message, err = executeEvent(resolved, app)
+		message, err = executeEvent(rc)
 	case parser.ModuleMusic:
-		message, err = executeMusic(resolved, app)
+		message, err = executeMusic(rc)
 	case parser.ModuleAlias:
 		message, err = executeAlias(ctx, resolved, app)
 	case parser.ModuleGacha:
 		message, err = executeGacha(resolved, app)
 	case parser.ModuleDeck:
-		message, err = executeDeck(resolved, app)
+		message, err = executeDeck(rc)
 	case parser.ModuleEducation:
-		message, err = executeEducation(resolved, app)
+		message, err = executeEducation(rc)
 	case parser.ModuleSK:
 		message, err = executeSK(ctx, resolved, app)
 	case parser.ModuleScore:
@@ -122,51 +125,42 @@ func imageMessage(img []byte, app *renderapp.App, group string) (onebot11.Messag
 	return onebot11.Message{onebot11.Image(url, "")}, nil
 }
 
-func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
-	if app.Cards == nil {
+func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
+	if rc.App.Cards == nil {
 		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
 	}
-	var (
-		data []byte
-		url  string
-	)
-	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
-	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
-		if detail := snapshot.DetailedProfile(renderregion.Normalize(r.Region)); detail != nil {
-			publicDetailedProfile = detail
-		}
-	}
-	switch r.Mode {
+	var data []byte
+	switch rc.Cmd.Mode {
 	case "card-detail":
-		q := card.Query{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		data, err = app.Cards.RenderCardDetail(q)
+		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Cards.RenderCardDetail(q)
 	case "card-list":
-		q := card.ListRequest{Region: r.Region}
-		mergeParams(r.Params, &q)
-		q.DetailedProfile = publicDetailedProfile
-		data, err = app.Cards.RenderCardList(q)
+		q := card.ListRequest{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		q.DetailedProfile = rc.GetDetailedProfile()
+		data, err = rc.App.Cards.RenderCardList(q)
 	case "card-box":
 		useAfterTraining := true
 		q := card.Query{
-			Query:            r.Query,
-			Region:           r.Region,
+			Query:            rc.Cmd.Query,
+			Region:           rc.Cmd.Region,
 			UseAfterTraining: &useAfterTraining,
-			DetailedProfile:  resolveCardBoxDetailedProfile(r, app),
+			DetailedProfile:  resolveCardBoxDetailedProfile(rc.Cmd, rc.App),
 		}
-		mergeParams(r.Params, &q)
+		mergeParams(rc.Cmd.Params, &q)
 		queries := []card.Query{q}
-		data, err = app.Cards.RenderCardBox(queries)
+		data, err = rc.App.Cards.RenderCardBox(queries)
 	case "card-image":
-		q := card.Query{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		result, resolveErr := app.Cards.ResolveCardImages(q)
+		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		result, resolveErr := rc.App.Cards.ResolveCardImages(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
 		message = make(onebot11.Message, 0, len(result.Paths))
 		for _, path := range result.Paths {
-			image, imageErr := assetImageMessage(path, app, BotModulePJSK)
+			image, imageErr := assetImageMessage(path, rc.App, BotModulePJSK)
 			if imageErr != nil {
 				return nil, imageErr
 			}
@@ -177,43 +171,42 @@ func executeCard(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		}
 		return message, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported card mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported card mode %q", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return
 	}
-	url, err = app.ImageCache.StoreAndGetURL(data, BotModulePJSK)
-	return onebot11.Message{onebot11.Image(url, "")}, err
+	return rc.ImageMessage(data)
 }
 
-func executeEvent(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
-	if app.Events == nil {
+func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
+	if rc.App.Events == nil {
 		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
 	}
 	var data []byte
-	region := renderregion.Value(r.Region)
-	switch r.Mode {
+	region := renderregion.Value(rc.Cmd.Region)
+	switch rc.Cmd.Mode {
 	case "event-detail":
 		q := event.DetailQuery{Region: region}
-		mergeParams(r.Params, &q)
-		data, err = app.Events.RenderEventDetail(q)
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Events.RenderEventDetail(q)
 	case "event-list":
 		q := event.ListQuery{Region: region}
-		mergeParams(r.Params, &q)
-		data, err = app.Events.RenderEventList(q)
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Events.RenderEventList(q)
 	case "event-record":
-		req, buildErr := buildEventRecordFromSnapshot(r, app, region)
+		req, buildErr := buildEventRecordFromSnapshot(rc.Cmd, rc.App, region)
 		if buildErr != nil {
 			return nil, buildErr
 		}
-		data, err = app.Events.RenderEventRecord(*req)
+		data, err = rc.App.Events.RenderEventRecord(*req)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported event mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported event mode %q", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, BotModulePJSK)
+	return rc.ImageMessage(data)
 }
 
 // buildEventRecordFromSnapshot constructs an EventRecordRequest from live
@@ -449,43 +442,42 @@ func intVal(m map[string]interface{}, key string) int {
 	return 0
 }
 
-func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
-	if app == nil || app.Music == nil {
+func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
+	if rc.App == nil || rc.App.Music == nil {
 		return nil, fmt.Errorf("music service unavailable: music controller is not configured")
 	}
-	if app.Aliases != nil {
-		app.Music.SetAliasResolver(app.Aliases)
+	if rc.App.Aliases != nil {
+		rc.App.Music.SetAliasResolver(rc.App.Aliases)
 	}
-	publicDetailedProfile, publicProfileCard := buildPublicMusicProfiles(r, app)
 	var data []byte
-	switch r.Mode {
+	switch rc.Cmd.Mode {
 	case "music-detail":
-		q := music.Query{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		data, err = app.Music.RenderMusicDetail(q)
+		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Music.RenderMusicDetail(q)
 	case "music-list":
-		q := music.ListQuery{Region: r.Region}
-		mergeParams(r.Params, &q)
+		q := music.ListQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
 		if strings.TrimSpace(q.Keyword) == "" {
-			q.Keyword = strings.TrimSpace(r.Query)
+			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		q.DetailedProfile = publicDetailedProfile
-		data, err = app.Music.RenderMusicList(q)
+		q.DetailedProfile = rc.GetDetailedProfile()
+		data, err = rc.App.Music.RenderMusicList(q)
 	case "music-chart":
-		q := music.ChartQuery{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		data, err = app.Music.RenderMusicChart(q)
+		q := music.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Music.RenderMusicChart(q)
 	case "music-progress":
-		q := music.ProgressQuery{Region: r.Region}
-		mergeParams(r.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = app.Music.RenderMusicProgress(q)
+		q := music.ProgressQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		q.Profile = rc.GetProfileCard()
+		data, err = rc.App.Music.RenderMusicProgress(q)
 	case "music-rewards":
-		data, err = renderMusicRewards(r, app, publicProfileCard)
+		data, err = renderMusicRewards(rc.Cmd, rc.App, rc.GetProfileCard())
 	case "music-note-count":
-		q := music.NoteCountQuery{Region: r.Region}
-		mergeParams(r.Params, &q)
-		matches, resolveErr := app.Music.FindMusicChartsByNoteCount(q)
+		q := music.NoteCountQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		matches, resolveErr := rc.App.Music.FindMusicChartsByNoteCount(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -495,26 +487,26 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		}
 		return onebot11.Message{onebot11.Text(strings.Join(lines, "\n"))}, nil
 	case "music-cover":
-		q := music.Query{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		result, resolveErr := app.Music.ResolveMusicCover(q)
+		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		result, resolveErr := rc.App.Music.ResolveMusicCover(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := assetImageMessage(result.JacketPath, app, BotModulePJSK)
+		image, imageErr := assetImageMessage(result.JacketPath, rc.App, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
 		text := fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title)
 		return append(image, onebot11.Text(text)), nil
 	case "music-bpm":
-		q := music.Query{Query: r.Query, Region: r.Region}
-		mergeParams(r.Params, &q)
-		result, resolveErr := app.Music.ResolveMusicBPM(q)
+		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		result, resolveErr := rc.App.Music.ResolveMusicBPM(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := assetImageMessage(result.JacketPath, app, BotModulePJSK)
+		image, imageErr := assetImageMessage(result.JacketPath, rc.App, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
@@ -526,12 +518,12 @@ func executeMusic(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 		}
 		return append(image, onebot11.Text(strings.Join(textLines, "\n"))), nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported music mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported music mode %q", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, BotModulePJSK)
+	return rc.ImageMessage(data)
 }
 
 func executeAlias(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
@@ -590,108 +582,9 @@ func formatMusicBPM(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
-func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
-	if r == nil || app == nil || app.Profiles == nil || app.Bindings == nil {
-		return nil, nil
-	}
-	if strings.TrimSpace(r.RequesterPlatform) == "" || strings.TrimSpace(r.RequesterUserID) == "" {
-		return nil, nil
-	}
 
-	region := strings.TrimSpace(r.Region)
-	if region == "" {
-		region = string(renderregion.JP)
-	}
 
-	queryParams := userQueryParams{
-		Mode:           "self",
-		Platform:       strings.TrimSpace(r.RequesterPlatform),
-		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
-	}
-	target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
-	if err != nil {
-		return nil, nil
-	}
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
-	if err != nil {
-		return nil, nil
-	}
-
-	var framesJSON []byte
-	if hasUsableSuiteData(target.Binding) {
-		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
-			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-				region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userPlayerFrames")
-		}
-	}
-
-	q := profile.Query{
-		Region:     region,
-		Visible:    target.Visible,
-		BgSettings: target.BgSettings,
-	}
-	detail, err := app.Profiles.BuildDetailedProfileCardFromAPI(q, resp, framesJSON)
-	if err != nil {
-		return nil, nil
-	}
-	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
-	if err != nil {
-		return detail, nil
-	}
-	return detail, card
-}
-
-// buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
-// game target. Used by mysekai commands where the target is already resolved
-// through userQueryParams (supporting u[i] selectors and region binding).
-func buildPublicProfileCardForTarget(target resolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
-	if app == nil || app.Profiles == nil {
-		return nil
-	}
-
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
-	if err != nil {
-		return nil
-	}
-
-	var framesJSON []byte
-	if hasUsableSuiteData(target.Binding) {
-		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
-			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-				region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
-		}
-	}
-
-	q := profile.Query{
-		Region:     region,
-		Visible:    target.Visible,
-		BgSettings: target.BgSettings,
-	}
-	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
-	if err != nil {
-		return nil
-	}
-	return card
-}
-
-func resolveCardBoxDetailedProfile(r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
-	if r == nil || app == nil {
-		return nil
-	}
-	region := renderregion.Normalize(r.Region)
-	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
-		if detail := snapshot.DetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
-			return detail
-		}
-	}
-	if app.Profiles != nil {
-		if detail := app.Profiles.SnapshotDetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
-			return detail
-		}
-	}
-	return nil
-}
 
 func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicProfileCard *drawing.ProfileCardRequest) ([]byte, error) {
 	q := music.RewardsBasicQuery{Region: r.Region}
@@ -769,10 +662,10 @@ func executeGacha(r *parser.ResolvedCommand, app *renderapp.App) (message onebot
 	return imageMessage(data, app, BotModulePJSK)
 }
 
-func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	recommendType := ""
-	switch r.Mode {
+	switch rc.Cmd.Mode {
 	case "deck-event":
 		recommendType = "event"
 	case "deck-challenge":
@@ -789,9 +682,9 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 			Deck  json.RawMessage `json:"deck"`
 			Query userQueryParams `json:"query"`
 		}
-		mergeParams(r.Params, &combined)
+		mergeParams(rc.Cmd.Params, &combined)
 
-		regionStr := strings.TrimSpace(r.Region)
+		regionStr := strings.TrimSpace(rc.Cmd.Region)
 		if regionStr == "" {
 			regionStr = "jp"
 		}
@@ -800,10 +693,10 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		p := combined.Query
 		if p.Mode == "" {
 			p.Mode = "self"
-			p.Platform = strings.TrimSpace(r.RequesterPlatform)
-			p.PlatformUserID = strings.TrimSpace(r.RequesterUserID)
+			p.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
+			p.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
 		}
-		target, targetErr := resolveGameTarget(context.Background(), p, regionStr, r.RegionExplicit, app)
+		target, targetErr := resolveGameTarget(context.Background(), p, regionStr, rc.Cmd.RegionExplicit, rc.App)
 		if targetErr != nil {
 			return nil, targetErr
 		}
@@ -811,17 +704,17 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		platform, platformUserID := platformCredentials(p)
 		uid, _ := strconv.ParseInt(target.PJSKUserID, 10, 64)
 
-		q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
+		q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 		mergeParams(combined.Deck, &q)
-		if err := resolveDeckCharacterSelections(&q, app); err != nil {
+		if err := resolveDeckCharacterSelections(&q, rc.App); err != nil {
 			return nil, err
 		}
-		if err := resolveDeckMusicSelection(&q, app); err != nil {
+		if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 			return nil, err
 		}
 
 		// Build detailed profile for deck rendering from the resolved target.
-		if app.Profiles != nil {
+		if rc.App.Profiles != nil {
 			if resp, apiErr := sekaiutils.GetSekaiAPIClient().GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
 				var framesJSON []byte
 				if hasUsableSuiteData(target.Binding) {
@@ -829,19 +722,19 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 						regionStr, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
 				}
 				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
-				if detail, buildErr := app.Profiles.BuildDetailedProfileCardFromAPI(pq, resp, framesJSON); buildErr == nil {
+				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPI(pq, resp, framesJSON); buildErr == nil {
 					q.Profile = detail
 				}
 			}
 		}
 
-		deckCtrl := app.Decks
+		deckCtrl := rc.App.Decks
 		tc := sekaiutils.GetToolboxClient()
 		if target.Binding != nil && hasUsableSuiteData(target.Binding) {
 			suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
 			if suiteErr == nil && len(suiteJSON) > 0 {
 				region := renderregion.Normalize(regionStr)
-				if snapshot, snapErr := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, nil, nil); snapErr == nil {
+				if snapshot, snapErr := userdata.NewFromBytes(rc.App.Sekai, rc.App.Assets, region, suiteJSON, nil, nil); snapErr == nil {
 					deckCtrl = deckCtrl.WithSnapshot(snapshot)
 				}
 			}
@@ -851,33 +744,33 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 		if err != nil {
 			return nil, err
 		}
-		return imageMessage(data, app, BotModulePJSK)
+		return rc.ImageMessage(data)
 	case "deck-score-up":
 		var msg string
-		err := json.Unmarshal(r.Params, &msg)
+		err := json.Unmarshal(rc.Cmd.Params, &msg)
 		if err != nil {
 			return nil, err
 		}
 		return onebot11.Message{onebot11.Text(msg)}, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported deck mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported deck mode %q", rc.Cmd.Mode)
 	}
-	q := deck.AutoQuery{Region: r.Region, RecommendType: recommendType}
-	mergeParams(r.Params, &q)
-	if err := resolveDeckCharacterSelections(&q, app); err != nil {
+	q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
+	mergeParams(rc.Cmd.Params, &q)
+	if err := resolveDeckCharacterSelections(&q, rc.App); err != nil {
 		return nil, err
 	}
-	if err := resolveDeckMusicSelection(&q, app); err != nil {
+	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 		return nil, err
 	}
-	if detail, _ := buildPublicMusicProfiles(r, app); detail != nil {
+	if detail := rc.GetDetailedProfile(); detail != nil {
 		q.Profile = detail
 	}
 
 	// Try to inject live Toolbox snapshot so the deck controller can operate
 	// on real user data even when no local snapshot file is configured.
-	deckCtrl := app.Decks
-	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+	deckCtrl := rc.App.Decks
+	if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
 		deckCtrl = deckCtrl.WithSnapshot(snapshot)
 	}
 
@@ -885,7 +778,7 @@ func executeDeck(r *parser.ResolvedCommand, app *renderapp.App) (message onebot1
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, BotModulePJSK)
+	return rc.ImageMessage(data)
 }
 
 func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
@@ -1028,34 +921,31 @@ func resolveDeckCharacterUnit(charID int) string {
 	}
 }
 
-func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message onebot11.Message, err error) {
+func executeEducation(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
-	region := renderregion.Value(r.Region)
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
-	publicDetailedProfile, _ := buildPublicMusicProfiles(r, app)
+	region := renderregion.Value(rc.Cmd.Region)
+	regionStr := rc.RegionStr
+	publicDetailedProfile := rc.GetDetailedProfile()
 
 	// Resolve user binding and fetch suite data from Toolbox.
 	// Try global default binding first when no explicit region prefix.
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	platform := rc.Platform
+	platformUserID := rc.PlatformUserID
 	var suiteUID int64
 	var suitePlatform, suitePlatformUserID string
 	var suiteBinding *accountdata.ResolvedBinding
 
-	if platform != "" && platformUserID != "" && app.Bindings != nil {
+	if platform != "" && platformUserID != "" && rc.App.Bindings != nil {
 		ctx := context.Background()
 		var binding *accountdata.ResolvedBinding
 		var resolveErr error
-		if !r.RegionExplicit {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+		if !rc.Cmd.RegionExplicit {
+			_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
 			if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
-				_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+				_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
 			}
 		} else {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+			_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
 		}
 		if resolveErr == nil && binding != nil && hasUsableSuiteData(binding) {
 			if uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64); convErr == nil {
@@ -1067,69 +957,69 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 		}
 	}
 
-	switch r.Mode {
+	switch rc.Cmd.Mode {
 	case "education-challenge":
 		q := education.ChallengeLiveQuery{Region: region}
-		mergeParams(r.Params, &q)
+		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = publicDetailedProfile
 		if suiteUID > 0 {
 			suiteJSON, suiteErr := sekaiutils.GetToolboxClient().GetSuiteData(
 				regionStr, suiteUID, suitePlatform, suitePlatformUserID)
 			if suiteErr == nil && len(suiteJSON) > 0 {
-				snapshot, buildErr := buildEducationSnapshot(app, region, suiteJSON)
+				snapshot, buildErr := buildEducationSnapshot(rc.App, region, suiteJSON)
 				if buildErr == nil {
 					q.Snapshot = snapshot
 				}
 			}
 		}
-		data, err = app.Edu.RenderChallengeLiveDetails(q)
+		data, err = rc.App.Edu.RenderChallengeLiveDetails(q)
 
 	case "education-bonds":
 		req := drawing.BondsRequest{}
-		mergeParams(r.Params, &req)
+		mergeParams(rc.Cmd.Params, &req)
 		if len(req.Bonds) == 0 && suiteUID > 0 {
 			bondsReq, buildErr := buildBondsRequestFromSuite(
-				app, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
 			if buildErr == nil {
 				req = *bondsReq
 			}
 		}
-		data, err = app.Edu.RenderBonds(req)
+		data, err = rc.App.Edu.RenderBonds(req)
 
 	case "education-leader":
 		req := drawing.LeaderCountRequest{}
-		mergeParams(r.Params, &req)
+		mergeParams(rc.Cmd.Params, &req)
 		if len(req.LeaderCounts) == 0 && suiteUID > 0 {
 			leaderReq, buildErr := buildLeaderCountRequestFromSuite(
-				app, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
 			if buildErr == nil {
 				req = *leaderReq
 			}
 		}
-		data, err = app.Edu.RenderLeaderCount(req)
+		data, err = rc.App.Edu.RenderLeaderCount(req)
 
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}
-		mergeParams(r.Params, &req)
+		mergeParams(rc.Cmd.Params, &req)
 		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 && suiteUID > 0 {
 			var powerMysekaiJSON []byte
 			if hasUsableMySekaiData(suiteBinding) {
 				powerMysekaiJSON, _ = sekaiutils.GetToolboxClient().GetMySekaiData(regionStr, suiteUID, suitePlatform, suitePlatformUserID)
 			}
 			builtReq, buildErr := buildPowerBonusRequestFromSuite(
-				app, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, powerMysekaiJSON, publicDetailedProfile)
+				rc.App, region, regionStr, suiteUID, suitePlatform, suitePlatformUserID, powerMysekaiJSON, publicDetailedProfile)
 			if buildErr != nil {
 				return nil, buildErr
 			}
 			req = *builtReq
 		}
-		data, err = app.Edu.RenderPowerBonusDetail(req)
+		data, err = rc.App.Edu.RenderPowerBonusDetail(req)
 
 	case "education-area":
 		query := education.AreaItemQuery{Region: region}
-		mergeParams(r.Params, &query)
+		mergeParams(rc.Cmd.Params, &query)
 		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-			query.Cid, err = resolveEducationAreaCharacterID(context.Background(), app, region, query.CharacterQuery)
+			query.Cid, err = resolveEducationAreaCharacterID(context.Background(), rc.App, region, query.CharacterQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -1137,22 +1027,22 @@ func executeEducation(r *parser.ResolvedCommand, app *renderapp.App) (message on
 		query.Profile = publicDetailedProfile
 		if suiteUID > 0 {
 			builtReq, buildErr := buildAreaItemUpgradeMaterialsRequestFromSuite(
-				app, query, regionStr, suiteUID, suitePlatform, suitePlatformUserID)
+				rc.App, query, regionStr, suiteUID, suitePlatform, suitePlatformUserID)
 			if buildErr != nil {
 				return nil, buildErr
 			}
-			data, err = app.Edu.RenderAreaItemUpgradeMaterials(*builtReq)
+			data, err = rc.App.Edu.RenderAreaItemUpgradeMaterials(*builtReq)
 			break
 		}
-		data, err = app.Edu.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
+		data, err = rc.App.Edu.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
 
 	default:
-		return nil, fmt.Errorf("bridge: unsupported education mode %q", r.Mode)
+		return nil, fmt.Errorf("bridge: unsupported education mode %q", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, BotModulePJSK)
+	return rc.ImageMessage(data)
 }
 
 // buildEducationSnapshot creates a userdata.Service from live Toolbox suite data.
@@ -1211,104 +1101,7 @@ func buildEducationSnapshotFromSuite(
 	return snapshot, nil
 }
 
-// resolveLiveSnapshot resolves the requester's Toolbox binding and fetches a
-// live snapshot. If needMySekai is true it also fetches mysekai data and merges
-// it into the snapshot. Returns nil if the user has no usable binding or if any
-// API call fails (callers fall back to the controller-level static snapshot).
-func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return nil
-	}
 
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
-
-	// Try global default binding first when no explicit region prefix,
-	// then fall back to region-specific binding.
-	ctx := context.Background()
-	var binding *accountdata.ResolvedBinding
-	var resolveErr error
-	if !r.RegionExplicit {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-	} else {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-	}
-	if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
-		return nil
-	}
-	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
-	if convErr != nil {
-		return nil
-	}
-
-	tc := sekaiutils.GetToolboxClient()
-	suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
-	if suiteErr != nil || len(suiteJSON) == 0 {
-		return nil
-	}
-
-	var mysekaiJSON []byte
-	if needMySekai && hasUsableMySekaiData(binding) {
-		mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
-	}
-
-	region := renderregion.Normalize(regionStr)
-	snapshot, err := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil)
-	if err != nil {
-		return nil
-	}
-	return snapshot
-}
-
-// resolveMySekaiOnly fetches only the mysekai data from Toolbox, without
-// requiring suite data. This is the lightweight fallback when the full
-// merged snapshot is unavailable (e.g. the user has mysekai data uploaded
-// but GetSuiteData fails). Returns nil on any error.
-func resolveMySekaiOnly(r *parser.ResolvedCommand, app *renderapp.App) []byte {
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return nil
-	}
-
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
-
-	ctx := context.Background()
-	var binding *accountdata.ResolvedBinding
-	var resolveErr error
-	if !r.RegionExplicit {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-	} else {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-	}
-	if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
-		return nil
-	}
-	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
-	if convErr != nil {
-		return nil
-	}
-
-	tc := sekaiutils.GetToolboxClient()
-	data, err := tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
-	if err != nil || len(data) == 0 {
-		return nil
-	}
-	return data
-}
 
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
 func buildBondsRequestFromSuite(
@@ -2280,117 +2073,7 @@ func executeVLive(r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Messa
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
-// userQueryParams mirrors sekai.UserQueryParams for bridge-side decoding.
-type userQueryParams struct {
-	Mode           string `json:"mode"`
-	Platform       string `json:"platform"`
-	PlatformUserID string `json:"platform_user_id"`
-	AtUserID       string `json:"at_user_id"`
-	PJSKUserID     string `json:"pjsk_user_id"`
-	Selector       string `json:"selector,omitempty"`
-}
 
-type resolvedGameTarget struct {
-	HarukiUserID int
-	PJSKUserID   string
-	Visible      bool
-	BgSettings   *drawing.ProfileBgSettings
-	Binding      *accountdata.ResolvedBinding
-}
-
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
-	if app == nil || app.Bindings == nil {
-		return resolvedGameTarget{}, fmt.Errorf("绑定服务未就绪")
-	}
-	switch p.Mode {
-	case "self":
-		var hid int
-		var binding *accountdata.ResolvedBinding
-		var err error
-		if p.Selector != "" {
-			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, p.Selector)
-		} else if !regionExplicit {
-			// No explicit region prefix 閳?use global default binding directly,
-			// so the user's global default account is picked instead of a
-			// potentially different server-specific default.
-			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
-			if err != nil {
-				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
-			}
-		} else {
-			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
-		}
-		if err != nil {
-			return resolvedGameTarget{}, fmt.Errorf("解析绑定账号失败：%w", err)
-		}
-		return resolvedGameTarget{
-			HarukiUserID: hid,
-			PJSKUserID:   binding.PJSKUserID,
-			Visible:      binding.Visible,
-			BgSettings:   binding.Bg,
-			Binding:      binding,
-		}, nil
-	case "at_user":
-		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
-		if err != nil {
-			return resolvedGameTarget{}, fmt.Errorf("未找到该用户的绑定账号：%w", err)
-		}
-		if !binding.Visible {
-			return resolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
-		}
-		return resolvedGameTarget{
-			PJSKUserID: binding.PJSKUserID,
-			Visible:    binding.Visible,
-			BgSettings: binding.Bg,
-			Binding:    binding,
-		}, nil
-	case "uid":
-		return resolvedGameTarget{
-			PJSKUserID: p.PJSKUserID,
-			Visible:    true,
-		}, nil
-	default:
-		return resolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
-	}
-}
-
-// resolveGameUID resolves a game UID from userQueryParams using the identity and
-// binding layers in the renderapp. For "at_user" mode the caller's visibility
-// is checked; if the target has hidden their profile an error is returned.
-//
-// Returns (harukiUserID, pjskUserID, visible, error).
-// harukiUserID is 0 and visible is true when the mode is "uid".
-func resolveGameUID(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (int, string, bool, error) {
-	target, err := resolveGameTarget(ctx, p, region, regionExplicit, app)
-	if err != nil {
-		return 0, "", false, err
-	}
-	return target.HarukiUserID, target.PJSKUserID, target.Visible, nil
-}
-
-func hasUsableSuiteData(binding *accountdata.ResolvedBinding) bool {
-	return binding != nil && binding.SuiteVisible
-}
-
-// MySekai availability is governed by a dedicated binding flag rather than
-// reusing SuiteVisible. This matches the split semantics we want in Cloud and
-// keeps suite/mysekai private-data visibility independently configurable.
-func hasUsableMySekaiData(binding *accountdata.ResolvedBinding) bool {
-	return binding != nil && binding.MySekaiVisible
-}
-
-// platformCredentials returns the (platform, platformUserID) pair for toolbox
-// key queries. Returns empty strings for "uid" mode (no credentials available).
-func platformCredentials(p userQueryParams) (string, string) {
-	switch p.Mode {
-	case "self":
-		return p.Platform, p.PlatformUserID
-	case "at_user":
-		return p.Platform, p.AtUserID
-	default:
-		return "", ""
-	}
-}
 
 func executeArrest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error) {
 	var p userQueryParams
@@ -2942,27 +2625,4 @@ func mergeParams(params json.RawMessage, target interface{}) {
 	_ = json.Unmarshal(params, target)
 }
 
-// resolveRegionFromDefaultBinding resolves the region for a command where the
-// user did not provide an explicit region prefix or -r flag. It looks up the
-// user's global default binding (server = "default") and returns the server of
-// the bound account (e.g. "jp", "tw", "kr", "en"). Falls back to "jp" if the
-// user has no global default binding or if any lookup fails.
-func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) string {
-	if r.RegionExplicit {
-		return r.Region
-	}
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return r.Region
-	}
-	_, binding, err := app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-	if err != nil || binding == nil || strings.TrimSpace(binding.Server) == "" {
-		return r.Region
-	}
-	normalized := renderregion.Normalize(binding.Server)
-	if normalized.IsZero() {
-		return r.Region
-	}
-	return normalized.String()
-}
+

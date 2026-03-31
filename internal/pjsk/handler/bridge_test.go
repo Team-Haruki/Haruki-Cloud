@@ -441,12 +441,12 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
-	message, err := executeMusic(&parser.ResolvedCommand{
+	message, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMusic,
 		Mode:   "music-cover",
 		Query:  "Song A",
 		Region: "jp",
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeMusic cover: %v", err)
 	}
@@ -458,12 +458,12 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
 	}
-	message, err = executeMusic(&parser.ResolvedCommand{
+	message, err = executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMusic,
 		Mode:   "music-note-count",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeMusic note-count: %v", err)
 	}
@@ -520,13 +520,13 @@ func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeMusic(&parser.ResolvedCommand{
+	message, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMusic,
 		Mode:   "music-list",
 		Query:  "blue song",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeMusic list: %v", err)
 	}
@@ -1535,12 +1535,12 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, nil, assets.NewAssetHelper(root, nil)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
-	message, err := executeCard(&parser.ResolvedCommand{
+	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleCard,
 		Mode:   "card-image",
 		Query:  "1001",
 		Region: "jp",
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeCard image: %v", err)
 	}
@@ -1581,13 +1581,13 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	message, err := executeCard(&parser.ResolvedCommand{
+	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleCard,
 		Mode:   "card-box",
 		Query:  "1001",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err != nil {
 		t.Fatalf("executeCard box: %v", err)
 	}
@@ -1614,13 +1614,13 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	_, err = executeCard(&parser.ResolvedCommand{
+	_, err = executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleCard,
 		Mode:   "card-box",
 		Query:  "1001",
 		Region: "jp",
 		Params: params,
-	}, app)
+	}, app))
 	if err == nil {
 		t.Fatal("expected missing owned-card data to fail")
 	}

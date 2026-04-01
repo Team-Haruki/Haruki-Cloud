@@ -100,7 +100,7 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			// Fallback to requester's own UID only when command does not explicitly target user/rank.
 			if trackerReq.UserID == nil && len(trackerReq.Ranks) == 0 && !hasExplicitTarget {
-				if uid := resolveRequesterGameUID(rc.Cmd, rc.App); uid > 0 {
+				if uid := resolveRequesterGameUID(rc.Ctx, rc.Cmd, rc.App); uid > 0 {
 					trackerReq.UserID = &uid
 				}
 			}
@@ -194,7 +194,7 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 }
 
 // resolveRequesterGameUID resolves the game user ID from the requester's binding.
-func resolveRequesterGameUID(r *parser.ResolvedCommand, app *renderapp.App) int64 {
+func resolveRequesterGameUID(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) int64 {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
 	if platform == "" || platformUserID == "" || app.Bindings == nil {
@@ -204,7 +204,6 @@ func resolveRequesterGameUID(r *parser.ResolvedCommand, app *renderapp.App) int6
 	if regionStr == "" {
 		regionStr = "jp"
 	}
-	ctx := context.Background()
 	var binding *accountdata.ResolvedBinding
 	var err error
 	if !r.RegionExplicit {

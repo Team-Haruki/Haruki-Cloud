@@ -991,6 +991,7 @@ func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T
 	})
 
 	req, err := buildBondsRequestFromSuite(
+		context.Background(),
 		&renderapp.App{
 			Sekai:  sekaiClient,
 			Assets: assets.NewAssetHelper(t.TempDir(), nil),
@@ -1141,7 +1142,7 @@ func TestResolveDeckCharacterSelectionsUsesMasterdataQueries(t *testing.T) {
 		FixedCharacterQueries:       []string{"巡音流歌"},
 	}
 
-	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
 		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
 	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
@@ -1181,7 +1182,7 @@ func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing
 		ChallengeLiveCharacterQuery: "neo",
 	}
 
-	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
 		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
 	if query.ChallengeLiveCharacterID != nil {
@@ -1216,7 +1217,7 @@ func TestResolveDeckCharacterSelectionsFallsBackWorldBloomQueryToMusic(t *testin
 		WorldBloomCharacterQuery: "neo",
 	}
 
-	if err := resolveDeckCharacterSelections(&query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
 		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
 	if query.WorldBloomCharacterID != nil {

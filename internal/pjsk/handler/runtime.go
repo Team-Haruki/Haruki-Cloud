@@ -80,14 +80,14 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 // ResolveSnapshot fetches and builds a live snapshot from Toolbox.
 // NOT cached (needMySekai varies per call site), so no sync.Once.
 func (rc *RequestContext) ResolveSnapshot(needMySekai bool) *userdata.Service {
-	return resolveLiveSnapshot(rc.Cmd, rc.App, needMySekai)
+	return resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, needMySekai)
 }
 
 // GetDetailedProfile lazily resolves the user's detailed profile, preferring
 // live snapshot data over Sekai API data.
 func (rc *RequestContext) GetDetailedProfile() *drawing.DetailedProfileCardRequest {
 	rc.profileOnce.Do(func() {
-		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Cmd, rc.App)
+		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
 		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
 			if detail := snapshot.DetailedProfile(rc.Region); detail != nil {
 				rc.detailedProfile = detail
@@ -100,7 +100,7 @@ func (rc *RequestContext) GetDetailedProfile() *drawing.DetailedProfileCardReque
 // GetProfileCard returns the compact profile card (resolved along with detailed profile).
 func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
 	rc.profileOnce.Do(func() {
-		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Cmd, rc.App)
+		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
 	})
 	return rc.profileCard
 }

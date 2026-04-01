@@ -38,7 +38,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	var suiteBinding *accountdata.ResolvedBinding
 
 	if platform != "" && platformUserID != "" && rc.App.Bindings != nil {
-		ctx := context.Background()
+		ctx := rc.Ctx
 		var binding *accountdata.ResolvedBinding
 		var resolveErr error
 		if !rc.Cmd.RegionExplicit {
@@ -81,7 +81,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.Bonds) == 0 && suiteUID > 0 {
 			bondsReq, buildErr := buildBondsRequestFromSuite(
-				rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				rc.Ctx, rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
 			if buildErr == nil {
 				req = *bondsReq
 			}
@@ -121,7 +121,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		query := education.AreaItemQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
 		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-			query.Cid, err = resolveEducationAreaCharacterID(context.Background(), rc.App, region, query.CharacterQuery)
+			query.Cid, err = resolveEducationAreaCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +205,7 @@ func buildEducationSnapshotFromSuite(
 
 // buildBondsRequestFromSuite fetches bonds data from the Toolbox and builds a BondsRequest.
 func buildBondsRequestFromSuite(
-	app *renderapp.App, region string, uid int64, platform, platformUserID string,
+	ctx context.Context, app *renderapp.App, region string, uid int64, platform, platformUserID string,
 	profile *drawing.DetailedProfileCardRequest,
 ) (*drawing.BondsRequest, error) {
 	tc := sekaiutils.GetToolboxClient()
@@ -242,7 +242,6 @@ func buildBondsRequestFromSuite(
 	}
 
 	// Look up bonds master data to map group IDs to character pairs.
-	ctx := context.Background()
 	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
 	if normalizedRegion == "" {
 		normalizedRegion = "jp"

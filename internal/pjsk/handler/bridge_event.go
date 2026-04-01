@@ -34,7 +34,7 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = rc.App.Events.RenderEventList(q)
 	case "event-record":
-		req, buildErr := buildEventRecordFromSnapshot(rc.Cmd, rc.App, region)
+		req, buildErr := buildEventRecordFromSnapshot(rc.Ctx, rc.Cmd, rc.App, region)
 		if buildErr != nil {
 			return nil, buildErr
 		}
@@ -51,8 +51,8 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 // buildEventRecordFromSnapshot constructs an EventRecordRequest from live
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
-func buildEventRecordFromSnapshot(r *parser.ResolvedCommand, app *renderapp.App, region renderregion.Value) (*drawing.EventRecordRequest, error) {
-	snapshot := resolveLiveSnapshot(r, app, false)
+func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, region renderregion.Value) (*drawing.EventRecordRequest, error) {
+	snapshot := resolveLiveSnapshot(ctx, r, app, false)
 	if snapshot == nil {
 		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
 	}
@@ -69,7 +69,7 @@ func buildEventRecordFromSnapshot(r *parser.ResolvedCommand, app *renderapp.App,
 
 	eventEntities, err := app.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil || len(eventEntities) == 0 {
 		return nil, fmt.Errorf("event master data not available")
 	}

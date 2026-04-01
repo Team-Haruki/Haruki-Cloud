@@ -52,7 +52,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			p.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
 			p.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
 		}
-		target, targetErr := resolveGameTarget(context.Background(), p, regionStr, rc.Cmd.RegionExplicit, rc.App)
+		target, targetErr := resolveGameTarget(rc.Ctx, p, regionStr, rc.Cmd.RegionExplicit, rc.App)
 		if targetErr != nil {
 			return nil, targetErr
 		}
@@ -62,7 +62,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 
 		q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 		mergeParams(combined.Deck, &q)
-		if err := resolveDeckCharacterSelections(&q, rc.App); err != nil {
+		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 			return nil, err
 		}
 		if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
@@ -113,7 +113,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 	q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 	mergeParams(rc.Cmd.Params, &q)
-	if err := resolveDeckCharacterSelections(&q, rc.App); err != nil {
+	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 		return nil, err
 	}
 	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
@@ -177,7 +177,7 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	return nil
 }
 
-func resolveDeckCharacterSelections(q *deck.AutoQuery, app *renderapp.App) error {
+func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app *renderapp.App) error {
 	if q == nil {
 		return nil
 	}
@@ -185,7 +185,7 @@ func resolveDeckCharacterSelections(q *deck.AutoQuery, app *renderapp.App) error
 	region := renderregion.WithDefault(renderregion.Normalize(q.Region))
 
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
-		charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, q.WorldBloomCharacterQuery, "deck")
+		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
 		if err != nil {
 			if q.WorldBloomEventTurn == nil && strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
 				q.MusicQuery = strings.TrimSpace(q.WorldBloomCharacterQuery)
@@ -203,7 +203,7 @@ func resolveDeckCharacterSelections(q *deck.AutoQuery, app *renderapp.App) error
 	}
 
 	if q.ChallengeLiveCharacterID == nil && strings.TrimSpace(q.ChallengeLiveCharacterQuery) != "" {
-		charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, q.ChallengeLiveCharacterQuery, "deck")
+		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ChallengeLiveCharacterQuery, "deck")
 		if err != nil {
 			if strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
 				q.MusicQuery = strings.TrimSpace(q.ChallengeLiveCharacterQuery)
@@ -219,7 +219,7 @@ func resolveDeckCharacterSelections(q *deck.AutoQuery, app *renderapp.App) error
 
 	if len(q.FixedCharacterQueries) > 0 {
 		for _, raw := range q.FixedCharacterQueries {
-			charID, err := resolveGameCharacterIDByQuery(context.Background(), app, region, raw, "deck")
+			charID, err := resolveGameCharacterIDByQuery(ctx, app, region, raw, "deck")
 			if err != nil {
 				return err
 			}

@@ -47,7 +47,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		q.Profile = rc.GetProfileCard()
 		data, err = rc.App.Music.RenderMusicProgress(q)
 	case "music-rewards":
-		data, err = renderMusicRewards(rc.Cmd, rc.App, rc.GetProfileCard())
+		data, err = renderMusicRewards(rc.Ctx, rc.Cmd, rc.App, rc.GetProfileCard())
 	case "music-note-count":
 		q := music.NoteCountQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -118,7 +118,7 @@ func formatMusicBPM(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
-func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicProfileCard *drawing.ProfileCardRequest) ([]byte, error) {
+func renderMusicRewards(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, publicProfileCard *drawing.ProfileCardRequest) ([]byte, error) {
 	q := music.RewardsBasicQuery{Region: r.Region}
 	mergeParams(r.Params, &q)
 	q.Profile = publicProfileCard
@@ -135,7 +135,7 @@ func renderMusicRewards(r *parser.ResolvedCommand, app *renderapp.App, publicPro
 			Platform:       strings.TrimSpace(r.RequesterPlatform),
 			PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 		}
-		target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
+		target, err := resolveGameTarget(ctx, queryParams, region, r.RegionExplicit, app)
 		if err == nil && target.Binding != nil {
 			if !hasUsableSuiteData(target.Binding) {
 				reason = "当前账号没有可用的 Suite 抓包数据"

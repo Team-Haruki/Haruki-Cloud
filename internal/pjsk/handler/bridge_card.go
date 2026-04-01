@@ -28,7 +28,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			Query:            rc.Cmd.Query,
 			Region:           rc.Cmd.Region,
 			UseAfterTraining: &useAfterTraining,
-			DetailedProfile:  resolveCardBoxDetailedProfile(rc.Cmd, rc.App),
+			DetailedProfile:  resolveCardBoxDetailedProfile(rc.Ctx, rc.Cmd, rc.App),
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		queries := []card.Query{q}

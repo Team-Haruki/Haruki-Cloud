@@ -108,7 +108,7 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, regio
 // live snapshot. If needMySekai is true it also fetches mysekai data and merges
 // it into the snapshot. Returns nil if the user has no usable binding or if any
 // API call fails (callers fall back to the controller-level static snapshot).
-func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
+func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
 	if platform == "" || platformUserID == "" || app.Bindings == nil {
@@ -122,7 +122,6 @@ func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySe
 
 	// Try global default binding first when no explicit region prefix,
 	// then fall back to region-specific binding.
-	ctx := context.Background()
 	var binding *accountdata.ResolvedBinding
 	var resolveErr error
 	if !r.RegionExplicit {
@@ -164,7 +163,7 @@ func resolveLiveSnapshot(r *parser.ResolvedCommand, app *renderapp.App, needMySe
 // requiring suite data. This is the lightweight fallback when the full
 // merged snapshot is unavailable (e.g. the user has mysekai data uploaded
 // but GetSuiteData fails). Returns nil on any error.
-func resolveMySekaiOnly(r *parser.ResolvedCommand, app *renderapp.App) []byte {
+func resolveMySekaiOnly(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) []byte {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
 	if platform == "" || platformUserID == "" || app.Bindings == nil {
@@ -176,7 +175,6 @@ func resolveMySekaiOnly(r *parser.ResolvedCommand, app *renderapp.App) []byte {
 		regionStr = "jp"
 	}
 
-	ctx := context.Background()
 	var binding *accountdata.ResolvedBinding
 	var resolveErr error
 	if !r.RegionExplicit {
@@ -228,12 +226,12 @@ func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedComm
 	return normalized.String()
 }
 
-func resolveCardBoxDetailedProfile(r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
+func resolveCardBoxDetailedProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
 	if r == nil || app == nil {
 		return nil
 	}
 	region := renderregion.Normalize(r.Region)
-	if snapshot := resolveLiveSnapshot(r, app, false); snapshot != nil {
+	if snapshot := resolveLiveSnapshot(ctx, r, app, false); snapshot != nil {
 		if detail := snapshot.DetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
 			return detail
 		}
@@ -246,7 +244,7 @@ func resolveCardBoxDetailedProfile(r *parser.ResolvedCommand, app *renderapp.App
 	return nil
 }
 
-func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
 	if r == nil || app == nil || app.Profiles == nil || app.Bindings == nil {
 		return nil, nil
 	}
@@ -264,7 +262,7 @@ func buildPublicMusicProfiles(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		Platform:       strings.TrimSpace(r.RequesterPlatform),
 		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
 	}
-	target, err := resolveGameTarget(context.Background(), queryParams, region, r.RegionExplicit, app)
+	target, err := resolveGameTarget(ctx, queryParams, region, r.RegionExplicit, app)
 	if err != nil {
 		return nil, nil
 	}

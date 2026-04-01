@@ -111,25 +111,13 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, regio
 func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return nil
-	}
-
 	regionStr := regionWithDefault(r.Region)
 
-	// Try global default binding first when no explicit region prefix,
-	// then fall back to region-specific binding.
-	var binding *accountdata.ResolvedBinding
-	var resolveErr error
-	if !r.RegionExplicit {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-	} else {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-	}
-	if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
+	_, binding, _ := resolveBindingWithFallback(
+		ctx, app.Bindings, platform, platformUserID, regionStr, r.RegionExplicit,
+		bindingResolutionOptions{RequireSuite: true},
+	)
+	if binding == nil {
 		return nil
 	}
 	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
@@ -163,23 +151,13 @@ func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *re
 func resolveMySekaiOnly(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) []byte {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return nil
-	}
-
 	regionStr := regionWithDefault(r.Region)
 
-	var binding *accountdata.ResolvedBinding
-	var resolveErr error
-	if !r.RegionExplicit {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
-			_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-	} else {
-		_, binding, resolveErr = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-	}
-	if resolveErr != nil || binding == nil || !hasUsableMySekaiData(binding) {
+	_, binding, _ := resolveBindingWithFallback(
+		ctx, app.Bindings, platform, platformUserID, regionStr, r.RegionExplicit,
+		bindingResolutionOptions{RequireMySekai: true},
+	)
+	if binding == nil {
 		return nil
 	}
 	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
@@ -329,6 +307,66 @@ func hasUsableSuiteData(binding *accountdata.ResolvedBinding) bool {
 // keeps suite/mysekai private-data visibility independently configurable.
 func hasUsableMySekaiData(binding *accountdata.ResolvedBinding) bool {
 	return binding != nil && binding.MySekaiVisible
+}
+
+// bindingResolutionOptions specifies how to resolve a user binding using the
+// global-default → regional fallback pattern. Each call site can customize the
+// data requirement (suite vs mysekai) by setting the appropriate validator.
+type bindingResolutionOptions struct {
+	// RequireSuite, if true, considers a binding valid only when hasUsableSuiteData returns true.
+	RequireSuite bool
+	// RequireMySekai, if true, considers a binding valid only when hasUsableMySekaiData returns true.
+	RequireMySekai bool
+}
+
+// resolveBindingWithFallback resolves a user binding using the standard pattern:
+// 1. If regionExplicit is false, try global default binding first
+// 2. Fall back to region-specific binding
+// 3. Validate the binding against the options (suite/mysekai requirements)
+//
+// Returns (harukiUserID, binding, nil) on success. The binding is non-nil on success.
+// Returns (0, nil, nil) when the binding service is unavailable or no valid binding found.
+func resolveBindingWithFallback(
+	ctx context.Context,
+	bindings *accountdata.BindingService,
+	platform, platformUserID, regionStr string,
+	regionExplicit bool,
+	opts bindingResolutionOptions,
+) (int, *accountdata.ResolvedBinding, error) {
+	if bindings == nil || platform == "" || platformUserID == "" {
+		return 0, nil, nil
+	}
+
+	var hid int
+	var binding *accountdata.ResolvedBinding
+	var err error
+
+	isValid := func(b *accountdata.ResolvedBinding) bool {
+		if b == nil {
+			return false
+		}
+		if opts.RequireSuite && !hasUsableSuiteData(b) {
+			return false
+		}
+		if opts.RequireMySekai && !hasUsableMySekaiData(b) {
+			return false
+		}
+		return true
+	}
+
+	if !regionExplicit {
+		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+		if err != nil || !isValid(binding) {
+			hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		}
+	} else {
+		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+	}
+
+	if err != nil || !isValid(binding) {
+		return 0, nil, nil
+	}
+	return hid, binding, nil
 }
 
 // platformCredentials returns the (platform, platformUserID) pair for toolbox

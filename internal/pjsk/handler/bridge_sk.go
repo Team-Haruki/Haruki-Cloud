@@ -212,21 +212,13 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 func resolveRequesterGameUID(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) int64 {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	if platform == "" || platformUserID == "" || app.Bindings == nil {
-		return 0
-	}
 	regionStr := regionWithDefault(r.Region)
-	var binding *accountdata.ResolvedBinding
-	var err error
-	if !r.RegionExplicit {
-		_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if err != nil || binding == nil {
-			_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-	} else {
-		_, binding, err = app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-	}
-	if err != nil || binding == nil {
+
+	_, binding, _ := resolveBindingWithFallback(
+		ctx, app.Bindings, platform, platformUserID, regionStr, r.RegionExplicit,
+		bindingResolutionOptions{},
+	)
+	if binding == nil {
 		return 0
 	}
 	uid, parseErr := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)

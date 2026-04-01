@@ -32,32 +32,22 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	publicDetailedProfile := rc.GetDetailedProfile()
 
 	// Resolve user binding and fetch suite data from Toolbox.
-	// Try global default binding first when no explicit region prefix.
 	platform := rc.Platform
 	platformUserID := rc.PlatformUserID
 	var suiteUID int64
 	var suitePlatform, suitePlatformUserID string
 	var suiteBinding *accountdata.ResolvedBinding
 
-	if platform != "" && platformUserID != "" && rc.App.Bindings != nil {
-		ctx := rc.Ctx
-		var binding *accountdata.ResolvedBinding
-		var resolveErr error
-		if !rc.Cmd.RegionExplicit {
-			_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-			if resolveErr != nil || binding == nil || !hasUsableSuiteData(binding) {
-				_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-			}
-		} else {
-			_, binding, resolveErr = rc.App.Bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		}
-		if resolveErr == nil && binding != nil && hasUsableSuiteData(binding) {
-			if uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64); convErr == nil {
-				suiteUID = uid
-				suitePlatform = platform
-				suitePlatformUserID = platformUserID
-				suiteBinding = binding
-			}
+	_, binding, _ := resolveBindingWithFallback(
+		rc.Ctx, rc.App.Bindings, platform, platformUserID, regionStr, rc.Cmd.RegionExplicit,
+		bindingResolutionOptions{RequireSuite: true},
+	)
+	if binding != nil {
+		if uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64); convErr == nil {
+			suiteUID = uid
+			suitePlatform = platform
+			suitePlatformUserID = platformUserID
+			suiteBinding = binding
 		}
 	}
 

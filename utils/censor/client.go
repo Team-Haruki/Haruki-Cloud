@@ -2,7 +2,8 @@ package censor
 
 import (
 	"fmt"
-	"time"
+
+	"haruki-cloud/config"
 
 	"github.com/bytedance/sonic"
 
@@ -20,7 +21,7 @@ func NewBaiduTextCensorClient(apiKey, secretKey string) *BaiduTextCensorClient {
 	return &BaiduTextCensorClient{
 		apiKey:    apiKey,
 		secretKey: secretKey,
-		client:    resty.New().SetTimeout(10 * time.Second),
+		client:    resty.New().SetTimeout(config.HTTPClientTimeout),
 	}
 }
 
@@ -55,7 +56,7 @@ func (b *BaiduTextCensorClient) getAccessToken() error {
 
 func (b *BaiduTextCensorClient) Init() error {
 	if b.client == nil {
-		b.client = resty.New().SetTimeout(10 * time.Second)
+		b.client = resty.New().SetTimeout(config.HTTPClientTimeout)
 	}
 	if b.accessToken == "" {
 		return b.getAccessToken()

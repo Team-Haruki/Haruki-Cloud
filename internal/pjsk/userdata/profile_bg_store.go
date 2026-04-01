@@ -12,8 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	"haruki-cloud/config"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -38,7 +38,7 @@ func NewLocalProfileBGStore(rootDir string) *LocalProfileBGStore {
 		rootDir:     rootDir,
 		relativeDir: DefaultProfileBGRelativeDir,
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: config.ProfileBGStoreTimeout,
 		},
 	}
 }

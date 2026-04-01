@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"haruki-cloud/config"
 )
 
 type remoteEngineProvider struct {
@@ -24,7 +26,7 @@ type remoteEngineProvider struct {
 func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	timeout := cfg.Timeout
 	if timeout <= 0 {
-		timeout = 75 * time.Second
+		timeout = config.DeckRemoteEngineTimeout
 	}
 	return &remoteEngineProvider{
 		cfg:          cfg,

@@ -272,7 +272,7 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
-		metaRefreshInterval = 30 * time.Minute
+		metaRefreshInterval = harukiConfig.MetaRefreshInterval
 	}
 	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"))
 	if err := metaLoader.LoadAll(context.Background()); err != nil {

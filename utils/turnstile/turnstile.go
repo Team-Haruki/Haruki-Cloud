@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
+
+	"haruki-cloud/config"
 
 	"github.com/go-resty/resty/v2"
 )
 
 const (
 	verifyURL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-	timeout   = 10 * time.Second
 )
 
 var (
@@ -36,7 +36,7 @@ type Client struct {
 func NewClient(secretKey string) *Client {
 	return &Client{
 		secretKey: secretKey,
-		client:    resty.New().SetTimeout(timeout),
+		client:    resty.New().SetTimeout(config.HTTPClientTimeout),
 	}
 }
 

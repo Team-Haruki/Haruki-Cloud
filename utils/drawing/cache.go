@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/config"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -22,8 +24,6 @@ const (
 	renderCacheFileExt    = "png"
 	renderCachePublic     = "public"
 	renderCacheKeyVersion = 2
-
-	defaultLocalRenderCacheTTL = 10 * time.Minute
 )
 
 // localRenderCache is an in-process TTL cache for rendered images.
@@ -42,7 +42,7 @@ type localRenderEntry struct {
 
 func newLocalRenderCache(ttl time.Duration) *localRenderCache {
 	if ttl <= 0 {
-		ttl = defaultLocalRenderCacheTTL
+		ttl = config.LocalRenderCacheTTL
 	}
 	return &localRenderCache{
 		entries: make(map[string]*localRenderEntry),
@@ -165,7 +165,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 	}
 
 	return &RenderCacheClient{
-		http:       resty.New().SetTimeout(10 * time.Second),
+		http:       resty.New().SetTimeout(config.HTTPClientTimeout),
 		baseURL:    baseURL,
 		storageDir: storageDir,
 		ttl:        cfg.TTL,

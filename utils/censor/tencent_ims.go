@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/config"
 )
 
 const (
@@ -52,7 +54,7 @@ func NewTencentIMSClient(secretID, secretKey, region, bizType string) *TencentIM
 		secretKey:  secretKey,
 		region:     region,
 		bizType:    bizType,
-		httpClient: &http.Client{Timeout: 15 * time.Second},
+		httpClient: &http.Client{Timeout: config.TencentIMSTimeout},
 	}
 }
 

@@ -744,6 +744,37 @@ func unsupportedModeError(module, mode string) error
 
 ---
 
+### R28：绑定解析模式统一 ✅
+
+**提交**：`4341efa`
+
+创建 `resolveBindingWithFallback()` 辅助函数，封装常见的 "全局默认 → 区域回退" 绑定解析模式：
+
+```go
+type bindingResolutionOptions struct {
+    RequireSuite   bool
+    RequireMySekai bool
+}
+
+func resolveBindingWithFallback(
+    ctx context.Context,
+    bindings *accountdata.BindingService,
+    platform, platformUserID, regionStr string,
+    regionExplicit bool,
+    opts bindingResolutionOptions,
+) (int, *accountdata.ResolvedBinding, error)
+```
+
+替换 4 处重复的绑定解析逻辑：
+- `resolveLiveSnapshot` (resolver.go)
+- `resolveMySekaiOnly` (resolver.go)
+- `executeEducation` (bridge_education.go)
+- `resolveRequesterGameUID` (bridge_sk.go)
+
+减少约 40 行重复代码。
+
+---
+
 ## 剩余重构建议
 
 根据代码分析，以下是优先级排序的剩余重构项：

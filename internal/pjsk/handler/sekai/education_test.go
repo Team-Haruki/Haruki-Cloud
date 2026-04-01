@@ -12,19 +12,15 @@ import (
 
 func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 	tests := []struct {
-		name      string
-		args      string
-		checkFunc func(*testing.T, education.AreaItemQuery)
+		name        string
+		args        string
+		expectError bool
+		checkFunc   func(*testing.T, education.AreaItemQuery)
 	}{
 		{
-			name: "no filter keeps default behavior",
-			args: "",
-			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
-				t.Helper()
-				if query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
-				}
-			},
+			name:        "no filter returns usage error",
+			args:        "",
+			expectError: true,
 		},
 		{
 			name: "all filters are parsed and passed through",
@@ -66,6 +62,12 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 				TriggerCmd: "/区域道具",
 				ArgText:    tt.args,
 			})
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("expected error but got nil")
+				}
+				return
+			}
 			if err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}

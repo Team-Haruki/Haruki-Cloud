@@ -250,10 +250,11 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 	}
 
 	resolved := result.(*parser.ResolvedCommand)
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+	var combined mysekaiDeckCombinedParams
+	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
+	params := combined.Deck
 	if params.EventID == nil || *params.EventID != 123 {
 		t.Fatalf("unexpected event id: %+v", params.EventID)
 	}
@@ -277,10 +278,11 @@ func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
 	}
 
 	resolved := result.(*parser.ResolvedCommand)
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+	var combined mysekaiDeckCombinedParams
+	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
+	params := combined.Deck
 	if params.EventID == nil || *params.EventID != 123 {
 		t.Fatalf("unexpected event id: %+v", params.EventID)
 	}

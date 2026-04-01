@@ -239,7 +239,12 @@ func extractOwnedCards(detailedProfile *drawing.DetailedProfileCardRequest) map[
 }
 
 func resolveCardBoxAfterTraining(card drawing.CardBasic, state ownedCardState, useAfterTraining bool, hasOwnedState bool) bool {
-	if len(card.ThumbnailInfo) <= 1 {
+	// Cards without after-training art (rarity_1, rarity_2) are always "before".
+	rare := ""
+	if card.Rare != nil {
+		rare = *card.Rare
+	}
+	if rare != "rarity_3" && rare != "rarity_4" && rare != "rarity_birthday" {
 		return false
 	}
 	if !hasOwnedState {

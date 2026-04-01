@@ -22,8 +22,8 @@ func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
 		UserId:     "42",
 		TriggerCmd: "/上传个人背景",
 		Message: onebot11.Message{
-			{Type: "text", Data: map[string]string{"text": "/上传个人背景"}},
-			{Type: "image", Data: map[string]string{"url": "https://example.com/bg.png"}},
+			onebot11.Text("/上传个人背景"),
+			onebot11.Image("", "https://example.com/bg.png"),
 		},
 	})
 	if err != nil {

@@ -959,6 +959,7 @@ func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T
 	} {
 		if _, err := sekaiClient.Gamecharacterunit.Create().
 			SetServerRegion("jp").
+			SetGameID(item.CharacterID).
 			SetGameCharacterID(item.CharacterID).
 			SetColorCode(item.ColorCode).
 			Save(ctx); err != nil {

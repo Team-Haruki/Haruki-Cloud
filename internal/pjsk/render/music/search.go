@@ -109,9 +109,17 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return s.source.GetMusicByEventID(events[info.BanSeq-1].ID)
 
 	case QueryTypeTitle, QueryTypeChart:
+		if info.MusicID != 0 {
+			if musicInfo, err := s.source.GetMusicByID(info.MusicID); err == nil && musicInfo != nil {
+				return musicInfo, nil
+			}
+		}
 		keyword := strings.TrimSpace(info.Keyword)
-		if keyword == "" && info.MusicID != 0 {
-			return s.source.GetMusicByID(info.MusicID)
+		if keyword == "" {
+			if info.MusicID != 0 {
+				return nil, fmt.Errorf("music not found: %d", info.MusicID)
+			}
+			return nil, fmt.Errorf("music title query is empty")
 		}
 		return s.resolveTitle(keyword)
 

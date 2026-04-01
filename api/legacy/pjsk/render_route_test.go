@@ -761,6 +761,10 @@ func (s *routeMusicSource) GetCharacterByID(id int) (*masterdata.Character, erro
 	return nil, fiber.ErrNotFound
 }
 
+func (s *routeMusicSource) GetOutsideCharacterByID(id int) (string, error) {
+	return "", fiber.ErrNotFound
+}
+
 func (s *routeMusicSource) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
 	eventID, ok := s.primaryEventByMusic[musicID]
 	if !ok {

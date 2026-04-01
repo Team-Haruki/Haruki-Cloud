@@ -149,7 +149,7 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
-				return nil, onebot11.NewReplayError(aliasQueryHelp(aliasType, sampleCommand))
+				return nil, onebot11.NewReplayError("%s", aliasQueryHelp(aliasType, sampleCommand))
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleAlias, aliases.ModeQuery, aliases.QueryCommandParams{
 				AliasType: aliasType,
@@ -269,13 +269,13 @@ func aliasQueryTokenPrompt(aliasType string) string {
 func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 	args = strings.TrimSpace(strings.ReplaceAll(args, "\r\n", "\n"))
 	if args == "" {
-		return "", nil, onebot11.NewReplayError(usage)
+		return "", nil, onebot11.NewReplayError("%s", usage)
 	}
 
 	lines := strings.Split(args, "\n")
 	target := strings.TrimSpace(lines[0])
 	if target == "" {
-		return "", nil, onebot11.NewReplayError(usage)
+		return "", nil, onebot11.NewReplayError("%s", usage)
 	}
 
 	aliasValues := make([]string, 0, len(lines)-1)

@@ -325,8 +325,8 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 	app := testBotApp(t, srv.URL)
 
 	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
-		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查卡",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查卡 1001"}}},
 	})
 
 	resp, err := app.Test(req)
@@ -345,7 +345,7 @@ func TestBotEndpointGetReturnsImage(t *testing.T) {
 func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 	app := testBotAppWithBindings(t, "", testBindingService(t))
 
-	req := newBotPOSTRequest(botPJSKPath("profile/bind"), BotCommandRequest{
+	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/绑定列表",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/绑定列表"}}},
 	})
@@ -374,8 +374,8 @@ func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {
 
 	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", PlatformGroupID: "67890",
-		Server: "jp", MatchedCommand: "/卡面",
-		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+		Server: "jp", MatchedCommand: "/查卡",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查卡 1001"}}},
 	})
 
 	resp, err := app.Test(req)
@@ -400,8 +400,8 @@ func TestBotEndpointPlainTextFallback(t *testing.T) {
 	app := testBotApp(t, srv.URL)
 
 	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
-		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查卡",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查卡 1001"}}},
 	})
 
 	resp, err := app.Test(req)
@@ -426,9 +426,9 @@ func TestBotEndpointOneBotMessageArray(t *testing.T) {
 	app := testBotApp(t, srv.URL)
 
 	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查卡",
 		Message: onebot11.Message{
-			{Type: "text", Data: onebot11.TextData{Text: "/卡面 "}},
+			{Type: "text", Data: onebot11.TextData{Text: "/查卡 "}},
 			{Type: "text", Data: onebot11.TextData{Text: "1001"}},
 		},
 	})
@@ -1304,7 +1304,7 @@ func TestBotEndpointSKPlayerTraceSupportsTwoRanks(t *testing.T) {
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	// /卡面 resolves to card-detail, but we send it to card/list
+	// /卡面 resolves to card/image, but we send it to card/list
 	req := newBotPOSTRequest(botPJSKPath("card/list"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
@@ -1333,7 +1333,7 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 func TestBotEndpointEmptyCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+	req := newBotPOSTRequest(botPJSKPath("card/image"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/卡面",
 		// Message is empty
 	})
@@ -1352,7 +1352,7 @@ func TestBotEndpointEmptyCommandRejects400(t *testing.T) {
 func TestBotEndpointUnknownMatchedCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+	req := newBotPOSTRequest(botPJSKPath("card/image"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/不存在的命令",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
 	})
@@ -1371,7 +1371,7 @@ func TestBotEndpointUnknownMatchedCommandRejects400(t *testing.T) {
 func TestBotEndpointMissingMatchedCommandRejects400(t *testing.T) {
 	app := testBotApp(t, "")
 
-	req := newBotPOSTRequest(botPJSKPath("card/detail"), BotCommandRequest{
+	req := newBotPOSTRequest(botPJSKPath("card/image"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp",
 		// MatchedCommand is empty
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}}},
@@ -1464,9 +1464,9 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 		Platform:       "qq",
 		PlatformUserID: "999",
 		Server:         "jp",
-		MatchedCommand: "/卡面",
+		MatchedCommand: "/查卡",
 		Message: onebot11.Message{
-			{Type: "text", Data: onebot11.TextData{Text: "/卡面 1001"}},
+			{Type: "text", Data: onebot11.TextData{Text: "/查卡 1001"}},
 		},
 	}
 	plaintext, err := noiseMP.Marshal(cmdReq)

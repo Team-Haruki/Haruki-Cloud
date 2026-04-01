@@ -1,11 +1,13 @@
 package sekai
 
 import (
+	"errors"
 	"fmt"
-	"haruki-cloud/internal/pjsk/handler"
-	"haruki-cloud/internal/pjsk/parser"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/parser"
 )
 
 func (sekaiHandlers) GachaHandle() SekaiCommandHandler {
@@ -42,7 +44,7 @@ func (sekaiHandlers) GachaRecordHandle() SekaiCommandHandler {
 					specGIDs = append(specGIDs, gid)
 				}
 			}
-			return nil, fmt.Errorf("TODO: 抽卡记录未实现，spec_gids=%v", specGIDs)
+			return nil, errors.New("抽卡记录功能正在开发中，敬请期待")
 		},
 	}
 }

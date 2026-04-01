@@ -77,7 +77,7 @@ func (sekaiHandlers) HelpHandle() SekaiCommandHandler {
 			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, fmt.Errorf("TODO: 帮助未实现")
+			return nil, errors.New("该功能正在开发中，敬请期待")
 		},
 	}
 }
@@ -91,7 +91,7 @@ func (sekaiHandlers) UpdateHandle() SekaiCommandHandler {
 			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, fmt.Errorf("TODO: 更新查询未实现，region=%s", string(ctx.region))
+			return nil, errors.New("该功能正在开发中，敬请期待")
 		},
 	}
 }
@@ -110,7 +110,7 @@ func (sekaiHandlers) NgWordHandle() SekaiCommandHandler {
 			if text == "" {
 				return nil, errors.New("请输入要查询的文本")
 			}
-			return nil, fmt.Errorf("TODO: 屏蔽词检测未实现，text=%q", text)
+			return nil, errors.New("屏蔽词检测功能正在开发中，敬请期待")
 		},
 	}
 }
@@ -124,7 +124,7 @@ func (sekaiHandlers) UploadHelpHandle() SekaiCommandHandler {
 			Disabled: true,
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("TODO: 抓包帮助未实现")
+			return nil, errors.New("抓包帮助功能正在开发中，敬请期待")
 		},
 	}
 }
@@ -139,7 +139,7 @@ func (sekaiHandlers) ExtractCardHandle() SekaiCommandHandler {
 		},
 		Regions: []renderregion.Value{renderregion.JP},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("TODO: 提取卡牌未实现")
+			return nil, errors.New("提取卡牌功能正在开发中，敬请期待")
 		},
 	}
 }

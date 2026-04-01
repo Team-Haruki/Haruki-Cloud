@@ -2,12 +2,12 @@ package sekai
 
 import (
 	"errors"
-	"fmt"
+	"strings"
+
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"strings"
 )
 
 const searchSingleCardHelp = `查单张卡的方式:
@@ -148,27 +148,7 @@ func (sekaiHandlers) CardStoryHandle() SekaiCommandHandler {
 			if args == "" {
 				return nil, errors.New("请输入要查询的卡牌")
 			}
-
-			refresh := false
-			save := true
-			if strings.Contains(args, "refresh") {
-				args = strings.TrimSpace(strings.ReplaceAll(args, "refresh", ""))
-				refresh = true
-			}
-
-			model := ""
-			if strings.Contains(args, "model:") {
-				parts := strings.SplitN(args, "model:", 2)
-				args = strings.TrimSpace(parts[0])
-				model = strings.TrimSpace(parts[1])
-				refresh = true
-				save = false
-			}
-
-			return nil, fmt.Errorf(
-				"TODO: 卡牌剧情查询未实现，query=%q, refresh=%t, save=%t, model=%q",
-				args, refresh, save, model,
-			)
+			return nil, errors.New("卡牌剧情查询功能正在开发中，敬请期待")
 		},
 	}
 }

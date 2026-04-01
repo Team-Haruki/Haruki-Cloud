@@ -7,7 +7,6 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
@@ -18,10 +17,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		var p userQueryParams
 		mergeParams(rc.Cmd.Params, &p)
 
-		region := rc.Cmd.Region
-		if region == "" {
-			region = string(renderregion.JP)
-		}
+		region := regionWithDefault(rc.Cmd.Region)
 
 		target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
 		if err != nil {

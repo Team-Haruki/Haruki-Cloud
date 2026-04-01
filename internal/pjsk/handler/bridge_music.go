@@ -11,7 +11,6 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/music"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
@@ -124,10 +123,7 @@ func renderMusicRewards(ctx context.Context, r *parser.ResolvedCommand, app *ren
 	q.Profile = publicProfileCard
 
 	reason := ""
-	region := strings.TrimSpace(r.Region)
-	if region == "" {
-		region = string(renderregion.JP)
-	}
+	region := regionWithDefault(r.Region)
 
 	if strings.TrimSpace(r.RequesterPlatform) != "" && strings.TrimSpace(r.RequesterUserID) != "" {
 		queryParams := userQueryParams{

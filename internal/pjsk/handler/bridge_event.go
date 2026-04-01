@@ -95,10 +95,7 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 		}
 	}
 
-	regionStr := region.String()
-	if regionStr == "" {
-		regionStr = "jp"
-	}
+	regionStr := regionWithDefault(region.String())
 
 	// --- Build regular event entries from userEvents ---
 	eventInfo := make([]drawing.EventHistory, 0)

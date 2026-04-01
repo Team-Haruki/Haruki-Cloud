@@ -242,10 +242,7 @@ func buildBondsRequestFromSuite(
 	}
 
 	// Look up bonds master data to map group IDs to character pairs.
-	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
-	if normalizedRegion == "" {
-		normalizedRegion = "jp"
-	}
+	normalizedRegion := regionWithDefault(region)
 
 	bondsMaster, err := app.Sekai.Bond.Query().
 		Where(bonddb.ServerRegionEQ(normalizedRegion)).

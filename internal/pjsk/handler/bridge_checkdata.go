@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/query"
 	sekaiutils "haruki-cloud/utils/sekai"
@@ -17,10 +16,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
 
-	region := rc.Cmd.Region
-	if region == "" {
-		region = string(renderregion.JP)
-	}
+	region := regionWithDefault(rc.Cmd.Region)
 
 	var dataType sekaiutils.ToolboxDataType
 	var label string

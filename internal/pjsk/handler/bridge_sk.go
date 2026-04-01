@@ -85,7 +85,7 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 			// No params: build a basic query for the requester's own user
 			trackerReq = sk.TrackerRankQuery{Region: rc.Cmd.Region}
 			if trackerReq.Region == "" {
-				trackerReq.Region = "jp"
+				trackerReq.Region = DefaultRegionStr
 			}
 		}
 		if err := resolveTrackerCharacterSelection(rc.Ctx, rc.App, &trackerReq); err != nil {
@@ -200,10 +200,7 @@ func resolveRequesterGameUID(ctx context.Context, r *parser.ResolvedCommand, app
 	if platform == "" || platformUserID == "" || app.Bindings == nil {
 		return 0
 	}
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
+	regionStr := regionWithDefault(r.Region)
 	var binding *accountdata.ResolvedBinding
 	var err error
 	if !r.RegionExplicit {
@@ -261,7 +258,7 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		// No explicit region prefix: use global default binding first, then JP.
 		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, accountdata.GlobalDefaultBindingScope)
 		if err != nil || binding == nil {
-			_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, string(renderregion.JP))
+			_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, DefaultRegionStr)
 			if err != nil {
 				return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
 			}
@@ -293,9 +290,5 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 }
 
 func normalizeTrackerRegion(region string) string {
-	normalized := renderregion.Normalize(strings.TrimSpace(region))
-	if normalized.IsZero() {
-		return string(renderregion.JP)
-	}
-	return normalized.String()
+	return regionWithDefault(region)
 }

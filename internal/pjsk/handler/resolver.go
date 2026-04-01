@@ -115,10 +115,7 @@ func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *re
 		return nil
 	}
 
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
+	regionStr := regionWithDefault(r.Region)
 
 	// Try global default binding first when no explicit region prefix,
 	// then fall back to region-specific binding.
@@ -170,10 +167,7 @@ func resolveMySekaiOnly(ctx context.Context, r *parser.ResolvedCommand, app *ren
 		return nil
 	}
 
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
+	regionStr := regionWithDefault(r.Region)
 
 	var binding *accountdata.ResolvedBinding
 	var resolveErr error
@@ -252,10 +246,7 @@ func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, ap
 		return nil, nil
 	}
 
-	region := strings.TrimSpace(r.Region)
-	if region == "" {
-		region = string(renderregion.JP)
-	}
+	region := regionWithDefault(r.Region)
 
 	queryParams := userQueryParams{
 		Mode:           "self",

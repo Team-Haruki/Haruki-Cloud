@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"haruki-cloud/api/bot/onebot11"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/query"
 )
 
@@ -15,10 +14,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
 
-	region := rc.Cmd.Region
-	if region == "" {
-		region = string(renderregion.JP)
-	}
+	region := regionWithDefault(rc.Cmd.Region)
 
 	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {

@@ -40,10 +40,7 @@ type RequestContext struct {
 // NewRequestContext creates a RequestContext from a resolved command.
 // Region is already resolved (resolveRegionFromDefaultBinding was called in Execute).
 func NewRequestContext(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) *RequestContext {
-	regionStr := strings.TrimSpace(r.Region)
-	if regionStr == "" {
-		regionStr = "jp"
-	}
+	regionStr := regionWithDefault(r.Region)
 	return &RequestContext{
 		Ctx:            ctx,
 		Cmd:            r,

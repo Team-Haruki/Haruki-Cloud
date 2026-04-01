@@ -20,10 +20,7 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
 
-	region := rc.Cmd.Region
-	if region == "" {
-		region = string(renderregion.JP)
-	}
+	region := regionWithDefault(rc.Cmd.Region)
 
 	harukiUserID, pjskUserID, visible, err := resolveGameUID(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {

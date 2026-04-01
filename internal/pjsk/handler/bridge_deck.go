@@ -40,10 +40,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		mergeParams(rc.Cmd.Params, &combined)
 
-		regionStr := strings.TrimSpace(rc.Cmd.Region)
-		if regionStr == "" {
-			regionStr = "jp"
-		}
+		regionStr := regionWithDefault(rc.Cmd.Region)
 
 		// Resolve target binding from user query params.
 		p := combined.Query

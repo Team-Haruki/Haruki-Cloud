@@ -44,6 +44,7 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 	if err != nil {
 		return nil, err
 	}
+	categories := b.buildCategories(music.ID)
 
 	req := &drawing.MusicDetailRequest{
 		Region: regionCode,
@@ -53,7 +54,8 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 			Composer:     music.Composer,
 			Lyricist:     music.Lyricist,
 			Arranger:     music.Arranger,
-			Categories:   b.buildCategories(music.ID),
+			MVInfo:       append([]string(nil), categories...),
+			Categories:   categories,
 			ReleaseAt:    music.PublishedAt,
 			IsFullLength: music.IsFullLength,
 		},
@@ -368,11 +370,14 @@ func (b *Builder) buildDisplayMusicTitle(music *masterdata.Music, region renderr
 }
 
 func (b *Builder) buildCategories(musicID int) []string {
+	if musicInfo, err := b.source.GetMusicByID(musicID); err == nil && musicInfo != nil && len(musicInfo.Categories) > 0 {
+		return append([]string(nil), musicInfo.Categories...)
+	}
 	tags, err := b.source.GetMusicTags(musicID)
 	if err != nil {
 		return nil
 	}
-	return tags
+	return append([]string(nil), tags...)
 }
 
 func (b *Builder) buildMusicAliases(music *masterdata.Music) []string {
@@ -433,4 +438,3 @@ func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregi
 		filepath.Join("event", assetBundleName, "banner.png"),
 	)
 }
-

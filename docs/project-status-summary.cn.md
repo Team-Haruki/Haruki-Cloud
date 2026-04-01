@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-03-28（v17.1）
+> 最后更新：2026-04-01（v17.2）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 
@@ -30,6 +30,24 @@ MySekai 指令在本轮补齐了地图路由和快捷别名对齐，当前约定
 4. `/msm <1|2|3|4>` 支持按顺序编号选图，映射地图 ID `5/7/6/8`（其中 `2` 对应花园）
 5. `/msm 13` 支持紧凑组合写法（等价于 `1 3`）
 6. `/msm ... all` 可开启 `show_harvested=true`
+
+### 1.2 v17.2 增量更新（2026-04-01）
+
+本轮主要收口了 PJSK 查歌详情载荷和本地 Drawing 请求模型：
+
+1. `music-detail` 现在会在基础歌曲信息之外，补齐本地 `music_meta` 派生字段。
+2. 当前已对齐的详情字段包括：
+   - 歌曲时长 `length`
+   - 排行矩阵 `leaderboard_matrix`
+   - 排行标签与总曲数
+   - `music_info.mv_info`
+3. 这轮实现参考了本地 `lunabot` 的查歌详情逻辑，优先保证现有图片表现和字段语义一致。
+4. 当前分支原先缺失一部分 `utils/drawing` 请求模型，导致 PJSK 渲染链路外的若干请求结构无法稳定编译。
+5. 现已基于 `test` 分支补齐 `utils/drawing/models.go`，并同步修正字段名漂移，例如：
+   - `MvInfo -> MVInfo`
+   - `Bpm -> BPM`
+   - `CnName -> CNName`
+6. 截至本轮收口，PJSK 相关包测试已能稳定通过；整仓剩余失败主要是依赖本地服务的 integration 用例，而不是查歌功能本身的编译或业务错误。
 
 ## 2. 已完成的合并内容
 

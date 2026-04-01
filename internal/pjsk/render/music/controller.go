@@ -184,7 +184,12 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
 	}
-	return builder.BuildMusicDetailRequest(musicInfo, region)
+	req, err := builder.BuildMusicDetailRequest(musicInfo, region)
+	if err != nil {
+		return nil, err
+	}
+	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo)
+	return req, nil
 }
 
 func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
@@ -491,4 +496,3 @@ func (c *Controller) resolveRegion(region string) renderregion.Value {
 	}
 	return c.sources.ResolveRegion(renderregion.Normalize(region))
 }
-

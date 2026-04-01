@@ -1,6 +1,6 @@
 # Haruki-Cloud PJSK 歌曲查询现状整理
 
-> 最后更新：2026-03-29
+> 最后更新：2026-04-01
 >
 > 本文记录当前 `Haruki-Cloud` 中“歌曲查询相关”入口的实际落地状态，用于后续排查和继续收口。
 
@@ -127,7 +127,7 @@
 
 | 入口 | 当前状态 | 备注 |
 | --- | --- | --- |
-| `music-detail` | 已接入统一主链 | 通过 `ResolveMusicCover()` 走公共 parser/search |
+| `music-detail` | 已接入统一主链 | 通过统一 parser/search 查歌；详情载荷已补齐 metadata 时长、leaderboard 和 `mv_info` |
 | `music-list keyword` | 已接入统一主链 | 支持 alias，支持 `music<id>`，隐式数字按纯歌曲入口规则处理 |
 | `music-cover` | 已接入统一主链 | 直接走 `ResolveMusicCover()` |
 | `music-bpm` | 已接入统一主链 | 额外支持难度优先选择本地谱面 |
@@ -183,6 +183,33 @@
 2. `multi` 的单个技能值现在要求带 `技能` 或 `实效` 关键词，避免误吞裸数字歌曲查询。
 3. 关注歌曲支持 `*` 全难度展开。
 
+### 5.3 `music-detail` 详情载荷曾缺少 metadata 衍生字段
+
+问题：
+
+1. `music-detail` 虽然已经接入统一查歌主链，但返回给 Drawing API 的详情请求仍缺少本地 `music_meta` 派生信息。
+2. 实际表现是歌曲详情图里没有对齐 `lunabot` 现有逻辑中的歌曲时长、leaderboard 相关字段。
+3. 同时 `mv_info` 没有和现有 `categories` 一起稳定下发，导致下游绘图载荷不完整。
+
+本次修正：
+
+1. `BuildMusicDetailRequest(...)` 在构造基础详情后，会继续补齐 metadata 衍生字段。
+2. 详情请求现在会带上：
+   - `length`
+   - `leaderboard_matrix`
+   - `leaderboard_music_num`
+   - `leaderboard_live_types`
+   - `leaderboard_targets`
+   - `music_info.mv_info`
+3. `length` 来自本地 `music_meta` 中该曲各难度的最大 `music_time`。
+4. leaderboard 复用了当前 Cloud 内已有 `music-board` 计算链路，并按 `solo / multi / auto` 与 `score / pt / pt/time` 输出固定矩阵。
+5. `mv_info` 优先取 `masterdata.music.categories`，无数据时再回退到既有 tag 查询。
+
+补充说明：
+
+1. 这次对齐参考了本地 `lunabot` 的查歌详情逻辑。
+2. 同步补上了 `utils/drawing` 中缺失的 `MusicDetailRequest` 字段定义，避免详情请求在当前分支出现字段丢失或编译失败。
+
 ## 6. 当前仍保留的业务差异
 
 这些不是 bug，而是当前有意保留的入口差异：
@@ -207,11 +234,12 @@
 
 ## 8. 这轮扫描后的结论
 
-截至本次扫描结束，`Haruki-Cloud` 中主要的歌曲查询入口已经基本接到同一条正式主链上。
+截至 2026-04-01 本次扫描结束，`Haruki-Cloud` 中主要的歌曲查询入口已经基本接到同一条正式主链上，`music-detail` 的详情载荷缺口也已经补齐。
 
 当前更需要警惕的不是“主链缺失”，而是下面两类回归：
 
 1. 新入口又在 `handler` 层手写一套曲名 / 难度 / ID 解析
 2. 结构化查询（特别是 `music<id>`）在后续链路里被额外的兜底逻辑偷偷放宽
+3. Drawing 请求模型和下游绘图接口继续发生字段漂移
 
 后续如果再做歌曲相关功能，优先复用现有 `render/music` helper，而不是重新起一套解析规则。

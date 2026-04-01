@@ -46,6 +46,8 @@ test_auth
 
 # Drawing API subproject (separate repo)
 drawing/
+!utils/drawing/
+!utils/drawing/*.go
 
 # Images
 *.png

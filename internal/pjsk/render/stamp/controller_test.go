@@ -78,6 +78,30 @@ func TestControllerBuildStampListRequestFiltersAndUsesPrompt(t *testing.T) {
 	}
 }
 
+func TestControllerBuildStampListRequestFiltersByCharacterIDs(t *testing.T) {
+	source := newTestStampSource(renderregion.JP)
+	source.stamps = []masterdata.Stamp{
+		{ID: 2, AssetBundleName: "stamp_b", CharacterID: 24},
+		{ID: 1, AssetBundleName: "stamp_a", CharacterID: 21},
+		{ID: 3, AssetBundleName: "stamp_c", CharacterID: 21},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildStampListRequest(ListQuery{
+		Region:       renderregion.JP,
+		CharacterIDs: []int{21},
+	})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest failed: %v", err)
+	}
+	if len(req.Stamps) != 2 {
+		t.Fatalf("expected 2 stamps, got %d", len(req.Stamps))
+	}
+	if req.Stamps[0].ID != 1 || req.Stamps[1].ID != 3 {
+		t.Fatalf("unexpected stamps: %+v", req.Stamps)
+	}
+}
+
 func TestControllerBuildStampListRequestPaginatesAtFiveByFive(t *testing.T) {
 	dir := t.TempDir()
 	source := newTestStampSource(renderregion.JP)

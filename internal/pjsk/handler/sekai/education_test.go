@@ -12,15 +12,19 @@ import (
 
 func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 	tests := []struct {
-		name        string
-		args        string
-		expectError bool
-		checkFunc   func(*testing.T, education.AreaItemQuery)
+		name      string
+		args      string
+		checkFunc func(*testing.T, education.AreaItemQuery)
 	}{
 		{
-			name:        "no filter returns usage error",
-			args:        "",
-			expectError: true,
+			name: "no filter keeps default behavior",
+			args: "",
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
 		},
 		{
 			name: "all filters are parsed and passed through",
@@ -62,12 +66,6 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 				TriggerCmd: "/区域道具",
 				ArgText:    tt.args,
 			})
-			if tt.expectError {
-				if err == nil {
-					t.Fatalf("expected error but got nil")
-				}
-				return
-			}
 			if err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
@@ -81,6 +79,63 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 			}
 
 			var query education.AreaItemQuery
+			if err := json.Unmarshal(resolved.Params, &query); err != nil {
+				t.Fatalf("unmarshal params: %v", err)
+			}
+			tt.checkFunc(t, query)
+		})
+	}
+}
+
+func TestBondsHandleBuildsResolvedCommand(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      string
+		checkFunc func(*testing.T, education.BondsQuery)
+	}{
+		{
+			name: "no filter keeps default behavior",
+			args: "",
+			checkFunc: func(t *testing.T, query education.BondsQuery) {
+				t.Helper()
+				if query.Cid != 0 || query.CharacterQuery != "" {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
+			name: "character query is passed through",
+			args: "初音未来",
+			checkFunc: func(t *testing.T, query education.BondsQuery) {
+				t.Helper()
+				if query.Cid != 0 || query.CharacterQuery != "初音未来" {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := sekaiHandlers{}.BondsHandle()
+			result, err := h.Handle(&handler.HandlerContext{
+				Context:    context.Background(),
+				TriggerCmd: "/羁绊",
+				ArgText:    tt.args,
+			})
+			if err != nil {
+				t.Fatalf("Handle() error = %v", err)
+			}
+
+			resolved, ok := result.(*parser.ResolvedCommand)
+			if !ok {
+				t.Fatalf("handler returned %T", result)
+			}
+			if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-bonds" {
+				t.Fatalf("unexpected resolved command: %+v", resolved)
+			}
+
+			var query education.BondsQuery
 			if err := json.Unmarshal(resolved.Params, &query); err != nil {
 				t.Fatalf("unmarshal params: %v", err)
 			}

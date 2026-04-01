@@ -1,7 +1,10 @@
 package deck
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,6 +18,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+
+	"github.com/klauspost/compress/zstd"
 )
 
 type testCardSource struct {
@@ -301,59 +306,86 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 			}
 			_, _ = w.Write([]byte(`{"status":"ok"}`))
 
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if len(payloads) != 1 || len(payloads[0]) == 0 {
+				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+
 		case "/recommend":
 			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			if len(payloads) != 1 {
+				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
+			}
 			var payload map[string]interface{}
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-				t.Fatalf("decode recommend request: %v", err)
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
 			}
-			if payload["algorithm"] != "ga" {
-				t.Fatalf("unexpected algorithm: %+v", payload["algorithm"])
+			options, ok := payload["batch_options"].([]interface{})
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
 			}
-			if path, _ := payload["user_data_file_path"].(string); strings.TrimSpace(path) == "" {
-				if raw, _ := payload["user_data_str"].(string); strings.TrimSpace(raw) == "" {
-					t.Fatalf("expected user_data_file_path or user_data_str in recommend payload")
-				}
+			first, ok := options[0].(map[string]interface{})
+			if !ok || first["algorithm"] != "ga" {
+				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
 			}
-			_, _ = w.Write([]byte(`{
-				"decks": [{
-					"score": 1234567,
-					"live_score": 1234567,
-					"mysekai_event_point": 0,
-					"total_power": 345678,
-					"event_bonus_rate": 25,
-					"support_deck_bonus_rate": 10,
-					"multi_live_score_up": 120,
-					"cards": [
-						{
-							"card_id": 1002,
-							"level": 60,
-							"master_rank": 5,
-							"skill_level": 4,
-							"skill_score_up": 120,
+			if payload["userdata_hash"] != "test-userdata-hash" {
+				t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 1234567,
+							"live_score": 1234567,
+							"mysekai_event_point": 0,
+							"total_power": 345678,
 							"event_bonus_rate": 25,
-							"episode1_read": true,
-							"episode2_read": true,
-							"after_training": true,
-							"default_image": "special_training",
-							"has_canvas_bonus": false
-						},
-						{
-							"card_id": 1001,
-							"level": 50,
-							"master_rank": 1,
-							"skill_level": 4,
-							"skill_score_up": 100,
-							"event_bonus_rate": 20,
-							"episode1_read": true,
-							"episode2_read": true,
-							"after_training": false,
-							"default_image": "normal",
-							"has_canvas_bonus": false
-						}
-					]
-				}]
-			}`))
+							"support_deck_bonus_rate": 10,
+							"multi_live_score_up": 120,
+							"cards": [
+								{
+									"card_id": 1002,
+									"level": 60,
+									"master_rank": 5,
+									"skill_level": 4,
+									"skill_score_up": 120,
+									"event_bonus_rate": 25,
+									"episode1_read": true,
+									"episode2_read": true,
+									"after_training": true,
+									"default_image": "special_training",
+									"has_canvas_bonus": false
+								},
+								{
+									"card_id": 1001,
+									"level": 50,
+									"master_rank": 1,
+									"skill_level": 4,
+									"skill_score_up": 100,
+									"event_bonus_rate": 20,
+									"episode1_read": true,
+									"episode2_read": true,
+									"after_training": false,
+									"default_image": "normal",
+									"has_canvas_bonus": false
+								}
+							]
+						}]
+					}
+				}
+			]`))
 
 		default:
 			http.NotFound(w, r)
@@ -420,6 +452,118 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 	}
 	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 2 {
 		t.Fatalf("unexpected cached call counts: masterdata=%d musicmeta=%d recommend=%d", masterdataCalls.Load(), musicMetaCalls.Load(), recommendCalls.Load())
+	}
+}
+
+func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T) {
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if len(payloads) != 1 || len(payloads[0]) == 0 {
+				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			if len(payloads) != 1 {
+				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
+			}
+			var payload map[string]interface{}
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]interface{})
+			if !ok || len(options) != 2 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			if payload["userdata_hash"] != "test-userdata-hash" {
+				t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "dfs",
+					"cost_time": 1.0,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false}]
+						}]
+					}
+				},
+				{
+					"alg": "ga",
+					"cost_time": 2.0,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false}]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"dfs", "ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected one batched recommend call, got %d", recommendCalls.Load())
+	}
+	if len(request.ModelName) != 1 || request.ModelName[0] != "dfs+ga" {
+		t.Fatalf("unexpected model names: %+v", request.ModelName)
 	}
 }
 
@@ -495,4 +639,36 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 	}
 
 	return NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, metaLoader)
+}
+
+func decodeDeckMultipartPayload(body io.Reader, out *[][]byte) error {
+	compressed, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	reader, err := zstd.NewReader(bytes.NewReader(compressed))
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	raw, err := io.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewReader(raw)
+	var items [][]byte
+	for buf.Len() > 0 {
+		var size uint32
+		if err := binary.Read(buf, binary.BigEndian, &size); err != nil {
+			return err
+		}
+		payload := make([]byte, size)
+		if _, err := io.ReadFull(buf, payload); err != nil {
+			return err
+		}
+		items = append(items, payload)
+	}
+	*out = items
+	return nil
 }

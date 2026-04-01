@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"fmt"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
 	"regexp"
 	"sort"
 	"strconv"
@@ -58,6 +59,9 @@ func resolveDeckCharacterToken(token string) (int, string) {
 	raw := strings.TrimSpace(token)
 	if raw == "" {
 		return 0, ""
+	}
+	if charID, ok := rendercard.ResolveDefaultCharacterNickname(raw); ok {
+		return charID, ""
 	}
 	return 0, raw
 }

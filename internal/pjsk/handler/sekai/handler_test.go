@@ -3,13 +3,11 @@ package sekai
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"testing"
-
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	"haruki-cloud/internal/pjsk/render/common"
+	"log"
+	"testing"
 )
 
 func TestRegisterCommandHandler(t *testing.T) {
@@ -33,7 +31,7 @@ func TestRegisterCommandHandler(t *testing.T) {
 
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 	skh := SekaiCommandHandler{
-		ParseUIDArg: common.BoolPtr(true),
+		ParseUIDArg: boolPtr(true),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if ctx.UIDArg() != "@987654321" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
@@ -59,7 +57,7 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 
 func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 	skh := SekaiCommandHandler{
-		ParseUIDArg: common.BoolPtr(false),
+		ParseUIDArg: boolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if ctx.UIDArg() != "" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
@@ -135,5 +133,28 @@ func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 	}
 	if got, _ := params["target_user_id"].(string); got != "67890" {
 		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
+	}
+}
+
+func TestDispatchSupportsSKPredictMode(t *testing.T) {
+	EnsureCommandHandlersRegistered(nil)
+
+	result, err := handler.Dispatch(context.Background(), handler.Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]interface{}{"text": "/skp event101 100"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok || resolved == nil {
+		t.Fatalf("expected resolved command, got %#v", result)
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-predict" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
 	}
 }

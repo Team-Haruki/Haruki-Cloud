@@ -75,6 +75,33 @@ func TestResolveRegionAssetPathFallsBackToOnDemand(t *testing.T) {
 	}
 }
 
+func TestResolveRegionAssetPathHandlesCaseMismatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	helper := NewAssetHelper(tmpDir, nil)
+
+	full := filepath.Join(
+		tmpDir,
+		"asset",
+		"jp-assets",
+		"startapp",
+		"music",
+		"jacket",
+		"Jacket_S_001",
+		"Jacket_S_001.png",
+	)
+	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(full, []byte("ok"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	got := ResolveRegionAssetPath(helper, "jp", filepath.Join("music", "jacket", "jacket_s_001", "jacket_s_001.png"))
+	if want := filepath.ToSlash(full); got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
 func TestResolveRegionAssetPathPrefersStartAppOverOnDemand(t *testing.T) {
 	tmpDir := t.TempDir()
 	helper := NewAssetHelper(tmpDir, nil)

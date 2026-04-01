@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"haruki-cloud/api/bot/onebot11"
+	sekaidb "haruki-cloud/database/sekai"
 	bonddb "haruki-cloud/database/sekai/bond"
+	charactermissionv2parametergroupdb "haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	gamecharacterunitdb "haruki-cloud/database/sekai/gamecharacterunit"
 	leveldb "haruki-cloud/database/sekai/level"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -77,11 +79,20 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		data, err = rc.App.Edu.RenderChallengeLiveDetails(q)
 
 	case "education-bonds":
+		query := education.BondsQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &query)
+		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
+			query.Cid, err = resolveEducationBondsCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		req := drawing.BondsRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.Bonds) == 0 && suiteUID > 0 {
 			bondsReq, buildErr := buildBondsRequestFromSuite(
-				rc.Ctx, rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				rc.Ctx, rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile, query.Cid)
 			if buildErr == nil {
 				req = *bondsReq
 			}
@@ -207,6 +218,7 @@ func buildEducationSnapshotFromSuite(
 func buildBondsRequestFromSuite(
 	ctx context.Context, app *renderapp.App, region string, uid int64, platform, platformUserID string,
 	profile *drawing.DetailedProfileCardRequest,
+	targetCharacterID int,
 ) (*drawing.BondsRequest, error) {
 	tc := sekaiutils.GetToolboxClient()
 
@@ -259,6 +271,20 @@ func buildBondsRequestFromSuite(
 		groupToPair[int(b.GroupID)] = bondPair{CharID1: int(b.CharacterId1), CharID2: int(b.CharacterId2)}
 	}
 
+	type suiteBondEntry struct {
+		BondsGroupID int
+		Rank         int
+		Exp          int
+	}
+	userBondByGroupID := make(map[int]suiteBondEntry, len(suiteBonds))
+	for _, sb := range suiteBonds {
+		userBondByGroupID[sb.BondsGroupID] = suiteBondEntry{
+			BondsGroupID: sb.BondsGroupID,
+			Rank:         sb.Rank,
+			Exp:          sb.Exp,
+		}
+	}
+
 	bondLevels, err := app.Sekai.Level.Query().
 		Where(
 			leveldb.ServerRegionEQ(normalizedRegion),
@@ -278,17 +304,40 @@ func buildBondsRequestFromSuite(
 		}
 	}
 
+	selectedPairs := make([]bondPair, 0, len(suiteBonds))
+	selectedState := make([]suiteBondEntry, 0, len(suiteBonds))
 	requiredCharIDs := make(map[int]struct{}, len(suiteBonds)*2)
-	for _, sb := range suiteBonds {
-		pair, ok := groupToPair[sb.BondsGroupID]
-		if !ok {
-			continue
+	if targetCharacterID > 0 {
+		for _, master := range bondsMaster {
+			if master == nil {
+				continue
+			}
+			pair := bondPair{CharID1: int(master.CharacterId1), CharID2: int(master.CharacterId2)}
+			if pair.CharID1 != targetCharacterID && pair.CharID2 != targetCharacterID {
+				continue
+			}
+			if pair.CharID1 != targetCharacterID {
+				pair.CharID1, pair.CharID2 = pair.CharID2, pair.CharID1
+			}
+			selectedPairs = append(selectedPairs, pair)
+			selectedState = append(selectedState, userBondByGroupID[int(master.GroupID)])
+			requiredCharIDs[pair.CharID1] = struct{}{}
+			requiredCharIDs[pair.CharID2] = struct{}{}
 		}
-		requiredCharIDs[pair.CharID1] = struct{}{}
-		requiredCharIDs[pair.CharID2] = struct{}{}
+	} else {
+		for _, sb := range suiteBonds {
+			pair, ok := groupToPair[sb.BondsGroupID]
+			if !ok {
+				continue
+			}
+			selectedPairs = append(selectedPairs, pair)
+			selectedState = append(selectedState, userBondByGroupID[sb.BondsGroupID])
+			requiredCharIDs[pair.CharID1] = struct{}{}
+			requiredCharIDs[pair.CharID2] = struct{}{}
+		}
 	}
 
-	// Map game_id → game_character_id for icon paths (e.g., 46 → actual 1-26 range ID)
+	// Map game_id to game_character_id for icon paths (e.g. 46 to actual 1-26 range ID).
 	gameIDToCharID := make(map[int]int, len(requiredCharIDs))
 	charColorMap := make(map[int][]int, len(requiredCharIDs))
 	if len(requiredCharIDs) > 0 {
@@ -328,17 +377,19 @@ func buildBondsRequestFromSuite(
 		}
 		return charaIconPath(app.Assets, gameID)
 	}
-
-	bonds := make([]drawing.BondInfo, 0, len(suiteBonds))
-	userMaxLevel := 0
-	for _, sb := range suiteBonds {
-		pair, ok := groupToPair[sb.BondsGroupID]
-		if !ok {
-			continue
+	resolveBondSortCharacterID := func(gameID int) int {
+		if mapped, ok := gameIDToCharID[gameID]; ok && mapped > 0 {
+			return mapped
 		}
+		return gameID
+	}
 
-		if sb.Rank > userMaxLevel {
-			userMaxLevel = sb.Rank
+	bonds := make([]drawing.BondInfo, 0, len(selectedPairs))
+	userMaxLevel := 0
+	for idx, pair := range selectedPairs {
+		state := selectedState[idx]
+		if state.Rank > userMaxLevel {
+			userMaxLevel = state.Rank
 		}
 
 		info := drawing.BondInfo{
@@ -348,8 +399,8 @@ func buildBondsRequestFromSuite(
 			CharaIconPath2: resolveCharIcon(pair.CharID2),
 			CharaRank1:     charRankMap[pair.CharID1],
 			CharaRank2:     charRankMap[pair.CharID2],
-			BondLevel:      sb.Rank,
-			HasBond:        true,
+			BondLevel:      state.Rank,
+			HasBond:        state.BondsGroupID != 0,
 			Color1:         defaultBondColor(),
 			Color2:         defaultBondColor(),
 		}
@@ -359,11 +410,11 @@ func buildBondsRequestFromSuite(
 		if color, ok := charColorMap[pair.CharID2]; ok {
 			info.Color2 = color
 		}
-		if sb.Rank > 0 && sb.Rank < maxLevel {
-			currentTotalExp, okCurrent := levelTotalExp[sb.Rank]
-			nextTotalExp, okNext := levelTotalExp[sb.Rank+1]
+		if state.Rank > 0 && state.Rank < maxLevel {
+			currentTotalExp, okCurrent := levelTotalExp[state.Rank]
+			nextTotalExp, okNext := levelTotalExp[state.Rank+1]
 			if okCurrent && okNext {
-				needExp := nextTotalExp - currentTotalExp - sb.Exp
+				needExp := nextTotalExp - currentTotalExp - state.Exp
 				if needExp < 0 {
 					needExp = 0
 				}
@@ -372,10 +423,57 @@ func buildBondsRequestFromSuite(
 		}
 		bonds = append(bonds, info)
 	}
+	if targetCharacterID > 0 {
+		deduped := make([]drawing.BondInfo, 0, len(bonds))
+		indexByDisplayRight := make(map[int]int, len(bonds))
+		betterBondInfo := func(current, candidate drawing.BondInfo) bool {
+			if candidate.BondLevel != current.BondLevel {
+				return candidate.BondLevel > current.BondLevel
+			}
+			if candidate.HasBond != current.HasBond {
+				return candidate.HasBond
+			}
+			rightCurrent := resolveBondSortCharacterID(current.CharaID2)
+			rightCandidate := resolveBondSortCharacterID(candidate.CharaID2)
+			if rightCandidate != rightCurrent {
+				return rightCandidate < rightCurrent
+			}
+			return candidate.CharaID2 < current.CharaID2
+		}
+		for _, bond := range bonds {
+			displayRight := resolveBondSortCharacterID(bond.CharaID2)
+			if idx, ok := indexByDisplayRight[displayRight]; ok {
+				if betterBondInfo(deduped[idx], bond) {
+					deduped[idx] = bond
+				}
+				continue
+			}
+			indexByDisplayRight[displayRight] = len(deduped)
+			deduped = append(deduped, bond)
+		}
+		bonds = deduped
+	}
 	if maxLevel == 0 {
 		maxLevel = userMaxLevel
 	}
 	sort.Slice(bonds, func(i, j int) bool {
+		if targetCharacterID > 0 {
+			if bonds[i].BondLevel != bonds[j].BondLevel {
+				return bonds[i].BondLevel > bonds[j].BondLevel
+			}
+			if bonds[i].HasBond != bonds[j].HasBond {
+				return bonds[i].HasBond
+			}
+			rightI := resolveBondSortCharacterID(bonds[i].CharaID2)
+			rightJ := resolveBondSortCharacterID(bonds[j].CharaID2)
+			if rightI != rightJ {
+				return rightI < rightJ
+			}
+			if bonds[i].CharaID2 != bonds[j].CharaID2 {
+				return bonds[i].CharaID2 < bonds[j].CharaID2
+			}
+			return bonds[i].CharaID1 < bonds[j].CharaID1
+		}
 		if bonds[i].BondLevel != bonds[j].BondLevel {
 			return bonds[i].BondLevel > bonds[j].BondLevel
 		}
@@ -401,54 +499,118 @@ func buildLeaderCountRequestFromSuite(
 	profile *drawing.DetailedProfileCardRequest,
 ) (*drawing.LeaderCountRequest, error) {
 	tc := sekaiutils.GetToolboxClient()
+	playCountByCharacter := make(map[int]int, 26)
 
-	raw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacterLiveUsageCounts")
-	if err != nil {
-		return nil, fmt.Errorf("fetch userCharacterLiveUsageCounts: %w", err)
-	}
-
-	var usageCounts []struct {
-		CharacterID            int    `json:"characterId"`
-		CharacterLiveUsageType string `json:"characterLiveUsageType"`
-		UsageCount             int    `json:"usageCount"`
-	}
-	if err := json.Unmarshal(raw, &usageCounts); err != nil {
-		return nil, fmt.Errorf("decode userCharacterLiveUsageCounts: %w", err)
-	}
-
-	// Group by character, pick leader counts.
-	type charEntry struct {
-		LeaderCount int
-		MemberCount int
-	}
-	charMap := make(map[int]*charEntry)
-	for _, u := range usageCounts {
-		entry, ok := charMap[u.CharacterID]
-		if !ok {
-			entry = &charEntry{}
-			charMap[u.CharacterID] = entry
-		}
-		switch u.CharacterLiveUsageType {
-		case "leader":
-			entry.LeaderCount = u.UsageCount
-		case "member":
-			entry.MemberCount = u.UsageCount
+	var missionGroups []leaderMissionRequirement
+	maxPlayLimit := 0
+	if app != nil && app.Sekai != nil {
+		var missionErr error
+		missionGroups, maxPlayLimit, missionErr = loadLeaderMissionRequirements(app.Sekai, region)
+		if missionErr != nil {
+			return nil, missionErr
 		}
 	}
 
-	leaders := make([]drawing.LeaderCountInfo, 0, len(charMap))
-	maxPlay := 0
-	for charID, entry := range charMap {
-		if entry.LeaderCount > maxPlay {
-			maxPlay = entry.LeaderCount
+	exCountByCharacter := make(map[int]int)
+	exLevelByCharacter := make(map[int]int)
+	hasPlayLiveMission := false
+
+	if raw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacterMissionV2s"); err == nil {
+		var missions []struct {
+			CharacterMissionType string `json:"characterMissionType"`
+			CharacterID          int    `json:"characterId"`
+			Progress             int    `json:"progress"`
 		}
+		if err := json.Unmarshal(raw, &missions); err != nil {
+			return nil, fmt.Errorf("decode userCharacterMissionV2s: %w", err)
+		}
+		for _, item := range missions {
+			if item.CharacterID <= 0 {
+				continue
+			}
+			switch strings.ToLower(strings.TrimSpace(item.CharacterMissionType)) {
+			case "play_live":
+				playCountByCharacter[item.CharacterID] = item.Progress
+				hasPlayLiveMission = true
+			case "play_live_ex":
+				exCountByCharacter[item.CharacterID] = item.Progress
+				if _, ok := exLevelByCharacter[item.CharacterID]; !ok {
+					exLevelByCharacter[item.CharacterID] = 0
+				}
+			}
+		}
+	}
+
+	if !hasPlayLiveMission {
+		raw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacterLiveUsageCounts")
+		if err != nil {
+			return nil, fmt.Errorf("fetch userCharacterMissionV2s: %w", err)
+		}
+
+		var usageCounts []struct {
+			CharacterID            int    `json:"characterId"`
+			CharacterLiveUsageType string `json:"characterLiveUsageType"`
+			UsageCount             int    `json:"usageCount"`
+		}
+		if err := json.Unmarshal(raw, &usageCounts); err != nil {
+			return nil, fmt.Errorf("decode userCharacterLiveUsageCounts: %w", err)
+		}
+		for _, item := range usageCounts {
+			if item.CharacterID <= 0 || !strings.EqualFold(item.CharacterLiveUsageType, "leader") {
+				continue
+			}
+			playCountByCharacter[item.CharacterID] = item.UsageCount
+		}
+	}
+
+	if raw, err := tc.GetPrivateDataValue(region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userCharacterMissionV2Statuses"); err == nil {
+		var statuses []struct {
+			ParameterGroupID int `json:"parameterGroupId"`
+			Seq              int `json:"seq"`
+			CharacterID      int `json:"characterId"`
+		}
+		if err := json.Unmarshal(raw, &statuses); err != nil {
+			return nil, fmt.Errorf("decode userCharacterMissionV2Statuses: %w", err)
+		}
+		for _, item := range statuses {
+			if item.CharacterID <= 0 || item.ParameterGroupID != 101 {
+				continue
+			}
+			if item.Seq > exLevelByCharacter[item.CharacterID] {
+				exLevelByCharacter[item.CharacterID] = item.Seq
+			}
+			exCountByCharacter[item.CharacterID] += leaderMissionRequirementForSeq(missionGroups, item.Seq)
+		}
+	}
+
+	leaders := make([]drawing.LeaderCountInfo, 0, 26)
+	for charID := 1; charID <= 26; charID++ {
+		playCount := playCountByCharacter[charID]
 		leaders = append(leaders, drawing.LeaderCountInfo{
 			CharaID:       charID,
 			CharaIconPath: charaIconPath(app.Assets, charID),
-			PlayCount:     entry.LeaderCount,
+			PlayCount:     playCount,
+			ExLevel:       exLevelByCharacter[charID],
+			ExCount:       exCountByCharacter[charID],
 		})
 	}
-	sort.Slice(leaders, func(i, j int) bool { return leaders[i].PlayCount > leaders[j].PlayCount })
+	sort.SliceStable(leaders, func(i, j int) bool {
+		totalI := leaders[i].PlayCount + leaders[i].ExCount
+		totalJ := leaders[j].PlayCount + leaders[j].ExCount
+		if totalI == totalJ {
+			return leaders[i].CharaID < leaders[j].CharaID
+		}
+		return totalI > totalJ
+	})
+
+	maxPlay := maxPlayLimit
+	if maxPlay <= 0 {
+		for _, item := range leaders {
+			if item.PlayCount > maxPlay {
+				maxPlay = item.PlayCount
+			}
+		}
+	}
 
 	req := &drawing.LeaderCountRequest{
 		LeaderCounts: leaders,
@@ -458,6 +620,65 @@ func buildLeaderCountRequestFromSuite(
 		req.Profile = *profile
 	}
 	return req, nil
+}
+
+type leaderMissionRequirement struct {
+	Seq         int
+	Requirement int
+}
+
+func loadLeaderMissionRequirements(client *sekaidb.Client, region string) ([]leaderMissionRequirement, int, error) {
+	if client == nil {
+		return nil, 0, nil
+	}
+
+	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
+	if normalizedRegion == "" {
+		normalizedRegion = "jp"
+	}
+
+	groups, err := client.Charactermissionv2Parametergroup.Query().
+		Where(
+			charactermissionv2parametergroupdb.ServerRegionEQ(normalizedRegion),
+			charactermissionv2parametergroupdb.GameIDIn(1, 101),
+		).
+		Order(charactermissionv2parametergroupdb.ByGameID(), charactermissionv2parametergroupdb.BySeq()).
+		All(context.Background())
+	if err != nil {
+		return nil, 0, fmt.Errorf("query charactermissionv2parametergroups: %w", err)
+	}
+
+	requirements := make([]leaderMissionRequirement, 0)
+	maxPlayLimit := 0
+	for _, item := range groups {
+		switch item.GameID {
+		case 1:
+			if requirement := int(item.Requirement); requirement > maxPlayLimit {
+				maxPlayLimit = requirement
+			}
+		case 101:
+			requirements = append(requirements, leaderMissionRequirement{
+				Seq:         int(item.Seq),
+				Requirement: int(item.Requirement),
+			})
+		}
+	}
+	return requirements, maxPlayLimit, nil
+}
+
+func leaderMissionRequirementForSeq(requirements []leaderMissionRequirement, seq int) int {
+	if seq <= 0 || len(requirements) == 0 {
+		return 0
+	}
+
+	result := 0
+	for _, item := range requirements {
+		if item.Seq > seq {
+			break
+		}
+		result = item.Requirement
+	}
+	return result
 }
 
 // charaIconPath resolves a character icon path using the asset helper.

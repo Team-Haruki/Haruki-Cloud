@@ -1,5 +1,7 @@
 package card
 
+import "strings"
+
 var defaultNicknames = map[string]int{
 	"ick": 1, "ichika": 1, "星乃一歌": 1, "星乃": 1, "一歌": 1,
 	"saki": 2, "咲希": 2, "天马咲希": 2, "天馬咲希": 2,
@@ -35,4 +37,25 @@ func cloneNicknames(items map[string]int) map[string]int {
 		result[key] = value
 	}
 	return result
+}
+
+func DefaultCharacterNicknames() map[string]int {
+	return cloneNicknames(defaultNicknames)
+}
+
+func ResolveDefaultCharacterNickname(query string) (int, bool) {
+	target := normalizeNicknameQuery(query)
+	if target == "" {
+		return 0, false
+	}
+	for nickname, characterID := range defaultNicknames {
+		if normalizeNicknameQuery(nickname) == target {
+			return characterID, true
+		}
+	}
+	return 0, false
+}
+
+func normalizeNicknameQuery(text string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(text)), ""))
 }

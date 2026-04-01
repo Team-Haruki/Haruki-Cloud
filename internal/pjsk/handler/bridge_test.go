@@ -1001,6 +1001,7 @@ func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T
 		"qq",
 		"42",
 		nil,
+		0,
 	)
 	if err != nil {
 		t.Fatalf("buildBondsRequestFromSuite: %v", err)

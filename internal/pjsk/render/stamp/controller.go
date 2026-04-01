@@ -143,11 +143,22 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 			filter[id] = struct{}{}
 		}
 	}
+	characterFilter := make(map[int]struct{}, len(query.CharacterIDs))
+	for _, id := range query.CharacterIDs {
+		if id > 0 {
+			characterFilter[id] = struct{}{}
+		}
+	}
 
 	items := make([]drawing.StampData, 0, len(stamps))
 	for _, item := range stamps {
 		if len(filter) > 0 {
 			if _, ok := filter[item.ID]; !ok {
+				continue
+			}
+		}
+		if len(characterFilter) > 0 {
+			if _, ok := characterFilter[item.CharacterID]; !ok {
 				continue
 			}
 		}
@@ -174,6 +185,7 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 		prompt = strings.Join([]string{
 			`发送"/stamp 序号"获取单张表情`,
 			`发送"/stamp 序号 序号"获取多张表情`,
+			`发送"/stamp 角色名"按角色筛选表情`,
 			`发送"/stamp page 2"查看指定页`,
 			`发送"/stamp all"返回全部页`,
 		}, "\n")

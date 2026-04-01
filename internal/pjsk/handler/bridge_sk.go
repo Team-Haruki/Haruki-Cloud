@@ -131,6 +131,21 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 		req := drawing.RankTraceRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		data, err = rc.App.SK.RenderRankTrace(req)
+	case "sk-predict":
+		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
+				return nil, err
+			}
+			payload, err := rc.App.SK.BuildPredictLineRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			data, err = rc.App.SK.RenderLine(*payload)
+			break
+		}
+		req := sk.LineRequest{}
+		mergeParams(rc.Cmd.Params, &req)
+		data, err = rc.App.SK.RenderLine(req)
 	case "sk-winrate":
 		req := drawing.WinRateRequest{}
 		mergeParams(rc.Cmd.Params, &req)

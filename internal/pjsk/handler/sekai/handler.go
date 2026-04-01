@@ -158,6 +158,10 @@ func (skh *SekaiCommandHandler) shouldParseUIDArg() bool {
 	return *skh.ParseUIDArg
 }
 
+func boolPtr(v bool) *bool {
+	return &v
+}
+
 var DefaultRegions = AllRegions
 
 var registerOnce sync.Once

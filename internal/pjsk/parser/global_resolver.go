@@ -117,6 +117,7 @@ func init() {
 		{regexp.MustCompile(`(?i)^/(sk-speed|sk时速|时速线|pjsk sk speed|pjsk board speed|sks|skv|sktime)\s*(.*)`), ModuleSK, "sk-speed"},
 		{regexp.MustCompile(`(?i)^/(sk-player-trace|sk玩家轨迹|玩家轨迹|ptr|pjsk玩家追踪|pjsk ptr)\s*(.*)`), ModuleSK, "sk-player-trace"},
 		{regexp.MustCompile(`(?i)^/(sk-rank-trace|sk档线轨迹|档线轨迹|rtr|skt|sklt|sktl|pjsk追踪|pjsk sk追踪)\s*(.*)`), ModuleSK, "sk-rank-trace"},
+		{regexp.MustCompile(`(?i)^/(sk预测|榜线预测|skp|pjsk sk predict|pjsk board predict)\s*(.*)`), ModuleSK, "sk-predict"},
 		{regexp.MustCompile(`(?i)^/(sk-winrate|sk胜率|胜率预测|pjsk winrate predict|5v5预测|5v5胜率)\s*(.*)`), ModuleSK, "sk-winrate"},
 
 		// ── Mysekai ──────────────────────────────────────────────────────────────

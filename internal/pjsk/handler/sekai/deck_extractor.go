@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"strconv"
 	"strings"
@@ -226,15 +227,28 @@ func extractDeckMusicQuery(args string, params *deckAutoQueryParams) (string, er
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	if turn, _, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && charQuery != "" {
+	if turn, charID, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && (charID > 0 || charQuery != "") {
 		params.WorldBloomEventTurn = intPtr(turn)
-		params.WorldBloomCharacterQuery = charQuery
+		if charID > 0 {
+			params.WorldBloomCharacterID = intPtr(charID)
+			if params.EventUnit == "" {
+				params.EventUnit = deckCharacterUnit(charID)
+			}
+		} else {
+			params.WorldBloomCharacterQuery = charQuery
+		}
 		return remaining, nil
 	}
 
 	if eventID, remaining := extractDeckEventID(args); eventID != nil {
 		params.EventID = eventID
-		if _, charQuery, next := extractDeckCharacterCandidate(remaining, true); charQuery != "" {
+		if charID, charQuery, next := extractDeckCharacterCandidate(remaining, true); charID > 0 {
+			params.WorldBloomCharacterID = intPtr(charID)
+			if params.EventUnit == "" {
+				params.EventUnit = deckCharacterUnit(charID)
+			}
+			return next, nil
+		} else if charQuery != "" {
 			params.WorldBloomCharacterQuery = charQuery
 			return next, nil
 		}
@@ -315,7 +329,19 @@ func extractDeckUnit(args string) (string, string) {
 }
 
 func extractDeckCharacter(args string) (int, string) {
-	return 0, normalizeDeckSpaces(args)
+	normalized := normalizeDeckSpaces(args)
+	if normalized == "" {
+		return 0, ""
+	}
+	ext := rendercard.NewExtractor(rendercard.DefaultCharacterNicknames())
+	result := ext.ExtractCharacter(normalized)
+	if result.Found {
+		return result.Value, normalizeDeckSpaces(result.Remaining)
+	}
+	if charID, ok := rendercard.ResolveDefaultCharacterNickname(normalized); ok {
+		return charID, ""
+	}
+	return 0, normalized
 }
 
 func extractDeckCharacterCandidate(args string, allowSingleFieldFallback bool) (int, string, string) {
@@ -326,6 +352,9 @@ func extractDeckCharacterCandidate(args string, allowSingleFieldFallback bool) (
 	args = normalizeDeckSpaces(args)
 	if !allowSingleFieldFallback || args == "" {
 		return 0, "", args
+	}
+	if _, ok := rendercard.ResolveDefaultCharacterNickname(args); ok {
+		return 0, args, ""
 	}
 	if len(strings.Fields(args)) != 1 {
 		return 0, "", args

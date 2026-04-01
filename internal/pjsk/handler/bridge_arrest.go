@@ -11,6 +11,7 @@ import (
 	sekaidb "haruki-cloud/database/sekai"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/card"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/query"
 	sekaiutils "haruki-cloud/utils/sekai"
@@ -133,6 +134,10 @@ func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, re
 	return resolveGameCharacterIDByQuery(ctx, app, region, query, "education area")
 }
 
+func resolveEducationBondsCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
+	return resolveGameCharacterIDByQuery(ctx, app, region, query, "education bonds")
+}
+
 func resolveGameCharacterIDByQuery(
 	ctx context.Context,
 	app *renderapp.App,
@@ -158,6 +163,9 @@ func resolveGameCharacterIDByQuery(
 		} else if ok && charID > 0 {
 			return charID, nil
 		}
+	}
+	if charID, ok := card.ResolveDefaultCharacterNickname(query); ok && charID > 0 {
+		return charID, nil
 	}
 
 	rows, err := app.Sekai.Gamecharacter.Query().

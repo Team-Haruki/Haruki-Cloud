@@ -100,11 +100,20 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 		if req.MatchedCommand == "" {
 			return botResponse(c, fiber.StatusBadRequest, "matched_command is required")
 		}
-		if !slices.Contains(commands, req.MatchedCommand) {
+		// Backward compatibility: /skp moved from sk/rank-trace to sk/predict.
+		// Some clients may still post /skp to the old endpoint until manifests refresh.
+		legacySKPredictCompat := expectedPath == "sk/rank-trace"
+		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 
 		resolved, err := resolveBotCommand(req.Message, expectedPath, req)
+		if err != nil && legacySKPredictCompat {
+			var validationErr *botValidationError
+			if errors.As(err, &validationErr) && strings.Contains(validationErr.Error(), "belongs to path sk/predict") {
+				resolved, err = resolveBotCommand(req.Message, "sk/predict", req)
+			}
+		}
 		if err != nil {
 			var validationErr *botValidationError
 			if errors.As(err, &validationErr) {

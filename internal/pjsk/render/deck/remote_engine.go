@@ -3,6 +3,7 @@ package deck
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"haruki-cloud/config"
+	"github.com/klauspost/compress/zstd"
 )
 
 type remoteEngineProvider struct {
@@ -26,7 +27,7 @@ type remoteEngineProvider struct {
 func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	timeout := cfg.Timeout
 	if timeout <= 0 {
-		timeout = config.DeckRemoteEngineTimeout
+		timeout = 75 * time.Second
 	}
 	return &remoteEngineProvider{
 		cfg:          cfg,
@@ -91,6 +92,15 @@ type remoteRecommendResult struct {
 	Decks []remoteRecommendDeck `json:"decks"`
 }
 
+type remoteBatchRecommendResult struct {
+	Alg      string               `json:"alg,omitempty"`
+	CostTime float64              `json:"cost_time,omitempty"`
+	WaitTime float64              `json:"wait_time,omitempty"`
+	Result   *remoteRecommendResult `json:"result,omitempty"`
+	Decks    []remoteRecommendDeck `json:"decks,omitempty"`
+	Error    string               `json:"error,omitempty"`
+}
+
 type remoteRecommendDeck struct {
 	Score                int                   `json:"score"`
 	LiveScore            int                   `json:"live_score"`
@@ -118,6 +128,10 @@ type remoteRecommendCard struct {
 
 type remoteErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type remoteUserDataCacheResponse struct {
+	UserdataHash string `json:"userdata_hash"`
 }
 
 func (r *RemoteDeckRecommender) Enabled() bool {
@@ -162,144 +176,9 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		return nil, err
 	}
 
-	type partial struct {
-		alg   string
-		decks []RecommendDeck
-		cost  float64
-		err   error
-	}
-
-	results := make(chan partial, len(req.BatchOption))
-	for _, option := range req.BatchOption {
-		opt := option
-		go func() {
-			alg, _ := opt["algorithm"].(string)
-			start := time.Now()
-			decks, err := r.recommendOption(req, opt)
-			results <- partial{
-				alg:   alg,
-				decks: decks,
-				cost:  time.Since(start).Seconds(),
-				err:   err,
-			}
-		}()
-	}
-
-	agg := &RecommendResult{
-		CostTimes: make(map[string]float64),
-		WaitTimes: make(map[string]float64),
-	}
-	seen := make(map[string]*RecommendDeck)
-	var order []string
-	var firstErr error
-
-	for range req.BatchOption {
-		p := <-results
-		if p.err != nil {
-			if firstErr == nil {
-				firstErr = p.err
-			}
-			continue
-		}
-		if p.alg != "" {
-			agg.CostTimes[p.alg] = p.cost
-			agg.WaitTimes[p.alg] = 0
-		}
-		for _, deck := range p.decks {
-			h := deckHash(deck)
-			if existing, ok := seen[h]; ok {
-				if p.alg != "" {
-					existing.Algs = append(existing.Algs, p.alg)
-				}
-				continue
-			}
-			deckCopy := deck
-			if p.alg != "" {
-				deckCopy.Algs = []string{p.alg}
-			}
-			seen[h] = &deckCopy
-			order = append(order, h)
-		}
-	}
-	if len(order) == 0 && firstErr != nil {
-		return nil, firstErr
-	}
-
-	type pair struct {
-		Deck RecommendDeck
-		Alg  string
-	}
-	var pairs []pair
-	for _, h := range order {
-		deck := seen[h]
-		algsMap := make(map[string]struct{})
-		for _, a := range deck.Algs {
-			algsMap[a] = struct{}{}
-		}
-		var algs []string
-		for alg := range algsMap {
-			algs = append(algs, alg)
-		}
-		sort.Strings(algs)
-		pairs = append(pairs, pair{Deck: *deck, Alg: strings.Join(algs, "+")})
-	}
-
-	liveType, _ := req.BatchOption[0]["live_type"].(string)
-	target, _ := req.BatchOption[0]["target"].(string)
-	sort.SliceStable(pairs, func(i, j int) bool {
-		d1 := pairs[i].Deck
-		d2 := pairs[j].Deck
-		if liveType == "mysekai" {
-			if d1.MysekaiEventPoint != d2.MysekaiEventPoint {
-				return d1.MysekaiEventPoint > d2.MysekaiEventPoint
-			}
-			return d1.TotalPower > d2.TotalPower
-		}
-		if target == "power" {
-			return d1.TotalPower > d2.TotalPower
-		}
-		if target == "skill" {
-			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
-		}
-		if target == "bonus" {
-			if d1.EventBonusRate != d2.EventBonusRate {
-				return d1.EventBonusRate < d2.EventBonusRate
-			}
-			if d1.Score != d2.Score {
-				return d1.Score > d2.Score
-			}
-			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
-		}
-		if d1.Score != d2.Score {
-			return d1.Score > d2.Score
-		}
-		return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
-	})
-
-	limitFloat, _ := req.BatchOption[0]["limit"].(float64)
-	limitInt, ok := req.BatchOption[0]["limit"].(int)
-	if !ok {
-		limitInt = int(limitFloat)
-	}
-	if limitInt <= 0 {
-		limitInt = len(pairs)
-	}
-	if limitInt > len(pairs) {
-		limitInt = len(pairs)
-	}
-
-	for i := 0; i < limitInt; i++ {
-		agg.Decks = append(agg.Decks, pairs[i].Deck)
-		agg.DeckAlgs = append(agg.DeckAlgs, pairs[i].Alg)
-	}
-
-	return agg, nil
-}
-
-func (r *RemoteDeckRecommender) recommendOption(req RecommendRequest, option map[string]interface{}) ([]RecommendDeck, error) {
-	result, err := r.doRecommend(req, option)
+	results, err := r.doRecommendBatch(req)
 	if err == nil {
-		return result, nil
+		return aggregateRemoteRecommendResults(req.BatchOption, results)
 	}
 	if !shouldRewarmRemoteService(err) {
 		return nil, err
@@ -308,26 +187,42 @@ func (r *RemoteDeckRecommender) recommendOption(req RecommendRequest, option map
 	if warmErr := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
 		return nil, warmErr
 	}
-	return r.doRecommend(req, option)
-}
-
-func (r *RemoteDeckRecommender) doRecommend(req RecommendRequest, option map[string]interface{}) ([]RecommendDeck, error) {
-	payload := cloneRecommendOption(option)
-	payload["region"] = strings.ToLower(strings.TrimSpace(req.Region))
-	// Always prefer sending bytes directly — the container cannot access host temp files.
-	if len(req.UserData) > 0 {
-		payload["user_data_str"] = string(req.UserData)
-	} else if path := strings.TrimSpace(req.UserDataFilePath); path != "" {
-		payload["user_data_file_path"] = path
-	} else {
-		return nil, fmt.Errorf("deck remote engine: no user data available")
-	}
-
-	var response remoteRecommendResult
-	if err := r.postJSON("/recommend", payload, &response); err != nil {
+	results, err = r.doRecommendBatch(req)
+	if err != nil {
 		return nil, err
 	}
-	return convertRemoteDecks(response.Decks), nil
+	return aggregateRemoteRecommendResults(req.BatchOption, results)
+}
+
+func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	userData := req.UserData
+	if len(userData) == 0 {
+		return nil, fmt.Errorf("deck remote engine: no user data bytes available")
+	}
+
+	var cacheResp remoteUserDataCacheResponse
+	if err := r.postBinary("/cache_userdata", buildMultipartPayload(userData), &cacheResp); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(cacheResp.UserdataHash) == "" {
+		return nil, fmt.Errorf("deck-service cache_userdata returned empty userdata_hash")
+	}
+
+	recommendPayload := map[string]interface{}{
+		"region":        strings.ToLower(strings.TrimSpace(req.Region)),
+		"batch_options": req.BatchOption,
+		"userdata_hash": cacheResp.UserdataHash,
+	}
+	recommendJSON, err := json.Marshal(recommendPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw json.RawMessage
+	if err := r.postBinary("/recommend", buildMultipartPayload(recommendJSON), &raw); err != nil {
+		return nil, err
+	}
+	return parseRemoteRecommendBatch(raw, req.BatchOption)
 }
 
 func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, musicMetaPath string) error {
@@ -427,6 +322,65 @@ func (r *RemoteDeckRecommender) postJSON(path string, requestBody interface{}, r
 	return json.Unmarshal(payload, responseBody)
 }
 
+func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, responseBody interface{}) error {
+	req, err := http.NewRequest(http.MethodPost, r.baseURL+path, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		var remoteErr remoteErrorResponse
+		if json.Unmarshal(body, &remoteErr) == nil && strings.TrimSpace(remoteErr.Error) != "" {
+			return fmt.Errorf("%s", remoteErr.Error)
+		}
+		if trimmed := strings.TrimSpace(string(body)); trimmed != "" {
+			return fmt.Errorf("deck-service returned HTTP %d: %s", resp.StatusCode, trimmed)
+		}
+		return fmt.Errorf("deck-service returned HTTP %d", resp.StatusCode)
+	}
+	if responseBody == nil || len(body) == 0 {
+		return nil
+	}
+	return json.Unmarshal(body, responseBody)
+}
+
+func buildMultipartPayload(segments ...[]byte) []byte {
+	var raw bytes.Buffer
+	for _, segment := range segments {
+		if err := binary.Write(&raw, binary.BigEndian, uint32(len(segment))); err != nil {
+			return nil
+		}
+		if _, err := raw.Write(segment); err != nil {
+			return nil
+		}
+	}
+
+	var compressed bytes.Buffer
+	writer, err := zstd.NewWriter(&compressed)
+	if err != nil {
+		return nil
+	}
+	if _, err := writer.Write(raw.Bytes()); err != nil {
+		_ = writer.Close()
+		return nil
+	}
+	if err := writer.Close(); err != nil {
+		return nil
+	}
+	return compressed.Bytes()
+}
+
 func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 	out := make([]RecommendDeck, 0, len(src))
 	for _, d := range src {
@@ -458,6 +412,163 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 		})
 	}
 	return out
+}
+
+func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]interface{}) ([]remoteBatchRecommendResult, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return nil, fmt.Errorf("deck-service returned empty response")
+	}
+
+	if trimmed[0] == '[' {
+		var items []remoteBatchRecommendResult
+		if err := json.Unmarshal(trimmed, &items); err != nil {
+			return nil, err
+		}
+		for i := range items {
+			if strings.TrimSpace(items[i].Alg) == "" && i < len(options) {
+				if alg, _ := options[i]["algorithm"].(string); strings.TrimSpace(alg) != "" {
+					items[i].Alg = alg
+				}
+			}
+		}
+		return items, nil
+	}
+
+	var single remoteRecommendResult
+	if err := json.Unmarshal(trimmed, &single); err != nil {
+		return nil, err
+	}
+	item := remoteBatchRecommendResult{Result: &single}
+	if len(options) > 0 {
+		if alg, _ := options[0]["algorithm"].(string); strings.TrimSpace(alg) != "" {
+			item.Alg = alg
+		}
+	}
+	return []remoteBatchRecommendResult{item}, nil
+}
+
+func aggregateRemoteRecommendResults(options []map[string]interface{}, results []remoteBatchRecommendResult) (*RecommendResult, error) {
+	agg := &RecommendResult{
+		CostTimes: make(map[string]float64),
+		WaitTimes: make(map[string]float64),
+	}
+	seen := make(map[string]*RecommendDeck)
+	var order []string
+	var firstErr error
+
+	for _, item := range results {
+		if strings.TrimSpace(item.Error) != "" {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("%s", strings.TrimSpace(item.Error))
+			}
+			continue
+		}
+
+		var decks []RecommendDeck
+		if item.Result != nil {
+			decks = convertRemoteDecks(item.Result.Decks)
+		} else {
+			decks = convertRemoteDecks(item.Decks)
+		}
+		if len(decks) == 0 {
+			continue
+		}
+
+		alg := strings.ToLower(strings.TrimSpace(item.Alg))
+		if alg != "" {
+			agg.CostTimes[alg] = item.CostTime
+			agg.WaitTimes[alg] = item.WaitTime
+		}
+
+		for _, deck := range decks {
+			h := deckHash(deck)
+			if existing, ok := seen[h]; ok {
+				if alg != "" {
+					existing.Algs = append(existing.Algs, alg)
+				}
+				continue
+			}
+			deckCopy := deck
+			if alg != "" {
+				deckCopy.Algs = []string{alg}
+			}
+			seen[h] = &deckCopy
+			order = append(order, h)
+		}
+	}
+	if len(order) == 0 && firstErr != nil {
+		return nil, firstErr
+	}
+
+	type pair struct {
+		Deck RecommendDeck
+		Alg  string
+	}
+	var pairs []pair
+	for _, h := range order {
+		deck := seen[h]
+		algsMap := make(map[string]struct{})
+		for _, a := range deck.Algs {
+			algsMap[a] = struct{}{}
+		}
+		var algs []string
+		for alg := range algsMap {
+			algs = append(algs, alg)
+		}
+		sort.Strings(algs)
+		pairs = append(pairs, pair{Deck: *deck, Alg: strings.Join(algs, "+")})
+	}
+
+	liveType, _ := options[0]["live_type"].(string)
+	target, _ := options[0]["target"].(string)
+	sort.SliceStable(pairs, func(i, j int) bool {
+		d1 := pairs[i].Deck
+		d2 := pairs[j].Deck
+		if liveType == "mysekai" {
+			if d1.MysekaiEventPoint != d2.MysekaiEventPoint {
+				return d1.MysekaiEventPoint > d2.MysekaiEventPoint
+			}
+			return d1.TotalPower > d2.TotalPower
+		}
+		if target == "power" {
+			return d1.TotalPower > d2.TotalPower
+		}
+		if target == "skill" {
+			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
+		}
+		if target == "bonus" {
+			if d1.EventBonusRate != d2.EventBonusRate {
+				return d1.EventBonusRate < d2.EventBonusRate
+			}
+			if d1.Score != d2.Score {
+				return d1.Score > d2.Score
+			}
+			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
+		}
+		if d1.Score != d2.Score {
+			return d1.Score > d2.Score
+		}
+		return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
+	})
+
+	limitFloat, _ := options[0]["limit"].(float64)
+	limitInt, ok := options[0]["limit"].(int)
+	if !ok {
+		limitInt = int(limitFloat)
+	}
+	if limitInt <= 0 {
+		limitInt = len(pairs)
+	}
+	if limitInt > len(pairs) {
+		limitInt = len(pairs)
+	}
+
+	for i := 0; i < limitInt; i++ {
+		agg.Decks = append(agg.Decks, pairs[i].Deck)
+		agg.DeckAlgs = append(agg.DeckAlgs, pairs[i].Alg)
+	}
+	return agg, nil
 }
 
 func shouldRewarmRemoteService(err error) bool {

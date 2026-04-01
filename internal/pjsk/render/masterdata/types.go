@@ -245,6 +245,7 @@ type Costume3d struct {
 type Stamp struct {
 	ID              int
 	AssetBundleName string
+	CharacterID     int
 }
 
 type Honor struct {

@@ -70,7 +70,7 @@
 | `sk/check-room` | `/查房` | `/sk-check-room` `/sk查房` `/查房` `/cf` `/pjsk查房` `/csb` `/冲水板` | ✅ | 查 CS 房间/水表 |
 | `sk/player-trace` | `/玩家轨迹` | `/sk-player-trace` `/玩家轨迹` `/ptr` `/pjsk玩家追踪` | ✅ ⚠️ | 需用户绑定 |
 | `sk/rank-trace` | `/档线轨迹` | `/sk-rank-trace` `/档线轨迹` `/rtr` `/skt` `/sklt` `/pjsk追踪` | ✅ | 档线历史轨迹 |
-| `sk/rank-trace` | `/sk预测` | `/pjsk sk predict` `/sk预测` `/榜线预测` `/skp` | ✅ | 榜线预测（共享路径） |
+| `sk/predict` | `/sk预测` | `/pjsk sk predict` `/sk预测` `/榜线预测` `/skp` | ✅ | 榜线预测（33kit/snowy/sekarun，暂不支持WL单榜） |
 | `sk/winrate` | `/胜率预测` | `/pjsk winrate predict` `/胜率预测` `/5v5预测` `/胜率` `/预测胜率` | ✅ | 5v5 胜率 |
 
 ---
@@ -220,7 +220,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | sk                     |       |    |    |                                 |        |
 | mysekai                | 9/9   | 9  | 0  | 上传数据的信息需要完善                     | 锡纸     |
 | profile                | 18/20 | 17 | 1  | bg相关需要处理client实现                | 锡纸     |
-| education              | 5/5   | 3  | 2  | 羁绊、队长缺图；                        | 锡纸     |
+| education              | 5/5   | 5  | 0  |   已通过                      | 锡纸、LQ     |
 | score                  | 4/4   | 4  | 0  |                                 | LQ、锡纸  |
 | alias                  | 9/9   | 9  | 0  | 别名列表过长的情况下应该用文本转图片再发送，这个后续优化    | LQ、锡纸  |
 | misc/gacha/stamp/vlive | 3/5   | 3  | 3  | 贴纸和卡池列表我没测                      | 锡纸     |

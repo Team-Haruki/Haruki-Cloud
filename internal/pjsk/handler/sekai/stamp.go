@@ -17,8 +17,8 @@ func (sekaiHandlers) StampHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			if page, ok := parseStampPage(args); ok {
-				ctx.SetArgs("")
+			if page, remaining, ok := parseStampPageWithRemaining(args); ok {
+				ctx.SetArgs(remaining)
 				return makeResolvedCmdWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
 					"page": page,
 				}), nil
@@ -57,20 +57,38 @@ func parseStampIDs(args string) []int {
 }
 
 func parseStampPage(args string) (int, bool) {
-	fields := strings.Fields(strings.TrimSpace(args))
-	if len(fields) != 2 {
-		return 0, false
-	}
-	switch strings.ToLower(fields[0]) {
-	case "page", "p", "页":
-	default:
-		return 0, false
-	}
-	page, err := strconv.Atoi(fields[1])
-	if err != nil || page <= 0 {
+	page, remaining, ok := parseStampPageWithRemaining(args)
+	if !ok || strings.TrimSpace(remaining) != "" {
 		return 0, false
 	}
 	return page, true
+}
+
+func parseStampPageWithRemaining(args string) (int, string, bool) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) < 2 {
+		return 0, "", false
+	}
+
+	for i := 0; i < len(fields)-1; i++ {
+		switch strings.ToLower(fields[i]) {
+		case "page", "p", "页":
+		default:
+			continue
+		}
+
+		page, err := strconv.Atoi(fields[i+1])
+		if err != nil || page <= 0 {
+			return 0, "", false
+		}
+
+		remainingFields := make([]string, 0, len(fields)-2)
+		remainingFields = append(remainingFields, fields[:i]...)
+		remainingFields = append(remainingFields, fields[i+2:]...)
+		return page, strings.Join(remainingFields, " "), true
+	}
+
+	return 0, "", false
 }
 
 func parseStampAll(args string) bool {

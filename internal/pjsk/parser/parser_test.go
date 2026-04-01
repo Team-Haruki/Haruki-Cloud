@@ -148,6 +148,7 @@ func TestGlobalResolver_Resolution(t *testing.T) {
 		{"Player Trace No Flag", "/sk-player-trace", "sk-player-trace", false},
 		{"Player Trace With Extraneous Text", "/sk玩家轨迹 a b c", "sk-player-trace", false},
 		{"Line", "/sk线", "sk-line", false},
+		{"Predict", "/skp", "sk-predict", false},
 		{"Event List with JP region", "/jp/event-list", "event-list", false},
 		{"Mysekai Resource Alias", "/msa", "mysekai-resource", false},
 		{"Mysekai Map Alias", "/msm", "mysekai-map", false},

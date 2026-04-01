@@ -43,6 +43,7 @@ func (p *dbStampProvider) GetAll() ([]masterdata.Stamp, error) {
 			stamps = append(stamps, masterdata.Stamp{
 				ID:              int(item.GameID),
 				AssetBundleName: item.AssetbundleName,
+				CharacterID:     int(item.CharacterId1),
 			})
 		}
 		p.stamps = stamps

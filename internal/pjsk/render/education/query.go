@@ -18,6 +18,13 @@ type PowerBonusQuery struct {
 	Snapshot *userdata.Service                   `json:"-"`
 }
 
+type BondsQuery struct {
+	Region         renderregion.Value                  `json:"region"`
+	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
+	Cid            int                                 `json:"cid,omitempty"`
+	CharacterQuery string                              `json:"character_query,omitempty"`
+}
+
 type AreaItemQuery struct {
 	Region         renderregion.Value                  `json:"region"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`

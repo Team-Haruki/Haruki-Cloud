@@ -74,12 +74,74 @@ func (h *AssetHelper) FirstExisting(relPaths ...string) string {
 				continue
 			}
 			candidate := filepath.Join(root, rel)
+			if resolved, ok := resolveCaseInsensitivePath(candidate); ok {
+				return filepath.ToSlash(resolved)
+			}
 			if _, err := os.Stat(candidate); err == nil {
 				return filepath.ToSlash(candidate)
 			}
 		}
 	}
 	return ""
+}
+
+func resolveCaseInsensitivePath(path string) (string, bool) {
+	clean := filepath.Clean(path)
+	if clean == "" {
+		return "", false
+	}
+
+	current := "."
+	remaining := clean
+
+	if filepath.IsAbs(clean) {
+		volume := filepath.VolumeName(clean)
+		if volume != "" {
+			current = volume + string(filepath.Separator)
+			remaining = strings.TrimPrefix(clean, volume)
+		} else {
+			current = string(filepath.Separator)
+		}
+	}
+
+	for _, segment := range strings.Split(filepath.ToSlash(remaining), "/") {
+		if segment == "" || segment == "." {
+			continue
+		}
+		if segment == ".." {
+			current = filepath.Dir(current)
+			continue
+		}
+
+		matched, ok := matchPathComponent(current, segment)
+		if !ok {
+			return "", false
+		}
+		current = filepath.Join(current, matched)
+	}
+
+	if _, err := os.Stat(current); err != nil {
+		return "", false
+	}
+	return current, true
+}
+
+func matchPathComponent(parent, segment string) (string, bool) {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		return "", false
+	}
+	for _, entry := range entries {
+		if entry.Name() == segment {
+			return segment, true
+		}
+	}
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Name(), segment) {
+			return entry.Name(), true
+		}
+	}
+	return "", false
 }
 
 func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) string {

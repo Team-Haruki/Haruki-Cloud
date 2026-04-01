@@ -377,7 +377,174 @@ func executeSK(rc *RequestContext)
 
 ---
 
-## 未做的工作
+### P16：music/controller.go 拆分 ✅
+
+**提交**：`d2737d5`
+
+将 782 行的 `controller.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| controller_helpers.go | 301 | currentSnapshot, profile helpers, buildPlaceholderProfile, convertDetailedProfileToCard, buildPlayResultIconMap, buildUserResults, buildUserProgressCounts, flattenProgressCounts, resolveMusicChartMeta, matchesMusicKeyword, resolveStaticIcon |
+
+**controller.go 从 782 行降至 494 行**（减少 37%）
+
+---
+
+### P17：drawing/cache.go 拆分 ✅
+
+**提交**：`4f8f5dc`
+
+将 728 行的 `cache.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| cache_helpers.go | 482 | policy building, endpoint parsing, payload normalization, sanitization, user ID extraction, profile detection, JSON traversal helpers (mapAt, valueAt, sliceAt等), scalar conversion, scope value, digest utilities |
+
+**cache.go 从 728 行降至 260 行**（减少 64%）
+
+---
+
+### P18：userdata/local.go 拆分 ✅
+
+**提交**：`060850e`
+
+将 689 行的 `local.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| local_helpers.go | 265 | mergeMySekaiJSON, resolveLeaderImagePath, fallbackLeaderImagePath, makeRelativeAsset, buildUserCardEntries, findActiveDeck, findUserCard, buildMusicResultMap, normalizePlayResult, prioritizePlayResult, convertChallenge*函数 |
+
+**local.go 从 689 行降至 438 行**（减少 36%）
+
+---
+
+### P19：music/builder.go 拆分 ✅
+
+**提交**：`a7b8af9`
+
+将 678 行的 `builder.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| builder_helpers.go | 253 | normalizeDifficulty, containsString, regionToLocation, formatTimestamp, selectLocalizedTitle, buildJPVocalOrderKey, normalizeVocalCaption, classifyVocalByAssetBundle, localizeVocalCaption, vocalLocalizationByRegion |
+
+**builder.go 从 678 行降至 435 行**（减少 36%）
+
+---
+
+### P20：profile/controller.go 拆分 ✅
+
+**提交**：`4a2d5e8`
+
+将 652 行的 `controller.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| controller_helpers.go | 369 | logProfilePayloadDebug, resolveProfileBGSettings, buildAPIUserCardEntries, buildLeaderImagePathFromSource, buildFramePaths, buildPCards, buildHonors, findEventRank, buildMusicCounts, buildCharacterRanks, buildSoloLive, buildCharaIconMap |
+
+**controller.go 从 652 行降至 297 行**（减少 54%）
+
+---
+
+### P21：handler/sekai/score.go 拆分 ✅
+
+**提交**：`9acee70`
+
+将 596 行的 `score.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| score_board_params.go | 462 | buildMusicBoardParams 及全部 board 参数解析函数 (extractMusicBoard*, parseMusicBoard*, resolveMusicBoard*, isMusicBoardLevelFilter) |
+
+**score.go 从 596 行降至 143 行**（减少 76%）
+
+---
+
+### P22：education/snapshot_build.go 拆分 ✅
+
+**提交**：`c3e9dbf`
+
+将 582 行的 `snapshot_build.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| snapshot_helpers.go | 161 | hasAreaItemFilter, areaItemMatchesFilter, areaItemTargetIcon, unitIconPath, attrIconPath, materialIconPath, normalizeUnit, normalizeAttr |
+
+**snapshot_build.go 从 582 行降至 431 行**（减少 26%）
+
+---
+
+### P23：card/builder.go 拆分 ✅
+
+**提交**：`336e0fd`
+
+将 577 行的 `builder.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| builder_helpers.go | 253 | BuildCardBasic, buildThumbnailInfo, calculatePower, buildDualSkillDetail, combineSkillLines, buildCardImagePaths, buildCostumeImagePaths, BuildCharacterIconPath, buildUnitLogoPath, buildSkillTypeIconPath, buildEventBannerPath, buildGachaBannerPath |
+
+**builder.go 从 577 行降至 338 行**（减少 41%）
+
+---
+
+### P24：handler/sekai/sk.go 拆分 ✅
+
+**提交**：`0efa1d2`
+
+将 574 行的 `sk.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| sk_params.go | 368 | buildSKTrackerParams, buildSKPlayerTraceParams, extractSKMetaArgs, parseSKWorldBloomCharacterToken, splitSKWorldBloomCharacterAndRanks, parseSKRanks, normalizeRanks, defaultSKRanksByMode |
+
+**sk.go 从 574 行降至 212 行**（减少 63%）
+
+---
+
+### P25：requestbuilder/misc_birthday.go 拆分 ✅
+
+**提交**：`59f866e`
+
+将 562 行的 `misc_birthday.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| birthday_helpers.go | 266 | matchBirthdayCharacterIDs, birthdayCharacterMatches/Names, loadBirthdayCards, birthdayCardImagePath, resolveBirthdayColorCode, buildBirthdayCalendar, nextBirthdayTime, birthdayRegionLocation, birthdayDaysUntil, birthdayTimeText |
+
+**misc_birthday.go 从 562 行降至 311 行**（减少 45%）
+
+---
+
+### P26：api/legacy/pjsk/render_route.go 拆分 ✅
+
+**提交**：`3c29e2d`
+
+将 1518 行的 `render_route.go` 按域拆分为 4 个文件：
+
+| 文件 | 行数 | 内容 |
+|------|------|------|
+| render_route.go | 668 | 路由注册、通用helper、card/deck/event/gacha/honor/profile/misc handler |
+| render_route_mysekai.go | 182 | MySekai Build/Render handler |
+| render_route_music.go | 290 | Music + Education Build/Render handler |
+| render_route_sk.go | 410 | SK + Score + Stamp Build/Render handler |
+
+**render_route.go 从 1518 行降至 668 行**（减少 56%）
+
+---
+
+### P27：mysekai/helpers.go 拆分 ✅
+
+**提交**：`7dea8e4`
+
+将 542 行的 `helpers.go` 拆分：
+
+| 已提取文件 | 行数 | 内容 |
+|-----------|------|------|
+| helpers_convert.go | 126 | intNumber, floatNumber, int64Number, boolValue, stringValue, nestedList, nestedInt, parseIntTokens |
+
+**helpers.go 从 542 行降至 423 行**（减少 22%）
 
 ### 1. 快照 Provider（snapshot-schema / store）
 

@@ -43,5 +43,4 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	default:
 		return nil, fmt.Errorf("bridge: unsupported stamp mode %q", rc.Cmd.Mode)
 	}
-	return nil, fmt.Errorf("bridge: unsupported stamp mode %q", rc.Cmd.Mode)
 }

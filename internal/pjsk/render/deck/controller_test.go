@@ -567,6 +567,69 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 	}
 }
 
+func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *testing.T) {
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			http.NotFound(w, r)
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payload map[string]interface{}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode recommend request: %v", err)
+			}
+			if payload["algorithm"] != "ga" {
+				t.Fatalf("unexpected legacy algorithm: %+v", payload["algorithm"])
+			}
+			if strings.TrimSpace(payload["user_data_str"].(string)) == "" {
+				t.Fatalf("expected user_data_str in legacy payload")
+			}
+			_, _ = w.Write([]byte(`{"decks":[{"score":123,"live_score":123,"mysekai_event_point":0,"total_power":456,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]}]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		Algorithm:     "ga",
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected one legacy recommend call, got %d", recommendCalls.Load())
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("unexpected request payload: %+v", request.DeckData)
+	}
+}
+
 func newTestDeckController(t *testing.T, cfg RecommendConfig) *Controller {
 	return newTestDeckControllerWithMeta(t, cfg, nil)
 }

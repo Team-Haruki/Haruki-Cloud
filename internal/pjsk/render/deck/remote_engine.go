@@ -176,7 +176,7 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		return nil, err
 	}
 
-	results, err := r.doRecommendBatch(req)
+	results, err := r.doRecommendCompatible(req)
 	if err == nil {
 		return aggregateRemoteRecommendResults(req.BatchOption, results)
 	}
@@ -187,11 +187,22 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	if warmErr := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
 		return nil, warmErr
 	}
-	results, err = r.doRecommendBatch(req)
+	results, err = r.doRecommendCompatible(req)
 	if err != nil {
 		return nil, err
 	}
 	return aggregateRemoteRecommendResults(req.BatchOption, results)
+}
+
+func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	results, err := r.doRecommendBatch(req)
+	if err == nil {
+		return results, nil
+	}
+	if !isUnsupportedBatchProtocolError(err) {
+		return nil, err
+	}
+	return r.doRecommendLegacy(req)
 }
 
 func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
@@ -223,6 +234,69 @@ func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remote
 		return nil, err
 	}
 	return parseRemoteRecommendBatch(raw, req.BatchOption)
+}
+
+func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	type partial struct {
+		item remoteBatchRecommendResult
+		err  error
+	}
+
+	results := make(chan partial, len(req.BatchOption))
+	for _, option := range req.BatchOption {
+		opt := cloneRecommendOption(option)
+		go func() {
+			alg, _ := opt["algorithm"].(string)
+			start := time.Now()
+			decks, err := r.doRecommendLegacyOption(req, opt)
+			if err != nil {
+				results <- partial{err: err}
+				return
+			}
+			results <- partial{
+				item: remoteBatchRecommendResult{
+					Alg:      alg,
+					CostTime: time.Since(start).Seconds(),
+					Result:   &remoteRecommendResult{Decks: decks},
+				},
+			}
+		}()
+	}
+
+	out := make([]remoteBatchRecommendResult, 0, len(req.BatchOption))
+	var firstErr error
+	for range req.BatchOption {
+		item := <-results
+		if item.err != nil {
+			if firstErr == nil {
+				firstErr = item.err
+			}
+			continue
+		}
+		out = append(out, item.item)
+	}
+	if len(out) == 0 && firstErr != nil {
+		return nil, firstErr
+	}
+	return out, nil
+}
+
+func (r *RemoteDeckRecommender) doRecommendLegacyOption(req RecommendRequest, option map[string]interface{}) ([]remoteRecommendDeck, error) {
+	payload := cloneRecommendOption(option)
+	payload["region"] = strings.ToLower(strings.TrimSpace(req.Region))
+	if len(req.UserData) > 0 {
+		payload["user_data_str"] = string(req.UserData)
+	} else if path := strings.TrimSpace(req.UserDataFilePath); path != "" {
+		payload["user_data_file_path"] = path
+	} else {
+		return nil, fmt.Errorf("deck remote engine: no user data available")
+	}
+
+	var response remoteRecommendResult
+	if err := r.postJSON("/recommend", payload, &response); err != nil {
+		return nil, err
+	}
+	return response.Decks, nil
 }
 
 func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, musicMetaPath string) error {
@@ -579,6 +653,16 @@ func shouldRewarmRemoteService(err error) bool {
 	return strings.Contains(message, "master data not found") ||
 		strings.Contains(message, "music metas not found") ||
 		strings.Contains(message, "music meta not found")
+}
+
+func isUnsupportedBatchProtocolError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "http 404") ||
+		strings.Contains(message, "missing field `live_type`") ||
+		strings.Contains(message, "unsupported media type")
 }
 
 func hashPayload(data []byte) string {

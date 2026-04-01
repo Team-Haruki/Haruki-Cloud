@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/render/common"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
@@ -136,7 +137,7 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		if _, exists := specRankMap[row.Rank]; exists {
 			continue
 		}
-		if len(normalized.DiffFilter) > 0 && !containsString(normalized.DiffFilter, row.Difficulty) {
+		if len(normalized.DiffFilter) > 0 && !common.ContainsString(normalized.DiffFilter, row.Difficulty) {
 			continue
 		}
 		if !matchesMusicBoardLevelFilter(row.Level, normalized.LevelFilter) {
@@ -269,7 +270,7 @@ func normalizeMusicBoardQuery(query BoardQuery) musicBoardResolvedQuery {
 		if normalized == "" {
 			continue
 		}
-		if containsString(diffFilter, normalized) {
+		if common.ContainsString(diffFilter, normalized) {
 			continue
 		}
 		diffFilter = append(diffFilter, normalized)

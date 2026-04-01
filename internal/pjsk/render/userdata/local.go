@@ -11,6 +11,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
@@ -259,9 +260,9 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 		return service
 	}
 
-	activeDeck := findActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
+	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 	leaderCardID := activeDeck.Leader
-	leaderCard := findUserCard(raw.UserCards, leaderCardID)
+	leaderCard := FindUserCard(raw.UserCards, leaderCardID)
 	leaderImagePath := resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, leaderCardID, isAfterTraining(leaderCard))
 	if leaderImagePath == "" {
 		leaderImagePath = fallbackLeaderImagePath(assetHelper)
@@ -274,7 +275,7 @@ func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetH
 		Nickname:        raw.UserGamedata.Name,
 		Source:          "suite_dump",
 		UpdateTime:      raw.Now,
-		Mode:            optionalString(mode),
+		Mode:            common.OptionalString(mode),
 		IsHideUID:       true,
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        false,
@@ -332,8 +333,8 @@ func (s *Service) DetailedProfile(region renderregion.Value) *drawing.DetailedPr
 	if normalized := renderregion.WithDefault(region); !normalized.IsZero() {
 		profile.Region = strings.ToUpper(normalized.String())
 	}
-	profile.Mode = cloneStringPtr(s.baseProfile.Mode)
-	profile.FramePath = cloneStringPtr(s.baseProfile.FramePath)
+	profile.Mode = common.CloneStringPtr(s.baseProfile.Mode)
+	profile.FramePath = common.CloneStringPtr(s.baseProfile.FramePath)
 	profile.UserCards = append([]interface{}(nil), s.baseProfile.UserCards...)
 	return &profile
 }
@@ -353,14 +354,14 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 			IsHideUID:       detail.IsHideUID,
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
-			FramePath:       cloneStringPtr(detail.FramePath),
+			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:       "User Data",
 				Source:     &source,
 				UpdateTime: &update,
-				Mode:       cloneStringPtr(detail.Mode),
+				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},
 	}

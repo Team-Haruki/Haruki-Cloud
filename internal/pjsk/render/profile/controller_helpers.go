@@ -165,7 +165,7 @@ func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.Ra
 }
 
 func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
-	activeDeck := findActiveDeck(decks, activeDeckID)
+	activeDeck := userdata.FindActiveDeck(decks, activeDeckID)
 	memberIDs := []int{activeDeck.Member1, activeDeck.Member2, activeDeck.Member3, activeDeck.Member4, activeDeck.Member5}
 	result := make([]drawing.CardFullThumbnailRequest, 0, len(memberIDs))
 	for _, cardID := range memberIDs {
@@ -176,7 +176,7 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 		if err != nil || cardInfo == nil {
 			continue
 		}
-		userCard := findUserCard(userCards, cardID)
+		userCard := userdata.FindUserCard(userCards, cardID)
 		var level *int
 		if userCard != nil {
 			value := userCard.Level
@@ -339,31 +339,3 @@ func cleanWord(word string) string {
 	return wordTagPattern.ReplaceAllString(word, "")
 }
 
-func findActiveDeck(decks []userdata.RawUserDeck, activeID int) userdata.RawUserDeck {
-	for _, deck := range decks {
-		if deck.DeckID == activeID {
-			return deck
-		}
-	}
-	if len(decks) > 0 {
-		return decks[0]
-	}
-	return userdata.RawUserDeck{}
-}
-
-func findUserCard(cards []userdata.RawUserCard, cardID int) *userdata.RawUserCard {
-	for i := range cards {
-		if cards[i].CardID == cardID {
-			return &cards[i]
-		}
-	}
-	return nil
-}
-
-func cloneStringPtr(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	copy := *value
-	return &copy
-}

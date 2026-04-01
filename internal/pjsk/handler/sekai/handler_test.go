@@ -3,11 +3,13 @@ package sekai
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"testing"
+
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	"log"
-	"testing"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 func TestRegisterCommandHandler(t *testing.T) {
@@ -31,7 +33,7 @@ func TestRegisterCommandHandler(t *testing.T) {
 
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 	skh := SekaiCommandHandler{
-		ParseUIDArg: boolPtr(true),
+		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if ctx.UIDArg() != "@987654321" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
@@ -57,7 +59,7 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 
 func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 	skh := SekaiCommandHandler{
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if ctx.UIDArg() != "" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())

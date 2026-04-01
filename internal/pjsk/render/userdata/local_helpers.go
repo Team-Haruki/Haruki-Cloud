@@ -140,7 +140,8 @@ func buildUserCardEntries(cards []RawUserCard) []interface{} {
 	return entries
 }
 
-func findActiveDeck(decks []RawUserDeck, activeID int) RawUserDeck {
+// FindActiveDeck returns the deck with the given activeID, or the first deck if not found.
+func FindActiveDeck(decks []RawUserDeck, activeID int) RawUserDeck {
 	for _, deck := range decks {
 		if deck.DeckID == activeID {
 			return deck
@@ -152,7 +153,8 @@ func findActiveDeck(decks []RawUserDeck, activeID int) RawUserDeck {
 	return RawUserDeck{}
 }
 
-func findUserCard(cards []RawUserCard, cardID int) *RawUserCard {
+// FindUserCard returns the card matching cardID, or nil if not found.
+func FindUserCard(cards []RawUserCard, cardID int) *RawUserCard {
 	for i := range cards {
 		if cards[i].CardID == cardID {
 			return &cards[i]
@@ -246,20 +248,4 @@ func convertChallengeRewards(source []RawChallengeLiveReward) []ChallengeLiveRew
 		})
 	}
 	return out
-}
-
-func optionalString(value string) *string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	return &value
-}
-
-func cloneStringPtr(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	copy := *value
-	return &copy
 }

@@ -2,11 +2,13 @@ package sekai
 
 import (
 	"fmt"
+	"strings"
+
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/pjsk/render/common"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"strings"
 )
 
 func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
@@ -18,7 +20,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bind",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -37,7 +39,7 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bind/list",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
@@ -193,7 +195,7 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 			},
 			Path: "profile/unbind",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -213,7 +215,7 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 			},
 			Path: "profile/default",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
@@ -237,7 +239,7 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 			},
 			Path: "profile/default/clear",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 
@@ -424,7 +426,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
 			},
 			Path: "profile/verify/list",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
@@ -443,7 +445,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/upload",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
@@ -468,7 +470,7 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/clear",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
@@ -487,7 +489,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/adjust",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			params := newProfileSettingsParams(ctx)
 			adjustParams, err := parseProfileBGAdjustArgs(ctx.GetArgs())

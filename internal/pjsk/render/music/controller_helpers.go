@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
@@ -103,14 +104,14 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 			IsHideUID:       detail.IsHideUID,
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
-			FramePath:       cloneStringPtr(detail.FramePath),
+			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:       "User Data",
 				Source:     &source,
 				UpdateTime: &update,
-				Mode:       cloneStringPtr(detail.Mode),
+				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},
 	}
@@ -238,14 +239,6 @@ func (c *Controller) resolveStaticIcon(explicit *string, filename string) *strin
 		}
 	}
 	return &path
-}
-
-func cloneStringPtr(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	copy := *value
-	return &copy
 }
 
 func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID int, difficulty string) map[string]interface{} {

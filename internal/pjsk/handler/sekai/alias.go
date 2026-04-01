@@ -2,12 +2,14 @@ package sekai
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"haruki-cloud/api/bot/onebot11"
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	"strconv"
-	"strings"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 func (sekaiHandlers) MusicAliasQueryHandle() SekaiCommandHandler {
@@ -74,7 +76,7 @@ func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
 			},
 			Helper: "使用方式:\n/待审核别名",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n/待审核别名")
@@ -96,7 +98,7 @@ func (sekaiHandlers) AliasApproveHandle() SekaiCommandHandler {
 			},
 			Helper: "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
@@ -120,7 +122,7 @@ func (sekaiHandlers) AliasRejectHandle() SekaiCommandHandler {
 			},
 			Helper: "使用方式:\n/拒绝别名 待审核ID 原因",
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
@@ -143,7 +145,7 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 			Commands: commands,
 			Helper:   aliasQueryHelp(aliasType, sampleCommand),
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
@@ -164,7 +166,7 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 			Commands: commands,
 			Helper:   aliasAddHelp(aliasType, sampleCommand),
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
 			if err != nil {
@@ -188,7 +190,7 @@ func newEntityAliasDeleteHandler(aliasType, path string, commands []string, samp
 			Commands: commands,
 			Helper:   aliasDeleteHelp(aliasType, sampleCommand),
 		},
-		ParseUIDArg: boolPtr(false),
+		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))
 			if err != nil {

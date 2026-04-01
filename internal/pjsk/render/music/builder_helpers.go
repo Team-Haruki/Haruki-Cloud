@@ -1,13 +1,13 @@
 package music
 
 import (
-"fmt"
-"regexp"
-"strings"
-"time"
+	"fmt"
+	"regexp"
+	"strings"
+	"time"
 
-"haruki-cloud/internal/pjsk/render/masterdata"
-renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 func normalizeDifficulty(value string) string {
@@ -16,15 +16,6 @@ func normalizeDifficulty(value string) string {
 		return "master"
 	}
 	return diff
-}
-
-func containsString(values []string, target string) bool {
-	for _, value := range values {
-		if strings.EqualFold(value, target) {
-			return true
-		}
-	}
-	return false
 }
 
 func regionToLocation(region renderregion.Value) *time.Location {

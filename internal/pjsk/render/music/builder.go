@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
@@ -382,19 +383,19 @@ func (b *Builder) buildMusicAliases(music *masterdata.Music) []string {
 	if localized, err := b.source.GetMusicLocalizedTitles(music.ID); err == nil {
 		for _, title := range localized {
 			title = strings.TrimSpace(title)
-			if title == "" || containsString(aliases, title) {
+			if title == "" || common.ContainsString(aliases, title) {
 				continue
 			}
 			aliases = append(aliases, title)
 		}
 	}
-	if pronunciation := strings.TrimSpace(music.Pronunciation); pronunciation != "" && !containsString(aliases, pronunciation) {
+	if pronunciation := strings.TrimSpace(music.Pronunciation); pronunciation != "" && !common.ContainsString(aliases, pronunciation) {
 		aliases = append(aliases, pronunciation)
 	}
 	if tags, err := b.source.GetMusicTags(music.ID); err == nil {
 		for _, tag := range tags {
 			tag = strings.TrimSpace(tag)
-			if tag == "" || containsString(aliases, tag) {
+			if tag == "" || common.ContainsString(aliases, tag) {
 				continue
 			}
 			aliases = append(aliases, tag)

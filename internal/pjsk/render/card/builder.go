@@ -169,12 +169,12 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		cardInfo := b.BuildCardBasic(card, region)
 		if userCard, ok := ownedCards[card.ID]; ok {
 			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, &userCard, useAfterTraining)
-			cardInfo.IsAfterTraining = boolPtr(strings.EqualFold(userCard.DefaultImage, "special_training"))
+			cardInfo.IsAfterTraining = common.BoolPtr(strings.EqualFold(userCard.DefaultImage, "special_training"))
 		} else {
 			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, nil, useAfterTraining)
-			cardInfo.IsAfterTraining = boolPtr(useAfterTraining && hasAfterTrainingCard(card) && !onlyHasAfterTrainingCard(card))
+			cardInfo.IsAfterTraining = common.BoolPtr(useAfterTraining && hasAfterTrainingCard(card) && !onlyHasAfterTrainingCard(card))
 			if onlyHasAfterTrainingCard(card) {
-				cardInfo.IsAfterTraining = boolPtr(true)
+				cardInfo.IsAfterTraining = common.BoolPtr(true)
 			}
 		}
 		items = append(items, drawing.UserCard{

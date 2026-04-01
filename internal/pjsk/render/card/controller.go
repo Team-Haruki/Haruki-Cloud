@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -176,7 +177,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	userCardStates := extractOwnedCards(queries[0].DetailedProfile)
 	for i := range req.Cards {
 		state, ok := userCardStates[req.Cards[i].Card.CardID]
-		req.Cards[i].Card.IsAfterTraining = boolPtr(resolveCardBoxAfterTraining(req.Cards[i].Card, state, useAfterTraining, ok))
+		req.Cards[i].Card.IsAfterTraining = common.BoolPtr(resolveCardBoxAfterTraining(req.Cards[i].Card, state, useAfterTraining, ok))
 	}
 	if queries[0].DetailedProfile != nil {
 		req.UserInfo = queries[0].DetailedProfile

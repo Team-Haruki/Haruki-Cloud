@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -373,7 +374,7 @@ func (c *Controller) resolveMusicBoardSpecs(source DataSource, rows []musicBoard
 
 		if rawDiff := strings.TrimSpace(info.Diff); rawDiff != "" && !expandAllDiffs {
 			diff := normalizeDifficulty(rawDiff)
-			if !containsString(available[musicInfo.ID], diff) {
+			if !common.ContainsString(available[musicInfo.ID], diff) {
 				return nil, fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
 			}
 			key := musicBoardKey(musicInfo.ID, diff)
@@ -431,7 +432,7 @@ func boardDifficultyPriority(difficulty string) int {
 }
 
 func appendUniqueString(values []string, item string) []string {
-	if containsString(values, item) {
+	if common.ContainsString(values, item) {
 		return values
 	}
 	return append(values, item)

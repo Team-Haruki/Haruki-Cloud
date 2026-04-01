@@ -6,6 +6,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/utils/logger"
 )
 
@@ -82,7 +83,7 @@ func resolveSelfOnlyQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error
 
 func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
-		ParseUIDArg: boolPtr(true),
+		ParseUIDArg: common.BoolPtr(true),
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/逮捕", "/pjsk逮捕", "/pjsk arrest",

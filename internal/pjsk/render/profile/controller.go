@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
@@ -269,13 +270,13 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 			IsHideUID:       detail.IsHideUID,
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
-			FramePath:       cloneStringPtr(detail.FramePath),
+			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:   "Sekai API",
 				Source: &source,
-				Mode:   cloneStringPtr(detail.Mode),
+				Mode:   common.CloneStringPtr(detail.Mode),
 			},
 		},
 	}, nil

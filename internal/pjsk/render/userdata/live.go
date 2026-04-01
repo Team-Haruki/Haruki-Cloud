@@ -9,6 +9,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
@@ -54,9 +55,9 @@ func NewFromBytes(
 		return nil, fmt.Errorf("userdata: suite JSON is missing userId")
 	}
 
-	activeDeck := findActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
+	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 	leaderCardID := activeDeck.Leader
-	leaderCard := findUserCard(raw.UserCards, leaderCardID)
+	leaderCard := FindUserCard(raw.UserCards, leaderCardID)
 	leaderImagePath := resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, leaderCardID, isAfterTraining(leaderCard))
 	if leaderImagePath == "" {
 		leaderImagePath = fallbackLeaderImagePath(assetHelper)
@@ -69,7 +70,7 @@ func NewFromBytes(
 		Nickname:        raw.UserGamedata.Name,
 		Source:          "toolbox_live",
 		UpdateTime:      raw.Now,
-		Mode:            optionalString(mode),
+		Mode:            common.OptionalString(mode),
 		IsHideUID:       true,
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        false,

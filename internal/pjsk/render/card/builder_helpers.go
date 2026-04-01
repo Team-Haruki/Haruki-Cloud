@@ -28,7 +28,7 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 		Prefix:          &prefix,
 		AssetBundleName: &assetBundleName,
 		ReleaseAt:       &releaseAt,
-		IsAfterTraining: boolPtr(false),
+		IsAfterTraining: common.BoolPtr(false),
 		ThumbnailInfo:   b.buildThumbnailInfo(card, region),
 		Power:           b.calculatePower(card),
 	}
@@ -239,10 +239,6 @@ func (b *Builder) buildGachaBannerPath(gachaID int, region renderregion.Value) s
 		filepath.Join("home", "banner", fmt.Sprintf("banner_gacha%d", gachaID), fmt.Sprintf("banner_gacha%d.png", gachaID)),
 		filepath.Join("gacha", fmt.Sprintf("banner_gacha%d.png", gachaID)),
 	)
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
 
 func stringValue(value *string) string {

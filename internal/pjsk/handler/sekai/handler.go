@@ -2,15 +2,16 @@ package sekai
 
 import (
 	"fmt"
-	"haruki-cloud/internal/pjsk/handler"
-	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"log"
+	"log/slog"
 	"os"
 	"reflect"
 	"slices"
 	"strings"
 	"sync"
+
+	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 type SekaiHandlerContext struct {
@@ -183,7 +184,7 @@ func registerSekaiCommandHandlers() {
 		if methodTyp.NumIn() == 0 &&
 			methodTyp.NumOut() == 1 &&
 			methodTyp.Out(0) == configTyp {
-			log.Printf("注册指令解析器：%s\n", methodName)
+			slog.Info("注册指令解析器", "handler", methodName)
 			results := methodVal.Call(nil)
 			skHandler := results[0].Interface().(SekaiCommandHandler)
 

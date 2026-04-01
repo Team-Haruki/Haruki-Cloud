@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"log/slog"
 	"strings"
 	"sync"
 	"unicode"
@@ -176,9 +175,9 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	if nextR == 0 {
 		handlerPriority := handler.GetPriority()
 		if t.handler != nil && !t.handler.IsDisabled() {
-			fmt.Fprintf(os.Stderr, "指令 %s 已被注册，已有的指令 %s 优先级：%d，待注册优先级：%d\n", string(command), string(t.command), t.priority, handlerPriority)
+			slog.Warn("指令已被注册", "command", string(command), "existing", string(t.command), "existing_priority", t.priority, "new_priority", handlerPriority)
 			if handlerPriority > 0 && (handlerPriority < t.priority || t.priority == 0) {
-				log.Printf("待注册的指令处理器 %s 优先级更高，替换已有的处理器\n", string(command))
+				slog.Info("待注册的指令处理器优先级更高，替换已有的处理器", "command", string(command))
 			} else {
 				return
 			}
@@ -264,12 +263,12 @@ func (t *handlerTreeNode) Json() []byte {
 	}
 	result, err := json.Marshal(jsonMap)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error("failed to marshal handler tree", "error", err)
 	}
 	return result
 }
 
 func PrintTree() {
 	message := commandHandlerTree.Json()
-	log.Println(string(message))
+	slog.Debug("handler tree", "tree", string(message))
 }

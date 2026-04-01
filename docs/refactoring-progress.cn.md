@@ -650,3 +650,147 @@ internal/pjsk/render/
 ├── profile/adapter_provider.go
 └── education/adapter_provider.go
 ```
+
+---
+
+## 后续重构阶段（2026-04）
+
+### R22：Context 传播优化 ✅
+
+**提交**：`006faa5`
+
+将 13 处 `context.Background()` 调用替换为 `rc.Ctx`：
+
+| 文件 | 修改位置 |
+|------|----------|
+| bridge_card.go | Card 相关查询 |
+| bridge_deck.go | Deck 相关查询 |
+| bridge_education.go | Education 相关查询 |
+| bridge_event.go | Event 相关查询 |
+| bridge_music.go | Music 相关查询 |
+| bridge_sk.go | SK 相关查询 |
+| runtime.go | RequestContext 初始化 |
+| resolver.go | 绑定解析 |
+
+---
+
+### R16：默认区域常量集中化 ✅
+
+**提交**：`fb44d54`
+
+创建 `internal/pjsk/handler/defaults.go`：
+
+```go
+const DefaultRegionStr = "jp"
+
+func regionWithDefault(region string) string {
+    if region == "" {
+        return DefaultRegionStr
+    }
+    return region
+}
+```
+
+替换 11 处散落的 `"jp"` 字符串字面量和 3 处默认区域模式。
+
+---
+
+### R26：死代码清理 ✅
+
+**提交**：`eae6f68`
+
+移除 `bridge_stamp.go` 中的不可达代码（exhaustive switch 后的重复 error return）。
+
+---
+
+### Test 分支合并 ✅
+
+**提交**：`a65a86a`
+
+合并 test 分支的 21 个提交到 refactor/test：
+
+| 功能 | 说明 |
+|------|------|
+| Deck 角色昵称解析 | 角色昵称（如 "miku"、"初音未来"）直接解析为角色 ID |
+| Education Bonds 过滤 | 添加角色过滤参数支持 |
+| Education EX 等级 | Leader Count 支持 EX 等级显示 |
+| Stamp 优化 | 单表情包直接返回资源 URL |
+| SK 预测模式 | 添加 sk-predict 命令和 forecast provider |
+
+文件变更：36 个文件，+4119/-1289 行
+
+---
+
+### R27：错误消息与 Context 传播 ✅
+
+**提交**：`bdf7ed9`
+
+创建 `internal/pjsk/handler/messages.go`：
+
+```go
+const (
+    ErrMsgSuiteDataUnavailable   = "当前账号没有可用的 Suite 抓包数据"
+    ErrMsgMySekaiDataUnavailable = "当前账号没有可用的 MySekai 抓包数据"
+    ErrMsgSelfQueryOnly          = "%s仅支持查询自己的数据"
+    ErrMsgBindingServiceUnavailable = "绑定服务未就绪"
+)
+
+func unsupportedModeError(module, mode string) error
+```
+
+替换 12 处重复的 `unsupported mode` 错误模式。
+
+修复 `loadLeaderMissionRequirements` 的 context.Background() 调用。
+
+---
+
+## 剩余重构建议
+
+根据代码分析，以下是优先级排序的剩余重构项：
+
+### 高优先级
+
+| 项目 | 影响文件数 | 预计工时 |
+|------|-----------|---------|
+| 服务 nil 检查模式统一 | 6 | 1-2h |
+| 绑定解析模式统一 | 4 | 2-3h |
+
+### 中优先级
+
+| 项目 | 影响文件数 | 预计工时 |
+|------|-----------|---------|
+| Provider 缓存初始化优化 | 12 | 3-4h |
+| Mutex 解锁模式（使用 defer）| 21+ | 2h |
+
+### 低优先级
+
+| 项目 | 影响文件数 | 预计工时 |
+|------|-----------|---------|
+| 大函数拆分（executeEducation 等）| 2-3 | 4-5h |
+| 魔法数字常量化 | 多 | 1-2h |
+| 命名规范统一 | 多 | 2h |
+
+---
+
+## 统计数据
+
+### 重构前后对比
+
+| 指标 | 重构前 | 重构后 | 变化 |
+|------|--------|--------|------|
+| bridge.go 行数 | 2968 | 133 | -95.5% |
+| 最大单文件行数 | 2968 | ~700 | -76% |
+| handler/*.go 文件数 | 3 | 22+ | +633% |
+| Provider 测试覆盖 | 0 | 70 | +70 |
+| 重复代码（估计）| ~1500 行 | ~300 行 | -80% |
+
+### 提交统计
+
+- P0-P5 基础重构：6 个阶段，~25 个提交
+- P6-P27 优化重构：22 个阶段，~22 个提交
+- Test 分支合并：1 个合并提交
+- **总计**：~48 个重构相关提交
+
+---
+
+> 文档更新日期：2026-04-01

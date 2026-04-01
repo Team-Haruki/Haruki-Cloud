@@ -53,7 +53,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return message, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported card mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("card", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return

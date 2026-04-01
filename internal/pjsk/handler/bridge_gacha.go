@@ -20,7 +20,7 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = rc.App.Gachas.RenderGachaList(q)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported gacha mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("gacha", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

@@ -91,7 +91,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return append(image, onebot11.Text(strings.Join(textLines, "\n"))), nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported music mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("music", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

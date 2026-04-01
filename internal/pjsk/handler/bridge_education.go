@@ -104,7 +104,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.LeaderCounts) == 0 && suiteUID > 0 {
 			leaderReq, buildErr := buildLeaderCountRequestFromSuite(
-				rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
+				rc.Ctx, rc.App, regionStr, suiteUID, suitePlatform, suitePlatformUserID, publicDetailedProfile)
 			if buildErr == nil {
 				req = *leaderReq
 			}
@@ -150,7 +150,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		data, err = rc.App.Edu.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
 
 	default:
-		return nil, fmt.Errorf("bridge: unsupported education mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("education", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
@@ -495,7 +495,7 @@ func buildBondsRequestFromSuite(
 
 // buildLeaderCountRequestFromSuite fetches leader usage data from Toolbox and builds a LeaderCountRequest.
 func buildLeaderCountRequestFromSuite(
-	app *renderapp.App, region string, uid int64, platform, platformUserID string,
+	ctx context.Context, app *renderapp.App, region string, uid int64, platform, platformUserID string,
 	profile *drawing.DetailedProfileCardRequest,
 ) (*drawing.LeaderCountRequest, error) {
 	tc := sekaiutils.GetToolboxClient()
@@ -505,7 +505,7 @@ func buildLeaderCountRequestFromSuite(
 	maxPlayLimit := 0
 	if app != nil && app.Sekai != nil {
 		var missionErr error
-		missionGroups, maxPlayLimit, missionErr = loadLeaderMissionRequirements(app.Sekai, region)
+		missionGroups, maxPlayLimit, missionErr = loadLeaderMissionRequirements(ctx, app.Sekai, region)
 		if missionErr != nil {
 			return nil, missionErr
 		}
@@ -627,14 +627,14 @@ type leaderMissionRequirement struct {
 	Requirement int
 }
 
-func loadLeaderMissionRequirements(client *sekaidb.Client, region string) ([]leaderMissionRequirement, int, error) {
+func loadLeaderMissionRequirements(ctx context.Context, client *sekaidb.Client, region string) ([]leaderMissionRequirement, int, error) {
 	if client == nil {
 		return nil, 0, nil
 	}
 
 	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
 	if normalizedRegion == "" {
-		normalizedRegion = "jp"
+		normalizedRegion = DefaultRegionStr
 	}
 
 	groups, err := client.Charactermissionv2Parametergroup.Query().
@@ -643,7 +643,7 @@ func loadLeaderMissionRequirements(client *sekaidb.Client, region string) ([]lea
 			charactermissionv2parametergroupdb.GameIDIn(1, 101),
 		).
 		Order(charactermissionv2parametergroupdb.ByGameID(), charactermissionv2parametergroupdb.BySeq()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query charactermissionv2parametergroups: %w", err)
 	}

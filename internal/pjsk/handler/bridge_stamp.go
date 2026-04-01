@@ -48,7 +48,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return imageMessage(data, rc.App, BotModulePJSK)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported stamp mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("stamp", rc.Cmd.Mode)
 	}
 }
 

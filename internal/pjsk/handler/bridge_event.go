@@ -40,7 +40,7 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		data, err = rc.App.Events.RenderEventRecord(*req)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported event mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("event", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

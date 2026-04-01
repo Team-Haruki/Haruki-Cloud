@@ -106,7 +106,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return onebot11.Message{onebot11.Text(msg)}, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported deck mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("deck", rc.Cmd.Mode)
 	}
 	q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 	mergeParams(rc.Cmd.Params, &q)

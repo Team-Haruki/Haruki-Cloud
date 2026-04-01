@@ -151,7 +151,7 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &req)
 		data, err = rc.App.SK.RenderWinRate(req)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported sk mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("sk", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

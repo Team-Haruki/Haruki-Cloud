@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 	"haruki-cloud/utils/drawing"
@@ -23,7 +21,7 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		data, err = rc.App.Misc.RenderCharaBirthday(req)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported misc mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("misc", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

@@ -130,4 +130,3 @@ func mergeParams(params json.RawMessage, target interface{}) {
 	}
 	_ = json.Unmarshal(params, target)
 }
-

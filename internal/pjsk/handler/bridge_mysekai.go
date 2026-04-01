@@ -148,7 +148,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		q.Profile = publicProfileCard
 		data, err = msCtrl.RenderTalkList(q)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported mysekai mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("mysekai", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

@@ -91,7 +91,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 		return onebot11.Message{onebot11.Text(string(data))}, nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported profile mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("profile", rc.Cmd.Mode)
 	}
 }
 

@@ -76,7 +76,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		data, err = rc.App.Score.RenderMusicBoard(req)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported score mode %q", rc.Cmd.Mode)
+		return nil, unsupportedModeError("score", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err

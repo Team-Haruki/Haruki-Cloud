@@ -117,7 +117,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		Word:                 word,
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck, region),
 		BgSettings:           resolveProfileBGSettings(query.BgSettings),
-		Honors:               c.buildHonors(source, raw.UserProfileHonors, raw.UserHonors),
+		Honors:               c.buildHonors(source, region, raw.UserProfileHonors, raw.UserHonors),
 		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
@@ -173,8 +173,18 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		return nil, fmt.Errorf("profile data source is not configured")
 	}
 
+	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
+	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard), region)
+	leaderImagePath := buildProfileImagePathFromSource(
+		source,
+		c.assets,
+		profileCardID,
+		isAPICardAfterTraining(profileCard),
+		resp.UserDeck.Leader,
+		isAPICardAfterTraining(leaderCard),
+		region,
+	)
 
 	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
@@ -202,7 +212,7 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID, region),
 		BgSettings:           resolveProfileBGSettings(query.BgSettings),
-		Honors:               c.buildHonors(source, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
+		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
 		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
 		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
@@ -231,8 +241,18 @@ func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.Ge
 		return nil, fmt.Errorf("profile data source is not configured")
 	}
 
+	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
+	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildLeaderImagePathFromSource(source, c.assets, resp.UserDeck.Leader, isAPICardAfterTraining(leaderCard), region)
+	leaderImagePath := buildProfileImagePathFromSource(
+		source,
+		c.assets,
+		profileCardID,
+		isAPICardAfterTraining(profileCard),
+		resp.UserDeck.Leader,
+		isAPICardAfterTraining(leaderCard),
+		region,
+	)
 
 	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)

@@ -52,10 +52,7 @@ func (p *remoteEngineProvider) Get(region string) (DeckRecommender, error) {
 		return recommender, nil
 	}
 
-	masterdataDir, err := resolveDeckMasterdataDir(p.cfg.MasterdataDir, region)
-	if err != nil {
-		return nil, err
-	}
+	masterdataDir := resolveDeckRemoteMasterdataDir(p.cfg.MasterdataDir)
 	if masterdataDir == "" {
 		return nil, fmt.Errorf("deck remote engine requires local masterdata dir")
 	}

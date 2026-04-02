@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ type testGachaSource struct {
 	gachas    []*masterdata.Gacha
 	gachaByID map[int]*masterdata.Gacha
 	cardByID  map[int]*masterdata.Card
+	eventCards map[int][]int
 }
 
 func newTestGachaSource(region renderregion.Value) *testGachaSource {
@@ -24,6 +26,7 @@ func newTestGachaSource(region renderregion.Value) *testGachaSource {
 		region:    region,
 		gachaByID: make(map[int]*masterdata.Gacha),
 		cardByID:  make(map[int]*masterdata.Card),
+		eventCards: make(map[int][]int),
 	}
 }
 
@@ -44,6 +47,36 @@ func (s *testGachaSource) GetGachas() []*masterdata.Gacha {
 		result = append(result, &copy)
 	}
 	return result
+}
+
+func (s *testGachaSource) GetGachaByEventID(eventID int) (*masterdata.Gacha, error) {
+	cardIDs, ok := s.eventCards[eventID]
+	if !ok || len(cardIDs) == 0 {
+		return nil, fmt.Errorf("gacha not found for event: %d", eventID)
+	}
+	sorted := append([]int(nil), cardIDs...)
+	sort.Ints(sorted)
+	idx := len(sorted) - 1
+	if idx > 2 {
+		idx = 2
+	}
+	targetCardID := sorted[idx]
+	for _, item := range s.gachas {
+		if testGachaContainsPickup(item, targetCardID) {
+			copy := *item
+			return &copy, nil
+		}
+	}
+	return nil, fmt.Errorf("gacha not found for event: %d", eventID)
+}
+
+func testGachaContainsPickup(gachaInfo *masterdata.Gacha, cardID int) bool {
+	for _, pickup := range gachaInfo.GachaPickups {
+		if pickup.CardID == cardID {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *testGachaSource) GetCardByID(id int) (*masterdata.Card, error) {

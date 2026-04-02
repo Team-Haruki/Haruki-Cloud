@@ -56,3 +56,17 @@ func TestResolveDeckStaticDataDirUsesMasterdataRoot(t *testing.T) {
 		t.Fatalf("unexpected static data dir from region dir: %s", resolved)
 	}
 }
+
+func TestResolveDeckRemoteMasterdataDirStripsRegionSuffix(t *testing.T) {
+	resolved := resolveDeckRemoteMasterdataDir("/masterdata/jp")
+	if resolved != filepath.Clean("/masterdata") {
+		t.Fatalf("unexpected remote masterdata dir: %s", resolved)
+	}
+}
+
+func TestResolveDeckRemoteMasterdataDirKeepsRoot(t *testing.T) {
+	resolved := resolveDeckRemoteMasterdataDir("/masterdata")
+	if resolved != filepath.Clean("/masterdata") {
+		t.Fatalf("unexpected remote masterdata root: %s", resolved)
+	}
+}

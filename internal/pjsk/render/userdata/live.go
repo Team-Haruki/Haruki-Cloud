@@ -57,8 +57,13 @@ func NewFromBytes(
 
 	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 	leaderCardID := activeDeck.Leader
+	profileCardID := SelectProfileImageCardID(raw.UserProfile.ProfileImageType, raw.UserProfile.ProfileImageID, leaderCardID)
+	profileCard := FindUserCard(raw.UserCards, profileCardID)
 	leaderCard := FindUserCard(raw.UserCards, leaderCardID)
-	leaderImagePath := resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, leaderCardID, isAfterTraining(leaderCard))
+	leaderImagePath := resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, profileCardID, isAfterTraining(profileCard))
+	if leaderImagePath == "" && profileCardID != leaderCardID {
+		leaderImagePath = resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, leaderCardID, isAfterTraining(leaderCard))
+	}
 	if leaderImagePath == "" {
 		leaderImagePath = fallbackLeaderImagePath(assetHelper)
 	}

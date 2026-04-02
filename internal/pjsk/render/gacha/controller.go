@@ -100,7 +100,12 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, src, nil
 	}
 	if query.EventID != 0 {
-		return query, src, fmt.Errorf("event-based gacha lookup is not implemented")
+		gachaInfo, err := src.GetGachaByEventID(query.EventID)
+		if err != nil {
+			return query, src, err
+		}
+		query.GachaID = gachaInfo.ID
+		return query, src, nil
 	}
 	return query, src, fmt.Errorf("gacha id is required")
 }

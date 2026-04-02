@@ -212,6 +212,20 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		profileController = profile.NewController(profileAdapter, drawingClient, assetHelper, snapshotService)
 		stampController = stamp.NewController(stampAdapter, drawingClient, assetHelper)
 		vliveController = vlive.NewController(vliveAdapter, cfg.DefaultRegion)
+
+		for _, region := range []renderregion.Value{
+			renderregion.JP,
+			renderregion.CN,
+			renderregion.TW,
+			renderregion.KR,
+			renderregion.EN,
+		} {
+			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
+				continue
+			}
+			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
+			profileController.RegisterSource(profile.NewProviderAdapter(regionProvider))
+		}
 	}
 
 	aliasService := pjskalias.NewService(sekaiClient, pjskClient, nil)

@@ -114,7 +114,7 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 // master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
 func buildLeaderImagePathFromSource(source DataSource, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
-	fallback := assets.ResolveAssetPath(helper, assets.StaticImagesDir, "unknown.jpg")
+	fallback := profileUnknownImagePath(helper)
 	if cardID == 0 || source == nil {
 		return fallback
 	}
@@ -130,6 +130,32 @@ func buildLeaderImagePathFromSource(source DataSource, helper *assets.AssetHelpe
 		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
 		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
 	)
+}
+
+func buildProfileImagePathFromSource(
+	source DataSource,
+	helper *assets.AssetHelper,
+	profileCardID int,
+	profileAfterTraining bool,
+	leaderCardID int,
+	leaderAfterTraining bool,
+	region renderregion.Value,
+) string {
+	fallback := profileUnknownImagePath(helper)
+
+	if path := buildLeaderImagePathFromSource(source, helper, profileCardID, profileAfterTraining, region); path != fallback {
+		return path
+	}
+	if profileCardID != leaderCardID {
+		if path := buildLeaderImagePathFromSource(source, helper, leaderCardID, leaderAfterTraining, region); path != fallback {
+			return path
+		}
+	}
+	return fallback
+}
+
+func profileUnknownImagePath(helper *assets.AssetHelper) string {
+	return assets.ResolveAssetPath(helper, assets.StaticImagesDir, "unknown.jpg")
 }
 
 func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
@@ -192,7 +218,7 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 	return result
 }
 
-func (c *Controller) buildHonors(source DataSource, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
+func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
 	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {
@@ -209,7 +235,7 @@ func (c *Controller) buildHonors(source DataSource, profileHonors []userdata.Raw
 			honorID = item.HonorId2
 		}
 		req, err := builder.BuildHonorRequest(renderhonor.Query{
-			Region:           source.DefaultRegion(),
+			Region:           region,
 			HonorID:          honorID,
 			HonorLevel:       item.HonorLevel,
 			IsMain:           item.Seq == 1,
@@ -228,7 +254,7 @@ func (c *Controller) buildHonors(source DataSource, profileHonors []userdata.Raw
 			break
 		}
 		req, err := builder.BuildHonorRequest(renderhonor.Query{
-			Region:     source.DefaultRegion(),
+			Region:     region,
 			HonorID:    item.HonorID,
 			HonorLevel: item.HonorLevel,
 			IsMain:     len(requests) == 0,

@@ -63,32 +63,31 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 
 	assetName := honorInfo.AssetBundleName
 	rarity := honorInfo.HonorRarity
-	for _, level := range honorInfo.Levels {
-		if level.Level != honorLevel {
-			continue
+	if resolvedLevel, ok := resolveHonorLevelVisual(honorInfo.Levels, honorLevel); ok {
+		if assetName == "" && resolvedLevel.AssetBundleName != "" {
+			assetName = resolvedLevel.AssetBundleName
 		}
-		if level.AssetBundleName != "" {
-			assetName = level.AssetBundleName
+		if rarity == "" && resolvedLevel.HonorRarity != "" {
+			rarity = resolvedLevel.HonorRarity
 		}
-		if level.HonorRarity != "" {
-			rarity = level.HonorRarity
+		if honorLevel <= 0 {
+			honorLevel = resolvedLevel.Level
 		}
-		break
 	}
 
 	req.HonorLevel = &honorLevel
-
-	groupType := group.HonorType
-	if groupType == "world_link" {
-		groupType = "wl_event"
-	}
-	req.GroupType = &groupType
-	req.HonorRarity = &rarity
 
 	bgAssetName := assetName
 	if group.BackgroundAssetBundleName != nil && *group.BackgroundAssetBundleName != "" {
 		bgAssetName = *group.BackgroundAssetBundleName
 	}
+
+	groupType := group.HonorType
+	if isWorldLinkHonorGroup(groupType, bgAssetName, assetName) {
+		groupType = "wl_event"
+	}
+	req.GroupType = &groupType
+	req.HonorRarity = &rarity
 
 	mode := "sub"
 	if req.IsMainHonor {
@@ -134,13 +133,23 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		case "rank_match":
 			rankImgPath := resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode))
 			req.RankImgPath = &rankImgPath
-		case "event", "wl_event":
+		case "event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
 			degreeCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
 			switch {
 			case rankCandidate != honorImgPath && b.assetExists(rankCandidate):
 				req.RankImgPath = &rankCandidate
 			case degreeCandidate != honorImgPath && b.assetExists(degreeCandidate):
+				req.RankImgPath = &degreeCandidate
+			}
+		case "wl_event":
+			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
+			if rankCandidate != honorImgPath {
+				req.RankImgPath = &rankCandidate
+				break
+			}
+			degreeCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
+			if degreeCandidate != honorImgPath {
 				req.RankImgPath = &degreeCandidate
 			}
 		}
@@ -190,6 +199,37 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		req.Lv6ImgPath = &lv6Img
 	}
 	return nil
+}
+
+func resolveHonorLevelVisual(levels []masterdata.HonorLevel, requestedLevel int) (*masterdata.HonorLevel, bool) {
+	var bestAtOrBelow *masterdata.HonorLevel
+	var firstUsable *masterdata.HonorLevel
+
+	for i := range levels {
+		level := &levels[i]
+		if level.AssetBundleName == "" && level.HonorRarity == "" {
+			continue
+		}
+		if firstUsable == nil {
+			firstUsable = level
+		}
+		if level.Level == requestedLevel {
+			return level, true
+		}
+		if requestedLevel > 0 && level.Level <= requestedLevel {
+			if bestAtOrBelow == nil || level.Level > bestAtOrBelow.Level {
+				bestAtOrBelow = level
+			}
+		}
+	}
+
+	if bestAtOrBelow != nil {
+		return bestAtOrBelow, true
+	}
+	if firstUsable != nil {
+		return firstUsable, true
+	}
+	return nil, false
 }
 
 func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *masterdata.BondsHonor, honorLevel, bondsHonorWordID int, region renderregion.Value) error {
@@ -357,4 +397,13 @@ func deriveHonorBackgroundAssetName(assetName string) string {
 		return ""
 	}
 	return "honor_bg_" + parts[3]
+}
+
+func isWorldLinkHonorGroup(groupType, bgAssetName, assetName string) bool {
+	if groupType == "world_link" {
+		return true
+	}
+	bgAssetName = strings.TrimSpace(bgAssetName)
+	assetName = strings.TrimSpace(assetName)
+	return strings.Contains(bgAssetName, "event_wl") || strings.Contains(assetName, "event_wl")
 }

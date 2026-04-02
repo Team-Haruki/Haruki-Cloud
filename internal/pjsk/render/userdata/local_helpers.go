@@ -94,6 +94,20 @@ func resolveLeaderImagePath(sekaiClient *sekaiDB.Client, assetHelper *assets.Ass
 		filepath.Join("character", "member", assetBundleName, "card_normal.png"))
 }
 
+func SelectProfileImageCardID(profileImageType string, profileImageID, leaderCardID int) int {
+	mode := strings.ToLower(strings.TrimSpace(profileImageType))
+	if profileImageID > 0 && mode != "" && mode != "default" {
+		return profileImageID
+	}
+	if leaderCardID > 0 {
+		return leaderCardID
+	}
+	if profileImageID > 0 {
+		return profileImageID
+	}
+	return 0
+}
+
 func fallbackLeaderImagePath(assetHelper *assets.AssetHelper) string {
 	const fallback = "user/leader.png"
 	if assetHelper == nil {

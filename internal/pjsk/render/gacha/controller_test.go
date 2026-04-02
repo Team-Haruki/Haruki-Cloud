@@ -74,3 +74,43 @@ func TestControllerBuildGachaDetailRequestUsesNegativeIndex(t *testing.T) {
 		t.Fatalf("expected latest gacha id 20, got %d", req.Gacha.ID)
 	}
 }
+
+func TestControllerBuildGachaDetailRequestUsesEventID(t *testing.T) {
+	source := newTestGachaSource(renderregion.JP)
+
+	eventID := 123
+	source.eventCards[eventID] = []int{1001, 1002, 1003}
+
+	gachaInfo := &masterdata.Gacha{
+		ID:              30,
+		Name:            "Event Gacha",
+		GachaType:       "ceil",
+		AssetBundleName: "event_gacha",
+		StartAt:         100,
+		EndAt:           200,
+		GachaDetails: []masterdata.GachaDetail{
+			{CardID: 1003, Weight: 100},
+		},
+		GachaPickups: []masterdata.GachaPickup{
+			{CardID: 1003},
+		},
+		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
+			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 100},
+		},
+	}
+	source.gachas = []*masterdata.Gacha{gachaInfo}
+	source.gachaByID[gachaInfo.ID] = gachaInfo
+	source.cardByID[1003] = &masterdata.Card{ID: 1003, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_1003"}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildGachaDetailRequest(DetailQuery{
+		Region:  renderregion.JP,
+		EventID: eventID,
+	})
+	if err != nil {
+		t.Fatalf("BuildGachaDetailRequest failed: %v", err)
+	}
+	if req.Gacha.ID != 30 {
+		t.Fatalf("expected event gacha id 30, got %d", req.Gacha.ID)
+	}
+}

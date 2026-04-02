@@ -44,6 +44,23 @@ func resolveDeckMasterdataDir(configured, region string) (string, error) {
 	return root, nil
 }
 
+func resolveDeckRemoteMasterdataDir(configured string) string {
+	configured = strings.TrimSpace(configured)
+	if configured == "" {
+		return ""
+	}
+
+	root := filepath.Clean(configured)
+	base := strings.ToLower(filepath.Base(root))
+	if _, ok := deckMasterdataRegions[base]; ok {
+		parent := filepath.Dir(root)
+		if parent != "" && parent != "." && parent != root {
+			return parent
+		}
+	}
+	return root
+}
+
 func resolveDeckStaticDataDir(configured, masterdataDir string) string {
 	if configured = strings.TrimSpace(configured); configured != "" && dirExists(configured) {
 		return filepath.Clean(configured)

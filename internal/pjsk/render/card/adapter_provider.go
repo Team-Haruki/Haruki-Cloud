@@ -1,6 +1,8 @@
 package card
 
 import (
+	"fmt"
+
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -26,16 +28,33 @@ func (a *ProviderAdapter) GetCardByCharacterAndSeq(characterID, seq int) (*maste
 }
 
 func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+	if info == nil {
+		return nil, fmt.Errorf("card query info is required")
+	}
+
+	eventID := info.EventID
+	if eventID == 0 && info.BanCharID != 0 {
+		events := a.p.Events().GetBanEvents(info.BanCharID)
+		if len(events) == 0 {
+			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
+		}
+		if info.BanSeq < 1 || info.BanSeq > len(events) {
+			return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
+		}
+		eventID = events[info.BanSeq-1].ID
+	}
+
 	return a.p.Cards().Filter(&provider.CardFilter{
 		CharacterID: info.CharacterID,
 		Unit:        info.Unit,
+		MainUnit:    info.MainUnit,
 		SupportUnit: info.SupportUnit,
 		Rarity:      info.Rarity,
 		Attr:        info.Attr,
 		SkillType:   info.SkillType,
 		SupplyType:  info.SupplyType,
 		Year:        info.Year,
-		EventID:     info.EventID,
+		EventID:     eventID,
 	})
 }
 

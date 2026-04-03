@@ -238,7 +238,7 @@ func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, erro
 				continue
 			}
 		}
-		if filter.Unit != "" || filter.SupportUnit != "" {
+		if filter.Unit != "" || filter.MainUnit != "" || filter.SupportUnit != "" {
 			if !p.matchesUnitFilter(filter, card) {
 				continue
 			}
@@ -268,7 +268,7 @@ func (p *localCardProvider) matchesUnitFilter(filter *CardFilter, card *masterda
 	if filter == nil || card == nil {
 		return false
 	}
-	if filter.Unit == "" && filter.SupportUnit == "" {
+	if filter.Unit == "" && filter.MainUnit == "" && filter.SupportUnit == "" {
 		return true
 	}
 	if p.characters == nil {
@@ -278,16 +278,7 @@ func (p *localCardProvider) matchesUnitFilter(filter *CardFilter, card *masterda
 	if err != nil || character == nil {
 		return false
 	}
-	mainUnit := cardNormalizeUnit(character.Unit)
-	supportUnit := cardNormalizeSupportUnit(card.SupportUnit)
-
-	if filter.Unit != "" && filter.Unit != mainUnit && filter.Unit != supportUnit {
-		return false
-	}
-	if filter.SupportUnit != "" && filter.SupportUnit != supportUnit {
-		return false
-	}
-	return true
+	return cardMatchesUnitFilter(filter, character.Unit, card.SupportUnit)
 }
 
 func (p *localCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {

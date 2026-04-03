@@ -18,6 +18,7 @@ type CardProvider interface {
 type CardFilter struct {
 	CharacterID int
 	Unit        string
+	MainUnit    string
 	SupportUnit string
 	Rarity      string
 	Attr        string
@@ -26,4 +27,27 @@ type CardFilter struct {
 	Year        int
 	EventID     int
 	Limit       int
+}
+
+func cardMatchesUnitFilter(filter *CardFilter, mainUnit, supportUnit string) bool {
+	if filter == nil {
+		return false
+	}
+	if filter.Unit == "" && filter.MainUnit == "" && filter.SupportUnit == "" {
+		return true
+	}
+
+	mainUnit = cardNormalizeUnit(mainUnit)
+	supportUnit = cardNormalizeSupportUnit(supportUnit)
+
+	if filter.Unit != "" && filter.Unit != mainUnit && filter.Unit != supportUnit {
+		return false
+	}
+	if filter.MainUnit != "" && filter.MainUnit != mainUnit {
+		return false
+	}
+	if filter.SupportUnit != "" && filter.SupportUnit != supportUnit {
+		return false
+	}
+	return true
 }

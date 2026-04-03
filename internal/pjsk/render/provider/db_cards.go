@@ -382,7 +382,7 @@ func (p *dbCardProvider) matchesUnitFilter(filter *CardFilter, cardInfo *masterd
 	if filter == nil || cardInfo == nil {
 		return false
 	}
-	if filter.Unit == "" && filter.SupportUnit == "" {
+	if filter.Unit == "" && filter.MainUnit == "" && filter.SupportUnit == "" {
 		return true
 	}
 	if p.characters == nil {
@@ -393,16 +393,7 @@ func (p *dbCardProvider) matchesUnitFilter(filter *CardFilter, cardInfo *masterd
 	if err != nil || character == nil {
 		return false
 	}
-	mainUnit := cardNormalizeUnit(character.Unit)
-	supportUnit := cardNormalizeSupportUnit(cardInfo.SupportUnit)
-
-	if filter.Unit != "" && filter.Unit != mainUnit && filter.Unit != supportUnit {
-		return false
-	}
-	if filter.SupportUnit != "" && filter.SupportUnit != supportUnit {
-		return false
-	}
-	return true
+	return cardMatchesUnitFilter(filter, character.Unit, cardInfo.SupportUnit)
 }
 
 func (p *dbCardProvider) getRawCardSupplyType(id int) string {

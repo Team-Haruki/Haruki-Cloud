@@ -18,7 +18,7 @@ const searchMultiCardHelp = `查询多张卡牌的筛选参数:
 角色昵称：miku
 团/团oc/团vs/纯vs：mmj mmjoc mmjv 纯v
 稀有度/属性/技能：4 四星 生日 蓝 蓝星 判 分 p分
-限定类型：非限 限定 期间限定 fes
+限定类型：非限 限定 期间限定 fes cfes bfes 联动限定
 年份：25年 去年
 活动id或者箱活缩写：event123 mnr1
 以上参数可以混合使用，用空格分隔`

@@ -551,9 +551,15 @@ func cardNormalizeSupplyType(raw string) string {
 func cardMatchesSupplyFilter(filter, raw string) bool {
 	switch cardNormalizeSupplyType(raw) {
 	case "colorful_festival_limited", "bloom_festival_limited":
-		return filter == "festival" || filter == "limited"
+		if filter == "festival" || filter == "limited" {
+			return true
+		}
+		return cardNormalizeSupplyType(filter) == cardNormalizeSupplyType(raw)
 	case "term_limited", "unit_event_limited", "collaboration_limited":
-		return filter == "limited"
+		if filter == "limited" {
+			return true
+		}
+		return cardNormalizeSupplyType(filter) == cardNormalizeSupplyType(raw)
 	case "birthday":
 		return filter == "birthday"
 	case "normal":

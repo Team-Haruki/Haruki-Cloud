@@ -81,9 +81,15 @@ func formatSupplyTypeForDetail(raw string) string {
 func matchesRawSupplyFilter(filter, raw string) bool {
 	switch normalizeSupplyType(raw) {
 	case "colorful_festival_limited", "bloom_festival_limited":
-		return filter == SupplyFes || filter == SupplyLimited
+		if filter == SupplyFes || filter == SupplyLimited {
+			return true
+		}
+		return normalizeSupplyType(filter) == normalizeSupplyType(raw)
 	case "term_limited", "unit_event_limited", "collaboration_limited":
-		return filter == SupplyLimited
+		if filter == SupplyLimited {
+			return true
+		}
+		return normalizeSupplyType(filter) == normalizeSupplyType(raw)
 	case "birthday":
 		return filter == SupplyBirthday
 	case "normal":

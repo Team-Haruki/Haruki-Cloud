@@ -123,6 +123,9 @@ const (
 	SupplyNormal   = "normal"
 	SupplyLimited  = "limited"
 	SupplyFes      = "festival"
+	SupplyCFes     = "colorful_festival_limited"
+	SupplyBFes     = "bloom_festival_limited"
+	SupplyCollab   = "collaboration_limited"
 	SupplyBirthday = "birthday"
 )
 
@@ -142,14 +145,20 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 }
 
 var supplyRules = buildRules(map[string]string{
-	"期间限定":  "limited",
-	"fes":   "festival",
-	"非限定":   "normal",
-	"限定":    "limited",
-	"limit": "limited",
-	"常驻":    "normal",
-	"非限":    "normal",
-	"生日":    "birthday",
+	"联动限定":   SupplyCollab,
+	"collab": SupplyCollab,
+	"bfes限定": SupplyBFes,
+	"bfes":   SupplyBFes,
+	"cfes限定": SupplyCFes,
+	"cfes":   SupplyCFes,
+	"期间限定":   SupplyLimited,
+	"fes":    SupplyFes,
+	"非限定":    SupplyNormal,
+	"限定":     SupplyLimited,
+	"limit":  SupplyLimited,
+	"常驻":     SupplyNormal,
+	"非限":     SupplyNormal,
+	"生日":     SupplyBirthday,
 })
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {

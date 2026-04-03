@@ -1,15 +1,15 @@
 package card
 
 import (
-"fmt"
-"path/filepath"
-"strings"
+	"fmt"
+	"path/filepath"
+	"strings"
 
-"haruki-cloud/internal/pjsk/render/assets"
-"haruki-cloud/internal/pjsk/render/common"
-"haruki-cloud/internal/pjsk/render/masterdata"
-renderregion "haruki-cloud/internal/pjsk/render/region"
-"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/utils/drawing"
 )
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {
@@ -163,13 +163,14 @@ func combineSkillLines(lines ...string) string {
 	return strings.Join(ordered, "\n")
 }
 
-func (b *Builder) buildCardImagePaths(card *masterdata.Card, region renderregion.Value) []string {
+func (b *Builder) buildCardImagePaths(card *masterdata.Card, region renderregion.Value) (paths []string) {
 	if card == nil {
 		return nil
 	}
 	base := filepath.Join("character", "member", card.AssetBundleName)
-	paths := []string{
-		assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_normal.png")),
+
+	if !onlyHasAfterTrainingCard(card) {
+		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_normal.png")))
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
 		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_after_training.png")))

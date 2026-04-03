@@ -93,7 +93,8 @@ build_binary() {
 	echo "[build] ${LOCAL_BINARY_PATH}"
 	(
 		cd "${REPO_ROOT}"
-		CGO_ENABLED=1 go build -tags "${GO_BUILD_TAGS}" -o "${LOCAL_BINARY_PATH}" "${GO_BUILD_TARGET}"
+		CGO_ENABLED=1 go build -o "${LOCAL_BINARY_PATH}" "${GO_BUILD_TARGET}"
+		# CGO_ENABLED=1 go build -tags "${GO_BUILD_TAGS}" -o "${LOCAL_BINARY_PATH}" "${GO_BUILD_TARGET}"
 	)
 }
 
@@ -186,7 +187,7 @@ chmod +x "${binary_path}"
 pkill -f "haruki-server" || true
 
 cd "${remote_dir}"
-export LD_LIBRARY_PATH="${remote_dir}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+# export LD_LIBRARY_PATH="${remote_dir}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export HARUKI_BACKEND_LOG_LEVEL="${log_level}"
 nohup "${binary_path}" > "${log_path}" 2>&1 &
 sleep 1

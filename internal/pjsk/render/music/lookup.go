@@ -12,6 +12,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/logger"
 )
 
 type NoteCountMatch struct {
@@ -264,17 +265,14 @@ func (c *Controller) resolveLocalChartPath(region string, musicID int, difficult
 
 	relPaths := []string{
 		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", musicID), diff+".txt"),
-		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01_rip", musicID), diff),
-		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01_rip", musicID), diff+".txt"),
 	}
 	candidates := make([]string, 0, len(relPaths)*3)
 	for _, relPath := range relPaths {
 		candidates = append(candidates,
-			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
-			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetOnDemand), relPath),
-			relPath,
+			filepath.Join(region+"-assets/", assets.RegionAssetStartApp, relPath),
 		)
 	}
+	logger.Infof("%+v", candidates)
 	return c.assets.FirstExisting(candidates...)
 }
 

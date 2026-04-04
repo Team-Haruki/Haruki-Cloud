@@ -289,6 +289,9 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 			}
 			return next, nil
 		} else if charQuery != "" {
+			if next == "" && looksLikeInlineMusicQuery(charQuery) {
+				return remaining, nil
+			}
 			params.WorldBloomCharacterQuery = charQuery
 			return next, nil
 		}
@@ -421,4 +424,22 @@ func extractDeckCharacterCandidate(args string, allowSingleFieldFallback bool) (
 		return 0, "", args
 	}
 	return 0, args, ""
+}
+
+func looksLikeInlineMusicQuery(raw string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	if normalized == "" {
+		return false
+	}
+	for _, suffix := range deckInlineDifficultySuffixes {
+		if !strings.HasSuffix(normalized, strings.ToLower(suffix)) {
+			continue
+		}
+		diff, cleaned := rendermusic.ExtractMusicDifficulty(raw)
+		if diff == "" {
+			return false
+		}
+		return strings.TrimSpace(cleaned) != ""
+	}
+	return false
 }

@@ -326,6 +326,33 @@ func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "190 满画布 已读 虾ex 10火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 190 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.MusicQuery != "虾" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
 func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

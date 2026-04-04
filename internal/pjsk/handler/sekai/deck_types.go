@@ -83,6 +83,11 @@ var deckSkillReferenceKeywords = []string{"技能抽取", "技能吸取"}
 var deckMaxKeywords = []string{"最高", "最大", "最优", "最强", "最佳"}
 var deckMinKeywords = []string{"最低", "最小", "最差", "最弱", "最烂"}
 var deckAverageKeywords = []string{"平均", "均值", "期望"}
+var deckInlineDifficultySuffixes = []string{
+	"append", "expert", "master", "normal", "easy", "hard",
+	"粉谱", "红谱", "紫谱", "蓝谱", "绿谱", "黄谱",
+	"apd", "app", "exp", "mas", "nm", "ez", "hd", "ex", "ma",
+}
 
 var deckRarityPrefixes = []struct {
 	prefix string

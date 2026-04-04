@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,6 +20,10 @@ import (
 )
 
 func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeDeckUserFacingError(err)
+	}()
+
 	var data []byte
 	recommendType := ""
 	switch rc.Cmd.Mode {
@@ -229,6 +234,40 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		return err
 	}
 	return nil
+}
+
+func normalizeDeckUserFacingError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var replyErr onebot11.ReplayError
+	if errors.As(err, &replyErr) {
+		return err
+	}
+
+	message := strings.TrimSpace(err.Error())
+	switch {
+	case strings.Contains(message, "failed to search music by title or alias: music not found:"):
+		musicQuery := strings.TrimSpace(strings.TrimPrefix(message, "failed to search music by title or alias: music not found:"))
+		if musicQuery == "" {
+			return onebot11.NewReplayError("未找到对应歌曲，请检查歌曲名或别名后重试")
+		}
+		return onebot11.NewReplayError("未找到歌曲：%s", musicQuery)
+	case strings.Contains(message, "local user snapshot is not configured"),
+		strings.Contains(message, "user data is required for deck auto recommend"):
+		return onebot11.NewReplayError("组卡需要用户卡牌持有数据，请先绑定账号并上传 Suite 抓包或本地快照")
+	case strings.Contains(message, "解析绑定账号失败"):
+		return onebot11.NewReplayError("组卡需要先绑定账号；如果已绑定，请确认该账号已上传 Suite 抓包数据")
+	case strings.Contains(message, "未找到该用户的绑定账号"):
+		return onebot11.NewReplayError("未找到目标用户的绑定账号")
+	case strings.Contains(message, "toolbox: request failed after retries"),
+		strings.Contains(message, "sekai api: request failed after retries"),
+		strings.Contains(message, "context deadline exceeded"):
+		return onebot11.NewReplayError("获取组卡所需数据超时，请稍后重试")
+	default:
+		return err
+	}
 }
 
 func validateDeckCharacterIDs(values []int) error {

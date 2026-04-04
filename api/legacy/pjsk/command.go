@@ -2,8 +2,10 @@ package pjsk
 
 import (
 	"context"
+	"errors"
 
 	"haruki-cloud/api"
+	onebot11 "haruki-cloud/api/bot/onebot11"
 	pjskHandler "haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -50,6 +52,7 @@ func (h *CommandHandler) HandleCommand(c fiber.Ctx) error {
 			Error: err.Error(),
 		})
 	}
+	applyLegacyRequesterContext(resolved, req)
 
 	// Override region if caller specified a server
 	if req.Server != "" {
@@ -58,10 +61,27 @@ func (h *CommandHandler) HandleCommand(c fiber.Ctx) error {
 
 	responseData, err := pjskHandler.Execute(context.Background(), resolved, h.renderApp)
 	if err != nil {
-		return api.JSONResponse(c, fiber.StatusInternalServerError, "render failed", CommandErrorResponse{
-			Error: err.Error(),
-			Mode:  resolved.Mode,
-		})
+		status, message, data := legacyCommandExecutionError(err, resolved.Mode)
+		return api.JSONResponse(c, status, message, data)
 	}
 	return api.JSONResponse(c, fiber.StatusOK, "ok", responseData)
+}
+
+func applyLegacyRequesterContext(resolved *parser.ResolvedCommand, req CommandRequest) {
+	if resolved == nil {
+		return
+	}
+	resolved.RequesterPlatform = req.IMPlatform
+	resolved.RequesterUserID = req.IMUserID
+}
+
+func legacyCommandExecutionError(err error, mode string) (int, string, interface{}) {
+	var replyErr onebot11.ReplayError
+	if errors.As(err, &replyErr) {
+		return fiber.StatusOK, "ok", []onebot11.Segment{onebot11.Text(string(replyErr))}
+	}
+	return fiber.StatusInternalServerError, "render failed", CommandErrorResponse{
+		Error: err.Error(),
+		Mode:  mode,
+	}
 }

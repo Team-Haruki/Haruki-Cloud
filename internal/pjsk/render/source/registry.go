@@ -64,7 +64,16 @@ func (r *Registry[T]) ResolveRegion(requested renderregion.Value) renderregion.V
 }
 
 func (r *Registry[T]) SourceForRegion(region renderregion.Value) (T, bool) {
-	normalized := r.ResolveRegion(region)
+	normalized := NormalizeRegion(region)
+	if !normalized.IsZero() {
+		if src, ok := r.sources[normalized]; ok && !isNilValue(src) {
+			return src, true
+		}
+		var zero T
+		return zero, false
+	}
+
+	normalized = r.ResolveRegion(region)
 	if src, ok := r.sources[normalized]; ok && !isNilValue(src) {
 		return src, true
 	}

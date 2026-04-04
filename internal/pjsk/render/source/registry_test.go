@@ -42,11 +42,20 @@ func TestRegistryFallsBackToFirstRegisteredSource(t *testing.T) {
 
 	registry.RegisterSource(jp)
 
-	src, ok := registry.SourceForRegion(renderregion.TW)
+	src, ok := registry.SourceForRegion(renderregion.Unknown)
 	if !ok {
 		t.Fatal("expected fallback source")
 	}
 	if src.name != "jp" {
 		t.Fatalf("expected jp fallback, got %q", src.name)
+	}
+}
+
+func TestRegistryDoesNotFallbackForExplicitRegion(t *testing.T) {
+	registry := NewRegistry[*fakeSource](renderregion.JP)
+	registry.RegisterSource(&fakeSource{region: renderregion.JP, name: "jp"})
+
+	if _, ok := registry.SourceForRegion(renderregion.TW); ok {
+		t.Fatal("expected explicit tw lookup without a tw source to fail")
 	}
 }

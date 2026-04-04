@@ -127,6 +127,19 @@ func TestBuildCardBoxRequestRejectsShowBoxWithoutOwnedCardData(t *testing.T) {
 	}
 }
 
+func TestBuildCardBoxRequestRejectsExplicitRegionWithoutSource(t *testing.T) {
+	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
+	controller := NewController(source, nil, nil, nil)
+
+	_, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "cn"}})
+	if err == nil {
+		t.Fatal("expected explicit cn lookup without a cn source to fail")
+	}
+	if !strings.Contains(err.Error(), "region cn") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestBuildCardBoxRequestUsesOwnedCardVisualStateFromDetailedProfile(t *testing.T) {
 	source := &lookupTestSource{}
 	builder := NewBuilder(source, nil, nil, nil)

@@ -175,23 +175,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		profileAdapter := profile.NewProviderAdapter(masterProvider)
 		educationAdapter := education.NewProviderAdapter(masterProvider)
 
-		// SK event source for default region + multi-region registration
+		// Initialize controllers with provider adapters.
 		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventAdapter, assetHelper)
-		for _, region := range []renderregion.Value{
-			renderregion.JP,
-			renderregion.CN,
-			renderregion.TW,
-			renderregion.KR,
-			renderregion.EN,
-		} {
-			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
-				continue
-			}
-			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
-			skController.RegisterEventSource(event.NewProviderAdapter(regionProvider))
-		}
-
-		// Initialize controllers with provider adapters
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:          cfg.DeckRecommend.Enabled,
 			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
@@ -224,7 +209,25 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 				continue
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
-			profileController.RegisterSource(profile.NewProviderAdapter(regionProvider))
+			regionCardAdapter := card.NewProviderAdapter(regionProvider)
+			regionEventAdapter := event.NewProviderAdapter(regionProvider)
+			regionMusicAdapter := music.NewProviderAdapter(regionProvider)
+			regionGachaAdapter := gacha.NewProviderAdapter(regionProvider)
+			regionHonorAdapter := honor.NewProviderAdapter(regionProvider)
+			regionStampAdapter := stamp.NewProviderAdapter(regionProvider)
+			regionProfileAdapter := profile.NewProviderAdapter(regionProvider)
+			regionEducationAdapter := education.NewProviderAdapter(regionProvider)
+
+			cardController.RegisterSource(regionCardAdapter)
+			cardController.RegisterEventSource(regionEventAdapter)
+			educationController.RegisterSource(regionEducationAdapter)
+			eventController.RegisterSource(regionEventAdapter)
+			gachaController.RegisterSource(regionGachaAdapter)
+			honorController.RegisterSource(regionHonorAdapter)
+			musicController.RegisterSource(regionMusicAdapter)
+			profileController.RegisterSource(regionProfileAdapter)
+			skController.RegisterEventSource(regionEventAdapter)
+			stampController.RegisterSource(regionStampAdapter)
 		}
 	}
 

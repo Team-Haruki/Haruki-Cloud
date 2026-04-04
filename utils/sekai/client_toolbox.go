@@ -30,6 +30,7 @@ type HarukiToolboxClient struct {
 func GetToolboxClient() *HarukiToolboxClient {
 	toolboxOnce.Do(func() {
 		c := resty.New().
+			SetTimeout(apiTimeout).
 			SetRetryCount(maxRetries).
 			SetRetryWaitTime(retryWaitTime).
 			AddRetryCondition(func(r *resty.Response, err error) bool {

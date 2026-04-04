@@ -17,6 +17,7 @@ import (
 const (
 	maxRetries    = 4
 	retryWaitTime = time.Second
+	apiTimeout    = 5 * time.Second
 	tokenHeader   = "X-Haruki-Sekai-Token"
 )
 
@@ -33,6 +34,7 @@ type SekaiAPIClient struct {
 func GetSekaiAPIClient() *SekaiAPIClient {
 	apiOnce.Do(func() {
 		c := resty.New().
+			SetTimeout(apiTimeout).
 			SetRetryCount(maxRetries).
 			SetRetryWaitTime(retryWaitTime).
 			AddRetryCondition(func(r *resty.Response, err error) bool {

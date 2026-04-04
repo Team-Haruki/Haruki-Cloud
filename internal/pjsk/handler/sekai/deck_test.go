@@ -407,6 +407,57 @@ func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "163 tks sage 5火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 163 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 13 {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event163 sage neo 5火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 163 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

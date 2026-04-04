@@ -69,6 +69,7 @@ var (
 
 var deckPowerTargetKeywords = []string{"综合力", "综合", "总合力", "总和", "power"}
 var deckSkillTargetKeywords = []string{"倍率", "实效", "skill", "时效"}
+var deckBoostKeywords = []string{"boost", "火", "体力", "体"}
 var deckSkillMaxKeywords = []string{"满技能", "满技", "skillmax", "技能满级", "slv4"}
 var deckMasterMaxKeywords = []string{"满突破", "满破", "rankmax", "mastermax", "5破", "五破"}
 var deckEpisodeReadKeywords = []string{"剧情已读", "满剧情", "前后篇已读", "前后篇", "已读"}

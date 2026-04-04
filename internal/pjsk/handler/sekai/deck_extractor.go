@@ -39,6 +39,7 @@ func extractDeckCommonParams(args string, params *deckAutoQueryParams, cfg deckC
 	if cfg.allowTarget {
 		args = extractDeckTarget(args, params)
 	}
+	args = extractDeckBoost(args)
 	return strings.TrimSpace(args), nil
 }
 
@@ -130,6 +131,45 @@ func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (stri
 		remaining = append(remaining, field)
 	}
 	return strings.TrimSpace(strings.Join(remaining, " ")), nil
+}
+
+func extractDeckBoost(args string) string {
+	fields := strings.Fields(args)
+	if len(fields) == 0 {
+		return strings.TrimSpace(args)
+	}
+
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		if _, ok := parseDeckBoostField(field); ok {
+			continue
+		}
+		remaining = append(remaining, field)
+	}
+
+	return strings.TrimSpace(strings.Join(remaining, " "))
+}
+
+func parseDeckBoostField(field string) (int, bool) {
+	value := strings.ToLower(strings.TrimSpace(field))
+	if value == "" {
+		return 0, false
+	}
+
+	for _, keyword := range deckBoostKeywords {
+		keywordLower := strings.ToLower(keyword)
+		if !strings.HasSuffix(value, keywordLower) || len(value) <= len(keywordLower) {
+			continue
+		}
+		raw := strings.TrimSpace(value[:len(value)-len(keywordLower)])
+		boost, err := strconv.Atoi(raw)
+		if err != nil || boost < 0 || boost > 10 {
+			return 0, false
+		}
+		return boost, true
+	}
+
+	return 0, false
 }
 
 func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, error) {
@@ -287,19 +327,40 @@ func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuer
 }
 
 func extractDeckEventID(args string) (*int, string) {
+	normalized := normalizeDeckSpaces(args)
 	if strings.Contains(args, "终章") {
 		eventID := 180
 		return &eventID, normalizeDeckSpaces(strings.Replace(args, "终章", "", 1))
 	}
-	matches := deckEventIDRegex.FindStringSubmatch(args)
+	matches := deckEventIDRegex.FindStringSubmatch(normalized)
 	if len(matches) < 3 {
-		return nil, normalizeDeckSpaces(args)
+		fields := strings.Fields(normalized)
+		if len(fields) < 2 || len(fields[0]) > 3 {
+			return nil, normalized
+		}
+		if _, err := strconv.Atoi(fields[0]); err != nil {
+			return nil, normalized
+		}
+
+		// Keep the legacy behavior for inputs like "123 ex" which are commonly
+		// used as bare music queries with difficulty suffixes.
+		if len(fields) == 2 {
+			if diff, cleaned := rendermusic.ExtractMusicDifficulty(normalized); diff != "" && normalizeDeckSpaces(cleaned) == fields[0] {
+				return nil, normalized
+			}
+		}
+
+		eventID, err := strconv.Atoi(fields[0])
+		if err != nil || eventID <= 0 {
+			return nil, normalized
+		}
+		return &eventID, normalizeDeckSpaces(strings.Join(fields[1:], " "))
 	}
 	eventID, err := strconv.Atoi(matches[2])
 	if err != nil || eventID <= 0 {
-		return nil, normalizeDeckSpaces(args)
+		return nil, normalized
 	}
-	return &eventID, normalizeDeckSpaces(deckEventIDRegex.ReplaceAllString(args, " "))
+	return &eventID, normalizeDeckSpaces(deckEventIDRegex.ReplaceAllString(normalized, " "))
 }
 
 func extractDeckSimulatedEvent(args string) (attr string, unit string, remaining string) {

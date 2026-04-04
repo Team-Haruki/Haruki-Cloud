@@ -135,24 +135,7 @@ func (c *Controller) buildUserResults(diff string) map[int]string {
 }
 
 func (c *Controller) buildDefaultProgressCounts(source DataSource, builder *Builder, diff string) []drawing.PlayProgressCount {
-	countMap := make(map[int]*drawing.PlayProgressCount)
-	for _, musicInfo := range source.GetMusics() {
-		if musicInfo == nil {
-			continue
-		}
-		level := builder.GetDifficultyLevel(musicInfo.ID, diff)
-		if level == 0 {
-			continue
-		}
-		entry := countMap[level]
-		if entry == nil {
-			entry = &drawing.PlayProgressCount{Level: level}
-			countMap[level] = entry
-		}
-		entry.Total++
-		entry.NotClear++
-	}
-	return flattenProgressCounts(countMap)
+	return c.buildProgressCountsFromResults(source, builder, diff, nil)
 }
 
 func (c *Controller) buildUserProgressCounts(source DataSource, builder *Builder, diff string) []drawing.PlayProgressCount {
@@ -160,11 +143,17 @@ func (c *Controller) buildUserProgressCounts(source DataSource, builder *Builder
 	if snapshot == nil {
 		return nil
 	}
+	return c.buildProgressCountsFromResults(source, builder, diff, snapshot.MusicResults(diff))
+}
 
+func (c *Controller) buildProgressCountsFromResults(source DataSource, builder *Builder, diff string, userResults map[int]string) []drawing.PlayProgressCount {
 	countMap := make(map[int]*drawing.PlayProgressCount)
 	now := time.Now().UnixMilli()
 	for _, musicInfo := range source.GetMusics() {
 		if musicInfo == nil || musicInfo.PublishedAt > now {
+			continue
+		}
+		if _, blocked := hiddenMusicIDs[musicInfo.ID]; blocked {
 			continue
 		}
 		level := builder.GetDifficultyLevel(musicInfo.ID, diff)
@@ -177,7 +166,7 @@ func (c *Controller) buildUserProgressCounts(source DataSource, builder *Builder
 			countMap[level] = entry
 		}
 		entry.Total++
-		switch snapshot.GetMusicResult(musicInfo.ID, diff) {
+		switch strings.ToLower(strings.TrimSpace(userResults[musicInfo.ID])) {
 		case "ap":
 			entry.Ap++
 			entry.Fc++

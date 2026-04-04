@@ -45,12 +45,13 @@ type ListQuery struct {
 }
 
 type ProgressQuery struct {
-	Difficulty string                      `json:"difficulty"`
-	Region     string                      `json:"region"`
-	Counts     []drawing.PlayProgressCount `json:"counts,omitempty"`
-	Title      *string                     `json:"title,omitempty"`
-	TitleStyle map[string]interface{}      `json:"title_style,omitempty"`
-	Profile    *drawing.ProfileCardRequest `json:"-"`
+	Difficulty  string                      `json:"difficulty"`
+	Region      string                      `json:"region"`
+	Counts      []drawing.PlayProgressCount `json:"counts,omitempty"`
+	UserResults map[int]string              `json:"user_results,omitempty"`
+	Title       *string                     `json:"title,omitempty"`
+	TitleStyle  map[string]interface{}      `json:"title_style,omitempty"`
+	Profile     *drawing.ProfileCardRequest `json:"-"`
 }
 
 type BoardQuery struct {

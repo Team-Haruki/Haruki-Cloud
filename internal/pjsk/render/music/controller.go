@@ -371,7 +371,9 @@ func (c *Controller) BuildMusicProgressRequest(query ProgressQuery) (*drawing.Pl
 
 	counts := append([]drawing.PlayProgressCount(nil), query.Counts...)
 	if len(counts) == 0 {
-		if userCounts := c.buildUserProgressCounts(source, builder, diff); len(userCounts) > 0 {
+		if query.UserResults != nil {
+			counts = c.buildProgressCountsFromResults(source, builder, diff, query.UserResults)
+		} else if userCounts := c.buildUserProgressCounts(source, builder, diff); len(userCounts) > 0 {
 			counts = userCounts
 		} else {
 			counts = c.buildDefaultProgressCounts(source, builder, diff)

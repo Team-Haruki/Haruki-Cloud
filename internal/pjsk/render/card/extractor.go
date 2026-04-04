@@ -145,6 +145,7 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 }
 
 var supplyRules = buildRules(map[string]string{
+	"联动":     SupplyCollab,
 	"联动限定":   SupplyCollab,
 	"collab": SupplyCollab,
 	"bfes限定": SupplyBFes,

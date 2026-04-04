@@ -71,10 +71,17 @@ func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/progress",
 			Commands: []string{
-				"/打歌进度", "/歌曲进度", "/打歌信息", "/pjsk进度", "/progress", "/music-progress", "/pjsk music progress",
+				"/打歌进度", "/歌曲进度", "/打歌信息", "/pjsk进度", "/progress", "/music-progress", "/pjsk music progress", "/pjsk progress",
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
+				ctx.SetArgs(cleaned)
+				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", map[string]any{
+					"difficulty": diff,
+				}), nil
+			}
 			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-progress"), nil
 		},
 	}
@@ -123,28 +130,6 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", map[string]any{
 				"note_count": noteCount,
 			}), nil
-		},
-	}
-}
-
-func (sekaiHandlers) PlayProgressHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Path: "music/progress",
-			Commands: []string{
-				"/pjsk progress",
-				"/pjsk进度", "/打歌进度", "/歌曲进度", "/打歌信息",
-			},
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
-				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", map[string]any{
-					"difficulty": diff,
-				}), nil
-			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-progress"), nil
 		},
 	}
 }

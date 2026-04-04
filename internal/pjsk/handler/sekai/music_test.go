@@ -101,3 +101,38 @@ func TestMusicCoverHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("resolved.Query = %q", resolved.Query)
 	}
 }
+
+func TestMusicProgressHandleBuildsResolvedCommand(t *testing.T) {
+	h := sekaiHandlers{}.MusicProgressHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/pjsk progress",
+		ArgText:    "ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-progress" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		Difficulty string `json:"difficulty"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Difficulty != "expert" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

@@ -43,7 +43,19 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	case "music-progress":
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = rc.GetProfileCard()
+		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
+			diff := strings.ToLower(strings.TrimSpace(q.Difficulty))
+			if diff == "" {
+				diff = "master"
+			}
+			q.UserResults = snapshot.MusicResults(diff)
+			if profile := snapshot.ProfileCard(rc.Region); profile != nil {
+				q.Profile = profile
+			}
+		}
+		if q.Profile == nil {
+			q.Profile = rc.GetProfileCard()
+		}
 		data, err = rc.App.Music.RenderMusicProgress(q)
 	case "music-rewards":
 		data, err = renderMusicRewards(rc.Ctx, rc.Cmd, rc.App, rc.GetProfileCard())

@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
 )
@@ -21,13 +22,14 @@ type CardSource interface {
 }
 
 type EventSource interface {
+	DefaultRegion() renderregion.Value
 	GetEventByID(id int) (*masterdata.Event, error)
 	GetEvents() []*masterdata.Event
 }
 
 type Controller struct {
-	cards         CardSource
-	events        EventSource
+	cardSources   *regionsource.Registry[CardSource]
+	eventSources  *regionsource.Registry[EventSource]
 	drawing       *drawing.HarukiDrawingClient
 	assets        *assets.AssetHelper
 	snapshot      *userdata.Service
@@ -45,13 +47,14 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
+	resolvedDefaultRegion := renderregion.WithDefault(defaultRegion)
 	controller := &Controller{
-		cards:         cards,
-		events:        events,
+		cardSources:   regionsource.NewRegistry[CardSource](resolvedDefaultRegion),
+		eventSources:  regionsource.NewRegistry[EventSource](resolvedDefaultRegion),
 		drawing:       drawingClient,
 		assets:        assetHelper,
 		snapshot:      snapshot,
-		defaultRegion: renderregion.WithDefault(defaultRegion),
+		defaultRegion: resolvedDefaultRegion,
 		recommendCfg: RecommendConfig{
 			Enabled:          cfg.Enabled,
 			UseLocalEngine:   cfg.UseLocalEngine,
@@ -65,6 +68,8 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		},
 		metaLoader: metaLoader,
 	}
+	controller.RegisterCardSource(cards)
+	controller.RegisterEventSource(events)
 	if cfg.Enabled {
 		if controller.recommendCfg.ServiceBaseURL != "" {
 			controller.engine = newRemoteEngineProvider(controller.recommendCfg)
@@ -73,6 +78,26 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		}
 	}
 	return controller
+}
+
+func (c *Controller) RegisterCardSource(source CardSource) {
+	if c == nil {
+		return
+	}
+	if c.cardSources == nil {
+		c.cardSources = regionsource.NewRegistry[CardSource](c.defaultRegion)
+	}
+	c.cardSources.RegisterSource(source)
+}
+
+func (c *Controller) RegisterEventSource(source EventSource) {
+	if c == nil {
+		return
+	}
+	if c.eventSources == nil {
+		c.eventSources = regionsource.NewRegistry[EventSource](c.defaultRegion)
+	}
+	c.eventSources.RegisterSource(source)
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given
@@ -112,7 +137,7 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 	if c == nil {
 		return nil, fmt.Errorf("deck controller is not initialized")
 	}
-	if c.cards == nil {
+	if c.cardSources == nil {
 		return nil, fmt.Errorf("deck card source is not configured")
 	}
 	if c.snapshot == nil {
@@ -134,6 +159,10 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	}
 
 	region, recType, err := c.normalizeAutoQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	region, _, err = c.resolveCardSource(region)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +213,10 @@ func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequ
 	if err != nil {
 		return nil, err
 	}
+	region, cardSource, err := c.resolveCardSource(region)
+	if err != nil {
+		return nil, err
+	}
 	option, err := c.buildRecommendOption(region, recType, query)
 	if err != nil {
 		return nil, err
@@ -196,7 +229,7 @@ func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequ
 	}
 	candidates := make([]deckCandidate, 0, len(raw.UserCards))
 	for _, userCard := range raw.UserCards {
-		card, err := c.cards.GetCardByID(userCard.CardID)
+		card, err := cardSource.GetCardByID(userCard.CardID)
 		if err != nil || card == nil {
 			continue
 		}
@@ -276,7 +309,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		eventID = *query.EventID
 	}
 	if eventID == 0 && recType != "no_event" && recType != "challenge" {
-		if id := c.pickCurrentOrNextEventID(); id > 0 {
+		if id := c.pickCurrentOrNextEventID(region); id > 0 {
 			eventID = id
 		}
 	}
@@ -357,6 +390,10 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	if result == nil || len(result.Decks) == 0 {
 		return nil, fmt.Errorf("deck local engine returned no deck results")
 	}
+	region, cardSource, err := c.resolveCardSource(region)
+	if err != nil {
+		return nil, err
+	}
 
 	profile := c.resolveProfile(region, query.Profile, "deck_local_engine")
 	userCardMap := make(map[int]userdata.RawUserCard)
@@ -370,7 +407,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	for _, deckInfo := range result.Decks {
 		cardData := make([]drawing.DeckCardData, 0, len(deckInfo.Cards))
 		for _, deckCard := range deckInfo.Cards {
-			card, err := c.cards.GetCardByID(deckCard.CardID)
+			card, err := cardSource.GetCardByID(deckCard.CardID)
 			if err != nil || card == nil {
 				continue
 			}
@@ -498,7 +535,7 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 		finalEventID = *query.EventID
 	}
 	if finalEventID <= 0 && shouldUseFallbackEventMetadata(recType, option) {
-		finalEventID = c.pickCurrentOrNextEventID()
+		finalEventID = c.pickCurrentOrNextEventID(region)
 	}
 
 	if optionHasUnitAttrEvent(option) && recType == "event" {
@@ -542,8 +579,8 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 		request.EventID = drawing.IntPtr(finalEventID)
 		eventName := fmt.Sprintf("Event #%d", finalEventID)
 		request.EventName = &eventName
-		if c.events != nil {
-			if eventInfo, err := c.events.GetEventByID(finalEventID); err == nil && eventInfo != nil {
+		if _, eventSource, ok := c.resolveEventSource(region); ok {
+			if eventInfo, err := eventSource.GetEventByID(finalEventID); err == nil && eventInfo != nil {
 				eventName = eventInfo.Name
 				request.EventName = &eventName
 				if bannerPath := c.resolveEventBannerPath(eventInfo.AssetBundleName, region); bannerPath != "" {
@@ -848,8 +885,10 @@ func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {
 
 func (c *Controller) normalizeAutoQuery(query AutoQuery) (renderregion.Value, string, error) {
 	region := renderregion.Normalize(query.Region)
-	if region.IsZero() && c.cards != nil {
-		region = c.cards.DefaultRegion()
+	if region.IsZero() {
+		if resolvedRegion, _, err := c.resolveCardSource(renderregion.Unknown); err == nil {
+			region = resolvedRegion
+		}
 	}
 	if region.IsZero() {
 		region = c.defaultRegion
@@ -867,15 +906,16 @@ func (c *Controller) normalizeAutoQuery(query AutoQuery) (renderregion.Value, st
 	}
 }
 
-func (c *Controller) pickCurrentOrNextEventID() int {
-	if c == nil || c.events == nil {
+func (c *Controller) pickCurrentOrNextEventID(region renderregion.Value) int {
+	_, eventSource, ok := c.resolveEventSource(region)
+	if !ok {
 		return 0
 	}
 	now := time.Now().UnixMilli()
 	var current *masterdata.Event
 	var next *masterdata.Event
 	var latest *masterdata.Event
-	for _, eventInfo := range c.events.GetEvents() {
+	for _, eventInfo := range eventSource.GetEvents() {
 		if eventInfo == nil {
 			continue
 		}
@@ -904,6 +944,41 @@ func (c *Controller) pickCurrentOrNextEventID() int {
 		return latest.ID
 	}
 	return 0
+}
+
+func (c *Controller) resolveCardSource(requested renderregion.Value) (renderregion.Value, CardSource, error) {
+	if c == nil || c.cardSources == nil {
+		return renderregion.WithDefault(requested), nil, fmt.Errorf("deck card source is not configured")
+	}
+	normalized := renderregion.Normalize(requested.String())
+	if !normalized.IsZero() {
+		source, ok := c.cardSources.SourceForRegion(normalized)
+		if !ok {
+			return normalized, nil, fmt.Errorf("no deck card source for region %s", normalized)
+		}
+		return normalized, source, nil
+	}
+	source, ok := c.cardSources.SourceForRegion(renderregion.Unknown)
+	if !ok {
+		return c.cardSources.ResolveRegion(renderregion.Unknown), nil, fmt.Errorf("deck card source is not configured")
+	}
+	return renderregion.WithDefault(source.DefaultRegion()), source, nil
+}
+
+func (c *Controller) resolveEventSource(requested renderregion.Value) (renderregion.Value, EventSource, bool) {
+	if c == nil || c.eventSources == nil {
+		return renderregion.WithDefault(requested), nil, false
+	}
+	normalized := renderregion.Normalize(requested.String())
+	if !normalized.IsZero() {
+		source, ok := c.eventSources.SourceForRegion(normalized)
+		return normalized, source, ok
+	}
+	source, ok := c.eventSources.SourceForRegion(renderregion.Unknown)
+	if !ok {
+		return c.eventSources.ResolveRegion(renderregion.Unknown), nil, false
+	}
+	return renderregion.WithDefault(source.DefaultRegion()), source, true
 }
 
 func (c *Controller) resolveEventBannerPath(assetBundleName string, region renderregion.Value) string {

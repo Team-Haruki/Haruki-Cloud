@@ -220,6 +220,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 			cardController.RegisterSource(regionCardAdapter)
 			cardController.RegisterEventSource(regionEventAdapter)
+			deckController.RegisterCardSource(regionCardAdapter)
+			deckController.RegisterEventSource(regionEventAdapter)
 			educationController.RegisterSource(regionEducationAdapter)
 			eventController.RegisterSource(regionEventAdapter)
 			gachaController.RegisterSource(regionGachaAdapter)

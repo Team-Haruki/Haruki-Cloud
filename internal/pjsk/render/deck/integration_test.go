@@ -166,9 +166,12 @@ func (s *integrationCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 }
 
 type integrationEventSource struct {
+	region     renderregion.Value
 	events     map[int]*masterdata.Event
 	eventSlice []*masterdata.Event
 }
+
+func (s *integrationEventSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *integrationEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	return s.events[id], nil
@@ -222,6 +225,7 @@ func loadIntegrationSources(root, region string) (CardSource, EventSource, error
 			region: renderregion.Normalize(region),
 			cards:  cardMap,
 		}, &integrationEventSource{
+			region:     renderregion.Normalize(region),
 			events:     eventMap,
 			eventSlice: eventSlice,
 		}, nil

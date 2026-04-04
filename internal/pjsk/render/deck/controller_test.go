@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -34,6 +35,7 @@ func (s *testCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 }
 
 type testEventSource struct {
+	region renderregion.Value
 	events map[int]*masterdata.Event
 }
 
@@ -44,6 +46,8 @@ type testMusicMetaSource struct {
 func (s *testMusicMetaSource) Get(string) []byte {
 	return append([]byte(nil), s.data...)
 }
+
+func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	return s.events[id], nil
@@ -97,6 +101,84 @@ func TestBuildAutoRecommendRequestFallback(t *testing.T) {
 	}
 	if request.DeckData[0].CardData[0].CardThumbnail.CardID != 1002 {
 		t.Fatalf("unexpected card order: %+v", request.DeckData[0].CardData)
+	}
+}
+
+func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	now := time.Now().UnixMilli()
+
+	controller.RegisterCardSource(&testCardSource{
+		region: renderregion.CN,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				AssetBundleName: "cn_card_1001",
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 100},
+					{CardParameterType: "param2", Power: 100},
+					{CardParameterType: "param3", Power: 100},
+				},
+			},
+			1002: {
+				ID:                              1002,
+				CharacterID:                     2,
+				CardRarityType:                  "rarity_4",
+				Attr:                            "cool",
+				AssetBundleName:                 "cn_card_1002",
+				SpecialTrainingPower1BonusFixed: 50,
+				SpecialTrainingPower2BonusFixed: 50,
+				SpecialTrainingPower3BonusFixed: 50,
+				CardParameters: []masterdata.CardParameter{
+					{CardParameterType: "param1", Power: 200},
+					{CardParameterType: "param2", Power: 200},
+					{CardParameterType: "param3", Power: 200},
+				},
+			},
+		},
+	})
+	controller.RegisterEventSource(&testEventSource{
+		region: renderregion.CN,
+		events: map[int]*masterdata.Event{
+			200: {
+				ID:              200,
+				Name:            "CN Deck Event",
+				AssetBundleName: "cn_deck_event_banner",
+				StartAt:         now - 1_000,
+				AggregateAt:     now + 1_000,
+			},
+		},
+	})
+
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "cn",
+		RecommendType: "event",
+		Limit:         2,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if request.Region != "cn" {
+		t.Fatalf("unexpected request region: %s", request.Region)
+	}
+	if request.EventID == nil || *request.EventID != 200 {
+		t.Fatalf("unexpected event id: %+v", request.EventID)
+	}
+	if request.EventName == nil || *request.EventName != "CN Deck Event" {
+		t.Fatalf("unexpected event name: %+v", request.EventName)
+	}
+	if request.EventBannerPath == nil || !strings.Contains(*request.EventBannerPath, "asset/cn-assets/") || !strings.Contains(*request.EventBannerPath, "cn_deck_event_banner") {
+		t.Fatalf("unexpected event banner path: %+v", request.EventBannerPath)
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 2 {
+		t.Fatalf("unexpected deck data: %+v", request.DeckData)
+	}
+	if !strings.Contains(request.DeckData[0].CardData[0].CardThumbnail.CardThumbnailPath, "asset/cn-assets/") {
+		t.Fatalf("expected cn card thumbnail path, got %q", request.DeckData[0].CardData[0].CardThumbnail.CardThumbnailPath)
 	}
 }
 
@@ -692,6 +774,7 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 		},
 	}
 	eventSource := &testEventSource{
+		region: renderregion.JP,
 		events: map[int]*masterdata.Event{
 			7: {
 				ID:              7,

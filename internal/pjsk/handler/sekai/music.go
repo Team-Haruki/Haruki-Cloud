@@ -2,13 +2,14 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"strconv"
 	"strings"
 )
-
+/*
 func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -29,7 +30,7 @@ func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
 		},
 	}
 }
-
+*/
 func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -99,7 +100,7 @@ func (sekaiHandlers) SongHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")
+				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
 			}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
 				ctx.SetArgs(cleaned)
@@ -125,7 +126,7 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			noteCount, err := strconv.Atoi(args)
 			if err != nil {
-				return nil, fmt.Errorf("请输入物量数值")
+				return nil, onebot11.NewReplayError("请输入物量数值")
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", map[string]any{
 				"note_count": noteCount,
@@ -145,7 +146,7 @@ func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")
+				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
 			}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
 				ctx.SetArgs(cleaned)

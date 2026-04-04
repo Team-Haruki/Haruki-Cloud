@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -194,7 +195,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		diffUsed  string
 	)
 	for _, difficulty := range difficulties {
-		chartPath = c.resolveLocalChartPath(musicInfo.ID, difficulty)
+		chartPath = c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
 		if chartPath == "" {
 			continue
 		}
@@ -252,16 +253,29 @@ func (c *Controller) resolveLocalMusicJacket(assetName string) string {
 	)
 }
 
-func (c *Controller) resolveLocalChartPath(musicID int, difficulty string) string {
+func (c *Controller) resolveLocalChartPath(region string, musicID int, difficulty string) string {
 	if c == nil || c.assets == nil || musicID <= 0 || strings.TrimSpace(difficulty) == "" {
 		return ""
 	}
 	diff := normalizeDifficulty(difficulty)
-	return c.assets.FirstExisting(
+	if strings.TrimSpace(region) == "" {
+		region = "jp"
+	}
+
+	relPaths := []string{
 		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", musicID), diff+".txt"),
 		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01_rip", musicID), diff),
 		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01_rip", musicID), diff+".txt"),
-	)
+	}
+	candidates := make([]string, 0, len(relPaths)*3)
+	for _, relPath := range relPaths {
+		candidates = append(candidates,
+			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
+			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetOnDemand), relPath),
+			relPath,
+		)
+	}
+	return c.assets.FirstExisting(candidates...)
 }
 
 type parsedChartBPM struct {

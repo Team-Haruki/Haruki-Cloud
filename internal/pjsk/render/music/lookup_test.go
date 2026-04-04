@@ -208,6 +208,49 @@ func TestResolveMusicCoverAndBPM(t *testing.T) {
 	}
 }
 
+func TestResolveMusicBPMSupportsRegionAssetChartPath(t *testing.T) {
+	root := t.TempDir()
+	chartPath := filepath.Join(root, "asset", "jp-assets", "startapp", "music", "music_score", "0001_01", "expert.txt")
+	if err := os.MkdirAll(filepath.Dir(chartPath), 0o755); err != nil {
+		t.Fatalf("mkdir chart: %v", err)
+	}
+	chart := strings.Join([]string{
+		"#BPM01:128",
+		"#BPM02:196",
+		"#00008:0100",
+		"#00108:0200",
+	}, "\n")
+	if err := os.WriteFile(chartPath, []byte(chart), 0o644); err != nil {
+		t.Fatalf("write chart: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil)
+	bpm, err := controller.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"})
+	if err != nil {
+		t.Fatalf("ResolveMusicBPM() error = %v", err)
+	}
+	if bpm.Difficulty != "expert" {
+		t.Fatalf("unexpected difficulty: %q", bpm.Difficulty)
+	}
+	if bpm.MainBPM != 128 {
+		t.Fatalf("unexpected main bpm: %v", bpm.MainBPM)
+	}
+	if len(bpm.Events) != 2 || bpm.Events[0].BPM != 128 || bpm.Events[1].BPM != 196 {
+		t.Fatalf("unexpected events: %+v", bpm.Events)
+	}
+}
+
 func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{

@@ -1,11 +1,12 @@
 package sekai
 
 import (
-"fmt"
-rendermusic "haruki-cloud/internal/pjsk/render/music"
-"sort"
-"strconv"
-"strings"
+	"fmt"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"sort"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
 func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
@@ -100,13 +101,95 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 		args = remaining
 	}
 
-	levelFilter, diffFilter, remaining := extractLeadingMusicBoardFilters(args)
+	levelFilter, remaining := extractMusicBoardLevelFilter(args)
 	params.LevelFilter = levelFilter
+	args = remaining
+
+	diffFilter, remaining := extractMusicBoardDiffFilters(args)
 	params.DiffFilter = diffFilter
 	args = remaining
 
-	params.SpecQueries = splitMusicMetaQueries(args)
+	params.SpecQueries = splitMusicBoardSpecQueries(args)
 	return params, nil
+}
+
+func splitMusicBoardSpecQueries(args string) []string {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return nil
+	}
+	if strings.ContainsAny(args, "/|\n\r") {
+		return splitMusicMetaQueries(args)
+	}
+	fields := strings.Fields(args)
+	if len(fields) <= 1 {
+		return []string{args}
+	}
+	if !shouldSplitMusicBoardSpecQueriesByWhitespace(fields) {
+		return []string{args}
+	}
+
+	queries := make([]string, 0, len(fields))
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		if field != "" {
+			queries = append(queries, field)
+		}
+	}
+	return queries
+}
+
+func shouldSplitMusicBoardSpecQueriesByWhitespace(fields []string) bool {
+	for _, field := range fields {
+		if !looksLikeCompactMusicBoardSpecQuery(field) {
+			return false
+		}
+	}
+	return true
+}
+
+func looksLikeCompactMusicBoardSpecQuery(field string) bool {
+	field = strings.TrimSpace(field)
+	if field == "" {
+		return false
+	}
+
+	if diff, rest := rendermusic.ExtractMusicDifficulty(field); diff != "" && strings.TrimSpace(rest) != "" {
+		return true
+	}
+	if strings.Contains(field, "*") {
+		return true
+	}
+	if _, ok := rendermusic.ParseExplicitMusicID(field); ok {
+		return true
+	}
+	if _, ok := rendermusic.ParseImplicitMusicID(field); ok {
+		return true
+	}
+
+	hasNonASCII := false
+	hasASCIIUpper := false
+	hasASCII := false
+	for _, r := range field {
+		if r > unicode.MaxASCII {
+			hasNonASCII = true
+			continue
+		}
+		hasASCII = true
+		if unicode.IsUpper(r) {
+			hasASCIIUpper = true
+		}
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-') {
+			return false
+		}
+	}
+	if hasNonASCII && !hasASCII {
+		return true
+	}
+	if hasASCIIUpper {
+		return false
+	}
+	return len(field) <= 8
 }
 
 func extractMusicBoardPageArg(args string) (int, string, bool) {
@@ -247,36 +330,32 @@ func extractMusicBoardInterval(args string) (float64, string, error) {
 	return 0, args, nil
 }
 
-func extractLeadingMusicBoardFilters(args string) (string, []string, string) {
-	levelFilter := ""
-	diffFilter := make([]string, 0, 2)
+func extractMusicBoardLevelFilter(args string) (string, string) {
 	remaining := strings.TrimSpace(args)
-
-	for {
-		fields := strings.Fields(remaining)
-		if len(fields) == 0 {
-			break
-		}
-
-		token := fields[0]
+	for _, token := range strings.Fields(args) {
 		lower := strings.ToLower(strings.TrimSpace(token))
-		switch {
-		case levelFilter == "" && isMusicBoardLevelFilter(lower):
-			levelFilter = lower
-			remaining = removeMusicBoardToken(remaining, token)
-		default:
-			diff, rest := rendermusic.ExtractMusicDifficulty(token)
-			if diff == "" || strings.TrimSpace(rest) != "" {
-				return levelFilter, diffFilter, strings.TrimSpace(remaining)
-			}
-			if !containsMusicBoardString(diffFilter, diff) {
-				diffFilter = append(diffFilter, diff)
-			}
-			remaining = removeMusicBoardToken(remaining, token)
+		if !isMusicBoardLevelFilter(lower) {
+			continue
 		}
+		return lower, removeMusicBoardToken(remaining, token)
 	}
+	return "", remaining
+}
 
-	return levelFilter, diffFilter, strings.TrimSpace(remaining)
+func extractMusicBoardDiffFilters(args string) ([]string, string) {
+	remaining := strings.TrimSpace(args)
+	diffFilter := make([]string, 0, 2)
+	for _, token := range strings.Fields(args) {
+		diff, rest := rendermusic.ExtractMusicDifficulty(token)
+		if diff == "" || strings.TrimSpace(rest) != "" {
+			continue
+		}
+		if !containsMusicBoardString(diffFilter, diff) {
+			diffFilter = append(diffFilter, diff)
+		}
+		remaining = removeMusicBoardToken(remaining, token)
+	}
+	return diffFilter, strings.TrimSpace(remaining)
 }
 
 func removeMusicBoardToken(args, token string) string {
@@ -304,18 +383,13 @@ func containsMusicBoardString(values []string, target string) bool {
 }
 
 func parseMusicBoardPage(token string) (int, bool) {
-	switch {
-	case strings.HasSuffix(token, "页"):
-		value := strings.TrimSuffix(token, "页")
+	if strings.Contains(token, "页") || strings.Contains(token, "p") {
+		value := strings.Replace(token, "页", "", 1)
+		value = strings.Replace(value, "p", "", 1)
 		page, err := strconv.Atoi(value)
 		return page, err == nil && page > 0
-	case strings.HasPrefix(token, "p"):
-		value := strings.TrimPrefix(token, "p")
-		page, err := strconv.Atoi(value)
-		return page, err == nil && page > 0
-	default:
-		return 0, false
 	}
+	return 0, false
 }
 
 func resolveMusicBoardLiveType(token string) (string, bool) {

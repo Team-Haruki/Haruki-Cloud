@@ -161,13 +161,39 @@ func TestMusicBoardHandleBuildsResolvedCommand(t *testing.T) {
 	}
 }
 
+func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "虾ex 虾ma 龙hd",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.SpecQueries) != 3 || params.SpecQueries[0] != "虾ex" || params.SpecQueries[1] != "虾ma" || params.SpecQueries[2] != "龙hd" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
 func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
-		ArgText:    "solo max 技能 120 110 100 90 80 Song A ex / music2ma",
+		ArgText:    "solo max 技能 120 110 100 90 80 SongAex / music2ma",
 	})
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
@@ -194,7 +220,7 @@ func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 			t.Fatalf("unexpected skills: %+v", params.Skills)
 		}
 	}
-	if len(params.SpecQueries) != 2 || params.SpecQueries[0] != "Song A ex" || params.SpecQueries[1] != "music2ma" {
+	if len(params.SpecQueries) != 2 || params.SpecQueries[0] != "SongAex" || params.SpecQueries[1] != "music2ma" {
 		t.Fatalf("unexpected spec queries: %+v", params)
 	}
 }
@@ -261,6 +287,67 @@ func TestMusicBoardHandleParsesMultiSkillWithKeyword(t *testing.T) {
 		}
 	}
 	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "Song A" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
+func TestMusicBoardHandleParsesPageWithTrailingP(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "多人 2p SongA",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Page != 2 {
+		t.Fatalf("unexpected page: %+v", params)
+	}
+	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "SongA" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+}
+
+func TestMusicBoardHandleExtractsLevelAndDiffFiltersFromAnyPosition(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "多人 SongA >30 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LevelFilter != ">30" {
+		t.Fatalf("unexpected level filter: %+v", params)
+	}
+	if len(params.DiffFilter) != 1 || params.DiffFilter[0] != "expert" {
+		t.Fatalf("unexpected diff filter: %+v", params)
+	}
+	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "SongA" {
 		t.Fatalf("unexpected spec queries: %+v", params)
 	}
 }

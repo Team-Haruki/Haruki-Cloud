@@ -920,6 +920,95 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 	}
 }
 
+func TestExecuteScoreMusicBoardDoesNotTreatModeArgsAsSpecQueries(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/score/music-board" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		var req drawing.MusicBoardRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if req.LiveType != "multi" || req.Target != "pt" {
+			t.Fatalf("unexpected board mode: %+v", req)
+		}
+		if len(req.SpecMidDiffs) != 0 {
+			t.Fatalf("expected no highlighted songs, got %+v", req.SpecMidDiffs)
+		}
+		if len(req.Items) == 0 {
+			t.Fatalf("expected board items, got none")
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	metaPath := filepath.Join(root, "music_meta.json")
+	if err := os.WriteFile(userPath, []byte(`{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte(`[
+  {"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70},
+  {"music_id": 2, "difficulty": "master", "music_time": 140, "tap_count": 500, "event_rate": 110, "base_score": 1.05, "base_score_auto": 0.98, "skill_score_solo": [0.08,0.07,0.06,0.05,0.04,0.03], "skill_score_auto": [0.07,0.06,0.05,0.04,0.03,0.02], "skill_score_multi": [0.10,0.09,0.08,0.07,0.06,0.05], "fever_score": 0.55}
+]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 30},
+			},
+		},
+	}
+	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MusicMetaJSON: metaPath,
+	})
+	app := &renderapp.App{
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(music.BoardQuery{
+		LiveType: "multi",
+		Target:   "pt",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeScore(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleScore,
+		Mode:   "score-music-board",
+		Region: "jp",
+		Query:  "多人 火效率",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeScore music-board without spec queries: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected music-board message: %+v", message)
+	}
+}
+
 func TestBuildBondsRequestFromSuiteIncludesFallbackIconsAndProgress(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_bonds?mode=memory&cache=shared&_fk=1")

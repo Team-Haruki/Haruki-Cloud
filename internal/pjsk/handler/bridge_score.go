@@ -65,7 +65,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			boardQuery := music.BoardQuery{}
 			mergeParams(rc.Cmd.Params, &boardQuery)
-			if len(boardQuery.SpecQueries) == 0 {
+			if len(rc.Cmd.Params) == 0 && len(boardQuery.SpecQueries) == 0 {
 				boardQuery.SpecQueries = splitScoreMusicMetaQueries(rc.Cmd.Query)
 			}
 			reqPtr, resolveErr := rc.App.Music.ResolveMusicBoardRequest(rc.Cmd.Region, boardQuery)

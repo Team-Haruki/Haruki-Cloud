@@ -187,6 +187,35 @@ func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
 	}
 }
 
+func TestMusicBoardHandleAllowsModeOnlyQueryWithoutSpecSongs(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲比较",
+		ArgText:    "多人 火效率",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LiveType != "multi" || params.Target != "pt" {
+		t.Fatalf("unexpected board mode: %+v", params)
+	}
+	if len(params.SpecQueries) != 0 {
+		t.Fatalf("expected no spec queries, got %+v", params.SpecQueries)
+	}
+}
+
 func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 

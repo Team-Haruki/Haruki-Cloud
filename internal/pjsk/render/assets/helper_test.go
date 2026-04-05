@@ -156,6 +156,17 @@ func TestResolveRegionAssetPathPrefersOnDemandForGacha(t *testing.T) {
 	}
 }
 
+func TestResolveRegionAssetPathFallsBackToRelativePathWhenHelperMisses(t *testing.T) {
+	helper := NewAssetHelper("/srv/haruki-assets", nil)
+	rel := filepath.Join("thumbnail", "chara", "res001_no001_normal.png")
+
+	got := ResolveRegionAssetPath(helper, "jp", rel)
+	want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", rel))
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
 func TestResolveRegionAssetPathPrefersStartAppForBondsHonor(t *testing.T) {
 	tmpDir := t.TempDir()
 	helper := NewAssetHelper(tmpDir, nil)

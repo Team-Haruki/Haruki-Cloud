@@ -619,19 +619,20 @@ func applyRecommendOptionOverrides(option map[string]interface{}, recType string
 		option["event_id"] = *query.EventID
 	}
 
-	fakeEvent := false
-	if attr := normalizeRecommendAttr(query.EventAttr); attr != "" {
+	attr := normalizeRecommendAttr(query.EventAttr)
+	unit := normalizeRecommendUnit(query.EventUnit)
+	hasSimulatedWorldBloomTurn := query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
+	fakeEvent := hasSimulatedWorldBloomTurn || (!explicitEventID && (attr != "" || unit != ""))
+
+	if attr != "" && fakeEvent {
 		option["event_attr"] = attr
-		fakeEvent = true
 	}
-	if unit := normalizeRecommendUnit(query.EventUnit); unit != "" {
+	if unit != "" && (hasSimulatedWorldBloomTurn || !explicitEventID) {
 		option["event_unit"] = unit
-		fakeEvent = true
 	}
-	if query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0 {
+	if hasSimulatedWorldBloomTurn {
 		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
 		option["event_type"] = "world_bloom"
-		fakeEvent = true
 	}
 	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
 		option["world_bloom_character_id"] = *query.WorldBloomCharacterID

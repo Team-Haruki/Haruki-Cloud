@@ -562,16 +562,17 @@ type LeaderCountRequest struct {
 // =========================== Event Models ===========================
 
 type EventInfo struct {
-	ID           interface{}              `json:"id"` // str | int
-	EventType    string                   `json:"event_type"`
-	StartAt      interface{}              `json:"start_at"` // datetime (int64 ts)
-	EndAt        interface{}              `json:"end_at"`
-	IsWlEvent    bool                     `json:"is_wl_event"`
-	BannerCid    int                      `json:"banner_cid"`
-	BannerIndex  int                      `json:"banner_index"`
-	BonusAttr    string                   `json:"bonus_attr"`
-	BonusCharaID []int                    `json:"bonus_chara_id,omitempty"`
-	WlTimeList   []map[string]interface{} `json:"wl_time_list,omitempty"`
+	ID            interface{}              `json:"id"` // str | int
+	EventType     string                   `json:"event_type"`
+	EventTypeName string                   `json:"event_type_name"`
+	StartAt       interface{}              `json:"start_at"` // datetime (int64 ts)
+	EndAt         interface{}              `json:"end_at"`
+	IsWlEvent     bool                     `json:"is_wl_event"`
+	BannerCid     int                      `json:"banner_cid"`
+	BannerIndex   int                      `json:"banner_index"`
+	BonusAttr     string                   `json:"bonus_attr"`
+	BonusCharaID  []int                    `json:"bonus_chara_id,omitempty"`
+	WlTimeList    []map[string]interface{} `json:"wl_time_list,omitempty"`
 }
 
 type EventHistory struct {
@@ -600,6 +601,7 @@ type EventBrief struct {
 	ID              int                        `json:"id"`
 	EventName       string                     `json:"event_name"`
 	EventType       string                     `json:"event_type"`
+	EventTypeName   string                     `json:"event_type_name"`
 	StartAt         interface{}                `json:"start_at"`
 	EndAt           interface{}                `json:"end_at"`
 	EventBannerPath string                     `json:"event_banner_path"`

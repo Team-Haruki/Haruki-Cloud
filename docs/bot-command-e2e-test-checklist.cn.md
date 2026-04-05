@@ -221,7 +221,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | mysekai                | 9/9   | 9  | 0  | 上传数据的信息需要完善                     | 锡纸     |
 | profile                | 18/20 | 17 | 1  | bg相关需要处理client实现                | 锡纸     |
 | education              | 5/5   | 5  | 0  |   已通过                      | 锡纸、LQ     |
-| score                  | 4/4   | 4  | 0  |                                 | LQ、锡纸  |
+| score                  | 4/4   | 4  | 0  |            已通过                   | LQ、锡纸  |
 | alias                  | 9/9   | 9  | 0  | 别名列表过长的情况下应该用文本转图片再发送，这个后续优化    | LQ、锡纸  |
 | misc/gacha/stamp/vlive | 3/5   | 3  | 3  | 贴纸和卡池列表我没测                      | 锡纸     |
 

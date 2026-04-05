@@ -2,9 +2,11 @@ package event
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/drawing"
@@ -108,25 +110,145 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	if query.EventID != 0 {
 		return query, src, nil
 	}
+
+	if query.BanCharID != 0 {
+		if query.BanSeq <= 0 {
+			return query, src, fmt.Errorf("ban sequence must be greater than 0")
+		}
+		events := src.GetBanEvents(query.BanCharID)
+		if len(events) == 0 {
+			return query, src, fmt.Errorf("character %d does not have ban events", query.BanCharID)
+		}
+		sort.Slice(events, func(i, j int) bool {
+			return events[i].StartAt < events[j].StartAt
+		})
+		if query.BanSeq > len(events) {
+			return query, src, fmt.Errorf("character %d only has %d ban events", query.BanCharID, len(events))
+		}
+		query.EventID = events[query.BanSeq-1].ID
+		return query, src, nil
+	}
+
+	events := src.GetEvents()
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].StartAt < events[j].StartAt
+	})
+	if len(events) == 0 {
+		return query, src, fmt.Errorf("no events found for region %s", query.Region)
+	}
+
+	if query.Keyword != "" {
+		index, err := resolveEventKeywordIndex(events, query.Keyword)
+		if err != nil {
+			return query, src, err
+		}
+		query.EventID = events[index].ID
+		return query, src, nil
+	}
+
+	if query.Index != nil {
+		baseIndex, err := resolveCurrentEventIndex(events, "next_first")
+		if err != nil {
+			return query, src, err
+		}
+		targetIndex := baseIndex
+		switch {
+		case *query.Index < 0:
+			targetIndex = baseIndex + *query.Index + 1
+		case *query.Index > 0:
+			targetIndex = baseIndex + *query.Index
+		}
+		if targetIndex < 0 || targetIndex >= len(events) {
+			return query, src, fmt.Errorf("event index %d is out of range", *query.Index)
+		}
+		query.EventID = events[targetIndex].ID
+		return query, src, nil
+	}
+
 	if !query.UseCurrent {
 		return query, src, fmt.Errorf("event id is required")
 	}
+	index, err := resolveCurrentEventIndex(events, "next_first")
+	if err != nil {
+		return query, src, err
+	}
+	query.EventID = events[index].ID
+	return query, src, nil
+}
 
+func resolveCurrentEventIndex(events []*masterdata.Event, fallback string) (int, error) {
 	now := time.Now().UnixMilli()
-	var selected *int
-	var selectedStartAt int64
-	for _, eventInfo := range src.GetEvents() {
+	prevIndex := -1
+	currentIndex := -1
+	nextIndex := -1
+	for i, eventInfo := range events {
 		if eventInfo.StartAt <= now && now < eventInfo.AggregateAt+1000 {
-			if selected == nil || eventInfo.StartAt > selectedStartAt {
-				id := eventInfo.ID
-				selected = &id
-				selectedStartAt = eventInfo.StartAt
-			}
+			currentIndex = i
+		}
+		if eventInfo.AggregateAt+1000 < now {
+			prevIndex = i
+		}
+		if nextIndex == -1 && eventInfo.StartAt > now {
+			nextIndex = i
 		}
 	}
-	if selected == nil {
-		return query, src, fmt.Errorf("no current event found for region %s", query.Region)
+	if currentIndex >= 0 {
+		return currentIndex, nil
 	}
-	query.EventID = *selected
-	return query, src, nil
+	switch fallback {
+	case "prev":
+		if prevIndex >= 0 {
+			return prevIndex, nil
+		}
+	case "next":
+		if nextIndex >= 0 {
+			return nextIndex, nil
+		}
+	case "prev_first":
+		if prevIndex >= 0 {
+			return prevIndex, nil
+		}
+		if nextIndex >= 0 {
+			return nextIndex, nil
+		}
+	case "next_first":
+		if nextIndex >= 0 {
+			return nextIndex, nil
+		}
+		if prevIndex >= 0 {
+			return prevIndex, nil
+		}
+	}
+	return -1, fmt.Errorf("no current event found")
+}
+
+func resolveEventKeywordIndex(events []*masterdata.Event, keyword string) (int, error) {
+	now := time.Now().UnixMilli()
+	prevIndex := -1
+	nextIndex := -1
+	for i, eventInfo := range events {
+		if eventInfo.AggregateAt+1000 < now {
+			prevIndex = i
+		}
+		if nextIndex == -1 && eventInfo.StartAt > now {
+			nextIndex = i
+		}
+	}
+
+	switch keyword {
+	case "current":
+		return resolveCurrentEventIndex(events, "next_first")
+	case "prev":
+		if prevIndex >= 0 {
+			return prevIndex, nil
+		}
+		return -1, fmt.Errorf("no previous event found")
+	case "next":
+		if nextIndex >= 0 {
+			return nextIndex, nil
+		}
+		return -1, fmt.Errorf("no next event found")
+	default:
+		return -1, fmt.Errorf("unsupported event keyword %q", keyword)
+	}
 }

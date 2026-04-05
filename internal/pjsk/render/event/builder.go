@@ -210,6 +210,10 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	result := make([]*masterdata.Event, 0, len(events))
 	includePast := query.IncludePast
 	includeFuture := query.IncludeFuture
+	if !query.OnlyFuture && !includePast && !includeFuture {
+		includePast = true
+		includeFuture = true
+	}
 	if query.OnlyFuture {
 		includeFuture = true
 		includePast = false

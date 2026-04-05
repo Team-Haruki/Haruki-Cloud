@@ -10,27 +10,29 @@ import (
 )
 
 type testEventSource struct {
-	region         renderregion.Value
-	events         []*masterdata.Event
-	eventsByID     map[int]*masterdata.Event
-	cardsByEvent   map[int][]*masterdata.Card
-	bannerByEvent  map[int]int
-	bonusesByEvent map[int][]*masterdata.EventDeckBonus
-	gcuByID        map[int]*masterdata.GameCharacterUnit
-	worldByEvent   map[int][]*masterdata.WorldBloom
-	characterByID  map[int]*masterdata.Character
+	region          renderregion.Value
+	events          []*masterdata.Event
+	eventsByID      map[int]*masterdata.Event
+	cardsByEvent    map[int][]*masterdata.Card
+	bannerByEvent   map[int]int
+	bonusesByEvent  map[int][]*masterdata.EventDeckBonus
+	gcuByID         map[int]*masterdata.GameCharacterUnit
+	worldByEvent    map[int][]*masterdata.WorldBloom
+	characterByID   map[int]*masterdata.Character
+	banEventsByChar map[int][]*masterdata.Event
 }
 
 func newTestEventSource(region renderregion.Value) *testEventSource {
 	return &testEventSource{
-		region:         region,
-		eventsByID:     make(map[int]*masterdata.Event),
-		cardsByEvent:   make(map[int][]*masterdata.Card),
-		bannerByEvent:  make(map[int]int),
-		bonusesByEvent: make(map[int][]*masterdata.EventDeckBonus),
-		gcuByID:        make(map[int]*masterdata.GameCharacterUnit),
-		worldByEvent:   make(map[int][]*masterdata.WorldBloom),
-		characterByID:  make(map[int]*masterdata.Character),
+		region:          region,
+		eventsByID:      make(map[int]*masterdata.Event),
+		cardsByEvent:    make(map[int][]*masterdata.Card),
+		bannerByEvent:   make(map[int]int),
+		bonusesByEvent:  make(map[int][]*masterdata.EventDeckBonus),
+		gcuByID:         make(map[int]*masterdata.GameCharacterUnit),
+		worldByEvent:    make(map[int][]*masterdata.WorldBloom),
+		characterByID:   make(map[int]*masterdata.Character),
+		banEventsByChar: make(map[int][]*masterdata.Event),
 	}
 }
 
@@ -92,7 +94,15 @@ func (s *testEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacte
 	return nil, fmt.Errorf("gcu not found: %d", id)
 }
 
-func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event { return nil }
+func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event {
+	items := s.banEventsByChar[charID]
+	out := make([]*masterdata.Event, 0, len(items))
+	for _, item := range items {
+		copy := *item
+		out = append(out, &copy)
+	}
+	return out
+}
 
 func (s *testEventSource) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
 	items := s.worldByEvent[eventID]

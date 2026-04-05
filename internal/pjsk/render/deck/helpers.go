@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 )
 
@@ -153,6 +154,27 @@ func (c *Controller) resolveCharacterIconPath(characterID int) string {
 		assets.StaticImagesDir,
 		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
 	)
+}
+
+func (c *Controller) resolveCharacterName(region renderregion.Value, characterID int) string {
+	if c == nil || characterID <= 0 {
+		return ""
+	}
+	_, cardSource, err := c.resolveCardSource(region)
+	if err != nil {
+		return ""
+	}
+	resolver, ok := cardSource.(interface {
+		GetCharacterByID(id int) (*masterdata.Character, error)
+	})
+	if !ok {
+		return ""
+	}
+	character, err := resolver.GetCharacterByID(characterID)
+	if err != nil || character == nil {
+		return ""
+	}
+	return strings.TrimSpace(character.FirstName + character.GivenName)
 }
 
 func (c *Controller) resolveUnitIconPath(unit string) string {

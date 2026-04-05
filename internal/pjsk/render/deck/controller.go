@@ -556,12 +556,21 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 					request.CharaIconPath = &icon
 				}
 			}
+			if name := c.resolveCharacterName(region, cid); name != "" {
+				request.WlCharaName = &name
+				if request.CharaName == nil {
+					request.CharaName = &name
+				}
+			}
 		}
 	}
 	if recType == "challenge" {
 		if cid := optionInt(option, "challenge_live_character_id"); cid > 0 {
 			if icon := c.resolveCharacterIconPath(cid); icon != "" {
 				request.CharaIconPath = &icon
+			}
+			if name := c.resolveCharacterName(region, cid); name != "" {
+				request.CharaName = &name
 			}
 		}
 	}

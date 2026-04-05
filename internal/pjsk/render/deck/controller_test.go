@@ -24,14 +24,19 @@ import (
 )
 
 type testCardSource struct {
-	region renderregion.Value
-	cards  map[int]*masterdata.Card
+	region     renderregion.Value
+	cards      map[int]*masterdata.Card
+	characters map[int]*masterdata.Character
 }
 
 func (s *testCardSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 	return s.cards[id], nil
+}
+
+func (s *testCardSource) GetCharacterByID(id int) (*masterdata.Character, error) {
+	return s.characters[id], nil
 }
 
 type testEventSource struct {
@@ -101,6 +106,38 @@ func TestBuildAutoRecommendRequestFallback(t *testing.T) {
 	}
 	if request.DeckData[0].CardData[0].CardThumbnail.CardID != 1002 {
 		t.Fatalf("unexpected card order: %+v", request.DeckData[0].CardData)
+	}
+}
+
+func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	eventID := 7
+	worldBloomCharacterID := 20
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:                "jp",
+		RecommendType:         "event",
+		EventID:               &eventID,
+		WorldBloomCharacterID: &worldBloomCharacterID,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if !request.IsWl {
+		t.Fatalf("expected world bloom request: %+v", request)
+	}
+	if request.RecommendType != "wl" {
+		t.Fatalf("unexpected recommend type: %q", request.RecommendType)
+	}
+	if request.WlCharaIconPath == nil || *request.WlCharaIconPath == "" {
+		t.Fatalf("expected wl character icon: %+v", request.WlCharaIconPath)
+	}
+	if request.WlCharaName == nil || *request.WlCharaName != "晓山瑞希" {
+		t.Fatalf("unexpected wl character name: %+v", request.WlCharaName)
+	}
+	if request.CharaName == nil || *request.CharaName != "晓山瑞希" {
+		t.Fatalf("unexpected shared character name: %+v", request.CharaName)
 	}
 }
 
@@ -820,6 +857,11 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 					{CardParameterType: "param3", Power: 200},
 				},
 			},
+		},
+		characters: map[int]*masterdata.Character{
+			1:  {ID: 1, FirstName: "星乃", GivenName: "一歌", Unit: "light_sound"},
+			2:  {ID: 2, FirstName: "天马", GivenName: "咲希", Unit: "light_sound"},
+			20: {ID: 20, FirstName: "晓山", GivenName: "瑞希", Unit: "school_refusal"},
 		},
 	}
 	eventSource := &testEventSource{

@@ -238,6 +238,8 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	if helper != nil {
 		if resolved := helper.FirstExisting(candidates...); resolved != "" {
 			return filepath.ToSlash(resolved)
+		}else{
+			return ""
 		}
 	}
 	// Fall back to the first candidate as a relative path so that callers forwarding

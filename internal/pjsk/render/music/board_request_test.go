@@ -88,6 +88,65 @@ func TestResolveMusicBoardRequestBuildsItemsFromMeta(t *testing.T) {
 	}
 }
 
+func TestResolveMusicBoardRequestBuildsPtTimeMetrics(t *testing.T) {
+	root := t.TempDir()
+	userJSON := filepath.Join(root, "user.json")
+	metaJSON := filepath.Join(root, "music_meta.json")
+
+	if err := os.WriteFile(userJSON, []byte(`{
+		"now": 1700000000,
+		"userGamedata": {"userId": 123, "name": "Tester", "deck": 1},
+		"userProfile": {},
+		"userDecks": [{"deckId": 1}],
+		"userCards": []
+	}`), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(metaJSON, []byte(`[
+		{"music_id": 1, "difficulty": "master", "music_time": 120, "tap_count": 600, "event_rate": 100, "base_score": 1.20, "base_score_auto": 1.10, "skill_score_solo": [0.12,0.11,0.10,0.09,0.08,0.07], "skill_score_auto": [0.10,0.09,0.08,0.07,0.06,0.05], "skill_score_multi": [0.14,0.13,0.12,0.11,0.10,0.09], "fever_score": 0.70}
+	]`), 0o644); err != nil {
+		t.Fatalf("write music meta snapshot: %v", err)
+	}
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userJSON,
+		MusicMetaJSON: metaJSON,
+	})
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil)
+	req, err := controller.ResolveMusicBoardRequest("jp", BoardQuery{
+		LiveType: "multi",
+		Target:   "pt/time",
+	})
+	if err != nil {
+		t.Fatalf("ResolveMusicBoardRequest() error = %v", err)
+	}
+	if len(req.Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(req.Items))
+	}
+	item := req.Items[0]
+	if item.LiveTypeRealScore == nil || *item.LiveTypeRealScore <= 0 {
+		t.Fatalf("expected non-zero live real score: %+v", item)
+	}
+	if item.LiveTypePtPerHour == nil || *item.LiveTypePtPerHour <= 0 {
+		t.Fatalf("expected non-zero pt/hour: %+v", item)
+	}
+	if item.LiveTypeSkillAccount == nil || *item.LiveTypeSkillAccount <= 0 {
+		t.Fatalf("expected non-zero skill account: %+v", item)
+	}
+}
+
 func TestResolveMusicBoardRequestBuildsItemsFromAlias(t *testing.T) {
 	root := t.TempDir()
 	userJSON := filepath.Join(root, "user.json")

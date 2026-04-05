@@ -155,28 +155,40 @@ func selectMusicBoardLiveValue(row musicBoardRow, liveType, metric string) *floa
 		switch metric {
 		case "score":
 			return row.SoloScore
+		case "real_score":
+			return row.SoloRealScore
 		case "pt":
 			return row.SoloPt
-		case "pt/time":
+		case "pt/time", "pt_per_hour":
 			return row.SoloPtPerHour
+		case "skill_account":
+			return row.SoloSkillAccount
 		}
 	case "auto":
 		switch metric {
 		case "score":
 			return row.AutoScore
+		case "real_score":
+			return row.AutoRealScore
 		case "pt":
 			return row.AutoPt
-		case "pt/time":
+		case "pt/time", "pt_per_hour":
 			return row.AutoPtPerHour
+		case "skill_account":
+			return row.AutoSkillAccount
 		}
 	case "multi":
 		switch metric {
 		case "score":
 			return row.MultiScore
+		case "real_score":
+			return row.MultiRealScore
 		case "pt":
 			return row.MultiPt
-		case "pt/time":
+		case "pt/time", "pt_per_hour":
 			return row.MultiPtPerHour
+		case "skill_account":
+			return row.MultiSkillAccount
 		}
 	}
 	return nil

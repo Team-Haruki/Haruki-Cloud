@@ -266,10 +266,13 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 	}
 
 	second := req.AreaItems[1]
-	if second.ItemID != 102 || second.CurrentLevel != 2 || len(second.Levels) != 1 {
+	if second.ItemID != 102 || second.CurrentLevel != 2 || len(second.Levels) != 2 {
 		t.Fatalf("unexpected second area item: %+v", second)
 	}
-	if got := second.Levels[0]; got.Level != 3 || !got.CanUpgrade || len(got.Materials) != 2 {
+	if got := second.Levels[0]; got.Level != 2 || len(got.Materials) != 0 {
+		t.Fatalf("unexpected aligned current level payload: %+v", got)
+	}
+	if got := second.Levels[1]; got.Level != 3 || !got.CanUpgrade || len(got.Materials) != 2 {
 		t.Fatalf("unexpected upgrade level payload: %+v", got)
 	}
 }

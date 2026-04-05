@@ -216,7 +216,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | card                   | 4/4   | 4  | 0  |                                    | LQ、 XY |
 | music                  |   8/8    |  8  |  0  |                              |    LQ    |
 | deck                   |       |    |    |                                 |        |
-| event                  | 3/3   | 2  | 1  | 活动列表测试不通过                       | 锡纸     |
+| event                  | 3/3   | 3  | 0  |                               | 锡纸 、 LQ    |
 | sk                     |       |    |    |                                 |        |
 | mysekai                | 9/9   | 9  | 0  | 上传数据的信息需要完善                     | 锡纸     |
 | profile                | 18/20 | 17 | 1  | bg相关需要处理client实现                | 锡纸     |

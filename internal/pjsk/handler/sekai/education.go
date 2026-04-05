@@ -124,7 +124,10 @@ var educationAreaUnitAliases = map[string]string{
 func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItemQuery, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return education.AreaItemQuery{}, nil
+		return education.AreaItemQuery{}, onebot11.NewReplayError(
+			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花",
+			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
+		)
 	}
 
 	tree, args := extractEducationAreaFlag(args, "树", "tree")

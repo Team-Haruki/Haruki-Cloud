@@ -63,18 +63,16 @@ func extractDeckLiveType(args string, params *deckAutoQueryParams) string {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
-		if params.LiveType == "" {
-			switch field {
-			case "多人", "协力", "multi":
-				params.LiveType = "multi"
-				continue
-			case "单人", "solo":
-				params.LiveType = "solo"
-				continue
-			case "自动", "auto":
-				params.LiveType = "auto"
-				continue
-			}
+		switch field {
+		case "多人", "协力", "multi":
+			params.LiveType = "multi"
+			continue
+		case "单人", "solo":
+			params.LiveType = "solo"
+			continue
+		case "自动", "auto":
+			params.LiveType = "auto"
+			continue
 		}
 		remaining = append(remaining, field)
 	}

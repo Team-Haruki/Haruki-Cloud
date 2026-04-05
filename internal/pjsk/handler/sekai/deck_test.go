@@ -170,6 +170,69 @@ func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "三星满破满技能 四星禁用 已读 画布 龙hd 实效",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Target != "skill" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MusicDiff != "hard" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+	if params.MusicQuery != "龙" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MultiLiveScoreUpLowerBound != nil {
+		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+	if params.Rarity3Config == nil || !params.Rarity3Config.MasterMax || !params.Rarity3Config.SkillMax {
+		t.Fatalf("unexpected rarity 3 config: %+v", params.Rarity3Config)
+	}
+	if params.Rarity4Config == nil || !params.Rarity4Config.Disable {
+		t.Fatalf("unexpected rarity 4 config: %+v", params.Rarity4Config)
+	}
+	if params.Rarity1Config == nil || !params.Rarity1Config.EpisodeRead || !params.Rarity1Config.Canvas {
+		t.Fatalf("unexpected global config propagation: %+v", params.Rarity1Config)
+	}
+}
+
+func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "多人 230 实效",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Target != "skill" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
+		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+}
+
 func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

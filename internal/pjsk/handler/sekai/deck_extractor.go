@@ -119,7 +119,7 @@ func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (stri
 			idx += consumed - 1
 			continue
 		}
-		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckSkillTargetKeywords, parseDeckInt); ok {
+		if value, consumed, ok, err := extractDeckSkillLowerBound(fields, idx); ok {
 			if err != nil {
 				return "", fmt.Errorf("无法解析指定的实效下限")
 			}
@@ -132,6 +132,32 @@ func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (stri
 		remaining = append(remaining, fields[idx])
 	}
 	return strings.TrimSpace(strings.Join(remaining, " ")), nil
+}
+
+func extractDeckSkillLowerBound(fields []string, index int) (int, int, bool, error) {
+	if index < 0 || index >= len(fields) {
+		return 0, 0, false, nil
+	}
+	if value, ok, err := extractDeckKeywordNumber(fields[index], deckSkillTargetKeywords, parseDeckInt); ok {
+		return value, 1, true, err
+	}
+	if index+1 >= len(fields) {
+		return 0, 0, false, nil
+	}
+
+	current := strings.TrimSpace(fields[index])
+	next := strings.TrimSpace(fields[index+1])
+	for _, keyword := range deckSkillTargetKeywords {
+		switch {
+		case current == keyword && looksLikeDeckNumericToken(next):
+			value, err := parseDeckInt(strings.TrimSuffix(next, "%"))
+			return value, 2, true, err
+		case next == keyword && looksLikeDeckNumericToken(current):
+			value, err := parseDeckInt(strings.TrimSuffix(current, "%"))
+			return value, 2, true, err
+		}
+	}
+	return 0, 0, false, nil
 }
 
 func extractDeckBoost(args string) string {

@@ -119,6 +119,19 @@ func parseDeckBonusInt(raw string) (int, error) {
 	return strconv.Atoi(strings.TrimSpace(cleaned))
 }
 
+func looksLikeDeckNumericToken(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false
+	}
+	for _, ch := range raw {
+		if ch >= '0' && ch <= '9' {
+			return true
+		}
+	}
+	return false
+}
+
 func containsDeckKeyword(args string, keywords []string) bool {
 	for _, keyword := range keywords {
 		if strings.Contains(args, keyword) {

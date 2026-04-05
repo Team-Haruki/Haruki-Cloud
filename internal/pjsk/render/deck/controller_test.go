@@ -229,6 +229,28 @@ func TestBuildRecommendOptionBonusTargets(t *testing.T) {
 	}
 }
 
+func TestBuildRecommendOptionBonusTargetsWithKeywords(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "bonus", AutoQuery{
+		Region:        "jp",
+		RecommendType: "bonus",
+		Limit:         3,
+		Args:          "150加成 160%",
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	targets, ok := option["target_bonus_list"].([]int)
+	if !ok {
+		t.Fatalf("unexpected target_bonus_list type: %T", option["target_bonus_list"])
+	}
+	if len(targets) != 2 || targets[0] != 150 || targets[1] != 160 {
+		t.Fatalf("unexpected target bonus list: %+v", targets)
+	}
+}
+
 func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 

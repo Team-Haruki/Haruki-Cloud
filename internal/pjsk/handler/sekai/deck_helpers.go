@@ -81,8 +81,42 @@ func extractDeckKeywordNumber(field string, keywords []string, parserFn func(str
 	return 0, false, nil
 }
 
+func extractDeckKeywordNumberFromFields(fields []string, index int, keywords []string, parserFn func(string) (int, error)) (int, int, bool, error) {
+	if index < 0 || index >= len(fields) {
+		return 0, 0, false, nil
+	}
+	if value, ok, err := extractDeckKeywordNumber(fields[index], keywords, parserFn); ok {
+		return value, 1, true, err
+	}
+	if index+1 >= len(fields) {
+		return 0, 0, false, nil
+	}
+
+	current := strings.TrimSpace(fields[index])
+	next := strings.TrimSpace(fields[index+1])
+	for _, keyword := range keywords {
+		switch {
+		case current == keyword:
+			value, err := parserFn(strings.TrimSuffix(next, "%"))
+			return value, 2, true, err
+		case next == keyword:
+			value, err := parserFn(strings.TrimSuffix(current, "%"))
+			return value, 2, true, err
+		}
+	}
+	return 0, 0, false, nil
+}
+
 func parseDeckInt(raw string) (int, error) {
 	return strconv.Atoi(strings.TrimSpace(raw))
+}
+
+func parseDeckBonusInt(raw string) (int, error) {
+	cleaned := strings.TrimSpace(raw)
+	cleaned = strings.TrimSuffix(cleaned, "%")
+	cleaned = strings.TrimSuffix(cleaned, "％")
+	cleaned = strings.TrimSpace(strings.ReplaceAll(cleaned, "加成", ""))
+	return strconv.Atoi(strings.TrimSpace(cleaned))
 }
 
 func containsDeckKeyword(args string, keywords []string) bool {

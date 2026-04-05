@@ -80,6 +80,72 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "多人 230实效 Song A",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LiveType != "multi" {
+		t.Fatalf("unexpected live type: %q", params.LiveType)
+	}
+	if params.Target != "skill" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveTeammateScoreUp != nil {
+		t.Fatalf("generic skill lower bound should not overwrite teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+	}
+	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
+		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+	if params.MusicQuery != "song a" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "多人 队友实效 210 Song A",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.LiveType != "multi" {
+		t.Fatalf("unexpected live type: %q", params.LiveType)
+	}
+	if params.Target != "" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 210 {
+		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+	}
+	if params.MultiLiveScoreUpLowerBound != nil {
+		t.Fatalf("teammate score up should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+	if params.MusicQuery != "song a" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
@@ -170,6 +236,30 @@ func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 		Context:    context.Background(),
 		TriggerCmd: "/加成组卡",
 		ArgText:    "event123 120 160",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if len(params.TargetBonuses) != 2 || params.TargetBonuses[0] != 120 || params.TargetBonuses[1] != 160 {
+		t.Fatalf("unexpected bonuses: %+v", params.TargetBonuses)
+	}
+}
+
+func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
+	h := sekaiHandlers{}.BonusDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/加成组卡",
+		ArgText:    "event123 120加成 160%",
 	})
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)

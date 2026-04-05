@@ -220,7 +220,7 @@ func pickBonusTargets(list []int, args string) []int {
 	parts := strings.Fields(strings.TrimSpace(args))
 	var values []int
 	for _, part := range parts {
-		value, err := strconv.Atoi(strings.TrimSpace(part))
+		value, err := parseBonusTarget(strings.TrimSpace(part))
 		if err != nil || value <= 0 {
 			continue
 		}
@@ -230,6 +230,14 @@ func pickBonusTargets(list []int, args string) []int {
 		return []int{120}
 	}
 	return values
+}
+
+func parseBonusTarget(raw string) (int, error) {
+	cleaned := strings.TrimSpace(raw)
+	cleaned = strings.TrimSuffix(cleaned, "%")
+	cleaned = strings.TrimSuffix(cleaned, "％")
+	cleaned = strings.TrimSpace(strings.ReplaceAll(cleaned, "加成", ""))
+	return strconv.Atoi(strings.TrimSpace(cleaned))
 }
 
 // Conversion helpers

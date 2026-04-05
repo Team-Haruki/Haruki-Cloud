@@ -104,31 +104,34 @@ func extractDeckRandomStrategies(args string, params *deckAutoQueryParams) strin
 func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (string, error) {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
-	for _, field := range fields {
-		if value, ok, err := extractDeckKeywordNumber(field, deckTeammatePowerKeywords, parseMusicBoardLargeNumber); ok {
+	for idx := 0; idx < len(fields); idx++ {
+		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckTeammatePowerKeywords, parseMusicBoardLargeNumber); ok {
 			if err != nil {
 				return "", fmt.Errorf("无法解析指定的队友综合力")
 			}
 			params.MultiLiveTeammatePower = intPtr(value)
+			idx += consumed - 1
 			continue
 		}
-		if value, ok, err := extractDeckKeywordNumber(field, deckTeammateScoreUpKeywords, parseDeckInt); ok {
+		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckTeammateScoreUpKeywords, parseDeckInt); ok {
 			if err != nil {
 				return "", fmt.Errorf("无法解析指定的队友实效")
 			}
 			params.MultiLiveTeammateScoreUp = intPtr(value)
+			idx += consumed - 1
 			continue
 		}
-		if value, ok, err := extractDeckKeywordNumber(field, deckSkillTargetKeywords, parseDeckInt); ok {
+		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckSkillTargetKeywords, parseDeckInt); ok {
 			if err != nil {
-				return "", fmt.Errorf("无法解析指定的队友实效")
+				return "", fmt.Errorf("无法解析指定的实效下限")
 			}
-			params.MultiLiveTeammateScoreUp = intPtr(value)
+			params.Target = "skill"
 			f := float64(value)
 			params.MultiLiveScoreUpLowerBound = &f
+			idx += consumed - 1
 			continue
 		}
-		remaining = append(remaining, field)
+		remaining = append(remaining, fields[idx])
 	}
 	return strings.TrimSpace(strings.Join(remaining, " ")), nil
 }

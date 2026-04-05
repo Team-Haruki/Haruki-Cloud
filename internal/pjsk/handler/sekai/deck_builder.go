@@ -3,7 +3,6 @@ package sekai
 import (
 	"fmt"
 	"haruki-cloud/api/bot/onebot11"
-	"strconv"
 	"strings"
 )
 
@@ -108,7 +107,7 @@ func buildBonusDeckParams(args string, params *deckAutoQueryParams, trigger stri
 	}
 	bonuses := make([]int, 0, len(fields))
 	for _, field := range fields {
-		value, err := strconv.Atoi(strings.TrimSpace(field))
+		value, err := parseDeckBonusInt(strings.TrimSpace(field))
 		if err != nil || value <= 0 {
 			return "", onebot11.NewReplayError("使用方式:\n%s event123 120 160", trigger)
 		}

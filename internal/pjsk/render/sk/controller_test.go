@@ -562,6 +562,48 @@ func (unresolvedEventNameTrackerSource) GetUserEventData(server string, eventID 
 	}, nil
 }
 
+type rankTraceNameMismatchTrackerSource struct {
+	testTrackerSource
+}
+
+func (rankTraceNameMismatchTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    "77889900112233",
+			Score:     2345678,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "77889900112233",
+			Name:   "CurrentDisplayName",
+		},
+	}, nil
+}
+
+func (rankTraceNameMismatchTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    "77889900112233",
+				Score:     2300000,
+				Rank:      rank,
+				Timestamp: 1704060000,
+			},
+			{
+				UserID:    "77889900112233",
+				Score:     2345678,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "77889900112233",
+			Name:   "StaleTraceName",
+		},
+	}, nil
+}
+
 type testEventSource struct {
 	region renderregion.Value
 	events []*masterdata.Event
@@ -852,6 +894,50 @@ func TestBuildPlayerTraceFromTrackerUserUsesResolvedName(t *testing.T) {
 	}
 	if payload.Ranks[0].Name != "TracePointFallbackName" {
 		t.Fatalf("expected resolved user trace name, got %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildPlayerTraceFromTrackerUsesSameDisplayNameAsQueryForRank(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(rankTraceNameMismatchTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	queryPayload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	tracePayload, err := controller.BuildPlayerTraceFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build player trace request: %v", err)
+	}
+	if len(queryPayload.Ranks) != 1 {
+		t.Fatalf("unexpected query ranks len: %d", len(queryPayload.Ranks))
+	}
+	if len(tracePayload.Ranks) == 0 {
+		t.Fatalf("expected trace data")
+	}
+	if queryPayload.Ranks[0].Name != "CurrentDisplayName" {
+		t.Fatalf("unexpected query name: %+v", queryPayload.Ranks[0])
+	}
+	if tracePayload.Ranks[0].Name != queryPayload.Ranks[0].Name {
+		t.Fatalf("expected ptr name to match sk name, query=%q trace=%q", queryPayload.Ranks[0].Name, tracePayload.Ranks[0].Name)
 	}
 }
 

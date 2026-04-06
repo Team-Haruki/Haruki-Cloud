@@ -1492,6 +1492,10 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 
 func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int, wlCharacterID *int) ([]drawing.RankInfo, error) {
 	result := make([]drawing.RankInfo, 0)
+	latestName := ""
+	if latest, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID); err == nil {
+		latestName = strings.TrimSpace(latest.Name)
+	}
 	if wlCharacterID != nil && *wlCharacterID > 0 {
 		trace, err := c.tracker.TraceWorldBloomRankingByRank(server, eventID, *wlCharacterID, rank)
 		if err != nil {
@@ -1513,6 +1517,9 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		}
 		if c.isTrackerEventTitleName(server, eventID, name) {
 			name = fmt.Sprintf("Rank %d", rank)
+		}
+		if latestName != "" {
+			name = latestName
 		}
 		for _, point := range trace.RankData {
 			rankValue := rank
@@ -1548,6 +1555,9 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		}
 		if c.isTrackerEventTitleName(server, eventID, name) {
 			name = fmt.Sprintf("Rank %d", rank)
+		}
+		if latestName != "" {
+			name = latestName
 		}
 		for _, point := range trace.RankData {
 			rankValue := rank

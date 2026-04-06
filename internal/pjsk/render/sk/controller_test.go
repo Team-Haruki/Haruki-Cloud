@@ -165,6 +165,17 @@ func (lineNameTrackerSource) TraceWorldBloomRankingByUser(server string, eventID
 	return nil, fmt.Errorf("not implemented")
 }
 
+type missingDefaultRankLineTrackerSource struct {
+	lineNameTrackerSource
+}
+
+func (missingDefaultRankLineTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	if rank == 300000 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	return lineNameTrackerSource{}.GetLatestRankingByRank(server, eventID, rank)
+}
+
 type rankNameFallbackTrackerSource struct {
 	testTrackerSource
 }
@@ -446,6 +457,55 @@ func (speedTraceOnlyTrackerSource) TraceRankingByRank(server string, eventID, ra
 	}, nil
 }
 
+type missingDefaultRankSpeedTrackerSource struct {
+	testTrackerSource
+}
+
+func (missingDefaultRankSpeedTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return []sekaiapi.ScoreGrowthPoint{
+		{
+			Rank:            50,
+			ScoreLatest:     3_699_591,
+			TimestampLatest: 1_002_000,
+		},
+	}, nil
+}
+
+func (missingDefaultRankSpeedTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	switch rank {
+	case 50:
+		return &sekaiapi.TraceRankingResponse{
+			RankData: []sekaiapi.RankDataPoint{
+				{UserID: "50050", Score: 22_527_600, Rank: 50, Timestamp: 1_000_000},
+				{UserID: "50050", Score: 23_171_700, Rank: 50, Timestamp: 1_001_490},
+			},
+			UserData: sekaiapi.RankingUserData{UserID: "50050", Name: "SpeedPlayer"},
+		}, nil
+	case 300000:
+		return nil, sekaiapi.ErrRankingNotFound
+	default:
+		return nil, fmt.Errorf("unexpected rank")
+	}
+}
+
+func (missingDefaultRankSpeedTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	if rank == 300000 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.Itoa(10000 + rank),
+			Score:     1000000 + rank,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(10000 + rank),
+			Name:   "SpeedPlayer",
+		},
+	}, nil
+}
+
 type fuzzyEventNameTrackerSource struct {
 	testTrackerSource
 }
@@ -615,6 +675,61 @@ func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 		if rank.Name != "" {
 			t.Fatalf("expected line payload name to be empty, got %+v", rank)
 		}
+	}
+}
+
+func TestBuildLineRequestFromTrackerSkipsMissingDefaultRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(missingDefaultRankLineTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID:      101,
+		Region:       "jp",
+		Ranks:        []int{1, 300000},
+		DefaultRanks: true,
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("expected only existing ranks to remain, got %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Rank != 1 {
+		t.Fatalf("unexpected remaining rank: %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildLineRequestFromTrackerKeepsExplicitMissingRankError(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(missingDefaultRankLineTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	_, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{300000},
+	})
+	if err == nil {
+		t.Fatal("expected explicit missing rank to fail")
 	}
 }
 
@@ -878,6 +993,37 @@ func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *t
 	got := payload.Ranks[0]
 	if got.Speed == nil || *got.Speed != 1556214 {
 		t.Fatalf("expected speed from trace fallback, got %+v", got.Speed)
+	}
+}
+
+func TestBuildSpeedRequestFromTrackerSkipsMissingDefaultRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(missingDefaultRankSpeedTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		EventID:      101,
+		Region:       "jp",
+		Ranks:        []int{50, 300000},
+		DefaultRanks: true,
+	})
+	if err != nil {
+		t.Fatalf("build speed request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("expected only existing ranks to remain, got %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Rank != 50 {
+		t.Fatalf("unexpected remaining speed rank: %+v", payload.Ranks[0])
 	}
 }
 

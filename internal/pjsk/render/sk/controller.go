@@ -2,6 +2,7 @@ package sk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -48,6 +49,7 @@ type TrackerRankQuery struct {
 	Region           string  `json:"region"`
 	RegionExplicit   bool    `json:"region_explicit,omitempty"`
 	Ranks            []int   `json:"ranks"`
+	DefaultRanks     bool    `json:"default_ranks,omitempty"`
 	UserID           *int64  `json:"user_id,omitempty"`
 	TargetPlatform   string  `json:"target_platform,omitempty"`
 	TargetUserID     string  `json:"target_user_id,omitempty"`
@@ -155,7 +157,8 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 	if err != nil {
 		return nil, err
 	}
-	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID)
+	skipMissing := shouldSkipMissingTrackerRanks(normalized)
+	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID, skipMissing)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +210,7 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 
-	currentRanks, currentErr := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, nil)
+	currentRanks, currentErr := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, nil, shouldSkipMissingTrackerRanks(normalized))
 	if currentErr == nil {
 		for i := range currentRanks {
 			// SK line keeps names empty to reduce visual noise.
@@ -359,7 +362,8 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 	if err != nil {
 		return nil, err
 	}
-	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID)
+	skipMissing := shouldSkipMissingTrackerRanks(normalized)
+	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID, skipMissing)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +401,8 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 	if normalized.UserID != nil {
 		return nil, fmt.Errorf("check-room 暂不支持按用户查询，请使用排名")
 	}
-	rankInfos, err := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID)
+	skipMissing := shouldSkipMissingTrackerRanks(normalized)
+	rankInfos, err := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +462,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 		return nil, fmt.Errorf("speed 暂不支持按用户查询，请使用排名")
 	}
 	const speedPeriodSeconds = int64(20 * 60)
-	speedInfos, err := c.buildSpeedInfosFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, int(speedPeriodSeconds))
+	speedInfos, err := c.buildSpeedInfosFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, int(speedPeriodSeconds), shouldSkipMissingTrackerRanks(normalized))
 	if err != nil {
 		return nil, err
 	}
@@ -762,11 +767,22 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	return normalized, nil
 }
 
-func (c *Controller) buildRanksFromTracker(server string, eventID int, ranks []int, wlCharacterID *int) ([]drawing.RankInfo, error) {
+func shouldSkipMissingTrackerRanks(req TrackerRankQuery) bool {
+	return req.DefaultRanks && req.UserID == nil
+}
+
+func shouldSkipMissingTrackerRankError(skipMissing bool, err error) bool {
+	return skipMissing && errors.Is(err, sekaiapi.ErrRankingNotFound)
+}
+
+func (c *Controller) buildRanksFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, error) {
 	result := make([]drawing.RankInfo, 0, len(ranks))
 	for _, rank := range ranks {
 		info, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID)
 		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
 			return nil, fmt.Errorf("tracker rank %d query failed: %w", rank, err)
 		}
 		result = append(result, info)
@@ -778,7 +794,7 @@ func (c *Controller) buildRanksFromTracker(server string, eventID int, ranks []i
 	return result, nil
 }
 
-func (c *Controller) buildRanksOrUserFromTracker(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int) ([]drawing.RankInfo, error) {
+func (c *Controller) buildRanksOrUserFromTracker(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, error) {
 	if userID != nil && *userID > 0 {
 		info, err := c.buildSingleUserFromTracker(server, eventID, *userID, wlCharacterID)
 		if err != nil {
@@ -786,7 +802,7 @@ func (c *Controller) buildRanksOrUserFromTracker(server string, eventID int, ran
 		}
 		return []drawing.RankInfo{info}, nil
 	}
-	return c.buildRanksFromTracker(server, eventID, ranks, wlCharacterID)
+	return c.buildRanksFromTracker(server, eventID, ranks, wlCharacterID, skipMissing)
 }
 
 func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
@@ -1371,7 +1387,7 @@ func countPositiveDeltas(samples []trackerScoreSample) int {
 	return count
 }
 
-func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int) ([]drawing.SpeedInfo, error) {
+func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int, skipMissing bool) ([]drawing.SpeedInfo, error) {
 	var (
 		points []sekaiapi.ScoreGrowthPoint
 		err    error
@@ -1422,6 +1438,9 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 		}
 		info, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID)
 		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
 			return nil, fmt.Errorf("tracker speed rank %d query failed: %w", rank, err)
 		}
 		score := 0

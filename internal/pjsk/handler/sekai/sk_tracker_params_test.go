@@ -25,6 +25,9 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 	if len(ranks) != len(defaultSKRanks) {
 		t.Fatalf("expected default ranks len=%d got=%d", len(defaultSKRanks), len(ranks))
 	}
+	if got, ok := params["default_ranks"].(bool); !ok || !got {
+		t.Fatalf("expected default_ranks=true, got %#v", params["default_ranks"])
+	}
 }
 
 func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
@@ -45,6 +48,9 @@ func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 	}
 	if len(ranks) != len(defaultSKRanksWorldLink) {
 		t.Fatalf("expected world link default ranks len=%d got=%d", len(defaultSKRanksWorldLink), len(ranks))
+	}
+	if got, ok := params["default_ranks"].(bool); !ok || !got {
+		t.Fatalf("expected default_ranks=true, got %#v", params["default_ranks"])
 	}
 }
 
@@ -69,6 +75,9 @@ func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 	}
 	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
+	}
+	if _, ok := params["default_ranks"]; ok {
+		t.Fatalf("expected default_ranks to be omitted for explicit ranks")
 	}
 }
 

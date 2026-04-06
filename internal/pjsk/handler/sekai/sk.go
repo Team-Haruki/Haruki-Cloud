@@ -275,6 +275,9 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if len(ranks) > 0 {
 		params["ranks"] = ranks
 	}
+	if !rankArgsProvided && userID == nil && targetUserID == "" && len(ranks) > 0 {
+		params["default_ranks"] = true
+	}
 	if eventID > 0 {
 		params["event_id"] = eventID
 	}

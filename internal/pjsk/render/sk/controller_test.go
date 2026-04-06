@@ -956,6 +956,12 @@ func TestBuildSpeedRequestFromTrackerDerivesSpeedWhenGrowthFieldsMissing(t *test
 	if len(payload.Ranks) != 1 {
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
+	if payload.RequestType != "时" {
+		t.Fatalf("unexpected request type: %q", payload.RequestType)
+	}
+	if payload.Period != 60*60 {
+		t.Fatalf("unexpected period: %d", payload.Period)
+	}
 	got := payload.Ranks[0]
 	if got.Rank != 50 {
 		t.Fatalf("unexpected rank: %d", got.Rank)
@@ -993,6 +999,45 @@ func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *t
 	got := payload.Ranks[0]
 	if got.Speed == nil || *got.Speed != 1556214 {
 		t.Fatalf("expected speed from trace fallback, got %+v", got.Speed)
+	}
+}
+
+func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		EventID:         101,
+		Region:          "jp",
+		Ranks:           []int{50},
+		SpeedUnit:       "d",
+		SpeedPeriodSecs: 24 * 60 * 60,
+	})
+	if err != nil {
+		t.Fatalf("build daily speed request: %v", err)
+	}
+	if payload.RequestType != "日" {
+		t.Fatalf("unexpected request type: %q", payload.RequestType)
+	}
+	if payload.Period != 24*60*60 {
+		t.Fatalf("unexpected period: %d", payload.Period)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Speed == nil || *got.Speed != 37349154 {
+		t.Fatalf("unexpected daily speed: %+v", got.Speed)
 	}
 }
 

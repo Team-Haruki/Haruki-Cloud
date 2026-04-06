@@ -79,6 +79,21 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 		req := drawing.SpeedRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		data, err = rc.App.SK.RenderSpeed(req)
+	case "sk-daily-speed":
+		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
+				return nil, err
+			}
+			payload, err := rc.App.SK.BuildSpeedRequestFromTracker(trackerReq)
+			if err != nil {
+				return nil, err
+			}
+			data, err = rc.App.SK.RenderSpeed(*payload)
+			break
+		}
+		req := drawing.SpeedRequest{}
+		mergeParams(rc.Cmd.Params, &req)
+		data, err = rc.App.SK.RenderSpeed(req)
 	case "sk-player-trace":
 		trackerReq, ok := trackerRankQueryFromParams(rc.Cmd)
 		if !ok {

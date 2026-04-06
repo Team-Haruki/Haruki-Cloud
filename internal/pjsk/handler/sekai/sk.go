@@ -61,6 +61,7 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
+			applySKSpeedDefaults(params, "h", 60*60)
 			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-speed", params), nil
 		},
 	}
@@ -137,11 +138,10 @@ func (sekaiHandlers) WinratePredictHandle() SekaiCommandHandler {
 	}
 }
 
-// TODO
 func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
-			Path: "sk/speed",
+			Path: "sk/daily-speed",
 			Commands: []string{
 				"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
 			},
@@ -152,7 +152,8 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-speed", params), nil
+			applySKSpeedDefaults(params, "d", 24*60*60)
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-daily-speed", params), nil
 		},
 	}
 }
@@ -301,6 +302,20 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 		params["full"] = true
 	}
 	return params, nil
+}
+
+func applySKSpeedDefaults(params map[string]any, unit string, periodSeconds int64) {
+	if params == nil {
+		return
+	}
+	unit = strings.ToLower(strings.TrimSpace(unit))
+	if unit == "" {
+		unit = "h"
+	}
+	params["speed_unit"] = unit
+	if periodSeconds > 0 {
+		params["speed_period_seconds"] = periodSeconds
+	}
 }
 
 func buildSKPlayerTraceParams(ctx SekaiHandlerContext) (map[string]any, error) {

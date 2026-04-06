@@ -50,6 +50,8 @@ type TrackerRankQuery struct {
 	RegionExplicit   bool    `json:"region_explicit,omitempty"`
 	Ranks            []int   `json:"ranks"`
 	DefaultRanks     bool    `json:"default_ranks,omitempty"`
+	SpeedUnit        string  `json:"speed_unit,omitempty"`
+	SpeedPeriodSecs  int64   `json:"speed_period_seconds,omitempty"`
 	UserID           *int64  `json:"user_id,omitempty"`
 	TargetPlatform   string  `json:"target_platform,omitempty"`
 	TargetUserID     string  `json:"target_user_id,omitempty"`
@@ -461,8 +463,16 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 	if normalized.UserID != nil {
 		return nil, fmt.Errorf("speed 暂不支持按用户查询，请使用排名")
 	}
-	const speedPeriodSeconds = int64(20 * 60)
-	speedInfos, err := c.buildSpeedInfosFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, int(speedPeriodSeconds), shouldSkipMissingTrackerRanks(normalized))
+	speedPeriodSeconds, speedUnitText := normalizeTrackerSpeedConfig(normalized)
+	speedInfos, err := c.buildSpeedInfosFromTracker(
+		normalized.Region,
+		normalized.EventID,
+		normalized.Ranks,
+		normalized.WlCharacterID,
+		int(speedPeriodSeconds),
+		speedPeriodSeconds,
+		shouldSkipMissingTrackerRanks(normalized),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +486,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 		EventAggregateAt: meta.aggregateAt,
 		Ranks:            speedInfos,
 		IsWlEvent:        normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0,
-		RequestType:      "tracker",
+		RequestType:      speedUnitText,
 		Period:           speedPeriodSeconds,
 	}
 	if meta.bannerPath != "" {
@@ -769,6 +779,27 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 
 func shouldSkipMissingTrackerRanks(req TrackerRankQuery) bool {
 	return req.DefaultRanks && req.UserID == nil
+}
+
+func normalizeTrackerSpeedConfig(req TrackerRankQuery) (periodSeconds int64, unitText string) {
+	unit := strings.ToLower(strings.TrimSpace(req.SpeedUnit))
+	switch unit {
+	case "d", "day", "daily", "日":
+		unitText = "日"
+	default:
+		unitText = "时"
+	}
+
+	periodSeconds = req.SpeedPeriodSecs
+	if periodSeconds <= 0 {
+		if unitText == "日" {
+			periodSeconds = 24 * 60 * 60
+		} else {
+			periodSeconds = 60 * 60
+		}
+	}
+
+	return periodSeconds, unitText
 }
 
 func shouldSkipMissingTrackerRankError(skipMissing bool, err error) bool {
@@ -1387,7 +1418,7 @@ func countPositiveDeltas(samples []trackerScoreSample) int {
 	return count
 }
 
-func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int, skipMissing bool) ([]drawing.SpeedInfo, error) {
+func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int, unitPeriodSeconds int64, skipMissing bool) ([]drawing.SpeedInfo, error) {
 	var (
 		points []sekaiapi.ScoreGrowthPoint
 		err    error
@@ -1414,9 +1445,9 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 	result := make([]drawing.SpeedInfo, 0, len(ranks))
 	for _, rank := range ranks {
 		if point, ok := pointByRank[rank]; ok {
-			info := speedInfoFromGrowthPoint(point)
+			info := speedInfoFromGrowthPoint(point, unitPeriodSeconds)
 			if info.Speed == nil {
-				if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval); traceOK {
+				if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds); traceOK {
 					// Prefer score/time from growth endpoint when present because it
 					// reflects the tracker speed aggregation point used by drawing.
 					if info.Score > 0 {
@@ -1432,7 +1463,7 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 			result = append(result, info)
 			continue
 		}
-		if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval); traceOK {
+		if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds); traceOK {
 			result = append(result, traceInfo)
 			continue
 		}
@@ -1547,12 +1578,15 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 	return result, nil
 }
 
-func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, wlCharacterID *int, interval int) (drawing.SpeedInfo, bool) {
+func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, wlCharacterID *int, interval int, unitPeriodSeconds int64) (drawing.SpeedInfo, bool) {
 	if c == nil || c.tracker == nil || rank <= 0 {
 		return drawing.SpeedInfo{}, false
 	}
 	if interval <= 0 {
-		interval = 20 * 60
+		interval = 60 * 60
+	}
+	if unitPeriodSeconds <= 0 {
+		unitPeriodSeconds = 60 * 60
 	}
 	samples := make([]trackerRankScoreSample, 0)
 	if wlCharacterID != nil && *wlCharacterID > 0 {
@@ -1627,7 +1661,7 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 	base := samples[baseIdx]
 	baseSec := normalizeTrackerUnixSeconds(base.timestamp)
 	if endSec > baseSec && last.score > base.score {
-		speed := int((int64(last.score-base.score) * 3600) / (endSec - baseSec))
+		speed := int((int64(last.score-base.score) * unitPeriodSeconds) / (endSec - baseSec))
 		if speed > 0 {
 			info.Speed = drawing.IntPtr(speed)
 		}
@@ -1635,8 +1669,11 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 	return info, true
 }
 
-func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint) drawing.SpeedInfo {
+func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds int64) drawing.SpeedInfo {
 	var speed *int
+	if unitPeriodSeconds <= 0 {
+		unitPeriodSeconds = 60 * 60
+	}
 
 	growth := point.Growth
 	if (growth == nil || *growth <= 0) && point.ScoreEarlier != nil {
@@ -1657,7 +1694,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint) drawing.SpeedInfo
 	}
 
 	if growth != nil && *growth > 0 && timeDiff != nil && *timeDiff > 0 {
-		val := int((int64(*growth) * 3600) / *timeDiff)
+		val := int((int64(*growth) * unitPeriodSeconds) / *timeDiff)
 		speed = &val
 	}
 	score := point.ScoreLatest

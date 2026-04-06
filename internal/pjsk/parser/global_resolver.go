@@ -114,6 +114,7 @@ func init() {
 		{regexp.MustCompile(`(?i)^/(sk-line|sk线|榜线|pjsk sk line|pjsk board line|skl)\s*(.*)`), ModuleSK, "sk-line"},
 		{regexp.MustCompile(`(?i)^/(sk-query|sk查询|sk查分|pjsk sk board|pjsk board)\s*(.*)`), ModuleSK, "sk-query"},
 		{regexp.MustCompile(`(?i)^/(sk-check-room|sk查房|查房|cf|pjsk查房|csb|冲水板|pjsk冲水板)\s*(.*)`), ModuleSK, "sk-check-room"},
+		{regexp.MustCompile(`(?i)^/(pjsk sk daily speed|pjsk board daily speed|日速|skds|skdv|sk日速)\s*(.*)`), ModuleSK, "sk-daily-speed"},
 		{regexp.MustCompile(`(?i)^/(sk-speed|sk时速|时速线|pjsk sk speed|pjsk board speed|sks|skv|sktime)\s*(.*)`), ModuleSK, "sk-speed"},
 		{regexp.MustCompile(`(?i)^/(sk-player-trace|sk玩家轨迹|玩家轨迹|ptr|pjsk玩家追踪|pjsk ptr)\s*(.*)`), ModuleSK, "sk-player-trace"},
 		{regexp.MustCompile(`(?i)^/(sk-rank-trace|sk档线轨迹|档线轨迹|rtr|skt|sklt|sktl|pjsk追踪|pjsk sk追踪)\s*(.*)`), ModuleSK, "sk-rank-trace"},

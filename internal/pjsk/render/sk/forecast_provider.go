@@ -14,7 +14,7 @@ import (
 
 const (
 	forecast33KitURL       = "https://sekai-data.3-3.dev/predict.json"
-	forecastSnowyMoeURL    = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
+	forecastMoesekaiURL    = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
 	forecastSnowyLegacyURL = "https://sekaibangdan.exmeaning.com/api/public/v1/%sdata/%d"
 	forecastSekaURL        = "https://jiiku831.github.io/%sdata/sekarun.js"
 )
@@ -43,7 +43,7 @@ type ForecastProviderBySource interface {
 }
 
 // RemoteForecastProvider fetches forecast data from public remote sources
-// used by Lunabot (33kit / Snowy / SekaRun).
+// used by Lunabot (33kit / Moesekai / SekaRun).
 type RemoteForecastProvider struct {
 	http *resty.Client
 }
@@ -96,7 +96,7 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 	}
 	sources := []source{
 		{name: "33kit", fn: p.fetch33Kit},
-		{name: "snowy", fn: p.fetchSnowy},
+		{name: "moesekai", fn: p.fetchMoesekai},
 		{name: "sekarun", fn: p.fetchSekaRun},
 	}
 
@@ -173,11 +173,11 @@ func (p *RemoteForecastProvider) fetch33Kit(ctx context.Context, region string, 
 	return out, nil
 }
 
-func (p *RemoteForecastProvider) fetchSnowy(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+func (p *RemoteForecastProvider) fetchMoesekai(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
 	if region != "jp" && region != "cn" {
 		return nil, nil
 	}
-	items, rkErr := p.fetchSnowyMoe(ctx, region, eventID, rankFilter)
+	items, rkErr := p.fetchMoe(ctx, region, eventID, rankFilter)
 	if len(items) > 0 {
 		return items, nil
 	}
@@ -198,8 +198,8 @@ func (p *RemoteForecastProvider) fetchSnowy(ctx context.Context, region string, 
 	return nil, nil
 }
 
-func (p *RemoteForecastProvider) fetchSnowyMoe(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
-	url := fmt.Sprintf(forecastSnowyMoeURL, eventID, region)
+func (p *RemoteForecastProvider) fetchMoe(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	url := fmt.Sprintf(forecastMoesekaiURL, eventID, region)
 
 	var resp struct {
 		EventID   int    `json:"event_id"`
@@ -249,7 +249,7 @@ func (p *RemoteForecastProvider) fetchSnowyMoe(ctx context.Context, region strin
 		out[rank] = ForecastScore{
 			Score:     score,
 			Timestamp: normalizeForecastTimestamp(timestamp),
-			Source:    "snowy",
+			Source:    "moesekai",
 		}
 	}
 	return out, nil
@@ -298,7 +298,7 @@ func (p *RemoteForecastProvider) fetchSnowyLegacy(ctx context.Context, region st
 		out[rank] = ForecastScore{
 			Score:     score,
 			Timestamp: timestamp,
-			Source:    "snowy",
+			Source:    "moesekai",
 		}
 	}
 	return out, nil

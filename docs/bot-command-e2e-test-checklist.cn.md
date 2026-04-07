@@ -70,7 +70,7 @@
 | `sk/check-room` | `/查房` | `/sk-check-room` `/sk查房` `/查房` `/cf` `/pjsk查房` `/csb` `/冲水板` | ✅ | 查 CS 房间/水表 |
 | `sk/player-trace` | `/玩家轨迹` | `/sk-player-trace` `/玩家轨迹` `/ptr` `/pjsk玩家追踪` | ✅ ⚠️ | 需用户绑定 |
 | `sk/rank-trace` | `/档线轨迹` | `/sk-rank-trace` `/档线轨迹` `/rtr` `/skt` `/sklt` `/pjsk追踪` | ✅ | 档线历史轨迹 |
-| `sk/predict` | `/sk预测` | `/pjsk sk predict` `/sk预测` `/榜线预测` `/skp` | ✅ | 榜线预测（33kit/snowy/sekarun，暂不支持WL单榜） |
+| `sk/predict` | `/sk预测` | `/pjsk sk predict` `/sk预测` `/榜线预测` `/skp` | ✅ | 榜线预测（33kit/moesekai/sekarun，暂不支持WL单榜） |
 | `sk/winrate` | `/胜率预测` | `/pjsk winrate predict` `/胜率预测` `/5v5预测` `/胜率` `/预测胜率` | ✅ | 5v5 胜率 |
 
 ---
@@ -217,7 +217,7 @@ Bot API 路径同理：`/api/v2/bot/:botId/pjsk/jp/music`
 | music                  |   8/8    |  8  |  0  |                              |    LQ    |
 | deck                   |       |    |    |                                 |        |
 | event                  | 3/3   | 3  | 0  |                               | 锡纸 、 LQ    |
-| sk                     |       |    |    |                                 |        |
+| sk                     |   8/9  |  8  | 0  |      现在没有5v5的活动             |  LQ    |
 | mysekai                | 9/9   | 9  | 0  | 上传数据的信息需要完善                     | 锡纸     |
 | profile                | 18/20 | 17 | 1  | bg相关需要处理client实现                | 锡纸     |
 | education              | 5/5   | 5  | 0  |   已通过                      | 锡纸、LQ     |

@@ -193,7 +193,7 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 }
 
 // BuildPredictLineRequestFromTracker builds an SK line payload using external
-// forecast sources (33kit / Snowy / SekaRun) for final score prediction.
+// forecast sources (33kit / Moesekai / SekaRun) for final score prediction.
 func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -223,10 +223,10 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		})
 	}
 
-	sourceOrder := []string{"33kit", "snowy", "sekarun"}
+	sourceOrder := []string{"33kit", "moesekai", "sekarun"}
 	sourceNames := map[string]string{
 		"33kit":    "33Kit预测",
-		"snowy":    "SnowyBot预测",
+		"moesekai": "Moesekai预测",
 		"sekarun":  "SekaRun预测",
 		"forecast": "预测",
 	}

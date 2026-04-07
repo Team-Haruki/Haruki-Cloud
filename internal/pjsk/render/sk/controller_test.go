@@ -232,13 +232,28 @@ type traceUserIDNameFallbackTrackerSource struct {
 func (traceUserIDNameFallbackTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
 	return &sekaiapi.LatestRankingResponse{
 		RankData: sekaiapi.RankDataPoint{
-			UserID:    "",
+			UserID:    "55667788990011",
 			Score:     2233445,
 			Rank:      rank,
 			Timestamp: 1704067200,
 		},
 		UserData: sekaiapi.RankingUserData{
-			UserID: "",
+			UserID: "55667788990011",
+			Name:   "",
+		},
+	}, nil
+}
+
+func (traceUserIDNameFallbackTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     2233445,
+			Rank:      1,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
 			Name:   "",
 		},
 	}, nil
@@ -581,6 +596,21 @@ func (rankTraceNameMismatchTrackerSource) GetLatestRankingByRank(server string, 
 	}, nil
 }
 
+func (rankTraceNameMismatchTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     2345678,
+			Rank:      100,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "CurrentDisplayName",
+		},
+	}, nil
+}
+
 func (rankTraceNameMismatchTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
 	return &sekaiapi.TraceRankingResponse{
 		RankData: []sekaiapi.RankDataPoint{
@@ -600,6 +630,93 @@ func (rankTraceNameMismatchTrackerSource) TraceRankingByRank(server string, even
 		UserData: sekaiapi.RankingUserData{
 			UserID: "77889900112233",
 			Name:   "StaleTraceName",
+		},
+	}, nil
+}
+
+func (rankTraceNameMismatchTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	uid := strconv.FormatInt(userID, 10)
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    uid,
+				Score:     2300000,
+				Rank:      100,
+				Timestamp: 1704060000,
+			},
+			{
+				UserID:    uid,
+				Score:     2345678,
+				Rank:      100,
+				Timestamp: 1704067200,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: uid,
+			Name:   "StaleTraceName",
+		},
+	}, nil
+}
+
+type playerTracePrefersUserHistoryTrackerSource struct {
+	testTrackerSource
+}
+
+func (playerTracePrefersUserHistoryTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    "99887766554433",
+			Score:     3500000,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "99887766554433",
+			Name:   "CurrentPlayer",
+		},
+	}, nil
+}
+
+func (playerTracePrefersUserHistoryTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     3500000,
+			Rank:      10,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "CurrentPlayer",
+		},
+	}, nil
+}
+
+func (playerTracePrefersUserHistoryTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: "111", Score: 1000000, Rank: rank, Timestamp: 1704060000},
+			{UserID: "222", Score: 2000000, Rank: rank, Timestamp: 1704063600},
+			{UserID: "99887766554433", Score: 3500000, Rank: rank, Timestamp: 1704067200},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "99887766554433",
+			Name:   "RankLineHistory",
+		},
+	}, nil
+}
+
+func (playerTracePrefersUserHistoryTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	uid := strconv.FormatInt(userID, 10)
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: uid, Score: 1500000, Rank: 70, Timestamp: 1704060000},
+			{UserID: uid, Score: 2500000, Rank: 35, Timestamp: 1704063600},
+			{UserID: uid, Score: 3500000, Rank: 10, Timestamp: 1704067200},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: uid,
+			Name:   "StaleUserTraceName",
 		},
 	}, nil
 }
@@ -938,6 +1055,42 @@ func TestBuildPlayerTraceFromTrackerUsesSameDisplayNameAsQueryForRank(t *testing
 	}
 	if tracePayload.Ranks[0].Name != queryPayload.Ranks[0].Name {
 		t.Fatalf("expected ptr name to match sk name, query=%q trace=%q", queryPayload.Ranks[0].Name, tracePayload.Ranks[0].Name)
+	}
+}
+
+func TestBuildPlayerTraceFromTrackerRankUsesCurrentPlayerHistory(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(playerTracePrefersUserHistoryTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildPlayerTraceFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build player trace request: %v", err)
+	}
+	if len(payload.Ranks) != 3 {
+		t.Fatalf("unexpected trace point count: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Rank != 70 || payload.Ranks[1].Rank != 35 || payload.Ranks[2].Rank != 10 {
+		t.Fatalf("expected current player's rank history, got %+v", payload.Ranks)
+	}
+	if payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 1500000 {
+		t.Fatalf("expected user trace score history, got %+v", payload.Ranks[0])
+	}
+	if payload.Ranks[0].Name != "CurrentPlayer" {
+		t.Fatalf("expected latest player display name, got %+v", payload.Ranks[0])
 	}
 }
 

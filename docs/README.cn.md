@@ -14,6 +14,10 @@
   - 当前状态、已完成工作、待办事项
   - 适合：快速了解项目全貌
 
+- **[项目完成度跟踪](project-completion-tracker.cn.md)** ⭐
+  - 基于 2026-04-09 代码审计整理的模块分档、82 条活跃 Bot path、disabled handler 与当前测试/风险快照
+  - 适合：持续跟踪“哪些已经稳定、哪些仍是过渡实现、哪些尚未暴露”
+
 - **[PJSK Deck-Service HTTP 联调测试记录](pjsk-deck-service-http-integration-test.cn.md)** ⭐
   - 记录这轮 `deck-service <-> Haruki-Cloud` 接线、兼容层验证、真实服务调用结果与当前结论
   - 适合：继续排查 `deck recommend auto` 远程推荐失败，或查看这轮接入的边界与验证结果
@@ -60,21 +64,23 @@ Parser 已作为内部子系统合并进 Haruki-Cloud：
 客户端联调应优先使用：
 
 - `GET /api/v2/bot/:botId/command/manifests`
-- `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(ob11 pack)>`
+- `POST /api/v2/bot/:botId/pjsk/<path>`
 
 ```http
-GET /api/v2/bot/:botId/pjsk/card/detail?command_payload=<base64(ob11 pack)>
-X-Haruki-Bot-Platform: qq
-X-Haruki-Bot-Platform-User-Id: 12345
-X-Haruki-Bot-Platform-Group-Id: 67890
-X-Haruki-Bot-Pjsk-Server: jp
-X-Haruki-Bot-Matched-Command: /卡面
+POST /api/v2/bot/:botId/pjsk/card/detail
+X-Haruki-Bot-Id: <bot_id>
+X-Haruki-Bot-Session-Token: <session_token>
+Content-Type: application/octet-stream
+
+Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
 ```
 
 其中：
 
-- `command_payload` 是客户端通过 OneBot V11 协议拿到的消息原文包，做 Base64 后放到查询参数里。
-- `X-Haruki-Bot-Matched-Command` 表示客户端前缀树实际命中的那条命令。
+- `manifest` 端点保持 `GET + JSON`。
+- PJSK 业务端点当前主协议为 `POST + JWT Session + Noise IK + MsgPack`。
+- 若服务端未配置 `noise_private_key`，则退回 `POST + JSON(BotCommandRequest)` 明文模式。
+- `matched_command`、平台用户信息、区服和消息段都统一放在 `BotCommandRequest` body 中，而不是 query/header 分散传递。
 
 `POST /internal/pjsk/command` 仅保留给内部兼容场景，不是客户端主协议。
 
@@ -92,6 +98,7 @@ X-Haruki-Bot-Matched-Command: /卡面
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-04-09 | 项目完成度跟踪 / README 索引 | 新增基于代码审计的完成度跟踪文档，整理模块分档、82 条活跃 Bot path、disabled handler 与测试/风险快照 |
 | 2026-03-31 | PJSK Deck-Service HTTP 联调测试记录 / README 索引 | 新增 deck-service HTTP 联调测试文档，记录 Cloud 接线、真实服务验证与当前结论 |
 | 2026-03-29 | PJSK 卡牌查询语义整理 / README 索引 | 新增卡牌查询专题文档，整理 `card/detail` `card/list` `card/image` 的入口分流与参数边界 |
 | 2026-03-29 | PJSK 歌曲查询统一改造方案 / README 索引 | 新增歌曲查询统一方案文档，整理 `music` `score/music-board` `score/music-meta` `deck` 的统一改造方向 |
@@ -111,4 +118,4 @@ X-Haruki-Bot-Matched-Command: /卡面
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-03-31
+**最后更新**：2026-04-09

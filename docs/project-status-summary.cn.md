@@ -3,6 +3,8 @@
 > 最后更新：2026-04-01（v17.2）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
+>
+> 2026-04-09 补充：当前模块分档、活跃 Bot path、disabled handler 与测试/风险快照，见 [项目完成度跟踪](project-completion-tracker.cn.md)。
 
 ## 1. 当前结论
 

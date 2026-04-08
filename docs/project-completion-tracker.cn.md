@@ -1,0 +1,449 @@
+# Haruki-Cloud 项目完成度跟踪
+
+> 最后更新：2026-04-09
+>
+> 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
+
+## 1. 范围与方法
+
+本次审计范围包括：
+
+- `cmd/`
+- `api/`
+- `internal/`
+- `utils/`
+- `drawing/`
+- `docs/`
+
+本次明确排除：
+
+- `database/` 中的 ent 生成实现
+- `ent/` 中的 schema / 生成代码
+- 纯数据目录（如 `data/master/*`）
+
+审计方法：
+
+1. 阅读服务入口、路由注册、运行时装配与核心业务链路。
+2. 对照 `docs/` 中的设计文档、状态文档与合并说明。
+3. 读取 `internal/pjsk/handler/sekai/` 与 `internal/pjsk/render/` 的实现和测试。
+4. 运行 `go test ./...`，记录当前失败包与原因。
+
+## 2. 当前结论
+
+当前仓库已经明显超过“搭骨架”阶段，属于：
+
+- **主干已成型**
+- **可内部联调**
+- **仍有工程化收尾与安全/测试债务**
+
+如果只看 `Haruki-Cloud` 作为 **PJSK Bot 新协议后端** 的目标完成度，本次审计给出的判断是：
+
+- **业务主链完成度：约 80%**
+- **发布级稳定度：约 65% ~ 70%**
+
+更准确地说，它已经是一个 **可以继续在现有结构上推进，而不应推倒重来** 的项目。
+
+## 3. 分档规则
+
+| 分档 | 含义 | 当前跟踪用语 |
+|------|------|--------------|
+| `A` | 主链完成，已经是当前正式实现 | 稳定 |
+| `B` | 已实现、可联调，但仍依赖外部服务、快照桥接或多源拼装 | 过渡 / 条件可用 |
+| `C` | 兼容层或迁移层，不应再视为最终主模型 | 兼容 |
+| `D` | 未实现、未暴露或显式 disabled | 未完成 |
+
+## 4. 路由总量结论
+
+按 **当前 handler registry 实测**，Bot API 现在暴露的是：
+
+- **82 条活跃 Bot path**
+- **9 个 disabled handler**
+
+> 注意：旧文档中多处仍写 **76 条**。按照当前注册表运行结果，后续应以本文档中的 **82 条活跃 path 清单** 为准。
+
+模块分布如下：
+
+| 模块前缀 | 活跃 path 数 |
+|----------|--------------|
+| `alias` | 9 |
+| `arrest` | 1 |
+| `card` | 4 |
+| `deck` | 6 |
+| `education` | 5 |
+| `event` | 3 |
+| `gacha` | 1 |
+| `misc` | 1 |
+| `music` | 8 |
+| `mysekai` | 9 |
+| `profile` | 20 |
+| `score` | 4 |
+| `sk` | 9 |
+| `stamp` | 1 |
+| `vlive` | 1 |
+
+## 5. 模块完成度矩阵
+
+| 模块 | 活跃 path | 分档 | 当前判断 | 主要边界 |
+|------|-----------|------|----------|----------|
+| 协议 / 鉴权 / Manifest / Bot API | N/A | `A-` | 主链已完成 | Noise 白名单、安全收尾仍未完成 |
+| Parser / Handler Registry | N/A | `A-` | 已完成 | 路径数与旧文档存在漂移 |
+| Alias | 9 | `A-` | 稳定 | 审核类命令依赖管理员身份与 PJSK DB |
+| Profile 账号体系 | 20 中的设置类 | `A-` | 稳定 | 依赖 users DB、PJSK DB、Toolbox 快速验证 |
+| Profile 渲染 | `profile` | `B+` | 已实现 | 依赖 Sekai API / Toolbox / Drawing / ImageCache |
+| Card | 4 | `A-` | 稳定 | 图片链依赖 Drawing / 资产完整性 |
+| Music | 8 | `A-` | 稳定 | `progress/rewards/bpm` 仍有快照或环境依赖 |
+| Score | 4 | `A-` | 稳定 | 复杂参数语义仍需保持回归测试 |
+| SK / Tracker | 9 | `B+` | 已实现 | 强依赖 tracker 与绑定解析；存在少量测试回归 |
+| Event | 3 | `B` | 已实现 | `event-record` 更依赖真实历史数据 |
+| Gacha | 1 | `B` | 基本可用 | 仍有 disabled 扩展能力 |
+| Education | 5 | `B-` | 已接通 | 依赖 Toolbox suite snapshot，偏过渡 |
+| Deck | 6 | `B-` | 已接通 | 依赖 snapshot / Drawing / recommend engine 过渡方案 |
+| MySekai | 9 | `B-` | 已接通 | 仍保留本地 masterdata fallback |
+| Stamp | 1 | `A-` | 稳定 | 功能范围已收口为贴纸列表 |
+| VLive | 1 | `A` | 稳定 | 当前目标就是最小文本链路 |
+| 公开 API（PJSK / CHUNITHM） | N/A | `A-` | 已完成 | PJSK 公开面刻意只保留 alias 查询 |
+| Legacy `/internal/pjsk/*` | N/A | `C` | 兼容保留 | 不应再作为客户端主协议 |
+| Drawing Python 服务 | N/A | `B` | 可用 | 仍受资产缺失与服务端细节 bug 影响 |
+
+## 6. 活跃 Bot Path 清单
+
+本节按 **当前活跃 path** 记录，供后续直接更新。
+
+### 6.1 Alias（9）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `alias/music` | `A-` | 稳定 | 歌曲别名查询 |
+| `alias/music/add` | `A-` | 稳定 | 歌曲别名提交审核 |
+| `alias/music/del` | `A-` | 稳定 | 歌曲别名删除 |
+| `alias/character` | `A-` | 稳定 | 角色别名查询 |
+| `alias/character/add` | `A-` | 稳定 | 角色别名提交审核 |
+| `alias/character/del` | `A-` | 稳定 | 角色别名删除 |
+| `alias/pending` | `A-` | 稳定 | 待审核列表 |
+| `alias/approve` | `A-` | 稳定 | 审核通过 |
+| `alias/reject` | `A-` | 稳定 | 审核拒绝 |
+
+### 6.2 Arrest（1）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `arrest` | `A-` | 稳定 | self / `@用户` / UID 三种目标模式都已接通 |
+
+### 6.3 Card（4）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `card/detail` | `A-` | 稳定 | 单卡详情 |
+| `card/list` | `A-` | 稳定 | 条件筛选列表 |
+| `card/box` | `A-` | 稳定 | 卡牌一览 / box 语义 |
+| `card/image` | `A-` | 稳定 | 原图 / 多图消息；旧状态文档对此项判断已过期 |
+
+### 6.4 Deck（6）
+
+模块判断：`B- / 过渡`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `deck/event` | `B-` | 过渡 | 活动组卡；依赖 snapshot / recommend engine / Drawing |
+| `deck/challenge` | `B-` | 过渡 | 挑战组卡 |
+| `deck/no-event` | `B-` | 过渡 | 长草 / 最强组卡 |
+| `deck/bonus` | `B-` | 过渡 | 加成 / 控分组卡 |
+| `deck/mysekai` | `B-` | 过渡 | MySekai 组卡；依赖更重 |
+| `deck/score-up` | `A` | 稳定 | 纯文本计算，不依赖 Drawing；旧状态文档对此项判断已过期 |
+
+### 6.5 Education（5）
+
+模块判断：`B- / 过渡`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `education/challenge` | `B-` | 过渡 | 依赖 Toolbox suite snapshot |
+| `education/power` | `B-` | 过渡 | 依赖 suite snapshot 与部分 MySekai 数据 |
+| `education/area` | `B-` | 过渡 | 依赖 snapshot；当前有一条 handler 测试回归 |
+| `education/bonds` | `B-` | 过渡 | 依赖 suite snapshot |
+| `education/leader` | `B-` | 过渡 | 依赖 suite snapshot |
+
+### 6.6 Event（3）
+
+模块判断：`B / 已实现`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `event` | `B` | 已实现 | 单活动详情 |
+| `event/list` | `B` | 已实现 | 活动列表 / 过滤 |
+| `event/record` | `B-` | 条件可用 | 需要真实用户活动历史数据 |
+
+### 6.7 Gacha（1）
+
+模块判断：`B / 基本可用`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `gacha` | `B` | 基本可用 | 列表主链已接通；扩展能力仍保留 disabled 实现 |
+
+### 6.8 Misc（1）
+
+模块判断：`B+ / 已实现`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `misc/birthday` | `B+` | 已实现 | 角色生日文本 -> 渲染链路已完成 |
+
+### 6.9 Music（8）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `music` | `A-` | 稳定 | 歌曲详情主链 |
+| `music/list` | `A-` | 稳定 | 歌曲列表 / 关键字 / alias |
+| `music/chart` | `A-` | 稳定 | 谱面预览 |
+| `music/cover` | `A-` | 稳定 | 曲绘查询 |
+| `music/note-count` | `A-` | 稳定 | 物量查询 |
+| `music/bpm` | `B` | 条件可用 | 依赖本地谱面文件环境；当前有 2 条测试失败 |
+| `music/progress` | `B` | 过渡 | 依赖快照 / 公开资料混合 |
+| `music/rewards` | `B` | 过渡 | 依赖快照 / 公开资料混合 |
+
+### 6.10 MySekai（9）
+
+模块判断：`B- / 过渡`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `mysekai/resource` | `B-` | 过渡 | 依赖 snapshot / masterdata / Drawing |
+| `mysekai/map` | `B-` | 过渡 | 依赖 snapshot / masterdata / Drawing |
+| `mysekai/talk-list` | `B-` | 过渡 | 对资源完整性更敏感 |
+| `mysekai/fixture-list` | `B-` | 过渡 | 依赖 snapshot / masterdata |
+| `mysekai/fixture-detail` | `B-` | 过渡 | 依赖 snapshot / masterdata |
+| `mysekai/door-upgrade` | `B-` | 过渡 | 依赖 Drawing 侧实现稳定性 |
+| `mysekai/music-record` | `B-` | 过渡 | 依赖 snapshot / masterdata |
+| `mysekai/blueprint` | `B-` | 过渡 | 当前是语义收口后的组合入口 |
+| `mysekai/photo` | `B+` | 已实现 | 直接走图片下载，不依赖 Drawing 渲染 |
+
+### 6.11 Profile（20）
+
+模块判断：`混合：A- ~ B`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `profile` | `B+` | 已实现 | 资料渲染主链；依赖 Sekai API / Drawing / ImageCache |
+| `profile/bind` | `A-` | 稳定 | 账号绑定 |
+| `profile/bind/list` | `A-` | 稳定 | 绑定列表 |
+| `profile/unbind` | `A-` | 稳定 | 解绑 |
+| `profile/default` | `A-` | 稳定 | 设置默认绑定 |
+| `profile/default/clear` | `A-` | 稳定 | 清除默认绑定 |
+| `profile/verify` | `A-` | 稳定 | 快速验证 |
+| `profile/verify/list` | `A-` | 稳定 | 验证列表 |
+| `profile/visibility/hide` | `A-` | 稳定 | 隐藏 ID |
+| `profile/visibility/show` | `A-` | 稳定 | 显示 ID |
+| `profile/suite/hide` | `A-` | 稳定 | 隐藏 suite 抓包信息 |
+| `profile/suite/show` | `A-` | 稳定 | 显示 suite 抓包信息 |
+| `profile/mysekai/hide` | `A-` | 稳定 | 隐藏 MySekai 抓包信息 |
+| `profile/mysekai/show` | `A-` | 稳定 | 显示 MySekai 抓包信息 |
+| `profile/bg/upload` | `B` | 过渡 | 依赖验证状态、内容审核、BG 存储、ImageCache |
+| `profile/bg/clear` | `B` | 过渡 | 依赖 BG 存储 |
+| `profile/bg/adjust` | `B` | 过渡 | 依赖已存在背景图 |
+| `profile/check-data` | `B` | 条件可用 | 依赖 Toolbox |
+| `profile/check-data-mysekai` | `B` | 条件可用 | 依赖 Toolbox |
+| `profile/reg-time` | `A-` | 稳定 | 注册时间查询 |
+
+### 6.12 Score（4）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `score` | `A-` | 稳定 | 分数控制 / 分数计算 |
+| `score/custom-room` | `A-` | 稳定 | 自定义房间 |
+| `score/music-meta` | `A-` | 稳定 | 曲目 meta |
+| `score/music-board` | `A-` | 稳定 | 排行 / 对比；参数语义较复杂，需继续回归 |
+
+### 6.13 SK（9）
+
+模块判断：`B+ / 已实现`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `sk/query` | `B+` | 已实现 | tracker 主链，支持 UID / `@用户` |
+| `sk/line` | `B+` | 已实现 | tracker 主链 |
+| `sk/speed` | `B` | 已实现 | 当前有 1 条 bot 测试回归 |
+| `sk/check-room` | `B` | 已实现 | tracker 主链 |
+| `sk/rank-trace` | `B` | 已实现 | tracker 主链 |
+| `sk/player-trace` | `B` | 条件可用 | 当前有 1 条 bot 测试回归 |
+| `sk/predict` | `B` | 已实现 | 基于 tracker 的预测线路 |
+| `sk/daily-speed` | `B` | 已实现 | tracker 主链 |
+| `sk/winrate` | `B-` | 条件可用 | 更依赖真实对战数据 |
+
+### 6.14 Stamp（1）
+
+模块判断：`A- / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `stamp` | `A-` | 稳定 | 范围已经主动收口到贴纸列表 |
+
+### 6.15 VLive（1）
+
+模块判断：`A / 稳定`
+
+| Path | 分档 | 当前状态 | 备注 |
+|------|------|----------|------|
+| `vlive` | `A` | 稳定 | 最小文本版主链已经完成 |
+
+## 7. 未暴露 / Disabled Handler 清单
+
+当前显式 `Disabled: true` 的 handler 共 **9 个**：
+
+| Handler | 所属文件 | 当前状态 | 备注 |
+|---------|----------|----------|------|
+| `CardStoryHandle` | `internal/pjsk/handler/sekai/card.go` | `D` | 卡牌剧情 |
+| `GachaRecordHandle` | `internal/pjsk/handler/sekai/gacha.go` | `D` | 抽卡记录 |
+| `EventStoryHandle` | `internal/pjsk/handler/sekai/event.go` | `D` | 活动剧情 |
+| `HelpHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 帮助 |
+| `UpdateHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 更新信息 |
+| `NgWordHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | NG 词检测 |
+| `UploadHelpHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 抓包帮助 |
+| `ExtractCardHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 提取卡牌 |
+| `HeyiweiHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 历史保留功能 |
+
+## 8. Legacy 与兼容层状态
+
+当前以下能力仍然保留，但不应再被当作客户端主模型：
+
+- `POST /internal/pjsk/command`
+- `POST /internal/pjsk/render`
+- `POST /internal/pjsk/<module>/<action>/build`
+- `POST /internal/pjsk/<module>/<action>/render`
+
+当前判断：
+
+- 分档：`C / 兼容`
+- 说明：仍有维护价值，但客户端主协议已经转移到 `/api/v2/bot/:botId/pjsk/<path>`
+
+## 9. 当前测试快照
+
+审计时执行命令：
+
+```bash
+go test ./...
+```
+
+当前整仓测试 **不是全绿**，但失败已经收敛到少数包。
+
+### 9.1 通过情况较好的核心区域
+
+下列核心包当前测试通过或总体稳定：
+
+- `internal/pjsk/render/card`
+- `internal/pjsk/render/deck`
+- `internal/pjsk/render/education`
+- `internal/pjsk/render/gacha`
+- `internal/pjsk/render/honor`
+- `internal/pjsk/render/misc`
+- `internal/pjsk/render/mysekai`
+- `internal/pjsk/render/score`
+- `internal/pjsk/render/sk`
+- `internal/pjsk/render/stamp`
+- `internal/pjsk/render/userdata`
+- `internal/pjsk/render/vlive`
+- `internal/pjsk/parser`
+- `internal/pjsk/userdata`
+- `utils/drawing`
+- `utils/logger`
+- `utils/query`
+
+### 9.2 当前失败包
+
+| 包 | 现状 | 主要原因 |
+|----|------|----------|
+| `api/bot/pjsk` | 失败 | 2 条 SK 相关测试回归 |
+| `api/legacy/pjsk` | 构建失败 | legacy 测试桩没跟上接口升级 |
+| `integration` | 失败 | `TestAuth` 的 fixture / 鉴权前提已过期 |
+| `internal/pjsk/handler/sekai` | 失败 | `education/area` 一条测试预期与当前行为不一致 |
+| `internal/pjsk/render/event` | 失败 | `world_bloom` / `world_link` 枚举语义不一致 |
+| `internal/pjsk/render/music` | 失败 | BPM 测试依赖本地谱面文件环境 |
+| `internal/pjsk/render/profile` | 失败 | API profile builder 测试中的 data source 配置不完整 |
+
+### 9.3 当前已定位的具体失败点
+
+| 位置 | 问题 |
+|------|------|
+| `api/bot/pjsk/handler_test.go:1111` | `sk/speed` 期望 `request_type=tracker`，当前实际为另一种请求类型 |
+| `api/bot/pjsk/handler_test.go:1301` | `sk/player-trace` 返回了文本错误而非图片消息 |
+| `api/legacy/pjsk/render_route_test.go:3308` | `routeGachaSource` 未实现 `GetGachaByEventID` |
+| `internal/pjsk/handler/sekai/education_test.go:70` | `education/area` 空参数默认行为测试失败 |
+| `internal/pjsk/render/event/builder_test.go:147` | 期望 `WorldLink`，实际得到 `world_bloom` |
+| `internal/pjsk/render/music/lookup_test.go:198` | 当前环境没有可读取的本地谱面文件，无法查询 BPM |
+| `internal/pjsk/render/music/lookup_test.go:241` | 同上 |
+| `internal/pjsk/render/profile/controller_test.go:118` | `profile data source is not configured` |
+| `integration/api_test.go:260` | `authentication failed` |
+
+## 10. 当前主要风险
+
+### 10.1 安全风险
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| Noise 对端静态公钥白名单 | 未完成 | `internal/middleware/secure/secure.go` 仍留有 `TODO` |
+| `/internal/*` 默认保护强度 | 偏弱 | `AcceptAuthorization` / `AcceptUserAgent` 为空时校验会放行 |
+
+### 10.2 架构过渡风险
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| 强用户态模块正式 provider | 未完成 | 仍大量依赖 Toolbox snapshot / 本地 snapshot |
+| MySekai 正式数据源 | 未完成 | 仍保留本地 masterdata fallback |
+| Deck 正式 recommend engine | 未完成 | Go fallback / remote / local engine 并存 |
+
+### 10.3 工程化风险
+
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| Legacy 兼容路由仍在生产启动流程 | 存在 | `api/legacy/pjsk` 仍被注册 |
+| 后台刷新 goroutine 生命周期 | 待收尾 | `chardata` 与 `music meta` 刷新使用 `context.Background()` |
+| 文档与代码漂移 | 存在 | 旧文档仍写 76 path，与当前 82 path 不一致 |
+
+### 10.4 外部依赖风险
+
+以下能力依赖外部服务或外部资源完整性：
+
+- Drawing API
+- ImageCache
+- Sekai API
+- Toolbox
+- Tracker
+- 区服资产目录 / masterdata / 本地谱面文件
+
+## 11. 当前推荐优先级
+
+建议下一阶段优先按下面顺序推进：
+
+1. 修平 `go test ./...` 当前失败包，先恢复测试可信度。
+2. 修复 `api/bot/pjsk` 的 2 条 SK 回归测试，保证 Bot 主链继续稳定。
+3. 修复 `api/legacy/pjsk` 测试桩编译错误，避免兼容层持续腐烂。
+4. 明确 `world_bloom` / `world_link` 的统一枚举语义，并收口 `event` 渲染链。
+5. 让 `music/bpm` 测试脱离本地谱面文件强依赖，或补全测试夹具。
+6. 补齐 `profile` API builder 的测试数据源注入。
+7. 修正 `integration/api_test.go` 中过期的鉴权 fixture。
+8. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
+9. 收紧 `/internal/*` 默认鉴权策略。
+10. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
+
+## 12. 维护说明
+
+后续更新本文件时，建议遵守：
+
+1. 新增 Bot path 时，同时更新第 4 节、第 5 节和第 6 节。
+2. 某 path 被移除或改为 disabled 时，从第 6 节移出，并挪到第 7 节。
+3. `go test ./...` 状态发生变化时，更新第 9 节。
+4. 新的主风险或架构决策，统一补到第 10 节和第 11 节。
+
+---
+
+**维护建议**：后续若继续保留 [project-status-summary.cn.md](project-status-summary.cn.md) 作为长篇阶段日志，则本文件应保持“短周期更新、高密度跟踪”的定位，不再重复记录逐轮详细联调流水。  

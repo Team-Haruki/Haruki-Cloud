@@ -14,18 +14,18 @@ import (
 )
 
 type testGachaSource struct {
-	region    renderregion.Value
-	gachas    []*masterdata.Gacha
-	gachaByID map[int]*masterdata.Gacha
-	cardByID  map[int]*masterdata.Card
+	region     renderregion.Value
+	gachas     []*masterdata.Gacha
+	gachaByID  map[int]*masterdata.Gacha
+	cardByID   map[int]*masterdata.Card
 	eventCards map[int][]int
 }
 
 func newTestGachaSource(region renderregion.Value) *testGachaSource {
 	return &testGachaSource{
-		region:    region,
-		gachaByID: make(map[int]*masterdata.Gacha),
-		cardByID:  make(map[int]*masterdata.Card),
+		region:     region,
+		gachaByID:  make(map[int]*masterdata.Gacha),
+		cardByID:   make(map[int]*masterdata.Card),
 		eventCards: make(map[int][]int),
 	}
 }

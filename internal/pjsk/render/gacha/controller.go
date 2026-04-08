@@ -3,8 +3,10 @@ package gacha
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/drawing"
@@ -82,7 +84,15 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, src, nil
 	}
 	if query.NegIndex < 0 {
-		gachas := src.GetGachas()
+		all := src.GetGachas()
+		gachas := make([]*masterdata.Gacha, 0, len(all))
+		now := time.Now().UnixMilli()
+		for _, item := range all {
+			if item == nil || item.StartAt > now {
+				continue
+			}
+			gachas = append(gachas, item)
+		}
 		if len(gachas) == 0 {
 			return query, src, fmt.Errorf("no gacha data available for region %s", query.Region)
 		}

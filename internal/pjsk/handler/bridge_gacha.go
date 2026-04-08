@@ -15,10 +15,14 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
-	case "gacha":
+	case "gacha", "gacha-list":
 		q := gacha.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = rc.App.Gachas.RenderGachaList(q)
+	case "gacha-detail":
+		q := gacha.DetailQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = rc.App.Gachas.RenderGachaDetail(q)
 	default:
 		return nil, unsupportedModeError("gacha", rc.Cmd.Mode)
 	}

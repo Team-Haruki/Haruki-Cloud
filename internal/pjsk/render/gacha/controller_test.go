@@ -75,6 +75,73 @@ func TestControllerBuildGachaDetailRequestUsesNegativeIndex(t *testing.T) {
 	}
 }
 
+func TestControllerBuildGachaDetailRequestNegativeIndexIgnoresFutureGacha(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := newTestGachaSource(renderregion.JP)
+
+	past := &masterdata.Gacha{
+		ID:              10,
+		Name:            "Past",
+		GachaType:       "ceil",
+		AssetBundleName: "past",
+		StartAt:         now - 20_000,
+		EndAt:           now - 10_000,
+		GachaDetails: []masterdata.GachaDetail{
+			{CardID: 1001, Weight: 100},
+		},
+		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
+			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 100},
+		},
+	}
+	current := &masterdata.Gacha{
+		ID:              20,
+		Name:            "Current",
+		GachaType:       "ceil",
+		AssetBundleName: "current",
+		StartAt:         now - 5_000,
+		EndAt:           now + 5_000,
+		GachaDetails: []masterdata.GachaDetail{
+			{CardID: 1002, Weight: 100},
+		},
+		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
+			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 100},
+		},
+	}
+	future := &masterdata.Gacha{
+		ID:              30,
+		Name:            "Future",
+		GachaType:       "ceil",
+		AssetBundleName: "future",
+		StartAt:         now + 20_000,
+		EndAt:           now + 30_000,
+		GachaDetails: []masterdata.GachaDetail{
+			{CardID: 1003, Weight: 100},
+		},
+		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
+			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 100},
+		},
+	}
+	source.gachas = []*masterdata.Gacha{past, future, current}
+	source.gachaByID[past.ID] = past
+	source.gachaByID[current.ID] = current
+	source.gachaByID[future.ID] = future
+	source.cardByID[1001] = &masterdata.Card{ID: 1001, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_1001"}
+	source.cardByID[1002] = &masterdata.Card{ID: 1002, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_1002"}
+	source.cardByID[1003] = &masterdata.Card{ID: 1003, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_1003"}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildGachaDetailRequest(DetailQuery{
+		Region:   renderregion.JP,
+		NegIndex: -1,
+	})
+	if err != nil {
+		t.Fatalf("BuildGachaDetailRequest failed: %v", err)
+	}
+	if req.Gacha.ID != 20 {
+		t.Fatalf("expected latest started gacha id 20, got %d", req.Gacha.ID)
+	}
+}
+
 func TestControllerBuildGachaDetailRequestUsesEventID(t *testing.T) {
 	source := newTestGachaSource(renderregion.JP)
 

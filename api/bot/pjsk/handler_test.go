@@ -214,11 +214,55 @@ func (botTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, cha
 }
 
 func (botTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
-	return nil, nil
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     5000000 + int(userID%1000),
+				Rank:      777,
+				Timestamp: 1704067200,
+			},
+			{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     5005000 + int(userID%1000),
+				Rank:      777,
+				Timestamp: 1704070800,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "BotTrackerUIDUser",
+		},
+	}, nil
 }
 
 func (botTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
-	return nil, nil
+	return &sekaiapi.WorldBloomTraceRankingResponse{
+		RankData: []sekaiapi.WorldBloomRankDataPoint{
+			{
+				RankDataPoint: sekaiapi.RankDataPoint{
+					UserID:    strconv.FormatInt(userID, 10),
+					Score:     6000000 + int(userID%1000),
+					Rank:      888,
+					Timestamp: 1704067200,
+				},
+				CharacterID: &characterID,
+			},
+			{
+				RankDataPoint: sekaiapi.RankDataPoint{
+					UserID:    strconv.FormatInt(userID, 10),
+					Score:     6005000 + int(userID%1000),
+					Rank:      888,
+					Timestamp: 1704070800,
+				},
+				CharacterID: &characterID,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "BotWLTrackerUIDUser",
+		},
+	}, nil
 }
 
 // testBotApp registers bot routes on a fresh Fiber instance.
@@ -1107,7 +1151,7 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 		if req.EventID != 101 {
 			t.Fatalf("unexpected event id: %d", req.EventID)
 		}
-		if req.RequestType != "tracker" {
+		if req.RequestType != "时" {
 			t.Fatalf("unexpected request type: %s", req.RequestType)
 		}
 		if req.Period <= 0 {

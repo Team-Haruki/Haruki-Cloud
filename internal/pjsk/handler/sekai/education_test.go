@@ -14,11 +14,13 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      string
+		wantErr   bool
 		checkFunc func(*testing.T, education.AreaItemQuery)
 	}{
 		{
-			name: "no filter keeps default behavior",
-			args: "",
+			name:    "no filter now requires explicit target",
+			args:    "",
+			wantErr: true,
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
 				if query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
@@ -66,6 +68,12 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 				TriggerCmd: "/区域道具",
 				ArgText:    tt.args,
 			})
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
 			if err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}

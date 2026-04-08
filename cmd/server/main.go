@@ -5,7 +5,6 @@ import (
 	harukiLogger "haruki-cloud/utils/logger"
 
 	botPJSK "haruki-cloud/api/bot/pjsk"
-	legacyPJSK "haruki-cloud/api/legacy/pjsk"
 
 	"github.com/gofiber/fiber/v3/middleware/static"
 
@@ -30,9 +29,6 @@ func main() {
 	renderRuntime := initPJSKRenderIfEnabled(mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, censorService)
-	legacyPJSK.RegisterPJSKRenderRoutes(app, renderRuntime)
-	pjskResolver := initPJSKParserIfEnabled(mainLogger, sekaiClient)
-	legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 	botDBClient := initBot(mainLogger, app, redisClient)
 	noiseKeyPair := initNoiseKeyPair(mainLogger)
 	botPJSK.RegisterPJSKBotRoutes(app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
@@ -45,7 +41,7 @@ func main() {
 	defer closeClients(usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 
 	if renderRuntime != nil {
-		mainLogger.Infof("PJSK render runtime initialized; internal render routes registered")
+		mainLogger.Infof("PJSK render runtime initialized")
 	}
 
 	startServer(mainLogger, app)

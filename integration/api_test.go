@@ -1,6 +1,6 @@
 // Package integration provides end-to-end integration tests for Haruki-Cloud APIs.
 //
-// Run with: go test -v -run TestAuth -run TestManifests -run TestBotCommands -run TestExternalAPIs ./integration/ -count=1
+// Run with: HARUKI_RUN_INTEGRATION=1 go test -v -run TestAuth -run TestManifests -run TestBotCommands -run TestExternalAPIs ./integration/ -count=1
 package integration_test
 
 import (
@@ -30,6 +30,7 @@ import (
 // ─── Test Configuration ─────────────────────────────────────────────
 
 const (
+	integrationEnv = "HARUKI_RUN_INTEGRATION"
 	baseURL        = "http://127.0.0.1:6666"
 	botID          = "12345678"
 	credentialB64  = "CREDENTIAL_VALUE_REDACTED_PLACEHOLDER_00000000000="
@@ -44,8 +45,8 @@ const (
 	usersDSN = "host=localhost port=5432 user=haruki_users password=users_pw_2026 dbname=haruki_users sslmode=disable"
 	pjskDSN  = "host=localhost port=5432 user=haruki_pjsk password=pjsk_pw_2026 dbname=haruki_pjsk sslmode=disable"
 
-	noisePrivKeyHex  = "NOISE_PRIV_KEY_REDACTED_000000000000000000000000000000000000000000"
-	serverPubKeyHex  = "NOISE_PUB_KEY_REDACTED_0000000000000000000000000000000000000000000"
+	noisePrivKeyHex = "NOISE_PRIV_KEY_REDACTED_000000000000000000000000000000000000000000"
+	serverPubKeyHex = "NOISE_PUB_KEY_REDACTED_0000000000000000000000000000000000000000000"
 )
 
 var (
@@ -53,6 +54,13 @@ var (
 	clientKP     *corecrypto.KeyPair
 	serverPubKey []byte
 )
+
+func requireIntegration(t *testing.T) {
+	t.Helper()
+	if os.Getenv(integrationEnv) != "1" {
+		t.Skipf("integration tests are disabled by default; set %s=1 to enable", integrationEnv)
+	}
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -111,12 +119,12 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 }
 
 type botRequest struct {
-	Platform        string        `json:"platform" msgpack:"platform"`
-	PlatformUserID  string        `json:"platform_user_id" msgpack:"platform_user_id"`
-	PlatformGroupID string        `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
-	Server          string        `json:"server,omitempty" msgpack:"server,omitempty"`
-	MatchedCommand  string        `json:"matched_command" msgpack:"matched_command"`
-	Message         []msgSegment  `json:"message" msgpack:"message"`
+	Platform        string       `json:"platform" msgpack:"platform"`
+	PlatformUserID  string       `json:"platform_user_id" msgpack:"platform_user_id"`
+	PlatformGroupID string       `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
+	Server          string       `json:"server,omitempty" msgpack:"server,omitempty"`
+	MatchedCommand  string       `json:"matched_command" msgpack:"matched_command"`
+	Message         []msgSegment `json:"message" msgpack:"message"`
 }
 
 type msgSegment struct {
@@ -225,6 +233,7 @@ func min(a, b int) int {
 // ─── Phase 1: Authentication ────────────────────────────────────────
 
 func TestAuth(t *testing.T) {
+	requireIntegration(t)
 	t.Log("=== Phase 1: Bot Authentication ===")
 
 	// Key derivation: server takes the raw credential string bytes (not base64-decoded),
@@ -289,6 +298,7 @@ func TestAuth(t *testing.T) {
 // ─── Phase 2: Manifests ─────────────────────────────────────────────
 
 func TestManifests(t *testing.T) {
+	requireIntegration(t)
 	if sessionToken == "" {
 		t.Skip("no session token — run TestAuth first")
 	}
@@ -324,14 +334,15 @@ func TestManifests(t *testing.T) {
 // ─── Phase 3: Bot Command Tests ─────────────────────────────────────
 
 type cmdTest struct {
-	name    string
-	path    string
-	cmd     string
-	text    string
-	wantOK  bool
+	name   string
+	path   string
+	cmd    string
+	text   string
+	wantOK bool
 }
 
 func TestBotCommands(t *testing.T) {
+	requireIntegration(t)
 	if sessionToken == "" {
 		t.Skip("no session token — run TestAuth first")
 	}
@@ -582,6 +593,7 @@ func getPendingAliasIDs(t *testing.T, limit int) []int64 {
 }
 
 func TestExpandedCoverage(t *testing.T) {
+	requireIntegration(t)
 	if sessionToken == "" {
 		t.Skip("no session token — run TestAuth first")
 	}
@@ -777,6 +789,7 @@ func TestExpandedCoverage(t *testing.T) {
 // ─── Phase 4: External API Proxy Tests ──────────────────────────────
 
 func TestExternalAPIs(t *testing.T) {
+	requireIntegration(t)
 	sekaiToken := os.Getenv("HARUKI_TEST_SEKAI_TOKEN")
 	toolboxToken := os.Getenv("HARUKI_TEST_TOOLBOX_TOKEN")
 	trackerBase := os.Getenv("HARUKI_TEST_TRACKER_BASE")

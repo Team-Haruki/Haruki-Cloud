@@ -58,9 +58,9 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 	// Fast path: return cached URL from PostgreSQL — but only if the file still exists on disk.
 	ctx := context.Background()
 	if c.store != nil {
-		if cachedURL, cachedPath, ok := c.store.Lookup(ctx, hashHex); ok {
-			if _, err := os.Stat(cachedPath); err == nil {
-				return cachedURL, nil
+		if cachedPath, storedPath, ok := c.store.Lookup(ctx, hashHex); ok {
+			if _, err := os.Stat(storedPath); err == nil {
+				return c.uri + "/" + cachedPath, nil
 			}
 			// File was deleted; fall through to re-write it below.
 		}
@@ -80,9 +80,11 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 	urlPath := strings.ReplaceAll(filepath.ToSlash(filepath.Join(group, name)), "\\", "/")
 	cdnURL := c.uri + "/" + urlPath
 
-	// Record in PostgreSQL for future deduplication.
+	// Record the relative path (no domain) in PostgreSQL for future deduplication.
+	// Storing only the path means changing the CDN base URI in config is sufficient
+	// to update all returned URLs — no DB update required.
 	if c.store != nil {
-		c.store.Insert(ctx, hashHex, group, cdnURL, targetPath, int64(len(data)))
+		c.store.Insert(ctx, hashHex, group, urlPath, targetPath, int64(len(data)))
 	}
 
 	return cdnURL, nil

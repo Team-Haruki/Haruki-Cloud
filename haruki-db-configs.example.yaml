@@ -10,6 +10,7 @@ backend:
   access_log_path: "access.log"
   accept_authorization: null
   accept_user_agent: null
+  allow_insecure_internal_api: false
   api_cache_ttl: "300s"
   enable_trust_proxy: true
   trusted_proxies:

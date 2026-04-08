@@ -77,14 +77,30 @@ func CachedJSONResponse(
 
 func VerifyAPIAuthorization() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		authHeader := c.Get("Authorization")
+		expectedAuth := strings.TrimSpace(config.Cfg.Backend.AcceptAuthorization)
+		if expectedAuth == "" {
+			if token := strings.TrimSpace(config.Cfg.HarukiBotDB.InternalAPIToken); token != "" {
+				if strings.HasPrefix(strings.ToLower(token), "bearer ") {
+					expectedAuth = token
+				} else {
+					expectedAuth = "Bearer " + token
+				}
+			}
+		}
+		expectedUserAgent := strings.TrimSpace(config.Cfg.Backend.AcceptUserAgent)
+
+		if expectedAuth == "" && expectedUserAgent == "" && !config.Cfg.Backend.AllowInsecureInternalAPI {
+			return JSONResponse(c, fiber.StatusServiceUnavailable, "Internal API authorization is not configured")
+		}
+
+		authHeader := strings.TrimSpace(c.Get("Authorization"))
 		userAgent := c.Get("User-Agent")
 
-		if config.Cfg.Backend.AcceptAuthorization != "" && authHeader != config.Cfg.Backend.AcceptAuthorization {
+		if expectedAuth != "" && authHeader != expectedAuth {
 			return JSONResponse(c, fiber.StatusUnauthorized, "Invalid Authorization header")
 		}
 
-		if config.Cfg.Backend.AcceptUserAgent != "" && !strings.Contains(userAgent, config.Cfg.Backend.AcceptUserAgent) {
+		if expectedUserAgent != "" && !strings.Contains(userAgent, expectedUserAgent) {
 			return JSONResponse(c, fiber.StatusForbidden, "Invalid User-Agent")
 		}
 

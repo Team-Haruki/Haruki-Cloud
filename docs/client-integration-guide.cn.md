@@ -28,6 +28,8 @@ Bot Client (QQ/Discord/...)
 | `credential` | string | Base64 编码的 JWT，由 `credential_sign_token` 签名，包含 `bot_id` 和原始 credential |
 | `noise_server_pubkey` | string | 服务端 Noise IK X25519 公钥（hex），用于加密传输层（可选） |
 
+> 说明：当前客户端只需要显式配置**服务端公钥**。客户端静态公钥会在 Noise IK 握手中隐式参与，但服务端侧的“客户端公钥登记 / 白名单授权”体系目前仍是后续 TODO，不是当前接入前提。
+
 ### 2.1 Credential JWT 结构
 
 credential 是一个 HS256 签名的 JWT，payload 为：
@@ -298,6 +300,12 @@ encrypted_payload = base64.b64encode(nonce + ciphertext).decode()
 - **密钥交换**：X25519
 - **AEAD**：AES-GCM
 - **哈希**：SHA256
+
+补充说明：
+
+1. 当前 Noise 的主要作用是**传输层加密**。
+2. 当前服务端尚未把客户端静态公钥做成正式的设备身份白名单因子。
+3. 因此，Bot 身份的正式认证仍然以 `X-Haruki-Bot-Id + X-Haruki-Bot-Session-Token` 为准。
 
 ### 6.2 请求流程
 

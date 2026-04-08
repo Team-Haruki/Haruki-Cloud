@@ -10,6 +10,8 @@
 > 2. `cmd/server/main.go` 已不再注册 legacy PJSK 路由。
 > 3. `go test ./...` 当前已恢复全绿。
 > 4. `integration` 测试改为默认关闭，需显式设置 `HARUKI_RUN_INTEGRATION=1` 才执行。
+> 5. `integration/api_test.go` 已支持通过环境变量完整覆盖主配置，且不再依赖“先跑 `TestAuth`”的隐含顺序。
+> 6. `/internal/*` 默认鉴权已收紧：未配置内部鉴权时默认拒绝，仅显式 `allow_insecure_internal_api=true` 才放宽。
 
 ## 1. 范围与方法
 
@@ -348,6 +350,21 @@ go test ./...
 HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
 ```
 
+按需覆盖的核心环境变量包括：
+
+- `HARUKI_TEST_BASE_URL`
+- `HARUKI_TEST_BOT_ID`
+- `HARUKI_TEST_BOT_CREDENTIAL`
+- `HARUKI_TEST_PLATFORM`
+- `HARUKI_TEST_PLATFORM_USER_ID`
+- `HARUKI_TEST_REGION`
+- `HARUKI_TEST_GAME_USER_ID`
+- `HARUKI_TEST_CREDENTIAL_SIGN_TOKEN`
+- `HARUKI_TEST_USERS_DSN`
+- `HARUKI_TEST_PJSK_DSN`
+- `HARUKI_TEST_SERVER_PUBKEY_HEX`
+- `HARUKI_TEST_IMAGE_PATH`
+
 ### 9.1 当前整体状态
 
 截至 2026-04-09 本轮稳定化完成后：
@@ -355,6 +372,8 @@ HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
 - **默认口径 `go test ./...`：全绿**
 - `integration` 包：默认 `Skip`
 - 集成测试只有在显式设置 `HARUKI_RUN_INTEGRATION=1` 时才真正执行
+- 集成测试主配置已支持通过环境变量覆盖，不再需要为了切环境直接改源文件
+- 集成测试认证改为按需初始化，不再要求必须先手动跑 `TestAuth`
 
 ### 9.2 本轮已修复的失败点
 
@@ -365,7 +384,7 @@ HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
 | `internal/pjsk/render/event` | 修正 `EventBrief.EventType` 输出为展示值 |
 | `internal/pjsk/render/music` | `ResolveMusicBPM` 补齐普通本地路径 + `asset/{region}-assets/startapp/...` 双路径支持 |
 | `internal/pjsk/render/profile` | 测试补齐显式 `CN` source 注册 |
-| `integration` | 改为默认关闭，显式环境变量开启 |
+| `integration` | 改为默认关闭，显式环境变量开启；主配置 env 化，并移除对 `TestAuth` 执行顺序的依赖 |
 
 ### 9.3 当前说明
 
@@ -431,7 +450,18 @@ go test ./...
 | 项目 | 状态 | 说明 |
 |------|------|------|
 | Noise 对端静态公钥白名单 | 未完成 | `internal/middleware/secure/secure.go` 仍留有 `TODO` |
-| `/internal/*` 默认保护强度 | 偏弱 | `AcceptAuthorization` / `AcceptUserAgent` 为空时校验会放行 |
+| `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；仅显式 `allow_insecure_internal_api=true` 才放宽 |
+
+补充 TODO（2026-04-09 明确延期）：
+
+- **客户端静态公钥登记 / 白名单校验体系**
+  - 当前客户端只显式持有“服务端公钥”，并通过 Noise IK 在握手中隐式带出客户端静态公钥。
+  - 服务端虽然能通过 `peerStatic` 读取到对端静态公钥，但还没有：
+    - `bot_id -> 客户端静态公钥` 绑定表
+    - 公钥轮换 / 吊销机制
+    - 多客户端并存策略
+    - 基于白名单的正式授权判断
+  - 当前决定：**先标记为 TODO，不作为本轮优先工作项**。
 
 ### 10.2 架构过渡风险
 
@@ -445,7 +475,7 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| Legacy 兼容路由仍在生产启动流程 | 存在 | `api/legacy/pjsk` 仍被注册 |
+| Legacy 兼容路由残留风险 | 已消除 | `api/legacy/pjsk` 已删除，`cmd/server/main.go` 也不再注册 legacy 路由 |
 | 后台刷新 goroutine 生命周期 | 待收尾 | `chardata` 与 `music meta` 刷新使用 `context.Background()` |
 | 文档与代码漂移 | 存在 | 旧文档仍写 76 path，与当前 82 path 不一致 |
 
@@ -462,13 +492,13 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-P0 / P1 / P2 已完成，下一阶段建议优先按下面顺序推进：
+P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧已完成。下一阶段建议优先按下面顺序推进：
 
 1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
-2. 收紧 `/internal/*` 默认鉴权策略。
-3. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
-4. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
-5. 把集成测试改造成可由环境变量完整注入配置，而不再依赖硬编码 fixture。
+2. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
+3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
+4. 视需要补一份集成测试环境样例说明，降低多人联调门槛。
+5. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
 
 ## 12. 维护说明
 

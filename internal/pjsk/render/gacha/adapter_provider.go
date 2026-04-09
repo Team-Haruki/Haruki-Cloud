@@ -7,31 +7,26 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to gacha.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) GetGachaByID(id int) (*masterdata.Gacha, error) {
-	return a.p.Gachas().GetByID(id)
+	return a.P.Gachas().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, error) {
@@ -39,7 +34,7 @@ func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 		return nil, fmt.Errorf("event id is required")
 	}
 
-	cards, err := a.p.Cards().Filter(&provider.CardFilter{EventID: eventID})
+	cards, err := a.P.Cards().Filter(&provider.CardFilter{EventID: eventID})
 	if err != nil {
 		return nil, err
 	}
@@ -55,13 +50,13 @@ func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 	if idx > 2 {
 		idx = 2
 	}
-	return a.p.Cards().GetGachaByCardID(cards[idx].ID)
+	return a.P.Cards().GetGachaByCardID(cards[idx].ID)
 }
 
 func (a *ProviderAdapter) GetGachas() []*masterdata.Gacha {
-	return a.p.Gachas().GetAll()
+	return a.P.Gachas().GetAll()
 }
 
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
-	return a.p.Cards().GetByID(id)
+	return a.P.Cards().GetByID(id)
 }

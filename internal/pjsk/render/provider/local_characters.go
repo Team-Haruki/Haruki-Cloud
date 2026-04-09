@@ -3,7 +3,6 @@ package provider
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -13,54 +12,52 @@ import (
 // localCharacterProvider
 // ===========================================================================
 
+type charUnitData struct {
+	byID    map[int]*masterdata.GameCharacterUnit
+	colorID map[int]string
+}
+
 type localCharacterProvider struct {
 	store *localStore
-
-	charOnce sync.Once
-	charByID map[int]*masterdata.Character
-	charErr  error
-
-	unitOnce  sync.Once
-	unitByID  map[int]*masterdata.GameCharacterUnit
-	colorByID map[int]string
-	unitErr   error
+	chars lazyValue[map[int]*masterdata.Character]
+	units lazyValue[charUnitData]
 }
 
 func (p *localCharacterProvider) ensureCharacters() error {
-	p.charOnce.Do(func() {
+	return p.chars.init(func() (map[int]*masterdata.Character, error) {
 		items, err := loadJSON[localGameCharacterJSON](p.store, "gameCharacters.json")
 		if err != nil {
-			p.charErr = err
-			return
+			return nil, err
 		}
-		p.charByID = make(map[int]*masterdata.Character, len(items))
+		byID := make(map[int]*masterdata.Character, len(items))
 		for _, item := range items {
-			p.charByID[item.ID] = &masterdata.Character{
+			byID[item.ID] = &masterdata.Character{
 				ID:        item.ID,
 				FirstName: item.FirstName,
 				GivenName: item.GivenName,
 				Unit:      item.Unit,
 			}
 		}
+		return byID, nil
 	})
-	return p.charErr
 }
 
 func (p *localCharacterProvider) ensureUnits() error {
-	p.unitOnce.Do(func() {
+	return p.units.init(func() (charUnitData, error) {
 		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
 		if err != nil {
-			p.unitErr = err
-			return
+			return charUnitData{}, err
 		}
-		p.unitByID = make(map[int]*masterdata.GameCharacterUnit, len(items))
-		p.colorByID = make(map[int]string, len(items))
+		data := charUnitData{
+			byID:    make(map[int]*masterdata.GameCharacterUnit, len(items)),
+			colorID: make(map[int]string, len(items)),
+		}
 		for i := range items {
-			p.unitByID[items[i].ID] = &items[i]
-			p.colorByID[items[i].ID] = strings.TrimSpace(items[i].ColorCode)
+			data.byID[items[i].ID] = &items[i]
+			data.colorID[items[i].ID] = strings.TrimSpace(items[i].ColorCode)
 		}
+		return data, nil
 	})
-	return p.unitErr
 }
 
 func (p *localCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
@@ -70,7 +67,7 @@ func (p *localCharacterProvider) GetByID(id int) (*masterdata.Character, error) 
 	if err := p.ensureCharacters(); err != nil {
 		return nil, err
 	}
-	ch, ok := p.charByID[id]
+	ch, ok := p.chars.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("character %d not found", id)
 	}
@@ -84,7 +81,7 @@ func (p *localCharacterProvider) GetColorCode(id int) (string, bool) {
 	if err := p.ensureUnits(); err != nil {
 		return "", false
 	}
-	v, ok := p.colorByID[id]
+	v, ok := p.units.v().colorID[id]
 	return v, ok && v != ""
 }
 
@@ -95,7 +92,7 @@ func (p *localCharacterProvider) GetGameCharacterUnit(id int) (*masterdata.GameC
 	if err := p.ensureUnits(); err != nil {
 		return nil, err
 	}
-	u, ok := p.unitByID[id]
+	u, ok := p.units.v().byID[id]
 	if !ok {
 		return nil, fmt.Errorf("game character unit %d not found", id)
 	}

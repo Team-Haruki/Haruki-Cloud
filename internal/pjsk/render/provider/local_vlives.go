@@ -3,7 +3,6 @@ package provider
 import (
 	"encoding/json"
 	"sort"
-	"sync"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -14,20 +13,16 @@ import (
 
 type localVLiveProvider struct {
 	store *localStore
-
-	once  sync.Once
-	lives []*VLive
-	err   error
+	lives lazyValue[[]*VLive]
 }
 
 func (p *localVLiveProvider) ensureLoaded() error {
-	p.once.Do(func() {
+	return p.lives.init(func() ([]*VLive, error) {
 		items, err := loadJSON[localVirtualLiveJSON](p.store, "virtualLives.json")
 		if err != nil {
-			p.err = err
-			return
+			return nil, err
 		}
-		p.lives = make([]*VLive, 0, len(items))
+		lives := make([]*VLive, 0, len(items))
 		for _, item := range items {
 			live := &VLive{
 				ID:      item.ID,
@@ -50,24 +45,24 @@ func (p *localVLiveProvider) ensureLoaded() error {
 					EndAt:   endAt,
 				})
 			}
-			p.lives = append(p.lives, live)
+			lives = append(lives, live)
 		}
-		sort.Slice(p.lives, func(i, j int) bool {
-			if p.lives[i].StartAt == p.lives[j].StartAt {
-				return p.lives[i].ID < p.lives[j].ID
+		sort.Slice(lives, func(i, j int) bool {
+			if lives[i].StartAt == lives[j].StartAt {
+				return lives[i].ID < lives[j].ID
 			}
-			return p.lives[i].StartAt < p.lives[j].StartAt
+			return lives[i].StartAt < lives[j].StartAt
 		})
+		return lives, nil
 	})
-	return p.err
 }
 
 func (p *localVLiveProvider) GetLives(_ renderregion.Value) ([]*VLive, error) {
 	if err := p.ensureLoaded(); err != nil {
 		return nil, err
 	}
-	result := make([]*VLive, 0, len(p.lives))
-	for _, live := range p.lives {
+	result := make([]*VLive, 0, len(p.lives.v()))
+	for _, live := range p.lives.v() {
 		c := *live
 		c.Schedules = append([]VLiveSchedule(nil), live.Schedules...)
 		result = append(result, &c)

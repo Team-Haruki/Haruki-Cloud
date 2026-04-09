@@ -5,41 +5,36 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to honor.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) GetHonorByID(id int) (*masterdata.Honor, error) {
-	return a.p.Honors().GetByID(id)
+	return a.P.Honors().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
-	return a.p.Honors().GetGroupByID(id)
+	return a.P.Honors().GetGroupByID(id)
 }
 
 func (a *ProviderAdapter) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
-	return a.p.Honors().GetBondsHonorByID(id)
+	return a.P.Honors().GetBondsHonorByID(id)
 }
 
 func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
-	return a.p.Honors().GetGameCharacterUnitByID(id)
+	return a.P.Honors().GetGameCharacterUnitByID(id)
 }

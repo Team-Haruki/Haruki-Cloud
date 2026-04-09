@@ -16,110 +16,98 @@ import (
 // localHonorProvider
 // ===========================================================================
 
+type honorBirthdayData struct {
+	byGroup map[int]honorBirthdayAssets
+	chars   []localGameCharacterJSON
+}
+
 type localHonorProvider struct {
 	store *localStore
 
-	honorOnce sync.Once
-	honorByID map[int]*masterdata.Honor
-	honorErr  error
+	honors      lazyValue[map[int]*masterdata.Honor]
+	groups      lazyValue[map[int]*masterdata.HonorGroup]
+	bondsHonors lazyValue[map[int]*masterdata.BondsHonor]
+	gcu         lazyValue[map[int]*masterdata.GameCharacterUnit]
+	birthday    lazyValue[honorBirthdayData]
+	eventHonors lazyValue[map[int]int]
 
-	groupOnce sync.Once
-	groupByID map[int]*masterdata.HonorGroup
-	groupErr  error
-
-	bondsOnce sync.Once
-	bondsByID map[int]*masterdata.BondsHonor
-	bondsErr  error
-
-	gcuOnce sync.Once
-	gcuByID map[int]*masterdata.GameCharacterUnit
-	gcuErr  error
-
-	birthdayOnce    sync.Once
-	birthdayByGroup map[int]honorBirthdayAssets
-	birthdayChars   []localGameCharacterJSON
-
-	eventHonorOnce   sync.Once
-	eventByHonorID   map[int]int
-	eventHonorLoaded bool
+	// birthdayMu guards mutation of birthday.v().byGroup cache
+	birthdayMu sync.Mutex
 }
 
 func (p *localHonorProvider) ensureHonors() error {
-	p.honorOnce.Do(func() {
+	return p.honors.init(func() (map[int]*masterdata.Honor, error) {
 		items, err := loadJSON[masterdata.Honor](p.store, "honors.json")
 		if err != nil {
-			p.honorErr = err
-			return
+			return nil, err
 		}
-		p.honorByID = make(map[int]*masterdata.Honor, len(items))
+		byID := make(map[int]*masterdata.Honor, len(items))
 		for i := range items {
-			p.honorByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.honorErr
 }
 
 func (p *localHonorProvider) ensureGroups() error {
-	p.groupOnce.Do(func() {
+	return p.groups.init(func() (map[int]*masterdata.HonorGroup, error) {
 		items, err := loadJSON[masterdata.HonorGroup](p.store, "honorGroups.json")
 		if err != nil {
-			p.groupErr = err
-			return
+			return nil, err
 		}
-		p.groupByID = make(map[int]*masterdata.HonorGroup, len(items))
+		byID := make(map[int]*masterdata.HonorGroup, len(items))
 		for i := range items {
-			p.groupByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.groupErr
 }
 
 func (p *localHonorProvider) ensureBonds() error {
-	p.bondsOnce.Do(func() {
+	return p.bondsHonors.init(func() (map[int]*masterdata.BondsHonor, error) {
 		items, err := loadJSON[masterdata.BondsHonor](p.store, "bondsHonors.json")
 		if err != nil {
-			p.bondsErr = err
-			return
+			return nil, err
 		}
-		p.bondsByID = make(map[int]*masterdata.BondsHonor, len(items))
+		byID := make(map[int]*masterdata.BondsHonor, len(items))
 		for i := range items {
-			p.bondsByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.bondsErr
 }
 
 func (p *localHonorProvider) ensureGCU() error {
-	p.gcuOnce.Do(func() {
+	return p.gcu.init(func() (map[int]*masterdata.GameCharacterUnit, error) {
 		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
 		if err != nil {
-			p.gcuErr = err
-			return
+			return nil, err
 		}
-		p.gcuByID = make(map[int]*masterdata.GameCharacterUnit, len(items))
+		byID := make(map[int]*masterdata.GameCharacterUnit, len(items))
 		for i := range items {
-			p.gcuByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.gcuErr
 }
 
 func (p *localHonorProvider) ensureBirthdayChars() {
-	p.birthdayOnce.Do(func() {
-		p.birthdayByGroup = make(map[int]honorBirthdayAssets)
+	_ = p.birthday.init(func() (honorBirthdayData, error) {
+		data := honorBirthdayData{byGroup: make(map[int]honorBirthdayAssets)}
 		chars, err := loadJSON[localGameCharacterJSON](p.store, "gameCharacters.json")
 		if err == nil {
-			p.birthdayChars = chars
+			data.chars = chars
 		}
+		return data, nil
 	})
 }
 
 func (p *localHonorProvider) ensureEventHonors() {
-	p.eventHonorOnce.Do(func() {
-		p.eventByHonorID = make(map[int]int)
+	_ = p.eventHonors.init(func() (map[int]int, error) {
+		byHonorID := make(map[int]int)
 		items, err := loadJSON[localEventJSON](p.store, "events.json")
 		if err != nil {
-			return
+			return byHonorID, nil
 		}
 		for _, item := range items {
 			var ranges []honorRewardRange
@@ -129,12 +117,12 @@ func (p *localHonorProvider) ensureEventHonors() {
 			for _, rr := range ranges {
 				for _, detail := range rr.EventRankingRewardDetails {
 					if detail.ResourceType == "honor" && detail.ResourceID > 0 {
-						p.eventByHonorID[detail.ResourceID] = item.ID
+						byHonorID[detail.ResourceID] = item.ID
 					}
 				}
 			}
 		}
-		p.eventHonorLoaded = true
+		return byHonorID, nil
 	})
 }
 
@@ -145,7 +133,7 @@ func (p *localHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
 	if err := p.ensureHonors(); err != nil {
 		return nil, err
 	}
-	h, ok := p.honorByID[id]
+	h, ok := p.honors.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("honor %d not found", id)
 	}
@@ -159,7 +147,7 @@ func (p *localHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error
 	if err := p.ensureGroups(); err != nil {
 		return nil, err
 	}
-	g, ok := p.groupByID[id]
+	g, ok := p.groups.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("honor group %d not found", id)
 	}
@@ -188,10 +176,14 @@ func (p *localHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error
 func (p *localHonorProvider) deriveBirthdayAssetsForGroup(groupID int, groupName string) (honorBirthdayAssets, bool) {
 	p.ensureBirthdayChars()
 
-	if cached, ok := p.birthdayByGroup[groupID]; ok {
+	p.birthdayMu.Lock()
+	defer p.birthdayMu.Unlock()
+
+	bd := p.birthday.v()
+	if cached, ok := bd.byGroup[groupID]; ok {
 		return cached, true
 	}
-	for _, ch := range p.birthdayChars {
+	for _, ch := range bd.chars {
 		if ch.ID <= 0 {
 			continue
 		}
@@ -203,7 +195,7 @@ func (p *localHonorProvider) deriveBirthdayAssetsForGroup(groupID int, groupName
 			background: "honor_bg_birthday_" + suffix,
 			frame:      "honor_frame_birthday_" + suffix,
 		}
-		p.birthdayByGroup[groupID] = derived
+		p.birthday.v().byGroup[groupID] = derived
 		return derived, true
 	}
 	return honorBirthdayAssets{}, false
@@ -245,7 +237,7 @@ func (p *localHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, 
 	if err := p.ensureBonds(); err != nil {
 		return nil, err
 	}
-	b, ok := p.bondsByID[id]
+	b, ok := p.bondsHonors.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("bonds honor %d not found", id)
 	}
@@ -259,7 +251,7 @@ func (p *localHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameC
 	if err := p.ensureGCU(); err != nil {
 		return nil, false
 	}
-	u, ok := p.gcuByID[id]
+	u, ok := p.gcu.v()[id]
 	if !ok {
 		return nil, false
 	}
@@ -271,5 +263,5 @@ func (p *localHonorProvider) GetEventIDByHonorID(honorID int) int {
 		return 0
 	}
 	p.ensureEventHonors()
-	return p.eventByHonorID[honorID]
+	return p.eventHonors.v()[honorID]
 }

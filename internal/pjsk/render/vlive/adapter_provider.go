@@ -9,26 +9,22 @@ import (
 
 // ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
-	pvLives, err := a.p.VLives().GetLives(region)
+	pvLives, err := a.P.VLives().GetLives(region)
 	if err != nil {
 		return nil, err
 	}

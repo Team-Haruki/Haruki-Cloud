@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -13,152 +12,139 @@ import (
 // localEducationProvider
 // ===========================================================================
 
+type boxIndex struct {
+	byID      map[int]*ResourceBox
+	byPurpose map[string]map[int]*ResourceBox
+}
+
+type areaIndex struct {
+	byID         map[int]*AreaItem
+	levelsByItem map[int][]*AreaItemLevel
+	levelByItem  map[int]map[int]*AreaItemLevel
+}
+
+type bondData struct {
+	bonds  []*Bond
+	levels []*BondLevel
+}
+
+type missionData struct {
+	requirements []LeaderMissionRequirement
+	maxPlayLimit int
+}
+
 type localEducationProvider struct {
 	store *localStore
 
-	rewardOnce    sync.Once
-	rewardsByChar map[int][]*ChallengeReward
-	rewardErr     error
-
-	boxOnce      sync.Once
-	boxByID      map[int]*ResourceBox
-	boxByPurpose map[string]map[int]*ResourceBox
-	boxErr       error
-
-	areaOnce         sync.Once
-	areaByID         map[int]*AreaItem
-	areaLevelsByItem map[int][]*AreaItemLevel
-	areaLevelByItem  map[int]map[int]*AreaItemLevel
-	areaErr          error
-
-	rankOnce   sync.Once
-	rankByChar map[int]map[int]*CharacterRank
-	rankErr    error
-
-	bondOnce   sync.Once
-	bonds      []*Bond
-	bondLevels []*BondLevel
-	bondErr    error
-
-	styleOnce sync.Once
-	styleByID map[int]*GameCharacterStyle
-	styleErr  error
-
-	missionOnce        sync.Once
-	leaderRequirements []LeaderMissionRequirement
-	leaderMaxPlayLimit int
-	missionErr         error
-
-	gateOnce sync.Once
-	gateByID map[int]map[int]*MysekaiGateLevel
-	gateErr  error
-
-	shopOnce    sync.Once
-	shopByBoxID map[int]*ShopItem
-	shopErr     error
+	rewards  lazyValue[map[int][]*ChallengeReward]
+	boxes    lazyValue[boxIndex]
+	areas    lazyValue[areaIndex]
+	ranks    lazyValue[map[int]map[int]*CharacterRank]
+	bonds    lazyValue[bondData]
+	styles   lazyValue[map[int]*GameCharacterStyle]
+	missions lazyValue[missionData]
+	gates    lazyValue[map[int]map[int]*MysekaiGateLevel]
+	shops    lazyValue[map[int]*ShopItem]
 }
 
 func (p *localEducationProvider) ensureRewards() error {
-	p.rewardOnce.Do(func() {
+	return p.rewards.init(func() (map[int][]*ChallengeReward, error) {
 		items, err := loadJSON[ChallengeReward](p.store, "challengeLiveHighScoreRewards.json")
 		if err != nil {
-			p.rewardErr = err
-			return
+			return nil, err
 		}
-		p.rewardsByChar = make(map[int][]*ChallengeReward)
+		byChar := make(map[int][]*ChallengeReward)
 		for i := range items {
-			p.rewardsByChar[items[i].CharacterID] = append(
-				p.rewardsByChar[items[i].CharacterID], &items[i])
+			byChar[items[i].CharacterID] = append(byChar[items[i].CharacterID], &items[i])
 		}
+		return byChar, nil
 	})
-	return p.rewardErr
 }
 
 func (p *localEducationProvider) ensureResourceBoxes() error {
-	p.boxOnce.Do(func() {
+	return p.boxes.init(func() (boxIndex, error) {
 		items, err := loadJSON[ResourceBox](p.store, "resourceBoxes.json")
 		if err != nil {
-			p.boxErr = err
-			return
+			return boxIndex{}, err
 		}
-		p.boxByID = make(map[int]*ResourceBox, len(items))
-		p.boxByPurpose = make(map[string]map[int]*ResourceBox)
+		idx := boxIndex{
+			byID:      make(map[int]*ResourceBox, len(items)),
+			byPurpose: make(map[string]map[int]*ResourceBox),
+		}
 		for i := range items {
 			box := &items[i]
-			p.boxByID[box.ID] = box
-			if _, ok := p.boxByPurpose[box.ResourceBoxPurpose]; !ok {
-				p.boxByPurpose[box.ResourceBoxPurpose] = make(map[int]*ResourceBox)
+			idx.byID[box.ID] = box
+			if _, ok := idx.byPurpose[box.ResourceBoxPurpose]; !ok {
+				idx.byPurpose[box.ResourceBoxPurpose] = make(map[int]*ResourceBox)
 			}
-			p.boxByPurpose[box.ResourceBoxPurpose][box.ID] = box
+			idx.byPurpose[box.ResourceBoxPurpose][box.ID] = box
 		}
+		return idx, nil
 	})
-	return p.boxErr
 }
 
 func (p *localEducationProvider) ensureAreaItems() error {
-	p.areaOnce.Do(func() {
+	return p.areas.init(func() (areaIndex, error) {
 		items, err := loadJSON[AreaItem](p.store, "areaItems.json")
 		if err != nil {
-			p.areaErr = err
-			return
+			return areaIndex{}, err
 		}
-		p.areaByID = make(map[int]*AreaItem, len(items))
+		idx := areaIndex{
+			byID:         make(map[int]*AreaItem, len(items)),
+			levelsByItem: make(map[int][]*AreaItemLevel),
+			levelByItem:  make(map[int]map[int]*AreaItemLevel),
+		}
 		for i := range items {
-			p.areaByID[items[i].ID] = &items[i]
+			idx.byID[items[i].ID] = &items[i]
 		}
 
 		levels, err := loadJSON[AreaItemLevel](p.store, "areaItemLevels.json")
 		if err != nil {
-			p.areaErr = err
-			return
+			return areaIndex{}, err
 		}
-		p.areaLevelsByItem = make(map[int][]*AreaItemLevel)
-		p.areaLevelByItem = make(map[int]map[int]*AreaItemLevel)
 		for i := range levels {
 			lv := &levels[i]
-			p.areaLevelsByItem[lv.AreaItemID] = append(p.areaLevelsByItem[lv.AreaItemID], lv)
-			if _, ok := p.areaLevelByItem[lv.AreaItemID]; !ok {
-				p.areaLevelByItem[lv.AreaItemID] = make(map[int]*AreaItemLevel)
+			idx.levelsByItem[lv.AreaItemID] = append(idx.levelsByItem[lv.AreaItemID], lv)
+			if _, ok := idx.levelByItem[lv.AreaItemID]; !ok {
+				idx.levelByItem[lv.AreaItemID] = make(map[int]*AreaItemLevel)
 			}
-			p.areaLevelByItem[lv.AreaItemID][lv.Level] = lv
+			idx.levelByItem[lv.AreaItemID][lv.Level] = lv
 		}
+		return idx, nil
 	})
-	return p.areaErr
 }
 
 func (p *localEducationProvider) ensureCharacterRanks() error {
-	p.rankOnce.Do(func() {
+	return p.ranks.init(func() (map[int]map[int]*CharacterRank, error) {
 		items, err := loadJSON[localCharacterRankJSON](p.store, "characterRanks.json")
 		if err != nil {
-			p.rankErr = err
-			return
+			return nil, err
 		}
-		p.rankByChar = make(map[int]map[int]*CharacterRank)
+		byChar := make(map[int]map[int]*CharacterRank)
 		for _, item := range items {
 			rank := &CharacterRank{
 				CharacterID:     item.CharacterID,
 				Rank:            item.CharacterRank,
 				Power1BonusRate: item.Power1BonusRate,
 			}
-			if _, ok := p.rankByChar[rank.CharacterID]; !ok {
-				p.rankByChar[rank.CharacterID] = make(map[int]*CharacterRank)
+			if _, ok := byChar[rank.CharacterID]; !ok {
+				byChar[rank.CharacterID] = make(map[int]*CharacterRank)
 			}
-			p.rankByChar[rank.CharacterID][rank.Rank] = rank
+			byChar[rank.CharacterID][rank.Rank] = rank
 		}
+		return byChar, nil
 	})
-	return p.rankErr
 }
 
 func (p *localEducationProvider) ensureBondMaster() error {
-	p.bondOnce.Do(func() {
+	return p.bonds.init(func() (bondData, error) {
 		items, err := loadJSON[localBondJSON](p.store, "bonds.json")
 		if err != nil {
-			p.bondErr = err
-			return
+			return bondData{}, err
 		}
-		p.bonds = make([]*Bond, 0, len(items))
+		data := bondData{bonds: make([]*Bond, 0, len(items))}
 		for _, item := range items {
-			p.bonds = append(p.bonds, &Bond{
+			data.bonds = append(data.bonds, &Bond{
 				GroupID:      item.GroupID,
 				CharacterID1: item.CharacterID1,
 				CharacterID2: item.CharacterID2,
@@ -167,100 +153,95 @@ func (p *localEducationProvider) ensureBondMaster() error {
 
 		levels, err := loadJSON[localLevelJSON](p.store, "levels.json")
 		if err != nil {
-			p.bondErr = err
-			return
+			return bondData{}, err
 		}
-		p.bondLevels = make([]*BondLevel, 0)
+		data.levels = make([]*BondLevel, 0)
 		for _, item := range levels {
 			if !strings.EqualFold(item.LevelType, "bonds") || item.Level <= 0 {
 				continue
 			}
-			p.bondLevels = append(p.bondLevels, &BondLevel{
+			data.levels = append(data.levels, &BondLevel{
 				Level:    item.Level,
 				TotalExp: item.TotalExp,
 			})
 		}
-		sort.Slice(p.bondLevels, func(i, j int) bool { return p.bondLevels[i].Level < p.bondLevels[j].Level })
+		sort.Slice(data.levels, func(i, j int) bool { return data.levels[i].Level < data.levels[j].Level })
+		return data, nil
 	})
-	return p.bondErr
 }
 
 func (p *localEducationProvider) ensureGameCharacterStyles() error {
-	p.styleOnce.Do(func() {
+	return p.styles.init(func() (map[int]*GameCharacterStyle, error) {
 		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
 		if err != nil {
-			p.styleErr = err
-			return
+			return nil, err
 		}
-		p.styleByID = make(map[int]*GameCharacterStyle, len(items))
+		byID := make(map[int]*GameCharacterStyle, len(items))
 		for i := range items {
-			p.styleByID[items[i].ID] = &GameCharacterStyle{
+			byID[items[i].ID] = &GameCharacterStyle{
 				GameID:      items[i].ID,
 				CharacterID: items[i].GameCharacterID,
 				ColorCode:   strings.TrimSpace(items[i].ColorCode),
 			}
 		}
+		return byID, nil
 	})
-	return p.styleErr
 }
 
 func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
-	p.missionOnce.Do(func() {
+	return p.missions.init(func() (missionData, error) {
 		items, err := loadJSON[localLeaderMissionRequirementJSON](p.store, "characterMissionV2ParameterGroups.json")
 		if err != nil {
-			p.missionErr = err
-			return
+			return missionData{}, err
 		}
-		p.leaderRequirements = make([]LeaderMissionRequirement, 0)
+		data := missionData{}
 		for _, item := range items {
 			switch item.GameID {
 			case 1:
-				if item.Requirement > p.leaderMaxPlayLimit {
-					p.leaderMaxPlayLimit = item.Requirement
+				if item.Requirement > data.maxPlayLimit {
+					data.maxPlayLimit = item.Requirement
 				}
 			case 101:
-				p.leaderRequirements = append(p.leaderRequirements, LeaderMissionRequirement{
+				data.requirements = append(data.requirements, LeaderMissionRequirement{
 					Seq:         item.Seq,
 					Requirement: item.Requirement,
 				})
 			}
 		}
-		sort.Slice(p.leaderRequirements, func(i, j int) bool { return p.leaderRequirements[i].Seq < p.leaderRequirements[j].Seq })
+		sort.Slice(data.requirements, func(i, j int) bool { return data.requirements[i].Seq < data.requirements[j].Seq })
+		return data, nil
 	})
-	return p.missionErr
 }
 
 func (p *localEducationProvider) ensureGateLevels() error {
-	p.gateOnce.Do(func() {
+	return p.gates.init(func() (map[int]map[int]*MysekaiGateLevel, error) {
 		items, err := loadJSON[localMysekaiGateLevelJSON](p.store, "mysekaiGateLevels.json")
 		if err != nil {
-			p.gateErr = err
-			return
+			return nil, err
 		}
-		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
+		byID := make(map[int]map[int]*MysekaiGateLevel)
 		for _, item := range items {
 			level := &MysekaiGateLevel{
 				GateID:         item.MysekaiGateID,
 				Level:          item.Level,
 				PowerBonusRate: item.PowerBonusRate,
 			}
-			if _, ok := p.gateByID[level.GateID]; !ok {
-				p.gateByID[level.GateID] = make(map[int]*MysekaiGateLevel)
+			if _, ok := byID[level.GateID]; !ok {
+				byID[level.GateID] = make(map[int]*MysekaiGateLevel)
 			}
-			p.gateByID[level.GateID][level.Level] = level
+			byID[level.GateID][level.Level] = level
 		}
+		return byID, nil
 	})
-	return p.gateErr
 }
 
 func (p *localEducationProvider) ensureShopItems() error {
-	p.shopOnce.Do(func() {
+	return p.shops.init(func() (map[int]*ShopItem, error) {
 		items, err := loadJSON[localShopItemJSON](p.store, "shopItems.json")
 		if err != nil {
-			p.shopErr = err
-			return
+			return nil, err
 		}
-		p.shopByBoxID = make(map[int]*ShopItem, len(items))
+		byBoxID := make(map[int]*ShopItem, len(items))
 		for _, item := range items {
 			entry := &ShopItem{
 				ID:            item.ID,
@@ -277,10 +258,10 @@ func (p *localEducationProvider) ensureShopItems() error {
 					}
 				}
 			}
-			p.shopByBoxID[entry.ResourceBoxID] = entry
+			byBoxID[entry.ResourceBoxID] = entry
 		}
+		return byBoxID, nil
 	})
-	return p.shopErr
 }
 
 func (p *localEducationProvider) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
@@ -290,7 +271,7 @@ func (p *localEducationProvider) GetChallengeRewardsByCharacter(charID int) []*C
 	if err := p.ensureRewards(); err != nil {
 		return nil
 	}
-	return cloneEdChallengeRewards(p.rewardsByChar[charID])
+	return cloneEdChallengeRewards(p.rewards.v()[charID])
 }
 
 func (p *localEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
@@ -301,9 +282,9 @@ func (p *localEducationProvider) GetResourceBoxByPurpose(purpose string, id int)
 		return nil
 	}
 	if strings.TrimSpace(purpose) == "" {
-		return cloneEdResourceBox(p.boxByID[id])
+		return cloneEdResourceBox(p.boxes.v().byID[id])
 	}
-	if purposeMap, ok := p.boxByPurpose[purpose]; ok {
+	if purposeMap, ok := p.boxes.v().byPurpose[purpose]; ok {
 		return cloneEdResourceBox(purposeMap[id])
 	}
 	return nil
@@ -314,13 +295,13 @@ func (p *localEducationProvider) GetResourceBoxesByPurpose(purpose string) []*Re
 		return nil
 	}
 	if strings.TrimSpace(purpose) == "" {
-		items := make([]*ResourceBox, 0, len(p.boxByID))
-		for _, item := range p.boxByID {
+		items := make([]*ResourceBox, 0, len(p.boxes.v().byID))
+		for _, item := range p.boxes.v().byID {
 			items = append(items, cloneEdResourceBox(item))
 		}
 		return items
 	}
-	purposeMap, ok := p.boxByPurpose[purpose]
+	purposeMap, ok := p.boxes.v().byPurpose[purpose]
 	if !ok {
 		return nil
 	}
@@ -335,8 +316,8 @@ func (p *localEducationProvider) GetAreaItems() []*AreaItem {
 	if err := p.ensureAreaItems(); err != nil {
 		return nil
 	}
-	items := make([]*AreaItem, 0, len(p.areaByID))
-	for _, item := range p.areaByID {
+	items := make([]*AreaItem, 0, len(p.areas.v().byID))
+	for _, item := range p.areas.v().byID {
 		items = append(items, cloneEdAreaItem(item))
 	}
 	return items
@@ -349,7 +330,7 @@ func (p *localEducationProvider) GetAreaItem(id int) *AreaItem {
 	if err := p.ensureAreaItems(); err != nil {
 		return nil
 	}
-	return cloneEdAreaItem(p.areaByID[id])
+	return cloneEdAreaItem(p.areas.v().byID[id])
 }
 
 func (p *localEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
@@ -359,7 +340,7 @@ func (p *localEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLe
 	if err := p.ensureAreaItems(); err != nil {
 		return nil
 	}
-	return cloneEdAreaItemLevels(p.areaLevelsByItem[areaItemID])
+	return cloneEdAreaItemLevels(p.areas.v().levelsByItem[areaItemID])
 }
 
 func (p *localEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
@@ -369,7 +350,7 @@ func (p *localEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaIt
 	if err := p.ensureAreaItems(); err != nil {
 		return nil
 	}
-	if levels, ok := p.areaLevelByItem[areaItemID]; ok {
+	if levels, ok := p.areas.v().levelByItem[areaItemID]; ok {
 		return cloneEdAreaItemLevel(levels[level])
 	}
 	return nil
@@ -382,7 +363,7 @@ func (p *localEducationProvider) GetCharacterRank(characterID, rank int) *Charac
 	if err := p.ensureCharacterRanks(); err != nil {
 		return nil
 	}
-	if ranks, ok := p.rankByChar[characterID]; ok {
+	if ranks, ok := p.ranks.v()[characterID]; ok {
 		return cloneEdCharacterRank(ranks[rank])
 	}
 	return nil
@@ -392,14 +373,14 @@ func (p *localEducationProvider) GetBonds() []*Bond {
 	if err := p.ensureBondMaster(); err != nil {
 		return nil
 	}
-	return cloneEdBonds(p.bonds)
+	return cloneEdBonds(p.bonds.v().bonds)
 }
 
 func (p *localEducationProvider) GetBondLevels() []*BondLevel {
 	if err := p.ensureBondMaster(); err != nil {
 		return nil
 	}
-	return cloneEdBondLevels(p.bondLevels)
+	return cloneEdBondLevels(p.bonds.v().levels)
 }
 
 func (p *localEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
@@ -409,14 +390,14 @@ func (p *localEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacte
 	if err := p.ensureGameCharacterStyles(); err != nil {
 		return nil
 	}
-	return cloneEdGameCharacterStyle(p.styleByID[gameID])
+	return cloneEdGameCharacterStyle(p.styles.v()[gameID])
 }
 
 func (p *localEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
 		return nil, 0
 	}
-	return cloneEdLeaderMissionRequirements(p.leaderRequirements), p.leaderMaxPlayLimit
+	return cloneEdLeaderMissionRequirements(p.missions.v().requirements), p.missions.v().maxPlayLimit
 }
 
 func (p *localEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
@@ -426,7 +407,7 @@ func (p *localEducationProvider) GetMysekaiGateLevel(gateID, level int) *Mysekai
 	if err := p.ensureGateLevels(); err != nil {
 		return nil
 	}
-	if levels, ok := p.gateByID[gateID]; ok {
+	if levels, ok := p.gates.v()[gateID]; ok {
 		return cloneEdMysekaiGateLevel(levels[level])
 	}
 	return nil
@@ -439,7 +420,7 @@ func (p *localEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *
 	if err := p.ensureShopItems(); err != nil {
 		return nil
 	}
-	return cloneEdShopItem(p.shopByBoxID[resourceBoxID])
+	return cloneEdShopItem(p.shops.v()[resourceBoxID])
 }
 
 type localBondJSON struct {

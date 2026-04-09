@@ -1,10 +1,7 @@
 package sekai
 
 import (
-	"errors"
 	"fmt"
-	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -33,23 +30,7 @@ type SekaiAPIClient struct {
 
 func GetSekaiAPIClient() *SekaiAPIClient {
 	apiOnce.Do(func() {
-		c := resty.New().
-			SetTimeout(apiTimeout).
-			SetRetryCount(maxRetries).
-			SetRetryWaitTime(retryWaitTime).
-			AddRetryCondition(func(r *resty.Response, err error) bool {
-				if err != nil {
-					if _, ok := errors.AsType[net.Error](err); ok {
-						return true
-					}
-					msg := err.Error()
-					return strings.Contains(msg, "connection refused") ||
-						strings.Contains(msg, "no such host") ||
-						strings.Contains(msg, "i/o timeout") ||
-						strings.Contains(msg, "EOF")
-				}
-				return r.StatusCode() >= 500
-			})
+		c := newRestyClient().SetTimeout(apiTimeout)
 
 		apiClient = &SekaiAPIClient{
 			http:   c,

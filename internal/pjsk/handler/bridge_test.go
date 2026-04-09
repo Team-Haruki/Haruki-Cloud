@@ -216,7 +216,7 @@ func TestResolveTrackerTargetUserNoPrefixFallsBackToJPWhenNoGlobalDefault(t *tes
 	if _, err := service.Bind(ctx, "qq", "9002", "12345678901234"); err != nil {
 		t.Fatalf("bind jp: %v", err)
 	}
-	if _, err := service.ClearDefault(ctx, "qq", "9002", "", accountdata.GlobalDefaultBindingScope); err != nil {
+	if _, err := service.ClearDefault(ctx, "qq", "9002", "", "", accountdata.GlobalDefaultBindingScope); err != nil {
 		t.Fatalf("clear global default: %v", err)
 	}
 
@@ -321,11 +321,11 @@ func TestResolveTrackerTargetUserSupportsSelector(t *testing.T) {
 	if err := resolveTrackerTargetUser(ctx, &renderapp.App{Bindings: service}, &req, "qq", "someone"); err != nil {
 		t.Fatalf("resolve target: %v", err)
 	}
-	if req.UserID == nil || *req.UserID != 11111111111111 {
+	if req.UserID == nil || *req.UserID != 33333333333333 {
 		t.Fatalf("unexpected resolved uid: %+v", req.UserID)
 	}
-	if req.Region != "tw" {
-		t.Fatalf("expected selector region tw, got %q", req.Region)
+	if req.Region != "jp" {
+		t.Fatalf("expected selector region jp, got %q", req.Region)
 	}
 }
 

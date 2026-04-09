@@ -167,7 +167,7 @@ func TestExecuteProfileSettingsCommandVerifyListMasksUID(t *testing.T) {
 		t.Fatalf("verify list: %v", err)
 	}
 
-	expected := "已绑定账号验证状态:\nu1 [JP] 123********234 ✅ (全局默认/JP服默认)"
+	expected := "已绑定账号验证状态（u序号按区服分别编号）:\nu1 [JP] 123********234 ✅ (全局默认/JP服默认)"
 	if string(text) != expected {
 		t.Fatalf("unexpected verify list text:\n%s", text)
 	}

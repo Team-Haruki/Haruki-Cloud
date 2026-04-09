@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 const (
@@ -20,6 +22,7 @@ type ProfileBindingCommandParams struct {
 	Platform       string `json:"platform"`
 	PlatformUserID string `json:"platform_user_id"`
 	Selector       string `json:"selector,omitempty"`
+	Server         string `json:"server,omitempty"`
 	Scope          string `json:"scope,omitempty"`
 }
 
@@ -34,9 +37,17 @@ func DecodeProfileBindingParams(raw json.RawMessage) (ProfileBindingCommandParam
 	params.Platform = strings.TrimSpace(params.Platform)
 	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
 	params.Selector = strings.TrimSpace(params.Selector)
+	params.Server = strings.TrimSpace(strings.ToLower(params.Server))
 	params.Scope = strings.TrimSpace(params.Scope)
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing binding identity context")
+	}
+	if params.Server != "" {
+		normalized := renderregion.Normalize(params.Server)
+		if normalized.IsZero() {
+			return params, fmt.Errorf("bridge: invalid binding server %q", params.Server)
+		}
+		params.Server = normalized.String()
 	}
 	return params, nil
 }
@@ -60,19 +71,19 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 		}
 		return []byte(formatBindingListText(items)), nil
 	case ProfileModeUnbind:
-		result, err := service.Unbind(ctx, params.Platform, params.PlatformUserID, params.Selector)
+		result, err := service.Unbind(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server)
 		if err != nil {
 			return nil, err
 		}
 		return []byte(formatUnbindResultText(result)), nil
 	case ProfileModeDefaultSet:
-		result, err := service.SetDefault(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Scope)
+		result, err := service.SetDefault(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server, params.Scope)
 		if err != nil {
 			return nil, err
 		}
 		return []byte(formatDefaultBindingResultText("已设置", result)), nil
 	case ProfileModeDefaultClear:
-		result, err := service.ClearDefault(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Scope)
+		result, err := service.ClearDefault(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server, params.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +98,7 @@ func formatBindingListText(items []BindingListItem) string {
 		return "你还没有绑定任何PJSK账号"
 	}
 
-	lines := []string{"已绑定账号列表（按账号绑定先后顺序）:"}
+	lines := []string{"已绑定账号列表（u序号按区服分别编号）:"}
 	for _, item := range items {
 		line := fmt.Sprintf("u%d [%s] %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item))
 		marks := make([]string, 0, 2)

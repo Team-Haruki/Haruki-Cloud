@@ -71,7 +71,7 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	// first so the user's "default" account is targeted, not a server-specific one.
 	resolveBinding := func() (*pjskdb.UserBinding, error) {
 		if params.Selector != "" {
-			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, params.Selector)
+			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, params.Server, params.Selector)
 		}
 		if !params.RegionExplicit {
 			entity, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, GlobalDefaultBindingScope)
@@ -221,7 +221,7 @@ func formatVerifyListText(items []BindingListItem) string {
 	if len(items) == 0 {
 		return "你还没有绑定任何PJSK账号"
 	}
-	lines := []string{"已绑定账号验证状态:"}
+	lines := []string{"已绑定账号验证状态（u序号按区服分别编号）:"}
 	for _, item := range items {
 		status := "❌"
 		if item.Verified {

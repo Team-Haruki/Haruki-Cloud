@@ -163,7 +163,7 @@ func (s *BindingService) List(ctx context.Context, platform, platformUserID stri
 	return buildBindingList(bindings, defaults), nil
 }
 
-func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, selector string) (*UnbindResult, error) {
+func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, selector, server string) (*UnbindResult, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, s
 		return nil, err
 	}
 	items := buildBindingList(bindings, defaults)
-	target, err := selectBinding(items, selector)
+	target, err := selectBinding(items, selector, server)
 	if err != nil {
 		return nil, err
 	}

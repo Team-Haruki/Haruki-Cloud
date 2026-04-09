@@ -54,6 +54,7 @@ func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) ac
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
 		Selector:       strings.TrimSpace(selector),
+		Server:         ctx.Region().String(),
 		Scope:          strings.TrimSpace(scope),
 	}
 }

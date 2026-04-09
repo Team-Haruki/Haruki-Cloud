@@ -12,16 +12,16 @@ import (
 )
 
 // SetDefault sets the default binding for the given scope (global or server-specific).
-func (s *BindingService) SetDefault(ctx context.Context, platform, platformUserID, selector, serverScope string) (*DefaultBindingResult, error) {
-	return s.updateDefault(ctx, platform, platformUserID, selector, serverScope, false)
+func (s *BindingService) SetDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string) (*DefaultBindingResult, error) {
+	return s.updateDefault(ctx, platform, platformUserID, selector, selectorServer, serverScope, false)
 }
 
 // ClearDefault clears the default binding. If selector is empty, clears by scope alone.
-func (s *BindingService) ClearDefault(ctx context.Context, platform, platformUserID, selector, serverScope string) (*DefaultBindingResult, error) {
+func (s *BindingService) ClearDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string) (*DefaultBindingResult, error) {
 	if selector == "" {
 		return s.clearDefaultByScope(ctx, platform, platformUserID, serverScope)
 	}
-	return s.updateDefault(ctx, platform, platformUserID, selector, serverScope, true)
+	return s.updateDefault(ctx, platform, platformUserID, selector, selectorServer, serverScope, true)
 }
 
 // clearDefaultByScope clears the default binding for a scope without requiring
@@ -71,7 +71,7 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 }
 
 // updateDefault handles both setting and clearing default bindings.
-func (s *BindingService) updateDefault(ctx context.Context, platform, platformUserID, selector, serverScope string, clear bool) (*DefaultBindingResult, error) {
+func (s *BindingService) updateDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string, clear bool) (*DefaultBindingResult, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *BindingService) updateDefault(ctx context.Context, platform, platformUs
 		return nil, err
 	}
 	items := buildBindingList(bindings, defaults)
-	target, err := selectBinding(items, selector)
+	target, err := selectBinding(items, selector, selectorServer)
 	if err != nil {
 		return nil, err
 	}

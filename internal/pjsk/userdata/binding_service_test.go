@@ -86,7 +86,7 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 		t.Fatalf("expected JP binding to keep defaults, got %+v", items[1])
 	}
 
-	result, err := service.SetDefault(ctx, "qq", "42", "u1", "")
+	result, err := service.SetDefault(ctx, "qq", "42", "u1", "cn", "")
 	if err != nil {
 		t.Fatalf("set global default: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestBindingServiceUnbindReassignsDefaults(t *testing.T) {
 		t.Fatalf("bind second: %v", err)
 	}
 
-	result, err := service.Unbind(ctx, "qq", "99", "2000")
+	result, err := service.Unbind(ctx, "qq", "99", "2000", "")
 	if err != nil {
 		t.Fatalf("unbind: %v", err)
 	}

@@ -35,7 +35,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		var binding *accountdata.ResolvedBinding
 		var err error
 		if p.Selector != "" {
-			hid, binding, err = rc.App.Bindings.ResolveUserBindingBySelector(rc.Ctx, p.Platform, p.PlatformUserID, p.Selector)
+			hid, binding, err = rc.App.Bindings.ResolveUserBindingBySelector(rc.Ctx, p.Platform, p.PlatformUserID, region, p.Selector)
 		} else if !rc.Cmd.RegionExplicit {
 			hid, binding, err = rc.App.Bindings.ResolveUserBinding(rc.Ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
 			if err != nil {

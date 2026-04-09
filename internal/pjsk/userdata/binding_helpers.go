@@ -1,13 +1,14 @@
 package userdata
 
 import (
-"context"
-"fmt"
-"slices"
-"strconv"
-"strings"
+	"context"
+	"fmt"
+	"slices"
+	"strconv"
+	"strings"
 
-pjskdb "haruki-cloud/database/pjsk"
+	pjskdb "haruki-cloud/database/pjsk"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding) []BindingListItem {
@@ -54,13 +55,15 @@ func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDef
 		return a.BindingID - b.BindingID
 	})
 
+	serverIndex := make(map[string]int, len(list))
 	for i := range list {
-		list[i].Index = i + 1
+		serverIndex[list[i].Server]++
+		list[i].Index = serverIndex[list[i].Server]
 	}
 	return list
 }
 
-func selectBinding(items []BindingListItem, selector string) (BindingListItem, error) {
+func selectBinding(items []BindingListItem, selector, server string) (BindingListItem, error) {
 	if len(items) == 0 {
 		return BindingListItem{}, fmt.Errorf("你还没有绑定任何PJSK账号")
 	}
@@ -75,10 +78,23 @@ func selectBinding(items []BindingListItem, selector string) (BindingListItem, e
 		if err != nil || index <= 0 {
 			return BindingListItem{}, fmt.Errorf("请提供正确的u序号，例如 u1")
 		}
-		if index > len(items) {
-			return BindingListItem{}, fmt.Errorf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(items))
+
+		scopedItems := items
+		if normalizedServer := normalizeSelectorServer(server); normalizedServer != "" {
+			scopedItems = filterBindingsByServer(items, normalizedServer)
+			if len(scopedItems) == 0 {
+				return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
+			}
+			if index > len(scopedItems) {
+				return BindingListItem{}, fmt.Errorf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(normalizedServer), len(scopedItems))
+			}
+			return scopedItems[index-1], nil
 		}
-		return items[index-1], nil
+
+		if index > len(scopedItems) {
+			return BindingListItem{}, fmt.Errorf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(scopedItems))
+		}
+		return scopedItems[index-1], nil
 	}
 
 	var matched []BindingListItem
@@ -95,6 +111,32 @@ func selectBinding(items []BindingListItem, selector string) (BindingListItem, e
 	default:
 		return BindingListItem{}, fmt.Errorf("账号ID %s 在多个区服都已绑定，请改用 u序号 操作", selector)
 	}
+}
+
+func filterBindingsByServer(items []BindingListItem, server string) []BindingListItem {
+	if server == "" {
+		return append([]BindingListItem(nil), items...)
+	}
+
+	filtered := make([]BindingListItem, 0, len(items))
+	for _, item := range items {
+		if strings.EqualFold(strings.TrimSpace(item.Server), server) {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
+
+func normalizeSelectorServer(server string) string {
+	server = strings.TrimSpace(strings.ToLower(server))
+	if server == "" || server == GlobalDefaultBindingScope {
+		return ""
+	}
+	normalized := renderregion.Normalize(server)
+	if normalized.IsZero() {
+		return ""
+	}
+	return normalized.String()
 }
 
 func normalizeUID(value string) string {
@@ -178,9 +220,8 @@ func (s *BindingService) ResolveUserBinding(ctx context.Context, platform, platf
 }
 
 // ResolveUserBindingBySelector resolves a binding using a u[i] selector (e.g. "u1", "u2")
-// or a raw game UID. This looks up all bindings for the user, builds the ordered list,
-// and selects the one matching the selector.
-func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platform, platformUserID, selector string) (int, *ResolvedBinding, error) {
+// or a raw game UID. For u[i], the selector is scoped to the given server when provided.
+func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platform, platformUserID, server, selector string) (int, *ResolvedBinding, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return 0, nil, err
 	}
@@ -192,7 +233,7 @@ func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platf
 	if err != nil {
 		return harukiUserID, nil, err
 	}
-	item, err := selectBinding(items, selector)
+	item, err := selectBinding(items, selector, server)
 	if err != nil {
 		return harukiUserID, nil, err
 	}
@@ -209,11 +250,11 @@ func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platf
 }
 
 // currentBindingEntityBySelector resolves a binding entity by u[i] selector.
-func (s *BindingService) currentBindingEntityBySelector(ctx context.Context, platform, platformUserID, selector string) (*pjskdb.UserBinding, error) {
+func (s *BindingService) currentBindingEntityBySelector(ctx context.Context, platform, platformUserID, server, selector string) (*pjskdb.UserBinding, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return nil, err
 	}
-	_, resolved, err := s.ResolveUserBindingBySelector(ctx, platform, platformUserID, selector)
+	_, resolved, err := s.ResolveUserBindingBySelector(ctx, platform, platformUserID, server, selector)
 	if err != nil {
 		return nil, err
 	}

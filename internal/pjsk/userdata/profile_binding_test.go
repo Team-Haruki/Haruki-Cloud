@@ -34,13 +34,14 @@ func TestDecodeProfileBindingParams(t *testing.T) {
 		"platform": " qq ",
 		"platform_user_id": " 42 ",
 		"selector": " u1 ",
+		"server": " jp ",
 		"scope": " jp "
 	}`))
 	if err != nil {
 		t.Fatalf("decode params: %v", err)
 	}
 
-	if params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u1" || params.Scope != "jp" {
+	if params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u1" || params.Server != "jp" || params.Scope != "jp" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
@@ -74,7 +75,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("execute bind list: %v", err)
 	}
 
-	expectedList := "已绑定账号列表（按账号绑定先后顺序）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
+	expectedList := "已绑定账号列表（u序号按区服分别编号）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected list text:\n%s", string(listText))
 	}

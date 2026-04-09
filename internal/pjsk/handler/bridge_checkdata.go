@@ -28,22 +28,16 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 	var resolvedHarukiID int
 	var bindingServer string
 
-	// Helper to resolve user binding, supporting u[i] selector.
-	// Returns (binding, harukiUserID, error).
-	resolveCheckDataBinding := func() (*accountdata.ResolvedBinding, int, error) {
-		var hid int
-		var binding *accountdata.ResolvedBinding
-		var err error
-		if p.Selector != "" {
-			hid, binding, err = rc.App.Bindings.ResolveUserBindingBySelector(rc.Ctx, p.Platform, p.PlatformUserID, p.Selector)
-		} else if !rc.Cmd.RegionExplicit {
-			hid, binding, err = rc.App.Bindings.ResolveUserBinding(rc.Ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
-			if err != nil {
-				hid, binding, err = rc.App.Bindings.ResolveUserBinding(rc.Ctx, p.Platform, p.PlatformUserID, region)
-			}
-		} else {
-			hid, binding, err = rc.App.Bindings.ResolveUserBinding(rc.Ctx, p.Platform, p.PlatformUserID, region)
-		}
+	resolveBinding := func(requireSuite, requireMySekai bool) (*accountdata.ResolvedBinding, int, error) {
+		hid, binding, err := resolveBindingWithFallback(
+			rc.Ctx, rc.App.Bindings, p.Platform, p.PlatformUserID, region,
+			rc.Cmd.RegionExplicit,
+			bindingResolutionOptions{
+				RequireSuite:   requireSuite,
+				RequireMySekai: requireMySekai,
+				Selector:       p.Selector,
+			},
+		)
 		if err != nil {
 			return nil, 0, fmt.Errorf("解析绑定账号失败：%w", err)
 		}
@@ -55,7 +49,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
-		binding, hid, err := resolveCheckDataBinding()
+		binding, hid, err := resolveBinding(false, true)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +72,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		if p.Mode != "self" {
 			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
 		}
-		binding, hid, err := resolveCheckDataBinding()
+		binding, hid, err := resolveBinding(true, false)
 		if err != nil {
 			return nil, err
 		}

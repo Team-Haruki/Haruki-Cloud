@@ -373,6 +373,9 @@ type bindingResolutionOptions struct {
 	RequireSuite bool
 	// RequireMySekai, if true, considers a binding valid only when hasUsableMySekaiData returns true.
 	RequireMySekai bool
+	// Selector, if non-empty, uses ResolveUserBindingBySelector instead of the
+	// global-default → regional fallback pattern.
+	Selector string
 }
 
 // resolveBindingWithFallback resolves a user binding using the standard pattern:
@@ -410,7 +413,9 @@ func resolveBindingWithFallback(
 		return true
 	}
 
-	if !regionExplicit {
+	if opts.Selector != "" {
+		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, opts.Selector)
+	} else if !regionExplicit {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
 		if err != nil || !isValid(binding) {
 			hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)

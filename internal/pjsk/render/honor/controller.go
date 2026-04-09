@@ -1,6 +1,7 @@
 package honor
 
 import (
+	"context"
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -8,6 +9,12 @@ import (
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/drawing"
 )
+
+// honorContextualDataSource is the local interface for type-asserting
+// DataSource implementations that support context injection.
+type honorContextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
 
 type Controller struct {
 	sources *regionsource.Registry[DataSource]
@@ -30,6 +37,22 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 
 func (c *Controller) RegisterSource(src DataSource) {
 	c.sources.RegisterSource(src)
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(honorContextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
 }
 
 func (c *Controller) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) {

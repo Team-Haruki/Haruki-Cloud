@@ -256,11 +256,7 @@ func normalizeGameCharacterText(text string) string {
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {
-	raw := strconv.FormatInt(uid, 10)
-	if visible || len(raw) <= 6 {
-		return raw
-	}
-	return raw[:3] + strings.Repeat("*", len(raw)-6) + raw[len(raw)-3:]
+	return maskPJSKUID(strconv.FormatInt(uid, 10), visible)
 }
 
 func arrestCharacterRegionRank(region string) int {

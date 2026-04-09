@@ -57,7 +57,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, unsupportedModeError("card", rc.Cmd.Mode)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	return rc.ImageMessage(data)
 }

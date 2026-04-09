@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
@@ -214,45 +213,6 @@ func sortEventHistory(items []drawing.EventHistory) {
 		sj, _ := items[j].StartAt.(float64)
 		return si > sj
 	})
-}
-
-// loadMasterMapByID loads a JSON array file and indexes by "id" field.
-func loadMasterMapByID(dir, filename string) map[int]map[string]interface{} {
-	if dir == "" {
-		return nil
-	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
-	if err != nil {
-		return nil
-	}
-	var items []map[string]interface{}
-	if err := json.Unmarshal(data, &items); err != nil {
-		return nil
-	}
-	result := make(map[int]map[string]interface{}, len(items))
-	for _, item := range items {
-		id := intVal(item, "id")
-		if id != 0 {
-			result[id] = item
-		}
-	}
-	return result
-}
-
-// loadMasterList loads a JSON array file.
-func loadMasterList(dir, filename string) []map[string]interface{} {
-	if dir == "" {
-		return nil
-	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
-	if err != nil {
-		return nil
-	}
-	var items []map[string]interface{}
-	if err := json.Unmarshal(data, &items); err != nil {
-		return nil
-	}
-	return items
 }
 
 func stringVal(m map[string]interface{}, key string) string {

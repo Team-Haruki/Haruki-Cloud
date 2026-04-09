@@ -228,22 +228,6 @@ func normalizeRenderCacheUserID(userID string) string {
 	return trimmed
 }
 
-func appendIfPresent(parts []string, key string, value string) []string {
-	normalized := sanitizeScopeValue(value)
-	if normalized == "" {
-		return parts
-	}
-	return append(parts, key+"="+normalized)
-}
-
-func appendDigestIfPresent(parts []string, key string, value any) []string {
-	digest := renderCacheShortDigest(value)
-	if digest == "" {
-		return parts
-	}
-	return append(parts, key+"="+digest)
-}
-
 func sanitizeScopeValue(value string) string {
 	value = strings.ToLower(strings.TrimSpace(value))
 	if value == "" {
@@ -264,19 +248,6 @@ func sanitizeScopeValue(value string) string {
 		}
 	}
 	return strings.Trim(builder.String(), "_")
-}
-
-func renderCacheShortDigest(value any) string {
-	if value == nil {
-		return ""
-	}
-
-	hashValue, err := hashstructure.Hash(value, hashstructure.FormatV2, nil)
-	if err != nil {
-		return ""
-	}
-	digest := sha256.Sum256([]byte(strconv.FormatUint(hashValue, 10)))
-	return hex.EncodeToString(digest[:8])
 }
 
 func deleteKeyAt(root any, path ...string) {
@@ -443,40 +414,4 @@ func scalarString(value any) string {
 	default:
 		return fmt.Sprintf("%v", typed)
 	}
-}
-
-func boolQueryScopeValue(query neturl.Values, key string) string {
-	value := strings.ToLower(strings.TrimSpace(query.Get(key)))
-	if value == "" {
-		return ""
-	}
-	if value == "true" || value == "1" {
-		return "1"
-	}
-	return "0"
-}
-
-func boolValueString(value any) string {
-	switch typed := value.(type) {
-	case bool:
-		if typed {
-			return "1"
-		}
-		return "0"
-	case string:
-		return boolQueryScopeValue(neturl.Values{"value": {typed}}, "value")
-	default:
-		return ""
-	}
-}
-
-func mysekaiMusicRecordShowID(payload any) string {
-	for _, category := range sliceAt(payload, "category_musicrecords") {
-		for _, record := range sliceAt(category, "musicrecords") {
-			if valueAt(record, "id") != nil {
-				return "1"
-			}
-		}
-	}
-	return "0"
 }

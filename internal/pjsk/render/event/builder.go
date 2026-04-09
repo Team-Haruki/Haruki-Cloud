@@ -161,7 +161,7 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 	brief := drawing.EventBrief{
 		ID:            eventInfo.ID,
 		EventName:     eventInfo.Name,
-		EventType:     eventInfo.EventType,
+		EventType:     b.displayEventType(eventInfo.EventType),
 		EventTypeName: b.displayEventType(eventInfo.EventType),
 		StartAt:       eventInfo.StartAt,
 		EndAt:         eventInfo.AggregateAt + 1000,

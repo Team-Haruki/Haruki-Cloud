@@ -3,6 +3,15 @@
 > 最后更新：2026-04-09
 >
 > 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
+>
+> 2026-04-09 当日晚些时候已执行一轮主链稳定化：
+>
+> 1. `api/legacy/pjsk/` 已从仓库中移除，不再作为兼容主链保留。
+> 2. `cmd/server/main.go` 已不再注册 legacy PJSK 路由。
+> 3. `go test ./...` 当前已恢复全绿。
+> 4. `integration` 测试改为默认关闭，需显式设置 `HARUKI_RUN_INTEGRATION=1` 才执行。
+> 5. `integration/api_test.go` 已支持通过环境变量完整覆盖主配置，且不再依赖“先跑 `TestAuth`”的隐含顺序。
+> 6. `/internal/*` 默认鉴权已收紧：未配置内部鉴权时默认拒绝，仅显式 `allow_insecure_internal_api=true` 才放宽。
 
 ## 1. 范围与方法
 
@@ -39,7 +48,7 @@
 如果只看 `Haruki-Cloud` 作为 **PJSK Bot 新协议后端** 的目标完成度，本次审计给出的判断是：
 
 - **业务主链完成度：约 80%**
-- **发布级稳定度：约 65% ~ 70%**
+- **发布级稳定度：约 75%**
 
 更准确地说，它已经是一个 **可以继续在现有结构上推进，而不应推倒重来** 的项目。
 
@@ -102,7 +111,7 @@
 | Stamp | 1 | `A-` | 稳定 | 功能范围已收口为贴纸列表 |
 | VLive | 1 | `A` | 稳定 | 当前目标就是最小文本链路 |
 | 公开 API（PJSK / CHUNITHM） | N/A | `A-` | 已完成 | PJSK 公开面刻意只保留 alias 查询 |
-| Legacy `/internal/pjsk/*` | N/A | `C` | 兼容保留 | 不应再作为客户端主协议 |
+| Legacy `/internal/pjsk/*` | N/A | `D` | 已移除 | 2026-04-09 已从运行时与仓库中删除 |
 | Drawing Python 服务 | N/A | `B` | 可用 | 仍受资产缺失与服务端细节 bug 影响 |
 
 ## 6. 活跃 Bot Path 清单
@@ -312,31 +321,80 @@
 | `ExtractCardHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 提取卡牌 |
 | `HeyiweiHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 历史保留功能 |
 
-## 8. Legacy 与兼容层状态
+## 8. Legacy 清理状态
 
-当前以下能力仍然保留，但不应再被当作客户端主模型：
+截至 2026-04-09：
 
-- `POST /internal/pjsk/command`
-- `POST /internal/pjsk/render`
-- `POST /internal/pjsk/<module>/<action>/build`
-- `POST /internal/pjsk/<module>/<action>/render`
+- `api/legacy/pjsk/` 已从仓库中移除。
+- `cmd/server/main.go` 已不再注册 `RegisterPJSKRenderRoutes(...)` 与 `RegisterPJSKCommandRoute(...)`。
+- `/internal/pjsk/*` 不再作为运行时暴露路径保留。
 
 当前判断：
 
-- 分档：`C / 兼容`
-- 说明：仍有维护价值，但客户端主协议已经转移到 `/api/v2/bot/:botId/pjsk/<path>`
+- 分档：`D / 已移除`
+- 说明：客户端主协议已经完全收口到 `/api/v2/bot/:botId/pjsk/<path>`
 
 ## 9. 当前测试快照
 
-审计时执行命令：
+当前建议使用两套测试口径：
+
+1. 默认开发口径
 
 ```bash
 go test ./...
 ```
 
-当前整仓测试 **不是全绿**，但失败已经收敛到少数包。
+2. 显式开启集成测试
 
-### 9.1 通过情况较好的核心区域
+```bash
+HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
+```
+
+按需覆盖的核心环境变量包括：
+
+- `HARUKI_TEST_BASE_URL`
+- `HARUKI_TEST_BOT_ID`
+- `HARUKI_TEST_BOT_CREDENTIAL`
+- `HARUKI_TEST_PLATFORM`
+- `HARUKI_TEST_PLATFORM_USER_ID`
+- `HARUKI_TEST_REGION`
+- `HARUKI_TEST_GAME_USER_ID`
+- `HARUKI_TEST_CREDENTIAL_SIGN_TOKEN`
+- `HARUKI_TEST_USERS_DSN`
+- `HARUKI_TEST_PJSK_DSN`
+- `HARUKI_TEST_SERVER_PUBKEY_HEX`
+- `HARUKI_TEST_IMAGE_PATH`
+
+### 9.1 当前整体状态
+
+截至 2026-04-09 本轮稳定化完成后：
+
+- **默认口径 `go test ./...`：全绿**
+- `integration` 包：默认 `Skip`
+- 集成测试只有在显式设置 `HARUKI_RUN_INTEGRATION=1` 时才真正执行
+- 集成测试主配置已支持通过环境变量覆盖，不再需要为了切环境直接改源文件
+- 集成测试认证改为按需初始化，不再要求必须先手动跑 `TestAuth`
+
+### 9.2 本轮已修复的失败点
+
+| 位置 | 修复方式 |
+|------|----------|
+| `api/bot/pjsk` | 修正 `SK speed` 测试预期；补齐 `player-trace` tracker stub |
+| `internal/pjsk/handler/sekai` | 将 `education/area` 测试与当前显式参数要求对齐 |
+| `internal/pjsk/render/event` | 修正 `EventBrief.EventType` 输出为展示值 |
+| `internal/pjsk/render/music` | `ResolveMusicBPM` 补齐普通本地路径 + `asset/{region}-assets/startapp/...` 双路径支持 |
+| `internal/pjsk/render/profile` | 测试补齐显式 `CN` source 注册 |
+| `integration` | 改为默认关闭，显式环境变量开启；主配置 env 化，并移除对 `TestAuth` 执行顺序的依赖 |
+
+### 9.3 当前说明
+
+当前“全绿”有一个前提：
+
+- `integration` 不再默认强制执行，因此默认 `go test ./...` 反映的是 **单元测试 / 轻量组件测试基线已恢复**。
+
+这符合当前阶段目标：先让主链改动具备稳定反馈面，再在需要时显式跑端到端环境测试。
+
+### 9.4 核心区域稳定情况
 
 下列核心包当前测试通过或总体稳定：
 
@@ -346,7 +404,9 @@ go test ./...
 - `internal/pjsk/render/gacha`
 - `internal/pjsk/render/honor`
 - `internal/pjsk/render/misc`
+- `internal/pjsk/render/music`
 - `internal/pjsk/render/mysekai`
+- `internal/pjsk/render/profile`
 - `internal/pjsk/render/score`
 - `internal/pjsk/render/sk`
 - `internal/pjsk/render/stamp`
@@ -354,23 +414,22 @@ go test ./...
 - `internal/pjsk/render/vlive`
 - `internal/pjsk/parser`
 - `internal/pjsk/userdata`
+- `api/bot/pjsk`
 - `utils/drawing`
 - `utils/logger`
 - `utils/query`
 
-### 9.2 当前失败包
+### 9.5 已移除的失败包记录
 
-| 包 | 现状 | 主要原因 |
-|----|------|----------|
-| `api/bot/pjsk` | 失败 | 2 条 SK 相关测试回归 |
-| `api/legacy/pjsk` | 构建失败 | legacy 测试桩没跟上接口升级 |
-| `integration` | 失败 | `TestAuth` 的 fixture / 鉴权前提已过期 |
-| `internal/pjsk/handler/sekai` | 失败 | `education/area` 一条测试预期与当前行为不一致 |
-| `internal/pjsk/render/event` | 失败 | `world_bloom` / `world_link` 枚举语义不一致 |
-| `internal/pjsk/render/music` | 失败 | BPM 测试依赖本地谱面文件环境 |
-| `internal/pjsk/render/profile` | 失败 | API profile builder 测试中的 data source 配置不完整 |
+以下内容作为历史记录保留，说明为什么曾经需要做 P0/P1/P2：
 
-### 9.3 当前已定位的具体失败点
+审计前失败点包括：
+
+```bash
+go test ./...
+```
+
+历史失败点包括：
 
 | 位置 | 问题 |
 |------|------|
@@ -391,7 +450,18 @@ go test ./...
 | 项目 | 状态 | 说明 |
 |------|------|------|
 | Noise 对端静态公钥白名单 | 未完成 | `internal/middleware/secure/secure.go` 仍留有 `TODO` |
-| `/internal/*` 默认保护强度 | 偏弱 | `AcceptAuthorization` / `AcceptUserAgent` 为空时校验会放行 |
+| `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；仅显式 `allow_insecure_internal_api=true` 才放宽 |
+
+补充 TODO（2026-04-09 明确延期）：
+
+- **客户端静态公钥登记 / 白名单校验体系**
+  - 当前客户端只显式持有“服务端公钥”，并通过 Noise IK 在握手中隐式带出客户端静态公钥。
+  - 服务端虽然能通过 `peerStatic` 读取到对端静态公钥，但还没有：
+    - `bot_id -> 客户端静态公钥` 绑定表
+    - 公钥轮换 / 吊销机制
+    - 多客户端并存策略
+    - 基于白名单的正式授权判断
+  - 当前决定：**先标记为 TODO，不作为本轮优先工作项**。
 
 ### 10.2 架构过渡风险
 
@@ -405,7 +475,7 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| Legacy 兼容路由仍在生产启动流程 | 存在 | `api/legacy/pjsk` 仍被注册 |
+| Legacy 兼容路由残留风险 | 已消除 | `api/legacy/pjsk` 已删除，`cmd/server/main.go` 也不再注册 legacy 路由 |
 | 后台刷新 goroutine 生命周期 | 待收尾 | `chardata` 与 `music meta` 刷新使用 `context.Background()` |
 | 文档与代码漂移 | 存在 | 旧文档仍写 76 path，与当前 82 path 不一致 |
 
@@ -422,18 +492,13 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-建议下一阶段优先按下面顺序推进：
+P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧已完成。下一阶段建议优先按下面顺序推进：
 
-1. 修平 `go test ./...` 当前失败包，先恢复测试可信度。
-2. 修复 `api/bot/pjsk` 的 2 条 SK 回归测试，保证 Bot 主链继续稳定。
-3. 修复 `api/legacy/pjsk` 测试桩编译错误，避免兼容层持续腐烂。
-4. 明确 `world_bloom` / `world_link` 的统一枚举语义，并收口 `event` 渲染链。
-5. 让 `music/bpm` 测试脱离本地谱面文件强依赖，或补全测试夹具。
-6. 补齐 `profile` API builder 的测试数据源注入。
-7. 修正 `integration/api_test.go` 中过期的鉴权 fixture。
-8. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
-9. 收紧 `/internal/*` 默认鉴权策略。
-10. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
+1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
+2. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
+3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
+4. 视需要补一份集成测试环境样例说明，降低多人联调门槛。
+5. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
 
 ## 12. 维护说明
 

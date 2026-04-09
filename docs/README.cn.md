@@ -98,7 +98,7 @@ Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
-| 2026-04-09 | 项目完成度跟踪 / README 索引 | 新增基于代码审计的完成度跟踪文档，整理模块分档、82 条活跃 Bot path、disabled handler 与测试/风险快照 |
+| 2026-04-09 | 项目完成度跟踪 / README 索引 | 新增基于代码审计的完成度跟踪文档，并同步记录 legacy 移除、82 条活跃 Bot path 与当前测试基线 |
 | 2026-03-31 | PJSK Deck-Service HTTP 联调测试记录 / README 索引 | 新增 deck-service HTTP 联调测试文档，记录 Cloud 接线、真实服务验证与当前结论 |
 | 2026-03-29 | PJSK 卡牌查询语义整理 / README 索引 | 新增卡牌查询专题文档，整理 `card/detail` `card/list` `card/image` 的入口分流与参数边界 |
 | 2026-03-29 | PJSK 歌曲查询统一改造方案 / README 索引 | 新增歌曲查询统一方案文档，整理 `music` `score/music-board` `score/music-meta` `deck` 的统一改造方向 |

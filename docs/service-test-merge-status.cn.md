@@ -1,5 +1,7 @@
 # Service-Test 合并进度与收尾说明
 
+> 2026-04-09 补充说明：本文描述的是 2026-03 合并阶段的落地结果与边界。文中提到的 `/internal/pjsk/*` internal render/build 路由属于当时的兼容运行时形态，现已从仓库与运行时中移除；当前主链请以 Bot 协议与 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
+
 截至 2026-03-21，这轮 `Service-Test -> Haruki-Cloud` 合并任务在当前约定范围内可以视为完成。
 
 这份文档用于说明：
@@ -41,7 +43,7 @@
 
 ### 2.2 模块路由已经落地
 
-当前标准内部路由位于 `/internal/pjsk/...` 下，典型形式为：
+当时标准内部路由位于 `/internal/pjsk/...` 下，典型形式为：
 
 - `POST /internal/pjsk/<module>/<action>/build`
 - `POST /internal/pjsk/<module>/<action>/render`
@@ -50,7 +52,7 @@
 
 ### 2.3 统一分发入口已经落地
 
-统一入口已经迁入 `Haruki-Cloud`：
+统一入口在当时也已经迁入 `Haruki-Cloud`：
 
 - `POST /internal/pjsk/render`
 

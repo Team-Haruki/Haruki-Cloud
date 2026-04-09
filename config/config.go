@@ -44,6 +44,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_BACKEND_SSL_CERT", &cfg.Backend.SSLCert)
 	envStr("HARUKI_BACKEND_SSL_KEY", &cfg.Backend.SSLKey)
 	envStr("HARUKI_BACKEND_LOG_LEVEL", &cfg.Backend.LogLevel)
+	envStr("HARUKI_BACKEND_ACCEPT_AUTHORIZATION", &cfg.Backend.AcceptAuthorization)
+	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
+	envBool("HARUKI_BACKEND_ALLOW_INSECURE_INTERNAL_API", &cfg.Backend.AllowInsecureInternalAPI)
 
 	// Redis
 	envStr("HARUKI_REDIS_HOST", &cfg.Redis.Host)
@@ -115,21 +118,22 @@ func ApplyEnvOverrides(cfg *Config) {
 }
 
 type BackendConfig struct {
-	Host                string        `yaml:"host"`
-	Port                int           `yaml:"port"`
-	SSL                 bool          `yaml:"ssl"`
-	SSLCert             string        `yaml:"ssl_cert"`
-	SSLKey              string        `yaml:"ssl_key"`
-	LogLevel            string        `yaml:"log_level"`
-	MainLogFile         string        `yaml:"main_log_file"`
-	AccessLog           string        `yaml:"access_log"`
-	APICacheTTL         time.Duration `yaml:"api_cache_ttl"`
-	AccessLogPath       string        `yaml:"access_log_path"`
-	AcceptAuthorization string        `yaml:"accept_authorization"`
-	AcceptUserAgent     string        `yaml:"accept_user_agent"`
-	EnableTrustProxy    bool          `yaml:"enable_trust_proxy"`
-	TrustProxies        []string      `yaml:"trusted_proxies"`
-	ProxyHeader         string        `yaml:"proxy_header"`
+	Host                     string        `yaml:"host"`
+	Port                     int           `yaml:"port"`
+	SSL                      bool          `yaml:"ssl"`
+	SSLCert                  string        `yaml:"ssl_cert"`
+	SSLKey                   string        `yaml:"ssl_key"`
+	LogLevel                 string        `yaml:"log_level"`
+	MainLogFile              string        `yaml:"main_log_file"`
+	AccessLog                string        `yaml:"access_log"`
+	APICacheTTL              time.Duration `yaml:"api_cache_ttl"`
+	AccessLogPath            string        `yaml:"access_log_path"`
+	AcceptAuthorization      string        `yaml:"accept_authorization"`
+	AcceptUserAgent          string        `yaml:"accept_user_agent"`
+	AllowInsecureInternalAPI bool          `yaml:"allow_insecure_internal_api"`
+	EnableTrustProxy         bool          `yaml:"enable_trust_proxy"`
+	TrustProxies             []string      `yaml:"trusted_proxies"`
+	ProxyHeader              string        `yaml:"proxy_header"`
 }
 
 type ChunithmConfig struct {

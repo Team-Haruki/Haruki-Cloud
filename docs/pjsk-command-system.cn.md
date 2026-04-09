@@ -3,6 +3,12 @@
 > 最后更新：2026-03-26
 >
 > 本文档描述的是当前已落地的主模型。若后续实现发生变化，应以代码和本文档同步更新后的内容为准。
+>
+> 2026-04-09 补充：
+>
+> 1. 当前主协议已经完全收口为 `POST /api/v2/bot/:botId/pjsk/<path>`。
+> 2. `/internal/pjsk/*` 兼容路由已从仓库与运行时移除。
+> 3. 当前活跃 Bot path 数量请以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
 ## 1. 核心结论
 
@@ -27,7 +33,7 @@ Haruki-Cloud 下发 command_manifests
   -> Haruki-ZeroBot 构建本地前缀树
   -> 本地匹配到 command_module + command_path + matched_command
   -> 请求 /api/v2/bot/:botId/<module>/<path>
-  -> 上传 command_payload 查询参数 + matched_command 请求头
+  -> 上传 BotCommandRequest body
   -> 端点校验 matched_command -> handler.path
   -> 命中 handler 后在该 handler 内解析原文参数
   -> 调用统一执行链路
@@ -89,7 +95,7 @@ Haruki-Cloud 下发 command_manifests
 职责：
 
 1. 校验 Bot session
-2. 从 `command_payload` 恢复 OneBot 消息段
+2. 从 `BotCommandRequest` 恢复 OneBot 消息段
 3. 构造 `HandlerContext`，提取纯文本参数与 `at` 列表
 4. 校验 `matched_command` 是否属于当前端点
 5. 使用对应 handler 在当前端点语义范围内解析原文
@@ -103,11 +109,12 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 
 ### 3.3.1 消息段与 `@` 信息
 
-当前 Bot 入口对 `command_payload` 的处理方式是：
+当前 Bot 入口对 `BotCommandRequest` 的处理方式是：
 
-1. 优先读取 OneBot `message` 段数组
-2. 若没有段数组，再回退 `message` 字符串或 `raw_message`
-3. `HandlerContext` 从消息段中提取纯文本参数与 `at` 列表
+1. 优先从请求体读取 OneBot `message` 段数组
+2. Noise 模式下使用 `MsgPack` 解码
+3. 明文模式下使用 `JSON` 解码
+4. `HandlerContext` 从消息段中提取纯文本参数与 `at` 列表
 
 当前 `at` 信息只识别 OneBot `at` 段中的 `qq` 字段。
 
@@ -154,8 +161,6 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 
 - `internal/pjsk/handler/`
 - `internal/pjsk/render/`
-- `/internal/pjsk/render`
-- `/internal/pjsk/<module>/<action>/build|render`
 
 职责：
 
@@ -164,6 +169,11 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 3. 返回统一的执行结果，而不是让上游自己猜测返回类型
 
 这一层不负责前缀树命中，也不负责 Bot 业务端点选路。
+
+补充说明：
+
+- 截至 2026-04-09，`internal/pjsk/render/` 仍保留为代码内部执行层。
+- 但 `/internal/pjsk/*` 兼容 HTTP 路由已经移除，不再是运行时协议的一部分。
 
 需要额外明确：
 
@@ -205,9 +215,9 @@ Trie 仍然保留，但不再承担“替客户端决定访问哪个端点”的
 
 1. 客户端命中 `card/detail`
 2. 请求 `/api/v2/bot/:botId/pjsk/card/detail`
-3. 客户端同时上传 `command_payload` 和 `X-Haruki-Bot-Matched-Command`
+3. 客户端上传 `BotCommandRequest`，其中包含 `matched_command` 与 `message`
 4. 云端先检查这个 `matched_command` 是否属于 `card/detail`
-5. 命中该 path 的 handler 后，再按当前 handler 规则解析 `command_payload` 中的原始命令
+5. 命中该 path 的 handler 后，再按当前 handler 规则解析 `message` 中的原始命令
 6. 若 `matched_command` 不属于该 path，则返回 `400`
 7. 若 handler 成功产出最终 render 参数，则继续处理
 
@@ -251,6 +261,10 @@ Trie 仍然保留，但不再承担“替客户端决定访问哪个端点”的
 2. 云端根据原文重新全局决定目标端点
 3. 客户端直接调用 `/internal/pjsk/render`
 4. 客户端直接调用 `/internal/pjsk/command`
+
+补充：
+
+截至 2026-04-09，上述 `/internal/pjsk/*` 路由已被实际移除，不再只是“降级为非主链路”。
 
 ## 10. `path` 定义合并状态
 

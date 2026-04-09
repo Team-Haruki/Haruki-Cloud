@@ -1,6 +1,11 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-03-26（v1.6）
+> 最后更新：2026-04-09（v1.7）
+>
+> 2026-04-09 补充：
+> 1. `api/legacy/pjsk/` 已从仓库与运行时移除。
+> 2. PJSK Bot 主协议已经收口到 `POST /api/v2/bot/:botId/pjsk/<path>`。
+> 3. 当前活跃 Bot path 数量与模块分档，请优先参考 [项目完成度跟踪](project-completion-tracker.cn.md)。
 
 ---
 
@@ -20,7 +25,7 @@
 | ORM | Ent (entgo.io) |
 | 数据库 | PostgreSQL / MySQL / SQLite |
 | 缓存 | Redis |
-| 认证 | JWT (golang-jwt/v5) + AES-256-GCM |
+| 认证 | JWT (golang-jwt/v5) + AES-256-GCM + Noise IK |
 | JSON | bytedance/sonic（高性能替代 encoding/json） |
 | Go 版本 | 1.26.1 |
 
@@ -42,11 +47,9 @@ Haruki-Cloud/
 │   ├── public/                   #   公开端点（无鉴权）
 │   │   ├── pjsk/                 #     PJSK 别名查询 → /api/v2/public/pjsk/alias/*
 │   │   └── chunithm/             #     CHUNITHM 别名 + 曲目查询 → /api/v2/public/chunithm/*
-│   ├── bot/                      #   Bot 专属端点
-│   │   ├── auth/                 #     Bot 注册/登录/会话验证/统计
-│   │   └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
-│   └── legacy/                   #   内部兼容端点
-│       └── pjsk/                 #     渲染分发 + 通用指令端点 → /internal/pjsk/*
+│   └── bot/                      #   Bot 专属端点
+│       ├── auth/                 #     Bot 注册/登录/会话验证/统计
+│       └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
 │
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
 │   ├── core/crypto/              #   Noise 协议加密工具
@@ -117,6 +120,7 @@ backend:                   # 服务基础配置
   port: 3000
   accept_authorization: "" # 内部 API 鉴权令牌
   accept_user_agent: ""    # 内部 API User-Agent 过滤
+  allow_insecure_internal_api: false # 仅测试/本地调试时才建议显式开启
 
 redis:                     # Redis 连接
   addr: "localhost:6379"
@@ -165,10 +169,14 @@ toolbox:                   # Toolbox 外部服务
 ### 4.1 VerifyAPIAuthorization — 内部服务间调用
 
 ```
-适用路径：/internal/pjsk/*, /internal/bot/*
+适用路径：/internal/bot/*（以及未来其他内部服务路由）
 检查项：
   - Authorization 头 == config.backend.accept_authorization
+    - 若未配置 `backend.accept_authorization`，则回退到 `haruki_bot.internal_api_token`，并按 `Bearer <token>` 组装
   - User-Agent 头包含 config.backend.accept_user_agent
+默认行为：
+  - 当 Authorization 与 User-Agent 两种约束都未配置时，默认拒绝访问
+  - 只有显式设置 `backend.allow_insecure_internal_api=true` 时，才允许“无内部鉴权”放行
 实现：api/helper.go
 ```
 
@@ -212,50 +220,47 @@ toolbox:                   # Toolbox 外部服务
 当前 Bot 端点由 `internal/pjsk/handler` registry 动态派生，标准协议如下：
 
 1. `GET /api/v2/bot/:botId/command/manifests`
-2. `GET /api/v2/bot/:botId/pjsk/<path>?command_payload=<base64(onebot-v11-payload)>`
-协议头示例
-X-Haruki-Bot-Platform: qq/qqbot/discord/telegram
-X-Haruki-Bot-Platform-User-Id: 114514
-X-Haruki-Bot-Platform-Group-Id: 114514
-X-Haruki-Bot-Pjsk-Server: jp
-X-Haruki-Bot-Matched-Command: /查卡
+2. `POST /api/v2/bot/:botId/pjsk/<path>`
+
+协议头示例：
+
+X-Haruki-Bot-Id: 11451419
+X-Haruki-Bot-Session-Token: <jwt>
+
 其中：
 
-1. `command_payload` 放在查询参数中
-2. `matched_command` 放在 `X-Haruki-Bot-Matched-Command` 请求头中
-3. 当前 PJSK Bot 端点只支持 `GET`
+1. Manifest 端点始终为 `GET + JSON`
+2. PJSK Bot 业务端点为 `POST`
+3. 请求体使用 `BotCommandRequest`
+4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise IK + MsgPack(BotCommandRequest)`
+5. 当服务端未配置 `noise_private_key` 时，退回 `JSON(BotCommandRequest)` 明文模式
 
 代表性端点包括：
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应 |
-| GET | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
-| GET | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
-| GET | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情类路径之一 |
-| GET | `/api/v2/bot/:botId/pjsk/event` | 活动详情类路径之一 |
-| GET | `/api/v2/bot/:botId/pjsk/profile/bind` | 账号绑定 / 绑定列表 |
-| GET | `/api/v2/bot/:botId/pjsk/profile/unbind` | 账号解绑 |
-| GET | `/api/v2/bot/:botId/pjsk/profile/default` | 设置默认绑定 |
-| GET | `/api/v2/bot/:botId/pjsk/profile/default/clear` | 取消默认绑定 |
+| POST | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
+| POST | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
+| POST | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情类路径之一 |
+| POST | `/api/v2/bot/:botId/pjsk/event` | 活动详情类路径之一 |
+| POST | `/api/v2/bot/:botId/pjsk/profile/bind` | 账号绑定 / 绑定列表 |
+| POST | `/api/v2/bot/:botId/pjsk/profile/unbind` | 账号解绑 |
+| POST | `/api/v2/bot/:botId/pjsk/profile/default` | 设置默认绑定 |
+| POST | `/api/v2/bot/:botId/pjsk/profile/default/clear` | 取消默认绑定 |
 
 需要特别说明：
 
 1. 实际可用路径以运行时 handler registry 和 manifest 数据为准
 2. Bot 端点执行结果不再只限于图片，也可能返回文本
 
-### 5.3 内部渲染端点（VerifyAPIAuthorization 鉴权）
+### 5.3 PJSK 内部兼容渲染端点
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/internal/pjsk/command` | 通用指令端点（原文解析 → `Execute`；当前以 PNG 返回为主） |
-| POST | `/internal/pjsk/render` | 统一渲染分发（指定 target + operation + payload） |
-| POST | `/internal/pjsk/<module>/<action>/build` | 模块化构建（返回 JSON payload） |
-| POST | `/internal/pjsk/<module>/<action>/render` | 模块化渲染（返回 PNG） |
+截至 2026-04-09：
 
-模块列表：card, deck, event, gacha, honor, profile, misc, mysekai, music, education, sk, score, stamp
-
-说明：`vlive` 当前只提供 Bot 文本执行链路，不暴露 `/internal/pjsk/vlive/*` 的 build/render 路由，因此不在这里的内部渲染模块列表中。
+- `/internal/pjsk/*` 已从仓库与运行时中移除
+- 当前不存在活跃的 PJSK 内部兼容 render/command HTTP 路由
+- `internal/pjsk/render/` 仍保留为代码内部执行层，而不是外部可调用协议
 
 ### 5.4 PJSK 公开端点（无鉴权）
 
@@ -299,17 +304,17 @@ Bot 客户端
   │
   ├─ Bot 本地用前缀匹配到端点 /pjsk/card/detail
   │
-  └─ GET /api/v2/bot/:botId/pjsk/card/detail?command_payload=<base64 OneBot JSON>
+  └─ POST /api/v2/bot/:botId/pjsk/card/detail
        Headers:
          X-Haruki-Bot-Id
          X-Haruki-Bot-Session-Token
-         X-Haruki-Bot-Matched-Command
-         X-Haruki-Bot-Platform
-         X-Haruki-Bot-Platform-User-Id
+       Body:
+         Noise IK + MsgPack(BotCommandRequest)
+         或 JSON(BotCommandRequest)
        │
        ▼ VerifyBotSession middleware
        │
-       ▼ decodeCommand()  ←── Base64 解码 → OneBot JSON → 恢复消息段
+       ▼ parseBotRequest()  ←── MsgPack / JSON 解码 → 恢复消息段
        │
        ▼ BuildContext()   ←── 从消息段提取纯文本参数 + at 列表
        │
@@ -326,21 +331,15 @@ Bot 客户端
        └─ 200 OK, JSON 包装的 OneBot11 message segments
 ```
 
-### 6.2 内部渲染流程
+### 6.2 当前 PJSK 执行流程说明
 
-```
-内部服务 (如 ZeroBot)
-  │
-  └─ POST /internal/pjsk/<module>/<action>/render
-       Headers: Authorization, User-Agent
-       Body: {region, query, params...}
-       │
-       ▼ VerifyAPIAuthorization middleware
-       │
-       ▼ Controller.Handle*(region, query)
-       │
-       ▼ Drawing API → PNG
-```
+当前 PJSK 已不再通过 `/internal/pjsk/*` 暴露内部兼容渲染路由。
+
+现状是：
+
+1. Bot 端点直接进入 `handler -> Execute -> render/userdata`
+2. 渲染控制器仍然存在，但仅作为代码内部执行层
+3. 图片命令最终通过 Drawing API + ImageCache 返回 OneBot11 `image` segment
 
 ### 6.3 Bot 注册/登录流程
 
@@ -376,7 +375,7 @@ Schema 定义在 `ent/<module>/schema/` 下，通过 `go generate` 自动生成 
 
 ```
 internal/pjsk/parser/
-├── global_resolver.go    # 兼容型全局解析器，供 /internal/pjsk/command 等内部入口使用
+├── global_resolver.go    # 兼容型全局解析器，供测试、调试和历史辅助逻辑使用
 ├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份、uidArg 等
 ├── parser.go             # CardParser + CardQueryInfo
 ├── music_parser.go       # MusicParser + MusicQueryInfo
@@ -387,7 +386,7 @@ internal/pjsk/parser/
 ```
 
 **核心概念：**
-- `GlobalCommandResolver.Resolve(text)` 当前主要服务 `/internal/pjsk/command` 等内部兼容入口与测试，不是 Bot 主协议的首选选路器
+- `GlobalCommandResolver.Resolve(text)` 当前主要服务测试、调试与历史辅助逻辑，不是运行时 Bot 主协议入口
 - `ResolvedCommand` 包含：Module, Mode, Query, Region, Params, IsHelp, IsVerbose, IsPreview
 - parser 包同时向各 path 绑定的 handler 提供通用提取器和类型化解析能力
 - `Extractor.ExtractUid` 当前支持 `u[i]`、游戏 UID、`@qq` 三类账号指定参数
@@ -466,7 +465,7 @@ internal/pjsk/chardata/
 | 根目录存在独立 main 文件 | `migrate.go`, `extract_tables.go` | 与 `cmd/migrate/`, `cmd/extractor/` 功能重复，导致 `go build ./...` 失败（多个 main） |
 | `internal/core/` 半空 | `internal/core/pjsk/`, `internal/core/middleware/` | 目录存在但无实际代码或为空 |
 | `cmd/client_test/` 空目录 | `cmd/client_test/` | 未使用 |
-| `api/legacy/pjsk/` 命名历史遗留 | `api/legacy/pjsk/` | 实际仍承担 `/internal/pjsk/*` 内部兼容入口，后续若要重命名需单独迁移 |
+| `api/legacy/pjsk/` 历史兼容层 | `api/legacy/pjsk/` | 已于 2026-04-09 从仓库与运行时移除 |
 | `exports/` 用途不明 | `exports/` | 目录存在但未调查内容 |
 
 ### ⚠ 技术债
@@ -492,7 +491,6 @@ go test ./api/... ./internal/pjsk/...
 # 单独测试各子系统
 go test ./api/public/...                     # 公开 API（pjsk alias, chunithm）
 go test ./api/bot/...                        # Bot 端点（auth + pjsk）
-go test ./api/legacy/pjsk/...               # 内部渲染路由
 go test ./internal/pjsk/parser/...          # 指令解析器
 go test ./internal/pjsk/handler/sekai/...   # Handler 子系统
 go test ./internal/pjsk/render/...          # 渲染子系统
@@ -549,24 +547,15 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
-| `handler.go` | `makeBotHandler`、Base64+OneBot 解码、handler registry 派生路由注册、manifest 端点 | `/api/v2/bot/:botId/pjsk/*`, `/api/v2/bot/:botId/command/manifests` |
+| `handler.go` | `makeBotHandler`、MsgPack/JSON 请求解码、handler registry 派生路由注册、manifest 端点 | `/api/v2/bot/:botId/pjsk/*`, `/api/v2/bot/:botId/command/manifests` |
 | `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |
-| `handler_test.go` | 覆盖 OneBot 解码、GET-only、端点匹配、文本/图片返回、manifest 行为 | — |
+| `handler_test.go` | 覆盖 OneBot 解码、POST/Noise 往返、端点匹配、文本/图片返回、manifest 行为 | — |
 | `testhelpers_test.go` | 测试辅助：`testRenderApp`、`renderEnvelope` | — |
 
-### api/legacy/pjsk/（package pjsk，内部兼容端点）
+### api/legacy/pjsk/（已移除）
 
-| 文件 | 职责 | 关联路由 |
-|------|------|----------|
-| `render_route.go` | 渲染路由注册（13 个图像/构建模块 × build/render，不含文本型 `vlive`） | `/internal/pjsk/<module>/*` |
-| `render_dispatch.go` | 统一渲染分发 Handler | `/internal/pjsk/render` |
-| `render_struct.go` | 渲染请求/响应结构体 | — |
-| `render_route_test.go` | 渲染路由测试 + `testRenderApp` | — |
-| `render_dispatch_test.go` | 分发测试 | — |
-| `command.go` | 通用指令端点 Handler（原文解析 → `Execute`；当前以 PNG 返回为主，保留文本结果分支） | `/internal/pjsk/command` |
-| `command_struct.go` | 指令请求/响应结构体 | — |
-| `command_test.go` | 通用指令测试（5 个） | — |
+该目录已于 2026-04-09 删除，仅保留历史文档记录。
 
 ---
 
@@ -588,5 +577,5 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.6  
+**文档版本**：v1.7  
 **创建日期**：2026-03-23

@@ -1,6 +1,6 @@
 // Package integration provides end-to-end integration tests for Haruki-Cloud APIs.
 //
-// Run with: go test -v -run TestAuth -run TestManifests -run TestBotCommands -run TestExternalAPIs ./integration/ -count=1
+// Run with: HARUKI_RUN_INTEGRATION=1 go test -v ./integration -count=1
 package integration_test
 
 import (
@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,43 +31,213 @@ import (
 // ─── Test Configuration ─────────────────────────────────────────────
 
 const (
-	baseURL        = "http://127.0.0.1:6666"
-	botID          = "12345678"
-	credentialB64  = "CREDENTIAL_VALUE_REDACTED_PLACEHOLDER_00000000000="
-	platform       = "qq"
-	platformUserID = "QQ_ID_REDACTED"
-	region         = "jp"
-	gameUserID     = "GAME_USER_ID_REDACTED"
+	integrationEnv                    = "HARUKI_RUN_INTEGRATION"
+	integrationBaseURLEnv             = "HARUKI_TEST_BASE_URL"
+	integrationBotIDEnv               = "HARUKI_TEST_BOT_ID"
+	integrationCredentialEnv          = "HARUKI_TEST_BOT_CREDENTIAL"
+	integrationPlatformEnv            = "HARUKI_TEST_PLATFORM"
+	integrationPlatformUserIDEnv      = "HARUKI_TEST_PLATFORM_USER_ID"
+	integrationRegionEnv              = "HARUKI_TEST_REGION"
+	integrationGameUserIDEnv          = "HARUKI_TEST_GAME_USER_ID"
+	integrationCredentialSignTokenEnv = "HARUKI_TEST_CREDENTIAL_SIGN_TOKEN"
+	integrationUsersDSNEnv            = "HARUKI_TEST_USERS_DSN"
+	integrationPJSKDSNEnv             = "HARUKI_TEST_PJSK_DSN"
+	integrationServerPubKeyEnv        = "HARUKI_TEST_SERVER_PUBKEY_HEX"
+	integrationImagePathEnv           = "HARUKI_TEST_IMAGE_PATH"
 
-	credentialSignToken = "CREDENTIAL_SIGN_TOKEN_REDACTED_0000000000000000000000000000000000"
-
-	// Database DSNs for test setup
-	usersDSN = "host=localhost port=5432 user=haruki_users password=users_pw_2026 dbname=haruki_users sslmode=disable"
-	pjskDSN  = "host=localhost port=5432 user=haruki_pjsk password=pjsk_pw_2026 dbname=haruki_pjsk sslmode=disable"
-
-	noisePrivKeyHex  = "NOISE_PRIV_KEY_REDACTED_000000000000000000000000000000000000000000"
-	serverPubKeyHex  = "NOISE_PUB_KEY_REDACTED_0000000000000000000000000000000000000000000"
+	defaultBaseURL             = "http://127.0.0.1:6666"
+	defaultBotID               = "12345678"
+	defaultCredential          = "CREDENTIAL_VALUE_REDACTED_PLACEHOLDER_00000000000="
+	defaultPlatform            = "qq"
+	defaultPlatformUserID      = "QQ_ID_REDACTED"
+	defaultRegion              = "jp"
+	defaultGameUserID          = "GAME_USER_ID_REDACTED"
+	defaultCredentialSignToken = "CREDENTIAL_SIGN_TOKEN_REDACTED_0000000000000000000000000000000000"
+	defaultUsersDSN            = "host=localhost port=5432 user=haruki_users password=users_pw_2026 dbname=haruki_users sslmode=disable"
+	defaultPJSKDSN             = "host=localhost port=5432 user=haruki_pjsk password=pjsk_pw_2026 dbname=haruki_pjsk sslmode=disable"
+	defaultServerPubKeyHex     = "NOISE_PUB_KEY_REDACTED_0000000000000000000000000000000000000000000"
+	defaultImagePath           = "/IMG_7736.png"
 )
+
+type integrationConfig struct {
+	BaseURL             string
+	BotID               string
+	Credential          string
+	Platform            string
+	PlatformUserID      string
+	Region              string
+	GameUserID          string
+	CredentialSignToken string
+	UsersDSN            string
+	PJSKDSN             string
+	ServerPubKeyHex     string
+	ImagePath           string
+}
 
 var (
 	sessionToken string
 	clientKP     *corecrypto.KeyPair
 	serverPubKey []byte
+
+	testConfig     integrationConfig
+	loadConfigOnce sync.Once
+	loadConfigErr  error
+	authOnce       sync.Once
+	authErr        error
 )
 
-// ─── Helpers ────────────────────────────────────────────────────────
-
-func mustDecodeHex(s string) []byte {
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		panic(err)
+func requireIntegration(t *testing.T) {
+	t.Helper()
+	if !parseBoolEnv(integrationEnv) {
+		t.Skipf("integration tests are disabled by default; set %s=1 to enable", integrationEnv)
 	}
-	return b
+}
+
+func parseBoolEnv(name string) bool {
+	value := strings.TrimSpace(os.Getenv(name))
+	switch strings.ToLower(value) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
+}
+
+func readEnvOrDefault(name, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
+		return value
+	}
+	return fallback
+}
+
+func loadIntegrationConfig() (integrationConfig, error) {
+	loadConfigOnce.Do(func() {
+		cfg := integrationConfig{
+			BaseURL:             strings.TrimRight(readEnvOrDefault(integrationBaseURLEnv, defaultBaseURL), "/"),
+			BotID:               readEnvOrDefault(integrationBotIDEnv, defaultBotID),
+			Credential:          readEnvOrDefault(integrationCredentialEnv, defaultCredential),
+			Platform:            readEnvOrDefault(integrationPlatformEnv, defaultPlatform),
+			PlatformUserID:      readEnvOrDefault(integrationPlatformUserIDEnv, defaultPlatformUserID),
+			Region:              readEnvOrDefault(integrationRegionEnv, defaultRegion),
+			GameUserID:          readEnvOrDefault(integrationGameUserIDEnv, defaultGameUserID),
+			CredentialSignToken: readEnvOrDefault(integrationCredentialSignTokenEnv, defaultCredentialSignToken),
+			UsersDSN:            readEnvOrDefault(integrationUsersDSNEnv, defaultUsersDSN),
+			PJSKDSN:             readEnvOrDefault(integrationPJSKDSNEnv, defaultPJSKDSN),
+			ServerPubKeyHex:     readEnvOrDefault(integrationServerPubKeyEnv, defaultServerPubKeyHex),
+			ImagePath:           readEnvOrDefault(integrationImagePathEnv, defaultImagePath),
+		}
+		if cfg.BaseURL == "" {
+			loadConfigErr = fmt.Errorf("%s must not be empty", integrationBaseURLEnv)
+			return
+		}
+		if _, err := hex.DecodeString(cfg.ServerPubKeyHex); err != nil {
+			loadConfigErr = fmt.Errorf("invalid %s: %w", integrationServerPubKeyEnv, err)
+			return
+		}
+		if !strings.HasPrefix(cfg.ImagePath, "/") {
+			cfg.ImagePath = "/" + cfg.ImagePath
+		}
+		testConfig = cfg
+	})
+	return testConfig, loadConfigErr
+}
+
+func requireIntegrationConfig(t *testing.T) integrationConfig {
+	t.Helper()
+	requireIntegration(t)
+	cfg, err := loadIntegrationConfig()
+	if err != nil {
+		t.Fatalf("load integration config: %v", err)
+	}
+	return cfg
+}
+
+func ensureAuthenticated(t *testing.T) integrationConfig {
+	t.Helper()
+	cfg := requireIntegrationConfig(t)
+	authOnce.Do(func() {
+		authErr = authenticate(cfg)
+	})
+	if authErr != nil {
+		t.Fatalf("authenticate integration bot: %v", authErr)
+	}
+	return cfg
+}
+
+func authenticate(cfg integrationConfig) error {
+	// Key derivation: server takes the raw credential string bytes (not base64-decoded),
+	// copies first 32 bytes into a 32-byte key.
+	credRaw := []byte(cfg.Credential)
+	aesKey := make([]byte, 32)
+	copy(aesKey, credRaw)
+
+	// Build JWT credential: {bot_id, credential} signed with credentialSignToken.
+	jwtCred, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"bot_id":     cfg.BotID,
+		"credential": cfg.Credential,
+	}).SignedString([]byte(cfg.CredentialSignToken))
+	if err != nil {
+		return fmt.Errorf("sign JWT credential: %w", err)
+	}
+
+	authPayload := fmt.Sprintf(`{"credential":"%s","timestamp":%d}`, jwtCred, time.Now().Unix())
+	encrypted, err := utilscrypto.Encrypt([]byte(authPayload), aesKey)
+	if err != nil {
+		return fmt.Errorf("encrypt auth payload: %w", err)
+	}
+
+	body := fmt.Sprintf(`{"encrypted_payload":"%s"}`, encrypted)
+	resp, err := http.Post(cfg.BaseURL+"/bot/"+cfg.BotID+"/auth", "application/json", strings.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("auth request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read auth response: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("auth failed: status=%d body=%s", resp.StatusCode, string(respBody))
+	}
+
+	var authResp struct {
+		Message string `json:"message"`
+		Data    struct {
+			SessionToken string `json:"session_token"`
+			ExpiresAt    int64  `json:"expires_at"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(respBody, &authResp); err != nil {
+		return fmt.Errorf("parse auth response: %w", err)
+	}
+	if authResp.Data.SessionToken == "" {
+		return fmt.Errorf("empty session token in response: %s", string(respBody))
+	}
+
+	sessionToken = authResp.Data.SessionToken
+	clientKP, err = corecrypto.GenerateKeyPair()
+	if err != nil {
+		return fmt.Errorf("generate client keypair: %w", err)
+	}
+	serverPubKey, err = hex.DecodeString(cfg.ServerPubKeyHex)
+	if err != nil {
+		return fmt.Errorf("decode server pubkey: %w", err)
+	}
+	return nil
+}
+
+func summarizeSecret(value string) string {
+	if len(value) <= 18 {
+		return value
+	}
+	return value[:8] + "..." + value[len(value)-6:]
 }
 
 // noiseRoundTrip sends an encrypted Noise IK request and decrypts the response.
 func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int) {
 	t.Helper()
+	cfg := ensureAuthenticated(t)
 	body, err := msgpack.Marshal(payload)
 	if err != nil {
 		t.Fatalf("msgpack marshal: %v", err)
@@ -82,7 +253,7 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 	}
 
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(ciphertext))
-	req.Header.Set("X-Haruki-Bot-Id", botID)
+	req.Header.Set("X-Haruki-Bot-Id", cfg.BotID)
 	req.Header.Set("X-Haruki-Bot-Session-Token", sessionToken)
 	req.Header.Set("Content-Type", "application/octet-stream")
 
@@ -111,12 +282,12 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 }
 
 type botRequest struct {
-	Platform        string        `json:"platform" msgpack:"platform"`
-	PlatformUserID  string        `json:"platform_user_id" msgpack:"platform_user_id"`
-	PlatformGroupID string        `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
-	Server          string        `json:"server,omitempty" msgpack:"server,omitempty"`
-	MatchedCommand  string        `json:"matched_command" msgpack:"matched_command"`
-	Message         []msgSegment  `json:"message" msgpack:"message"`
+	Platform        string       `json:"platform" msgpack:"platform"`
+	PlatformUserID  string       `json:"platform_user_id" msgpack:"platform_user_id"`
+	PlatformGroupID string       `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
+	Server          string       `json:"server,omitempty" msgpack:"server,omitempty"`
+	MatchedCommand  string       `json:"matched_command" msgpack:"matched_command"`
+	Message         []msgSegment `json:"message" msgpack:"message"`
 }
 
 type msgSegment struct {
@@ -124,11 +295,11 @@ type msgSegment struct {
 	Data map[string]string `json:"data" msgpack:"data"`
 }
 
-func makeBotReq(cmd, fullText string) botRequest {
+func makeBotReq(cfg integrationConfig, cmd, fullText string) botRequest {
 	return botRequest{
-		Platform:       platform,
-		PlatformUserID: platformUserID,
-		Server:         region,
+		Platform:       cfg.Platform,
+		PlatformUserID: cfg.PlatformUserID,
+		Server:         cfg.Region,
 		MatchedCommand: cmd,
 		Message: []msgSegment{
 			{Type: "text", Data: map[string]string{"text": fullText}},
@@ -138,18 +309,20 @@ func makeBotReq(cmd, fullText string) botRequest {
 
 func sendBotCommand(t *testing.T, path, cmd, fullText string) ([]byte, int) {
 	t.Helper()
-	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", baseURL, botID, path)
-	req := makeBotReq(cmd, fullText)
+	cfg := ensureAuthenticated(t)
+	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", cfg.BaseURL, cfg.BotID, path)
+	req := makeBotReq(cfg, cmd, fullText)
 	return noiseRoundTrip(t, url, req)
 }
 
 func sendBotCommandWithSegments(t *testing.T, path, cmd string, segments []msgSegment) ([]byte, int) {
 	t.Helper()
-	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", baseURL, botID, path)
+	cfg := ensureAuthenticated(t)
+	url := fmt.Sprintf("%s/api/v2/bot/%s/pjsk/%s", cfg.BaseURL, cfg.BotID, path)
 	req := botRequest{
-		Platform:       platform,
-		PlatformUserID: platformUserID,
-		Server:         region,
+		Platform:       cfg.Platform,
+		PlatformUserID: cfg.PlatformUserID,
+		Server:         cfg.Region,
 		MatchedCommand: cmd,
 		Message:        segments,
 	}
@@ -225,75 +398,18 @@ func min(a, b int) int {
 // ─── Phase 1: Authentication ────────────────────────────────────────
 
 func TestAuth(t *testing.T) {
+	cfg := ensureAuthenticated(t)
 	t.Log("=== Phase 1: Bot Authentication ===")
-
-	// Key derivation: server takes the raw credential string bytes (not base64-decoded),
-	// copies first 32 bytes into a 32-byte key.
-	credRaw := []byte(credentialB64)
-	aesKey := make([]byte, 32)
-	copy(aesKey, credRaw)
-
-	// Build JWT credential: {bot_id, credential} signed with credentialSignToken
-	jwtCred, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"bot_id":     botID,
-		"credential": credentialB64,
-	}).SignedString([]byte(credentialSignToken))
-	if err != nil {
-		t.Fatalf("sign JWT credential: %v", err)
-	}
-
-	authPayload := fmt.Sprintf(`{"credential":"%s","timestamp":%d}`, jwtCred, time.Now().Unix())
-	encrypted, err := utilscrypto.Encrypt([]byte(authPayload), aesKey)
-	if err != nil {
-		t.Fatalf("encrypt auth payload: %v", err)
-	}
-
-	body := fmt.Sprintf(`{"encrypted_payload":"%s"}`, encrypted)
-	resp, err := http.Post(baseURL+"/bot/"+botID+"/auth", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("auth request: %v", err)
-	}
-	defer resp.Body.Close()
-	respBody, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != 200 {
-		t.Fatalf("auth failed: status=%d body=%s", resp.StatusCode, string(respBody))
-	}
-
-	var authResp struct {
-		Message string `json:"message"`
-		Data    struct {
-			SessionToken string `json:"session_token"`
-			ExpiresAt    int64  `json:"expires_at"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(respBody, &authResp); err != nil {
-		t.Fatalf("parse auth response: %v", err)
-	}
-	if authResp.Data.SessionToken == "" {
-		t.Fatalf("empty session token in response: %s", string(respBody))
-	}
-	sessionToken = authResp.Data.SessionToken
-	t.Logf("✅ Auth OK — session token: %s...%s", sessionToken[:20], sessionToken[len(sessionToken)-10:])
-
-	// Init Noise IK client keypair
-	clientKP, err = corecrypto.GenerateKeyPair()
-	if err != nil {
-		t.Fatalf("generate client keypair: %v", err)
-	}
-	serverPubKey = mustDecodeHex(serverPubKeyHex)
-	_ = mustDecodeHex(noisePrivKeyHex)
-	t.Log("✅ Noise IK client keypair generated")
+	t.Logf("✅ Auth OK — bot=%s base=%s session=%s", cfg.BotID, cfg.BaseURL, summarizeSecret(sessionToken))
+	t.Log("✅ Noise IK client keypair ready")
 }
 
 // ─── Phase 2: Manifests ─────────────────────────────────────────────
 
 func TestManifests(t *testing.T) {
-	if sessionToken == "" {
-		t.Skip("no session token — run TestAuth first")
-	}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v2/bot/%s/command/manifests", baseURL, botID), nil)
-	req.Header.Set("X-Haruki-Bot-Id", botID)
+	cfg := ensureAuthenticated(t)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v2/bot/%s/command/manifests", cfg.BaseURL, cfg.BotID), nil)
+	req.Header.Set("X-Haruki-Bot-Id", cfg.BotID)
 	req.Header.Set("X-Haruki-Bot-Session-Token", sessionToken)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -324,21 +440,19 @@ func TestManifests(t *testing.T) {
 // ─── Phase 3: Bot Command Tests ─────────────────────────────────────
 
 type cmdTest struct {
-	name    string
-	path    string
-	cmd     string
-	text    string
-	wantOK  bool
+	name   string
+	path   string
+	cmd    string
+	text   string
+	wantOK bool
 }
 
 func TestBotCommands(t *testing.T) {
-	if sessionToken == "" {
-		t.Skip("no session token — run TestAuth first")
-	}
+	cfg := ensureAuthenticated(t)
 
 	// Prerequisite: bind account first
 	t.Run("0-bind", func(t *testing.T) {
-		data, status := sendBotCommand(t, "profile/bind", "/绑定", "/绑定 GAME_USER_ID_REDACTED")
+		data, status := sendBotCommand(t, "profile/bind", "/绑定", "/绑定 "+cfg.GameUserID)
 		r := parseBotResp(t, data)
 		if status == 200 && r.Message == "ok" {
 			t.Log("✅ Bind OK")
@@ -509,15 +623,16 @@ func TestBotCommands(t *testing.T) {
 // resolveHarukiUserID queries the users DB to find the haruki_user_id for our test user.
 func resolveHarukiUserID(t *testing.T) int {
 	t.Helper()
-	db, err := sql.Open("postgres", usersDSN)
+	cfg := requireIntegrationConfig(t)
+	db, err := sql.Open("postgres", cfg.UsersDSN)
 	if err != nil {
 		t.Fatalf("open users DB: %v", err)
 	}
 	defer db.Close()
 	var id int
-	err = db.QueryRow("SELECT id FROM users WHERE platform=$1 AND user_id=$2", platform, platformUserID).Scan(&id)
+	err = db.QueryRow("SELECT id FROM users WHERE platform=$1 AND user_id=$2", cfg.Platform, cfg.PlatformUserID).Scan(&id)
 	if err != nil {
-		t.Fatalf("resolve haruki_user_id for %s/%s: %v", platform, platformUserID, err)
+		t.Fatalf("resolve haruki_user_id for %s/%s: %v", cfg.Platform, cfg.PlatformUserID, err)
 	}
 	return id
 }
@@ -525,7 +640,8 @@ func resolveHarukiUserID(t *testing.T) int {
 // ensureAliasAdmin inserts or updates the alias_admins record for our test user.
 func ensureAliasAdmin(t *testing.T, harukiUserID int) {
 	t.Helper()
-	db, err := sql.Open("postgres", pjskDSN)
+	cfg := requireIntegrationConfig(t)
+	db, err := sql.Open("postgres", cfg.PJSKDSN)
 	if err != nil {
 		t.Fatalf("open pjsk DB: %v", err)
 	}
@@ -560,7 +676,8 @@ func startImageServer(t *testing.T) string {
 // getPendingAliasIDs queries the DB for recent pending alias IDs (for approve/reject tests).
 func getPendingAliasIDs(t *testing.T, limit int) []int64 {
 	t.Helper()
-	db, err := sql.Open("postgres", pjskDSN)
+	cfg := requireIntegrationConfig(t)
+	db, err := sql.Open("postgres", cfg.PJSKDSN)
 	if err != nil {
 		t.Logf("open pjsk DB for pending: %v", err)
 		return nil
@@ -582,15 +699,13 @@ func getPendingAliasIDs(t *testing.T, limit int) []int64 {
 }
 
 func TestExpandedCoverage(t *testing.T) {
-	if sessionToken == "" {
-		t.Skip("no session token — run TestAuth first")
-	}
+	cfg := ensureAuthenticated(t)
 
 	// ─── Setup: alias admin + image server ───────────────────
 	harukiUserID := resolveHarukiUserID(t)
 	ensureAliasAdmin(t, harukiUserID)
 	imageBase := startImageServer(t)
-	imageURL := imageBase + "/IMG_7736.png"
+	imageURL := imageBase + cfg.ImagePath
 
 	results := make(map[string]string)
 
@@ -765,7 +880,7 @@ func TestExpandedCoverage(t *testing.T) {
 
 		// Restore: re-bind the game account
 		time.Sleep(200 * time.Millisecond)
-		sendBotCommand(t, "profile/bind", "/绑定", "/绑定 "+gameUserID)
+		sendBotCommand(t, "profile/bind", "/绑定", "/绑定 "+cfg.GameUserID)
 	})
 
 	t.Log("\n=== Expanded Coverage Results ===")
@@ -777,6 +892,8 @@ func TestExpandedCoverage(t *testing.T) {
 // ─── Phase 4: External API Proxy Tests ──────────────────────────────
 
 func TestExternalAPIs(t *testing.T) {
+	requireIntegration(t)
+	cfg := requireIntegrationConfig(t)
 	sekaiToken := os.Getenv("HARUKI_TEST_SEKAI_TOKEN")
 	toolboxToken := os.Getenv("HARUKI_TEST_TOOLBOX_TOKEN")
 	trackerBase := os.Getenv("HARUKI_TEST_TRACKER_BASE")
@@ -791,7 +908,7 @@ func TestExternalAPIs(t *testing.T) {
 
 	// Sekai API — profile
 	t.Run("sekai-api/profile", func(t *testing.T) {
-		url := fmt.Sprintf("%s/v6/api/jp/%s/profile", sekaiBase, gameUserID)
+		url := fmt.Sprintf("%s/v6/api/%s/%s/profile", sekaiBase, cfg.Region, cfg.GameUserID)
 		req, _ := http.NewRequest("GET", url, nil)
 		req.Header.Set("X-Haruki-Sekai-Token", sekaiToken)
 		resp, err := http.DefaultClient.Do(req)
@@ -810,7 +927,7 @@ func TestExternalAPIs(t *testing.T) {
 
 	// Toolbox API — MySEKAI
 	t.Run("toolbox/mysekai", func(t *testing.T) {
-		url := fmt.Sprintf("%s/api/private/game-data/jp/mysekai/%s?platform=qq&platform_user_id=%s", toolboxBase, gameUserID, platformUserID)
+		url := fmt.Sprintf("%s/api/private/game-data/%s/mysekai/%s?platform=%s&platform_user_id=%s", toolboxBase, cfg.Region, cfg.GameUserID, cfg.Platform, cfg.PlatformUserID)
 		req, _ := http.NewRequest("GET", url, nil)
 		req.Header.Set("Authorization", "Bearer "+toolboxToken)
 		req.Header.Set("User-Agent", "Haruki-Cloud/v2.0.0")
@@ -828,7 +945,7 @@ func TestExternalAPIs(t *testing.T) {
 
 	// Tracker API — event ranking
 	t.Run("tracker/event-ranking", func(t *testing.T) {
-		url := fmt.Sprintf("%s/event/jp/199/latest-ranking/rank/1", trackerBase)
+		url := fmt.Sprintf("%s/event/%s/199/latest-ranking/rank/1", trackerBase, cfg.Region)
 		resp, err := http.Get(url)
 		if err != nil {
 			t.Fatalf("tracker: %v", err)

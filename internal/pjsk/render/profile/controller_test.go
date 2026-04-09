@@ -11,10 +11,10 @@ import (
 )
 
 type testProfileSource struct {
-	region       renderregion.Value
-	cards        map[int]*masterdata.Card
-	honors       map[int]*masterdata.Honor
-	honorGroups  map[int]*masterdata.HonorGroup
+	region      renderregion.Value
+	cards       map[int]*masterdata.Card
+	honors      map[int]*masterdata.Honor
+	honorGroups map[int]*masterdata.HonorGroup
 }
 
 func (s *testProfileSource) DefaultRegion() renderregion.Value { return s.region }
@@ -97,6 +97,12 @@ func TestBuildProfileRequestFromAPIUsesRequestedRegionAssetPaths(t *testing.T) {
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	controller.RegisterSource(&testProfileSource{
+		region:      renderregion.CN,
+		cards:       source.cards,
+		honors:      source.honors,
+		honorGroups: source.honorGroups,
+	})
 
 	resp := &sekai.GetAnotherProfileResponse{
 		User:        sekai.AnotherUser{UserID: 12345, Name: "CN User", Rank: 100},

@@ -5,6 +5,8 @@
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
 > 2026-04-09 补充：当前模块分档、活跃 Bot path、disabled handler 与测试/风险快照，见 [项目完成度跟踪](project-completion-tracker.cn.md)。
+>
+> 再补充一条当前事实：`api/legacy/pjsk/` 与 `/internal/pjsk/*` 兼容运行时路由已于 2026-04-09 从仓库和运行时移除；本文保留了大量 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
 ## 1. 当前结论
 
@@ -55,7 +57,7 @@ MySekai 指令在本轮补齐了地图路由和快捷别名对齐，当前约定
 
 ### 2.1 渲染子系统
 
-`Service-Test` 的渲染能力已经稳定落在：
+`Service-Test` 的渲染能力在当时的合并阶段曾稳定落在：
 
 - `internal/pjsk/render/`
 - `/internal/pjsk/render`
@@ -1204,7 +1206,9 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 注册路径总览
 
-当前 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列）。第七轮测试已实现 **76/76 全覆盖**。
+历史记录（2026-03-27）：当时 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列），并完成 **76/76 全覆盖**。
+
+截至 2026-04-09，当前活跃 Bot path 已更新为 **82 条**，请以 [项目完成度跟踪](project-completion-tracker.cn.md) 的最新清单为准。
 
 ### 无 Path 的 handler（不可通过 bot API 访问）
 

@@ -3,6 +3,8 @@
 > 最后更新：2026-03-25
 >
 > 本文档记录当前 `event tracker` 在 Haruki-Cloud 中的接入位置、调用链路、参数协议、能力边界与测试覆盖，作为本轮对接的落地说明。
+>
+> 2026-04-09 补充说明：本文中的 `/internal/pjsk/sk/*` build/render 描述只代表当时的兼容链路设计。相关 internal 运行时路由现已移除，当前主链应以 Bot 协议和 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
 ## 1. 文档目的
 
@@ -20,7 +22,7 @@
 截至 2026-03-25，Event Tracker 对接状态如下：
 
 1. SK 主命令链路已经接入 tracker
-2. 旧的 `/internal/pjsk/sk/*` 路由已补齐 tracker build/render 入口
+2. 当时的旧 `/internal/pjsk/sk/*` 路由已补齐 tracker build/render 入口
 3. Bot `/sk`、`/skl` 已支持 `@用户` 查询（通过绑定解析目标 UID）
 4. `sk-speed`、`sk-check-room`、`sk-rank-trace` 仍保持仅排名模式（设计如此）
 
@@ -109,7 +111,7 @@
   -> drawing client
 ```
 
-### 4.2 legacy build/render 链路（兼容）
+### 4.2 legacy build/render 链路（已移除，以下为历史记录）
 
 `api/legacy/pjsk/render_route.go` 已补齐以下端点：
 
@@ -177,4 +179,3 @@
 2. `@用户` 查询依赖绑定服务可用；若绑定服务未注入，会提示改用游戏 UID。
 3. World Bloom 场景下若未给 `wl_character_id`，会返回 `world bloom event requires wl_character_id`。
 4. 当请求未提供 `event_id` 且无法从 event source 推断当前/下一期活动时，会要求显式传 `event_id`。
-

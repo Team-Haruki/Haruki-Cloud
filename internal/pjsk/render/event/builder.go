@@ -259,10 +259,6 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	return result
 }
 
-func normalizeRegion(value renderregion.Value) renderregion.Value {
-	return renderregion.Normalize(value.String())
-}
-
 func (b *Builder) extractEventBonuses(eventID int) (string, []int) {
 	bonuses, err := b.source.GetEventDeckBonuses(eventID)
 	if err != nil {

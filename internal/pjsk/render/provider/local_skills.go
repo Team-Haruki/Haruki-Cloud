@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -18,24 +17,21 @@ type localSkillProvider struct {
 	store      *localStore
 	characters *localCharacterProvider
 
-	once    sync.Once
-	byID    map[int]*masterdata.Skill
-	loadErr error
+	skills lazyValue[map[int]*masterdata.Skill]
 }
 
 func (p *localSkillProvider) ensureLoaded() error {
-	p.once.Do(func() {
+	return p.skills.init(func() (map[int]*masterdata.Skill, error) {
 		items, err := loadJSON[masterdata.Skill](p.store, "skills.json")
 		if err != nil {
-			p.loadErr = err
-			return
+			return nil, err
 		}
-		p.byID = make(map[int]*masterdata.Skill, len(items))
+		byID := make(map[int]*masterdata.Skill, len(items))
 		for i := range items {
-			p.byID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.loadErr
 }
 
 func (p *localSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
@@ -45,7 +41,7 @@ func (p *localSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
 	if err := p.ensureLoaded(); err != nil {
 		return nil, err
 	}
-	s, ok := p.byID[id]
+	s, ok := p.skills.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("skill %d not found", id)
 	}

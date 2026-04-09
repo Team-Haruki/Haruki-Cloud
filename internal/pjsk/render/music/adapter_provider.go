@@ -5,77 +5,72 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to music.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) SearchMusic(query string) (*masterdata.Music, error) {
-	return a.p.Musics().Search(query)
+	return a.P.Musics().Search(query)
 }
 
 func (a *ProviderAdapter) GetMusicByID(id int) (*masterdata.Music, error) {
-	return a.p.Musics().GetByID(id)
+	return a.P.Musics().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetMusicByEventID(eventID int) (*masterdata.Music, error) {
-	return a.p.Musics().GetByEventID(eventID)
+	return a.P.Musics().GetByEventID(eventID)
 }
 
 func (a *ProviderAdapter) GetMusics() []*masterdata.Music {
-	return a.p.Musics().GetAll()
+	return a.P.Musics().GetAll()
 }
 
 func (a *ProviderAdapter) GetBanEvents(charID int) []*masterdata.Event {
-	return a.p.Events().GetBanEvents(charID)
+	return a.P.Events().GetBanEvents(charID)
 }
 
 func (a *ProviderAdapter) GetMusicLocalizedTitles(musicID int) ([]string, error) {
-	return a.p.Musics().GetLocalizedTitles(musicID)
+	return a.P.Musics().GetLocalizedTitles(musicID)
 }
 
 func (a *ProviderAdapter) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
-	return a.p.Musics().GetDifficulties(musicID)
+	return a.P.Musics().GetDifficulties(musicID)
 }
 
 func (a *ProviderAdapter) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error) {
-	return a.p.Musics().GetVocals(musicID)
+	return a.P.Musics().GetVocals(musicID)
 }
 
 func (a *ProviderAdapter) GetMusicTags(musicID int) ([]string, error) {
-	return a.p.Musics().GetTags(musicID)
+	return a.P.Musics().GetTags(musicID)
 }
 
 func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error) {
-	return a.p.Characters().GetByID(id)
+	return a.P.Characters().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetOutsideCharacterByID(id int) (string, error) {
-	return a.p.Musics().GetOutsideCharacterByID(id)
+	return a.P.Musics().GetOutsideCharacterByID(id)
 }
 
 func (a *ProviderAdapter) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
-	return a.p.Musics().GetPrimaryEventByMusicID(musicID)
+	return a.P.Musics().GetPrimaryEventByMusicID(musicID)
 }
 
 func (a *ProviderAdapter) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
-	return a.p.Musics().GetLimitedTimeMusics(musicID)
+	return a.P.Musics().GetLimitedTimeMusics(musicID)
 }

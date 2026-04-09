@@ -3,7 +3,6 @@ package provider
 import (
 	"fmt"
 	"sort"
-	"sync"
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/common"
@@ -14,134 +13,126 @@ import (
 // localCardProvider
 // ===========================================================================
 
+type cardIndex struct {
+	all  []*masterdata.Card
+	byID map[int]*masterdata.Card
+}
+
+type cardEventIndex struct {
+	cardsByEvent map[int][]int
+	eventByCard  map[int]int
+}
+
 type localCardProvider struct {
 	store      *localStore
 	characters *localCharacterProvider
 	skills     *localSkillProvider
 
-	cardsOnce sync.Once
-	cardAll   []*masterdata.Card
-	cardByID  map[int]*masterdata.Card
-	cardsErr  error
-
-	supplyOnce sync.Once
-	supplyByID map[int]string
-	supplyErr  error
-
-	gachaOnce sync.Once
-	gachas    []*masterdata.Gacha
-	gachaErr  error
-
-	costumeOnce   sync.Once
-	costumeByCard map[int][]*masterdata.Costume3d
-	costumeErr    error
-
-	eventCardOnce sync.Once
-	cardsByEvent  map[int][]int
-	eventByCard   map[int]int
-	eventCardErr  error
+	cards      lazyValue[cardIndex]
+	supplies   lazyValue[map[int]string]
+	gachas     lazyValue[[]*masterdata.Gacha]
+	costumes   lazyValue[map[int][]*masterdata.Costume3d]
+	eventCards lazyValue[cardEventIndex]
 }
 
 func (p *localCardProvider) ensureCards() error {
-	p.cardsOnce.Do(func() {
+	return p.cards.init(func() (cardIndex, error) {
 		items, err := loadJSON[masterdata.Card](p.store, "cards.json")
 		if err != nil {
-			p.cardsErr = err
-			return
+			return cardIndex{}, err
 		}
-		p.cardByID = make(map[int]*masterdata.Card, len(items))
-		p.cardAll = make([]*masterdata.Card, 0, len(items))
+		idx := cardIndex{
+			byID: make(map[int]*masterdata.Card, len(items)),
+			all:  make([]*masterdata.Card, 0, len(items)),
+		}
 		for i := range items {
 			c := &items[i]
-			p.cardByID[c.ID] = c
-			p.cardAll = append(p.cardAll, c)
+			idx.byID[c.ID] = c
+			idx.all = append(idx.all, c)
 		}
-		sort.Slice(p.cardAll, func(i, j int) bool {
-			return p.cardAll[i].ReleaseAt < p.cardAll[j].ReleaseAt
+		sort.Slice(idx.all, func(i, j int) bool {
+			return idx.all[i].ReleaseAt < idx.all[j].ReleaseAt
 		})
+		return idx, nil
 	})
-	return p.cardsErr
 }
 
 func (p *localCardProvider) ensureSupplies() error {
-	p.supplyOnce.Do(func() {
+	return p.supplies.init(func() (map[int]string, error) {
 		items, err := loadJSON[localCardSupplyJSON](p.store, "cardSupplies.json")
 		if err != nil {
-			p.supplyErr = err
-			return
+			return nil, err
 		}
-		p.supplyByID = make(map[int]string, len(items))
+		byID := make(map[int]string, len(items))
 		for _, item := range items {
-			p.supplyByID[item.ID] = cardNormalizeSupplyType(item.CardSupplyType)
+			byID[item.ID] = cardNormalizeSupplyType(item.CardSupplyType)
 		}
+		return byID, nil
 	})
-	return p.supplyErr
 }
 
 func (p *localCardProvider) ensureGachas() error {
-	p.gachaOnce.Do(func() {
+	return p.gachas.init(func() ([]*masterdata.Gacha, error) {
 		items, err := loadJSON[masterdata.Gacha](p.store, "gachas.json")
 		if err != nil {
-			p.gachaErr = err
-			return
+			return nil, err
 		}
-		p.gachas = make([]*masterdata.Gacha, 0, len(items))
+		gachas := make([]*masterdata.Gacha, 0, len(items))
 		for i := range items {
-			p.gachas = append(p.gachas, &items[i])
+			gachas = append(gachas, &items[i])
 		}
-		sort.Slice(p.gachas, func(i, j int) bool {
-			if p.gachas[i].StartAt == p.gachas[j].StartAt {
-				return p.gachas[i].ID > p.gachas[j].ID
+		sort.Slice(gachas, func(i, j int) bool {
+			if gachas[i].StartAt == gachas[j].StartAt {
+				return gachas[i].ID > gachas[j].ID
 			}
-			return p.gachas[i].StartAt > p.gachas[j].StartAt
+			return gachas[i].StartAt > gachas[j].StartAt
 		})
+		return gachas, nil
 	})
-	return p.gachaErr
 }
 
 func (p *localCardProvider) ensureCostumes() error {
-	p.costumeOnce.Do(func() {
+	return p.costumes.init(func() (map[int][]*masterdata.Costume3d, error) {
 		links, err := loadJSON[localCardCostume3dJSON](p.store, "cardCostume3ds.json")
 		if err != nil {
-			p.costumeErr = err
-			return
+			return nil, err
 		}
 		raw, err := loadJSON[localCostume3dJSON](p.store, "costume3ds.json")
 		if err != nil {
-			p.costumeErr = err
-			return
+			return nil, err
 		}
 		costumeByID := make(map[int]*masterdata.Costume3d, len(raw))
 		for i := range raw {
 			costumeByID[raw[i].ID] = raw[i].toModel()
 		}
-		p.costumeByCard = make(map[int][]*masterdata.Costume3d)
+		byCard := make(map[int][]*masterdata.Costume3d)
 		for _, link := range links {
 			if c, ok := costumeByID[link.Costume3dID]; ok {
-				p.costumeByCard[link.CardID] = append(p.costumeByCard[link.CardID], c)
+				byCard[link.CardID] = append(byCard[link.CardID], c)
 			}
 		}
+		return byCard, nil
 	})
-	return p.costumeErr
 }
 
 func (p *localCardProvider) ensureEventCards() error {
-	p.eventCardOnce.Do(func() {
+	return p.eventCards.init(func() (cardEventIndex, error) {
 		items, err := loadJSON[localEventCardJSON](p.store, "eventCards.json")
 		if err != nil {
-			p.eventCardErr = err
-			return
+			return cardEventIndex{}, err
 		}
-		p.cardsByEvent = make(map[int][]int)
-		p.eventByCard = make(map[int]int)
+		idx := cardEventIndex{
+			cardsByEvent: make(map[int][]int),
+			eventByCard:  make(map[int]int),
+		}
 		for _, item := range items {
-			p.cardsByEvent[item.EventID] = append(p.cardsByEvent[item.EventID], item.CardID)
-			if _, ok := p.eventByCard[item.CardID]; !ok {
-				p.eventByCard[item.CardID] = item.EventID
+			idx.cardsByEvent[item.EventID] = append(idx.cardsByEvent[item.EventID], item.CardID)
+			if _, ok := idx.eventByCard[item.CardID]; !ok {
+				idx.eventByCard[item.CardID] = item.EventID
 			}
 		}
+		return idx, nil
 	})
-	return p.eventCardErr
 }
 
 func (p *localCardProvider) GetByID(id int) (*masterdata.Card, error) {
@@ -151,7 +142,7 @@ func (p *localCardProvider) GetByID(id int) (*masterdata.Card, error) {
 	if err := p.ensureCards(); err != nil {
 		return nil, err
 	}
-	card, ok := p.cardByID[id]
+	card, ok := p.cards.v().byID[id]
 	if !ok {
 		return nil, fmt.Errorf("card %d not found", id)
 	}
@@ -167,7 +158,7 @@ func (p *localCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterd
 	}
 
 	var cards []*masterdata.Card
-	for _, c := range p.cardAll {
+	for _, c := range p.cards.v().all {
 		if c.CharacterID == characterID {
 			cards = append(cards, c)
 		}
@@ -205,7 +196,7 @@ func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, erro
 		if err := p.ensureEventCards(); err != nil {
 			return nil, err
 		}
-		cardIDs, ok := p.cardsByEvent[filter.EventID]
+		cardIDs, ok := p.eventCards.v().cardsByEvent[filter.EventID]
 		if !ok || len(cardIDs) == 0 {
 			return nil, nil
 		}
@@ -216,7 +207,7 @@ func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, erro
 	}
 
 	results := make([]*masterdata.Card, 0)
-	for _, card := range p.cardAll {
+	for _, card := range p.cards.v().all {
 		if allowedIDs != nil {
 			if _, ok := allowedIDs[card.ID]; !ok {
 				continue
@@ -294,7 +285,7 @@ func (p *localCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
 	if err := p.ensureSupplies(); err != nil {
 		return cardNormalizeSupplyType("")
 	}
-	if v, ok := p.supplyByID[cardInfo.CardSupplyID]; ok {
+	if v, ok := p.supplies.v()[cardInfo.CardSupplyID]; ok {
 		return v
 	}
 	return cardNormalizeSupplyType("")
@@ -307,7 +298,7 @@ func (p *localCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, err
 	if err := p.ensureGachas(); err != nil {
 		return nil, err
 	}
-	for _, g := range p.gachas {
+	for _, g := range p.gachas.v() {
 		if cardContainsPickup(g, cardID) {
 			return common.CloneGacha(g), nil
 		}
@@ -322,7 +313,7 @@ func (p *localCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cos
 	if err := p.ensureCostumes(); err != nil {
 		return nil, err
 	}
-	costumes, ok := p.costumeByCard[cardID]
+	costumes, ok := p.costumes.v()[cardID]
 	if !ok || len(costumes) == 0 {
 		return nil, nil
 	}

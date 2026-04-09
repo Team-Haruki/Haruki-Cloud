@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -15,164 +14,149 @@ import (
 // localMusicProvider
 // ===========================================================================
 
+type musicIndex struct {
+	all  []*masterdata.Music
+	byID map[int]*masterdata.Music
+}
+
+type eventMusicIndex struct {
+	musicIDByEvent  map[int]int
+	eventIDsByMusic map[int][]int
+}
+
 type localMusicProvider struct {
 	store  *localStore
 	events EventProvider
 
-	musicOnce sync.Once
-	musicAll  []*masterdata.Music
-	musicByID map[int]*masterdata.Music
-	musicErr  error
-
-	diffOnce    sync.Once
-	diffByMusic map[int][]*masterdata.MusicDifficulty
-	diffErr     error
-
-	vocalOnce    sync.Once
-	vocalByMusic map[int][]*masterdata.MusicVocal
-	vocalErr     error
-
-	tagOnce    sync.Once
-	tagByMusic map[int][]string
-	tagErr     error
-
-	outsideOnce sync.Once
-	outsideByID map[int]string
-	outsideErr  error
-
-	eventMusicOnce  sync.Once
-	musicIDByEvent  map[int]int
-	eventIDsByMusic map[int][]int
-	eventMusicErr   error
-
-	limitedOnce    sync.Once
-	limitedByMusic map[int][]*masterdata.LimitedTimeMusic
-	limitedErr     error
+	musics      lazyValue[musicIndex]
+	diffs       lazyValue[map[int][]*masterdata.MusicDifficulty]
+	vocals      lazyValue[map[int][]*masterdata.MusicVocal]
+	tags        lazyValue[map[int][]string]
+	outside     lazyValue[map[int]string]
+	eventMusics lazyValue[eventMusicIndex]
+	limited     lazyValue[map[int][]*masterdata.LimitedTimeMusic]
 }
 
 func (p *localMusicProvider) ensureMusics() error {
-	p.musicOnce.Do(func() {
+	return p.musics.init(func() (musicIndex, error) {
 		items, err := loadJSON[localMusicJSON](p.store, "musics.json")
 		if err != nil {
-			p.musicErr = err
-			return
+			return musicIndex{}, err
 		}
-		p.musicByID = make(map[int]*masterdata.Music, len(items))
-		p.musicAll = make([]*masterdata.Music, 0, len(items))
+		idx := musicIndex{
+			byID: make(map[int]*masterdata.Music, len(items)),
+			all:  make([]*masterdata.Music, 0, len(items)),
+		}
 		for i := range items {
 			m := items[i].toModel()
-			p.musicByID[m.ID] = m
-			p.musicAll = append(p.musicAll, m)
+			idx.byID[m.ID] = m
+			idx.all = append(idx.all, m)
 		}
-		sort.Slice(p.musicAll, func(i, j int) bool {
-			if p.musicAll[i].PublishedAt == p.musicAll[j].PublishedAt {
-				return p.musicAll[i].ID < p.musicAll[j].ID
+		sort.Slice(idx.all, func(i, j int) bool {
+			if idx.all[i].PublishedAt == idx.all[j].PublishedAt {
+				return idx.all[i].ID < idx.all[j].ID
 			}
-			return p.musicAll[i].PublishedAt < p.musicAll[j].PublishedAt
+			return idx.all[i].PublishedAt < idx.all[j].PublishedAt
 		})
+		return idx, nil
 	})
-	return p.musicErr
 }
 
 func (p *localMusicProvider) ensureDifficulties() error {
-	p.diffOnce.Do(func() {
+	return p.diffs.init(func() (map[int][]*masterdata.MusicDifficulty, error) {
 		items, err := loadJSON[masterdata.MusicDifficulty](p.store, "musicDifficulties.json")
 		if err != nil {
-			p.diffErr = err
-			return
+			return nil, err
 		}
-		p.diffByMusic = make(map[int][]*masterdata.MusicDifficulty)
+		byMusic := make(map[int][]*masterdata.MusicDifficulty)
 		for i := range items {
-			p.diffByMusic[items[i].MusicID] = append(p.diffByMusic[items[i].MusicID], &items[i])
+			byMusic[items[i].MusicID] = append(byMusic[items[i].MusicID], &items[i])
 		}
+		return byMusic, nil
 	})
-	return p.diffErr
 }
 
 func (p *localMusicProvider) ensureVocals() error {
-	p.vocalOnce.Do(func() {
+	return p.vocals.init(func() (map[int][]*masterdata.MusicVocal, error) {
 		items, err := loadJSON[localMusicVocalJSON](p.store, "musicVocals.json")
 		if err != nil {
-			p.vocalErr = err
-			return
+			return nil, err
 		}
-		p.vocalByMusic = make(map[int][]*masterdata.MusicVocal)
+		byMusic := make(map[int][]*masterdata.MusicVocal)
 		for i := range items {
 			m := items[i].toModel()
-			p.vocalByMusic[m.MusicID] = append(p.vocalByMusic[m.MusicID], m)
+			byMusic[m.MusicID] = append(byMusic[m.MusicID], m)
 		}
+		return byMusic, nil
 	})
-	return p.vocalErr
 }
 
 func (p *localMusicProvider) ensureTags() error {
-	p.tagOnce.Do(func() {
+	return p.tags.init(func() (map[int][]string, error) {
 		items, err := loadJSON[localMusicTagJSON](p.store, "musicTags.json")
 		if err != nil {
-			p.tagErr = err
-			return
+			return nil, err
 		}
-		p.tagByMusic = make(map[int][]string)
+		byMusic := make(map[int][]string)
 		for _, item := range items {
 			tag := strings.TrimSpace(item.MusicTag)
 			if tag != "" {
-				p.tagByMusic[item.MusicID] = append(p.tagByMusic[item.MusicID], tag)
+				byMusic[item.MusicID] = append(byMusic[item.MusicID], tag)
 			}
 		}
+		return byMusic, nil
 	})
-	return p.tagErr
 }
 
 func (p *localMusicProvider) ensureOutsideCharacters() error {
-	p.outsideOnce.Do(func() {
+	return p.outside.init(func() (map[int]string, error) {
 		items, err := loadJSON[localOutsideCharacterJSON](p.store, "outsideCharacters.json")
 		if err != nil {
-			p.outsideErr = err
-			return
+			return nil, err
 		}
-		p.outsideByID = make(map[int]string, len(items))
+		byID := make(map[int]string, len(items))
 		for _, item := range items {
-			p.outsideByID[item.ID] = strings.TrimSpace(item.Name)
+			byID[item.ID] = strings.TrimSpace(item.Name)
 		}
+		return byID, nil
 	})
-	return p.outsideErr
 }
 
 func (p *localMusicProvider) ensureEventMusics() error {
-	p.eventMusicOnce.Do(func() {
+	return p.eventMusics.init(func() (eventMusicIndex, error) {
 		items, err := loadJSON[localEventMusicJSON](p.store, "eventMusics.json")
 		if err != nil {
-			p.eventMusicErr = err
-			return
+			return eventMusicIndex{}, err
 		}
-		p.musicIDByEvent = make(map[int]int)
-		p.eventIDsByMusic = make(map[int][]int)
+		idx := eventMusicIndex{
+			musicIDByEvent:  make(map[int]int),
+			eventIDsByMusic: make(map[int][]int),
+		}
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].Seq < items[j].Seq
 		})
 		for _, item := range items {
-			if _, ok := p.musicIDByEvent[item.EventID]; !ok {
-				p.musicIDByEvent[item.EventID] = item.MusicID
+			if _, ok := idx.musicIDByEvent[item.EventID]; !ok {
+				idx.musicIDByEvent[item.EventID] = item.MusicID
 			}
-			p.eventIDsByMusic[item.MusicID] = append(p.eventIDsByMusic[item.MusicID], item.EventID)
+			idx.eventIDsByMusic[item.MusicID] = append(idx.eventIDsByMusic[item.MusicID], item.EventID)
 		}
+		return idx, nil
 	})
-	return p.eventMusicErr
 }
 
 func (p *localMusicProvider) ensureLimitedTimeMusics() error {
-	p.limitedOnce.Do(func() {
+	return p.limited.init(func() (map[int][]*masterdata.LimitedTimeMusic, error) {
 		items, err := loadJSON[masterdata.LimitedTimeMusic](p.store, "limitedTimeMusics.json")
 		if err != nil {
-			p.limitedErr = err
-			return
+			return nil, err
 		}
-		p.limitedByMusic = make(map[int][]*masterdata.LimitedTimeMusic)
+		byMusic := make(map[int][]*masterdata.LimitedTimeMusic)
 		for i := range items {
-			p.limitedByMusic[items[i].MusicID] = append(p.limitedByMusic[items[i].MusicID], &items[i])
+			byMusic[items[i].MusicID] = append(byMusic[items[i].MusicID], &items[i])
 		}
+		return byMusic, nil
 	})
-	return p.limitedErr
 }
 
 func (p *localMusicProvider) Search(query string) (*masterdata.Music, error) {
@@ -203,7 +187,7 @@ func (p *localMusicProvider) GetByID(id int) (*masterdata.Music, error) {
 	if err := p.ensureMusics(); err != nil {
 		return nil, err
 	}
-	m, ok := p.musicByID[id]
+	m, ok := p.musics.v().byID[id]
 	if !ok {
 		return nil, fmt.Errorf("music %d not found", id)
 	}
@@ -214,7 +198,7 @@ func (p *localMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error
 	if err := p.ensureEventMusics(); err != nil {
 		return nil, err
 	}
-	musicID, ok := p.musicIDByEvent[eventID]
+	musicID, ok := p.eventMusics.v().musicIDByEvent[eventID]
 	if !ok {
 		return nil, fmt.Errorf("no music found for event %d", eventID)
 	}
@@ -225,7 +209,7 @@ func (p *localMusicProvider) GetAll() []*masterdata.Music {
 	if err := p.ensureMusics(); err != nil {
 		return nil
 	}
-	return common.CloneMusicList(p.musicAll)
+	return common.CloneMusicList(p.musics.v().all)
 }
 
 func (p *localMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
@@ -235,7 +219,7 @@ func (p *localMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
 	if err := p.ensureMusics(); err != nil {
 		return nil, err
 	}
-	m, ok := p.musicByID[musicID]
+	m, ok := p.musics.v().byID[musicID]
 	if !ok {
 		return nil, fmt.Errorf("music %d not found", musicID)
 	}
@@ -262,7 +246,7 @@ func (p *localMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDi
 	if err := p.ensureDifficulties(); err != nil {
 		return nil, err
 	}
-	diffs, ok := p.diffByMusic[musicID]
+	diffs, ok := p.diffs.v()[musicID]
 	if !ok || len(diffs) == 0 {
 		return nil, fmt.Errorf("no difficulties found for music %d", musicID)
 	}
@@ -278,7 +262,7 @@ func (p *localMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, e
 	if err := p.ensureVocals(); err != nil {
 		return nil, err
 	}
-	vocals, ok := p.vocalByMusic[musicID]
+	vocals, ok := p.vocals.v()[musicID]
 	if !ok || len(vocals) == 0 {
 		return nil, fmt.Errorf("no vocals found for music %d", musicID)
 	}
@@ -297,7 +281,7 @@ func (p *localMusicProvider) GetTags(musicID int) ([]string, error) {
 	if err := p.ensureTags(); err != nil {
 		return nil, err
 	}
-	tags := p.tagByMusic[musicID]
+	tags := p.tags.v()[musicID]
 	return append([]string(nil), tags...), nil
 }
 
@@ -308,7 +292,7 @@ func (p *localMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
 	if err := p.ensureOutsideCharacters(); err != nil {
 		return "", err
 	}
-	name, ok := p.outsideByID[id]
+	name, ok := p.outside.v()[id]
 	if !ok {
 		return "", fmt.Errorf("outside character %d not found", id)
 	}
@@ -319,7 +303,7 @@ func (p *localMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.
 	if err := p.ensureEventMusics(); err != nil {
 		return nil, err
 	}
-	eventIDs, ok := p.eventIDsByMusic[musicID]
+	eventIDs, ok := p.eventMusics.v().eventIDsByMusic[musicID]
 	if !ok || len(eventIDs) == 0 {
 		return nil, fmt.Errorf("no events found for music %d", musicID)
 	}
@@ -346,7 +330,7 @@ func (p *localMusicProvider) GetLimitedTimeMusics(musicID int) []*masterdata.Lim
 	if err := p.ensureLimitedTimeMusics(); err != nil {
 		return nil
 	}
-	items, ok := p.limitedByMusic[musicID]
+	items, ok := p.limited.v()[musicID]
 	if !ok {
 		return nil
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -14,104 +13,100 @@ import (
 // localEventProvider
 // ===========================================================================
 
+type eventIndex struct {
+	all  []*masterdata.Event
+	byID map[int]*masterdata.Event
+}
+
+type eventCardIndex struct {
+	eventByCard  map[int]int
+	cardsByEvent map[int][]int
+}
+
 type localEventProvider struct {
 	store *localStore
 	cards *localCardProvider
 
-	eventsOnce sync.Once
-	eventAll   []*masterdata.Event
-	eventByID  map[int]*masterdata.Event
-	eventsErr  error
-
-	eventCardOnce sync.Once
-	eventByCard   map[int]int
-	cardsByEvent  map[int][]int
-	eventCardErr  error
-
-	deckBonusOnce    sync.Once
-	deckBonusByEvent map[int][]*masterdata.EventDeckBonus
-	deckBonusErr     error
-
-	worldBloomOnce    sync.Once
-	worldBloomByEvent map[int][]*masterdata.WorldBloom
-	worldBloomErr     error
+	events     lazyValue[eventIndex]
+	eventCards lazyValue[eventCardIndex]
+	deckBonus  lazyValue[map[int][]*masterdata.EventDeckBonus]
+	worldBloom lazyValue[map[int][]*masterdata.WorldBloom]
 }
 
 func (p *localEventProvider) ensureEvents() error {
-	p.eventsOnce.Do(func() {
+	return p.events.init(func() (eventIndex, error) {
 		items, err := loadJSON[localEventJSON](p.store, "events.json")
 		if err != nil {
-			p.eventsErr = err
-			return
+			return eventIndex{}, err
 		}
-		p.eventByID = make(map[int]*masterdata.Event, len(items))
-		p.eventAll = make([]*masterdata.Event, 0, len(items))
+		idx := eventIndex{
+			byID: make(map[int]*masterdata.Event, len(items)),
+			all:  make([]*masterdata.Event, 0, len(items)),
+		}
 		for i := range items {
 			m := items[i].toModel()
-			p.eventByID[m.ID] = m
-			p.eventAll = append(p.eventAll, m)
+			idx.byID[m.ID] = m
+			idx.all = append(idx.all, m)
 		}
-		sort.Slice(p.eventAll, func(i, j int) bool {
-			return p.eventAll[i].StartAt < p.eventAll[j].StartAt
+		sort.Slice(idx.all, func(i, j int) bool {
+			return idx.all[i].StartAt < idx.all[j].StartAt
 		})
+		return idx, nil
 	})
-	return p.eventsErr
 }
 
 func (p *localEventProvider) ensureEventCards() error {
-	p.eventCardOnce.Do(func() {
+	return p.eventCards.init(func() (eventCardIndex, error) {
 		items, err := loadJSON[localEventCardJSON](p.store, "eventCards.json")
 		if err != nil {
-			p.eventCardErr = err
-			return
+			return eventCardIndex{}, err
 		}
-		p.eventByCard = make(map[int]int)
-		p.cardsByEvent = make(map[int][]int)
+		idx := eventCardIndex{
+			eventByCard:  make(map[int]int),
+			cardsByEvent: make(map[int][]int),
+		}
 		for _, item := range items {
-			p.cardsByEvent[item.EventID] = append(p.cardsByEvent[item.EventID], item.CardID)
-			if _, ok := p.eventByCard[item.CardID]; !ok {
-				p.eventByCard[item.CardID] = item.EventID
+			idx.cardsByEvent[item.EventID] = append(idx.cardsByEvent[item.EventID], item.CardID)
+			if _, ok := idx.eventByCard[item.CardID]; !ok {
+				idx.eventByCard[item.CardID] = item.EventID
 			}
 		}
+		return idx, nil
 	})
-	return p.eventCardErr
 }
 
 func (p *localEventProvider) ensureDeckBonuses() error {
-	p.deckBonusOnce.Do(func() {
+	return p.deckBonus.init(func() (map[int][]*masterdata.EventDeckBonus, error) {
 		items, err := loadJSON[masterdata.EventDeckBonus](p.store, "eventDeckBonuses.json")
 		if err != nil {
-			p.deckBonusErr = err
-			return
+			return nil, err
 		}
-		p.deckBonusByEvent = make(map[int][]*masterdata.EventDeckBonus)
+		byEvent := make(map[int][]*masterdata.EventDeckBonus)
 		for i := range items {
-			p.deckBonusByEvent[items[i].EventID] = append(
-				p.deckBonusByEvent[items[i].EventID], &items[i])
+			byEvent[items[i].EventID] = append(byEvent[items[i].EventID], &items[i])
 		}
+		return byEvent, nil
 	})
-	return p.deckBonusErr
 }
 
 func (p *localEventProvider) ensureWorldBlooms() error {
-	p.worldBloomOnce.Do(func() {
+	return p.worldBloom.init(func() (map[int][]*masterdata.WorldBloom, error) {
 		items, err := loadJSON[localWorldBloomJSON](p.store, "worldBlooms.json")
 		if err != nil {
-			p.worldBloomErr = err
-			return
+			return nil, err
 		}
-		p.worldBloomByEvent = make(map[int][]*masterdata.WorldBloom)
+		byEvent := make(map[int][]*masterdata.WorldBloom)
 		for i := range items {
 			m := items[i].toModel()
-			p.worldBloomByEvent[m.EventID] = append(p.worldBloomByEvent[m.EventID], m)
+			byEvent[m.EventID] = append(byEvent[m.EventID], m)
 		}
-		for _, wbs := range p.worldBloomByEvent {
+		for _, wbs := range byEvent {
 			sort.Slice(wbs, func(i, j int) bool {
 				return wbs[i].ChapterStartAt < wbs[j].ChapterStartAt
 			})
 		}
+		return byEvent, nil
 	})
-	return p.worldBloomErr
 }
 
 func (p *localEventProvider) GetByID(id int) (*masterdata.Event, error) {
@@ -121,7 +116,7 @@ func (p *localEventProvider) GetByID(id int) (*masterdata.Event, error) {
 	if err := p.ensureEvents(); err != nil {
 		return nil, err
 	}
-	ev, ok := p.eventByID[id]
+	ev, ok := p.events.v().byID[id]
 	if !ok {
 		return nil, fmt.Errorf("event %d not found", id)
 	}
@@ -132,7 +127,7 @@ func (p *localEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) 
 	if err := p.ensureEventCards(); err != nil {
 		return nil, err
 	}
-	eventID, ok := p.eventByCard[cardID]
+	eventID, ok := p.eventCards.v().eventByCard[cardID]
 	if !ok {
 		return nil, fmt.Errorf("no event found for card %d", cardID)
 	}
@@ -143,8 +138,8 @@ func (p *localEventProvider) GetAll() []*masterdata.Event {
 	if err := p.ensureEvents(); err != nil {
 		return nil
 	}
-	result := make([]*masterdata.Event, 0, len(p.eventAll))
-	for _, ev := range p.eventAll {
+	result := make([]*masterdata.Event, 0, len(p.events.v().all))
+	for _, ev := range p.events.v().all {
 		result = append(result, common.CloneEvent(ev))
 	}
 	return result
@@ -154,7 +149,7 @@ func (p *localEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
 	if err := p.ensureEventCards(); err != nil {
 		return nil, err
 	}
-	cardIDs, ok := p.cardsByEvent[eventID]
+	cardIDs, ok := p.eventCards.v().cardsByEvent[eventID]
 	if !ok || len(cardIDs) == 0 {
 		return nil, fmt.Errorf("no cards found for event %d", eventID)
 	}
@@ -196,7 +191,7 @@ func (p *localEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDec
 	if err := p.ensureDeckBonuses(); err != nil {
 		return nil, err
 	}
-	bonuses, ok := p.deckBonusByEvent[eventID]
+	bonuses, ok := p.deckBonus.v()[eventID]
 	if !ok {
 		return nil, nil
 	}
@@ -213,7 +208,7 @@ func (p *localEventProvider) GetBanEvents(charID int) []*masterdata.Event {
 		return nil
 	}
 	result := make([]*masterdata.Event, 0)
-	for _, ev := range p.eventAll {
+	for _, ev := range p.events.v().all {
 		if ev.EventType != "marathon" && ev.EventType != "cheerful_carnival" {
 			continue
 		}
@@ -230,7 +225,7 @@ func (p *localEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.Wo
 	if err := p.ensureWorldBlooms(); err != nil {
 		return nil
 	}
-	wbs, ok := p.worldBloomByEvent[eventID]
+	wbs, ok := p.worldBloom.v()[eventID]
 	if !ok {
 		return nil
 	}

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"strings"
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
@@ -92,11 +91,4 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 	}
 }
 
-// maskPJSKUID masks the middle digits of a PJSK user ID when visible is false.
-// Shows first 3 and last 3 digits with asterisks in between.
-func maskPJSKUID(uid string, visible bool) string {
-	if visible || len(uid) <= 6 {
-		return uid
-	}
-	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
-}
+

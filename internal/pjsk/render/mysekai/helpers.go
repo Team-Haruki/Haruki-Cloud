@@ -13,11 +13,6 @@ import (
 // pathResolver resolves a relative asset path to its full Drawing-API-relative path.
 type pathResolver func(relPath string) string
 
-func extractMysekaiGate(merged map[string]interface{}) (int, int) {
-	gateID, gateLevel, _ := extractMysekaiGateInfo(merged)
-	return gateID, gateLevel
-}
-
 func extractMysekaiGateInfo(merged map[string]interface{}) (int, int, int) {
 	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]interface{})
 	if !ok {

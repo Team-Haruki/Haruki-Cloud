@@ -1,9 +1,7 @@
 package sekai
 
 import (
-	"errors"
 	"fmt"
-	"net"
 	"strings"
 	"sync"
 
@@ -25,22 +23,7 @@ type TrackerClient struct {
 
 func GetTrackerClient() *TrackerClient {
 	trackerOnce.Do(func() {
-		c := resty.New().
-			SetRetryCount(maxRetries).
-			SetRetryWaitTime(retryWaitTime).
-			AddRetryCondition(func(r *resty.Response, err error) bool {
-				if err != nil {
-					if _, ok := errors.AsType[net.Error](err); ok {
-						return true
-					}
-					msg := err.Error()
-					return strings.Contains(msg, "connection refused") ||
-						strings.Contains(msg, "no such host") ||
-						strings.Contains(msg, "i/o timeout") ||
-						strings.Contains(msg, "EOF")
-				}
-				return r.StatusCode() >= 500
-			})
+		c := newRestyClient()
 
 		trackerClient = &TrackerClient{
 			http:   c,

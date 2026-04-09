@@ -4,31 +4,26 @@ import (
 	"context"
 
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
-	pvRewards := a.p.Education().GetChallengeRewardsByCharacter(charID)
+	pvRewards := a.P.Education().GetChallengeRewardsByCharacter(charID)
 	result := make([]*ChallengeReward, len(pvRewards))
 	for i, r := range pvRewards {
 		result[i] = &ChallengeReward{
@@ -42,11 +37,11 @@ func (a *ProviderAdapter) GetChallengeRewardsByCharacter(charID int) []*Challeng
 }
 
 func (a *ProviderAdapter) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
-	return convertResourceBox(a.p.Education().GetResourceBoxByPurpose(purpose, id))
+	return convertResourceBox(a.P.Education().GetResourceBoxByPurpose(purpose, id))
 }
 
 func (a *ProviderAdapter) GetResourceBoxesByPurpose(purpose string) []*ResourceBox {
-	pvBoxes := a.p.Education().GetResourceBoxesByPurpose(purpose)
+	pvBoxes := a.P.Education().GetResourceBoxesByPurpose(purpose)
 	result := make([]*ResourceBox, len(pvBoxes))
 	for i, b := range pvBoxes {
 		result[i] = convertResourceBox(b)
@@ -55,7 +50,7 @@ func (a *ProviderAdapter) GetResourceBoxesByPurpose(purpose string) []*ResourceB
 }
 
 func (a *ProviderAdapter) GetAreaItems() []*AreaItem {
-	pvItems := a.p.Education().GetAreaItems()
+	pvItems := a.P.Education().GetAreaItems()
 	result := make([]*AreaItem, len(pvItems))
 	for i, item := range pvItems {
 		result[i] = convertAreaItem(item)
@@ -64,11 +59,11 @@ func (a *ProviderAdapter) GetAreaItems() []*AreaItem {
 }
 
 func (a *ProviderAdapter) GetAreaItem(id int) *AreaItem {
-	return convertAreaItem(a.p.Education().GetAreaItem(id))
+	return convertAreaItem(a.P.Education().GetAreaItem(id))
 }
 
 func (a *ProviderAdapter) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
-	pvLevels := a.p.Education().GetAreaItemLevels(areaItemID)
+	pvLevels := a.P.Education().GetAreaItemLevels(areaItemID)
 	result := make([]*AreaItemLevel, len(pvLevels))
 	for i, l := range pvLevels {
 		result[i] = convertAreaItemLevel(l)
@@ -77,11 +72,11 @@ func (a *ProviderAdapter) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 }
 
 func (a *ProviderAdapter) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	return convertAreaItemLevel(a.p.Education().GetAreaItemLevel(areaItemID, level))
+	return convertAreaItemLevel(a.P.Education().GetAreaItemLevel(areaItemID, level))
 }
 
 func (a *ProviderAdapter) GetCharacterRank(characterID, rank int) *CharacterRank {
-	pv := a.p.Education().GetCharacterRank(characterID, rank)
+	pv := a.P.Education().GetCharacterRank(characterID, rank)
 	if pv == nil {
 		return nil
 	}
@@ -93,7 +88,7 @@ func (a *ProviderAdapter) GetCharacterRank(characterID, rank int) *CharacterRank
 }
 
 func (a *ProviderAdapter) GetBonds() []*Bond {
-	pvBonds := a.p.Education().GetBonds()
+	pvBonds := a.P.Education().GetBonds()
 	result := make([]*Bond, len(pvBonds))
 	for i, item := range pvBonds {
 		result[i] = &Bond{
@@ -106,7 +101,7 @@ func (a *ProviderAdapter) GetBonds() []*Bond {
 }
 
 func (a *ProviderAdapter) GetBondLevels() []*BondLevel {
-	pvLevels := a.p.Education().GetBondLevels()
+	pvLevels := a.P.Education().GetBondLevels()
 	result := make([]*BondLevel, len(pvLevels))
 	for i, item := range pvLevels {
 		result[i] = &BondLevel{
@@ -118,7 +113,7 @@ func (a *ProviderAdapter) GetBondLevels() []*BondLevel {
 }
 
 func (a *ProviderAdapter) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
-	pv := a.p.Education().GetGameCharacterStyle(gameID)
+	pv := a.P.Education().GetGameCharacterStyle(gameID)
 	if pv == nil {
 		return nil
 	}
@@ -130,7 +125,7 @@ func (a *ProviderAdapter) GetGameCharacterStyle(gameID int) *GameCharacterStyle 
 }
 
 func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
-	pvRequirements, maxPlayLimit := a.p.Education().GetLeaderMissionRequirements()
+	pvRequirements, maxPlayLimit := a.P.Education().GetLeaderMissionRequirements()
 	result := make([]LeaderMissionRequirement, len(pvRequirements))
 	for i, item := range pvRequirements {
 		result[i] = LeaderMissionRequirement{
@@ -142,7 +137,7 @@ func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequire
 }
 
 func (a *ProviderAdapter) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
-	pv := a.p.Education().GetMysekaiGateLevel(gateID, level)
+	pv := a.P.Education().GetMysekaiGateLevel(gateID, level)
 	if pv == nil {
 		return nil
 	}
@@ -154,7 +149,7 @@ func (a *ProviderAdapter) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLev
 }
 
 func (a *ProviderAdapter) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
-	pv := a.p.Education().GetShopItemByResourceBoxID(resourceBoxID)
+	pv := a.P.Education().GetShopItemByResourceBoxID(resourceBoxID)
 	if pv == nil {
 		return nil
 	}

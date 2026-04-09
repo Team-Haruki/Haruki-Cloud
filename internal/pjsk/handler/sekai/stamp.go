@@ -56,14 +56,6 @@ func parseStampIDs(args string) []int {
 	return ids
 }
 
-func parseStampPage(args string) (int, bool) {
-	page, remaining, ok := parseStampPageWithRemaining(args)
-	if !ok || strings.TrimSpace(remaining) != "" {
-		return 0, false
-	}
-	return page, true
-}
-
 func parseStampPageWithRemaining(args string) (int, string, bool) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) < 2 {

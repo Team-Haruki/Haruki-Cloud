@@ -266,18 +266,6 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 	return requests
 }
 
-func (c *Controller) findEventRank(results []userdata.RawUserEventResult, eventID int) int {
-	if eventID == 0 {
-		return 0
-	}
-	for _, item := range results {
-		if item.EventID == eventID {
-			return item.Rank
-		}
-	}
-	return 0
-}
-
 func buildMusicCounts(clears []userdata.RawMusicClear, stats []userdata.RawMusicResult) []drawing.MusicClearCount {
 	difficulties := []string{"easy", "normal", "hard", "expert", "master", "append"}
 	result := make([]drawing.MusicClearCount, 0, len(difficulties))

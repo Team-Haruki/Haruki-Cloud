@@ -1,8 +1,6 @@
 package provider
 
 import (
-	"sync"
-
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -11,24 +9,15 @@ import (
 // ===========================================================================
 
 type localStampProvider struct {
-	store *localStore
-
-	once   sync.Once
-	stamps []masterdata.Stamp
-	err    error
+	store  *localStore
+	stamps lazyValue[[]masterdata.Stamp]
 }
 
 func (p *localStampProvider) GetAll() ([]masterdata.Stamp, error) {
-	p.once.Do(func() {
-		items, err := loadJSON[masterdata.Stamp](p.store, "stamps.json")
-		if err != nil {
-			p.err = err
-			return
-		}
-		p.stamps = items
-	})
-	if p.err != nil {
-		return nil, p.err
+	if err := p.stamps.init(func() ([]masterdata.Stamp, error) {
+		return loadJSON[masterdata.Stamp](p.store, "stamps.json")
+	}); err != nil {
+		return nil, err
 	}
-	return append([]masterdata.Stamp(nil), p.stamps...), nil
+	return append([]masterdata.Stamp(nil), p.stamps.v()...), nil
 }

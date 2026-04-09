@@ -69,8 +69,7 @@ func CachedJSONResponse(
 ) error {
 	resp := BuildResponseMap(status, message, data)
 	if redisClient != nil {
-		if err := harukiRedis.SetCache(ctx, redisClient, key, resp, ttl); err != nil {
-		}
+		_ = harukiRedis.SetCache(ctx, redisClient, key, resp, ttl) // best-effort cache write
 	}
 	return c.Status(status).JSON(resp)
 }
@@ -123,6 +122,38 @@ func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, nam
 	}
 	return key, nil, false, nil
 }
+
+// WithCache is a convenience wrapper that handles the cache-check boilerplate.
+// fetchFn receives the cache key and should return (data, error). On success
+// the data is written as a cached JSON response; on cache hit the handler
+// returns immediately. If fetchFn returns a *CacheBypassError the handler
+// returns that error's response directly (for 404 / 400 cases).
+func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn func(key string) (interface{}, error)) error {
+	ctx := c.Context()
+	key, cached, hit, err := CacheQuery(ctx, c, redisClient, namespace)
+	if err != nil {
+		return InternalError(c)
+	}
+	if hit {
+		return c.Status(fiber.StatusOK).JSON(cached)
+	}
+	data, err := fetchFn(key)
+	if err != nil {
+		if bypass, ok := err.(*CacheBypassError); ok {
+			return bypass.Response
+		}
+		return InternalError(c)
+	}
+	return CachedJSONResponse(ctx, c, redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", data)
+}
+
+// CacheBypassError wraps a pre-built fiber response for WithCache fetch functions
+// that need to return non-200 responses (e.g., 404).
+type CacheBypassError struct {
+	Response error
+}
+
+func (e *CacheBypassError) Error() string { return "cache bypass" }
 
 // ================= User ID Extraction =================
 

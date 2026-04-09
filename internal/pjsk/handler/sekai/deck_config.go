@@ -20,7 +20,7 @@ func extractDeckCardConfigs(args string, params *deckAutoQueryParams, defaultNoC
 	}
 
 	args = strings.TrimSpace(strings.Join(remaining, " "))
-	globalPatch := renderdeck.CardConfigPatch{}
+	var globalPatch renderdeck.CardConfigPatch
 	args, globalPatch = extractGlobalDeckCardConfig(args)
 	applyGlobalDeckCardConfig(params, globalPatch)
 	if containsDeckKeyword(args, deckKeepAfterTrainingKeywords) {

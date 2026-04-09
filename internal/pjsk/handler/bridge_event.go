@@ -1,17 +1,13 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
 	"haruki-cloud/api/bot/onebot11"
 	eventdb "haruki-cloud/database/sekai/event"
-	"haruki-cloud/internal/pjsk/parser"
-	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/event"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -35,7 +31,7 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = eventCtrl.RenderEventList(q)
 	case "event-record":
-		req, buildErr := buildEventRecordFromSnapshot(rc.Ctx, rc.Cmd, rc.App, region)
+		req, buildErr := buildEventRecordFromSnapshot(rc, region)
 		if buildErr != nil {
 			return nil, buildErr
 		}
@@ -52,8 +48,8 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 // buildEventRecordFromSnapshot constructs an EventRecordRequest from live
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
-func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, region renderregion.Value) (*drawing.EventRecordRequest, error) {
-	snapshot := resolveLiveSnapshot(ctx, r, app, false)
+func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value) (*drawing.EventRecordRequest, error) {
+	snapshot := resolveLiveSnapshot(rc, false)
 	if snapshot == nil {
 		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
 	}
@@ -68,9 +64,9 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 		rankByEvent[result.EventID] = result.Rank
 	}
 
-	eventEntities, err := app.Sekai.Event.Query().
+	eventEntities, err := rc.App.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
-		All(ctx)
+		All(rc.Ctx)
 	if err != nil || len(eventEntities) == 0 {
 		return nil, fmt.Errorf("event master data not available")
 	}
@@ -104,7 +100,7 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 		if _, isWL := wlEventIDs[ue.EventID]; isWL {
 			continue // world bloom events handled below
 		}
-		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, app.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -137,7 +133,7 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 
 	wlEventInfo := make([]drawing.EventHistory, 0)
 	for eventID, agg := range wlMap {
-		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, agg.totalPoint, app.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, agg.totalPoint, rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -148,7 +144,7 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 		}
 		// Use first character for WL icon
 		if len(agg.charIDs) > 0 && agg.charIDs[0] > 0 {
-			icon := charaIconPath(app.Assets, agg.charIDs[0])
+			icon := charaIconPath(rc.App.Assets, agg.charIDs[0])
 			hist.WlCharaIconPath = &icon
 		}
 		wlEventInfo = append(wlEventInfo, *hist)
@@ -162,7 +158,7 @@ func buildEventRecordFromSnapshot(ctx context.Context, r *parser.ResolvedCommand
 		if _, exists := wlMap[ue.EventID]; exists {
 			continue
 		}
-		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, app.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -214,45 +210,6 @@ func sortEventHistory(items []drawing.EventHistory) {
 		sj, _ := items[j].StartAt.(float64)
 		return si > sj
 	})
-}
-
-// loadMasterMapByID loads a JSON array file and indexes by "id" field.
-func loadMasterMapByID(dir, filename string) map[int]map[string]interface{} {
-	if dir == "" {
-		return nil
-	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
-	if err != nil {
-		return nil
-	}
-	var items []map[string]interface{}
-	if err := json.Unmarshal(data, &items); err != nil {
-		return nil
-	}
-	result := make(map[int]map[string]interface{}, len(items))
-	for _, item := range items {
-		id := intVal(item, "id")
-		if id != 0 {
-			result[id] = item
-		}
-	}
-	return result
-}
-
-// loadMasterList loads a JSON array file.
-func loadMasterList(dir, filename string) []map[string]interface{} {
-	if dir == "" {
-		return nil
-	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
-	if err != nil {
-		return nil
-	}
-	var items []map[string]interface{}
-	if err := json.Unmarshal(data, &items); err != nil {
-		return nil
-	}
-	return items
 }
 
 func stringVal(m map[string]interface{}, key string) string {

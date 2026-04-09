@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"sync"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -55,25 +54,23 @@ func TestCardMatchesUnitFilterSupportsExplicitMainAndSupportUnit(t *testing.T) {
 }
 
 func TestLocalCardProviderFilterHonorsMainUnitConstraint(t *testing.T) {
-	characters := &localCharacterProvider{
-		charByID: map[int]*masterdata.Character{
-			1: {ID: 1, Unit: "idol"},
-			2: {ID: 2, Unit: "piapro"},
-			3: {ID: 3, Unit: "piapro"},
-		},
+	charMap := map[int]*masterdata.Character{
+		1: {ID: 1, Unit: "idol"},
+		2: {ID: 2, Unit: "piapro"},
+		3: {ID: 3, Unit: "piapro"},
 	}
-	characters.charOnce.Do(func() {})
+	characters := &localCharacterProvider{}
+	characters.chars.init(func() (map[int]*masterdata.Character, error) { return charMap, nil })
 
-	provider := &localCardProvider{
-		characters: characters,
-		cardAll: []*masterdata.Card{
+	cardData := cardIndex{
+		all: []*masterdata.Card{
 			{ID: 101, CharacterID: 1, SupportUnit: ""},
 			{ID: 102, CharacterID: 2, SupportUnit: "idol"},
 			{ID: 103, CharacterID: 3, SupportUnit: ""},
 		},
 	}
-	provider.cardsOnce = sync.Once{}
-	provider.cardsOnce.Do(func() {})
+	provider := &localCardProvider{characters: characters}
+	provider.cards.init(func() (cardIndex, error) { return cardData, nil })
 
 	results, err := provider.Filter(&CardFilter{MainUnit: "idol", SupportUnit: "none"})
 	if err != nil {

@@ -187,7 +187,7 @@ func (p *RemoteForecastProvider) fetchMoesekai(ctx context.Context, region strin
 		return legacyItems, nil
 	}
 	if rkErr != nil && legacyErr != nil {
-		return nil, fmt.Errorf("rk=%v; legacy=%v", rkErr, legacyErr)
+		return nil, fmt.Errorf("rk=%w; legacy=%w", rkErr, legacyErr)
 	}
 	if rkErr != nil {
 		return nil, rkErr

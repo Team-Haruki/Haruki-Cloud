@@ -1556,8 +1556,8 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 	}
 
 	// The handler should have processed the card query
-	status, _ := envelope["status"]
 	message, _ := envelope["message"].(string)
+	status := envelope["status"]
 	t.Logf("Noise IK response: status=%v message=%s", status, message)
 
 	if message != "ok" && message != "render failed" {

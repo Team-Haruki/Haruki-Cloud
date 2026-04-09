@@ -29,7 +29,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			Query:            rc.Cmd.Query,
 			Region:           rc.Cmd.Region,
 			UseAfterTraining: &useAfterTraining,
-			DetailedProfile:  resolveCardBoxDetailedProfile(rc.Ctx, rc.Cmd, rc.App),
+			DetailedProfile:  resolveCardBoxDetailedProfile(rc),
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		queries := []card.Query{q}
@@ -57,7 +57,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, unsupportedModeError("card", rc.Cmd.Mode)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	return rc.ImageMessage(data)
 }

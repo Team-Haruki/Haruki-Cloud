@@ -12,6 +12,8 @@
 > - 2026-04-09 本轮继续追加：`education` / `stamp` / `vlive` 也已接入请求级 source/provider 克隆；主链 render provider 的 DB 查询上下文债务已基本清完，剩余 `Background()` 主要在本地调试 helper 和 nil-ctx 兜底逻辑
 > - 2026-04-09 本轮再补一层：`internal/pjsk/render/userdata` 的 `DefaultSnapshotFactory.Build(ctx, ...)` 已真正使用 `ctx`，live/local snapshot 构建入口也已补上 context-aware 版本；leader 图路径解析和 MySekai merge helper 进一步收口
 > - 2026-04-09 再补脚本侧：`cmd/migrate` 已去除硬编码 Sekai DSN，改为环境变量/配置文件解析，并接入 signal-aware context
+> - 2026-04-09 阶段 B 结构拆分：`internal/pjsk/render/sk/` 已继续细拆为 `controller_base.go` / `controller_line_requests.go` / `controller_query_requests.go` / `controller_speed_requests.go` / `controller_trace_requests.go` / `controller_trace.go` / `controller_validate.go` / `controller_tracker_identity.go` / `controller_tracker_name.go` / `controller_tracker_metrics.go` / `controller_meta.go` / `controller_winrate.go`；`internal/pjsk/handler/resolver.go` 已按 target/snapshot/mysekai/profile/binding 职责拆分；`executeSK()` 已收口为薄调度函数并下沉到分模式 handler
+> - 2026-04-09 阶段 B 本轮继续推进：`internal/pjsk/render/deck/controller.go` 已从 894 行进一步按职责拆为 `controller.go` / `controller_engine.go` / `controller_request.go` / `controller_metadata.go` / `controller_options.go` / `controller_resolve.go`，当前 `controller.go` 主文件已降到 183 行
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -373,6 +375,28 @@ func executeSK(rc *RequestContext)
 | helpers.go | 291 | optionString/Int/Float, normalizeRecommend*, resolveCharacterIconPath, resolveUnitIconPath, defaultDeckConfig*, toInterfaceSlice/Map, calculateDeckCardPower |
 
 **controller.go 从 1184 行降至 918 行**（减少 22%）
+
+**2026-04-09 当前状态补充**：
+
+在早期把 helper 提出后，`controller.go` 仍长期保持在 894 行左右，职责依然混合了：
+
+- 自动推荐入口 / engine 调用
+- option 构造与 patch
+- drawing request 组装
+- event / profile / snapshot 解析
+
+本轮已继续按职责拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller.go` | 183 | Controller 结构、构造器、注册、入口方法 |
+| `controller_engine.go` | 134 | auto recommend engine 调用、基础 option 构造 |
+| `controller_request.go` | 169 | drawing request 组装与请求字段映射 |
+| `controller_metadata.go` | 142 | 活动 / WL / challenge 元数据回填 |
+| `controller_options.go` | 159 | option override、deck config patch、live 参数规范化 |
+| `controller_resolve.go` | 147 | profile / snapshot / source / event banner 解析 |
+
+也就是说，`deck` 这块现在已经从“一个超大控制器文件”进入“多文件职责分层”状态，后续剩余热点主要转移到 `remote_engine.go`、`mysekai/controller.go` 与 `education/snapshot_build.go`。
 
 ---
 
@@ -838,3 +862,85 @@ func resolveBindingWithFallback(
 ---
 
 > 文档更新日期：2026-04-01
+>
+> 2026-04-10 追加：阶段 A-D 代码审计与架构优化已完成
+
+---
+
+## 阶段 A-D 代码审计与架构优化（2026-04-10）
+
+在 P0-R28 基础上，对全项目进行系统性代码审计，发现 18 个改进点并按 A-D 四阶段执行。
+
+### 阶段 A：快速修复 ✅（commit 220ed19）
+
+- A1: 删除 bridge_event + cache_helpers 7 个未调用函数
+- A2: 合并重复的 UUID 掩码函数（arrestDisplayUID → maskPJSKUID）
+- A3: 修复 bridge_card.go 隐式 (nil, nil) return
+- A4: 补充 honor adapter 缺失的 WithContext() 方法
+- A5: checkdata 绑定解析用 resolveBindingWithFallback 替换重复闭包
+
+### 阶段 C：模式统一 ✅（commit 3a91f48）
+
+- C1: helper 函数签名统一为 *RequestContext（resolver.go, bridge_event/sk/card, runtime.go）
+- C2: api/helper.go 错误处理清理
+- C3: cmd/server 初始化模式统一（init_database.go, init_services.go, server.go）
+- C4: API 缓存中间件抽象（helper.go + chunithm/pjsk 路由）
+
+### 阶段 D：架构优化 ✅（commit 22b12df）
+
+- **D1: ProviderAdapter 基类**：创建 `provider.ProviderAdapterBase`，嵌入 `MasterDataProvider` 并提供 `DefaultRegion()` 和 `CloneWithContext()` 方法。9 个 render 模块的 adapter_provider.go 均改为嵌入基类。
+- **D2: contextual.go 泛型简化**：已分析，因 Go 泛型无法抽象不同接口方法集而标记为 blocked（需代码生成）
+- **D3: lazyValue[T] 泛型**：创建 `provider/lazy.go`，用 `lazyValue[T]` 替换 11 个 local_*.go 文件中的 40+ 个 `sync.Once` + error + data 字段三元组。多值 loader 使用私有 wrapper struct（cardIndex, eventIndex, musicIndex 等）。
+- **D4: Sekai 客户端基础提取**：创建 `sekai/client_base.go`，提取共享的 `newRestyClient()` 和 `isRetryable` 重试逻辑。3 个 HTTP 客户端（api, toolbox, tracker）共享同一份重试配置。
+
+### 净效果
+
+- 减少约 110 行重复代码
+- 消除 40+ 个 sync.Once 字段三元组
+- 消除 9× 重复的 DefaultRegion/WithContext 模板
+- 消除 3× 重复的 resty 重试逻辑
+
+## 阶段 E: staticcheck 驱动的技术债清理
+
+**提交**: Phase E tech debt cleanup
+
+### 完成项目
+
+#### E1: 死代码清除（21 个函数/变量，~400 行）
+通过 staticcheck U1000 检测，移除以下死代码：
+- `handler/defaults.go`: regionValueWithDefault
+- `handler/sekai/score_board_params.go`: 8 个未使用的 musicBoard 解析器
+- `handler/sekai/stamp.go`: parseStampPage
+- `render/card/supply.go`: formatSupplyType, matchesSupplyFilter
+- `render/education/controller.go`: makeRelative
+- `render/event/builder.go`: normalizeRegion
+- `render/music/controller.go`: boardDefaultDifficulties
+- `render/mysekai/helpers.go`: extractMysekaiGate
+- `render/profile/controller_helpers.go`: findEventRank
+- `render/provider/db_cards.go`: 4 个未使用方法
+- `render/userdata/local_helpers.go`: mergeMySekaiJSON
+- `api/bot/pjsk/handler.go`: flattenOneBotSegments
+- `cmd/server/init_services.go`: initPJSKParserIfEnabled
+- `utils/drawing/cache_helpers.go`: 5 个未使用 helper
+- `render/sk/controller_requests.go`: 移除残留的预拆分文件（505 行）
+
+#### E2: 错误处理修复
+- `forecast_provider.go`: `%v` → `%w`（Go 1.20+ 多 error wrapping）
+- `controller_line_requests.go`: `%v` → `%w`（多 error wrapping）
+- `redis/clearcache.go`: `errors.New(fmt.Sprintf())` → `fmt.Errorf(%w)`
+- `handler/sekai/handler.go`: 错误字符串小写化（ST1005）
+
+#### E3: 代码质量修复
+- `deck_config.go`: 移除多余零值初始化（SA4006）
+- `parser.go`, `card/parser.go`: 移除未使用的最后赋值（SA4006）
+- `local_helpers.go`: 使用类型转换代替结构体字面量（S1016）
+- `provider_test.go`: 修复始终为真的比较（SA4023）
+- `handler_test.go`: 移除不必要的空白标识符赋值（S1005）
+
+#### E4: 评估决策
+- **runtime.go sync.Once**: 经分析，不迁移到 lazyValue[T]。runtime.go 使用"nil-on-failure"模式（错误被有意丢弃），与 lazyValue 的错误传播模式不同
+- **provider/db_*.go context.Background()**: 经分析，保持现状。nil-ctx 回退是 contextual wrapper 渐进式 context 传播的桥接模式，改变需要接口级别的破坏性变更
+
+### 净效果
+- staticcheck 非测试非 SA1012 问题：从 26+ 降至 1（仅剩 gacha.go WIP stub）
+- 移除 ~400 行死代码 + 505 行残留文件

@@ -21,8 +21,6 @@ var hiddenMusicIDs = map[int]struct{}{
 	290: {},
 }
 
-var boardDefaultDifficulties = []string{"easy", "normal", "hard", "expert", "master", "append"}
-
 type Controller struct {
 	sources               *regionsource.Registry[DataSource]
 	drawing               *drawing.HarukiDrawingClient

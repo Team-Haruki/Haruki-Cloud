@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -12,45 +11,37 @@ import (
 // ===========================================================================
 
 type localPlayerFrameProvider struct {
-	store *localStore
-
-	frameOnce sync.Once
-	frameByID map[int]*masterdata.PlayerFrame
-	frameErr  error
-
-	groupOnce sync.Once
-	groupByID map[int]*masterdata.PlayerFrameGroup
-	groupErr  error
+	store  *localStore
+	frames lazyValue[map[int]*masterdata.PlayerFrame]
+	groups lazyValue[map[int]*masterdata.PlayerFrameGroup]
 }
 
 func (p *localPlayerFrameProvider) ensureFrames() error {
-	p.frameOnce.Do(func() {
+	return p.frames.init(func() (map[int]*masterdata.PlayerFrame, error) {
 		items, err := loadJSON[masterdata.PlayerFrame](p.store, "playerFrames.json")
 		if err != nil {
-			p.frameErr = err
-			return
+			return nil, err
 		}
-		p.frameByID = make(map[int]*masterdata.PlayerFrame, len(items))
+		byID := make(map[int]*masterdata.PlayerFrame, len(items))
 		for i := range items {
-			p.frameByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.frameErr
 }
 
 func (p *localPlayerFrameProvider) ensureGroups() error {
-	p.groupOnce.Do(func() {
+	return p.groups.init(func() (map[int]*masterdata.PlayerFrameGroup, error) {
 		items, err := loadJSON[masterdata.PlayerFrameGroup](p.store, "playerFrameGroups.json")
 		if err != nil {
-			p.groupErr = err
-			return
+			return nil, err
 		}
-		p.groupByID = make(map[int]*masterdata.PlayerFrameGroup, len(items))
+		byID := make(map[int]*masterdata.PlayerFrameGroup, len(items))
 		for i := range items {
-			p.groupByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.groupErr
 }
 
 func (p *localPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error) {
@@ -60,7 +51,7 @@ func (p *localPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, err
 	if err := p.ensureFrames(); err != nil {
 		return nil, err
 	}
-	f, ok := p.frameByID[id]
+	f, ok := p.frames.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("player frame %d not found", id)
 	}
@@ -75,7 +66,7 @@ func (p *localPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrame
 	if err := p.ensureGroups(); err != nil {
 		return nil, err
 	}
-	g, ok := p.groupByID[id]
+	g, ok := p.groups.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("player frame group %d not found", id)
 	}

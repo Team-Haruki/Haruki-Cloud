@@ -6,35 +6,30 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to card.DataSource.
 type ProviderAdapter struct {
-	p provider.MasterDataProvider
+	provider.ProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{p: p}
+	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	clone := *a
-	clone.p = provider.WithContext(a.p, ctx)
-	return &clone
+	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
-func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
-
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
-	return a.p.Cards().GetByID(id)
+	return a.P.Cards().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
-	return a.p.Cards().GetByCharacterAndSeq(characterID, seq)
+	return a.P.Cards().GetByCharacterAndSeq(characterID, seq)
 }
 
 func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
@@ -44,7 +39,7 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 
 	eventID := info.EventID
 	if eventID == 0 && info.BanCharID != 0 {
-		events := a.p.Events().GetBanEvents(info.BanCharID)
+		events := a.P.Events().GetBanEvents(info.BanCharID)
 		if len(events) == 0 {
 			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
 		}
@@ -54,7 +49,7 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 		eventID = events[info.BanSeq-1].ID
 	}
 
-	return a.p.Cards().Filter(&provider.CardFilter{
+	return a.P.Cards().Filter(&provider.CardFilter{
 		CharacterID: info.CharacterID,
 		Unit:        info.Unit,
 		MainUnit:    info.MainUnit,
@@ -69,33 +64,33 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 }
 
 func (a *ProviderAdapter) GetCharacterColorCode(id int) (string, bool) {
-	return a.p.Characters().GetColorCode(id)
+	return a.P.Characters().GetColorCode(id)
 }
 
 func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error) {
-	return a.p.Characters().GetByID(id)
+	return a.P.Characters().GetByID(id)
 }
 
 func (a *ProviderAdapter) GetUnitByCardID(cardID int) (string, error) {
-	return a.p.Cards().GetUnitByCardID(cardID)
+	return a.P.Cards().GetUnitByCardID(cardID)
 }
 
 func (a *ProviderAdapter) GetCardSupplyType(card *masterdata.Card) string {
-	return a.p.Cards().GetSupplyType(card)
+	return a.P.Cards().GetSupplyType(card)
 }
 
 func (a *ProviderAdapter) GetSkillByID(id int) (*masterdata.Skill, error) {
-	return a.p.Skills().GetByID(id)
+	return a.P.Skills().GetByID(id)
 }
 
 func (a *ProviderAdapter) FormatSkillDescription(skill *masterdata.Skill, cardCharacterID int) string {
-	return a.p.Skills().FormatDescription(skill, cardCharacterID)
+	return a.P.Skills().FormatDescription(skill, cardCharacterID)
 }
 
 func (a *ProviderAdapter) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
-	return a.p.Cards().GetGachaByCardID(cardID)
+	return a.P.Cards().GetGachaByCardID(cardID)
 }
 
 func (a *ProviderAdapter) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
-	return a.p.Cards().GetCostume3dsByCardID(cardID)
+	return a.P.Cards().GetCostume3dsByCardID(cardID)
 }

@@ -3,7 +3,6 @@ package provider
 import (
 	"fmt"
 	"sort"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -13,56 +12,54 @@ import (
 // localGachaProvider
 // ===========================================================================
 
+type gachaIndex struct {
+	all  []*masterdata.Gacha
+	byID map[int]*masterdata.Gacha
+}
+
 type localGachaProvider struct {
-	store *localStore
-
-	gachaOnce sync.Once
-	gachaAll  []*masterdata.Gacha
-	gachaByID map[int]*masterdata.Gacha
-	gachaErr  error
-
-	cardOnce sync.Once
-	cardByID map[int]*masterdata.Card
-	cardErr  error
+	store  *localStore
+	gachas lazyValue[gachaIndex]
+	cards  lazyValue[map[int]*masterdata.Card]
 }
 
 func (p *localGachaProvider) ensureGachas() error {
-	p.gachaOnce.Do(func() {
+	return p.gachas.init(func() (gachaIndex, error) {
 		items, err := loadJSON[masterdata.Gacha](p.store, "gachas.json")
 		if err != nil {
-			p.gachaErr = err
-			return
+			return gachaIndex{}, err
 		}
-		p.gachaByID = make(map[int]*masterdata.Gacha, len(items))
-		p.gachaAll = make([]*masterdata.Gacha, 0, len(items))
+		idx := gachaIndex{
+			byID: make(map[int]*masterdata.Gacha, len(items)),
+			all:  make([]*masterdata.Gacha, 0, len(items)),
+		}
 		for i := range items {
 			g := &items[i]
-			p.gachaByID[g.ID] = g
-			p.gachaAll = append(p.gachaAll, g)
+			idx.byID[g.ID] = g
+			idx.all = append(idx.all, g)
 		}
-		sort.Slice(p.gachaAll, func(i, j int) bool {
-			if p.gachaAll[i].StartAt == p.gachaAll[j].StartAt {
-				return p.gachaAll[i].ID > p.gachaAll[j].ID
+		sort.Slice(idx.all, func(i, j int) bool {
+			if idx.all[i].StartAt == idx.all[j].StartAt {
+				return idx.all[i].ID > idx.all[j].ID
 			}
-			return p.gachaAll[i].StartAt > p.gachaAll[j].StartAt
+			return idx.all[i].StartAt > idx.all[j].StartAt
 		})
+		return idx, nil
 	})
-	return p.gachaErr
 }
 
 func (p *localGachaProvider) ensureCards() error {
-	p.cardOnce.Do(func() {
+	return p.cards.init(func() (map[int]*masterdata.Card, error) {
 		items, err := loadJSON[masterdata.Card](p.store, "cards.json")
 		if err != nil {
-			p.cardErr = err
-			return
+			return nil, err
 		}
-		p.cardByID = make(map[int]*masterdata.Card, len(items))
+		byID := make(map[int]*masterdata.Card, len(items))
 		for i := range items {
-			p.cardByID[items[i].ID] = &items[i]
+			byID[items[i].ID] = &items[i]
 		}
+		return byID, nil
 	})
-	return p.cardErr
 }
 
 func (p *localGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
@@ -72,7 +69,7 @@ func (p *localGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
 	if err := p.ensureGachas(); err != nil {
 		return nil, err
 	}
-	g, ok := p.gachaByID[id]
+	g, ok := p.gachas.v().byID[id]
 	if !ok {
 		return nil, fmt.Errorf("gacha %d not found", id)
 	}
@@ -83,7 +80,7 @@ func (p *localGachaProvider) GetAll() []*masterdata.Gacha {
 	if err := p.ensureGachas(); err != nil {
 		return nil
 	}
-	return common.CloneGachaList(p.gachaAll)
+	return common.CloneGachaList(p.gachas.v().all)
 }
 
 func (p *localGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
@@ -93,7 +90,7 @@ func (p *localGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
 	if err := p.ensureCards(); err != nil {
 		return nil, err
 	}
-	card, ok := p.cardByID[id]
+	card, ok := p.cards.v()[id]
 	if !ok {
 		return nil, fmt.Errorf("card %d not found", id)
 	}

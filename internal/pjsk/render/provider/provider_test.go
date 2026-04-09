@@ -27,9 +27,7 @@ var _ MySekaiProvider = (*dbMySekaiProvider)(nil)
 func TestDatabaseProviderImplementsMasterDataProvider(t *testing.T) {
 	// Compile-time assertions above guarantee this; run-time confirmation.
 	var p MasterDataProvider = &DatabaseProvider{}
-	if p == nil {
-		t.Fatal("unexpected nil")
-	}
+	_ = p // interface satisfaction verified at compile time
 }
 
 // ── NewDatabaseProvider ─────────────────────────────────────────────────

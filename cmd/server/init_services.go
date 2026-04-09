@@ -5,16 +5,12 @@ import (
 	"encoding/hex"
 	"os"
 	"strings"
-	"time"
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
-	"haruki-cloud/internal/pjsk/chardata"
-	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
-	"haruki-cloud/internal/pjsk/parser"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/censor"
@@ -81,9 +77,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		mainLogger.Errorf("PJSK render runtime requires sekai.enabled=true")
 		os.Exit(1)
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
@@ -140,36 +134,6 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	return runtime
 }
 
-func initPJSKParserIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client) *parser.GlobalCommandResolver {
-	if !harukiConfig.Cfg.PJSK.Enabled || sekaiClient == nil {
-		return nil
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	parserCfg := harukiConfig.Cfg.PJSK.Parser
-	region := parserCfg.ChardataRegion
-	if region == "" {
-		region = "jp"
-	}
-	refreshInterval := parserCfg.ChardataRefreshInterval
-	if refreshInterval <= 0 {
-		refreshInterval = time.Hour
-	}
-
-	loader := chardata.NewLoader(sekaiClient, region, harukiLogger.NewLoggerFromGlobal("Chardata"))
-	if err := loader.Load(ctx); err != nil {
-		mainLogger.Warnf("chardata initial load failed (parser will use empty nicknames): %v", err)
-	}
-	loader.StartBackgroundRefresh(ctx, refreshInterval)
-
-	sekaiHandler.EnsureCommandHandlersRegistered(loader.Nicknames())
-	resolver := parser.NewGlobalCommandResolver(loader.Nicknames())
-	mainLogger.Infof("PJSK parser initialized (chardata_region=%s, refresh=%s)", region, refreshInterval)
-	return resolver
-}
-
 func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
 	if keyHex == "" {
@@ -199,9 +163,7 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 	if strings.TrimSpace(cfg.CensorDBType) == "" || strings.TrimSpace(cfg.CensorDBURL) == "" {
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
 	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
 	if err != nil {

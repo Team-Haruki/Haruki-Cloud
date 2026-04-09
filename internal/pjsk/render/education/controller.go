@@ -282,16 +282,3 @@ func (c *Controller) characterIconPath(charID int) string {
 func (c *Controller) findStaticIcon(filename string) string {
 	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, filename)
 }
-
-func makeRelative(helper *assets.AssetHelper, target string) string {
-	if helper == nil {
-		return filepath.ToSlash(filepath.Clean(target))
-	}
-	for _, root := range helper.Roots() {
-		relative := assets.MakeRelative(root, target)
-		if relative != target {
-			return relative
-		}
-	}
-	return filepath.ToSlash(filepath.Clean(target))
-}

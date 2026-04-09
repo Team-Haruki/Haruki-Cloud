@@ -145,7 +145,6 @@ func (p *CardParser) tryParseFilter(args string) *CardQueryInfo {
 
 	if res := p.extractor.ExtractYear(currentArgs); res.Found {
 		info.Year = res.Value
-		currentArgs = res.Remaining
 		matched = true
 	}
 

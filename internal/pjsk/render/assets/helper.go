@@ -193,6 +193,18 @@ func RegionAssetDirByMode(region, mode string) string {
 	return "asset/" + normalizedRegion + "-assets/" + normalizedMode
 }
 
+// 和Drawing不同，Cloud的asset_dirs没有挂载到asset/下
+func CloudRegionAssetDirByMode(region, mode string) string {
+	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
+	if normalizedRegion == "" {
+		normalizedRegion = "jp"
+	}
+	normalizedMode := strings.ToLower(strings.TrimSpace(mode))
+	if normalizedMode == "" {
+		normalizedMode = RegionAssetStartApp
+	}
+	return normalizedRegion + "-assets/" + normalizedMode
+}
 func RegionAssetDirs(region string) []string {
 	return []string{
 		RegionAssetDirByMode(region, RegionAssetStartApp),

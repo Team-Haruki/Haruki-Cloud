@@ -68,6 +68,12 @@ func resolveEventDetailOrList(ctx SekaiHandlerContext, preferList bool) (*parser
 		}), nil
 	}
 
+	if preferList {
+		if params, ok := resolveAmbiguousEventListFilter(args); ok {
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEvent, "event-list", params), nil
+		}
+	}
+
 	info, err := parser.NewEventParser(rendercard.DefaultCharacterNicknames()).Parse(args)
 	if err != nil {
 		return nil, fmt.Errorf("活动查询参数错误: %q\n%s\n%s", args, querySingleEventHelp, queryMultiEventHelp)
@@ -126,6 +132,19 @@ func resolveEventDetailOrList(ctx SekaiHandlerContext, preferList bool) (*parser
 		return nil, fmt.Errorf("活动查询参数错误: %q\n%s\n%s", args, querySingleEventHelp, queryMultiEventHelp)
 	}
 	return makeResolvedCmdWithParams(ctx, parser.ModuleEvent, "event-detail", params), nil
+}
+
+func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {
+	switch strings.ToLower(strings.TrimSpace(args)) {
+	case "25":
+		return map[string]any{
+			"include_past":   true,
+			"include_future": true,
+			"unit":           "school_refusal",
+		}, true
+	default:
+		return nil, false
+	}
 }
 
 func (sekaiHandlers) EventStoryHandle() SekaiCommandHandler {

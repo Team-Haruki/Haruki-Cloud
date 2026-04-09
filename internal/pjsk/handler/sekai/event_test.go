@@ -110,6 +110,37 @@ func TestEventDetailHandleFallsBackToListForFilterQuery(t *testing.T) {
 	}
 }
 
+func TestEventDetailHandleTreatsBare25AsEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDetailHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查活动",
+		ArgText:    "25",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-detail" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params struct {
+		EventID int `json:"event_id"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != 25 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestEventListHandleFallsBackToDetailForSingleEventQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventHandle()
 
@@ -139,6 +170,42 @@ func TestEventListHandleFallsBackToDetailForSingleEventQuery(t *testing.T) {
 	}
 	if params.BanCharID != 5 || params.BanSeq != 1 {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestEventListHandleTreatsBare25AsUnitFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/活动列表",
+		ArgText:    "25",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params struct {
+		Unit          string `json:"unit"`
+		IncludePast   bool   `json:"include_past"`
+		IncludeFuture bool   `json:"include_future"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Unit != "school_refusal" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+	if !params.IncludePast || !params.IncludeFuture {
+		t.Fatalf("unexpected range params: %+v", params)
 	}
 }
 

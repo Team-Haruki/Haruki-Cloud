@@ -1,6 +1,6 @@
 # PJSK Deck-Service HTTP 联调测试记录
 
-截至 2026-03-31，这轮 `deck-service <-> Haruki-Cloud` 联调已经完成了 Cloud 侧 HTTP 接线、兼容层验证和真实服务调用验证。
+截至 2026-04-09，这轮 `deck-service <-> Haruki-Cloud` 联调已经完成了 Cloud 侧 HTTP 接线、兼容层验证和真实服务调用验证；当前运行时也已经进一步收口为 HTTP-service-only。
 
 这份文档用于记录：
 
@@ -16,12 +16,12 @@
 
 旧路径为：
 
-- `internal/pjsk/render/deck/deck_cgo`
+- `internal/pjsk/render/deck/deck_cgo`（现已从仓库移除，仅作为历史联调背景）
 
 本轮目标是：
 
 - 启动独立的 `deck-service`；
-- 让 `Haruki-Cloud` 的 `deck recommend auto` 优先改走 HTTP 服务；
+- 让 `Haruki-Cloud` 的 `deck recommend auto` 正式改走 HTTP 服务；
 - 通过 `api/legacy/pjsk` 兼容层验证，而不是走客户端；
 - 用户数据使用 `Haruki-Cloud/Data/collections.suite.json`；
 - masterdata 使用 `deckrec/masterdata`；
@@ -63,7 +63,7 @@
 
 ## 4. Haruki-Cloud 侧改动
 
-### 4.1 配置新增 HTTP deck-service 入口
+### 4.1 配置已收口为 HTTP deck-service 入口
 
 `deck_recommend` 配置新增：
 
@@ -78,9 +78,9 @@
 
 当前行为是：
 
-- 若 `deck_recommend.service_base_url` 非空，则优先走远程 HTTP deck-service
-- 否则若 `use_local_engine` 为真，则走本地 cgo engine
-- 否则回退到原本的本地启发式 fallback
+- `deck recommend auto` 仅在 `deck_recommend.enabled=true` 且 `deck_recommend.service_base_url` 非空时可用
+- 未配置 `service_base_url` 时，Cloud 会直接返回 `deck recommend service is not configured`
+- 旧的 `use_local_engine`、本地 cgo engine 与 Cloud 内启发式 fallback 已退出主链
 
 ### 4.2 deck controller 新增远程 engine provider
 
@@ -90,19 +90,21 @@
 
 1. 按区服初始化远端 recommender。
 2. 首次调用前向 `deck-service` 发送 `/update/masterdata`。
-3. 首次调用前向 `deck-service` 发送 `/update/musicmetas`。
-4. 推荐阶段调用 `/recommend`。
+3. 首次调用优先向 `deck-service` 发送 `/update/musicmetas/string`，仅在没有内存 bytes 时才回退到 `/update/musicmetas` 文件路径协议。
+4. 推荐阶段优先调用 `/cache_userdata` + 批量 `/recommend`。
+5. 若远端不支持新的 batch/binary 协议，再兼容回退到旧 `/recommend` JSON 协议。
 
-### 4.3 改为优先传本地文件路径，避免大请求体
+### 4.3 请求体策略已改为“优先传 bytes，必要时兼容旧文件路径”
 
 `collections.suite.json` 体积约 9 MB。
 
-为避免 deck-service 在接收大 JSON 字符串时出现 body 限制或额外传输成本，Cloud 侧改成优先传文件路径：
+当前 Cloud 侧策略是：
 
-- 用户数据优先传 `user_data_file_path`
-- `music_metas` 优先通过 `/update/musicmetas` 的 `file_path` 方式加载
+- 用户数据优先通过 `/cache_userdata` 的压缩二进制协议上传，再在 `/recommend` 中只传 `userdata_hash`
+- `music_metas` 优先通过 `/update/musicmetas/string` 直接发送内容
+- 只有远端仍停留在旧协议时，才使用 `user_data_str` / `user_data_file_path` / `/update/musicmetas(file_path)` 这些 legacy 兼容字段
 
-这样 deck-service 在推荐请求中不再需要接收超大 `user_data_str`。
+这样新的 deck-service 主协议不再需要每次在 `/recommend` 中接收完整大 JSON 字符串。
 
 ### 4.4 本地快照标准化
 
@@ -166,6 +168,10 @@ go test ./api/legacy/pjsk -run 'TestPJSKDeckRecommendAutoBuildRouteReturnsBuiltP
 - `api/legacy/pjsk` 兼容层没有被这轮接线改坏
 - `deck recommend auto` 的 build/render 兼容入口仍可正常工作
 
+补充说明：
+
+- 上述验证只代表 2026-03-31 当时的兼容链路状态；`api/legacy/pjsk` 入口现已从仓库与运行时移除。
+
 ### 6.2 远程 deck-service 集成测试
 
 新增了真实联调测试，用于验证 Cloud 是否真的能打到 deck-service：
@@ -181,7 +187,8 @@ go test ./internal/pjsk/render/deck -run TestBuildAutoRecommendRequestWithDeckSe
 测试期间确认到的行为：
 
 - Cloud 能成功调用 `/update/masterdata`
-- Cloud 能成功调用 `/update/musicmetas`
+- Cloud 能成功调用 `/update/musicmetas/string`
+- Cloud 能成功调用 `/cache_userdata`
 - Cloud 能成功调用 `/recommend`
 - deck-service 实际读到了用户卡牌数据，并在报错中返回 `862 cards`
 
@@ -192,9 +199,9 @@ go test ./internal/pjsk/render/deck -run TestBuildAutoRecommendRequestWithDeckSe
 - 用户快照标准化与文件路径传递是通的
 - 失败点已经进入 deck 引擎业务层，而不是网络层或协议层
 
-### 6.3 本地 cgo engine 对照测试
+### 6.3 历史对照结论（当前已退出主链）
 
-为了排除“HTTP 改造引入回归”，额外新增了一个本地 cgo 对照测试：
+在 2026-03-31 这轮联调时，为了排除“HTTP 改造引入回归”，曾额外跑过一个本地 cgo 对照测试：
 
 ```bash
 HARUKI_TEST_ENABLE_LOCAL_ENGINE=1 \
@@ -205,25 +212,29 @@ HARUKI_TEST_ALGORITHM=ga \
 go test -tags pjsk_deck_cgo ./internal/pjsk/render/deck -run TestBuildAutoRecommendRequestWithLocalEngineIntegration -v
 ```
 
-结果：
+当时结果：
 
 - 本地 cgo engine 也返回 `Cannot recommend any deck in 862 cards`
 
-这一步非常关键，因为它说明：
+这一步在当时非常关键，因为它说明：
 
 - 同一份用户数据
 - 同一份 masterdata
 - 同一组测试参数
-- 无论走 HTTP deck-service 还是本地 cgo engine
+- 无论走 HTTP deck-service 还是当时仍保留的本地 cgo engine
 
 最终都得到同样的业务失败结果。
 
-因此，本轮已经可以排除：
+因此，当时已经可以排除：
 
 - Cloud HTTP 接线错误
 - 远程请求字段名错误
 - 快照标准化导致的数据结构破坏
 - 仅远程服务路径才存在的行为回归
+
+补充说明：
+
+- 截至 2026-04-09，当前运行时代码已经不再接本地 cgo engine，`deck_cgo` 历史目录也已从仓库移除；这段对照测试结论仅作为历史验证记录保留。
 
 ## 7. 已通过的相关测试
 
@@ -238,17 +249,17 @@ go test ./api/legacy/pjsk -run 'TestPJSKDeckRecommendAutoBuildRouteReturnsBuiltP
 
 补充说明：
 
-- `./api/legacy/pjsk` 仍存在一个与本轮任务无关的其他测试失败项
-- 本轮 deck-service 联调不依赖那个失败项
+- 其中 `./api/legacy/pjsk` 只对应当时的兼容入口验证；当前仓库已不再包含该包。
+- 本轮 deck-service 联调的核心结论并不依赖这条历史兼容测试链路。
 
 ## 8. 当前结论
 
 截至当前，可以确认以下结论：
 
-1. `Haruki-Cloud` 已经支持通过 `deck_recommend.service_base_url` 切换到远程 deck-service。
-2. `api/legacy/pjsk` 兼容层可以继续使用，不需要通过客户端链路做本轮验证。
+1. `Haruki-Cloud` 当前已经以 `deck_recommend.service_base_url` 作为 `deck recommend auto` 的唯一正式 provider 入口。
+2. 当时可以通过 `api/legacy/pjsk` 兼容层完成验证，而不必走客户端链路；该兼容入口现已移除。
 3. `collections.suite.json` 已经可以被 Cloud 标准化并安全交给 deck-service 使用。
-4. 远程 deck-service 的 masterdata 和 music meta 初始化链路已经验证通过。
+4. 远程 deck-service 的 masterdata、music meta 和 userdata cache 初始化链路已经验证通过。
 5. 当前剩余问题不是“联不通”，而是“这组数据和参数在底层引擎里推不出可用 deck”。
 
 ## 9. 当前未解决的问题
@@ -282,7 +293,7 @@ Cannot recommend any deck in 862 cards
 本轮相关代码和测试主要落在以下位置：
 
 - `config/config.go`
-- `cmd/server/main.go`
+- `cmd/server/init_services.go`
 - `internal/pjsk/render/app/app.go`
 - `internal/pjsk/render/deck/controller.go`
 - `internal/pjsk/render/deck/recommender.go`
@@ -294,4 +305,4 @@ Cannot recommend any deck in 862 cards
 
 ## 12. 一句话总结
 
-本轮已经完成“Cloud 接入远程 deck-service 并成功把请求打到引擎”的目标；当前没有证据表明 HTTP 化改坏了推荐逻辑，剩余问题集中在底层推荐业务结果本身。
+本轮已经完成“Cloud 接入远程 deck-service，并把 `deck recommend auto` 主链正式收口为 HTTP 外部服务”的目标；当前没有证据表明 HTTP 化改坏了推荐逻辑，剩余问题集中在底层推荐业务结果本身。

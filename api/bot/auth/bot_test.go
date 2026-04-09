@@ -15,8 +15,6 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
-	"haruki-cloud/database/bot/dailyrequests"
-	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/requestsranking"
 	"haruki-cloud/database/bot/user"
 	"haruki-cloud/utils/crypto"
@@ -259,29 +257,35 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	if statsResp.Status != fiber.StatusOK {
 		t.Fatalf("statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
 	}
+	statsResp = sendJSONRequest(t, app, http.MethodPost, "/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+		"Authorization": "Bearer internal-test",
+	})
+	if statsResp.Status != fiber.StatusOK {
+		t.Fatalf("second statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
+	}
 
 	rankingRow, err := client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(botID)).Only(ctx)
 	if err != nil {
 		t.Fatalf("load requests ranking: %v", err)
 	}
-	if rankingRow.Counts != 1 {
-		t.Fatalf("requests ranking count mismatch: got=%d want=1", rankingRow.Counts)
+	if rankingRow.Counts != 2 {
+		t.Fatalf("requests ranking count mismatch: got=%d want=2", rankingRow.Counts)
 	}
 
-	hourlyRow, err := client.HourlyRequests.Query().Where(hourlyrequests.CountEQ(1)).Only(ctx)
+	hourlyRow, err := client.HourlyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load hourly requests: %v", err)
 	}
-	if hourlyRow.Count != 1 {
-		t.Fatalf("hourly requests count mismatch: got=%d want=1", hourlyRow.Count)
+	if hourlyRow.Count != 2 {
+		t.Fatalf("hourly requests count mismatch: got=%d want=2", hourlyRow.Count)
 	}
 
-	dailyRow, err := client.DailyRequests.Query().Where(dailyrequests.CountEQ(1)).Only(ctx)
+	dailyRow, err := client.DailyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load daily requests: %v", err)
 	}
-	if dailyRow.Count != 1 {
-		t.Fatalf("daily requests count mismatch: got=%d want=1", dailyRow.Count)
+	if dailyRow.Count != 2 {
+		t.Fatalf("daily requests count mismatch: got=%d want=2", dailyRow.Count)
 	}
 }
 

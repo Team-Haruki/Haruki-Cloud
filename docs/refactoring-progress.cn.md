@@ -1,6 +1,19 @@
 # 数据层与 Handler 重构进度报告
 
 > 更新日期：2026-03-31
+>
+> 2026-04-09 补充说明：本文是 2026-03-31 当时的阶段性进度快照，不是当前架构总览。
+>
+> - `api/legacy/pjsk/` 已从仓库与运行时移除
+> - `internal/pjsk/render/deck/deck_cgo/` 已从仓库移除
+> - PJSK 当前主链应以 `api/bot/pjsk`、`internal/pjsk/handler` 与 [项目完成度跟踪](project-completion-tracker.cn.md) 为准
+> - 2026-04-09 追加稳定化：`music` / `score` / `sk` / `misc birthday` 主请求链已继续清理 `context.Background()`；服务退出路径补上了 `Redis` 与 `censor DB` 关闭
+> - 2026-04-09 再次追加：`card` / `event` / `gacha` / `music` / `profile` 已支持请求级 source/provider 克隆，`DatabaseProvider` 相关 masterdata 查询开始跟随请求 `ctx`
+> - 2026-04-09 本轮继续追加：`education` / `stamp` / `vlive` 也已接入请求级 source/provider 克隆；主链 render provider 的 DB 查询上下文债务已基本清完，剩余 `Background()` 主要在本地调试 helper 和 nil-ctx 兜底逻辑
+> - 2026-04-09 本轮再补一层：`internal/pjsk/render/userdata` 的 `DefaultSnapshotFactory.Build(ctx, ...)` 已真正使用 `ctx`，live/local snapshot 构建入口也已补上 context-aware 版本；leader 图路径解析和 MySekai merge helper 进一步收口
+> - 2026-04-09 再补脚本侧：`cmd/migrate` 已去除硬编码 Sekai DSN，改为环境变量/配置文件解析，并接入 signal-aware context
+>
+> 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
 ---
 

@@ -172,3 +172,29 @@ func TestExecuteProfileSettingsCommandVerifyListMasksUID(t *testing.T) {
 		t.Fatalf("unexpected verify list text:\n%s", text)
 	}
 }
+
+func TestExecuteProfileSettingsCommandVerifyReturnsVerificationText(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{{Server: "jp", GameUserID: "12345678901234"}},
+	})
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	text, err := userdata.ExecuteProfileSettingsCommand(ctx, service, userdata.ProfileModeVerify, userdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+	})
+	if err != nil {
+		t.Fatalf("verify command: %v", err)
+	}
+	if got := string(text); got != "已验证JP服账号 12345678901234" {
+		t.Fatalf("unexpected verify text:\n%s", got)
+	}
+}

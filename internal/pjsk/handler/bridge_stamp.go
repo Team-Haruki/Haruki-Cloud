@@ -15,17 +15,18 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Stamps == nil {
 		return nil, fmt.Errorf("stamp service unavailable: sekai client not configured")
 	}
+	stampCtrl := rc.App.Stamps.WithContext(rc.Ctx)
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
 	case "stamp-list":
 		q := stamp.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		_ = resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
-		if message, ok, directErr := resolveDirectStampImage(rc.App, q); ok {
+		if message, ok, directErr := resolveDirectStampImage(stampCtrl, rc.App, q); ok {
 			return message, directErr
 		}
 		if q.All {
-			images, renderErr := rc.App.Stamps.RenderStampListPages(q)
+			images, renderErr := stampCtrl.RenderStampListPages(q)
 			if renderErr != nil {
 				return nil, renderErr
 			}
@@ -42,7 +43,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			return message, nil
 		}
-		data, renderErr := rc.App.Stamps.RenderStampList(q)
+		data, renderErr := stampCtrl.RenderStampList(q)
 		if renderErr != nil {
 			return nil, renderErr
 		}
@@ -52,8 +53,8 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 }
 
-func resolveDirectStampImage(app *renderapp.App, query stamp.ListQuery) (onebot11.Message, bool, error) {
-	if app == nil || app.Stamps == nil {
+func resolveDirectStampImage(stampCtrl *stamp.Controller, app *renderapp.App, query stamp.ListQuery) (onebot11.Message, bool, error) {
+	if app == nil || stampCtrl == nil {
 		return nil, false, nil
 	}
 	if strings.TrimSpace(app.Config.AssetsBaseURL) == "" {
@@ -62,7 +63,7 @@ func resolveDirectStampImage(app *renderapp.App, query stamp.ListQuery) (onebot1
 	if query.All || len(query.IDs) != 1 {
 		return nil, false, nil
 	}
-	req, err := app.Stamps.BuildStampListRequest(query)
+	req, err := stampCtrl.BuildStampListRequest(query)
 	if err != nil {
 		return nil, true, err
 	}

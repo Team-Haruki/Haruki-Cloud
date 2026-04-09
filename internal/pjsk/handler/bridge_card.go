@@ -11,17 +11,18 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Cards == nil {
 		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
 	}
+	cardCtrl := rc.App.Cards.WithContext(rc.Ctx)
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "card-detail":
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = rc.App.Cards.RenderCardDetail(q)
+		data, err = cardCtrl.RenderCardDetail(q)
 	case "card-list":
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.DetailedProfile = rc.GetDetailedProfile()
-		data, err = rc.App.Cards.RenderCardList(q)
+		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
 		useAfterTraining := true
 		q := card.Query{
@@ -32,11 +33,11 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		queries := []card.Query{q}
-		data, err = rc.App.Cards.RenderCardBox(queries)
+		data, err = cardCtrl.RenderCardBox(queries)
 	case "card-image":
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := rc.App.Cards.ResolveCardImages(q)
+		result, resolveErr := cardCtrl.ResolveCardImages(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}

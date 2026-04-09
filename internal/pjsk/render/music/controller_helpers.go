@@ -14,7 +14,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) currentSnapshot() *userdata.Service {
+func (c *Controller) currentSnapshot() userdata.Snapshot {
 	if c == nil || c.snapshot == nil {
 		return nil
 	}

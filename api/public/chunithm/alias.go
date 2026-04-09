@@ -1,7 +1,6 @@
 package chunithm
 
 import (
-	"context"
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"haruki-cloud/database/chunithm/maindb"
@@ -12,7 +11,7 @@ import (
 )
 
 func (h *AliasHandler) GetMusicIDByAlias(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	aliasStr := c.Query("alias")
 	if aliasStr == "" {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "alias is required")
@@ -42,7 +41,7 @@ func (h *AliasHandler) GetMusicIDByAlias(c fiber.Ctx) error {
 }
 
 func (h *AliasHandler) GetAliasesByMusicID(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")

@@ -158,23 +158,23 @@
 - 现阶段已经可以运行
 - 但还不是完全 DB/source 驱动的最终形态
 
-### 4.3 deck auto recommend 保留 fallback，并新增可选 native 引擎
+### 4.3 deck auto recommend 已收口到 HTTP 外部服务
 
-`deck` 当前已经具备两层能力：
+`deck` 当前主链已经具备以下能力：
 
 - typed `recommend` build/render
-- `recommend/auto` 的本地快照启发式回退实现
-- 显式 opt-in 的本地 CGo deck engine（`pjsk_deck_cgo`）
+- `recommend/auto` 通过外部 `deck-service` 做推荐
 
 当前收口方式是：
 
-- 默认构建仍然不依赖原生 deck 库
-- 只有在显式 `CGO_ENABLED=1` 且带 `-tags pjsk_deck_cgo` 时才编译 native bindings
-- runtime 仍通过 `deck_recommend.enabled + use_local_engine` 决定是否走 native 路径
+- runtime 仅在配置了 `deck_recommend.service_base_url` 时启用 auto recommend
+- 本地启发式 fallback 已退出主链
+- `pjsk_deck_cgo` 目录已从仓库移除，不再参与正式运行时选路
 
-当前仍未迁入的内容：
+当前主要风险转为：
 
-- 旧的独立 deck recommendation HTTP backend
+- 外部 `deck-service` 可用性
+- 本地 masterdata 目录完整性
 
 ## 5. 后续事项，但不属于本轮任务
 
@@ -197,13 +197,12 @@
 
 后续真正收口时，需要把当前本地文件桥接替换为正式 provider，而不是继续扩展单进程本地快照方案。
 
-### 5.3 deck 引擎后续收口
+### 5.3 deck 历史 native 残留清理
 
-如果未来确认仍然需要原生 deck 能力，应按下面原则处理：
+当前运行时已经固定走 HTTP 外部服务。`deck_cgo` 目录已经删除；后续如继续清理 deck 历史残留，建议重点放在：
 
-- 必须显式 opt-in
-- 必须通过 build tag 或隔离 package 控制
-- 默认构建不能依赖本地原生库存在
+- 旧阶段文档里对 `use_local_engine` / native 路径的描述是否统一标注为历史信息
+- 避免新的配置样例或联调文档继续把本地 native 当作正式路径
 
 ### 5.4 调用方切换
 

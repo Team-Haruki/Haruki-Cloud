@@ -6,6 +6,8 @@
 > 测试结论：`go test -race ./api/... ./internal/...` 全部通过，无数据竞争报告
 >
 > 说明：本文保留的是 2026-03-23 当时的审查快照，不等同于当前未修复问题总表。若与最新实现存在差异，应以 `architecture.cn.md`、`project-status-summary.cn.md` 与对应代码为准。
+>
+> 2026-04-09 再补充：文中 `L-1` 提到的 `api/legacy/pjsk/` 问题已经随 legacy 路由删除而完成；该条仅作为历史审查记录保留。
 
 ---
 
@@ -146,7 +148,7 @@ Manifest 表 seed 失败完全不可观测，无日志无 metrics，无法知道
 
 ## 🟢 低优先级
 
-### L-1 · `api/legacy/pjsk/` — 仍注册在生产路由中
+### L-1 · `api/legacy/pjsk/` — 仍注册在生产路由中（历史记录）
 
 **文件**：`cmd/server/main.go:53-55`
 
@@ -215,7 +217,7 @@ legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 | M-5 | `cmd/server/main.go` | 🟡 中 | 待修复 |
 | M-6 | `api/bot/pjsk/handler.go` | 🟡 中 | 待修复 |
 | M-7 | `internal/pjsk/handler/bridge.go` | 🟡 中 | 待修复 |
-| L-1 | `api/legacy/pjsk/` | 🟢 低 | 计划删除 |
+| L-1 | `api/legacy/pjsk/` | 🟢 低 | 已完成（历史记录） |
 | L-2 | route_table / globalRoutes / bridge | 🟢 低 | 待对齐 |
 | L-3 | `api/helper.go` | 🟢 低 | 待修复 |
 | L-4 | `sekai/*.go` | 🟢 低 | 待实现 |

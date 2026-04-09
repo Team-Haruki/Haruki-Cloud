@@ -1,6 +1,7 @@
 package card
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -22,6 +23,14 @@ type Controller struct {
 	drawing   *drawing.HarukiDrawingClient
 	assets    *assets.AssetHelper
 	nicknames map[string]int
+}
+
+type cardContextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+type cardContextualEventSource interface {
+	WithContext(ctx context.Context) event.DataSource
 }
 
 func NewController(defaultSource DataSource, defaultEventSource event.DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -46,6 +55,30 @@ func (c *Controller) RegisterSource(source DataSource) {
 
 func (c *Controller) RegisterEventSource(source event.DataSource) {
 	c.events.RegisterSource(source)
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(cardContextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	clone.events = regionsource.NewRegistry[event.DataSource](c.events.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.events.OrderedSources() {
+		if contextual, ok := any(source).(cardContextualEventSource); ok {
+			clone.events.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.events.RegisterSource(source)
+	}
+	return &clone
 }
 
 func (c *Controller) BuildCardDetailRequest(query Query) (*drawing.CardDetailRequest, error) {

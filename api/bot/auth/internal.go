@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"errors"
 
 	"haruki-cloud/api"
@@ -16,7 +15,7 @@ import (
 
 // VerifySession 验证 bot_id 和 session_token
 func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 
 	var req InternalVerifyRequest
 	if err := c.Bind().Body(&req); err != nil {

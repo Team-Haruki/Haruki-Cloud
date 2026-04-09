@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
@@ -32,6 +32,11 @@ type resolvedGameTarget struct {
 	Visible      bool
 	BgSettings   *drawing.ProfileBgSettings
 	Binding      *accountdata.ResolvedBinding
+}
+
+type mySekaiRenderContext struct {
+	Controller *rendermysekai.Controller
+	Profile    *drawing.ProfileCardRequest
 }
 
 func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
@@ -108,69 +113,124 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, regio
 // live snapshot. If needMySekai is true it also fetches mysekai data and merges
 // it into the snapshot. Returns nil if the user has no usable binding or if any
 // API call fails (callers fall back to the controller-level static snapshot).
-func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) *userdata.Service {
+func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) userdata.Snapshot {
 	platform := strings.TrimSpace(r.RequesterPlatform)
 	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	regionStr := regionWithDefault(r.Region)
+	return resolveSnapshotBySelector(ctx, app, userdata.Selector{
+		IMPlatform: platform,
+		IMUserID:   platformUserID,
+		Region:     renderregion.Normalize(regionWithDefault(r.Region)),
+	}, userdata.ResolveOptions{
+		PreferGlobalDefault: !r.RegionExplicit,
+		NeedMySekai:         needMySekai,
+	})
+}
 
-	_, binding, _ := resolveBindingWithFallback(
-		ctx, app.Bindings, platform, platformUserID, regionStr, r.RegionExplicit,
-		bindingResolutionOptions{RequireSuite: true},
-	)
-	if binding == nil {
+func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, opts userdata.ResolveOptions) userdata.Snapshot {
+	if app == nil || app.Snapshots == nil {
 		return nil
 	}
-	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
-	if convErr != nil {
-		return nil
-	}
-
-	tc := sekaiutils.GetToolboxClient()
-	suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
-	if suiteErr != nil || len(suiteJSON) == 0 {
-		return nil
-	}
-
-	var mysekaiJSON []byte
-	if needMySekai && hasUsableMySekaiData(binding) {
-		mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
-	}
-
-	region := renderregion.Normalize(regionStr)
-	snapshot, err := userdata.NewFromBytes(app.Sekai, app.Assets, region, suiteJSON, mysekaiJSON, nil)
+	snapshot, err := app.Snapshots.Resolve(ctx, selector, opts)
 	if err != nil {
 		return nil
 	}
 	return snapshot
 }
 
-// resolveMySekaiOnly fetches only the mysekai data from Toolbox, without
-// requiring suite data. This is the lightweight fallback when the full
-// merged snapshot is unavailable (e.g. the user has mysekai data uploaded
-// but GetSuiteData fails). Returns nil on any error.
-func resolveMySekaiOnly(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) []byte {
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	regionStr := regionWithDefault(r.Region)
+func resolveTargetSnapshot(
+	ctx context.Context,
+	app *renderapp.App,
+	regionStr string,
+	platform string,
+	platformUserID string,
+	pjskUserID string,
+	needMySekai bool,
+) userdata.Snapshot {
+	return resolveSnapshotBySelector(ctx, app, userdata.Selector{
+		IMPlatform: strings.TrimSpace(platform),
+		IMUserID:   strings.TrimSpace(platformUserID),
+		Region:     renderregion.Normalize(regionStr),
+		PJSKUserID: strings.TrimSpace(pjskUserID),
+	}, userdata.ResolveOptions{
+		PreferGlobalDefault: false,
+		NeedMySekai:         needMySekai,
+	})
+}
 
-	_, binding, _ := resolveBindingWithFallback(
-		ctx, app.Bindings, platform, platformUserID, regionStr, r.RegionExplicit,
-		bindingResolutionOptions{RequireMySekai: true},
-	)
-	if binding == nil {
+func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, preferGlobalDefault bool) []byte {
+	if app == nil || app.MySekaiPayloads == nil {
 		return nil
 	}
-	uid, convErr := strconv.ParseInt(binding.PJSKUserID, 10, 64)
-	if convErr != nil {
+	payload, err := app.MySekaiPayloads.Resolve(ctx, selector, preferGlobalDefault)
+	if err != nil || len(payload) == 0 {
 		return nil
+	}
+	return payload
+}
+
+func resolveTargetMySekaiPayload(
+	ctx context.Context,
+	app *renderapp.App,
+	regionStr string,
+	platform string,
+	platformUserID string,
+	pjskUserID string,
+) []byte {
+	return resolveMySekaiPayloadBySelector(ctx, app, userdata.Selector{
+		IMPlatform: strings.TrimSpace(platform),
+		IMUserID:   strings.TrimSpace(platformUserID),
+		Region:     renderregion.Normalize(regionStr),
+		PJSKUserID: strings.TrimSpace(pjskUserID),
+	}, false)
+}
+
+func resolveTargetMySekaiController(
+	ctx context.Context,
+	app *renderapp.App,
+	regionStr string,
+	platform string,
+	platformUserID string,
+	pjskUserID string,
+) *rendermysekai.Controller {
+	if app == nil || app.MySekai == nil {
+		return nil
+	}
+	if snapshot := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, pjskUserID, true); snapshot != nil {
+		return app.MySekai.WithSnapshot(snapshot)
+	}
+	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, pjskUserID); len(data) > 0 {
+		return app.MySekai.WithMySekaiData(data)
+	}
+	return app.MySekai
+}
+
+func resolveMySekaiRenderContext(
+	ctx context.Context,
+	app *renderapp.App,
+	params userQueryParams,
+	regionStr string,
+	regionExplicit bool,
+) (mySekaiRenderContext, error) {
+	if app == nil || app.MySekai == nil {
+		return mySekaiRenderContext{}, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
 	}
 
-	tc := sekaiutils.GetToolboxClient()
-	data, err := tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
-	if err != nil || len(data) == 0 {
-		return nil
+	result := mySekaiRenderContext{Controller: app.MySekai}
+	if app.Bindings == nil || strings.TrimSpace(params.Platform) == "" || strings.TrimSpace(params.PlatformUserID) == "" {
+		return result, nil
 	}
-	return data
+
+	target, err := resolveGameTarget(ctx, params, regionStr, regionExplicit, app)
+	if err != nil {
+		return mySekaiRenderContext{}, err
+	}
+
+	platform, platformUserID := platformCredentials(params)
+	result.Profile = buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app)
+	if controller := resolveTargetMySekaiController(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); controller != nil {
+		result.Controller = controller
+	}
+	return result, nil
 }
 
 // resolveRegionFromDefaultBinding resolves the region for a command where the
@@ -241,12 +301,25 @@ func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, ap
 		return nil, nil
 	}
 
-	var framesJSON []byte
+	return buildPublicMusicProfilesFromResolvedTarget(ctx, target, region, queryParams.Platform, queryParams.PlatformUserID, resp, app)
+}
+
+func buildPublicMusicProfilesFromResolvedTarget(
+	ctx context.Context,
+	target resolvedGameTarget,
+	region string,
+	platform string,
+	platformUserID string,
+	resp *sekaiutils.GetAnotherProfileResponse,
+	app *renderapp.App,
+) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+	if app == nil || app.Profiles == nil || resp == nil {
+		return nil, nil
+	}
+
+	var profileSnapshot userdata.Snapshot
 	if hasUsableSuiteData(target.Binding) {
-		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
-			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-				region, sekaiutils.ToolboxDataTypeSuite, uid, queryParams.Platform, queryParams.PlatformUserID, "userPlayerFrames")
-		}
+		profileSnapshot = resolveTargetSnapshot(ctx, app, region, platform, platformUserID, target.PJSKUserID, false)
 	}
 
 	q := profile.Query{
@@ -254,11 +327,11 @@ func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, ap
 		Visible:    target.Visible,
 		BgSettings: target.BgSettings,
 	}
-	detail, err := app.Profiles.BuildDetailedProfileCardFromAPI(q, resp, framesJSON)
+	detail, err := app.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
 	if err != nil {
 		return nil, nil
 	}
-	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
+	card, err := app.Profiles.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
 	if err != nil {
 		return detail, nil
 	}
@@ -268,7 +341,7 @@ func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, ap
 // buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
 // game target. Used by mysekai commands where the target is already resolved
 // through userQueryParams (supporting u[i] selectors and region binding).
-func buildPublicProfileCardForTarget(target resolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
+func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
 	if app == nil || app.Profiles == nil {
 		return nil
 	}
@@ -277,24 +350,7 @@ func buildPublicProfileCardForTarget(target resolvedGameTarget, region, platform
 	if err != nil {
 		return nil
 	}
-
-	var framesJSON []byte
-	if hasUsableSuiteData(target.Binding) {
-		if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
-			framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-				region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
-		}
-	}
-
-	q := profile.Query{
-		Region:     region,
-		Visible:    target.Visible,
-		BgSettings: target.BgSettings,
-	}
-	card, err := app.Profiles.BuildProfileCardFromAPI(q, resp, framesJSON)
-	if err != nil {
-		return nil
-	}
+	_, card := buildPublicMusicProfilesFromResolvedTarget(ctx, target, region, platform, platformUserID, resp, app)
 	return card
 }
 

@@ -90,12 +90,12 @@ type remoteRecommendResult struct {
 }
 
 type remoteBatchRecommendResult struct {
-	Alg      string               `json:"alg,omitempty"`
-	CostTime float64              `json:"cost_time,omitempty"`
-	WaitTime float64              `json:"wait_time,omitempty"`
+	Alg      string                 `json:"alg,omitempty"`
+	CostTime float64                `json:"cost_time,omitempty"`
+	WaitTime float64                `json:"wait_time,omitempty"`
 	Result   *remoteRecommendResult `json:"result,omitempty"`
-	Decks    []remoteRecommendDeck `json:"decks,omitempty"`
-	Error    string               `json:"error,omitempty"`
+	Decks    []remoteRecommendDeck  `json:"decks,omitempty"`
+	Error    string                 `json:"error,omitempty"`
 }
 
 type remoteRecommendDeck struct {

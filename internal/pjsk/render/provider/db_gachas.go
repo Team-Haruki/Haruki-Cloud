@@ -36,8 +36,15 @@ func (p *dbGachaProvider) init() {
 }
 
 func (p *dbGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbGachaProvider) getByID(ctx context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("gacha id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -50,7 +57,7 @@ func (p *dbGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
 
 	entity, err := p.client.Gacha.Query().
 		Where(gachaent.ServerRegionEQ(p.region.String()), gachaent.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query gacha %d: %w", id, err)
 	}
@@ -67,7 +74,14 @@ func (p *dbGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
 }
 
 func (p *dbGachaProvider) GetAll() []*masterdata.Gacha {
+	return p.getAll(nil)
+}
+
+func (p *dbGachaProvider) getAll(ctx context.Context) []*masterdata.Gacha {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.gachaMu.RLock()
 	if len(p.gachas) > 0 {
@@ -78,7 +92,7 @@ func (p *dbGachaProvider) GetAll() []*masterdata.Gacha {
 
 	entities, err := p.client.Gacha.Query().
 		Where(gachaent.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil
 	}
@@ -112,8 +126,15 @@ func (p *dbGachaProvider) GetAll() []*masterdata.Gacha {
 }
 
 func (p *dbGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
+	return p.getCardByID(nil, id)
+}
+
+func (p *dbGachaProvider) getCardByID(ctx context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -127,7 +148,7 @@ func (p *dbGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
 
 	entity, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query card %d: %w", id, err)
 	}

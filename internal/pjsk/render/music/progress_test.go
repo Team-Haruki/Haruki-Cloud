@@ -6,6 +6,9 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
 )
 
 func TestBuildMusicProgressRequestUsesQueryUserResults(t *testing.T) {
@@ -63,5 +66,96 @@ func TestBuildMusicProgressRequestUsesQueryUserResults(t *testing.T) {
 	}
 	if req.Counts[1].Level != 27 || req.Counts[1].Total != 1 || req.Counts[1].NotClear != 1 || req.Counts[1].Clear != 0 {
 		t.Fatalf("unexpected level 27 counts: %+v", req.Counts[1])
+	}
+}
+
+type progressSnapshotStub struct {
+	profile *drawing.ProfileCardRequest
+	results map[string]map[int]string
+}
+
+func (s *progressSnapshotStub) Require() error { return nil }
+
+func (s *progressSnapshotStub) DetailedProfile(renderregion.Value) *drawing.DetailedProfileCardRequest {
+	return nil
+}
+
+func (s *progressSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCardRequest {
+	return s.profile
+}
+
+func (s *progressSnapshotStub) MusicResults(diff string) map[int]string {
+	source := s.results[diff]
+	out := make(map[int]string, len(source))
+	for musicID, result := range source {
+		out[musicID] = result
+	}
+	return out
+}
+
+func (s *progressSnapshotStub) GetMusicResult(musicID int, diff string) string {
+	return s.results[diff][musicID]
+}
+
+func (s *progressSnapshotStub) ChallengeLive() *userdata.ChallengeLiveData { return nil }
+
+func (s *progressSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
+
+func (s *progressSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil }
+
+func (s *progressSnapshotStub) RawFilePath() string { return "" }
+
+func (s *progressSnapshotStub) RawData() *userdata.RawUserData { return nil }
+
+func (s *progressSnapshotStub) MusicMetaBytes() []byte { return nil }
+
+func (s *progressSnapshotStub) MusicMetaPath() string { return "" }
+
+func TestBuildMusicProgressRequestFromSnapshotUsesSnapshotData(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", PublishedAt: now - 1000},
+			2: {ID: 2, Title: "Song B", PublishedAt: now - 1000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	snapshotProfile := &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{Nickname: "Snapshot User"},
+	}
+	fallbackProfile := &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{Nickname: "Fallback User"},
+	}
+	snapshot := &progressSnapshotStub{
+		profile: snapshotProfile,
+		results: map[string]map[int]string{
+			"master": {
+				1: "fc",
+				2: "clear",
+			},
+		},
+	}
+
+	req, err := controller.BuildMusicProgressRequestFromSnapshot(ProgressQuery{
+		Region:     "jp",
+		Difficulty: "master",
+	}, snapshot, fallbackProfile)
+	if err != nil {
+		t.Fatalf("BuildMusicProgressRequestFromSnapshot() error = %v", err)
+	}
+	if req.Profile.Profile == nil || req.Profile.Profile.Nickname != "Snapshot User" {
+		t.Fatalf("expected snapshot profile, got %+v", req.Profile.Profile)
+	}
+	if len(req.Counts) != 1 || req.Counts[0].Level != 31 || req.Counts[0].Total != 2 || req.Counts[0].Clear != 2 || req.Counts[0].Fc != 1 {
+		t.Fatalf("unexpected counts: %+v", req.Counts)
 	}
 }

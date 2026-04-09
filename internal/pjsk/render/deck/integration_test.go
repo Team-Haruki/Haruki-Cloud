@@ -50,30 +50,6 @@ func TestBuildAutoRecommendRequestWithDeckServiceIntegration(t *testing.T) {
 	}
 }
 
-func TestBuildAutoRecommendRequestWithLocalEngineIntegration(t *testing.T) {
-	if !parseBoolEnv("HARUKI_TEST_ENABLE_LOCAL_ENGINE") {
-		t.Skip("set HARUKI_TEST_ENABLE_LOCAL_ENGINE=1 to run local engine integration test")
-	}
-	input := loadIntegrationTestInput()
-	if input.userJSON == "" || input.masterdataRoot == "" || input.musicMetaJSON == "" {
-		t.Skip("set HARUKI_TEST_USER_JSON, HARUKI_DECK_MASTERDATA_DIR, HARUKI_TEST_MUSIC_META_JSON to run integration test")
-	}
-
-	request, err := buildIntegrationRequest(input, RecommendConfig{
-		Enabled:        true,
-		UseLocalEngine: true,
-		MasterdataDir:  input.masterdataRoot,
-		Timeout:        20 * time.Second,
-		DefaultAlgs:    []string{"ga"},
-	})
-	if err != nil {
-		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
-	}
-	if request == nil || len(request.DeckData) == 0 {
-		t.Fatalf("unexpected empty request: %+v", request)
-	}
-}
-
 func loadIntegrationTestInput() integrationTestInput {
 	input := integrationTestInput{
 		serviceURL:         strings.TrimSpace(os.Getenv("HARUKI_DECK_SERVICE_URL")),

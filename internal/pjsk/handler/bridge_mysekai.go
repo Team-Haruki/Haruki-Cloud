@@ -2,19 +2,19 @@ package handler
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
+	if rc.App == nil || rc.App.MySekai == nil {
+		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
+	}
+
 	// MySekai is disabled for CN region unless the requester's
 	// platform+group is on the whitelist.
 	if strings.EqualFold(rc.Cmd.Region, "cn") {
@@ -43,53 +43,9 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 
 	regionStr := rc.RegionStr
 
-	// When binding service is available, resolve target through it.
-	// Otherwise fall back to old behavior (use local snapshot as-is).
-	var target *resolvedGameTarget
-	var uid int64
-	var platform, platformUserID string
-
-	if rc.App.Bindings != nil && p.Platform != "" && p.PlatformUserID != "" {
-		t, targetErr := resolveGameTarget(rc.Ctx, p, regionStr, rc.Cmd.RegionExplicit, rc.App)
-		if targetErr != nil {
-			return nil, targetErr
-		}
-		target = &t
-		uid, _ = strconv.ParseInt(target.PJSKUserID, 10, 64)
-		platform, platformUserID = platformCredentials(p)
-	}
-
-	// Build public profile card for the resolved target.
-	var publicProfileCard *drawing.ProfileCardRequest
-	if target != nil {
-		publicProfileCard = buildPublicProfileCardForTarget(*target, regionStr, platform, platformUserID, rc.App)
-	}
-
-	// Inject live Toolbox data. Prefer the full snapshot (suite + mysekai
-	// merged); fall back to mysekai-only data which is sufficient for all
-	// mysekai render modes (profile card comes from the public API override).
-	msCtrl := rc.App.MySekai
-	if target != nil {
-		tc := sekaiutils.GetToolboxClient()
-
-		if target.Binding != nil && hasUsableSuiteData(target.Binding) {
-			suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
-			if suiteErr == nil && len(suiteJSON) > 0 {
-				var mysekaiJSON []byte
-				if hasUsableMySekaiData(target.Binding) {
-					mysekaiJSON, _ = tc.GetMySekaiData(regionStr, uid, platform, platformUserID)
-				}
-				region := renderregion.Normalize(regionStr)
-				if snapshot, snapErr := userdata.NewFromBytes(rc.App.Sekai, rc.App.Assets, region, suiteJSON, mysekaiJSON, nil); snapErr == nil {
-					msCtrl = msCtrl.WithSnapshot(snapshot)
-				}
-			}
-		}
-		if msCtrl == rc.App.MySekai && target.Binding != nil && hasUsableMySekaiData(target.Binding) {
-			if data, dataErr := tc.GetMySekaiData(regionStr, uid, platform, platformUserID); dataErr == nil && len(data) > 0 {
-				msCtrl = msCtrl.WithMySekaiData(data)
-			}
-		}
+	renderCtx, err := resolveMySekaiRenderContext(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit)
+	if err != nil {
+		return nil, err
 	}
 
 	var data []byte
@@ -97,35 +53,35 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	case "mysekai-resource":
 		q := mysekai.ResourceQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = msCtrl.RenderResource(q)
+		q.Profile = renderCtx.Profile
+		data, err = renderCtx.Controller.RenderResource(q)
 	case "mysekai-map":
 		q := mysekai.MapQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = msCtrl.RenderMap(q)
+		data, err = renderCtx.Controller.RenderMap(q)
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = msCtrl.RenderFixtureList(q)
+		q.Profile = renderCtx.Profile
+		data, err = renderCtx.Controller.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
 		q := mysekai.FixtureDetailQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = msCtrl.RenderFixtureDetail(q)
+		data, err = renderCtx.Controller.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = msCtrl.RenderDoorUpgrade(q)
+		q.Profile = renderCtx.Profile
+		data, err = renderCtx.Controller.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
 		q := mysekai.MusicRecordQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = msCtrl.RenderMusicRecord(q)
+		q.Profile = renderCtx.Profile
+		data, err = renderCtx.Controller.RenderMusicRecord(q)
 	case "mysekai-photo":
 		q := mysekai.PhotoQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := msCtrl.ResolvePhoto(q)
+		result, resolveErr := renderCtx.Controller.ResolvePhoto(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -145,8 +101,8 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	case "mysekai-talk-list":
 		q := mysekai.TalkListQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = publicProfileCard
-		data, err = msCtrl.RenderTalkList(q)
+		q.Profile = renderCtx.Profile
+		data, err = renderCtx.Controller.RenderTalkList(q)
 	default:
 		return nil, unsupportedModeError("mysekai", rc.Cmd.Mode)
 	}

@@ -1,20 +1,20 @@
 package requestbuilder
 
 import (
-"context"
-"fmt"
-"path/filepath"
-"sort"
-"strings"
-"time"
+	"context"
+	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
 
-sekaidb "haruki-cloud/database/sekai"
-sekaicard "haruki-cloud/database/sekai/card"
-"haruki-cloud/database/sekai/gamecharacterunit"
-renderapp "haruki-cloud/internal/pjsk/render/app"
-"haruki-cloud/internal/pjsk/render/assets"
-renderregion "haruki-cloud/internal/pjsk/render/region"
-"haruki-cloud/utils/drawing"
+	sekaidb "haruki-cloud/database/sekai"
+	sekaicard "haruki-cloud/database/sekai/card"
+	"haruki-cloud/database/sekai/gamecharacterunit"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/assets"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/utils/drawing"
 )
 
 func matchBirthdayCharacterIDs(rows []*sekaidb.Gamecharacter, query string) []int {
@@ -84,7 +84,10 @@ func normalizeBirthdayCharacterText(text string) string {
 	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(text)), ""))
 }
 
-func loadBirthdayCards(app *renderapp.App, region renderregion.Value, cid int) ([]drawing.CharaBirthdayCard, string, error) {
+func loadBirthdayCards(ctx context.Context, app *renderapp.App, region renderregion.Value, cid int) ([]drawing.CharaBirthdayCard, string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	entities, err := app.Sekai.Card.Query().
 		Where(
 			sekaicard.ServerRegionEQ(region.String()),
@@ -92,7 +95,7 @@ func loadBirthdayCards(app *renderapp.App, region renderregion.Value, cid int) (
 			sekaicard.CardRarityTypeEQ("rarity_birthday"),
 		).
 		Order(sekaicard.ByReleaseAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("query birthday cards failed: %w", err)
 	}
@@ -144,14 +147,17 @@ func birthdayCardImagePath(app *renderapp.App, region renderregion.Value, assetB
 	)
 }
 
-func resolveBirthdayColorCode(app *renderapp.App, region renderregion.Value, cid int) string {
+func resolveBirthdayColorCode(ctx context.Context, app *renderapp.App, region renderregion.Value, cid int) string {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	entity, err := app.Sekai.Gamecharacterunit.Query().
 		Where(
 			gamecharacterunit.ServerRegionEQ(region.String()),
 			gamecharacterunit.GameCharacterIDEQ(int64(cid)),
 		).
 		Order(gamecharacterunit.ByID()).
-		First(context.Background())
+		First(ctx)
 	if err == nil && strings.TrimSpace(entity.ColorCode) != "" {
 		return entity.ColorCode
 	}

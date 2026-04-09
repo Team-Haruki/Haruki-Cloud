@@ -8,6 +8,7 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
 	sekai "haruki-cloud/utils/sekai"
 )
@@ -144,6 +145,20 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromAchievements(query Reward
 		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
 		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
 	}, nil
+}
+
+func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDetailQuery, snapshot userdata.Snapshot) (*drawing.DetailMusicRewardsRequest, error) {
+	if snapshot == nil {
+		return nil, fmt.Errorf("user snapshot is required for music rewards detail")
+	}
+	if err := snapshot.Require(); err != nil {
+		return nil, err
+	}
+	achievementsJSON, err := snapshot.RawValue("userMusicAchievements")
+	if err != nil {
+		return nil, err
+	}
+	return c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
 }
 
 func (c *Controller) BuildMusicRewardsBasicEstimateRequest(query RewardsBasicQuery, clearCounts []sekai.AnotherUserMusicDifficultyClearCount, reason string) (*drawing.BasicMusicRewardsRequest, error) {

@@ -17,14 +17,21 @@ type dbVLiveProvider struct {
 }
 
 func (p *dbVLiveProvider) GetLives(region renderregion.Value) ([]*VLive, error) {
+	return p.getLives(nil, region)
+}
+
+func (p *dbVLiveProvider) getLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
 	if p.client == nil {
 		return nil, fmt.Errorf("vlive provider is not configured")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	queryRegion := renderregion.WithDefault(region)
 	entities, err := p.client.Virtuallive.Query().
 		Where(virtuallive.ServerRegionEQ(queryRegion.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query virtual lives: %w", err)
 	}

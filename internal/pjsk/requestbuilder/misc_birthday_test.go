@@ -55,7 +55,7 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	req, err := BuildMiscBirthdayRequest(&parser.ResolvedCommand{
+	req, err := BuildMiscBirthdayRequest(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMisc,
 		Mode:   "misc-birthday",
 		Region: "jp",
@@ -152,7 +152,7 @@ func TestBuildMiscBirthdayRequestFromRawQuery(t *testing.T) {
 		t.Fatalf("create birthday card: %v", err)
 	}
 
-	req, err := BuildMiscBirthdayRequest(&parser.ResolvedCommand{
+	req, err := BuildMiscBirthdayRequest(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMisc,
 		Mode:   "misc-birthday",
 		Region: "jp",

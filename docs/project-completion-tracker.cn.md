@@ -12,6 +12,19 @@
 > 4. `integration` 测试改为默认关闭，需显式设置 `HARUKI_RUN_INTEGRATION=1` 才执行。
 > 5. `integration/api_test.go` 已支持通过环境变量完整覆盖主配置，且不再依赖“先跑 `TestAuth`”的隐含顺序。
 > 6. `/internal/*` 默认鉴权已收紧：未配置内部鉴权时默认拒绝，仅显式 `allow_insecure_internal_api=true` 才放宽。
+> 7. `internal/pjsk/render/userdata` 已新增 `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 抽象，并落地 `ToolboxSnapshotProvider` + `DefaultSnapshotFactory`；请求级 live snapshot 解析已从 `handler/resolver.go` 内联逻辑收口到 provider。
+> 8. 最新架构已明确为“Cloud 只读、Toolbox 为事实来源”：生产运行时不再保留 `pjsk_user_snapshots`、`snapshot/upload`、验证后回填、读链写回等 Cloud 侧快照镜像机制。
+> 9. 当前生产快照链路已收敛为 `Toolbox -> local static(debug fallback)`；`local_file` 仅保留给测试、联调和开发环境。
+> 10. `Snapshot.RawValue(key)` 已落地，`profile`、`deck/mysekai` 公共资料卡与 `music progress/rewards` 已改为通过 render/controller 侧入口消费 snapshot/provider 数据；handler 层不再直接读取 `userPlayerFrames`、`userMusicAchievements` 这类具体 key，也不再手动拼 `music progress` 的 snapshot 结果。
+> 11. `education/bonds` 与 `education/leader` 已改为直接消费 suite snapshot 中的 `userBonds`、`userCharacters`、`userCharacterMissionV2*` 字段，不再依赖 handler 层 `GetPrivateDataValue(...)` 单 key 查询。
+> 12. `education` 的 bonds / leader snapshot builder 已下沉到 `render/education` controller，相关 bonds / level / character-style / leader-mission masterdata 也已收口进 `EducationProvider` / `DataSource`，handler 进一步瘦身。
+> 13. `MySekaiPayloadProvider` 已收敛为直接读取 Toolbox 的专用只读 provider；`bridge_mysekai.go` 不再直接调用 `GetMySekaiData()`，且 “snapshot 优先、payload provider 兜底” 的请求期绑定逻辑已收口到统一 helper。`SuiteVisible=false` 但 `MySekaiVisible=true` 的账号也能通过统一 provider 读取 raw mysekai 数据。
+> 14. `deck recommend auto` 运行时已正式收口为 HTTP 外部服务：`use_local_engine`、本地 cgo engine 与 Cloud 内启发式 fallback 已退出主链，`deck_cgo` 历史目录也已从仓库移除；未配置 `service_base_url` 时将直接报配置错误。
+> 15. 2026-04-09 最新一轮稳定化已继续推进请求级上下文与资源回收：`music` / `score` / `sk` / `misc birthday` 主链不再把别名解析、forecast 抓取、生日 DB 查询挂到 `context.Background()`；服务退出时也会显式关闭 `Redis` 与 `censor DB` 连接。
+> 16. 同日晚些时候，`card` / `event` / `gacha` / `music` / `profile` 的 provider-backed controller 已补上“按请求克隆 source/provider”链路：这些模块经由 `DatabaseProvider` 读取 masterdata 时，已能把请求 `ctx` 继续传到 `db_cards` / `db_events` / `db_musics` / `db_gachas` / `db_honors` / `db_player_frames` / `db_characters` / `db_skills` 查询层。
+> 17. 继续推进后，`education` / `stamp` / `vlive` 也已接入同一套请求级 source/provider 克隆链路；当前主链 render provider 中已基本消除“直接用 `context.Background()` 发起 DB 查询”的问题，剩余个别 `Background()` 主要只出现在本地调试/静态 snapshot helper 与脚本入口的 nil-ctx 兜底逻辑。
+> 18. `internal/pjsk/render/userdata` 的 `SnapshotFactory` 现已真正消费传入 `ctx`：live/local snapshot 构建时的 leader 卡图路径解析会跟随构建上下文；`NewFromBytesWithContext(...)`、`NewLocalFileServiceWithContext(...)` 也已补齐，MySekai JSON merge 逻辑收口到统一 helper。
+> 19. `cmd/migrate` 已移除源码中的硬编码 Sekai DSN：现在优先读取 `HARUKI_SEKAI_DB_URL` / `HARUKI_SEKAI_DSN`，否则回退读取 `HARUKI_CONFIG_PATH` 或默认 `haruki-db-configs.yaml` 中的 `sekai.db_url`；迁移上下文也已挂到信号取消。
 
 ## 1. 范围与方法
 
@@ -102,12 +115,12 @@
 | Card | 4 | `A-` | 稳定 | 图片链依赖 Drawing / 资产完整性 |
 | Music | 8 | `A-` | 稳定 | `progress/rewards/bpm` 仍有快照或环境依赖 |
 | Score | 4 | `A-` | 稳定 | 复杂参数语义仍需保持回归测试 |
-| SK / Tracker | 9 | `B+` | 已实现 | 强依赖 tracker 与绑定解析；存在少量测试回归 |
+| SK / Tracker | 9 | `B+` | 已实现 | 强依赖 tracker 与绑定解析；需持续保持集成回归 |
 | Event | 3 | `B` | 已实现 | `event-record` 更依赖真实历史数据 |
 | Gacha | 1 | `B` | 基本可用 | 仍有 disabled 扩展能力 |
-| Education | 5 | `B-` | 已接通 | 依赖 Toolbox suite snapshot，偏过渡 |
+| Education | 5 | `B-` | 已接通 | 主要依赖 snapshot/provider + masterdata，部分路径仍在过渡 |
 | Deck | 6 | `B-` | 已接通 | 依赖 snapshot / Drawing / recommend engine 过渡方案 |
-| MySekai | 9 | `B-` | 已接通 | 仍保留本地 masterdata fallback |
+| MySekai | 9 | `B-` | 已接通 | 已切到 Toolbox/provider 读链；仍保留本地 masterdata fallback |
 | Stamp | 1 | `A-` | 稳定 | 功能范围已收口为贴纸列表 |
 | VLive | 1 | `A` | 稳定 | 当前目标就是最小文本链路 |
 | 公开 API（PJSK / CHUNITHM） | N/A | `A-` | 已完成 | PJSK 公开面刻意只保留 alias 查询 |
@@ -159,7 +172,7 @@
 
 | Path | 分档 | 当前状态 | 备注 |
 |------|------|----------|------|
-| `deck/event` | `B-` | 过渡 | 活动组卡；依赖 snapshot / recommend engine / Drawing |
+| `deck/event` | `B-` | 过渡 | 活动组卡；依赖 snapshot / HTTP recommend service / Drawing |
 | `deck/challenge` | `B-` | 过渡 | 挑战组卡 |
 | `deck/no-event` | `B-` | 过渡 | 长草 / 最强组卡 |
 | `deck/bonus` | `B-` | 过渡 | 加成 / 控分组卡 |
@@ -172,11 +185,11 @@
 
 | Path | 分档 | 当前状态 | 备注 |
 |------|------|----------|------|
-| `education/challenge` | `B-` | 过渡 | 依赖 Toolbox suite snapshot |
+| `education/challenge` | `B-` | 过渡 | 已走 snapshot；仍依赖 masterdata / Drawing |
 | `education/power` | `B-` | 过渡 | 依赖 suite snapshot 与部分 MySekai 数据 |
-| `education/area` | `B-` | 过渡 | 依赖 snapshot；当前有一条 handler 测试回归 |
-| `education/bonds` | `B-` | 过渡 | 依赖 suite snapshot |
-| `education/leader` | `B-` | 过渡 | 依赖 suite snapshot |
+| `education/area` | `B-` | 过渡 | 依赖 snapshot 与 area/masterdata |
+| `education/bonds` | `B-` | 过渡 | 已走 snapshot/store；仍依赖 bonds masterdata |
+| `education/leader` | `B-` | 过渡 | 已走 snapshot/store；仍依赖 mission masterdata |
 
 ### 6.6 Event（3）
 
@@ -215,7 +228,7 @@
 | `music/chart` | `A-` | 稳定 | 谱面预览 |
 | `music/cover` | `A-` | 稳定 | 曲绘查询 |
 | `music/note-count` | `A-` | 稳定 | 物量查询 |
-| `music/bpm` | `B` | 条件可用 | 依赖本地谱面文件环境；当前有 2 条测试失败 |
+| `music/bpm` | `B` | 条件可用 | 依赖本地谱面文件环境 |
 | `music/progress` | `B` | 过渡 | 依赖快照 / 公开资料混合 |
 | `music/rewards` | `B` | 过渡 | 依赖快照 / 公开资料混合 |
 
@@ -281,10 +294,10 @@
 |------|------|----------|------|
 | `sk/query` | `B+` | 已实现 | tracker 主链，支持 UID / `@用户` |
 | `sk/line` | `B+` | 已实现 | tracker 主链 |
-| `sk/speed` | `B` | 已实现 | 当前有 1 条 bot 测试回归 |
+| `sk/speed` | `B` | 已实现 | tracker 主链，需继续保持 bot 回归覆盖 |
 | `sk/check-room` | `B` | 已实现 | tracker 主链 |
 | `sk/rank-trace` | `B` | 已实现 | tracker 主链 |
-| `sk/player-trace` | `B` | 条件可用 | 当前有 1 条 bot 测试回归 |
+| `sk/player-trace` | `B` | 条件可用 | 依赖 tracker 与目标解析的稳定性 |
 | `sk/predict` | `B` | 已实现 | 基于 tracker 的预测线路 |
 | `sk/daily-speed` | `B` | 已实现 | tracker 主链 |
 | `sk/winrate` | `B-` | 条件可用 | 更依赖真实对战数据 |
@@ -435,7 +448,7 @@ go test ./...
 |------|------|
 | `api/bot/pjsk/handler_test.go:1111` | `sk/speed` 期望 `request_type=tracker`，当前实际为另一种请求类型 |
 | `api/bot/pjsk/handler_test.go:1301` | `sk/player-trace` 返回了文本错误而非图片消息 |
-| `api/legacy/pjsk/render_route_test.go:3308` | `routeGachaSource` 未实现 `GetGachaByEventID` |
+| 历史 `api/legacy/pjsk/render_route_test.go:3308` | `routeGachaSource` 未实现 `GetGachaByEventID`（对应文件现已随 legacy 路由移除） |
 | `internal/pjsk/handler/sekai/education_test.go:70` | `education/area` 空参数默认行为测试失败 |
 | `internal/pjsk/render/event/builder_test.go:147` | 期望 `WorldLink`，实际得到 `world_bloom` |
 | `internal/pjsk/render/music/lookup_test.go:198` | 当前环境没有可读取的本地谱面文件，无法查询 BPM |
@@ -467,9 +480,9 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| 强用户态模块正式 provider | 未完成 | 仍大量依赖 Toolbox snapshot / 本地 snapshot |
+| 强用户态模块正式 provider | 进行中 | `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 已落地，生产链路已回到 `Toolbox -> local debug fallback`；Cloud 侧快照镜像/入库方案已撤回 |
 | MySekai 正式数据源 | 未完成 | 仍保留本地 masterdata fallback |
-| Deck 正式 recommend engine | 未完成 | Go fallback / remote / local engine 并存 |
+| Deck 正式 recommend engine | 已收口 | 运行时已固定为 HTTP 外部服务；本地 cgo / 启发式 fallback 与 `deck_cgo` 历史目录均已移除，剩余风险主要是 deck-service 可用性与 masterdata 完整性 |
 
 ### 10.3 工程化风险
 
@@ -492,13 +505,12 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧已完成。下一阶段建议优先按下面顺序推进：
+P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧，以及 snapshot/provider 主干收口已完成。下一阶段建议优先按下面顺序推进：
 
 1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
-2. 启动“正式 snapshot provider 替换本地 / Toolbox 过渡方案”的下一阶段工作。
+2. 继续把剩余 `music progress` 与少量 `mysekai` 请求期 fallback 细节收口到更统一的 provider / snapshot 语义。
 3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
-4. 视需要补一份集成测试环境样例说明，降低多人联调门槛。
-5. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
+4. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
 
 ## 12. 维护说明
 

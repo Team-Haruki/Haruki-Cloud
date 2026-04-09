@@ -1,6 +1,7 @@
 package gacha
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,32 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
+
+type gachaContextKey string
+
+type contextAwareGachaSource struct {
+	*testGachaSource
+	ctx       context.Context
+	wantKey   gachaContextKey
+	wantValue string
+}
+
+func (s *contextAwareGachaSource) WithContext(ctx context.Context) DataSource {
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *contextAwareGachaSource) GetGachas() []*masterdata.Gacha {
+	if s.ctx == nil {
+		return nil
+	}
+	value, _ := s.ctx.Value(s.wantKey).(string)
+	if value != s.wantValue {
+		return nil
+	}
+	return s.testGachaSource.GetGachas()
+}
 
 func TestControllerBuildGachaListRequestUsesRequestedRegionSource(t *testing.T) {
 	cn := newTestGachaSource(renderregion.CN)
@@ -179,5 +206,30 @@ func TestControllerBuildGachaDetailRequestUsesEventID(t *testing.T) {
 	}
 	if req.Gacha.ID != 30 {
 		t.Fatalf("expected event gacha id 30, got %d", req.Gacha.ID)
+	}
+}
+
+func TestControllerWithContextClonesGachaSource(t *testing.T) {
+	source := &contextAwareGachaSource{
+		testGachaSource: newTestGachaSource(renderregion.JP),
+		wantKey:         gachaContextKey("trace"),
+		wantValue:       "gacha-list",
+	}
+	gachaInfo := &masterdata.Gacha{ID: 1, Name: "Ctx Gacha", GachaType: "ceil", AssetBundleName: "ctx_gacha", StartAt: 100, EndAt: 200}
+	source.gachas = []*masterdata.Gacha{gachaInfo}
+	source.gachaByID[gachaInfo.ID] = gachaInfo
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	ctx := context.WithValue(context.Background(), gachaContextKey("trace"), "gacha-list")
+
+	req, err := controller.WithContext(ctx).BuildGachaListRequest(ListQuery{
+		Region:      renderregion.JP,
+		IncludePast: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	if len(req.Gachas) != 1 || req.Gachas[0].Name != "Ctx Gacha" {
+		t.Fatalf("unexpected gacha list payload: %+v", req.Gachas)
 	}
 }

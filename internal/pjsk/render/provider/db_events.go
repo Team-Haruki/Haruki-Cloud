@@ -45,8 +45,15 @@ func (p *dbEventProvider) init() {
 }
 
 func (p *dbEventProvider) GetByID(id int) (*masterdata.Event, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbEventProvider) getByID(ctx context.Context, id int) (*masterdata.Event, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("event id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -59,7 +66,7 @@ func (p *dbEventProvider) GetByID(id int) (*masterdata.Event, error) {
 
 	entity, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String()), event.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event %d: %w", id, err)
 	}
@@ -71,23 +78,37 @@ func (p *dbEventProvider) GetByID(id int) (*masterdata.Event, error) {
 }
 
 func (p *dbEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) {
+	return p.getByCardID(nil, cardID)
+}
+
+func (p *dbEventProvider) getByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	link, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.CardIDEQ(int64(cardID))).
 		Order(eventcard.ByEventID()).
-		First(context.Background())
+		First(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event by card %d: %w", cardID, err)
 	}
-	return p.GetByID(int(link.EventID))
+	return p.getByID(ctx, int(link.EventID))
 }
 
 func (p *dbEventProvider) GetAll() []*masterdata.Event {
+	return p.getAll(nil)
+}
+
+func (p *dbEventProvider) getAll(ctx context.Context) []*masterdata.Event {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	entities, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
 		Order(event.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil
 	}
@@ -104,11 +125,18 @@ func (p *dbEventProvider) GetAll() []*masterdata.Event {
 }
 
 func (p *dbEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
+	return p.getCards(nil, eventID)
+}
+
+func (p *dbEventProvider) getCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	links, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(eventID))).
 		Order(eventcard.ByCardID()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event cards for event %d: %w", eventID, err)
 	}
@@ -120,11 +148,15 @@ func (p *dbEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
 	for _, link := range links {
 		cardIDs = append(cardIDs, link.CardID)
 	}
-	return p.getCardsByIDs(cardIDs)
+	return p.getCardsByIDs(ctx, cardIDs)
 }
 
 func (p *dbEventProvider) GetBannerCharacterID(eventID int) (int, error) {
-	cards, err := p.GetCards(eventID)
+	return p.getBannerCharacterID(nil, eventID)
+}
+
+func (p *dbEventProvider) getBannerCharacterID(ctx context.Context, eventID int) (int, error) {
+	cards, err := p.getCards(ctx, eventID)
 	if err != nil {
 		return 0, err
 	}
@@ -132,7 +164,7 @@ func (p *dbEventProvider) GetBannerCharacterID(eventID int) (int, error) {
 	minCardID := -1
 	var selected *masterdata.Card
 	for _, cardInfo := range cards {
-		if p.isFestivalCard(cardInfo.CardSupplyID) {
+		if p.isFestivalCard(ctx, cardInfo.CardSupplyID) {
 			continue
 		}
 		if minCardID == -1 || cardInfo.ID < minCardID {
@@ -147,9 +179,16 @@ func (p *dbEventProvider) GetBannerCharacterID(eventID int) (int, error) {
 }
 
 func (p *dbEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
+	return p.getDeckBonuses(nil, eventID)
+}
+
+func (p *dbEventProvider) getDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Eventdeckbonuse.Query().
 		Where(eventdeckbonuse.ServerRegionEQ(p.region.String()), eventdeckbonuse.EventIDEQ(int64(eventID))).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query deck bonuses for event %d: %w", eventID, err)
 	}
@@ -168,11 +207,18 @@ func (p *dbEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBo
 }
 
 func (p *dbEventProvider) GetBanEvents(charID int) []*masterdata.Event {
+	return p.getBanEvents(nil, charID)
+}
+
+func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*masterdata.Event {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	entities, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
 		Order(event.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil
 	}
@@ -183,7 +229,7 @@ func (p *dbEventProvider) GetBanEvents(charID int) []*masterdata.Event {
 		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
 			continue
 		}
-		bannerCID, err := p.GetBannerCharacterID(eventInfo.ID)
+		bannerCID, err := p.getBannerCharacterID(ctx, eventInfo.ID)
 		if err != nil || bannerCID != charID {
 			continue
 		}
@@ -193,10 +239,17 @@ func (p *dbEventProvider) GetBanEvents(charID int) []*masterdata.Event {
 }
 
 func (p *dbEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
+	return p.getWorldBloomChapters(nil, eventID)
+}
+
+func (p *dbEventProvider) getWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Worldbloom.Query().
 		Where(worldbloom.ServerRegionEQ(p.region.String()), worldbloom.EventIDEQ(int64(eventID))).
 		Order(worldbloom.ByChapterStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil
 	}
@@ -223,10 +276,13 @@ func (p *dbEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.World
 	return result
 }
 
-func (p *dbEventProvider) getCardsByIDs(ids []int64) ([]*masterdata.Card, error) {
+func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*masterdata.Card, error) {
 	result := make([]*masterdata.Card, len(ids))
 	var missing []int64
 	missingIndex := make(map[int64]int)
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.cardMu.RLock()
 	for idx, id := range ids {
@@ -245,7 +301,7 @@ func (p *dbEventProvider) getCardsByIDs(ids []int64) ([]*masterdata.Card, error)
 
 	entities, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.GameIDIn(missing...)).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -272,14 +328,17 @@ func (p *dbEventProvider) getCardsByIDs(ids []int64) ([]*masterdata.Card, error)
 	return result, nil
 }
 
-func (p *dbEventProvider) isFestivalCard(supplyID int) bool {
-	typ := p.getCardSupplyType(supplyID)
+func (p *dbEventProvider) isFestivalCard(ctx context.Context, supplyID int) bool {
+	typ := p.getCardSupplyType(ctx, supplyID)
 	return strings.Contains(typ, "festival")
 }
 
-func (p *dbEventProvider) getCardSupplyType(id int) string {
+func (p *dbEventProvider) getCardSupplyType(ctx context.Context, id int) string {
 	if id == 0 {
 		return ""
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.supplyMu.RLock()
 	if cached, ok := p.supplyCache[id]; ok {
@@ -290,7 +349,7 @@ func (p *dbEventProvider) getCardSupplyType(id int) string {
 
 	supply, err := p.client.Cardsupplie.Query().
 		Where(cardsupplie.ServerRegionEQ(p.region.String()), cardsupplie.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return ""
 	}

@@ -33,8 +33,15 @@ func (p *dbSkillProvider) init() {
 }
 
 func (p *dbSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbSkillProvider) getByID(ctx context.Context, id int) (*masterdata.Skill, error) {
 	if id == 0 {
 		return nil, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -47,7 +54,7 @@ func (p *dbSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
 
 	entity, err := p.client.Skill.Query().
 		Where(skill.ServerRegionEQ(p.region.String()), skill.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query skill %d: %w", id, err)
 	}
@@ -62,8 +69,15 @@ func (p *dbSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
 }
 
 func (p *dbSkillProvider) FormatDescription(skillInfo *masterdata.Skill, cardCharacterID int) string {
+	return p.formatDescription(nil, skillInfo, cardCharacterID)
+}
+
+func (p *dbSkillProvider) formatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
 	if skillInfo == nil {
 		return ""
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	return skillPlaceholder.ReplaceAllStringFunc(skillInfo.Description, func(match string) string {
@@ -86,7 +100,7 @@ func (p *dbSkillProvider) FormatDescription(skillInfo *masterdata.Skill, cardCha
 
 		if parts[1] == "c" {
 			if p.characters != nil {
-				ch, err := p.characters.GetByID(cardCharacterID)
+				ch, err := p.characters.getByID(ctx, cardCharacterID)
 				if err == nil && ch != nil {
 					return ch.FirstName + ch.GivenName
 				}

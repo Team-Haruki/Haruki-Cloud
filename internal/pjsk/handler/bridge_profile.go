@@ -2,16 +2,17 @@ package handler
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
+	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
+	profileCtrl := rc.App.Profiles.WithContext(rc.Ctx)
 	switch rc.Cmd.Mode {
 	case accountdata.ProfileModeRender:
 		var p userQueryParams
@@ -39,14 +40,10 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			}
 		}
 
-		// Fetch player frames from the suite snapshot (best-effort; nil = no frame rendered).
-		var framesJSON []byte
+		var profileSnapshot userdata.Snapshot
 		if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
 			if platform, platformUserID := platformCredentials(p); platform != "" {
-				if uid, convErr := strconv.ParseInt(target.PJSKUserID, 10, 64); convErr == nil {
-					framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-						region, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
-				}
+				profileSnapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, platform, platformUserID, target.PJSKUserID, false)
 			}
 		}
 
@@ -55,7 +52,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			Visible:    target.Visible,
 			BgSettings: target.BgSettings,
 		}
-		data, err := rc.App.Profiles.RenderProfileFromAPI(q, resp, framesJSON)
+		data, err := profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
 		if err != nil {
 			return nil, err
 		}

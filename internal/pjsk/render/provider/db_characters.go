@@ -40,8 +40,15 @@ func (p *dbCharacterProvider) init() {
 }
 
 func (p *dbCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbCharacterProvider) getByID(ctx context.Context, id int) (*masterdata.Character, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("character id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -55,7 +62,7 @@ func (p *dbCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
 
 	entity, err := p.client.Gamecharacter.Query().
 		Where(gamecharacter.ServerRegionEQ(p.region.String()), gamecharacter.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query character %d: %w", id, err)
 	}
@@ -73,8 +80,15 @@ func (p *dbCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
 }
 
 func (p *dbCharacterProvider) GetColorCode(id int) (string, bool) {
+	return p.getColorCode(nil, id)
+}
+
+func (p *dbCharacterProvider) getColorCode(ctx context.Context, id int) (string, bool) {
 	if id == 0 {
 		return "", false
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -87,7 +101,7 @@ func (p *dbCharacterProvider) GetColorCode(id int) (string, bool) {
 
 	entity, err := p.client.Gamecharacterunit.Query().
 		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return "", false
 	}
@@ -99,8 +113,15 @@ func (p *dbCharacterProvider) GetColorCode(id int) (string, bool) {
 }
 
 func (p *dbCharacterProvider) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+	return p.getGameCharacterUnit(nil, id)
+}
+
+func (p *dbCharacterProvider) getGameCharacterUnit(ctx context.Context, id int) (*masterdata.GameCharacterUnit, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("game character unit id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -114,7 +135,7 @@ func (p *dbCharacterProvider) GetGameCharacterUnit(id int) (*masterdata.GameChar
 
 	entity, err := p.client.Gamecharacterunit.Query().
 		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query game character unit %d: %w", id, err)
 	}

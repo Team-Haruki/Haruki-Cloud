@@ -1,25 +1,21 @@
 package userdata
 
 import (
-"context"
-"encoding/json"
-"fmt"
-"os"
-"path/filepath"
-"strings"
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
-sekaiDB "haruki-cloud/database/sekai"
-"haruki-cloud/database/sekai/card"
-"haruki-cloud/internal/pjsk/render/assets"
-renderregion "haruki-cloud/internal/pjsk/render/region"
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/card"
+	"haruki-cloud/internal/pjsk/render/assets"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
-func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
-	mySekaiData, err := os.ReadFile(filepath.Clean(mySekaiPath))
-	if err != nil {
-		return nil, fmt.Errorf("read mysekai snapshot: %w", err)
-	}
-	userData, err = normalizeSnapshotJSON(userData)
+func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
+	userData, err := normalizeSnapshotJSON(userData)
 	if err != nil {
 		return nil, err
 	}
@@ -65,16 +61,27 @@ func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
 	return merged, nil
 }
 
-func resolveLeaderImagePath(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, region renderregion.Value, cardID int, afterTraining bool) string {
+func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
+	mySekaiData, err := os.ReadFile(filepath.Clean(mySekaiPath))
+	if err != nil {
+		return nil, fmt.Errorf("read mysekai snapshot: %w", err)
+	}
+	return mergeMySekaiData(userData, mySekaiData)
+}
+
+func resolveLeaderImagePath(ctx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, region renderregion.Value, cardID int, afterTraining bool) string {
 	if cardID == 0 {
 		return ""
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	var assetBundleName string
 	if sekaiClient != nil {
 		entity, err := sekaiClient.Card.Query().
 			Where(card.ServerRegionEQ(renderregion.WithDefault(region).String()), card.GameIDEQ(int64(cardID))).
-			Only(context.Background())
+			Only(ctx)
 		if err == nil {
 			assetBundleName = entity.AssetbundleName
 		}

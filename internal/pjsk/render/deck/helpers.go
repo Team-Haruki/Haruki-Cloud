@@ -228,13 +228,6 @@ func noChangeDeckConfig() map[string]interface{} {
 	}
 }
 
-func defaultEventBonus(recommendType string) float64 {
-	if recommendType == "event" || recommendType == "bonus" {
-		return 20.0
-	}
-	return 0.0
-}
-
 func pickBonusTargets(list []int, args string) []int {
 	if len(list) > 0 {
 		return list
@@ -294,28 +287,4 @@ func float64Ptr(value float64) *float64 {
 
 func isAfterTraining(userCard userdata.RawUserCard) bool {
 	return strings.EqualFold(userCard.SpecialTrainingStatus, "done")
-}
-
-func calculateDeckCardPower(card *masterdata.Card) int {
-	if card == nil {
-		return 0
-	}
-	var p1, p2, p3 int
-	for _, param := range card.CardParameters {
-		switch param.CardParameterType {
-		case "param1":
-			if param.Power > p1 {
-				p1 = param.Power
-			}
-		case "param2":
-			if param.Power > p2 {
-				p2 = param.Power
-			}
-		case "param3":
-			if param.Power > p3 {
-				p3 = param.Power
-			}
-		}
-	}
-	return p1 + p2 + p3 + card.SpecialTrainingPower1BonusFixed + card.SpecialTrainingPower2BonusFixed + card.SpecialTrainingPower3BonusFixed
 }

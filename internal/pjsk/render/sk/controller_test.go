@@ -18,6 +18,29 @@ type testForecastProvider struct {
 	err      error
 }
 
+type ctxKey string
+
+type contextAwareForecastProvider struct {
+	wantKey   ctxKey
+	wantValue string
+}
+
+func (p contextAwareForecastProvider) Fetch(ctx context.Context, _ string, _ int, ranks []int) (map[int]ForecastScore, error) {
+	value, _ := ctx.Value(p.wantKey).(string)
+	if value != p.wantValue {
+		return nil, context.Canceled
+	}
+	out := make(map[int]ForecastScore, len(ranks))
+	for _, rank := range ranks {
+		out[rank] = ForecastScore{
+			Score:     8_000_000 + rank,
+			Timestamp: 1_700_000_000,
+			Source:    "forecast",
+		}
+	}
+	return out, nil
+}
+
 func (p testForecastProvider) Fetch(context.Context, string, int, []int) (map[int]ForecastScore, error) {
 	if p.err != nil {
 		return nil, p.err
@@ -1508,5 +1531,37 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeWhenForecastFails(
 	}
 	if payload.Ranks[0].Name != "" {
 		t.Fatalf("fallback rank name should stay empty, got %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+	controller.SetForecastProvider(contextAwareForecastProvider{
+		wantKey:   ctxKey("trace"),
+		wantValue: "sk-predict",
+	})
+
+	ctx := context.WithValue(context.Background(), ctxKey("trace"), "sk-predict")
+	payload, err := controller.WithContext(ctx).BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build predict line request: %v", err)
+	}
+	if len(payload.ForecastColumns) != 1 || payload.ForecastColumns[0].Key != "forecast" {
+		t.Fatalf("unexpected forecast columns: %+v", payload.ForecastColumns)
 	}
 }

@@ -22,6 +22,14 @@ type lookupTestAliasResolver struct {
 	err error
 }
 
+type lookupContextKey string
+
+type contextAwareLookupTestAliasResolver struct {
+	wantKey   lookupContextKey
+	wantValue string
+	id        int
+}
+
 func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
 
 func (r *lookupTestAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
@@ -44,6 +52,24 @@ func (r *lookupTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Contex
 	}
 	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
 	return id, ok, nil
+}
+
+func (r *contextAwareLookupTestAliasResolver) TryResolveMusicID(ctx context.Context, token string) (int, bool, error) {
+	return r.TryResolveMusicTitleOrAliasID(ctx, token)
+}
+
+func (r *contextAwareLookupTestAliasResolver) TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error) {
+	if r == nil {
+		return 0, false, nil
+	}
+	if strings.ToLower(strings.TrimSpace(token)) != "ctx song" {
+		return 0, false, nil
+	}
+	value, _ := ctx.Value(r.wantKey).(string)
+	if value != r.wantValue {
+		return 0, false, context.Canceled
+	}
+	return r.id, true, nil
 }
 
 func (s *lookupTestSource) SearchMusic(query string) (*masterdata.Music, error) {
@@ -147,6 +173,30 @@ func TestFindMusicChartsByNoteCount(t *testing.T) {
 	}
 	if matches[2].Music.ID != 2 || matches[2].Difficulty != "append" {
 		t.Fatalf("unexpected third match: %+v", matches[2])
+	}
+}
+
+func TestResolveMusicCoverUsesControllerRequestContext(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			7: {ID: 7, Title: "Ctx Song", AssetBundleName: "ctx_song"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&contextAwareLookupTestAliasResolver{
+		wantKey:   lookupContextKey("trace"),
+		wantValue: "music-cover",
+		id:        7,
+	})
+
+	ctx := context.WithValue(context.Background(), lookupContextKey("trace"), "music-cover")
+	result, err := controller.WithContext(ctx).ResolveMusicCover(Query{Query: "ctx song", Region: "jp"})
+	if err != nil {
+		t.Fatalf("ResolveMusicCover() error = %v", err)
+	}
+	if result == nil || result.Music == nil || result.Music.ID != 7 {
+		t.Fatalf("unexpected cover result: %+v", result)
 	}
 }
 

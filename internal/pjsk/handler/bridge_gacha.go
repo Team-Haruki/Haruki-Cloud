@@ -12,17 +12,18 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Gachas == nil {
 		return nil, fmt.Errorf("gacha service unavailable: sekai client not configured")
 	}
+	gachaCtrl := rc.App.Gachas.WithContext(rc.Ctx)
 	var data []byte
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
 	case "gacha", "gacha-list":
 		q := gacha.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = rc.App.Gachas.RenderGachaList(q)
+		data, err = gachaCtrl.RenderGachaList(q)
 	case "gacha-detail":
 		q := gacha.DetailQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = rc.App.Gachas.RenderGachaDetail(q)
+		data, err = gachaCtrl.RenderGachaDetail(q)
 	default:
 		return nil, unsupportedModeError("gacha", rc.Cmd.Mode)
 	}

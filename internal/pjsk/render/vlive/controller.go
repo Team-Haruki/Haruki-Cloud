@@ -1,6 +1,7 @@
 package vlive
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -14,11 +15,26 @@ type Controller struct {
 	defaultRegion renderregion.Value
 }
 
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
 func NewController(source DataSource, defaultRegion renderregion.Value) *Controller {
 	return &Controller{
 		source:        source,
 		defaultRegion: renderregion.WithDefault(defaultRegion),
 	}
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	if contextual, ok := any(c.source).(contextualDataSource); ok {
+		clone.source = contextual.WithContext(ctx)
+	}
+	return &clone
 }
 
 func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion.Value, error) {

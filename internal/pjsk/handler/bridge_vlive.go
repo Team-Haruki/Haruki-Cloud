@@ -13,7 +13,7 @@ func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 	}
 	query := vlive.ListQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &query)
-	text, err := rc.App.VLive.RenderText(query)
+	text, err := rc.App.VLive.WithContext(rc.Ctx).RenderText(query)
 	if err != nil {
 		return nil, err
 	}

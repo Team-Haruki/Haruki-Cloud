@@ -5,7 +5,8 @@
 > 2026-04-09 补充：
 > 1. `api/legacy/pjsk/` 已从仓库与运行时移除。
 > 2. PJSK Bot 主协议已经收口到 `POST /api/v2/bot/:botId/pjsk/<path>`。
-> 3. 当前活跃 Bot path 数量与模块分档，请优先参考 [项目完成度跟踪](project-completion-tracker.cn.md)。
+> 3. `internal/pjsk/render/deck/deck_cgo/` 历史目录已从仓库移除，deck recommend 运行时仅保留 HTTP 外部服务。
+> 4. 当前活跃 Bot path 数量与模块分档，请优先参考 [项目完成度跟踪](project-completion-tracker.cn.md)。
 
 ---
 
@@ -99,10 +100,11 @@ Haruki-Cloud/
 │
 ├── docs/                         # ── 文档 ──
 ├── integration/                  # ── 集成测试 ──
-├── exports/                      # ── 导出工具 ──
+├── exports/                      # ── 导出产物/临时数据 ──
 │
-├── migrate.go                    # ⚠ 根目录迁移脚本（与 cmd/migrate 重复）
-├── extract_tables.go             # ⚠ 根目录提取脚本（与 cmd/extractor 重复）
+├── cmd/extractor/                #   数据提取脚本入口
+├── cmd/migrate/                  #   Sekai Ent 迁移脚本入口
+├── cmd/server/                   #   主服务入口
 ├── schema_info.json              #   Sekai 表结构元数据
 ├── go.mod / go.sum               #   Go 模块定义
 └── haruki-db-configs.example.yaml  #   配置文件模板
@@ -462,11 +464,9 @@ internal/pjsk/chardata/
 
 | 问题 | 位置 | 说明 |
 |------|------|------|
-| 根目录存在独立 main 文件 | `migrate.go`, `extract_tables.go` | 与 `cmd/migrate/`, `cmd/extractor/` 功能重复，导致 `go build ./...` 失败（多个 main） |
 | `internal/core/` 半空 | `internal/core/pjsk/`, `internal/core/middleware/` | 目录存在但无实际代码或为空 |
-| `cmd/client_test/` 空目录 | `cmd/client_test/` | 未使用 |
 | `api/legacy/pjsk/` 历史兼容层 | `api/legacy/pjsk/` | 已于 2026-04-09 从仓库与运行时移除 |
-| `exports/` 用途不明 | `exports/` | 目录存在但未调查内容 |
+| `exports/` 混合导出与临时产物 | `exports/` | 当前包含 alias 导出与 DB dump，尚未形成清晰约束与归档规则 |
 
 ### ⚠ 技术债
 
@@ -482,11 +482,11 @@ internal/pjsk/chardata/
 ## 10. 构建 & 测试
 
 ```bash
-# 构建（必须指定 cmd/server，根目录有多个 main 会冲突）
+# 构建主服务
 go build ./cmd/server/...
 
 # 运行全部测试
-go test ./api/... ./internal/pjsk/...
+go test ./...
 
 # 单独测试各子系统
 go test ./api/public/...                     # 公开 API（pjsk alias, chunithm）
@@ -496,7 +496,7 @@ go test ./internal/pjsk/handler/sekai/...   # Handler 子系统
 go test ./internal/pjsk/render/...          # 渲染子系统
 ```
 
-> 注意：`api/bot/auth/` 的测试依赖数据库连接，在无 DB 环境下可能失败（这是预期行为）。
+> 说明：当前仓库默认 `go test ./...` 已可直接通过；`integration` 测试默认关闭，需显式设置 `HARUKI_RUN_INTEGRATION=1` 才执行。
 
 ---
 

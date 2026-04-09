@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -22,7 +21,7 @@ import (
 
 // SendMail 发送验证码 - 验证 Turnstile 并发送验证码到 QQ 邮箱（公开 API，无加密）
 func (h *UserHandler) SendMail(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 
 	var req SendMailRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -69,7 +68,7 @@ func (h *UserHandler) SendMail(c fiber.Ctx) error {
 
 // Register 注册 - 验证邮箱验证码，创建用户（公开 API，无加密）
 func (h *UserHandler) Register(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 
 	var req RegisterRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -162,7 +161,7 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 
 // Auth 登录 - AES-256-GCM 加密验证 credential，生成 session token（公开 API，AES 加密）
 func (h *UserHandler) Auth(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	botIDStr := c.Params("bot_id")
 	botID, err := strconv.Atoi(botIDStr)
 	if err != nil {

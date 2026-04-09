@@ -20,14 +20,19 @@ import (
 var wordTagPattern = regexp.MustCompile(`<#.*?>`)
 
 type Controller struct {
-	sources  *regionsource.Registry[DataSource]
-	drawing  *drawing.HarukiDrawingClient
-	assets   *assets.AssetHelper
-	snapshot *userdata.Service
-	censor   *censor.Service
+	sources    *regionsource.Registry[DataSource]
+	drawing    *drawing.HarukiDrawingClient
+	assets     *assets.AssetHelper
+	snapshot   userdata.Snapshot
+	censor     *censor.Service
+	requestCtx context.Context
 }
 
-func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service) *Controller {
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
@@ -48,11 +53,35 @@ func (c *Controller) RegisterSource(source DataSource) {
 	c.sources.RegisterSource(source)
 }
 
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(contextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
+}
+
 func (c *Controller) SetCensor(svc *censor.Service) {
 	if c == nil {
 		return
 	}
 	c.censor = svc
+}
+
+func (c *Controller) contextOrBackground() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.Background()
 }
 
 func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, error) {
@@ -91,13 +120,13 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 
 	nickname := detail.Nickname
 	if c.censor != nil && nickname != "" {
-		if !c.censor.CensorName(context.Background(), 0, detail.ID, nickname, query.Region) {
+		if !c.censor.CensorName(c.contextOrBackground(), 0, detail.ID, nickname, query.Region) {
 			nickname = ""
 		}
 	}
 	word := cleanWord(raw.UserProfile.Word)
 	if c.censor != nil && word != "" {
-		if !c.censor.CensorShortBio(context.Background(), 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
+		if !c.censor.CensorShortBio(c.contextOrBackground(), 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
 			word = ""
 		}
 	}
@@ -152,14 +181,22 @@ func (c *Controller) SnapshotDetailedProfile(region renderregion.Value) *drawing
 }
 
 // BuildProfileRequestFromAPI builds a ProfileRequest from a live GetUserProfile API response.
-// framesJSON is the optional raw bytes from a ?key=userPlayerFrames toolbox key-query; pass nil
-// to render without a player frame.
+// framesJSON is the optional raw bytes from a userPlayerFrames snapshot payload; pass nil to
+// render without a player frame.
 // query.Visible maps directly to !IsHideUID (false = hide UID, true = show UID).
 // UpdateTime is always nil so that the image cache system produces a stable cache key for
 // identical renders.
 // UserEventResults are intentionally ignored — honor badges show the honor level,
 // and FcOrApLevel is not an event-rank rendering field.
 func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileRequest, error) {
+	return c.buildProfileRequestFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+}
+
+func (c *Controller) BuildProfileRequestFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileRequest, error) {
+	return c.buildProfileRequestFromAPIFrames(query, resp, snapshotFrames(snapshot))
+}
+
+func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -186,7 +223,6 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 		region,
 	)
 
-	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
 	if framePaths != nil {
@@ -228,6 +264,14 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 }
 
 func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.DetailedProfileCardRequest, error) {
+	return c.buildDetailedProfileCardFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+}
+
+func (c *Controller) BuildDetailedProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
+	return c.buildDetailedProfileCardFromAPIFrames(query, resp, snapshotFrames(snapshot))
+}
+
+func (c *Controller) buildDetailedProfileCardFromAPIFrames(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame) (*drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -254,7 +298,6 @@ func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.Ge
 		region,
 	)
 
-	frames := parseFramesJSON(framesJSON)
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
 	if framePaths != nil {
@@ -277,7 +320,33 @@ func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.Ge
 }
 
 func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileCardRequest, error) {
-	detail, err := c.BuildDetailedProfileCardFromAPI(query, resp, framesJSON)
+	detail, err := c.buildDetailedProfileCardFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+	if err != nil {
+		return nil, err
+	}
+	source := detail.Source
+	return &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{
+			ID:              detail.ID,
+			Region:          detail.Region,
+			Nickname:        detail.Nickname,
+			IsHideUID:       detail.IsHideUID,
+			LeaderImagePath: detail.LeaderImagePath,
+			HasFrame:        detail.HasFrame,
+			FramePath:       common.CloneStringPtr(detail.FramePath),
+		},
+		DataSources: []drawing.ProfileDataSource{
+			{
+				Name:   "Sekai API",
+				Source: &source,
+				Mode:   common.CloneStringPtr(detail.Mode),
+			},
+		},
+	}, nil
+}
+
+func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileCardRequest, error) {
+	detail, err := c.buildDetailedProfileCardFromAPIFrames(query, resp, snapshotFrames(snapshot))
 	if err != nil {
 		return nil, err
 	}
@@ -316,3 +385,14 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 	return c.drawing.GenerateProfile(payload)
 }
 
+func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildProfileRequestFromAPIWithSnapshot(query, resp, snapshot)
+	if err != nil {
+		return nil, err
+	}
+	logProfilePayloadDebug("sekai_api_public", payload)
+	return c.drawing.GenerateProfile(payload)
+}

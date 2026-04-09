@@ -1,6 +1,7 @@
 package gacha
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -18,6 +19,10 @@ type Controller struct {
 	assets  *assets.AssetHelper
 }
 
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
@@ -33,6 +38,22 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 
 func (c *Controller) RegisterSource(src DataSource) {
 	c.sources.RegisterSource(src)
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(contextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
 }
 
 func (c *Controller) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequest, error) {

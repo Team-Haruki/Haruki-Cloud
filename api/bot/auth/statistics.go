@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"haruki-cloud/api"
@@ -24,32 +23,13 @@ func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 		return api.InternalError(c)
 	}
 	now := time.Now().In(loc)
-	ctx := context.Background()
-	var wg sync.WaitGroup
-	errCh := make(chan error, 3)
-	wg.Add(3)
-	go func() {
-		defer wg.Done()
-		if err := h.updateRequestsRanking(ctx, botID); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := h.updateHourlyRequests(ctx, now); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := h.updateDailyRequests(ctx, now, loc); err != nil {
-			errCh <- err
-		}
-	}()
-	wg.Wait()
-	close(errCh)
-	for err := range errCh {
-		if err != nil {
+	ctx := c.Context()
+	for _, update := range []func(context.Context) error{
+		func(ctx context.Context) error { return h.updateRequestsRanking(ctx, botID) },
+		func(ctx context.Context) error { return h.updateHourlyRequests(ctx, now) },
+		func(ctx context.Context) error { return h.updateDailyRequests(ctx, now, loc) },
+	} {
+		if err := update(ctx); err != nil {
 			return api.InternalError(c)
 		}
 	}
@@ -58,65 +38,84 @@ func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 }
 
 func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int) error {
-	rank, err := h.svc.client.RequestsRanking.
-		Query().
-		Where(requestsranking.BotIDEQ(botID)).
-		Only(ctx)
-	if err == nil && rank != nil {
-		_, err = h.svc.client.RequestsRanking.
-			UpdateOne(rank).
-			SetCounts(rank.Counts + 1).
-			Save(ctx)
-	} else {
-		_, err = h.svc.client.RequestsRanking.
-			Create().
-			SetBotID(botID).
-			SetCounts(1).
-			Save(ctx)
-	}
-	return err
+	return incrementStatisticCounter(
+		func() error {
+			_, err := h.svc.client.RequestsRanking.
+				Create().
+				SetBotID(botID).
+				SetCounts(1).
+				Save(ctx)
+			return err
+		},
+		func() (int, error) {
+			return h.svc.client.RequestsRanking.
+				Update().
+				Where(requestsranking.BotIDEQ(botID)).
+				AddCounts(1).
+				Save(ctx)
+		},
+	)
 }
 
 func (h *StatisticsHandler) updateHourlyRequests(ctx context.Context, now time.Time) error {
 	hourKey := now.Truncate(time.Hour)
-	hourly, err := h.svc.client.HourlyRequests.
-		Query().
-		Where(hourlyrequests.HourKeyEQ(hourKey)).
-		Only(ctx)
-	if err == nil && hourly != nil {
-		_, err = h.svc.client.HourlyRequests.
-			UpdateOne(hourly).
-			SetCount(hourly.Count + 1).
-			Save(ctx)
-	} else {
-		_, err = h.svc.client.HourlyRequests.
-			Create().
-			SetHourKey(hourKey).
-			SetCount(1).
-			Save(ctx)
-	}
-	return err
+	return incrementStatisticCounter(
+		func() error {
+			_, err := h.svc.client.HourlyRequests.
+				Create().
+				SetHourKey(hourKey).
+				SetCount(1).
+				Save(ctx)
+			return err
+		},
+		func() (int, error) {
+			return h.svc.client.HourlyRequests.
+				Update().
+				Where(hourlyrequests.HourKeyEQ(hourKey)).
+				AddCount(1).
+				Save(ctx)
+		},
+	)
 }
 
 func (h *StatisticsHandler) updateDailyRequests(ctx context.Context, now time.Time, loc *time.Location) error {
 	dateKey := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	daily, err := h.svc.client.DailyRequests.
-		Query().
-		Where(dailyrequests.DateKeyEQ(dateKey)).
-		Only(ctx)
-	if err == nil && daily != nil {
-		_, err = h.svc.client.DailyRequests.
-			UpdateOne(daily).
-			SetCount(daily.Count + 1).
-			Save(ctx)
-	} else {
-		_, err = h.svc.client.DailyRequests.
-			Create().
-			SetDateKey(dateKey).
-			SetCount(1).
-			Save(ctx)
+	return incrementStatisticCounter(
+		func() error {
+			_, err := h.svc.client.DailyRequests.
+				Create().
+				SetDateKey(dateKey).
+				SetCount(1).
+				Save(ctx)
+			return err
+		},
+		func() (int, error) {
+			return h.svc.client.DailyRequests.
+				Update().
+				Where(dailyrequests.DateKeyEQ(dateKey)).
+				AddCount(1).
+				Save(ctx)
+		},
+	)
+}
+
+func incrementStatisticCounter(create func() error, update func() (int, error)) error {
+	updated, err := update()
+	if err != nil {
+		return err
 	}
-	return err
+	if updated > 0 {
+		return nil
+	}
+
+	if err := create(); err != nil {
+		if !bot.IsConstraintError(err) {
+			return err
+		}
+		_, err = update()
+		return err
+	}
+	return nil
 }
 
 func registerStatisticsRoutes(app *fiber.App, client *bot.Client) {

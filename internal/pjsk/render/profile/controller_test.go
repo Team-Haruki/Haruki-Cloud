@@ -1,20 +1,51 @@
 package profile
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/sekai"
 )
+
+type profileContextKey string
+
+type contextAwareProfileSource struct {
+	*testProfileSource
+	ctx       context.Context
+	wantKey   profileContextKey
+	wantValue string
+}
+
+func (s *contextAwareProfileSource) WithContext(ctx context.Context) DataSource {
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *contextAwareProfileSource) GetCardByID(id int) (*masterdata.Card, error) {
+	if s.ctx == nil {
+		return nil, fmt.Errorf("missing request context")
+	}
+	value, _ := s.ctx.Value(s.wantKey).(string)
+	if value != s.wantValue {
+		return nil, fmt.Errorf("unexpected request context")
+	}
+	return s.testProfileSource.GetCardByID(id)
+}
 
 type testProfileSource struct {
 	region      renderregion.Value
 	cards       map[int]*masterdata.Card
 	honors      map[int]*masterdata.Honor
 	honorGroups map[int]*masterdata.HonorGroup
+	frames      map[int]*masterdata.PlayerFrame
+	frameGroups map[int]*masterdata.PlayerFrameGroup
 }
 
 func (s *testProfileSource) DefaultRegion() renderregion.Value { return s.region }
@@ -46,11 +77,21 @@ func (s *testProfileSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCh
 }
 
 func (s *testProfileSource) GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error) {
-	return nil, fmt.Errorf("player frame not found: %d", id)
+	item, ok := s.frames[id]
+	if !ok {
+		return nil, fmt.Errorf("player frame not found: %d", id)
+	}
+	cloned := *item
+	return &cloned, nil
 }
 
 func (s *testProfileSource) GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
-	return nil, fmt.Errorf("player frame group not found: %d", id)
+	item, ok := s.frameGroups[id]
+	if !ok {
+		return nil, fmt.Errorf("player frame group not found: %d", id)
+	}
+	cloned := *item
+	return &cloned, nil
 }
 
 func (s *testProfileSource) GetCardByID(id int) (*masterdata.Card, error) {
@@ -179,5 +220,129 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res021_no002_after_training.png"
 	if payload.Profile.LeaderImagePath != wantLeader {
 		t.Fatalf("unexpected custom profile image path: %q", payload.Profile.LeaderImagePath)
+	}
+}
+
+type profileSnapshotStub struct {
+	rawData *userdata.RawUserData
+}
+
+func (s *profileSnapshotStub) Require() error { return nil }
+
+func (s *profileSnapshotStub) DetailedProfile(renderregion.Value) *drawing.DetailedProfileCardRequest {
+	return nil
+}
+
+func (s *profileSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCardRequest {
+	return nil
+}
+
+func (s *profileSnapshotStub) MusicResults(string) map[int]string { return nil }
+
+func (s *profileSnapshotStub) GetMusicResult(int, string) string { return "" }
+
+func (s *profileSnapshotStub) ChallengeLive() *userdata.ChallengeLiveData { return nil }
+
+func (s *profileSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
+
+func (s *profileSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil }
+
+func (s *profileSnapshotStub) RawFilePath() string { return "" }
+
+func (s *profileSnapshotStub) RawData() *userdata.RawUserData { return s.rawData }
+
+func (s *profileSnapshotStub) MusicMetaBytes() []byte { return nil }
+
+func (s *profileSnapshotStub) MusicMetaPath() string { return "" }
+
+func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+		frames: map[int]*masterdata.PlayerFrame{
+			10: {ID: 10, PlayerFrameGroupID: 20},
+		},
+		frameGroups: map[int]*masterdata.PlayerFrameGroup{
+			20: {ID: 20, AssetBundleName: "frame_group_20"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	snapshot := &profileSnapshotStub{
+		rawData: &userdata.RawUserData{
+			UserFrames: []userdata.RawUserFrame{
+				{PlayerFrameID: 10, PlayerFrameAttachStatus: "equipped"},
+			},
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Frame User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
+	}
+
+	if !payload.Profile.HasFrame {
+		t.Fatalf("expected frame to be rendered")
+	}
+	if payload.FramePaths == nil || payload.FramePaths.Base != "player_frame/frame_group_20/10/horizontal/frame_base.png" {
+		t.Fatalf("unexpected frame paths: %+v", payload.FramePaths)
+	}
+	if payload.Profile.FramePath == nil || *payload.Profile.FramePath != payload.FramePaths.Base {
+		t.Fatalf("unexpected profile frame path: %+v", payload.Profile.FramePath)
+	}
+}
+
+func TestControllerWithContextClonesProfileSource(t *testing.T) {
+	source := &contextAwareProfileSource{
+		testProfileSource: &testProfileSource{
+			region: renderregion.JP,
+			cards: map[int]*masterdata.Card{
+				1001: {
+					ID:              1001,
+					CharacterID:     1,
+					AssetBundleName: "res001_no001",
+				},
+			},
+			honors:      map[int]*masterdata.Honor{},
+			honorGroups: map[int]*masterdata.HonorGroup{},
+		},
+		wantKey:   profileContextKey("trace"),
+		wantValue: "profile-api",
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Ctx User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	ctx := context.WithValue(context.Background(), profileContextKey("trace"), "profile-api")
+	payload, err := controller.WithContext(ctx).BuildProfileRequestFromAPI(Query{Region: "jp", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+	if payload.Profile.LeaderImagePath == "" {
+		t.Fatalf("expected leader image path to be resolved")
 	}
 }

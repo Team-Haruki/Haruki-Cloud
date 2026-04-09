@@ -1,6 +1,7 @@
 package vlive
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -8,9 +9,14 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
+type vliveContextKey string
+
 type fakeSource struct {
 	defaultRegion renderregion.Value
 	lives         map[renderregion.Value][]*Live
+	ctx           context.Context
+	wantKey       vliveContextKey
+	wantValue     string
 }
 
 func (f *fakeSource) DefaultRegion() renderregion.Value {
@@ -18,7 +24,22 @@ func (f *fakeSource) DefaultRegion() renderregion.Value {
 }
 
 func (f *fakeSource) GetLives(region renderregion.Value) ([]*Live, error) {
+	if f.wantValue != "" {
+		if f.ctx == nil {
+			return nil, context.Canceled
+		}
+		value, _ := f.ctx.Value(f.wantKey).(string)
+		if value != f.wantValue {
+			return nil, context.Canceled
+		}
+	}
 	return f.lives[region], nil
+}
+
+func (f *fakeSource) WithContext(ctx context.Context) DataSource {
+	clone := *f
+	clone.ctx = ctx
+	return &clone
 }
 
 func TestRenderTextFiltersAndFormatsLives(t *testing.T) {
@@ -105,5 +126,30 @@ func TestRenderTextReturnsEmptyMessageWhenNoUpcomingLives(t *testing.T) {
 	}
 	if text != "当前没有虚拟Live" {
 		t.Fatalf("unexpected empty text: %q", text)
+	}
+}
+
+func TestControllerWithContextClonesVLiveSource(t *testing.T) {
+	now := time.Date(2026, 3, 26, 20, 0, 0, 0, time.Local)
+	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
+
+	controller := NewController(&fakeSource{
+		defaultRegion: renderregion.JP,
+		wantKey:       vliveContextKey("trace"),
+		wantValue:     "vlive-list",
+		lives: map[renderregion.Value][]*Live{
+			renderregion.JP: {
+				{ID: 1, Name: "Ctx Live", StartAt: ms(now.Add(time.Hour)), EndAt: ms(now.Add(2 * time.Hour))},
+			},
+		},
+	}, renderregion.JP)
+
+	ctx := context.WithValue(context.Background(), vliveContextKey("trace"), "vlive-list")
+	text, err := controller.WithContext(ctx).RenderText(ListQuery{Now: now})
+	if err != nil {
+		t.Fatalf("RenderText() error = %v", err)
+	}
+	if !strings.Contains(text, "Ctx Live") {
+		t.Fatalf("unexpected vlive text: %q", text)
 	}
 }

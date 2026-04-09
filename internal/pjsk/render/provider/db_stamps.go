@@ -21,6 +21,13 @@ type dbStampProvider struct {
 }
 
 func (p *dbStampProvider) GetAll() ([]masterdata.Stamp, error) {
+	return p.getAll(nil)
+}
+
+func (p *dbStampProvider) getAll(ctx context.Context) ([]masterdata.Stamp, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	p.mu.RLock()
 	if p.loaded {
 		out := append([]masterdata.Stamp(nil), p.stamps...)
@@ -34,7 +41,7 @@ func (p *dbStampProvider) GetAll() ([]masterdata.Stamp, error) {
 	if !p.loaded {
 		items, err := p.client.Stamp.Query().
 			Where(sekaiStamp.ServerRegionEQ(p.region.String())).
-			All(context.Background())
+			All(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("query stamps: %w", err)
 		}

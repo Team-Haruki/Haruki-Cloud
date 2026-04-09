@@ -1,6 +1,7 @@
 package education
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"strings"
@@ -10,14 +11,45 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 )
 
+type educationContextKey string
+
+type contextAwareSource struct {
+	*testSource
+	ctx       context.Context
+	wantKey   educationContextKey
+	wantValue string
+}
+
+func (s *contextAwareSource) WithContext(ctx context.Context) DataSource {
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *contextAwareSource) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
+	if s.ctx == nil {
+		return nil
+	}
+	value, _ := s.ctx.Value(s.wantKey).(string)
+	if value != s.wantValue {
+		return nil
+	}
+	return s.testSource.GetAreaItemLevels(areaItemID)
+}
+
 type testSource struct {
-	region     renderregion.Value
-	boxes      map[string]map[int]*ResourceBox
-	areaItems  map[int]*AreaItem
-	areaLevels map[int]map[int]*AreaItemLevel
-	ranks      map[int]map[int]*CharacterRank
-	gates      map[int]map[int]*MysekaiGateLevel
-	shopItems  map[int]*ShopItem
+	region             renderregion.Value
+	boxes              map[string]map[int]*ResourceBox
+	areaItems          map[int]*AreaItem
+	areaLevels         map[int]map[int]*AreaItemLevel
+	ranks              map[int]map[int]*CharacterRank
+	bonds              []*Bond
+	bondLevels         []*BondLevel
+	charStyles         map[int]*GameCharacterStyle
+	leaderRequirements []LeaderMissionRequirement
+	leaderMaxPlayLimit int
+	gates              map[int]map[int]*MysekaiGateLevel
+	shopItems          map[int]*ShopItem
 }
 
 func (s *testSource) DefaultRegion() renderregion.Value { return s.region }
@@ -76,6 +108,22 @@ func (s *testSource) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
 
 func (s *testSource) GetCharacterRank(characterID, rank int) *CharacterRank {
 	return s.ranks[characterID][rank]
+}
+
+func (s *testSource) GetBonds() []*Bond {
+	return s.bonds
+}
+
+func (s *testSource) GetBondLevels() []*BondLevel {
+	return s.bondLevels
+}
+
+func (s *testSource) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
+	return s.charStyles[gameID]
+}
+
+func (s *testSource) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
+	return append([]LeaderMissionRequirement(nil), s.leaderRequirements...), s.leaderMaxPlayLimit
 }
 
 func (s *testSource) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
@@ -159,6 +207,54 @@ func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
 	}
 	if got := req.AttrBonuses[0]; got.Attr != "cute" || got.AreaItem != 1.0 || got.Total != 1.0 {
 		t.Fatalf("unexpected cute bonus: %+v", got)
+	}
+}
+
+func TestControllerWithContextClonesEducationSource(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userAreas": []map[string]any{
+			{"areaItems": []map[string]any{
+				{"areaItemId": 101, "level": 2},
+			}},
+		},
+	})
+
+	source := &contextAwareSource{
+		testSource: &testSource{
+			region: renderregion.JP,
+			areaLevels: map[int]map[int]*AreaItemLevel{
+				101: {2: {AreaItemID: 101, Level: 2, TargetGameCharacterID: 1, Power1BonusRate: 3.0}},
+			},
+		},
+		wantKey:   educationContextKey("trace"),
+		wantValue: "education-power",
+	}
+
+	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller.RegisterSource(source)
+	ctx := context.WithValue(context.Background(), educationContextKey("trace"), "education-power")
+
+	req, err := controller.WithContext(ctx).BuildPowerBonusDetailRequestFromSnapshot(PowerBonusQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildPowerBonusDetailRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.CharaBonuses) != 26 {
+		t.Fatalf("unexpected char bonus len: %d", len(req.CharaBonuses))
 	}
 }
 
@@ -385,6 +481,158 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testi
 				}
 			}
 		})
+	}
+}
+
+func TestBuildBondsRequestFromSnapshot(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userBonds": []map[string]any{
+			{"bondsGroupId": 2127, "rank": 2, "exp": 7},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 21, "characterRank": 55},
+			{"characterId": 27, "characterRank": 33},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		bonds: []*Bond{
+			{GroupID: 2127, CharacterID1: 21, CharacterID2: 27},
+		},
+		bondLevels: []*BondLevel{
+			{Level: 1, TotalExp: 0},
+			{Level: 2, TotalExp: 10},
+			{Level: 3, TotalExp: 30},
+		},
+		charStyles: map[int]*GameCharacterStyle{
+			21: {GameID: 21, CharacterID: 21, ColorCode: "#112233"},
+			27: {GameID: 27, CharacterID: 27, ColorCode: "#445566"},
+		},
+	})
+
+	req, err := controller.BuildBondsRequestFromSnapshot(BondsQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildBondsRequestFromSnapshot() error = %v", err)
+	}
+	if req.Profile.ID != "1001" {
+		t.Fatalf("unexpected profile id: %s", req.Profile.ID)
+	}
+	if req.MaxLevel != 3 {
+		t.Fatalf("unexpected max level: %d", req.MaxLevel)
+	}
+	if len(req.Bonds) != 1 {
+		t.Fatalf("unexpected bonds payload: %+v", req.Bonds)
+	}
+
+	bond := req.Bonds[0]
+	if bond.CharaID1 != 21 || bond.CharaID2 != 27 {
+		t.Fatalf("unexpected bond pair: %+v", bond)
+	}
+	if !strings.Contains(bond.CharaIconPath1, "miku.png") {
+		t.Fatalf("unexpected icon path1: %q", bond.CharaIconPath1)
+	}
+	if !strings.Contains(bond.CharaIconPath2, "chr_icon_27.png") {
+		t.Fatalf("unexpected icon path2: %q", bond.CharaIconPath2)
+	}
+	if bond.CharaRank1 != 55 || bond.CharaRank2 != 33 {
+		t.Fatalf("unexpected character ranks: %+v", bond)
+	}
+	if bond.BondLevel != 2 || !bond.HasBond {
+		t.Fatalf("unexpected bond state: %+v", bond)
+	}
+	if bond.NeedExp == nil || *bond.NeedExp != 13 {
+		t.Fatalf("unexpected need exp: %+v", bond.NeedExp)
+	}
+	if len(bond.Color1) != 3 || bond.Color1[0] != 17 || bond.Color1[1] != 34 || bond.Color1[2] != 51 {
+		t.Fatalf("unexpected color1: %+v", bond.Color1)
+	}
+	if len(bond.Color2) != 3 || bond.Color2[0] != 68 || bond.Color2[1] != 85 || bond.Color2[2] != 102 {
+		t.Fatalf("unexpected color2: %+v", bond.Color2)
+	}
+}
+
+func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 2, "progress": 11},
+		},
+		"userCharacterLiveUsageCounts": []map[string]any{
+			{"characterId": 2, "characterLiveUsageType": "leader", "usageCount": 66},
+		},
+		"userCharacterMissionV2Statuses": []map[string]any{
+			{"parameterGroupId": 101, "seq": 1, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 2, "characterId": 2},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		leaderRequirements: []LeaderMissionRequirement{
+			{Seq: 1, Requirement: 3},
+			{Seq: 2, Requirement: 7},
+		},
+		leaderMaxPlayLimit: 120,
+	})
+
+	req, err := controller.BuildLeaderCountRequestFromSnapshot(LeaderCountQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildLeaderCountRequestFromSnapshot() error = %v", err)
+	}
+	if req.Profile.ID != "1001" {
+		t.Fatalf("unexpected profile id: %s", req.Profile.ID)
+	}
+	if req.MaxPlayCount != 120 {
+		t.Fatalf("unexpected max play count: %d", req.MaxPlayCount)
+	}
+	if len(req.LeaderCounts) != 26 {
+		t.Fatalf("unexpected leader count size: %d", len(req.LeaderCounts))
+	}
+
+	first := req.LeaderCounts[0]
+	if first.CharaID != 2 {
+		t.Fatalf("unexpected first character: %+v", first)
+	}
+	if first.PlayCount != 66 {
+		t.Fatalf("unexpected play count: %+v", first)
+	}
+	if first.ExLevel != 2 || first.ExCount != 21 {
+		t.Fatalf("unexpected ex progress: %+v", first)
+	}
+	if strings.TrimSpace(first.CharaIconPath) == "" {
+		t.Fatalf("expected chara icon path")
 	}
 }
 

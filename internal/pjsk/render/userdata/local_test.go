@@ -72,4 +72,17 @@ func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {
 	if _, ok := payload["userGamedata"].(map[string]interface{}); !ok {
 		t.Fatalf("unexpected normalized payload: %+v", payload["userGamedata"])
 	}
+
+	frameBytes, err := service.RawValue("userDecks")
+	if err != nil {
+		t.Fatalf("RawValue returned error: %v", err)
+	}
+
+	var decks []map[string]interface{}
+	if err := json.Unmarshal(frameBytes, &decks); err != nil {
+		t.Fatalf("decode raw value: %v", err)
+	}
+	if len(decks) != 1 {
+		t.Fatalf("unexpected deck count: %d", len(decks))
+	}
 }

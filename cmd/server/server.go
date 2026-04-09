@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -13,10 +15,12 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	usersDB "haruki-cloud/database/users"
+	"haruki-cloud/utils/censor"
 
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/redis/go-redis/v9"
 )
 
 func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
@@ -46,8 +50,22 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	return app
 }
 
-func closeClients(usersClient *usersDB.Client, chunithmMainClient *chunithmMainDB.Client, chunithmMusicClient *chunithmMusicDB.Client,
-	pjskClient *pjskDB.Client, sekaiClient *sekaiDB.Client, botDBClient *botDB.Client) {
+func closeClients(
+	redisClient *redis.Client,
+	censorService *censor.Service,
+	usersClient *usersDB.Client,
+	chunithmMainClient *chunithmMainDB.Client,
+	chunithmMusicClient *chunithmMusicDB.Client,
+	pjskClient *pjskDB.Client,
+	sekaiClient *sekaiDB.Client,
+	botDBClient *botDB.Client,
+) {
+	if redisClient != nil {
+		_ = redisClient.Close()
+	}
+	if censorService != nil {
+		_ = censorService.Close()
+	}
 	if usersClient != nil {
 		_ = usersClient.Close()
 	}
@@ -68,10 +86,13 @@ func closeClients(usersClient *usersDB.Client, chunithmMainClient *chunithmMainD
 	}
 }
 
-func startServer(mainLogger *harukiLogger.Logger, app *fiber.App) {
+func startServer(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App) {
 	addr := fmt.Sprintf("%s:%d", harukiConfig.Cfg.Backend.Host, harukiConfig.Cfg.Backend.Port)
 	listenConfig := fiber.ListenConfig{
 		DisableStartupMessage: true,
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	if harukiConfig.Cfg.Backend.SSL {
 		listenConfig.CertFile = harukiConfig.Cfg.Backend.SSLCert
@@ -80,7 +101,21 @@ func startServer(mainLogger *harukiLogger.Logger, app *fiber.App) {
 	} else {
 		mainLogger.Infof("Starting HTTP server at %s", addr)
 	}
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := app.ShutdownWithContext(shutdownCtx); err != nil {
+			mainLogger.Errorf("Failed graceful shutdown: %v", err)
+		}
+	}()
+
 	if err := app.Listen(addr, listenConfig); err != nil {
+		if ctx.Err() != nil {
+			mainLogger.Infof("HTTP server stopped")
+			return
+		}
 		mainLogger.Errorf("Failed to start HTTP server: %v", err)
 		os.Exit(1)
 	}

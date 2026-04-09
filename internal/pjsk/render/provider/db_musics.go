@@ -48,17 +48,24 @@ func (p *dbMusicProvider) init() {
 }
 
 func (p *dbMusicProvider) Search(query string) (*masterdata.Music, error) {
+	return p.search(nil, query)
+}
+
+func (p *dbMusicProvider) search(ctx context.Context, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	if id, err := strconv.Atoi(query); err == nil {
-		return p.GetByID(id)
+		return p.getByID(ctx, id)
 	}
 
 	// Fall back to title match across all musics
-	all := p.GetAll()
+	all := p.getAll(ctx)
 	lowerQuery := strings.ToLower(query)
 	for _, m := range all {
 		if strings.Contains(strings.ToLower(m.Title), lowerQuery) {
@@ -72,8 +79,15 @@ func (p *dbMusicProvider) Search(query string) (*masterdata.Music, error) {
 }
 
 func (p *dbMusicProvider) GetByID(id int) (*masterdata.Music, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbMusicProvider) getByID(ctx context.Context, id int) (*masterdata.Music, error) {
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", id)
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -86,7 +100,7 @@ func (p *dbMusicProvider) GetByID(id int) (*masterdata.Music, error) {
 
 	entity, err := p.client.Music.Query().
 		Where(music.ServerRegionEQ(p.region.String()), music.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query music %d: %w", id, err)
 	}
@@ -99,21 +113,35 @@ func (p *dbMusicProvider) GetByID(id int) (*masterdata.Music, error) {
 }
 
 func (p *dbMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error) {
+	return p.getByEventID(nil, eventID)
+}
+
+func (p *dbMusicProvider) getByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	links, err := p.client.Eventmusic.Query().
 		Where(eventmusic.ServerRegionEQ(p.region.String()), eventmusic.EventIDEQ(int64(eventID))).
 		Order(eventmusic.BySeq()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event music for event %d: %w", eventID, err)
 	}
 	if len(links) == 0 {
 		return nil, fmt.Errorf("no music found for event %d", eventID)
 	}
-	return p.GetByID(int(links[0].MusicID))
+	return p.getByID(ctx, int(links[0].MusicID))
 }
 
 func (p *dbMusicProvider) GetAll() []*masterdata.Music {
+	return p.getAll(nil)
+}
+
+func (p *dbMusicProvider) getAll(ctx context.Context) []*masterdata.Music {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.mu.RLock()
 	if len(p.musicList) > 0 {
@@ -126,7 +154,7 @@ func (p *dbMusicProvider) GetAll() []*masterdata.Music {
 	entities, err := p.client.Music.Query().
 		Where(music.ServerRegionEQ(p.region.String())).
 		Order(music.ByPublishedAt(), music.ByGameID()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil
 	}
@@ -155,8 +183,15 @@ func (p *dbMusicProvider) GetAll() []*masterdata.Music {
 }
 
 func (p *dbMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
+	return p.getLocalizedTitles(nil, musicID)
+}
+
+func (p *dbMusicProvider) getLocalizedTitles(ctx context.Context, musicID int) ([]string, error) {
 	if musicID <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", musicID)
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -169,7 +204,7 @@ func (p *dbMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
 
 	items, err := p.client.Music.Query().
 		Where(music.GameIDEQ(int64(musicID))).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query localized titles for music %d: %w", musicID, err)
 	}
@@ -200,13 +235,20 @@ func (p *dbMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
 }
 
 func (p *dbMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
+	return p.getDifficulties(nil, musicID)
+}
+
+func (p *dbMusicProvider) getDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Musicdifficultie.Query().
 		Where(
 			musicdifficultie.ServerRegionEQ(p.region.String()),
 			musicdifficultie.MusicIDEQ(int64(musicID)),
 		).
 		Order(musicdifficultie.ByID()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query difficulties for music %d: %w", musicID, err)
 	}
@@ -228,13 +270,20 @@ func (p *dbMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDiffi
 }
 
 func (p *dbMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, error) {
+	return p.getVocals(nil, musicID)
+}
+
+func (p *dbMusicProvider) getVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Musicvocal.Query().
 		Where(
 			musicvocal.ServerRegionEQ(p.region.String()),
 			musicvocal.MusicIDEQ(int64(musicID)),
 		).
 		Order(musicvocal.BySeq()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query vocals for music %d: %w", musicID, err)
 	}
@@ -257,13 +306,20 @@ func (p *dbMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, erro
 }
 
 func (p *dbMusicProvider) GetTags(musicID int) ([]string, error) {
+	return p.getTags(nil, musicID)
+}
+
+func (p *dbMusicProvider) getTags(ctx context.Context, musicID int) ([]string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Musictag.Query().
 		Where(
 			musictag.ServerRegionEQ(p.region.String()),
 			musictag.MusicIDEQ(int64(musicID)),
 		).
 		Order(musictag.BySeq()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query tags for music %d: %w", musicID, err)
 	}
@@ -279,8 +335,15 @@ func (p *dbMusicProvider) GetTags(musicID int) ([]string, error) {
 }
 
 func (p *dbMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
+	return p.getOutsideCharacterByID(nil, id)
+}
+
+func (p *dbMusicProvider) getOutsideCharacterByID(ctx context.Context, id int) (string, error) {
 	if id <= 0 {
 		return "", fmt.Errorf("invalid outside character id: %d", id)
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -293,7 +356,7 @@ func (p *dbMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
 
 	entity, err := p.client.Outsidecharacter.Query().
 		Where(outsidecharacter.ServerRegionEQ(p.region.String()), outsidecharacter.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return "", fmt.Errorf("query outside character %d: %w", id, err)
 	}
@@ -306,13 +369,20 @@ func (p *dbMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
 }
 
 func (p *dbMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
+	return p.getPrimaryEventByMusicID(nil, musicID)
+}
+
+func (p *dbMusicProvider) getPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	links, err := p.client.Eventmusic.Query().
 		Where(
 			eventmusic.ServerRegionEQ(p.region.String()),
 			eventmusic.MusicIDEQ(int64(musicID)),
 		).
 		Order(eventmusic.BySeq()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event music for music %d: %w", musicID, err)
 	}
@@ -333,7 +403,7 @@ func (p *dbMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Eve
 	items, err := p.client.Event.Query().
 		Where(dbevent.ServerRegionEQ(p.region.String()), dbevent.GameIDIn(eventIDs...)).
 		Order(dbevent.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query events for music %d: %w", musicID, err)
 	}
@@ -344,13 +414,20 @@ func (p *dbMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Eve
 }
 
 func (p *dbMusicProvider) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
+	return p.getLimitedTimeMusics(nil, musicID)
+}
+
+func (p *dbMusicProvider) getLimitedTimeMusics(ctx context.Context, musicID int) []*masterdata.LimitedTimeMusic {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	items, err := p.client.Limitedtimemusic.Query().
 		Where(
 			limitedtimemusic.ServerRegionEQ(p.region.String()),
 			limitedtimemusic.MusicIDEQ(int64(musicID)),
 		).
 		Order(limitedtimemusic.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil || len(items) == 0 {
 		return nil
 	}

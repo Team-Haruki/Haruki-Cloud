@@ -1,6 +1,7 @@
 package education
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -16,10 +17,14 @@ type Controller struct {
 	drawing  *drawing.HarukiDrawingClient
 	assets   *assets.AssetHelper
 	sources  *rendersource.Registry[DataSource]
-	snapshot *userdata.Service
+	snapshot userdata.Snapshot
 }
 
-func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, defaultRegion renderregion.Value) *Controller {
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return &Controller{
 		drawing:  drawingClient,
 		assets:   assetHelper,
@@ -33,6 +38,22 @@ func (c *Controller) RegisterSource(source DataSource) {
 		return
 	}
 	c.sources.RegisterSource(source)
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.sources = rendersource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(contextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
 }
 
 func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) (*drawing.ChallengeLiveDetailsRequest, error) {

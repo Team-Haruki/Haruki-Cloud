@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,32 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
+
+type eventContextKey string
+
+type contextAwareEventSource struct {
+	*testEventSource
+	ctx       context.Context
+	wantKey   eventContextKey
+	wantValue string
+}
+
+func (s *contextAwareEventSource) WithContext(ctx context.Context) DataSource {
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *contextAwareEventSource) GetEvents() []*masterdata.Event {
+	if s.ctx == nil {
+		return nil
+	}
+	value, _ := s.ctx.Value(s.wantKey).(string)
+	if value != s.wantValue {
+		return nil
+	}
+	return s.testEventSource.GetEvents()
+}
 
 func TestControllerBuildEventListRequestUsesRequestedRegionSource(t *testing.T) {
 	cn := newTestEventSource(renderregion.CN)
@@ -154,5 +181,31 @@ func TestControllerBuildEventDetailRequestResolvesNegativeSequenceLikeRefer(t *t
 	}
 	if req.EventInfo.ID != 10 {
 		t.Fatalf("expected previous event id 10, got %v", req.EventInfo.ID)
+	}
+}
+
+func TestControllerWithContextClonesEventSource(t *testing.T) {
+	source := &contextAwareEventSource{
+		testEventSource: newTestEventSource(renderregion.JP),
+		wantKey:         eventContextKey("trace"),
+		wantValue:       "event-list",
+	}
+	eventInfo := &masterdata.Event{ID: 1, EventType: "marathon", Name: "Ctx Event", AssetBundleName: "ctx_event", StartAt: 100, AggregateAt: 200}
+	source.events = []*masterdata.Event{eventInfo}
+	source.eventsByID[eventInfo.ID] = eventInfo
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	ctx := context.WithValue(context.Background(), eventContextKey("trace"), "event-list")
+
+	req, err := controller.WithContext(ctx).BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 || req.EventInfo[0].EventName != "Ctx Event" {
+		t.Fatalf("unexpected event list payload: %+v", req.EventInfo)
 	}
 }

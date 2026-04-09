@@ -1,7 +1,6 @@
 package chunithm
 
 import (
-	"context"
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"sort"
@@ -17,7 +16,7 @@ import (
 )
 
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	now := time.Now()
 	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSMusic)
 	if err != nil {
@@ -56,7 +55,7 @@ func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 }
 
 func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
@@ -109,7 +108,7 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 }
 
 func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
@@ -142,7 +141,7 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 }
 
 func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
@@ -179,7 +178,7 @@ func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
 }
 
 func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	var req struct {
 		MusicIDs []int  `json:"music_ids"`
 		Version  string `json:"version"`

@@ -1,15 +1,13 @@
 package userdata
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
-	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -38,27 +36,31 @@ type Service struct {
 }
 
 type RawUserData struct {
-	Now                                               int64                    `json:"now"`
-	UserGamedata                                      RawUserGamedata          `json:"userGamedata"`
-	UserProfile                                       RawUserProfile           `json:"userProfile"`
-	UserDecks                                         []RawUserDeck            `json:"userDecks"`
-	UserCards                                         []RawUserCard            `json:"userCards"`
-	UserMusicStats                                    []RawMusicResult         `json:"userMusicResults"`
-	UserChallengeLiveSoloResults                      []RawChallengeLiveResult `json:"userChallengeLiveSoloResults"`
-	UserChallengeLiveSoloStages                       []RawChallengeLiveStage  `json:"userChallengeLiveSoloStages"`
-	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward `json:"userChallengeLiveSoloHighScoreRewards"`
-	UserCharacters                                    []RawUserCharacter       `json:"userCharacters"`
-	UserAreas                                         []RawUserArea            `json:"userAreas"`
-	UserMaterials                                     []RawUserMaterial        `json:"userMaterials"`
-	UserMysekaiGates                                  []RawUserMysekaiGate     `json:"userMysekaiGates"`
-	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus    `json:"userMysekaiFixtureGameCharacterPerformanceBonuses"`
-	UserMusicClear                                    []RawMusicClear          `json:"userMusicDifficultyClearCounts"`
-	UserHonors                                        []RawUserHonor           `json:"userHonors"`
-	UserProfileHonors                                 []RawUserProfileHonor    `json:"userProfileHonors"`
-	UserFrames                                        []RawUserFrame           `json:"userPlayerFrames"`
-	UserEvents                                        []RawUserEvent           `json:"userEvents"`
-	UserEventResults                                  []RawUserEventResult     `json:"userEventResults"`
-	UserWorldBlooms                                   []RawUserWorldBloom      `json:"userWorldBlooms"`
+	Now                                               int64                             `json:"now"`
+	UserGamedata                                      RawUserGamedata                   `json:"userGamedata"`
+	UserProfile                                       RawUserProfile                    `json:"userProfile"`
+	UserDecks                                         []RawUserDeck                     `json:"userDecks"`
+	UserCards                                         []RawUserCard                     `json:"userCards"`
+	UserBonds                                         []RawUserBond                     `json:"userBonds"`
+	UserMusicStats                                    []RawMusicResult                  `json:"userMusicResults"`
+	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults"`
+	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages"`
+	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward          `json:"userChallengeLiveSoloHighScoreRewards"`
+	UserCharacters                                    []RawUserCharacter                `json:"userCharacters"`
+	UserCharacterMissionV2s                           []RawUserCharacterMissionV2       `json:"userCharacterMissionV2s"`
+	UserCharacterLiveUsageCounts                      []RawUserCharacterLiveUsageCount  `json:"userCharacterLiveUsageCounts"`
+	UserCharacterMissionV2Statuses                    []RawUserCharacterMissionV2Status `json:"userCharacterMissionV2Statuses"`
+	UserAreas                                         []RawUserArea                     `json:"userAreas"`
+	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials"`
+	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates"`
+	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus             `json:"userMysekaiFixtureGameCharacterPerformanceBonuses"`
+	UserMusicClear                                    []RawMusicClear                   `json:"userMusicDifficultyClearCounts"`
+	UserHonors                                        []RawUserHonor                    `json:"userHonors"`
+	UserProfileHonors                                 []RawUserProfileHonor             `json:"userProfileHonors"`
+	UserFrames                                        []RawUserFrame                    `json:"userPlayerFrames"`
+	UserEvents                                        []RawUserEvent                    `json:"userEvents"`
+	UserEventResults                                  []RawUserEventResult              `json:"userEventResults"`
+	UserWorldBlooms                                   []RawUserWorldBloom               `json:"userWorldBlooms"`
 }
 
 type RawUserGamedata struct {
@@ -85,6 +87,12 @@ type RawUserDeck struct {
 	Member3   int `json:"member3"`
 	Member4   int `json:"member4"`
 	Member5   int `json:"member5"`
+}
+
+type RawUserBond struct {
+	BondsGroupID int `json:"bondsGroupId"`
+	Rank         int `json:"rank"`
+	Exp          int `json:"exp"`
 }
 
 type RawUserCardEpisode struct {
@@ -128,6 +136,24 @@ type RawChallengeLiveReward struct {
 type RawUserCharacter struct {
 	CharacterID   int `json:"characterId"`
 	CharacterRank int `json:"characterRank"`
+}
+
+type RawUserCharacterMissionV2 struct {
+	CharacterMissionType string `json:"characterMissionType"`
+	CharacterID          int    `json:"characterId"`
+	Progress             int    `json:"progress"`
+}
+
+type RawUserCharacterLiveUsageCount struct {
+	CharacterID            int    `json:"characterId"`
+	CharacterLiveUsageType string `json:"characterLiveUsageType"`
+	UsageCount             int    `json:"usageCount"`
+}
+
+type RawUserCharacterMissionV2Status struct {
+	ParameterGroupID int `json:"parameterGroupId"`
+	Seq              int `json:"seq"`
+	CharacterID      int `json:"characterId"`
 }
 
 type RawUserArea struct {
@@ -222,96 +248,61 @@ type ChallengeLiveReward struct {
 }
 
 func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg LocalFileConfig) *Service {
+	return NewLocalFileServiceWithContext(nil, sekaiClient, assetHelper, cfg)
+}
+
+func NewLocalFileServiceWithContext(ctx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg LocalFileConfig) *Service {
 	service := &Service{
-		configured:  strings.TrimSpace(cfg.UserJSON) != "",
-		musicResult: make(map[string]map[int]string),
+		configured: strings.TrimSpace(cfg.UserJSON) != "",
 	}
 	if !service.configured {
 		return service
 	}
-
-	defaultRegion := renderregion.WithDefault(cfg.DefaultRegion)
 
 	data, err := os.ReadFile(filepath.Clean(cfg.UserJSON))
 	if err != nil {
 		service.initErr = fmt.Errorf("read user snapshot: %w", err)
 		return service
 	}
-	data, err = normalizeSnapshotJSON(data)
-	if err != nil {
-		service.initErr = err
-		return service
-	}
-
+	var mysekaiJSON []byte
 	if strings.TrimSpace(cfg.MySekaiJSON) != "" {
-		data, err = mergeMySekaiJSON(data, cfg.MySekaiJSON)
+		mysekaiJSON, err = os.ReadFile(filepath.Clean(cfg.MySekaiJSON))
 		if err != nil {
-			service.initErr = err
+			service.initErr = fmt.Errorf("read mysekai snapshot: %w", err)
 			return service
 		}
 	}
 
-	var raw RawUserData
-	if err := json.Unmarshal(data, &raw); err != nil {
-		service.initErr = fmt.Errorf("decode user snapshot: %w", err)
-		return service
-	}
-	if raw.UserGamedata.UserID == 0 {
-		service.initErr = fmt.Errorf("user snapshot is missing userId")
-		return service
-	}
-
-	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
-	leaderCardID := activeDeck.Leader
-	profileCardID := SelectProfileImageCardID(raw.UserProfile.ProfileImageType, raw.UserProfile.ProfileImageID, leaderCardID)
-	profileCard := FindUserCard(raw.UserCards, profileCardID)
-	leaderCard := FindUserCard(raw.UserCards, leaderCardID)
-	leaderImagePath := resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, profileCardID, isAfterTraining(profileCard))
-	if leaderImagePath == "" && profileCardID != leaderCardID {
-		leaderImagePath = resolveLeaderImagePath(sekaiClient, assetHelper, defaultRegion, leaderCardID, isAfterTraining(leaderCard))
-	}
-	if leaderImagePath == "" {
-		leaderImagePath = fallbackLeaderImagePath(assetHelper)
-	}
-
-	mode := strings.TrimSpace(raw.UserProfile.ProfileImageType)
-	service.baseProfile = &drawing.DetailedProfileCardRequest{
-		ID:              strconv.FormatInt(raw.UserGamedata.UserID, 10),
-		Region:          strings.ToUpper(defaultRegion.String()),
-		Nickname:        raw.UserGamedata.Name,
-		Source:          "suite_dump",
-		UpdateTime:      raw.Now,
-		Mode:            common.OptionalString(mode),
-		IsHideUID:       true,
-		LeaderImagePath: leaderImagePath,
-		HasFrame:        false,
-		UserCards:       buildUserCardEntries(raw.UserCards),
-	}
-	service.musicResult = buildMusicResultMap(raw.UserMusicStats)
-	service.challenge = &ChallengeLiveData{
-		Results: convertChallengeResults(raw.UserChallengeLiveSoloResults),
-		Stages:  convertChallengeStages(raw.UserChallengeLiveSoloStages),
-		Rewards: convertChallengeRewards(raw.UserChallengeLiveSoloHighScoreRewards),
-	}
-	service.rawData = &raw
-	service.rawJSON = data
-	service.rawFilePath, err = writeNormalizedSnapshotFile("haruki-pjsk-user-*.json", data)
-	if err != nil {
-		service.initErr = err
-		return service
-	}
-
+	var musicMetaJSON []byte
 	if strings.TrimSpace(cfg.MusicMetaJSON) != "" {
-		musicMetaBytes, err := os.ReadFile(filepath.Clean(cfg.MusicMetaJSON))
+		musicMetaJSON, err = os.ReadFile(filepath.Clean(cfg.MusicMetaJSON))
 		if err != nil {
 			service.initErr = fmt.Errorf("read music meta snapshot: %w", err)
 			return service
 		}
-		service.musicMetaBytes = meta.InjectOmakase(musicMetaBytes)
-		service.musicMetaPath = filepath.Clean(cfg.MusicMetaJSON)
 	}
 
-	return service
+	snapshot, err := NewDefaultSnapshotFactory(sekaiClient, assetHelper).Build(ctx, BuildInput{
+		Region:         cfg.DefaultRegion,
+		Source:         "suite_dump",
+		SuiteJSON:      data,
+		MySekaiJSON:    mysekaiJSON,
+		MusicMetaJSON:  musicMetaJSON,
+		MusicMetaPath:  filepath.Clean(cfg.MusicMetaJSON),
+		PersistRawFile: true,
+		RawFilePattern: "haruki-pjsk-user-*.json",
+	})
+	if err != nil {
+		service.initErr = err
+		return service
+	}
+
+	built, ok := snapshot.(*Service)
+	if !ok {
+		service.initErr = fmt.Errorf("userdata: snapshot factory returned unexpected type %T", snapshot)
+		return service
+	}
+	return built
 }
 
 func (s *Service) Configured() bool {
@@ -442,4 +433,3 @@ func (s *Service) MusicMetaPath() string {
 	}
 	return strings.TrimSpace(s.musicMetaPath)
 }
-

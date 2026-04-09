@@ -61,11 +61,14 @@ type GachaWeight struct {
 }
 
 type GachaListRequest struct {
-	Gachas     []GachaBrief   `json:"gachas"`
-	PageSize   int            `json:"page_size"`
-	Region     string         `json:"region"`
-	GachaLogos map[int]string `json:"gacha_logos"`
-	Filter     GachaFilter    `json:"filter"`
+	Gachas       []GachaBrief   `json:"gachas"`
+	PageSize     int            `json:"page_size"`
+	Region       string         `json:"region"`
+	GachaLogos   map[int]string `json:"gacha_logos"`
+	Filter       GachaFilter    `json:"filter"`
+	CurrentPage  int            `json:"current_page,omitempty"`
+	TotalPage    int            `json:"total_page,omitempty"`
+	PrePaginated bool           `json:"pre_paginated,omitempty"`
 }
 
 type GachaDetailRequest struct {

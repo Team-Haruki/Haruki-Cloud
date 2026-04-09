@@ -112,7 +112,7 @@ func TestBuildGachaListRequestOnlyCurrentFiltersAndOrdersByNewest(t *testing.T) 
 	}
 }
 
-func TestBuildGachaListRequestDoesNotSliceAndDefaultsToLatestPage(t *testing.T) {
+func TestBuildGachaListRequestSlicesAndDefaultsToLatestPage(t *testing.T) {
 	now := time.Now().UnixMilli()
 	source := newTestGachaSource(renderregion.JP)
 
@@ -140,20 +140,26 @@ func TestBuildGachaListRequestDoesNotSliceAndDefaultsToLatestPage(t *testing.T) 
 	source.gachaByID[future.ID] = future
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
-	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true})
+	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true, PageSize: 10})
 	if err != nil {
 		t.Fatalf("BuildGachaListRequest failed: %v", err)
 	}
-	if len(req.Gachas) != 25 {
-		t.Fatalf("expected all started gachas, got %d", len(req.Gachas))
+	if len(req.Gachas) != 5 {
+		t.Fatalf("expected latest page to contain 5 gachas, got %d", len(req.Gachas))
 	}
-	if req.Filter.Page != 0 {
-		t.Fatalf("expected default page to defer to drawing latest page, got %d", req.Filter.Page)
+	if req.CurrentPage != 3 || req.TotalPage != 3 {
+		t.Fatalf("expected current/total page to be 3/3, got %d/%d", req.CurrentPage, req.TotalPage)
 	}
-	if req.PageSize != 0 {
-		t.Fatalf("expected default page size to defer to drawing default, got %d", req.PageSize)
+	if !req.PrePaginated {
+		t.Fatalf("expected request to be marked pre_paginated")
 	}
-	if req.Gachas[0].ID != 1 || req.Gachas[len(req.Gachas)-1].ID != 25 {
+	if req.Filter.Page != 3 {
+		t.Fatalf("expected filter page to match current page, got %d", req.Filter.Page)
+	}
+	if req.PageSize != 10 {
+		t.Fatalf("expected page size 10, got %d", req.PageSize)
+	}
+	if req.Gachas[0].ID != 21 || req.Gachas[len(req.Gachas)-1].ID != 25 {
 		t.Fatalf("expected ascending gacha order, got first=%d last=%d", req.Gachas[0].ID, req.Gachas[len(req.Gachas)-1].ID)
 	}
 }

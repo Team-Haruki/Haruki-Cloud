@@ -16,6 +16,7 @@ import (
 )
 
 const gachaEndPaddingMillis = int64(time.Minute / time.Millisecond)
+const defaultGachaListPageSize = 100
 
 var (
 	gachaRereleasePrefixes = []string{"[it's back]", "[재등장]", "[复刻]", "[復刻]"}
@@ -40,8 +41,8 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 		page = 0
 	}
 	pageSize := query.PageSize
-	if pageSize < 0 {
-		pageSize = 0
+	if pageSize <= 0 {
+		pageSize = defaultGachaListPageSize
 	}
 
 	now := time.Now()
@@ -111,13 +112,39 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 		logos[item.ID] = b.buildGachaLogoPath(item, region)
 	}
 
+	totalPages := 1
+	if len(briefs) > 0 {
+		totalPages = (len(briefs) + pageSize - 1) / pageSize
+	}
+	currentPage := page
+	if currentPage <= 0 {
+		currentPage = totalPages
+	}
+	if currentPage > totalPages {
+		currentPage = totalPages
+	}
+	startIndex := (currentPage - 1) * pageSize
+	endIndex := startIndex + pageSize
+	if endIndex > len(briefs) {
+		endIndex = len(briefs)
+	}
+	briefs = briefs[startIndex:endIndex]
+
+	pagedLogos := make(map[int]string, len(briefs))
+	for _, brief := range briefs {
+		pagedLogos[brief.ID] = logos[brief.ID]
+	}
+
 	return &drawing.GachaListRequest{
-		Gachas:     briefs,
-		PageSize:   pageSize,
-		Region:     region.String(),
-		GachaLogos: logos,
+		Gachas:       briefs,
+		PageSize:     pageSize,
+		Region:       region.String(),
+		GachaLogos:   pagedLogos,
+		CurrentPage:  currentPage,
+		TotalPage:    totalPages,
+		PrePaginated: true,
 		Filter: drawing.GachaFilter{
-			Page: page,
+			Page: currentPage,
 		},
 	}, nil
 }

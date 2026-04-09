@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目完成度跟踪
 
-> 最后更新：2026-04-09
+> 最后更新：2026-04-10
 >
 > 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
 >
@@ -25,6 +25,9 @@
 > 17. 继续推进后，`education` / `stamp` / `vlive` 也已接入同一套请求级 source/provider 克隆链路；当前主链 render provider 中已基本消除“直接用 `context.Background()` 发起 DB 查询”的问题，剩余个别 `Background()` 主要只出现在本地调试/静态 snapshot helper 与脚本入口的 nil-ctx 兜底逻辑。
 > 18. `internal/pjsk/render/userdata` 的 `SnapshotFactory` 现已真正消费传入 `ctx`：live/local snapshot 构建时的 leader 卡图路径解析会跟随构建上下文；`NewFromBytesWithContext(...)`、`NewLocalFileServiceWithContext(...)` 也已补齐，MySekai JSON merge 逻辑收口到统一 helper。
 > 19. `cmd/migrate` 已移除源码中的硬编码 Sekai DSN：现在优先读取 `HARUKI_SEKAI_DB_URL` / `HARUKI_SEKAI_DSN`，否则回退读取 `HARUKI_CONFIG_PATH` 或默认 `haruki-db-configs.yaml` 中的 `sekai.db_url`；迁移上下文也已挂到信号取消。
+> 20. 2026-04-10 又继续执行了一轮大文件治理：`render/deck/controller.go`、`render/education/snapshot_build.go`、`render/mysekai/controller.go`、`render/deck/remote_engine.go`、`handler/sekai/sk.go`、`alias/service.go`、`handler/sekai/profile.go`、`handler/sekai/mysekai.go`、`render/music/controller.go`、`render/sk/forecast_provider.go`、`render/provider/db_education.go`、`render/provider/db_cards.go` 均已进一步按职责拆分，当前大文件热点已明显收缩到少数 provider / builder / extractor 文件。
+> 21. 2026-04-10 本轮后续又继续清理了一批热点文件：`handler/sekai/deck_extractor.go`、`render/provider/db_musics.go`、`render/gacha/builder.go`、`handler/sekai/score_board_params.go`、`render/music/board_helpers.go`、`render/music/lookup.go`、`render/music/builder.go`、`render/event/builder.go`、`render/honor/builder.go`、`render/provider/db_honors.go` 均已进一步按职责拆分；`music/event/honor/provider` 相关 targeted tests 与 `go test ./...` 现已保持通过。
+> 22. 截至 2026-04-10，`go test ./...` 仍保持全绿；重构工作已从“主链架构收口”进入“剩余局部热点清理”阶段。
 
 ## 1. 范围与方法
 
@@ -56,14 +59,19 @@
 
 - **主干已成型**
 - **可内部联调**
-- **仍有工程化收尾与安全/测试债务**
+- **重构已进入收尾阶段，剩余热点已缩小**
 
 如果只看 `Haruki-Cloud` 作为 **PJSK Bot 新协议后端** 的目标完成度，本次审计给出的判断是：
 
-- **业务主链完成度：约 80%**
-- **发布级稳定度：约 75%**
+- **业务主链完成度：约 88%**
+- **发布级稳定度：约 82%**
 
 更准确地说，它已经是一个 **可以继续在现有结构上推进，而不应推倒重来** 的项目。
+
+再补一条当前事实：
+
+- **结构性重构已进入后半段的最后一段**
+- **当前主要剩余问题已经不再是“架构散乱”，而是少数 provider / helper / builder 热点仍偏厚**
 
 ## 3. 分档规则
 
@@ -480,7 +488,7 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| 强用户态模块正式 provider | 进行中 | `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 已落地，生产链路已回到 `Toolbox -> local debug fallback`；Cloud 侧快照镜像/入库方案已撤回 |
+| 强用户态模块正式 provider | 持续收口中 | `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 已落地，生产链路已回到 `Toolbox -> local debug fallback`；Cloud 侧快照镜像/入库方案已撤回，当前主要剩余的是 provider 内部少数 DB loader 大文件拆分与整理 |
 | MySekai 正式数据源 | 未完成 | 仍保留本地 masterdata fallback |
 | Deck 正式 recommend engine | 已收口 | 运行时已固定为 HTTP 外部服务；本地 cgo / 启发式 fallback 与 `deck_cgo` 历史目录均已移除，剩余风险主要是 deck-service 可用性与 masterdata 完整性 |
 
@@ -505,10 +513,10 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧，以及 snapshot/provider 主干收口已完成。下一阶段建议优先按下面顺序推进：
+P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧，以及 snapshot/provider 主干收口已完成；大文件/巨型函数拆分也已连续推进多轮。下一阶段建议优先按下面顺序推进：
 
-1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
-2. 继续把剩余 `music progress` 与少量 `mysekai` 请求期 fallback 细节收口到更统一的 provider / snapshot 语义。
+1. 继续清理剩余的大文件热点，优先 `render/provider/db_musics.go`、`handler/sekai/deck_extractor.go`、`render/gacha/builder.go`、`render/music/board_helpers.go`。
+2. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
 3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
 4. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
 

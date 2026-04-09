@@ -7,7 +7,6 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 const querySingleEventHelp = `【查单个活动格式】
@@ -144,41 +143,6 @@ func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {
 		}, true
 	default:
 		return nil, false
-	}
-}
-
-func (sekaiHandlers) EventStoryHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk event story", "/pjsk_event_story",
-				"/活动剧情", "/活动故事", "/活动总结",
-			},
-			Disabled: true,
-		},
-		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			refresh := false
-			save := true
-			if strings.Contains(args, "refresh") {
-				refresh = true
-				args = strings.TrimSpace(strings.ReplaceAll(args, "refresh", ""))
-			}
-			model := ""
-			if strings.Contains(args, "model:") {
-				parts := strings.SplitN(args, "model:", 2)
-				args = strings.TrimSpace(parts[0])
-				model = strings.TrimSpace(parts[1])
-				refresh = true
-				save = false
-			}
-
-			return nil, fmt.Errorf(
-				"TODO: 活动剧情未实现，query=%q, refresh=%t, save=%t, model=%q",
-				args, refresh, save, model,
-			)
-		},
 	}
 }
 

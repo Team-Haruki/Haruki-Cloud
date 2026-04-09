@@ -2,20 +2,15 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/bondshonor"
-	"haruki-cloud/database/sekai/event"
-	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
-	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -258,166 +253,4 @@ func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) 
 
 func (p *dbHonorProvider) GetEventIDByHonorID(honorID int) int {
 	return p.getEventIDByHonorID(nil, honorID)
-}
-
-func (p *dbHonorProvider) getEventIDByHonorID(ctx context.Context, honorID int) int {
-	if honorID == 0 {
-		return 0
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	p.init()
-
-	p.eventHonorMu.RLock()
-	if p.eventByHonorLoaded {
-		id := p.eventByHonorID[honorID]
-		p.eventHonorMu.RUnlock()
-		return id
-	}
-	p.eventHonorMu.RUnlock()
-
-	p.eventHonorMu.Lock()
-	defer p.eventHonorMu.Unlock()
-	if p.eventByHonorLoaded {
-		return p.eventByHonorID[honorID]
-	}
-
-	items, err := p.client.Event.Query().
-		Where(event.ServerRegionEQ(p.region.String())).
-		All(ctx)
-	if err != nil {
-		return 0
-	}
-
-	for _, item := range items {
-		var ranges []honorRewardRange
-		if err := json.Unmarshal(item.EventRankingRewardRanges, &ranges); err != nil {
-			continue
-		}
-		eventID := int(item.GameID)
-		for _, rr := range ranges {
-			for _, detail := range rr.EventRankingRewardDetails {
-				if detail.ResourceType == "honor" && detail.ResourceID > 0 {
-					p.eventByHonorID[detail.ResourceID] = eventID
-				}
-			}
-		}
-	}
-
-	p.eventByHonorLoaded = true
-	return p.eventByHonorID[honorID]
-}
-
-type honorRewardRange struct {
-	EventRankingRewardDetails []honorRewardDetail `json:"eventRankingRewardDetails"`
-}
-
-type honorRewardDetail struct {
-	ResourceType string `json:"resourceType"`
-	ResourceID   int    `json:"resourceId"`
-}
-
-func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(ctx context.Context, groupID int, groupName string) (honorBirthdayAssets, bool) {
-	p.birthdayMu.RLock()
-	if cached, ok := p.birthdayByGroup[groupID]; ok {
-		p.birthdayMu.RUnlock()
-		return cached, true
-	}
-	p.birthdayMu.RUnlock()
-
-	p.birthdayMu.Lock()
-	defer p.birthdayMu.Unlock()
-	if cached, ok := p.birthdayByGroup[groupID]; ok {
-		return cached, true
-	}
-
-	if !p.birthdayLoaded {
-		if ctx == nil {
-			ctx = context.Background()
-		}
-		rows, err := p.client.Gamecharacter.Query().
-			Where(gamecharacter.ServerRegionEQ(p.region.String())).
-			All(ctx)
-		if err == nil {
-			p.birthdayChars = rows
-		}
-		p.birthdayLoaded = true
-	}
-
-	for _, row := range p.birthdayChars {
-		gameID := int(row.GameID)
-		if gameID <= 0 {
-			continue
-		}
-		if !honorBirthdayGroupMatchesCharacter(groupName, row) {
-			continue
-		}
-		suffix := fmt.Sprintf("01_%02d", gameID)
-		derived := honorBirthdayAssets{
-			background: "honor_bg_birthday_" + suffix,
-			frame:      "honor_frame_birthday_" + suffix,
-		}
-		p.birthdayByGroup[groupID] = derived
-		slog.Info(
-			"honor birthday match trace",
-			"group_id", groupID,
-			"group_name", groupName,
-			"character_id", row.GameID,
-			"first_name", row.FirstName,
-			"given_name", row.GivenName,
-			"first_name_english", row.FirstNameEnglish,
-			"given_name_english", row.GivenNameEnglish,
-			"background_assetbundle_name", derived.background,
-			"frame_name", derived.frame,
-		)
-		return derived, true
-	}
-	return honorBirthdayAssets{}, false
-}
-
-func honorBirthdayGroupMatchesCharacter(groupName string, row *sekaiDB.Gamecharacter) bool {
-	if row == nil {
-		return false
-	}
-	name := strings.TrimSpace(groupName)
-	if name == "" {
-		return false
-	}
-	candidates := []string{
-		strings.TrimSpace(row.FirstName),
-		strings.TrimSpace(row.GivenName),
-		strings.TrimSpace(row.FirstName + row.GivenName),
-		strings.TrimSpace(row.FirstNameEnglish),
-		strings.TrimSpace(row.GivenNameEnglish),
-		strings.TrimSpace(row.FirstNameEnglish + row.GivenNameEnglish),
-	}
-	for _, candidate := range candidates {
-		if candidate != "" && strings.Contains(name, candidate) {
-			return true
-		}
-	}
-	if nickname, ok := assets.CharacterIDToNickname[int(row.GameID)]; ok && nickname != "" {
-		if strings.Contains(strings.ToLower(name), strings.ToLower(strings.TrimSpace(nickname))) {
-			return true
-		}
-	}
-	return false
-}
-
-func convertCloudHonor(entity *sekaiDB.Honor) (*masterdata.Honor, error) {
-	model := &masterdata.Honor{
-		ID:              int(entity.GameID),
-		GroupID:         int(entity.GroupID),
-		HonorRarity:     entity.HonorRarity,
-		Name:            entity.Name,
-		Description:     "",
-		AssetBundleName: entity.AssetbundleName,
-	}
-	if len(entity.Levels) > 0 {
-		if err := json.Unmarshal(entity.Levels, &model.Levels); err != nil {
-			return nil, fmt.Errorf("unmarshal honor levels: %w", err)
-		}
-	}
-	return model, nil
 }

@@ -7,7 +7,6 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 const searchSingleCardHelp = `查单张卡的方式:
@@ -129,66 +128,6 @@ func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
 				return nil, errors.New("请输入要查询的卡牌")
 			}
 			return makeResolvedCmd(ctx, parser.ModuleCard, "card-image"), nil
-		},
-	}
-}
-
-func (sekaiHandlers) CardStoryHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk card story",
-				"/卡牌剧情", "/卡面剧情", "/卡剧情", "/卡牌故事", "/卡面故事", "/卡故事",
-			},
-			Disabled: true,
-		},
-		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			if args == "" {
-				return nil, errors.New("请输入要查询的卡牌")
-			}
-			return nil, errors.New("卡牌剧情查询功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) BoxHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Path: "card/box",
-			Commands: []string{
-				"/pjsk box",
-				"/卡牌一览", "/卡面一览", "/卡一览",
-			},
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-
-			showID := false
-			if strings.Contains(args, "id") {
-				showID = true
-				args = strings.TrimSpace(strings.ReplaceAll(args, "id", ""))
-			}
-
-			showBox := false
-			if strings.Contains(args, "box") {
-				showBox = true
-				args = strings.TrimSpace(strings.ReplaceAll(args, "box", ""))
-			}
-
-			useAfterTraining := true
-			if strings.Contains(args, "before") {
-				useAfterTraining = false
-				args = strings.TrimSpace(strings.ReplaceAll(args, "before", ""))
-			}
-
-			ctx.SetArgs(strings.TrimSpace(args))
-			return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", map[string]any{
-				"show_id":            showID,
-				"show_box":           showBox,
-				"use_after_training": useAfterTraining,
-			}), nil
 		},
 	}
 }

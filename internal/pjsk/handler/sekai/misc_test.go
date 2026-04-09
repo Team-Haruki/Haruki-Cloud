@@ -83,10 +83,3 @@ func TestMiscBirthdayHandleBuildsResolvedCommand(t *testing.T) {
 		})
 	}
 }
-
-func TestHeyiweiHandleIsDisabled(t *testing.T) {
-	h := sekaiHandlers{}.HeyiweiHandle()
-	if !h.IsDisabled() {
-		t.Fatal("expected HeyiweiHandle to be disabled")
-	}
-}

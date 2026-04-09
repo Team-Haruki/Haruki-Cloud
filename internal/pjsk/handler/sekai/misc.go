@@ -1,11 +1,9 @@
 package sekai
 
 import (
-	"errors"
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"strconv"
 	"strings"
@@ -64,96 +62,6 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 				return nil, err
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeRender, p), nil
-		},
-	}
-}
-
-func (sekaiHandlers) HelpHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/help", "/帮助",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("该功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) UpdateHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk update", "/pjsk refresh", "/pjsk更新",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("该功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) NgWordHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjsk ng", "/pjsk ngword", "/pjsk ng word",
-				"/pjsk屏蔽词", "/pjsk屏蔽", "/pjsk敏感", "/pjsk敏感词",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			text := strings.TrimSpace(ctx.GetArgs())
-			if text == "" {
-				return nil, errors.New("请输入要查询的文本")
-			}
-			return nil, errors.New("屏蔽词检测功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) UploadHelpHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/抓包帮助", "/抓包", "/pjsk upload help",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("抓包帮助功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) ExtractCardHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/提取卡牌",
-			},
-			Disabled: true,
-		},
-		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return nil, errors.New("提取卡牌功能正在开发中，敬请期待")
-		},
-	}
-}
-
-func (sekaiHandlers) HeyiweiHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
-		CommandHandlerBase: handler.CommandHandlerBase{
-			Commands: []string{
-				"/pjskb30", "/pjskdetail", "/b30", "/b39", "/pjskb39", "/pjsk b30", "/pjsk b39", "/pjsk detail",
-			},
-			Disabled: true,
-		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
-			return "何意味", nil
 		},
 	}
 }

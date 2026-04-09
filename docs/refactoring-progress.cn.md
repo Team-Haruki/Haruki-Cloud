@@ -14,6 +14,22 @@
 > - 2026-04-09 再补脚本侧：`cmd/migrate` 已去除硬编码 Sekai DSN，改为环境变量/配置文件解析，并接入 signal-aware context
 > - 2026-04-09 阶段 B 结构拆分：`internal/pjsk/render/sk/` 已继续细拆为 `controller_base.go` / `controller_line_requests.go` / `controller_query_requests.go` / `controller_speed_requests.go` / `controller_trace_requests.go` / `controller_trace.go` / `controller_validate.go` / `controller_tracker_identity.go` / `controller_tracker_name.go` / `controller_tracker_metrics.go` / `controller_meta.go` / `controller_winrate.go`；`internal/pjsk/handler/resolver.go` 已按 target/snapshot/mysekai/profile/binding 职责拆分；`executeSK()` 已收口为薄调度函数并下沉到分模式 handler
 > - 2026-04-09 阶段 B 本轮继续推进：`internal/pjsk/render/deck/controller.go` 已从 894 行进一步按职责拆为 `controller.go` / `controller_engine.go` / `controller_request.go` / `controller_metadata.go` / `controller_options.go` / `controller_resolve.go`，当前 `controller.go` 主文件已降到 183 行
+> - 2026-04-09 阶段 B 再继续推进：`internal/pjsk/render/education/snapshot_build.go` 已进一步拆为 `snapshot_context.go` / `snapshot_power.go` / `snapshot_area.go` / `snapshot_bonds.go` / `snapshot_leader.go`；`internal/pjsk/render/mysekai/controller.go` 也已进一步拆为 `controller.go` / `controller_snapshot.go` / `controller_resources.go` / `controller_talk.go`
+> - 2026-04-09 阶段 B 继续收尾：`internal/pjsk/render/deck/remote_engine.go` 已进一步拆为 `remote_engine.go` / `remote_engine_recommend.go` / `remote_engine_http.go` / `remote_engine_results.go`；`internal/pjsk/handler/sekai/sk.go` 也已按 handler / params / parse 职责拆为 `sk.go` / `sk_params.go` / `sk_parse.go`
+> - 2026-04-09 阶段 B 再补一轮：`internal/pjsk/alias/service.go` 已进一步拆为 `service.go` / `service_aliases.go` / `service_review.go` / `service_validation.go` / `service_records.go`
+> - 2026-04-09 阶段 B 继续细化：`internal/pjsk/handler/sekai/profile.go` 已进一步拆为 `profile.go` / `profile_settings.go` / `profile_bg.go`
+> - 2026-04-10 阶段 B 继续细化：`internal/pjsk/handler/sekai/mysekai.go` 已进一步拆为 `mysekai.go` / `mysekai_parse.go`
+> - 2026-04-10 阶段 B 再推进：`internal/pjsk/render/music/controller.go` 已进一步拆为 `controller.go` / `controller_detail_list.go` / `controller_chart_progress.go` / `controller_rewards.go`；`internal/pjsk/render/sk/forecast_provider.go` 也已进一步拆为 `forecast_provider.go` / `forecast_provider_sources.go` / `forecast_provider_http.go`
+> - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/provider/db_education.go` 已进一步拆为 `db_education.go` / `db_education_rewards_boxes.go` / `db_education_area.go` / `db_education_bonds.go` / `db_education_gate_shop.go`；`internal/pjsk/render/provider/db_cards.go` 也已进一步拆为 `db_cards.go` / `db_cards_core.go` / `db_cards_supply.go` / `db_cards_gacha_costume.go`
+> - 2026-04-10 阶段 B 继续收尾：`internal/pjsk/handler/sekai/deck_extractor.go` 已进一步拆为 `deck_extractor.go` / `deck_extract_targets.go`
+> - 2026-04-10 阶段 B 再往前推：`internal/pjsk/render/provider/db_musics.go` 已进一步拆为 `db_musics.go` / `db_musics_core.go` / `db_musics_details.go`
+> - 2026-04-10 阶段 B 再补一轮：`internal/pjsk/render/gacha/builder.go` 已进一步拆为 `builder.go` / `builder_detail.go`
+> - 2026-04-10 阶段 B 继续细拆：`internal/pjsk/handler/sekai/score_board_params.go` 已进一步拆为 `score_board_params.go` / `score_board_params_extract.go`；`internal/pjsk/render/music/board_helpers.go` 已进一步拆为 `board_helpers.go` / `board_metrics.go` / `board_meta.go` / `board_specs.go`
+> - 2026-04-10 阶段 B 再推进一轮：`internal/pjsk/render/music/lookup.go` 已进一步拆为 `lookup.go` / `lookup_cover_bpm.go`
+> - 2026-04-10 阶段 B 再补一轮：`internal/pjsk/render/music/builder.go` 已进一步拆为 `builder.go` / `builder_requests.go` / `builder_metadata.go`
+> - 2026-04-10 阶段 B 继续收尾：`internal/pjsk/render/event/builder.go` 已进一步拆为 `builder.go` / `builder_metadata.go` / `builder_filters.go`
+> - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/honor/builder.go` 已进一步拆为 `builder.go` / `builder_normal.go` / `builder_bonds.go` / `builder_trace.go`
+> - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/db_honors.go` 已进一步拆为 `db_honors.go` / `db_honors_event.go` / `db_honors_birthday.go` / `db_honors_convert.go`
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -334,6 +350,26 @@ func executeSK(rc *RequestContext)
 
 **controller.go 从 2251 行降至 859 行**（减少 62%）
 
+**2026-04-09 当前状态补充**：
+
+在第一轮 builder 外提后，`controller.go` 仍长期保持在 859 行左右，主要还混着：
+
+- snapshot / raw mysekai 数据准备
+- profile / photo 入口
+- 资源站点与访问角色解析
+- 对话角色查询与单位判定
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller.go` | 184 | Controller 结构、构造器、路径解析、浅拷贝入口 |
+| `controller_snapshot.go` | 171 | snapshot decode、photo 解析、profile 注入 |
+| `controller_resources.go` | 313 | fixture/resource/visit/music-record 相关 helper |
+| `controller_talk.go` | 214 | talk unit alias、角色解析、V 家候选过滤 |
+
+也就是说，`mysekai` 现在已经不再由一个“剩余超大控制器文件”承载全部基础逻辑，而是进入了按语义分层的状态。
+
 ---
 
 ### P12：alias/service.go 拆分 ✅
@@ -348,6 +384,28 @@ func executeSK(rc *RequestContext)
 
 **service.go 从 1258 行降至 944 行**（减少 25%）
 
+**2026-04-09 当前状态补充**：
+
+早期把 resolver 提出后，`service.go` 仍长期保持在 612 行左右，主要还混着：
+
+- alias submit/query/delete
+- review approve/reject/list
+- alias/entity 名称冲突校验
+- admin 身份校验
+- pending 记录转展示记录
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `service.go` | 68 | Service 结构、构造器、基础类型 |
+| `service_aliases.go` | 182 | Submit / Query / Delete |
+| `service_review.go` | 191 | ListPending / Approve / Reject |
+| `service_validation.go` | 111 | alias 可用性、实体重名校验、admin 校验 |
+| `service_records.go` | 95 | pending rows -> AliasRecord / EntityRef 装配 |
+
+这样 `alias` 这块现在已经从“一个大服务文件”回到“按业务流程拆开的服务层”结构。
+
 ---
 
 ### P13：sk/controller.go 拆分 ✅
@@ -361,6 +419,90 @@ func executeSK(rc *RequestContext)
 | tracker_builder.go | 586 | validateTrackerQuery, buildRanksFromTracker, buildSingleRankFromTracker, enrichRankInfoByRank/User, buildSpeedInfosFromTracker, buildRankTraceFromTracker |
 
 **controller.go 从 1271 行降至 700 行**（减少 45%）
+
+**2026-04-09 当前状态补充**：
+
+这一节记录的是 `internal/pjsk/render/sk/controller.go` 的历史拆分；与之不同，Bot 命令入口侧的 `internal/pjsk/handler/sekai/sk.go` 本轮也已继续按职责拆分为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `sk.go` | 213 | SK 命令注册与 resolved command 入口 |
+| `sk_params.go` | 179 | tracker/player-trace 参数构造 |
+| `sk_parse.go` | 213 | WL 角色提取、rank expression 解析、默认档线规则 |
+
+这样 `SK` 现在已经同时在 render 层和 handler 层完成了两轮职责拆分。
+
+当前 `SK` 目录里与 forecast 相关的剩余热点也已继续拆分：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `forecast_provider.go` | 121 | provider 入口、Fetch/FetchBySource 基础流程 |
+| `forecast_provider_sources.go` | 255 | 33kit / moesekai / snowy legacy / sekarun 抓取逻辑 |
+| `forecast_provider_http.go` | 128 | HTTP 请求、row 解析、时间/数值转换 helper |
+
+---
+
+### P13.5：handler/sekai/profile.go 拆分 ✅
+
+**2026-04-09 当前状态补充**：
+
+`internal/pjsk/handler/sekai/profile.go` 在本轮拆分前约 505 行，混合了：
+
+- 绑定 / 解绑 / 默认绑定命令
+- 可见性 / 验证 / 抓包状态设置
+- 背景图上传 / 清除 / 调整
+- 背景参数与图片 URL 解析 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `profile.go` | 114 | 绑定、解绑、默认绑定相关命令 |
+| `profile_settings.go` | 236 | settings params、selector 解析、可见性/验证/抓包状态命令 |
+| `profile_bg.go` | 178 | 背景图上传/清除/调整命令与背景参数解析 |
+
+这样 `profile` handler 已经从“一个综合配置入口文件”回到更清晰的命令分层结构。
+
+---
+
+### P13.6：handler/sekai/mysekai.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/handler/sekai/mysekai.go` 在本轮拆分前约 492 行，混合了：
+
+- MySekai resource / map / talk / furniture / gate / music-record / blueprint / photo 命令
+- map / fixture / gate / blueprint / talk query 解析 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `mysekai.go` | 274 | MySekai 各命令注册与 resolved command 入口 |
+| `mysekai_parse.go` | 225 | map/fixture/gate/blueprint/talk query 解析与 alias helper |
+
+这样 `MySekai` handler 已经从“命令入口 + 解析规则堆叠在一个文件”回到两层结构，后续继续细拆也会更容易。
+
+---
+
+### P13.7：handler/sekai/deck_extractor.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/handler/sekai/deck_extractor.go` 在本轮拆分前约 472 行，混合了：
+
+- deck 通用参数抽取
+- multi live / target / boost / music query 解析
+- event / simulated world bloom / 团属性 / 角色 query 解析
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `deck_extractor.go` | 233 | 通用 deck 参数抽取、multilive/boost/target/music query |
+| `deck_extract_targets.go` | 249 | fixed target、event selection、WL/角色/团属性解析 |
+
+这样 `deck` handler 的 extractor 已经从“单文件承载全部参数解析”回到两层结构，后续如果再继续细分，成本会低很多。
 
 ---
 
@@ -398,6 +540,17 @@ func executeSK(rc *RequestContext)
 
 也就是说，`deck` 这块现在已经从“一个超大控制器文件”进入“多文件职责分层”状态，后续剩余热点主要转移到 `remote_engine.go`、`mysekai/controller.go` 与 `education/snapshot_build.go`。
 
+更新到 2026-04-09 当前状态后，上述两个热点和 `remote_engine.go` 也都已经继续拆分；`deck` 目录当前已不存在单个特别突兀的超大实现文件。
+
+`remote_engine` 当前拆分结果为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `remote_engine.go` | 150 | provider、类型定义、recommender 基础入口 |
+| `remote_engine_recommend.go` | 205 | warmup、batch/legacy recommend 流程 |
+| `remote_engine_http.go` | 110 | HTTP POST 与 multipart/zstd 传输 |
+| `remote_engine_results.go` | 240 | 返回解析、聚合、排序、hash/clone helper |
+
 ---
 
 ### P15：music/board_request.go 拆分 ✅
@@ -412,6 +565,21 @@ func executeSK(rc *RequestContext)
 
 **board_request.go 从 872 行降至 420 行**（减少 52%）
 
+**2026-04-10 当前状态补充**：
+
+随着 music board 的排序、文本、meta 加载、spec 解析逻辑继续扩充，`board_helpers.go` 后续又增长到了 462 行。
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `board_helpers.go` | 95 | 标题/副标题文本、difficulty key/helper |
+| `board_metrics.go` | 237 | skill 权重、live metrics、排序、level filter |
+| `board_meta.go` | 61 | meta payload 读取与 map 构建 |
+| `board_specs.go` | 85 | spec query 解析与去重 |
+
+这样 `music board` 的 helper 层已经回到按职责分开的结构。
+
 ---
 
 ### P16：music/controller.go 拆分 ✅
@@ -425,6 +593,21 @@ func executeSK(rc *RequestContext)
 | controller_helpers.go | 301 | currentSnapshot, profile helpers, buildPlaceholderProfile, convertDetailedProfileToCard, buildPlayResultIconMap, buildUserResults, buildUserProgressCounts, flattenProgressCounts, resolveMusicChartMeta, matchesMusicKeyword, resolveStaticIcon |
 
 **controller.go 从 782 行降至 494 行**（减少 37%）
+
+**2026-04-10 当前状态补充**：
+
+后续随着 detail/list/chart/progress/rewards 入口继续叠加，`controller.go` 又回升到了 578 行，并重新混合了多类入口职责。
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller.go` | 192 | Controller 结构、构造器、source/context/snapshot 基础入口 |
+| `controller_detail_list.go` | 207 | cover、detail、brief-list、music-list |
+| `controller_chart_progress.go` | 110 | chart、progress、snapshot progress |
+| `controller_rewards.go` | 95 | rewards detail/basic 渲染入口 |
+
+拆完之后，`music` controller 已经重新回到“按请求类别分层”的结构，后续若继续优化，热点主要会转向 `board_helpers.go`、`lookup.go` 与 provider 侧实现。
 
 ---
 
@@ -484,6 +667,239 @@ func executeSK(rc *RequestContext)
 
 ---
 
+### P20.5：provider/db_education.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/provider/db_education.go` 在本轮拆分前约 876 行，混合了：
+
+- challenge reward / resource box 查询
+- area item / character rank 查询
+- bonds / style / leader mission 查询
+- mysekai gate / shop item 查询
+- 全部 ensure* loader 与 clone helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `db_education.go` | 95 | provider 结构、init、context helper |
+| `db_education_rewards_boxes.go` | 181 | challenge rewards、resource boxes |
+| `db_education_area.go` | 227 | area items、area levels、character ranks |
+| `db_education_bonds.go` | 246 | bonds、styles、leader missions |
+| `db_education_gate_shop.go` | 142 | gate levels、shop items |
+
+这样 `education provider` 现在已经从一个大而全的 DB 访问文件回到了按数据域拆开的结构。
+
+---
+
+### P20.6：provider/db_cards.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/provider/db_cards.go` 在本轮拆分前约 531 行，混合了：
+
+- card 基础查询与 filter
+- supply type 查询与归一化
+- gacha / costume 查询
+- unit / event-card filter helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `db_cards.go` | 55 | provider 结构、init、context helper |
+| `db_cards_core.go` | 238 | GetByID、GetByCharacterAndSeq、Filter、unit/event helper |
+| `db_cards_supply.go` | 117 | supply type 查询与归一化 helper |
+| `db_cards_gacha_costume.go` | 140 | gacha、costume 查询 |
+
+这样 `card provider` 也已经从“单文件承载全部 DB 访问逻辑”回到更可维护的分层结构。
+
+---
+
+### P20.7：provider/db_musics.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/provider/db_musics.go` 在本轮拆分前约 499 行，混合了：
+
+- Search / GetByID / GetAll / localized title
+- difficulty / vocal / tag 查询
+- outside character / primary event / limited time music 查询
+- vocal character JSON 解析 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `db_musics.go` | 41 | provider 结构、init、context helper |
+| `db_musics_core.go` | 191 | Search、GetByID、GetByEventID、GetAll、GetLocalizedTitles |
+| `db_musics_details.go` | 271 | difficulties、vocals、tags、outside character、primary event、limited time musics、JSON helper |
+
+这样 `music provider` 也已经从“一个综合音乐 DB 访问文件”回到按职责分开的结构。
+
+---
+
+### P20.8：render/gacha/builder.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/gacha/builder.go` 在本轮拆分前约 463 行，混合了：
+
+- gacha list request 构造
+- gacha detail request 构造
+- logo / banner / ceil / thumbnail 路径解析
+- behavior 转换与 pickup/rate helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `builder.go` | 157 | Builder 结构、list request、基础 filter helper |
+| `builder_detail.go` | 317 | detail request、资源路径、behavior 转换、pickup/rate helper |
+
+这样 `gacha` builder 已经从“单文件承载列表与详情两类构造逻辑”回到更自然的两层结构。
+
+---
+
+### P20.9：handler/sekai/score_board_params.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/handler/sekai/score_board_params.go` 在本轮拆分前约 438 行，混合了：
+
+- board query 主流程组装
+- page / mode / target / order / strategy 解析
+- skills / power / deck bonus / interval 解析
+- level / diff filter 与 spec query helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `score_board_params.go` | 267 | board query 主流程、mapped arg、power/deck bonus/interval 解析 |
+| `score_board_params_extract.go` | 180 | page、skills、level/diff filter、token/span helper |
+
+这样 `score board` 的 handler 参数层也已经从单文件解析器回到两层结构。
+
+---
+
+### P20.10：render/music/lookup.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/music/lookup.go` 在本轮拆分前约 441 行，混合了：
+
+- note count 查询
+- jacket / cover 查询
+- BPM 查询
+- 本地谱面路径解析与 SUS BPM 解析
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `lookup.go` | 119 | note count 查询、结果类型定义 |
+| `lookup_cover_bpm.go` | 330 | cover、BPM、本地图表路径与 BPM 解析 |
+
+这样 `music lookup` 也已经从“单文件承载两类查询 + 图表解析”回到更清晰的两层结构。
+
+---
+
+### P20.11：render/music/builder.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/music/builder.go` 在本轮拆分前约 441 行，混合了：
+
+- Builder 基础结构与资源路径 helper
+- music detail / brief list request 构造
+- chart request 构造与 chart artist 处理
+- difficulty / vocal / alias / localized title / limited time metadata 组装
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `builder.go` | 49 | Builder 结构、difficulty level 查询、jacket/icon 路径 helper |
+| `builder_requests.go` | 158 | music detail / brief list / chart request 构造、chart artist helper |
+| `builder_metadata.go` | 236 | difficulty / vocal / title / alias / limited time / event banner metadata helper |
+
+这样 `music builder` 也已经从“单文件同时承载请求构造与 metadata 汇总逻辑”回到更自然的三层结构，后续如果继续补 `music` 相关功能，入口和 helper 的边界会更容易保持稳定。
+
+---
+
+### P20.12：render/event/builder.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/event/builder.go` 在本轮拆分前约 415 行，混合了：
+
+- event detail / list request 构造
+- event info / assets / brief 组装
+- event list filter、bonus 匹配与 world bloom timeline 计算
+- character / unit 图标与 event type 展示 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `builder.go` | 82 | Builder 结构、detail/list request 入口 |
+| `builder_metadata.go` | 164 | event info、assets、brief、character/unit/icon helper |
+| `builder_filters.go` | 185 | event filter、bonus 提取、banner index、world bloom timeline |
+
+这样 `event builder` 也已经从“一个文件同时承担请求构造、资源路径和过滤逻辑”回到更自然的三层结构，后续补事件筛选或资源规则时不需要再在同一个超大文件里来回穿梭。
+
+---
+
+### P20.13：render/honor/builder.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/honor/builder.go` 在本轮拆分前约 409 行，混合了：
+
+- honor request 主入口
+- normal honor 资源路径与展示规则
+- bonds honor 图层与文字资源构造
+- trace/debug 输出与多组视觉 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `builder.go` | 47 | Builder 结构、request 主入口 |
+| `builder_normal.go` | 252 | normal honor 构造、rarity/asset/world-link/helper |
+| `builder_bonds.go` | 81 | bonds honor 构造 |
+| `builder_trace.go` | 42 | trace/debug helper |
+
+这样 `honor builder` 也已经从“单文件同时承载两套 honor 构造规则 + trace 输出”回到更自然的四层结构，后续不论是修 normal honor 资源规则还是 bonds honor 词条逻辑，都不用再在一个大文件里交叉修改。
+
+---
+
+### P20.14：render/provider/db_honors.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/provider/db_honors.go` 在本轮拆分前约 423 行，混合了：
+
+- honor / honor group / bonds honor / gameCharacterUnit 查询与缓存
+- honor -> event reward 反查
+- birthday honor 资源补全推导
+- ent -> masterdata convert helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `db_honors.go` | 248 | provider 结构、缓存初始化、主查询入口 |
+| `db_honors_event.go` | 58 | honor -> event reward 反查 |
+| `db_honors_birthday.go` | 91 | birthday 资源补全与角色名匹配 |
+| `db_honors_convert.go` | 25 | ent -> masterdata convert helper |
+
+这样 `db_honors` 也已经从“查询主链 + 辅助派生逻辑”混在一起的状态回到更自然的分层结构；后续如果继续碰 honor provider，查询缓存、event 反查和 birthday 推导可以分别维护。
+
+---
+
 ### P21：handler/sekai/score.go 拆分 ✅
 
 **提交**：`9acee70`
@@ -509,6 +925,22 @@ func executeSK(rc *RequestContext)
 | snapshot_helpers.go | 161 | hasAreaItemFilter, areaItemMatchesFilter, areaItemTargetIcon, unitIconPath, attrIconPath, materialIconPath, normalizeUnit, normalizeAttr |
 
 **snapshot_build.go 从 582 行降至 431 行**（减少 26%）
+
+**2026-04-09 当前状态补充**：
+
+后续随着 `power / area / bonds / leader` 四类 snapshot builder 继续长大，`snapshot_build.go` 又回升到了 743 行，并重新混合了多类职责。
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `snapshot_context.go` | 112 | 共享常量、resolvedSnapshotContext、snapshot/source/profile 解析 |
+| `snapshot_power.go` | 117 | power bonus snapshot builder |
+| `snapshot_area.go` | 226 | area item upgrade snapshot builder 与 area 相关解析 |
+| `snapshot_bonds.go` | 223 | bonds snapshot builder |
+| `snapshot_leader.go` | 91 | leader count snapshot builder |
+
+拆完之后，`education` 这块已经从“一个超大 snapshot builder 文件”回到“按场景拆开的结构”，后续阅读和继续维护都会直接很多。
 
 ---
 

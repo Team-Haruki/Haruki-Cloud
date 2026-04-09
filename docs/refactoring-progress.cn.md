@@ -876,3 +876,48 @@ func resolveBindingWithFallback(
 - 消除 40+ 个 sync.Once 字段三元组
 - 消除 9× 重复的 DefaultRegion/WithContext 模板
 - 消除 3× 重复的 resty 重试逻辑
+
+## 阶段 E: staticcheck 驱动的技术债清理
+
+**提交**: Phase E tech debt cleanup
+
+### 完成项目
+
+#### E1: 死代码清除（21 个函数/变量，~400 行）
+通过 staticcheck U1000 检测，移除以下死代码：
+- `handler/defaults.go`: regionValueWithDefault
+- `handler/sekai/score_board_params.go`: 8 个未使用的 musicBoard 解析器
+- `handler/sekai/stamp.go`: parseStampPage
+- `render/card/supply.go`: formatSupplyType, matchesSupplyFilter
+- `render/education/controller.go`: makeRelative
+- `render/event/builder.go`: normalizeRegion
+- `render/music/controller.go`: boardDefaultDifficulties
+- `render/mysekai/helpers.go`: extractMysekaiGate
+- `render/profile/controller_helpers.go`: findEventRank
+- `render/provider/db_cards.go`: 4 个未使用方法
+- `render/userdata/local_helpers.go`: mergeMySekaiJSON
+- `api/bot/pjsk/handler.go`: flattenOneBotSegments
+- `cmd/server/init_services.go`: initPJSKParserIfEnabled
+- `utils/drawing/cache_helpers.go`: 5 个未使用 helper
+- `render/sk/controller_requests.go`: 移除残留的预拆分文件（505 行）
+
+#### E2: 错误处理修复
+- `forecast_provider.go`: `%v` → `%w`（Go 1.20+ 多 error wrapping）
+- `controller_line_requests.go`: `%v` → `%w`（多 error wrapping）
+- `redis/clearcache.go`: `errors.New(fmt.Sprintf())` → `fmt.Errorf(%w)`
+- `handler/sekai/handler.go`: 错误字符串小写化（ST1005）
+
+#### E3: 代码质量修复
+- `deck_config.go`: 移除多余零值初始化（SA4006）
+- `parser.go`, `card/parser.go`: 移除未使用的最后赋值（SA4006）
+- `local_helpers.go`: 使用类型转换代替结构体字面量（S1016）
+- `provider_test.go`: 修复始终为真的比较（SA4023）
+- `handler_test.go`: 移除不必要的空白标识符赋值（S1005）
+
+#### E4: 评估决策
+- **runtime.go sync.Once**: 经分析，不迁移到 lazyValue[T]。runtime.go 使用"nil-on-failure"模式（错误被有意丢弃），与 lazyValue 的错误传播模式不同
+- **provider/db_*.go context.Background()**: 经分析，保持现状。nil-ctx 回退是 contextual wrapper 渐进式 context 传播的桥接模式，改变需要接口级别的破坏性变更
+
+### 净效果
+- staticcheck 非测试非 SA1012 问题：从 26+ 降至 1（仅剩 gacha.go WIP stub）
+- 移除 ~400 行死代码 + 505 行残留文件

@@ -112,6 +112,104 @@ func TestBuildGachaListRequestOnlyCurrentFiltersAndOrdersByNewest(t *testing.T) 
 	}
 }
 
+func TestBuildGachaListRequestDoesNotSliceAndDefaultsToLatestPage(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := newTestGachaSource(renderregion.JP)
+
+	for i := 0; i < 25; i++ {
+		item := &masterdata.Gacha{
+			ID:              i + 1,
+			Name:            fmt.Sprintf("Gacha-%02d", i+1),
+			GachaType:       "ceil",
+			AssetBundleName: fmt.Sprintf("gacha_%02d", i+1),
+			StartAt:         now - int64((25-i)*1000),
+			EndAt:           now + 60_000,
+		}
+		source.gachas = append(source.gachas, item)
+		source.gachaByID[item.ID] = item
+	}
+	future := &masterdata.Gacha{
+		ID:              999,
+		Name:            "Future",
+		GachaType:       "ceil",
+		AssetBundleName: "future",
+		StartAt:         now + 60_000,
+		EndAt:           now + 120_000,
+	}
+	source.gachas = append(source.gachas, future)
+	source.gachaByID[future.ID] = future
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	if len(req.Gachas) != 25 {
+		t.Fatalf("expected all started gachas, got %d", len(req.Gachas))
+	}
+	if req.Filter.Page != 0 {
+		t.Fatalf("expected default page to defer to drawing latest page, got %d", req.Filter.Page)
+	}
+	if req.PageSize != 0 {
+		t.Fatalf("expected default page size to defer to drawing default, got %d", req.PageSize)
+	}
+	if req.Gachas[0].ID != 1 || req.Gachas[len(req.Gachas)-1].ID != 25 {
+		t.Fatalf("expected ascending gacha order, got first=%d last=%d", req.Gachas[0].ID, req.Gachas[len(req.Gachas)-1].ID)
+	}
+}
+
+func TestBuildGachaListRequestFiltersYearByStartAtAndExcludesFutureByDefault(t *testing.T) {
+	source := newTestGachaSource(renderregion.JP)
+	started2025 := &masterdata.Gacha{ID: 1, Name: "Started2025", GachaType: "ceil", AssetBundleName: "g1", StartAt: time.Date(2025, 12, 15, 12, 0, 0, 0, time.Local).UnixMilli(), EndAt: time.Date(2026, 1, 1, 12, 0, 0, 0, time.Local).UnixMilli()}
+	ended2025 := &masterdata.Gacha{ID: 2, Name: "Ended2025", GachaType: "ceil", AssetBundleName: "g2", StartAt: time.Date(2025, 1, 1, 12, 0, 0, 0, time.Local).UnixMilli(), EndAt: time.Date(2025, 1, 10, 12, 0, 0, 0, time.Local).UnixMilli()}
+	started2026 := &masterdata.Gacha{ID: 4, Name: "Started2026", GachaType: "ceil", AssetBundleName: "g4", StartAt: time.Date(2026, 1, 1, 12, 0, 0, 0, time.Local).UnixMilli(), EndAt: time.Date(2026, 1, 10, 12, 0, 0, 0, time.Local).UnixMilli()}
+	source.gachas = []*masterdata.Gacha{started2025, ended2025, started2026}
+	for _, item := range source.gachas {
+		source.gachaByID[item.ID] = item
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true, Year: 2025})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	if len(req.Gachas) != 2 {
+		t.Fatalf("expected only started 2025 gachas, got %d", len(req.Gachas))
+	}
+	if req.Gachas[0].ID != 2 || req.Gachas[1].ID != 1 {
+		t.Fatalf("unexpected year-filtered gacha order: %+v", req.Gachas)
+	}
+}
+
+func TestBuildGachaListRequestRereleaseAndRecallUsePrefix(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := newTestGachaSource(renderregion.JP)
+	rerelease := &masterdata.Gacha{ID: 1, Name: "[复刻] Rerelease", GachaType: "ceil", AssetBundleName: "g1", StartAt: now - 10_000, EndAt: now + 10_000}
+	rereleaseMiddle := &masterdata.Gacha{ID: 2, Name: "Not [复刻] Prefix", GachaType: "ceil", AssetBundleName: "g2", StartAt: now - 10_000, EndAt: now + 10_000}
+	recall := &masterdata.Gacha{ID: 3, Name: "[回响] Recall", GachaType: "ceil", AssetBundleName: "g3", StartAt: now - 10_000, EndAt: now + 10_000}
+	source.gachas = []*masterdata.Gacha{rerelease, rereleaseMiddle, recall}
+	for _, item := range source.gachas {
+		source.gachaByID[item.ID] = item
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true, IsRerelease: true})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	if len(req.Gachas) != 1 || req.Gachas[0].ID != 1 {
+		t.Fatalf("expected only prefix rerelease gacha, got %+v", req.Gachas)
+	}
+
+	req, err = builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, IncludePast: true, IsRecall: true})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	if len(req.Gachas) != 1 || req.Gachas[0].ID != 3 {
+		t.Fatalf("expected only recall prefix gacha, got %+v", req.Gachas)
+	}
+}
+
 func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	source := newTestGachaSource(renderregion.JP)
 

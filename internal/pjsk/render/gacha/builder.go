@@ -17,6 +17,11 @@ import (
 
 const gachaEndPaddingMillis = int64(time.Minute / time.Millisecond)
 
+var (
+	gachaRereleasePrefixes = []string{"[it's back]", "[재등장]", "[复刻]", "[復刻]"}
+	gachaRecallPrefixes    = []string{"[回响]"}
+)
+
 type Builder struct {
 	source DataSource
 	assets *assets.AssetHelper
@@ -31,12 +36,12 @@ func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
 
 func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequest, error) {
 	page := query.Page
-	if page <= 0 {
-		page = 1
+	if page < 0 {
+		page = 0
 	}
 	pageSize := query.PageSize
-	if pageSize <= 0 {
-		pageSize = 6
+	if pageSize < 0 {
+		pageSize = 0
 	}
 
 	now := time.Now()
@@ -62,12 +67,10 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 		if keyword != "" && !strings.Contains(strings.ToLower(item.Name), keyword) {
 			continue
 		}
-		if query.IsRerelease && !strings.Contains(strings.ToLower(item.Name), "it's back") &&
-			!strings.Contains(strings.ToLower(item.Name), "复刻") {
+		if query.IsRerelease && !hasAnyPrefixFold(item.Name, gachaRereleasePrefixes) {
 			continue
 		}
-		if query.IsRecall && !strings.Contains(strings.ToLower(item.Name), "回响") &&
-			!strings.Contains(strings.ToLower(item.Name), "colorful festival") {
+		if query.IsRecall && !hasAnyPrefixFold(item.Name, gachaRecallPrefixes) {
 			continue
 		}
 		if query.OnlyCurrent {
@@ -84,30 +87,19 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 
 	sort.Slice(filtered, func(i, j int) bool {
 		if filtered[i].StartAt == filtered[j].StartAt {
-			return filtered[i].ID > filtered[j].ID
+			return filtered[i].ID < filtered[j].ID
 		}
-		return filtered[i].StartAt > filtered[j].StartAt
+		return filtered[i].StartAt < filtered[j].StartAt
 	})
-
-	startIndex := (page - 1) * pageSize
-	if startIndex >= len(filtered) {
-		startIndex = 0
-		page = 1
-	}
-	endIndex := startIndex + pageSize
-	if endIndex > len(filtered) {
-		endIndex = len(filtered)
-	}
-	selected := filtered[startIndex:endIndex]
 
 	region := query.Region
 	if region.IsZero() {
 		region = b.source.DefaultRegion()
 	}
 
-	briefs := make([]drawing.GachaBrief, 0, len(selected))
-	logos := make(map[int]string, len(selected))
-	for _, item := range selected {
+	briefs := make([]drawing.GachaBrief, 0, len(filtered))
+	logos := make(map[int]string, len(filtered))
+	for _, item := range filtered {
 		briefs = append(briefs, drawing.GachaBrief{
 			ID:        item.ID,
 			Name:      item.Name,
@@ -128,6 +120,16 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 			Page: page,
 		},
 	}, nil
+}
+
+func hasAnyPrefixFold(text string, prefixes []string) bool {
+	lower := strings.ToLower(strings.TrimSpace(text))
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDetailRequest, error) {

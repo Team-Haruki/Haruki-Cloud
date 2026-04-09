@@ -13,6 +13,7 @@
 > - 2026-04-09 本轮再补一层：`internal/pjsk/render/userdata` 的 `DefaultSnapshotFactory.Build(ctx, ...)` 已真正使用 `ctx`，live/local snapshot 构建入口也已补上 context-aware 版本；leader 图路径解析和 MySekai merge helper 进一步收口
 > - 2026-04-09 再补脚本侧：`cmd/migrate` 已去除硬编码 Sekai DSN，改为环境变量/配置文件解析，并接入 signal-aware context
 > - 2026-04-09 阶段 B 结构拆分：`internal/pjsk/render/sk/` 已继续细拆为 `controller_base.go` / `controller_line_requests.go` / `controller_query_requests.go` / `controller_speed_requests.go` / `controller_trace_requests.go` / `controller_trace.go` / `controller_validate.go` / `controller_tracker_identity.go` / `controller_tracker_name.go` / `controller_tracker_metrics.go` / `controller_meta.go` / `controller_winrate.go`；`internal/pjsk/handler/resolver.go` 已按 target/snapshot/mysekai/profile/binding 职责拆分；`executeSK()` 已收口为薄调度函数并下沉到分模式 handler
+> - 2026-04-09 阶段 B 本轮继续推进：`internal/pjsk/render/deck/controller.go` 已从 894 行进一步按职责拆为 `controller.go` / `controller_engine.go` / `controller_request.go` / `controller_metadata.go` / `controller_options.go` / `controller_resolve.go`，当前 `controller.go` 主文件已降到 183 行
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -374,6 +375,28 @@ func executeSK(rc *RequestContext)
 | helpers.go | 291 | optionString/Int/Float, normalizeRecommend*, resolveCharacterIconPath, resolveUnitIconPath, defaultDeckConfig*, toInterfaceSlice/Map, calculateDeckCardPower |
 
 **controller.go 从 1184 行降至 918 行**（减少 22%）
+
+**2026-04-09 当前状态补充**：
+
+在早期把 helper 提出后，`controller.go` 仍长期保持在 894 行左右，职责依然混合了：
+
+- 自动推荐入口 / engine 调用
+- option 构造与 patch
+- drawing request 组装
+- event / profile / snapshot 解析
+
+本轮已继续按职责拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller.go` | 183 | Controller 结构、构造器、注册、入口方法 |
+| `controller_engine.go` | 134 | auto recommend engine 调用、基础 option 构造 |
+| `controller_request.go` | 169 | drawing request 组装与请求字段映射 |
+| `controller_metadata.go` | 142 | 活动 / WL / challenge 元数据回填 |
+| `controller_options.go` | 159 | option override、deck config patch、live 参数规范化 |
+| `controller_resolve.go` | 147 | profile / snapshot / source / event banner 解析 |
+
+也就是说，`deck` 这块现在已经从“一个超大控制器文件”进入“多文件职责分层”状态，后续剩余热点主要转移到 `remote_engine.go`、`mysekai/controller.go` 与 `education/snapshot_build.go`。
 
 ---
 

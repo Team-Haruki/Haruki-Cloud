@@ -1,0 +1,134 @@
+package deck
+
+import (
+	"fmt"
+
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/utils/drawing"
+)
+
+func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.DeckRequest, error) {
+	if c.engine == nil {
+		return nil, fmt.Errorf("deck recommend engine is not configured")
+	}
+
+	region, recType, err := c.normalizeAutoQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	region, _, err = c.resolveCardSource(region)
+	if err != nil {
+		return nil, err
+	}
+
+	userBytes, err := c.snapshot.RawBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	recommender, err := c.engine.Get(region.String())
+	if err != nil {
+		return nil, err
+	}
+
+	musicMeta := c.resolveMusicMeta(region)
+	musicMetaPath := c.resolveMusicMetaFilePath()
+	if len(musicMeta) == 0 && musicMetaPath == "" {
+		return nil, fmt.Errorf("deck recommend requires music meta data")
+	}
+
+	option, err := c.buildRecommendOption(region, recType, query)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:            region.String(),
+		UserData:          userBytes,
+		UserDataFilePath:  c.resolveUserDataFilePath(),
+		MusicMeta:         musicMeta,
+		MusicMetaFilePath: musicMetaPath,
+		BatchOption:       recommender.ExpandAlgorithms(option),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, result)
+}
+
+func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]interface{}, error) {
+	eventID := 0
+	if query.EventID != nil && *query.EventID > 0 {
+		eventID = *query.EventID
+	}
+	if eventID == 0 && recType != "no_event" && recType != "challenge" {
+		if id := c.pickCurrentOrNextEventID(region); id > 0 {
+			eventID = id
+		}
+	}
+
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 6
+	}
+
+	option := map[string]interface{}{
+		"region":                    region.String(),
+		"algorithm":                 "all",
+		"timeout_ms":                c.recommendTimeoutMs(),
+		"limit":                     limit,
+		"target":                    "score",
+		"live_type":                 "multi",
+		"music_id":                  10000,
+		"music_diff":                "master",
+		"member":                    5,
+		"rarity_1_config":           defaultDeckConfig12(),
+		"rarity_2_config":           defaultDeckConfig12(),
+		"rarity_3_config":           defaultDeckConfig34bd(),
+		"rarity_4_config":           defaultDeckConfig34bd(),
+		"rarity_birthday_config":    defaultDeckConfig34bd(),
+		"single_card_configs":       []interface{}{},
+		"best_skill_as_leader":      true,
+		"keep_after_training_state": false,
+	}
+
+	switch recType {
+	case "challenge":
+		option["live_type"] = "challenge"
+		option["event_id"] = nil
+	case "no_event":
+		option["live_type"] = "multi"
+		option["event_id"] = nil
+	case "bonus":
+		option["algorithm"] = "dfs"
+		option["live_type"] = "solo"
+		option["target"] = "bonus"
+		option["target_bonus_list"] = pickBonusTargets(query.TargetBonuses, query.Args)
+		option["rarity_1_config"] = noChangeDeckConfig()
+		option["rarity_2_config"] = noChangeDeckConfig()
+		option["rarity_3_config"] = noChangeDeckConfig()
+		option["rarity_4_config"] = noChangeDeckConfig()
+		option["rarity_birthday_config"] = noChangeDeckConfig()
+		if eventID > 0 {
+			option["event_id"] = eventID
+		}
+	case "mysekai":
+		option["algorithm"] = "ga"
+		option["live_type"] = "mysekai"
+		option["event_id"] = nil
+		option["rarity_1_config"] = noChangeDeckConfig()
+		option["rarity_2_config"] = noChangeDeckConfig()
+		option["rarity_3_config"] = noChangeDeckConfig()
+		option["rarity_4_config"] = noChangeDeckConfig()
+		option["rarity_birthday_config"] = noChangeDeckConfig()
+	default:
+		if eventID > 0 {
+			option["event_id"] = eventID
+		}
+	}
+
+	applyRecommendOptionOverrides(option, recType, query)
+	normalizeRecommendLiveOptions(option)
+	return option, nil
+}

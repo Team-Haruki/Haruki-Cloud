@@ -113,15 +113,13 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, regio
 // live snapshot. If needMySekai is true it also fetches mysekai data and merges
 // it into the snapshot. Returns nil if the user has no usable binding or if any
 // API call fails (callers fall back to the controller-level static snapshot).
-func resolveLiveSnapshot(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App, needMySekai bool) userdata.Snapshot {
-	platform := strings.TrimSpace(r.RequesterPlatform)
-	platformUserID := strings.TrimSpace(r.RequesterUserID)
-	return resolveSnapshotBySelector(ctx, app, userdata.Selector{
-		IMPlatform: platform,
-		IMUserID:   platformUserID,
-		Region:     renderregion.Normalize(regionWithDefault(r.Region)),
+func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) userdata.Snapshot {
+	return resolveSnapshotBySelector(rc.Ctx, rc.App, userdata.Selector{
+		IMPlatform: rc.Platform,
+		IMUserID:   rc.PlatformUserID,
+		Region:     rc.Region,
 	}, userdata.ResolveOptions{
-		PreferGlobalDefault: !r.RegionExplicit,
+		PreferGlobalDefault: !rc.Cmd.RegionExplicit,
 		NeedMySekai:         needMySekai,
 	})
 }
@@ -258,50 +256,47 @@ func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedComm
 	return normalized.String()
 }
 
-func resolveCardBoxDetailedProfile(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) *drawing.DetailedProfileCardRequest {
-	if r == nil || app == nil {
+func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileCardRequest {
+	if rc == nil || rc.App == nil {
 		return nil
 	}
-	region := renderregion.Normalize(r.Region)
-	if snapshot := resolveLiveSnapshot(ctx, r, app, false); snapshot != nil {
-		if detail := snapshot.DetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
+	if snapshot := resolveLiveSnapshot(rc, false); snapshot != nil {
+		if detail := snapshot.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
 			return detail
 		}
 	}
-	if app.Profiles != nil {
-		if detail := app.Profiles.SnapshotDetailedProfile(region); detail != nil && len(detail.UserCards) > 0 {
+	if rc.App.Profiles != nil {
+		if detail := rc.App.Profiles.SnapshotDetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
 			return detail
 		}
 	}
 	return nil
 }
 
-func buildPublicMusicProfiles(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
-	if r == nil || app == nil || app.Profiles == nil || app.Bindings == nil {
+func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+	if rc == nil || rc.App == nil || rc.App.Profiles == nil || rc.App.Bindings == nil {
 		return nil, nil
 	}
-	if strings.TrimSpace(r.RequesterPlatform) == "" || strings.TrimSpace(r.RequesterUserID) == "" {
+	if rc.Platform == "" || rc.PlatformUserID == "" {
 		return nil, nil
 	}
-
-	region := regionWithDefault(r.Region)
 
 	queryParams := userQueryParams{
 		Mode:           "self",
-		Platform:       strings.TrimSpace(r.RequesterPlatform),
-		PlatformUserID: strings.TrimSpace(r.RequesterUserID),
+		Platform:       rc.Platform,
+		PlatformUserID: rc.PlatformUserID,
 	}
-	target, err := resolveGameTarget(ctx, queryParams, region, r.RegionExplicit, app)
+	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
 		return nil, nil
 	}
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
 
-	return buildPublicMusicProfilesFromResolvedTarget(ctx, target, region, queryParams.Platform, queryParams.PlatformUserID, resp, app)
+	return buildPublicMusicProfilesFromResolvedTarget(rc.Ctx, target, rc.RegionStr, rc.Platform, rc.PlatformUserID, resp, rc.App)
 }
 
 func buildPublicMusicProfilesFromResolvedTarget(

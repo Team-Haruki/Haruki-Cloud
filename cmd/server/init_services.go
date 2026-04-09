@@ -81,9 +81,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		mainLogger.Errorf("PJSK render runtime requires sekai.enabled=true")
 		os.Exit(1)
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
@@ -144,9 +142,7 @@ func initPJSKParserIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	if !harukiConfig.Cfg.PJSK.Enabled || sekaiClient == nil {
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
 	parserCfg := harukiConfig.Cfg.PJSK.Parser
 	region := parserCfg.ChardataRegion
@@ -199,9 +195,7 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 	if strings.TrimSpace(cfg.CensorDBType) == "" || strings.TrimSpace(cfg.CensorDBURL) == "" {
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
 	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
 	if err != nil {

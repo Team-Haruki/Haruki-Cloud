@@ -24,10 +24,33 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func initRedis(ctx context.Context, mainLogger *harukiLogger.Logger) *redis.Client {
+// ensureContext returns ctx if non-nil, otherwise returns context.Background().
+func ensureContext(ctx context.Context) context.Context {
 	if ctx == nil {
-		ctx = context.Background()
+		return context.Background()
 	}
+	return ctx
+}
+
+// initDBClient opens a database connection and creates its schema.
+// On failure it logs the error and calls os.Exit(1).
+func initDBClient[T interface {
+	Close() error
+}](ctx context.Context, logger *harukiLogger.Logger, name string, openFn func() (T, error), schemaFn func(T, context.Context) error) T {
+	client, err := openFn()
+	if err != nil {
+		logger.Errorf("Failed to connect to %s DB: %v", name, err)
+		os.Exit(1)
+	}
+	if err := schemaFn(client, ctx); err != nil {
+		logger.Errorf("Failed to create schema for %s DB: %v", name, err)
+		os.Exit(1)
+	}
+	return client
+}
+
+func initRedis(ctx context.Context, mainLogger *harukiLogger.Logger) *redis.Client {
+	ctx = ensureContext(ctx)
 	redisClient := harukiRedis.NewRedisClient(harukiConfig.Cfg.Redis)
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		mainLogger.Errorf("Failed to connect Redis: %v", err)
@@ -40,29 +63,21 @@ func initChunithmIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger,
 	if !harukiConfig.Cfg.Chunithm.Enabled {
 		return nil, nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
-	chunithmMainClient, err := chunithmMainDB.Open(harukiConfig.Cfg.Chunithm.BindingDBType, harukiConfig.Cfg.Chunithm.BindingDBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to connect to Chunithm main DB: %v", err)
-		os.Exit(1)
-	}
-	if err := chunithmMainClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Chunithm main DB: %v", err)
-		os.Exit(1)
-	}
+	chunithmMainClient := initDBClient(ctx, mainLogger, "Chunithm main",
+		func() (*chunithmMainDB.Client, error) {
+			return chunithmMainDB.Open(harukiConfig.Cfg.Chunithm.BindingDBType, harukiConfig.Cfg.Chunithm.BindingDBURL)
+		},
+		func(c *chunithmMainDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 
-	chunithmMusicClient, err := chunithmMusicDB.Open(harukiConfig.Cfg.Chunithm.MusicDBType, harukiConfig.Cfg.Chunithm.MusicDBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to connect to Chunithm music DB: %v", err)
-		os.Exit(1)
-	}
-	if err := chunithmMusicClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Chunithm music DB: %v", err)
-		os.Exit(1)
-	}
+	chunithmMusicClient := initDBClient(ctx, mainLogger, "Chunithm music",
+		func() (*chunithmMusicDB.Client, error) {
+			return chunithmMusicDB.Open(harukiConfig.Cfg.Chunithm.MusicDBType, harukiConfig.Cfg.Chunithm.MusicDBURL)
+		},
+		func(c *chunithmMusicDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 
 	publicChunithm.RegisterChunithmRoutes(app, chunithmMainClient, chunithmMusicClient, redisClient)
 	return chunithmMainClient, chunithmMusicClient
@@ -73,39 +88,28 @@ func initUsers(ctx context.Context, mainLogger *harukiLogger.Logger) *usersDB.Cl
 		mainLogger.Warnf("Users DB is not configured; profile binding commands will be unavailable")
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
-	client, err := usersDB.Open(harukiConfig.Cfg.UsersDB.DBType, harukiConfig.Cfg.UsersDB.DBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to connect to Users DB: %v", err)
-		os.Exit(1)
-	}
-	if err := client.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Users DB: %v", err)
-		os.Exit(1)
-	}
-	return client
+	return initDBClient(ctx, mainLogger, "Users",
+		func() (*usersDB.Client, error) {
+			return usersDB.Open(harukiConfig.Cfg.UsersDB.DBType, harukiConfig.Cfg.UsersDB.DBURL)
+		},
+		func(c *usersDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 }
 
 func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) *pjskDB.Client {
 	if !harukiConfig.Cfg.PJSK.Enabled {
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
-	pjskClient, err := pjskDB.Open(harukiConfig.Cfg.PJSK.DBType, harukiConfig.Cfg.PJSK.DBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to connect to PJSK DB: %v", err)
-		os.Exit(1)
-	}
-	if err := pjskClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for PJSK DB: %v", err)
-		os.Exit(1)
-	}
+	pjskClient := initDBClient(ctx, mainLogger, "PJSK",
+		func() (*pjskDB.Client, error) {
+			return pjskDB.Open(harukiConfig.Cfg.PJSK.DBType, harukiConfig.Cfg.PJSK.DBURL)
+		},
+		func(c *pjskDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
@@ -115,36 +119,25 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 	if !harukiConfig.Cfg.Sekai.Enabled {
 		return nil
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 
-	sekaiClient, err := sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to connect to Sekai DB: %v", err)
-		os.Exit(1)
-	}
-	if err := sekaiClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Sekai DB: %v", err)
-		os.Exit(1)
-	}
-
-	return sekaiClient
+	return initDBClient(ctx, mainLogger, "Sekai",
+		func() (*sekaiDB.Client, error) {
+			return sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
+		},
+		func(c *sekaiDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 }
 
 func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) *botDB.Client {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	botDBClient, err := botDB.Open(harukiConfig.Cfg.HarukiBotDB.DBType, harukiConfig.Cfg.HarukiBotDB.DBURL)
-	if err != nil {
-		mainLogger.Errorf("Failed to initialize Bot entgo client: %v", err)
-		os.Exit(1)
-	}
-	if err := botDBClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Bot DB: %v", err)
-		os.Exit(1)
-	}
+	ctx = ensureContext(ctx)
+
+	botDBClient := initDBClient(ctx, mainLogger, "Bot",
+		func() (*botDB.Client, error) {
+			return botDB.Open(harukiConfig.Cfg.HarukiBotDB.DBType, harukiConfig.Cfg.HarukiBotDB.DBURL)
+		},
+		func(c *botDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+	)
 
 	botAuth.RegisterBotRoutes(app, botDBClient, redisClient)
 	return botDBClient

@@ -92,12 +92,12 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 func (rc *RequestContext) ResolveSnapshot(needMySekai bool) userdata.Snapshot {
 	if needMySekai {
 		rc.fullSnapshotOnce.Do(func() {
-			rc.fullSnapshot = resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, true)
+			rc.fullSnapshot = resolveLiveSnapshot(rc, true)
 		})
 		return rc.fullSnapshot
 	}
 	rc.basicSnapshotOnce.Do(func() {
-		rc.basicSnapshot = resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, false)
+		rc.basicSnapshot = resolveLiveSnapshot(rc, false)
 	})
 	return rc.basicSnapshot
 }
@@ -152,7 +152,7 @@ func (rc *RequestContext) resolveProfiles() {
 			}
 		}
 		if rc.detailedProfile == nil && rc.profileCard == nil {
-			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
+			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
 		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
 			if detail := snapshot.DetailedProfile(rc.Region); detail != nil {

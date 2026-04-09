@@ -16,42 +16,36 @@ import (
 )
 
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
-	ctx := c.Context()
 	now := time.Now()
-	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSMusic)
-	if err != nil {
-		return api.InternalError(c)
-	}
-	if hit {
-		return c.Status(fiber.StatusOK).JSON(cached)
-	}
-	rows, err := h.svc.client.ChunithmMusic.
-		Query().
-		Where(
-			chunithmmusic.Or(
-				chunithmmusic.ReleaseDateLTE(now),
-				chunithmmusic.ReleaseDateIsNil(),
-			),
-		).
-		All(ctx)
-	if err != nil {
-		return api.InternalError(c)
-	}
-	result := make([]MusicInfoSchema, len(rows))
-	for i, row := range rows {
-		deleted := row.IsDeleted
-		result[i] = MusicInfoSchema{
-			MusicID:        row.MusicID,
-			Title:          row.Title,
-			Artist:         row.Artist,
-			Category:       row.Category,
-			Version:        row.Version,
-			ReleaseDate:    row.ReleaseDate,
-			IsDeleted:      &deleted,
-			DeletedVersion: row.DeletedVersion,
+	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (interface{}, error) {
+		rows, err := h.svc.client.ChunithmMusic.
+			Query().
+			Where(
+				chunithmmusic.Or(
+					chunithmmusic.ReleaseDateLTE(now),
+					chunithmmusic.ReleaseDateIsNil(),
+				),
+			).
+			All(c.Context())
+		if err != nil {
+			return nil, err
 		}
-	}
-	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", result)
+		result := make([]MusicInfoSchema, len(rows))
+		for i, row := range rows {
+			deleted := row.IsDeleted
+			result[i] = MusicInfoSchema{
+				MusicID:        row.MusicID,
+				Title:          row.Title,
+				Artist:         row.Artist,
+				Category:       row.Category,
+				Version:        row.Version,
+				ReleaseDate:    row.ReleaseDate,
+				IsDeleted:      &deleted,
+				DeletedVersion: row.DeletedVersion,
+			}
+		}
+		return result, nil
+	})
 }
 
 func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {

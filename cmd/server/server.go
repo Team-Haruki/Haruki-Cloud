@@ -91,9 +91,7 @@ func startServer(ctx context.Context, mainLogger *harukiLogger.Logger, app *fibe
 	listenConfig := fiber.ListenConfig{
 		DisableStartupMessage: true,
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = ensureContext(ctx)
 	if harukiConfig.Cfg.Backend.SSL {
 		listenConfig.CertFile = harukiConfig.Cfg.Backend.SSLCert
 		listenConfig.CertKeyFile = harukiConfig.Cfg.Backend.SSLKey

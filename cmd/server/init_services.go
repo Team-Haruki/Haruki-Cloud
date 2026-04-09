@@ -5,16 +5,12 @@ import (
 	"encoding/hex"
 	"os"
 	"strings"
-	"time"
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
-	"haruki-cloud/internal/pjsk/chardata"
-	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
-	"haruki-cloud/internal/pjsk/parser"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/censor"
@@ -136,34 +132,6 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 	mainLogger.Infof("PJSK render asset roots: %v", runtime.AssetRoots())
 	return runtime
-}
-
-func initPJSKParserIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client) *parser.GlobalCommandResolver {
-	if !harukiConfig.Cfg.PJSK.Enabled || sekaiClient == nil {
-		return nil
-	}
-	ctx = ensureContext(ctx)
-
-	parserCfg := harukiConfig.Cfg.PJSK.Parser
-	region := parserCfg.ChardataRegion
-	if region == "" {
-		region = "jp"
-	}
-	refreshInterval := parserCfg.ChardataRefreshInterval
-	if refreshInterval <= 0 {
-		refreshInterval = time.Hour
-	}
-
-	loader := chardata.NewLoader(sekaiClient, region, harukiLogger.NewLoggerFromGlobal("Chardata"))
-	if err := loader.Load(ctx); err != nil {
-		mainLogger.Warnf("chardata initial load failed (parser will use empty nicknames): %v", err)
-	}
-	loader.StartBackgroundRefresh(ctx, refreshInterval)
-
-	sekaiHandler.EnsureCommandHandlersRegistered(loader.Nicknames())
-	resolver := parser.NewGlobalCommandResolver(loader.Nicknames())
-	mainLogger.Infof("PJSK parser initialized (chardata_region=%s, refresh=%s)", region, refreshInterval)
-	return resolver
 }
 
 func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {

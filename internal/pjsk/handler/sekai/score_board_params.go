@@ -392,86 +392,6 @@ func parseMusicBoardPage(token string) (int, bool) {
 	return 0, false
 }
 
-func resolveMusicBoardLiveType(token string) (string, bool) {
-	switch token {
-	case "solo", "单人", "挑战":
-		return "solo", true
-	case "multi", "多人":
-		return "multi", true
-	case "auto", "自动":
-		return "auto", true
-	default:
-		return "", false
-	}
-}
-
-func resolveMusicBoardTarget(token string) (string, bool) {
-	switch token {
-	case "live分数", "分数", "score":
-		return "score", true
-	case "时间效率", "pt/h", "pt时间", "时速":
-		return "pt/time", true
-	case "火效率", "pt/火", "pt":
-		return "pt", true
-	case "每秒点击", "tps":
-		return "tps", true
-	case "时长", "时间":
-		return "time", true
-	default:
-		return "", false
-	}
-}
-
-func resolveMusicBoardOrder(token string) (bool, bool) {
-	switch token {
-	case "升序", "从低到高", "从小到大":
-		return true, true
-	case "降序", "从高到低", "从大到小":
-		return false, true
-	default:
-		return false, false
-	}
-}
-
-func resolveMusicBoardStrategy(token string) (string, bool) {
-	switch token {
-	case "最优", "最高", "最大", "最强", "max":
-		return "max", true
-	case "最差", "最低", "最小", "最弱", "min":
-		return "min", true
-	case "平均", "期望", "随机", "均值", "avg":
-		return "avg", true
-	default:
-		return "", false
-	}
-}
-
-func parseMusicBoardPower(token string) (int, bool) {
-	if !strings.HasPrefix(token, "综合") {
-		return 0, false
-	}
-	value, err := parseMusicBoardLargeNumber(strings.TrimPrefix(token, "综合"))
-	return value, err == nil && value > 0
-}
-
-func parseMusicBoardDeckBonus(token string) (float64, bool) {
-	if !strings.Contains(token, "加成") {
-		return 0, false
-	}
-	raw := strings.TrimSuffix(strings.ReplaceAll(token, "加成", ""), "%")
-	value, err := strconv.ParseFloat(raw, 64)
-	return value, err == nil && value > 0
-}
-
-func parseMusicBoardInterval(token string) (float64, bool) {
-	if !strings.Contains(token, "间隔") {
-		return 0, false
-	}
-	raw := strings.TrimSuffix(strings.TrimSuffix(strings.ReplaceAll(token, "间隔", ""), "秒"), "s")
-	value, err := strconv.ParseFloat(raw, 64)
-	return value, err == nil && value > 0
-}
-
 func parseMusicBoardLargeNumber(raw string) (int, error) {
 	raw = strings.ToLower(strings.TrimSpace(raw))
 	if raw == "" {
@@ -516,21 +436,3 @@ func isMusicBoardLevelFilter(token string) bool {
 	return token != ""
 }
 
-func resolveMusicBoardDifficulty(token string) (string, bool) {
-	switch token {
-	case "easy", "ez":
-		return "easy", true
-	case "normal", "nm":
-		return "normal", true
-	case "hard", "hd":
-		return "hard", true
-	case "expert", "ex", "exp":
-		return "expert", true
-	case "master", "ma", "mas":
-		return "master", true
-	case "append", "apd":
-		return "append", true
-	default:
-		return "", false
-	}
-}

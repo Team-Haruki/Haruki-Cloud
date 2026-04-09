@@ -57,7 +57,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error)
 		if len(skh.Commands) > 0 {
 			cmdName = skh.Commands[0]
 		}
-		return nil, fmt.Errorf("Sekai 命令处理器 %s 没有处理方法", cmdName)
+		return nil, fmt.Errorf("sekai 命令处理器 %s 没有处理方法", cmdName)
 	}
 
 	var cmdRegion renderregion.Value

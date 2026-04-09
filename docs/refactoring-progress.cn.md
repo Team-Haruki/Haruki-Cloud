@@ -12,7 +12,7 @@
 > - 2026-04-09 本轮继续追加：`education` / `stamp` / `vlive` 也已接入请求级 source/provider 克隆；主链 render provider 的 DB 查询上下文债务已基本清完，剩余 `Background()` 主要在本地调试 helper 和 nil-ctx 兜底逻辑
 > - 2026-04-09 本轮再补一层：`internal/pjsk/render/userdata` 的 `DefaultSnapshotFactory.Build(ctx, ...)` 已真正使用 `ctx`，live/local snapshot 构建入口也已补上 context-aware 版本；leader 图路径解析和 MySekai merge helper 进一步收口
 > - 2026-04-09 再补脚本侧：`cmd/migrate` 已去除硬编码 Sekai DSN，改为环境变量/配置文件解析，并接入 signal-aware context
-> - 2026-04-09 阶段 B 结构拆分：`internal/pjsk/render/sk/controller.go` 已拆为 `controller_base.go` / `controller_requests.go` / `controller_rank.go` / `controller_trace.go` / `controller_meta.go`；`internal/pjsk/handler/resolver.go` 已按 target/snapshot/mysekai/profile/binding 职责拆分；`executeSK()` 已收口为薄调度函数并下沉到分模式 handler
+> - 2026-04-09 阶段 B 结构拆分：`internal/pjsk/render/sk/` 已继续细拆为 `controller_base.go` / `controller_line_requests.go` / `controller_query_requests.go` / `controller_speed_requests.go` / `controller_trace_requests.go` / `controller_trace.go` / `controller_validate.go` / `controller_tracker_identity.go` / `controller_tracker_name.go` / `controller_tracker_metrics.go` / `controller_meta.go` / `controller_winrate.go`；`internal/pjsk/handler/resolver.go` 已按 target/snapshot/mysekai/profile/binding 职责拆分；`executeSK()` 已收口为薄调度函数并下沉到分模式 handler
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 

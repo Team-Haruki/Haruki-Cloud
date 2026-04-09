@@ -2,8 +2,6 @@ package handler
 
 import (
 	"strings"
-
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 // DefaultRegionStr is the default region string used when no region is specified.
@@ -16,12 +14,6 @@ func regionWithDefault(region string) string {
 		return DefaultRegionStr
 	}
 	return s
-}
-
-// regionValueWithDefault returns the region as a renderregion.Value,
-// defaulting to JP if empty.
-func regionValueWithDefault(region string) renderregion.Value {
-	return renderregion.WithDefault(renderregion.Normalize(region))
 }
 
 // maskPJSKUID masks the middle digits of a PJSK user ID when visible is false.

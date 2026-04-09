@@ -228,28 +228,6 @@ func normalizeRenderCacheUserID(userID string) string {
 	return trimmed
 }
 
-func sanitizeScopeValue(value string) string {
-	value = strings.ToLower(strings.TrimSpace(value))
-	if value == "" {
-		return ""
-	}
-
-	var builder strings.Builder
-	for _, r := range value {
-		switch {
-		case r >= 'a' && r <= 'z':
-			builder.WriteRune(r)
-		case r >= '0' && r <= '9':
-			builder.WriteRune(r)
-		case r == '-' || r == '_' || r == '.':
-			builder.WriteRune(r)
-		default:
-			builder.WriteRune('_')
-		}
-	}
-	return strings.Trim(builder.String(), "_")
-}
-
 func deleteKeyAt(root any, path ...string) {
 	if len(path) == 0 {
 		return
@@ -313,75 +291,6 @@ func sliceAt(root any, path ...string) []any {
 	default:
 		return nil
 	}
-}
-
-func stringField(root any, path ...string) string {
-	return strings.TrimSpace(scalarString(valueAt(root, path...)))
-}
-
-func collectFieldList(root any, listKey string, field string) []any {
-	var items []any
-	if listKey == "" {
-		items = sliceAt(root)
-	} else {
-		items = sliceAt(root, listKey)
-	}
-	if len(items) == 0 {
-		return nil
-	}
-
-	values := make([]any, 0, len(items))
-	for _, item := range items {
-		if field == "" {
-			values = append(values, item)
-			continue
-		}
-		value := valueAt(item, field)
-		if value != nil {
-			values = append(values, value)
-		}
-	}
-	if len(values) == 0 {
-		return nil
-	}
-	return values
-}
-
-func collectNestedFieldList(root any, listKey string, objectKey string, field string) []any {
-	items := sliceAt(root, listKey)
-	if len(items) == 0 {
-		return nil
-	}
-
-	values := make([]any, 0, len(items))
-	for _, item := range items {
-		value := valueAt(item, objectKey, field)
-		if value != nil {
-			values = append(values, value)
-		}
-	}
-	if len(values) == 0 {
-		return nil
-	}
-	return values
-}
-
-func mapSubset(root any, keys ...string) map[string]any {
-	source := mapAt(root)
-	if source == nil {
-		return nil
-	}
-
-	result := make(map[string]any, len(keys))
-	for _, key := range keys {
-		if value, ok := source[key]; ok {
-			result[key] = value
-		}
-	}
-	if len(result) == 0 {
-		return nil
-	}
-	return result
 }
 
 func scalarString(value any) string {

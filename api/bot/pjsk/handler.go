@@ -291,24 +291,6 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	return resolved, nil
 }
 
-func flattenOneBotSegments(segments onebot11.Message) string {
-	var sb strings.Builder
-	for _, seg := range segments {
-		switch seg.Type {
-		case "text":
-			sb.WriteString(seg.Data.(onebot11.TextData).Text)
-		case "at":
-			qq := strings.TrimSpace(seg.Data.(onebot11.AtData).QQ)
-			if qq == "" {
-				continue
-			}
-			sb.WriteByte('@')
-			sb.WriteString(qq)
-		}
-	}
-	return sb.String()
-}
-
 // ---------------------------------------------------------------------------
 // Manifest
 // ---------------------------------------------------------------------------

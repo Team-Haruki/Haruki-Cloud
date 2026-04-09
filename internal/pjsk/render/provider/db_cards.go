@@ -14,7 +14,6 @@ import (
 	"haruki-cloud/database/sekai/cardcostume3d"
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/costume3d"
-	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/gacha"
 	"haruki-cloud/database/sekai/predicate"
@@ -443,102 +442,6 @@ func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilt
 		return false
 	}
 	return cardMatchesUnitFilter(filter, character.Unit, cardInfo.SupportUnit)
-}
-
-func (p *dbCardProvider) getRawCardSupplyType(ctx context.Context, id int) string {
-	if id == 0 {
-		return cardNormalizeSupplyType("")
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	p.supplyMu.RLock()
-	if cached, ok := p.supplyByID[id]; ok {
-		p.supplyMu.RUnlock()
-		return cached
-	}
-	p.supplyMu.RUnlock()
-
-	supply, err := p.client.Cardsupplie.Query().
-		Where(cardsupplie.ServerRegionEQ(p.region.String()), cardsupplie.GameIDEQ(int64(id))).
-		Only(ctx)
-	if err != nil {
-		return cardNormalizeSupplyType("")
-	}
-
-	value := cardNormalizeSupplyType(supply.CardSupplyType)
-	p.supplyMu.Lock()
-	p.supplyByID[id] = value
-	p.supplyMu.Unlock()
-	return value
-}
-
-func (p *dbCardProvider) isFestivalCard(ctx context.Context, supplyID int) bool {
-	typ := p.getRawCardSupplyType(ctx, supplyID)
-	return typ == "colorful_festival_limited" || typ == "bloom_festival_limited"
-}
-
-func (p *dbCardProvider) getEventBannerCharacterID(ctx context.Context, eventID int) (int, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	links, err := p.client.Eventcard.Query().
-		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(eventID))).
-		All(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	minCardID := 0
-	selected := 0
-	for _, link := range links {
-		cardInfo, err := p.getByID(ctx, int(link.CardID))
-		if err != nil || cardInfo == nil {
-			continue
-		}
-		if p.isFestivalCard(ctx, cardInfo.CardSupplyID) {
-			continue
-		}
-		if minCardID == 0 || cardInfo.ID < minCardID {
-			minCardID = cardInfo.ID
-			selected = cardInfo.CharacterID
-		}
-	}
-	if selected == 0 {
-		return 0, fmt.Errorf("no valid banner card found for event %d", eventID)
-	}
-	return selected, nil
-}
-
-func (p *dbCardProvider) getBanEventsByCharacter(ctx context.Context, charID int) ([]*masterdata.Event, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	entities, err := p.client.Event.Query().
-		Where(event.ServerRegionEQ(p.region.String())).
-		Order(event.ByStartAt()).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*masterdata.Event, 0)
-	for _, entity := range entities {
-		eventInfo := common.ConvertEventEntity(entity)
-		if eventInfo == nil {
-			continue
-		}
-		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
-			continue
-		}
-		bannerCID, err := p.getEventBannerCharacterID(ctx, eventInfo.ID)
-		if err != nil || bannerCID != charID {
-			continue
-		}
-		c := *eventInfo
-		result = append(result, &c)
-	}
-	return result, nil
 }
 
 // cardJsonFieldEQ creates a predicate that matches a JSONB text field by its

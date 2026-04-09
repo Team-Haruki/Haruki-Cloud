@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -59,14 +58,6 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
 	}
 	return merged, nil
-}
-
-func mergeMySekaiJSON(userData []byte, mySekaiPath string) ([]byte, error) {
-	mySekaiData, err := os.ReadFile(filepath.Clean(mySekaiPath))
-	if err != nil {
-		return nil, fmt.Errorf("read mysekai snapshot: %w", err)
-	}
-	return mergeMySekaiData(userData, mySekaiData)
 }
 
 func resolveLeaderImagePath(ctx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, region renderregion.Value, cardID int, afterTraining bool) string {
@@ -241,10 +232,7 @@ func prioritizePlayResult(result string) int {
 func convertChallengeResults(source []RawChallengeLiveResult) []ChallengeLiveResult {
 	out := make([]ChallengeLiveResult, 0, len(source))
 	for _, item := range source {
-		out = append(out, ChallengeLiveResult{
-			CharacterID: item.CharacterID,
-			HighScore:   item.HighScore,
-		})
+		out = append(out, ChallengeLiveResult(item))
 	}
 	return out
 }
@@ -252,10 +240,7 @@ func convertChallengeResults(source []RawChallengeLiveResult) []ChallengeLiveRes
 func convertChallengeStages(source []RawChallengeLiveStage) []ChallengeLiveStage {
 	out := make([]ChallengeLiveStage, 0, len(source))
 	for _, item := range source {
-		out = append(out, ChallengeLiveStage{
-			CharacterID: item.CharacterID,
-			Rank:        item.Rank,
-		})
+		out = append(out, ChallengeLiveStage(item))
 	}
 	return out
 }

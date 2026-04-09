@@ -2,31 +2,6 @@ package card
 
 import "strings"
 
-func formatSupplyType(raw string) string {
-	switch strings.TrimSpace(raw) {
-	case "", "normal":
-		return "非限定"
-	case "term_limited":
-		return "期间限定"
-	case "colorful_festival_limited":
-		return "CFes限定"
-	case "bloom_festival_limited":
-		return "BFes限定"
-	case "unit_event_limited":
-		return "WL限定"
-	case "collaboration_limited":
-		return "联动限定"
-	case "birthday", "rarity_birthday":
-		return "生日"
-	default:
-		return strings.TrimSpace(raw)
-	}
-}
-
-func matchesSupplyFilter(filter, localized string) bool {
-	return matchesRawSupplyFilter(filter, localized)
-}
-
 func normalizeSupplyType(raw string) string {
 	switch strings.TrimSpace(raw) {
 	case "", "normal", "not_limited":

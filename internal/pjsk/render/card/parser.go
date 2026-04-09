@@ -184,7 +184,6 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	}
 	if result := p.extractor.ExtractYear(current); result.Found {
 		info.Year = result.Value
-		current = result.Remaining
 		matched = true
 	}
 	if matched {

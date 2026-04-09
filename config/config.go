@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -182,14 +183,10 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled          bool          `yaml:"enabled"`
-	UseLocalEngine   bool          `yaml:"use_local_engine"`
-	ServiceBaseURL   string        `yaml:"service_base_url"`
-	LocalPoolSize    int           `yaml:"local_pool_size"`
-	LocalLibraryDirs []string      `yaml:"local_library_dirs"`
-	StaticDataDir    string        `yaml:"static_data_dir"`
-	Timeout          time.Duration `yaml:"timeout"`
-	DefaultAlgs      []string      `yaml:"default_algs"`
+	Enabled        bool          `yaml:"enabled"`
+	ServiceBaseURL string        `yaml:"service_base_url"`
+	Timeout        time.Duration `yaml:"timeout"`
+	DefaultAlgs    []string      `yaml:"default_algs"`
 }
 
 type RenderCacheConfig struct {
@@ -303,16 +300,26 @@ type Config struct {
 
 var Cfg Config
 
-func LoadConfig(path string) {
+func ReadConfig(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("failed to read config file: %v", err)
+		return Config{}, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	err = yaml.Unmarshal(data, &Cfg)
+	var cfg Config
+	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
-		log.Fatalf("failed to unmarshal config file: %v", err)
+		return Config{}, fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
-	ApplyEnvOverrides(&Cfg)
+	ApplyEnvOverrides(&cfg)
+	return cfg, nil
+}
+
+func LoadConfig(path string) {
+	cfg, err := ReadConfig(path)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	Cfg = cfg
 }

@@ -1,6 +1,8 @@
 package education
 
 import (
+	"context"
+
 	"haruki-cloud/internal/pjsk/render/provider"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -12,6 +14,15 @@ type ProviderAdapter struct {
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
 	return &ProviderAdapter{p: p}
+}
+
+func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
+	if a == nil {
+		return nil
+	}
+	clone := *a
+	clone.p = provider.WithContext(a.p, ctx)
+	return &clone
 }
 
 func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }
@@ -79,6 +90,55 @@ func (a *ProviderAdapter) GetCharacterRank(characterID, rank int) *CharacterRank
 		Rank:            pv.Rank,
 		Power1BonusRate: pv.Power1BonusRate,
 	}
+}
+
+func (a *ProviderAdapter) GetBonds() []*Bond {
+	pvBonds := a.p.Education().GetBonds()
+	result := make([]*Bond, len(pvBonds))
+	for i, item := range pvBonds {
+		result[i] = &Bond{
+			GroupID:      item.GroupID,
+			CharacterID1: item.CharacterID1,
+			CharacterID2: item.CharacterID2,
+		}
+	}
+	return result
+}
+
+func (a *ProviderAdapter) GetBondLevels() []*BondLevel {
+	pvLevels := a.p.Education().GetBondLevels()
+	result := make([]*BondLevel, len(pvLevels))
+	for i, item := range pvLevels {
+		result[i] = &BondLevel{
+			Level:    item.Level,
+			TotalExp: item.TotalExp,
+		}
+	}
+	return result
+}
+
+func (a *ProviderAdapter) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
+	pv := a.p.Education().GetGameCharacterStyle(gameID)
+	if pv == nil {
+		return nil
+	}
+	return &GameCharacterStyle{
+		GameID:      pv.GameID,
+		CharacterID: pv.CharacterID,
+		ColorCode:   pv.ColorCode,
+	}
+}
+
+func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
+	pvRequirements, maxPlayLimit := a.p.Education().GetLeaderMissionRequirements()
+	result := make([]LeaderMissionRequirement, len(pvRequirements))
+	for i, item := range pvRequirements {
+		result[i] = LeaderMissionRequirement{
+			Seq:         item.Seq,
+			Requirement: item.Requirement,
+		}
+	}
+	return result, maxPlayLimit
 }
 
 func (a *ProviderAdapter) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {

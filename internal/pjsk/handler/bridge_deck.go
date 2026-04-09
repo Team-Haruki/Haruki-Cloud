@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"haruki-cloud/api/bot/onebot11"
@@ -14,7 +13,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
@@ -60,7 +58,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 
 		platform, platformUserID := platformCredentials(p)
-		uid, _ := strconv.ParseInt(target.PJSKUserID, 10, 64)
+		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
 
 		q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 		mergeParams(combined.Deck, &q)
@@ -74,28 +72,16 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		// Build detailed profile for deck rendering from the resolved target.
 		if rc.App.Profiles != nil {
 			if resp, apiErr := sekaiutils.GetSekaiAPIClient().GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
-				var framesJSON []byte
-				if hasUsableSuiteData(target.Binding) {
-					framesJSON, _ = sekaiutils.GetToolboxClient().GetPrivateDataValue(
-						regionStr, sekaiutils.ToolboxDataTypeSuite, uid, platform, platformUserID, "userPlayerFrames")
-				}
 				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
-				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPI(pq, resp, framesJSON); buildErr == nil {
+				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot); buildErr == nil {
 					q.Profile = detail
 				}
 			}
 		}
 
 		deckCtrl := rc.App.Decks
-		tc := sekaiutils.GetToolboxClient()
-		if target.Binding != nil && hasUsableSuiteData(target.Binding) {
-			suiteJSON, suiteErr := tc.GetSuiteData(regionStr, uid, platform, platformUserID)
-			if suiteErr == nil && len(suiteJSON) > 0 {
-				region := renderregion.Normalize(regionStr)
-				if snapshot, snapErr := userdata.NewFromBytes(rc.App.Sekai, rc.App.Assets, region, suiteJSON, nil, nil); snapErr == nil {
-					deckCtrl = deckCtrl.WithSnapshot(snapshot)
-				}
-			}
+		if targetSnapshot != nil {
+			deckCtrl = deckCtrl.WithSnapshot(targetSnapshot)
 		}
 
 		data, err = deckCtrl.RenderAutoRecommend(q)

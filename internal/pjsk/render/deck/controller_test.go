@@ -66,13 +66,23 @@ func (s *testEventSource) GetEvents() []*masterdata.Event {
 	return result
 }
 
-func TestBuildAutoRecommendRequestFallback(t *testing.T) {
-	controller := newTestDeckController(t, RecommendConfig{})
+func TestBuildAutoRecommendRequestRemoteServiceUsesExplicitEvent(t *testing.T) {
+	server, masterdataRoot := newDeckRecommendStubServer(t)
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+	defer server.Close()
 
 	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
+		Algorithm:     "ga",
 		Limit:         2,
 		EventID:       &eventID,
 	})
@@ -98,7 +108,7 @@ func TestBuildAutoRecommendRequestFallback(t *testing.T) {
 	if len(request.DeckData) != 1 {
 		t.Fatalf("unexpected deck data count: %d", len(request.DeckData))
 	}
-	if request.DeckData[0].TotalPower == nil || *request.DeckData[0].TotalPower <= 0 {
+	if request.DeckData[0].TotalPower == nil || *request.DeckData[0].TotalPower != 345678 {
 		t.Fatalf("unexpected total power: %+v", request.DeckData[0].TotalPower)
 	}
 	if len(request.DeckData[0].CardData) != 2 {
@@ -110,13 +120,23 @@ func TestBuildAutoRecommendRequestFallback(t *testing.T) {
 }
 
 func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) {
-	controller := newTestDeckController(t, RecommendConfig{})
+	server, masterdataRoot := newDeckRecommendStubServer(t)
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+	defer server.Close()
 
 	eventID := 7
 	worldBloomCharacterID := 20
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:                "jp",
 		RecommendType:         "event",
+		Algorithm:             "ga",
 		EventID:               &eventID,
 		WorldBloomCharacterID: &worldBloomCharacterID,
 	})
@@ -142,7 +162,16 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 }
 
 func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
-	controller := newTestDeckController(t, RecommendConfig{})
+	server, masterdataRoot := newDeckRecommendStubServer(t)
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+	defer server.Close()
 	now := time.Now().UnixMilli()
 
 	controller.RegisterCardSource(&testCardSource{
@@ -193,6 +222,7 @@ func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "cn",
 		RecommendType: "event",
+		Algorithm:     "ga",
 		Limit:         2,
 	})
 	if err != nil {
@@ -219,11 +249,9 @@ func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
 	}
 }
 
-func TestBuildAutoRecommendRequestLocalEngineStubError(t *testing.T) {
+func TestBuildAutoRecommendRequestRequiresRemoteServiceWhenEngineEnabled(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{
-		Enabled:        true,
-		UseLocalEngine: true,
-		MasterdataDir:  t.TempDir(),
+		Enabled: true,
 	})
 
 	_, err := controller.BuildAutoRecommendRequest(AutoQuery{
@@ -231,9 +259,9 @@ func TestBuildAutoRecommendRequestLocalEngineStubError(t *testing.T) {
 		RecommendType: "event",
 	})
 	if err == nil {
-		t.Fatalf("expected local engine error")
+		t.Fatalf("expected remote service configuration error")
 	}
-	if !strings.Contains(err.Error(), "pjsk_deck_cgo") {
+	if !strings.Contains(err.Error(), "deck recommend service is not configured") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -796,6 +824,94 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
 		t.Fatalf("unexpected request payload: %+v", request.DeckData)
 	}
+}
+
+func newDeckRecommendStubServer(t *testing.T) (*httptest.Server, string) {
+	t.Helper()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if len(payloads) != 1 || len(payloads[0]) == 0 {
+				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			if len(payloads) != 1 {
+				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 1234567,
+							"live_score": 1234567,
+							"mysekai_event_point": 0,
+							"total_power": 345678,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 10,
+							"multi_live_score_up": 120,
+							"cards": [
+								{
+									"card_id": 1002,
+									"level": 60,
+									"master_rank": 5,
+									"skill_level": 4,
+									"skill_score_up": 120,
+									"event_bonus_rate": 25,
+									"episode1_read": true,
+									"episode2_read": true,
+									"after_training": true,
+									"default_image": "special_training",
+									"has_canvas_bonus": false
+								},
+								{
+									"card_id": 1001,
+									"level": 50,
+									"master_rank": 1,
+									"skill_level": 4,
+									"skill_score_up": 100,
+									"event_bonus_rate": 20,
+									"episode1_read": true,
+									"episode2_read": true,
+									"after_training": false,
+									"default_image": "normal",
+									"has_canvas_bonus": false
+								}
+							]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "cn"), 0o755); err != nil {
+		t.Fatalf("mkdir cn masterdata dir: %v", err)
+	}
+
+	return server, masterdataRoot
 }
 
 func newTestDeckController(t *testing.T, cfg RecommendConfig) *Controller {

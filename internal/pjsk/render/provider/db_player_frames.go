@@ -33,8 +33,15 @@ func (p *dbPlayerFrameProvider) init() {
 }
 
 func (p *dbPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbPlayerFrameProvider) getByID(ctx context.Context, id int) (*masterdata.PlayerFrame, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -48,7 +55,7 @@ func (p *dbPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error)
 
 	entity, err := p.client.Playerframe.Query().
 		Where(playerframe.ServerRegionEQ(p.region.String()), playerframe.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query player frame %d: %w", id, err)
 	}
@@ -70,8 +77,15 @@ func (p *dbPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error)
 }
 
 func (p *dbPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
+	return p.getGroupByID(nil, id)
+}
+
+func (p *dbPlayerFrameProvider) getGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame group id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -85,7 +99,7 @@ func (p *dbPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrameGro
 
 	entity, err := p.client.Playerframegroup.Query().
 		Where(playerframegroup.ServerRegionEQ(p.region.String()), playerframegroup.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query player frame group %d: %w", id, err)
 	}

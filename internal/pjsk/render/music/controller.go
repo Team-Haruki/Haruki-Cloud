@@ -29,8 +29,39 @@ type Controller struct {
 	assets                *assets.AssetHelper
 	banCharacterNicknames map[string]int
 	aliases               musicAliasResolver
-	snapshot              *userdata.Service
+	snapshot              userdata.Snapshot
 	metaLoader            *meta.Loader
+	requestCtx            context.Context
+}
+
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(contextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
+}
+
+func (c *Controller) WithSnapshot(snapshot userdata.Snapshot) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.snapshot = snapshot
+	return &clone
 }
 
 type musicAliasResolver interface {
@@ -38,7 +69,7 @@ type musicAliasResolver interface {
 	TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error)
 }
 
-func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, metaLoader *meta.Loader) *Controller {
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, metaLoader *meta.Loader) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
@@ -65,6 +96,13 @@ func (c *Controller) SetAliasResolver(resolver musicAliasResolver) {
 	c.aliases = resolver
 }
 
+func (c *Controller) contextOrBackground() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.Background()
+}
+
 func (c *Controller) newSearchService(source DataSource) *SearchService {
 	return NewSearchService(source, NewParser(c.banCharacterNicknames)).WithTitleResolver(func(query string) (*masterdata.Music, error) {
 		return c.resolveMusicTitleQuery(source, query)
@@ -82,7 +120,7 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 	}
 
 	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(context.Background(), query)
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +157,7 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 	}
 
 	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(context.Background(), keyword)
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), keyword)
 		if err != nil {
 			return nil, "", err
 		}
@@ -398,6 +436,37 @@ func (c *Controller) RenderMusicProgress(query ProgressQuery) ([]byte, error) {
 	return c.drawing.GeneratePlayProgress(payload)
 }
 
+func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, snapshot userdata.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (*drawing.PlayProgressRequest, error) {
+	if c == nil {
+		return nil, fmt.Errorf("music controller is not configured")
+	}
+	controller := c
+	if snapshot != nil {
+		controller = c.WithSnapshot(snapshot)
+		if query.Profile == nil {
+			region := controller.resolveRegion(query.Region)
+			if profile := snapshot.ProfileCard(region); profile != nil {
+				query.Profile = profile
+			}
+		}
+	}
+	if query.Profile == nil {
+		query.Profile = fallbackProfile
+	}
+	return controller.BuildMusicProgressRequest(query)
+}
+
+func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapshot userdata.Snapshot, fallbackProfile *drawing.ProfileCardRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMusicProgressRequestFromSnapshot(query, snapshot, fallbackProfile)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GeneratePlayProgress(payload)
+}
+
 func (c *Controller) BuildMusicRewardsDetailRequest(query RewardsDetailQuery) (*drawing.DetailMusicRewardsRequest, error) {
 	region := c.resolveRegion(query.Region)
 	return &drawing.DetailMusicRewardsRequest{
@@ -425,6 +494,17 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
 	payload, err := c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateDetailMusicRewards(payload)
+}
+
+func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQuery, snapshot userdata.Snapshot) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMusicRewardsDetailRequestFromSnapshot(query, snapshot)
 	if err != nil {
 		return nil, err
 	}

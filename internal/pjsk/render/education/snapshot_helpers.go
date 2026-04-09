@@ -1,11 +1,12 @@
 package education
 
 import (
-"fmt"
-"path/filepath"
-"strings"
+	"fmt"
+	"path/filepath"
+	"strconv"
+	"strings"
 
-"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 func hasAreaItemFilter(query AreaItemQuery) bool {
@@ -158,4 +159,40 @@ func normalizeAttr(attr string) string {
 		return ""
 	}
 	return attr
+}
+
+func defaultBondColor() []int {
+	return []int{100, 100, 100}
+}
+
+func parseBondColorCode(code string) []int {
+	colorCode := strings.TrimSpace(strings.TrimPrefix(code, "#"))
+	if len(colorCode) != 6 {
+		return defaultBondColor()
+	}
+
+	result := make([]int, 3)
+	for idx := 0; idx < 3; idx++ {
+		value, err := strconv.ParseInt(colorCode[idx*2:idx*2+2], 16, 64)
+		if err != nil {
+			return defaultBondColor()
+		}
+		result[idx] = int(value)
+	}
+	return result
+}
+
+func leaderMissionRequirementForSeq(requirements []LeaderMissionRequirement, seq int) int {
+	if seq <= 0 || len(requirements) == 0 {
+		return 0
+	}
+
+	result := 0
+	for _, item := range requirements {
+		if item.Seq > seq {
+			break
+		}
+		result = item.Requirement
+	}
+	return result
 }

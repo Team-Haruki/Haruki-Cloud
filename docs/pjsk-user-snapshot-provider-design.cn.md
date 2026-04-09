@@ -8,13 +8,16 @@
 - provider 必须建立在 Cloud 现有身份与绑定体系之上：
   - `users`：平台用户身份
   - `pjsk.user_bindings` / `pjsk.user_default_bindings`：PJSK 绑定关系
-  - 新增的快照存储：PJSK 用户态原始数据
+  - `Toolbox`：生产环境中的用户态事实来源
 
 阶段性说明：
 
 - 当前 `Service-Test` 合并阶段不实现这套正式 provider。
 - 当前阶段先继续使用本地 JSON 作为临时过渡方案，保证剩余模块可以先并入 `Haruki-Cloud`。
 - 本文档保留为后续替换本地 JSON 路径时的正式设计依据。
+- 2026-04-09 补充：第一阶段抽象已开始落地，`internal/pjsk/render/userdata` 已新增 `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 接口，并接入 `ToolboxSnapshotProvider` 作为请求级 live snapshot provider、`DefaultSnapshotFactory` 作为统一快照构造入口。
+- 2026-04-09 再补充：架构口径已重新收敛为“Cloud 只读、Toolbox 为事实来源”。此前尝试过的 `pjsk_user_snapshots`、`snapshot/upload`、验证后回填、读链写回等 Cloud 侧快照镜像方案已撤回，不再作为正式设计。
+- 2026-04-09 再补充一条：`Snapshot.RawValue(key)` 已落地，`userPlayerFrames` / `userMusicAchievements` 这类顶层原始字段已经可以直接从 Toolbox 快照读取，`profile`、`deck`、`music/rewards` 的一部分路径已不再需要在 handler 层单独直连 Toolbox key 查询。
 
 ## 2. 已确认的事实
 
@@ -24,8 +27,8 @@
 
 | 本地文件 | Toolbox 调用 | 数据类型 | 存储字段 |
 |---------|-------------|---------|---------|
-| `user.json` | `GetSuiteData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeSuite` | `main_snapshot_json`（用户级） |
-| `mysekai.json` | `GetMySekaiData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeMySekai` | `mysekai_snapshot_json`（用户级） |
+| `user.json` | `GetSuiteData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeSuite` | 运行时直接读取，不在 Cloud 持久化 |
+| `mysekai.json` | `GetMySekaiData(server, pjskUserID, platform, platformUserID)` | `ToolboxDataTypeMySekai` | 运行时直接读取，不在 Cloud 持久化 |
 | `music_metas.json` | `https://sekai-data.3-3.dev/music_metas-{region}.json`（公开远端） | 全局区服数据 | `music_meta_cache`（区服级） |
 
 `music_metas` 是全局按区服的静态数据（完全不含用户状态），来源与用户快照无关，存储层独立设计。
@@ -36,13 +39,18 @@
 - 单 key 查询（如 `upload_time`）：同路由加 `?key=...`
 - 快速验证绑定查询：`GET /api/private/game-binding?platform=...&platform_user_id=...`
 
-快照写入链路（`POST /internal/pjsk/snapshot/upload`）：
-1. `IdentityResolver`：`im_platform + im_user_id` → `haruki_user_id`
-2. `BindingResolver`：`haruki_user_id + region` → `pjsk_user_id`
-3. `GetSuiteData()` → 写 `main_snapshot_json`
-4. `GetMySekaiData()` → 写 `mysekai_snapshot_json`
+Cloud 当前不再维护独立的“快照写入链路”或 Cloud 侧快照镜像表。
 
-**不**接受外部 raw_json 推送；数据源由 Cloud 统一向对应服务拉取。
+**不**接受外部 raw_json 推送；生产数据由 Cloud 在请求期只读拉取 Toolbox。
+
+2026-04-09 进度补充：
+
+- 当前统一 snapshot/provider 读路径已开始下沉到 handler/controller：
+  - `userPlayerFrames` 已可经由 snapshot 供 `profile`、部分公共资料卡、`deck/mysekai` 读取
+  - `userMusicAchievements` 已可经由 snapshot 供 `music/rewards` 读取
+  - `userBonds`、`userCharacters`、`userCharacterMissionV2s`、`userCharacterLiveUsageCounts`、`userCharacterMissionV2Statuses` 已可经由 snapshot 供 `education/bonds`、`education/leader` 读取
+  - `education` 相关 bonds / leader 构建逻辑已进一步下沉到 `render/education` controller；为此 `EducationProvider` / `DataSource` 已补齐 bonds、bond levels、game-character style、leader mission requirement 等 masterdata 访问能力
+  - `mysekai` raw payload 已新增独立 `MySekaiPayloadProvider`（直接只读 Toolbox），用于覆盖 `SuiteVisible=false` 但 `MySekaiVisible=true` 的账号场景；handler 层已不再直接调用 `GetMySekaiData()`
 
 ### 2.2 Service-Test 当前做法
 
@@ -65,9 +73,18 @@
 
 当前 `Haruki-Cloud` 还没有：
 
-- 任何真正的用户快照 provider
-- 任何用户快照存储表或读取服务
-- 任何将 `user_snapshot` 配置真正消费到 render runtime 的实现
+- 完整清完所有请求期 fallback 细节并把所有用户态模块都收口到统一 provider 语义
+
+当前 `Haruki-Cloud` 已经有：
+
+- `Snapshot` 统一快照接口
+- `SnapshotProvider` 请求级解析接口
+- `SnapshotFactory` 统一快照构造接口
+- `ToolboxSnapshotProvider` 过渡实现
+- `DefaultSnapshotFactory`，并已用于统一 `local_file` 与 Toolbox live 两条构造路径
+- `FallbackSnapshotProvider`
+- `MySekaiPayloadProvider`
+- render controller 对快照的依赖开始从具体 `*userdata.Service` 收口到 `Snapshot` 接口
 
 ### 2.4 调用方现状
 
@@ -103,12 +120,11 @@
 
 ## 4. 核心架构
 
-建议拆成四层，而不是一个“大而全”的 provider：
+建议拆成三层，而不是一个“大而全”的 provider：
 
 1. `IdentityResolver`
 2. `BindingResolver`
-3. `SnapshotStore`
-4. `SnapshotFactory`
+3. `SnapshotFactory`
 
 调用链：
 
@@ -117,7 +133,7 @@ render handler
   -> selector extractor
   -> IdentityResolver
   -> BindingResolver
-  -> SnapshotStore
+  -> Toolbox live fetch
   -> SnapshotFactory
   -> controller / builder
 ```
@@ -130,16 +146,14 @@ render handler
 - `BindingResolver`
   - 输入 `haruki_user_id + region + optional pjsk_user_id`
   - 输出最终目标 PJSK 账号
-- `SnapshotStore`
-  - 读取原始快照 blob
 - `SnapshotFactory`
   - 复用 `Service-Test` 的解析/合并逻辑，构造 render 模块需要的视图
 
 这样做的原因：
 
 - 身份解析与快照读取不是一个问题
-- 绑定关系与快照存储也不是一个问题
-- 后续如果快照从数据库切到内部服务，只需要替换 `SnapshotStore`
+- 绑定关系与快照视图构造也不是一个问题
+- 生产环境由 Toolbox 提供事实数据，Cloud 侧不需要额外维护用户快照镜像表
 
 ## 5. Provider 的输入模型
 
@@ -216,7 +230,10 @@ type BindingResolver interface {
 - 指定账号未绑定
 - region 非法
 
-## 8. 快照存储设计
+## 8. 快照存储设计（已废弃历史方案）
+
+以下内容是曾经考虑过、但现已明确放弃的 Cloud 侧快照入库方案。
+保留这里只为说明为什么仓库里一度出现过 `pjsk_user_snapshots` 相关实现；它不再是当前正式设计。
 
 ## 8.1 存储位置
 
@@ -407,12 +424,13 @@ pjsk_render:
 ## 15. 推荐实施顺序
 
 1. 在 `Haruki-ZeroBot` 补传 `im_platform`。
-2. 在 `Haruki-Cloud/internal/pjsk/render/userdata` 定义 selector、resolver、store、snapshot 接口。
-3. 在 `database/pjsk` 新增快照表模型。
-4. 实现 `InternalCloudSnapshotProvider`。
-5. 先迁 `education/challenge-live`，验证 provider 契约。
-6. 再迁 `profile`、`music progress/rewards`、`mysekai`。
-7. 最后处理 `deck auto recommend` 这类更重的用户态逻辑。
+2. 在 `Haruki-Cloud/internal/pjsk/render/userdata` 定义 selector、snapshot、snapshot provider、snapshot factory 接口。
+   - 2026-04-09 进度：已落地
+3. 以 Toolbox 作为生产事实来源，保留 `local_file` 仅作测试/联调 fallback。
+   - 2026-04-09 进度：已落地
+4. 继续迁移剩余 `music progress` 等路径到更统一的 snapshot/provider 语义。
+5. 继续清理 `mysekai` 及其他仍保留的请求期 fallback 细节，评估是否还需要保留 raw mysekai payload 专用读链。
+6. 最后处理 `deck auto recommend` 这类更重的用户态逻辑。
 
 ## 16. 最终建议
 
@@ -422,6 +440,6 @@ pjsk_render:
 
 - 身份解析走 `users`
 - 默认绑定解析走 `pjsk.user_default_bindings`
-- 原始快照存储放在 `pjsk` 域内
+- 原始快照事实来源保持在 `Toolbox`
 - render runtime 通过只读 provider 获取统一快照对象
 - 本地 JSON 只作为测试工具保留

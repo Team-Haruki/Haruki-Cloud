@@ -6,15 +6,11 @@ import (
 )
 
 type RecommendConfig struct {
-	Enabled          bool
-	UseLocalEngine   bool
-	ServiceBaseURL   string
-	LocalPoolSize    int
-	LocalLibraryDirs []string
-	StaticDataDir    string
-	MasterdataDir    string
-	Timeout          time.Duration
-	DefaultAlgs      []string
+	Enabled        bool
+	ServiceBaseURL string
+	MasterdataDir  string
+	Timeout        time.Duration
+	DefaultAlgs    []string
 }
 
 type MusicMetaSource interface {

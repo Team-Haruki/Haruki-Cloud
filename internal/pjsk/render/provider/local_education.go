@@ -2,8 +2,11 @@ package provider
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 	"sync"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 // ===========================================================================
@@ -31,6 +34,20 @@ type localEducationProvider struct {
 	rankOnce   sync.Once
 	rankByChar map[int]map[int]*CharacterRank
 	rankErr    error
+
+	bondOnce   sync.Once
+	bonds      []*Bond
+	bondLevels []*BondLevel
+	bondErr    error
+
+	styleOnce sync.Once
+	styleByID map[int]*GameCharacterStyle
+	styleErr  error
+
+	missionOnce        sync.Once
+	leaderRequirements []LeaderMissionRequirement
+	leaderMaxPlayLimit int
+	missionErr         error
 
 	gateOnce sync.Once
 	gateByID map[int]map[int]*MysekaiGateLevel
@@ -130,6 +147,87 @@ func (p *localEducationProvider) ensureCharacterRanks() error {
 		}
 	})
 	return p.rankErr
+}
+
+func (p *localEducationProvider) ensureBondMaster() error {
+	p.bondOnce.Do(func() {
+		items, err := loadJSON[localBondJSON](p.store, "bonds.json")
+		if err != nil {
+			p.bondErr = err
+			return
+		}
+		p.bonds = make([]*Bond, 0, len(items))
+		for _, item := range items {
+			p.bonds = append(p.bonds, &Bond{
+				GroupID:      item.GroupID,
+				CharacterID1: item.CharacterID1,
+				CharacterID2: item.CharacterID2,
+			})
+		}
+
+		levels, err := loadJSON[localLevelJSON](p.store, "levels.json")
+		if err != nil {
+			p.bondErr = err
+			return
+		}
+		p.bondLevels = make([]*BondLevel, 0)
+		for _, item := range levels {
+			if !strings.EqualFold(item.LevelType, "bonds") || item.Level <= 0 {
+				continue
+			}
+			p.bondLevels = append(p.bondLevels, &BondLevel{
+				Level:    item.Level,
+				TotalExp: item.TotalExp,
+			})
+		}
+		sort.Slice(p.bondLevels, func(i, j int) bool { return p.bondLevels[i].Level < p.bondLevels[j].Level })
+	})
+	return p.bondErr
+}
+
+func (p *localEducationProvider) ensureGameCharacterStyles() error {
+	p.styleOnce.Do(func() {
+		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
+		if err != nil {
+			p.styleErr = err
+			return
+		}
+		p.styleByID = make(map[int]*GameCharacterStyle, len(items))
+		for i := range items {
+			p.styleByID[items[i].ID] = &GameCharacterStyle{
+				GameID:      items[i].ID,
+				CharacterID: items[i].GameCharacterID,
+				ColorCode:   strings.TrimSpace(items[i].ColorCode),
+			}
+		}
+	})
+	return p.styleErr
+}
+
+func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
+	p.missionOnce.Do(func() {
+		items, err := loadJSON[localLeaderMissionRequirementJSON](p.store, "characterMissionV2ParameterGroups.json")
+		if err != nil {
+			p.missionErr = err
+			return
+		}
+		p.leaderRequirements = make([]LeaderMissionRequirement, 0)
+		for _, item := range items {
+			switch item.GameID {
+			case 1:
+				if item.Requirement > p.leaderMaxPlayLimit {
+					p.leaderMaxPlayLimit = item.Requirement
+				}
+			case 101:
+				p.leaderRequirements = append(p.leaderRequirements, LeaderMissionRequirement{
+					Seq:         item.Seq,
+					Requirement: item.Requirement,
+				})
+			}
+		}
+		sort.Slice(p.leaderRequirements, func(i, j int) bool { return p.leaderRequirements[i].Seq < p.leaderRequirements[j].Seq })
+	})
+	return p.missionErr
 }
 
 func (p *localEducationProvider) ensureGateLevels() error {
@@ -290,6 +388,37 @@ func (p *localEducationProvider) GetCharacterRank(characterID, rank int) *Charac
 	return nil
 }
 
+func (p *localEducationProvider) GetBonds() []*Bond {
+	if err := p.ensureBondMaster(); err != nil {
+		return nil
+	}
+	return cloneEdBonds(p.bonds)
+}
+
+func (p *localEducationProvider) GetBondLevels() []*BondLevel {
+	if err := p.ensureBondMaster(); err != nil {
+		return nil
+	}
+	return cloneEdBondLevels(p.bondLevels)
+}
+
+func (p *localEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
+	if gameID <= 0 {
+		return nil
+	}
+	if err := p.ensureGameCharacterStyles(); err != nil {
+		return nil
+	}
+	return cloneEdGameCharacterStyle(p.styleByID[gameID])
+}
+
+func (p *localEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
+	if err := p.ensureLeaderMissionRequirements(); err != nil {
+		return nil, 0
+	}
+	return cloneEdLeaderMissionRequirements(p.leaderRequirements), p.leaderMaxPlayLimit
+}
+
 func (p *localEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
 	if gateID <= 0 || level <= 0 {
 		return nil
@@ -311,4 +440,22 @@ func (p *localEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *
 		return nil
 	}
 	return cloneEdShopItem(p.shopByBoxID[resourceBoxID])
+}
+
+type localBondJSON struct {
+	GroupID      int `json:"groupId"`
+	CharacterID1 int `json:"characterId1"`
+	CharacterID2 int `json:"characterId2"`
+}
+
+type localLevelJSON struct {
+	LevelType string `json:"levelType"`
+	Level     int    `json:"level"`
+	TotalExp  int    `json:"totalExp"`
+}
+
+type localLeaderMissionRequirementJSON struct {
+	GameID      int `json:"gameId"`
+	Seq         int `json:"seq"`
+	Requirement int `json:"requirement"`
 }

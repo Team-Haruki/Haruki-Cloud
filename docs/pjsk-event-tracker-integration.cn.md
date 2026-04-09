@@ -4,11 +4,11 @@
 >
 > 本文档记录当前 `event tracker` 在 Haruki-Cloud 中的接入位置、调用链路、参数协议、能力边界与测试覆盖，作为本轮对接的落地说明。
 >
-> 2026-04-09 补充说明：本文中的 `/internal/pjsk/sk/*` build/render 描述只代表当时的兼容链路设计。相关 internal 运行时路由现已移除，当前主链应以 Bot 协议和 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
+> 2026-04-09 补充说明：本文中的 `/internal/pjsk/sk/*` build/render 与 `api/legacy/pjsk/*` 描述都只代表当时的兼容链路设计。相关 internal / legacy 运行时路由现已移除，当前主链应以 Bot 协议和 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
 ## 1. 文档目的
 
-这轮改造不是“加一个独立 API”，而是把 SK 相关能力统一接入同一条 tracker 数据链路，并保持 Bot 入口和旧 render 路由的兼容性。
+这轮改造不是“加一个独立 API”，而是把 SK 相关能力统一接入同一条 tracker 数据链路；在当时阶段，还需要兼顾 Bot 入口和旧 render 路由的兼容性。
 
 本文重点回答以下问题：
 
@@ -165,13 +165,13 @@
 2. Bot 端 UID 查询
 3. Bot 端 `@用户` 查询（绑定解析）
 4. SK 参数解析与 tracker 参数构建
-5. legacy render tracker 路由 build/render
+5. legacy render tracker 路由 build/render（历史记录）
 
 主要测试文件：
 
 1. `api/bot/pjsk/handler_test.go`
 2. `internal/pjsk/handler/sekai/sk_tracker_params_test.go`
-3. `api/legacy/pjsk/render_route_test.go`
+3. `api/legacy/pjsk/render_route_test.go`（历史记录）
 
 ## 8. 注意事项
 

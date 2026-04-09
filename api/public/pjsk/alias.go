@@ -1,7 +1,6 @@
 package pjsk
 
 import (
-	"context"
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"haruki-cloud/database/pjsk"
@@ -12,7 +11,7 @@ import (
 )
 
 func (h *AliasHandler) GetGlobalAliasToID(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	params := getAliasParams(c)
 	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSAlias)
 	if err != nil {
@@ -38,7 +37,7 @@ func (h *AliasHandler) GetGlobalAliasToID(c fiber.Ctx) error {
 }
 
 func (h *AliasHandler) GetGlobalAliasesByID(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	params := getAliasParams(c)
 	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSAlias)
 	if err != nil {

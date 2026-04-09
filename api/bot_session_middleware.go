@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -78,7 +77,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 
 		// Verify the session has not been revoked (Redis lookup).
 		key := fmt.Sprintf(redisBotSessionKey, headerBotID)
-		stored, err := redisClient.Get(context.Background(), key).Result()
+		stored, err := redisClient.Get(c.Context(), key).Result()
 		if errors.Is(err, redis.Nil) {
 			return JSONResponse(c, fiber.StatusUnauthorized, "session expired or not found")
 		}

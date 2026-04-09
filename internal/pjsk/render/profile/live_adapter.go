@@ -117,9 +117,9 @@ func adaptAPIChallengeLiveStages(stages []sekai.AnotherUserChallengeLiveSoloStag
 	return result
 }
 
-// parseFramesJSON parses the raw bytes from a ?key=userPlayerFrames toolbox key-query into
-// the RawUserFrame slice used by buildFramePaths.  Returns nil on empty input or parse error
-// so that the caller renders without a player frame.
+// parseFramesJSON parses the raw bytes from a userPlayerFrames snapshot payload into the
+// RawUserFrame slice used by buildFramePaths. Returns nil on empty input or parse error so
+// that the caller renders without a player frame.
 func parseFramesJSON(data []byte) []userdata.RawUserFrame {
 	if len(data) == 0 {
 		return nil
@@ -128,6 +128,22 @@ func parseFramesJSON(data []byte) []userdata.RawUserFrame {
 	if err := sonic.Unmarshal(data, &frames); err != nil {
 		return nil
 	}
+	return frames
+}
+
+func snapshotFrames(snapshot userdata.Snapshot) []userdata.RawUserFrame {
+	if snapshot == nil {
+		return nil
+	}
+	if err := snapshot.Require(); err != nil {
+		return nil
+	}
+	raw := snapshot.RawData()
+	if raw == nil || len(raw.UserFrames) == 0 {
+		return nil
+	}
+	frames := make([]userdata.RawUserFrame, len(raw.UserFrames))
+	copy(frames, raw.UserFrames)
 	return frames
 }
 

@@ -42,6 +42,13 @@ func NewWithStore(uri, dir string, store *PGStore) *Client {
 	return &Client{uri: uri, dir: dir, store: store}
 }
 
+func (c *Client) Close() error {
+	if c == nil || c.store == nil {
+		return nil
+	}
+	return c.store.Close()
+}
+
 // StoreAndGetURL returns the CDN URL for data, writing it to disk if needed.
 // If a PGStore is configured and the hash is already known, the filesystem write
 // is skipped and the cached URL is returned directly.

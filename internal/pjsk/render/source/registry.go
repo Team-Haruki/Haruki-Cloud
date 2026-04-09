@@ -87,6 +87,13 @@ func (r *Registry[T]) SourceForRegion(region renderregion.Value) (T, bool) {
 	return zero, false
 }
 
+func (r *Registry[T]) OrderedSources() []T {
+	if r == nil || len(r.order) == 0 {
+		return nil
+	}
+	return append([]T(nil), r.order...)
+}
+
 func isNilValue(value any) bool {
 	if value == nil {
 		return true

@@ -1,6 +1,7 @@
 package stamp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,32 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
+
+type stampContextKey string
+
+type contextAwareStampSource struct {
+	*testStampSource
+	ctx       context.Context
+	wantKey   stampContextKey
+	wantValue string
+}
+
+func (s *contextAwareStampSource) WithContext(ctx context.Context) DataSource {
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *contextAwareStampSource) GetStamps() ([]masterdata.Stamp, error) {
+	if s.ctx == nil {
+		return nil, fmt.Errorf("missing request context")
+	}
+	value, _ := s.ctx.Value(s.wantKey).(string)
+	if value != s.wantValue {
+		return nil, fmt.Errorf("unexpected request context")
+	}
+	return s.testStampSource.GetStamps()
+}
 
 type testStampSource struct {
 	region renderregion.Value
@@ -226,6 +253,26 @@ func TestControllerBuildStampListRequestSupportsDirectAssetRootLayout(t *testing
 	}
 	want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", "stamp", "direct_stamp", "direct_stamp.png"))
 	if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != want {
+		t.Fatalf("unexpected stamps: %+v", req.Stamps)
+	}
+}
+
+func TestControllerWithContextClonesStampSource(t *testing.T) {
+	source := &contextAwareStampSource{
+		testStampSource: newTestStampSource(renderregion.JP),
+		wantKey:         stampContextKey("trace"),
+		wantValue:       "stamp-list",
+	}
+	source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "ctx_stamp"}}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	ctx := context.WithValue(context.Background(), stampContextKey("trace"), "stamp-list")
+
+	req, err := controller.WithContext(ctx).BuildStampListRequest(ListQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildStampListRequest failed: %v", err)
+	}
+	if len(req.Stamps) != 1 || req.Stamps[0].ID != 1 {
 		t.Fatalf("unexpected stamps: %+v", req.Stamps)
 	}
 }

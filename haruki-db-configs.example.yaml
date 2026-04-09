@@ -111,9 +111,6 @@ pjsk_render:
 
   deck_recommend:
     enabled: true
-    use_local_engine: true
-    service_base_url: ""       # set e.g. http://127.0.0.1:3000 to use deck-service instead of local cgo
-    local_pool_size: 2
-    static_data_dir: ""
+    service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
     timeout: "10s"
     default_algs: ["dfs", "ga"]

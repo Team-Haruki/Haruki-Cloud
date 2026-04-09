@@ -4,6 +4,13 @@
 
 这份文档保留为“历史方案与阶段划分”说明。
 
+2026-04-09 再补充两条当前事实：
+
+- `api/legacy/pjsk/` 已从仓库与运行时移除
+- `internal/pjsk/render/deck/deck_cgo/` 已从仓库移除，deck 正式推荐链路只保留 HTTP 外部服务
+
+凡本文中仍提到 legacy 路由、本地 native engine 或 `use_local_engine` 的内容，都应理解为阶段性历史方案，而不是当前实现。
+
 当前这轮合并的实际落地结果、完成范围和后续注意事项，已经整理到：
 
 - `docs/service-test-merge-status.cn.md`

@@ -32,18 +32,18 @@ type Controller struct {
 	eventSources  *regionsource.Registry[EventSource]
 	drawing       *drawing.HarukiDrawingClient
 	assets        *assets.AssetHelper
-	snapshot      *userdata.Service
+	snapshot      userdata.Snapshot
 	defaultRegion renderregion.Value
 	recommendCfg  RecommendConfig
 	metaLoader    MusicMetaSource
 	engine        engineProvider
 }
 
-func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, defaultRegion renderregion.Value) *Controller {
+func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return NewControllerWithConfig(cards, events, drawingClient, assetHelper, snapshot, defaultRegion, RecommendConfig{}, nil)
 }
 
-func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot *userdata.Service, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
+func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
@@ -56,26 +56,18 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		snapshot:      snapshot,
 		defaultRegion: resolvedDefaultRegion,
 		recommendCfg: RecommendConfig{
-			Enabled:          cfg.Enabled,
-			UseLocalEngine:   cfg.UseLocalEngine,
-			ServiceBaseURL:   strings.TrimSpace(cfg.ServiceBaseURL),
-			LocalPoolSize:    cfg.LocalPoolSize,
-			LocalLibraryDirs: append([]string(nil), cfg.LocalLibraryDirs...),
-			StaticDataDir:    cfg.StaticDataDir,
-			MasterdataDir:    cfg.MasterdataDir,
-			Timeout:          cfg.Timeout,
-			DefaultAlgs:      append([]string(nil), cfg.DefaultAlgs...),
+			Enabled:        cfg.Enabled,
+			ServiceBaseURL: strings.TrimSpace(cfg.ServiceBaseURL),
+			MasterdataDir:  cfg.MasterdataDir,
+			Timeout:        cfg.Timeout,
+			DefaultAlgs:    append([]string(nil), cfg.DefaultAlgs...),
 		},
 		metaLoader: metaLoader,
 	}
 	controller.RegisterCardSource(cards)
 	controller.RegisterEventSource(events)
-	if cfg.Enabled {
-		if controller.recommendCfg.ServiceBaseURL != "" {
-			controller.engine = newRemoteEngineProvider(controller.recommendCfg)
-		} else if cfg.UseLocalEngine {
-			controller.engine = newLocalEngineProvider(controller.recommendCfg)
-		}
+	if cfg.Enabled && controller.recommendCfg.ServiceBaseURL != "" {
+		controller.engine = newRemoteEngineProvider(controller.recommendCfg)
 	}
 	return controller
 }
@@ -103,7 +95,7 @@ func (c *Controller) RegisterEventSource(source EventSource) {
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
-func (c *Controller) WithSnapshot(s *userdata.Service) *Controller {
+func (c *Controller) WithSnapshot(s userdata.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}
@@ -146,11 +138,10 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 	if err := c.snapshot.Require(); err != nil {
 		return nil, err
 	}
-
-	if c.recommendCfg.Enabled && c.engine != nil {
-		return c.buildAutoRecommendWithEngine(query)
+	if c.engine == nil {
+		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
-	return c.buildAutoRecommendLocal(query)
+	return c.buildAutoRecommendWithEngine(query)
 }
 
 func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.DeckRequest, error) {
@@ -201,106 +192,6 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	}
 
 	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, result)
-}
-
-func (c *Controller) buildAutoRecommendLocal(query AutoQuery) (*drawing.DeckRequest, error) {
-	raw := c.snapshot.RawData()
-	if raw == nil {
-		return nil, fmt.Errorf("user data is required for deck auto recommend")
-	}
-
-	region, recType, err := c.normalizeAutoQuery(query)
-	if err != nil {
-		return nil, err
-	}
-	region, cardSource, err := c.resolveCardSource(region)
-	if err != nil {
-		return nil, err
-	}
-	option, err := c.buildRecommendOption(region, recType, query)
-	if err != nil {
-		return nil, err
-	}
-
-	type deckCandidate struct {
-		card     *masterdata.Card
-		userCard userdata.RawUserCard
-		power    int
-	}
-	candidates := make([]deckCandidate, 0, len(raw.UserCards))
-	for _, userCard := range raw.UserCards {
-		card, err := cardSource.GetCardByID(userCard.CardID)
-		if err != nil || card == nil {
-			continue
-		}
-		candidates = append(candidates, deckCandidate{
-			card:     card,
-			userCard: userCard,
-			power:    calculateDeckCardPower(card),
-		})
-	}
-	if len(candidates) == 0 {
-		return nil, fmt.Errorf("no available user cards for deck recommend")
-	}
-	sort.SliceStable(candidates, func(i, j int) bool {
-		if candidates[i].power == candidates[j].power {
-			return candidates[i].card.ID < candidates[j].card.ID
-		}
-		return candidates[i].power > candidates[j].power
-	})
-
-	limit := query.Limit
-	if limit <= 0 || limit > 5 {
-		limit = 5
-	}
-	if len(candidates) < limit {
-		limit = len(candidates)
-	}
-
-	cardData := make([]drawing.DeckCardData, 0, limit)
-	totalPower := 0
-	for _, pick := range candidates[:limit] {
-		totalPower += pick.power
-		afterTraining := isAfterTraining(pick.userCard)
-		cardData = append(cardData, drawing.DeckCardData{
-			CardThumbnail: common.BuildCardThumbnail(c.assets, pick.card, region, common.ThumbnailOptions{
-				AfterTraining: afterTraining,
-				TrainedArt:    afterTraining,
-				TrainRank:     drawing.IntPtr(pick.userCard.MasterRank),
-				Level:         drawing.IntPtr(pick.userCard.Level),
-				IsPcard:       false,
-			}),
-			CharaID:         pick.card.CharacterID,
-			SkillLevel:      "4",
-			IsAfterTraining: afterTraining,
-			SkillRate:       120.0,
-			EventBonusRate:  defaultEventBonus(recType),
-			IsBeforeStory:   true,
-			IsAfterStory:    true,
-			HasCanvasBonus:  false,
-		})
-	}
-
-	profile := c.resolveProfile(region, query.Profile, "local_fallback")
-	score := totalPower * 3
-	eventBonus := defaultEventBonus(recType)
-	supportDeckBonusRate := 0.0
-	multiLiveScoreUp := 20.0
-	request := &drawing.DeckRequest{
-		Region:              region.String(),
-		Profile:             *profile,
-		DeckData:            []drawing.DeckData{{CardData: cardData, Score: drawing.IntPtr(score), LiveScore: drawing.IntPtr(score), MySekaiEventPoint: drawing.IntPtr(score), EventBonusRate: &eventBonus, SupportDeckBonusRate: &supportDeckBonusRate, MultiLiveScoreUp: &multiLiveScoreUp, TotalPower: drawing.IntPtr(totalPower)}},
-		RecommendType:       recType,
-		Target:              drawing.StringPtr("score"),
-		ModelName:           []interface{}{"dfs"},
-		CostTimes:           map[string]interface{}{"dfs": 0.01},
-		WaitTimes:           map[string]interface{}{"dfs": 0.0},
-		CanvasThumbnailPath: drawing.StringPtr(assets.ResolveRegionAssetPath(c.assets, region.String(), "mysekai/icon/category_icon/icon_canvas.png")),
-	}
-
-	c.applyOptionRequestFields(request, option, query)
-	c.applyCommonRecommendMetadata(request, region, recType, option, query)
-	return request, nil
 }
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]interface{}, error) {
@@ -388,14 +279,14 @@ func (c *Controller) recommendTimeoutMs() int {
 
 func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]interface{}, result *RecommendResult) (*drawing.DeckRequest, error) {
 	if result == nil || len(result.Decks) == 0 {
-		return nil, fmt.Errorf("deck local engine returned no deck results")
+		return nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
 	region, cardSource, err := c.resolveCardSource(region)
 	if err != nil {
 		return nil, err
 	}
 
-	profile := c.resolveProfile(region, query.Profile, "deck_local_engine")
+	profile := c.resolveProfile(region, query.Profile, "deck_remote_service")
 	userCardMap := make(map[int]userdata.RawUserCard)
 	if raw := c.snapshot.RawData(); raw != nil {
 		for _, userCard := range raw.UserCards {

@@ -111,9 +111,12 @@ var (
 	}
 )
 
-func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
+func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
 	if app == nil || app.Sekai == nil {
 		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	region := renderregion.WithDefault(renderregion.Normalize(r.Region))
@@ -122,7 +125,7 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		return nil, err
 	}
 	if selection.Cid == 0 && strings.TrimSpace(selection.Query) != "" {
-		selection.Cid, err = resolveBirthdayCharacterID(app, region, selection.Query)
+		selection.Cid, err = resolveBirthdayCharacterID(ctx, app, region, selection.Query)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +137,7 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		return nil, err
 	}
 
-	cards, cardImagePath, err := loadBirthdayCards(app, region, info.Cid)
+	cards, cardImagePath, err := loadBirthdayCards(ctx, app, region, info.Cid)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +155,7 @@ func BuildMiscBirthdayRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		Day:               info.Day,
 		RegionName:        birthdayRegionName(region),
 		DaysUntilBirthday: birthdayDaysUntil(now, nextTime),
-		ColorCode:         resolveBirthdayColorCode(app, region, info.Cid),
+		ColorCode:         resolveBirthdayColorCode(ctx, app, region, info.Cid),
 		SdImagePath: assets.ResolveRegionAssetPath(
 			app.Assets,
 			region.String(),
@@ -259,7 +262,7 @@ func selectBirthdayInfo(infos []birthdayCharacterInfo, selection miscBirthdaySel
 	return infos[index-1], nil
 }
 
-func resolveBirthdayCharacterID(app *renderapp.App, region renderregion.Value, query string) (int, error) {
+func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return 0, fmt.Errorf("请输入角色名")
@@ -270,7 +273,7 @@ func resolveBirthdayCharacterID(app *renderapp.App, region renderregion.Value, q
 		return result.Value, nil
 	}
 
-	ids, err := lookupBirthdayCharacterIDs(app, region, query)
+	ids, err := lookupBirthdayCharacterIDs(ctx, app, region, query)
 	if err != nil {
 		return 0, err
 	}
@@ -284,14 +287,17 @@ func resolveBirthdayCharacterID(app *renderapp.App, region renderregion.Value, q
 	}
 }
 
-func lookupBirthdayCharacterIDs(app *renderapp.App, region renderregion.Value, query string) ([]int, error) {
+func lookupBirthdayCharacterIDs(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) ([]int, error) {
 	if app == nil || app.Sekai == nil {
 		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	rows, err := app.Sekai.Gamecharacter.Query().
 		Where(gamecharacter.ServerRegionEQ(region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query birthday characters failed: %w", err)
 	}
@@ -302,10 +308,9 @@ func lookupBirthdayCharacterIDs(app *renderapp.App, region renderregion.Value, q
 
 	rows, err = app.Sekai.Gamecharacter.Query().
 		Where(gamecharacter.GameIDGT(0)).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query birthday characters failed: %w", err)
 	}
 	return matchBirthdayCharacterIDs(rows, query), nil
 }
-

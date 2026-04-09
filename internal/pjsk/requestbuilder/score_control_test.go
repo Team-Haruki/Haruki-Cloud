@@ -147,7 +147,7 @@ func TestBuildScoreControlRequestPreservesControllerAliasResolver(t *testing.T) 
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	req, err := BuildScoreControlRequest(&parser.ResolvedCommand{
+	req, err := BuildScoreControlRequest(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleScore,
 		Mode:   "score-control",
 		Region: "jp",

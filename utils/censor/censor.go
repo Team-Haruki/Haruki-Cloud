@@ -196,3 +196,10 @@ func NewService(
 		Logger:         logger.NewLoggerFromGlobal("HarukiContentCensorService"),
 	}
 }
+
+func (s *Service) Close() error {
+	if s == nil || s.Client == nil {
+		return nil
+	}
+	return s.Client.Close()
+}

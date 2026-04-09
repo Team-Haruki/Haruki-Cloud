@@ -66,12 +66,13 @@ type TrackerRankQuery struct {
 }
 
 type Controller struct {
-	drawing  *drawing.HarukiDrawingClient
-	tracker  TrackerSource
-	forecast ForecastProvider
-	events   *regionsource.Registry[EventSource]
-	assets   *renderassets.AssetHelper
-	censor   CensorService
+	drawing    *drawing.HarukiDrawingClient
+	tracker    TrackerSource
+	forecast   ForecastProvider
+	events     *regionsource.Registry[EventSource]
+	assets     *renderassets.AssetHelper
+	censor     CensorService
+	requestCtx context.Context
 }
 
 // CensorService is a minimal interface for name censoring, satisfied by *censor.Service.
@@ -116,6 +117,22 @@ func (c *Controller) SetCensor(svc CensorService) {
 	c.censor = svc
 }
 
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	return &clone
+}
+
+func (c *Controller) contextOrBackground() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.Background()
+}
+
 func (c *Controller) SetForecastProvider(provider ForecastProvider) {
 	if c == nil || provider == nil {
 		return
@@ -131,7 +148,7 @@ func (c *Controller) censorTrackerName(name, server string) string {
 		return ""
 	}
 	if c.censor != nil {
-		_ = c.censor.CensorName(context.Background(), 0, "", clean, server)
+		_ = c.censor.CensorName(c.contextOrBackground(), 0, "", clean, server)
 	}
 	return clean
 }
@@ -234,9 +251,9 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	bySource := make(map[string]ForecastSourceData)
 	var forecastErr error
 	if provider, ok := c.forecast.(ForecastProviderBySource); ok {
-		bySource, forecastErr = provider.FetchBySource(context.Background(), normalized.Region, normalized.EventID, normalized.Ranks)
+		bySource, forecastErr = provider.FetchBySource(c.contextOrBackground(), normalized.Region, normalized.EventID, normalized.Ranks)
 	} else {
-		merged, err := c.forecast.Fetch(context.Background(), normalized.Region, normalized.EventID, normalized.Ranks)
+		merged, err := c.forecast.Fetch(c.contextOrBackground(), normalized.Region, normalized.EventID, normalized.Ranks)
 		forecastErr = err
 		if len(merged) > 0 {
 			bySource["forecast"] = ForecastSourceData{

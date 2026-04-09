@@ -9,8 +9,12 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/areaitem"
 	"haruki-cloud/database/sekai/areaitemlevel"
+	"haruki-cloud/database/sekai/bond"
 	"haruki-cloud/database/sekai/challengelivehighscorereward"
+	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
+	"haruki-cloud/database/sekai/gamecharacterunit"
+	"haruki-cloud/database/sekai/level"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/resourceboxe"
 	"haruki-cloud/database/sekai/shopitem"
@@ -39,6 +43,20 @@ type dbEducationProvider struct {
 	rankMu      sync.RWMutex
 	rankByChar  map[int]map[int]*CharacterRank
 	ranksLoaded bool
+
+	bondMu      sync.RWMutex
+	bonds       []*Bond
+	bondLevels  []*BondLevel
+	bondsLoaded bool
+
+	styleMu        sync.RWMutex
+	stylesByGameID map[int]*GameCharacterStyle
+	stylesLoaded   bool
+
+	missionMu            sync.RWMutex
+	leaderRequirements   []LeaderMissionRequirement
+	leaderMaxPlayLimit   int
+	leaderMissionsLoaded bool
 
 	gateMu      sync.RWMutex
 	gateByID    map[int]map[int]*MysekaiGateLevel
@@ -71,6 +89,9 @@ func (p *dbEducationProvider) init() {
 	if p.rankByChar == nil {
 		p.rankByChar = make(map[int]map[int]*CharacterRank)
 	}
+	if p.stylesByGameID == nil {
+		p.stylesByGameID = make(map[int]*GameCharacterStyle)
+	}
 	if p.gateByID == nil {
 		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
 	}
@@ -80,8 +101,15 @@ func (p *dbEducationProvider) init() {
 }
 
 func (p *dbEducationProvider) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
+	return p.getChallengeRewardsByCharacter(nil, charID)
+}
+
+func (p *dbEducationProvider) getChallengeRewardsByCharacter(ctx context.Context, charID int) []*ChallengeReward {
 	if charID <= 0 {
 		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -99,7 +127,7 @@ func (p *dbEducationProvider) GetChallengeRewardsByCharacter(charID int) []*Chal
 	if !p.rewardsLoaded {
 		items, err := p.client.Challengelivehighscorereward.Query().
 			Where(challengelivehighscorereward.ServerRegionEQ(p.region.String())).
-			All(context.Background())
+			All(ctx)
 		if err != nil {
 			return nil
 		}
@@ -119,10 +147,14 @@ func (p *dbEducationProvider) GetChallengeRewardsByCharacter(charID int) []*Chal
 }
 
 func (p *dbEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
+	return p.getResourceBoxByPurpose(nil, purpose, id)
+}
+
+func (p *dbEducationProvider) getResourceBoxByPurpose(ctx context.Context, purpose string, id int) *ResourceBox {
 	if id <= 0 {
 		return nil
 	}
-	if !p.ensureResourceBoxesLoaded() {
+	if !p.ensureResourceBoxesLoaded(ctx) {
 		return nil
 	}
 
@@ -139,7 +171,11 @@ func (p *dbEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *R
 }
 
 func (p *dbEducationProvider) GetResourceBoxesByPurpose(purpose string) []*ResourceBox {
-	if !p.ensureResourceBoxesLoaded() {
+	return p.getResourceBoxesByPurpose(nil, purpose)
+}
+
+func (p *dbEducationProvider) getResourceBoxesByPurpose(ctx context.Context, purpose string) []*ResourceBox {
+	if !p.ensureResourceBoxesLoaded(ctx) {
 		return nil
 	}
 
@@ -166,7 +202,11 @@ func (p *dbEducationProvider) GetResourceBoxesByPurpose(purpose string) []*Resou
 }
 
 func (p *dbEducationProvider) GetAreaItem(id int) *AreaItem {
-	if id <= 0 || !p.ensureAreaMasterLoaded() {
+	return p.getAreaItem(nil, id)
+}
+
+func (p *dbEducationProvider) getAreaItem(ctx context.Context, id int) *AreaItem {
+	if id <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
 
@@ -176,7 +216,11 @@ func (p *dbEducationProvider) GetAreaItem(id int) *AreaItem {
 }
 
 func (p *dbEducationProvider) GetAreaItems() []*AreaItem {
-	if !p.ensureAreaMasterLoaded() {
+	return p.getAreaItems(nil)
+}
+
+func (p *dbEducationProvider) getAreaItems(ctx context.Context) []*AreaItem {
+	if !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
 
@@ -191,7 +235,11 @@ func (p *dbEducationProvider) GetAreaItems() []*AreaItem {
 }
 
 func (p *dbEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
-	if areaItemID <= 0 || !p.ensureAreaMasterLoaded() {
+	return p.getAreaItemLevels(nil, areaItemID)
+}
+
+func (p *dbEducationProvider) getAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel {
+	if areaItemID <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
 
@@ -201,7 +249,11 @@ func (p *dbEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel
 }
 
 func (p *dbEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	if areaItemID <= 0 || level <= 0 || !p.ensureAreaMasterLoaded() {
+	return p.getAreaItemLevel(nil, areaItemID, level)
+}
+
+func (p *dbEducationProvider) getAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel {
+	if areaItemID <= 0 || level <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
 
@@ -214,7 +266,11 @@ func (p *dbEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemL
 }
 
 func (p *dbEducationProvider) GetCharacterRank(characterID, rank int) *CharacterRank {
-	if characterID <= 0 || rank <= 0 || !p.ensureCharacterRanksLoaded() {
+	return p.getCharacterRank(nil, characterID, rank)
+}
+
+func (p *dbEducationProvider) getCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank {
+	if characterID <= 0 || rank <= 0 || !p.ensureCharacterRanksLoaded(ctx) {
 		return nil
 	}
 
@@ -226,8 +282,68 @@ func (p *dbEducationProvider) GetCharacterRank(characterID, rank int) *Character
 	return nil
 }
 
+func (p *dbEducationProvider) GetBonds() []*Bond {
+	return p.getBonds(nil)
+}
+
+func (p *dbEducationProvider) getBonds(ctx context.Context) []*Bond {
+	if !p.ensureBondMasterLoaded(ctx) {
+		return nil
+	}
+
+	p.bondMu.RLock()
+	defer p.bondMu.RUnlock()
+	return cloneEdBonds(p.bonds)
+}
+
+func (p *dbEducationProvider) GetBondLevels() []*BondLevel {
+	return p.getBondLevels(nil)
+}
+
+func (p *dbEducationProvider) getBondLevels(ctx context.Context) []*BondLevel {
+	if !p.ensureBondMasterLoaded(ctx) {
+		return nil
+	}
+
+	p.bondMu.RLock()
+	defer p.bondMu.RUnlock()
+	return cloneEdBondLevels(p.bondLevels)
+}
+
+func (p *dbEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
+	return p.getGameCharacterStyle(nil, gameID)
+}
+
+func (p *dbEducationProvider) getGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle {
+	if gameID <= 0 || !p.ensureGameCharacterStylesLoaded(ctx) {
+		return nil
+	}
+
+	p.styleMu.RLock()
+	defer p.styleMu.RUnlock()
+	return cloneEdGameCharacterStyle(p.stylesByGameID[gameID])
+}
+
+func (p *dbEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
+	return p.getLeaderMissionRequirements(nil)
+}
+
+func (p *dbEducationProvider) getLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
+	if !p.ensureLeaderMissionsLoaded(ctx) {
+		return nil, 0
+	}
+
+	p.missionMu.RLock()
+	defer p.missionMu.RUnlock()
+	return cloneEdLeaderMissionRequirements(p.leaderRequirements), p.leaderMaxPlayLimit
+}
+
 func (p *dbEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
-	if gateID <= 0 || level <= 0 || !p.ensureGateLevelsLoaded() {
+	return p.getMysekaiGateLevel(nil, gateID, level)
+}
+
+func (p *dbEducationProvider) getMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel {
+	if gateID <= 0 || level <= 0 || !p.ensureGateLevelsLoaded(ctx) {
 		return nil
 	}
 
@@ -240,7 +356,11 @@ func (p *dbEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGat
 }
 
 func (p *dbEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
-	if resourceBoxID <= 0 || !p.ensureShopItemsLoaded() {
+	return p.getShopItemByResourceBoxID(nil, resourceBoxID)
+}
+
+func (p *dbEducationProvider) getShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem {
+	if resourceBoxID <= 0 || !p.ensureShopItemsLoaded(ctx) {
 		return nil
 	}
 
@@ -249,8 +369,11 @@ func (p *dbEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *Sho
 	return cloneEdShopItem(p.shopByBoxID[resourceBoxID])
 }
 
-func (p *dbEducationProvider) ensureResourceBoxesLoaded() bool {
+func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) bool {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.boxMu.RLock()
 	if p.boxesLoaded {
@@ -268,7 +391,7 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded() bool {
 
 	items, err := p.client.Resourceboxe.Query().
 		Where(resourceboxe.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -296,8 +419,11 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded() bool {
 	return true
 }
 
-func (p *dbEducationProvider) ensureAreaMasterLoaded() bool {
+func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.areaMu.RLock()
 	if p.areaMasterLoaded {
@@ -315,7 +441,7 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded() bool {
 
 	items, err := p.client.Areaitem.Query().
 		Where(areaitem.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -330,7 +456,7 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded() bool {
 
 	levels, err := p.client.Areaitemlevel.Query().
 		Where(areaitemlevel.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -354,8 +480,11 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded() bool {
 	return true
 }
 
-func (p *dbEducationProvider) ensureCharacterRanksLoaded() bool {
+func (p *dbEducationProvider) ensureCharacterRanksLoaded(ctx context.Context) bool {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.rankMu.RLock()
 	if p.ranksLoaded {
@@ -373,7 +502,7 @@ func (p *dbEducationProvider) ensureCharacterRanksLoaded() bool {
 
 	items, err := p.client.Characterrank.Query().
 		Where(characterrank.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -392,8 +521,151 @@ func (p *dbEducationProvider) ensureCharacterRanksLoaded() bool {
 	return true
 }
 
-func (p *dbEducationProvider) ensureGateLevelsLoaded() bool {
+func (p *dbEducationProvider) ensureBondMasterLoaded(ctx context.Context) bool {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	p.bondMu.RLock()
+	if p.bondsLoaded {
+		p.bondMu.RUnlock()
+		return true
+	}
+	p.bondMu.RUnlock()
+
+	p.bondMu.Lock()
+	defer p.bondMu.Unlock()
+
+	if p.bondsLoaded {
+		return true
+	}
+
+	items, err := p.client.Bond.Query().
+		Where(bond.ServerRegionEQ(p.region.String())).
+		All(ctx)
+	if err != nil {
+		return false
+	}
+	p.bonds = make([]*Bond, 0, len(items))
+	for _, item := range items {
+		p.bonds = append(p.bonds, &Bond{
+			GroupID:      int(item.GroupID),
+			CharacterID1: int(item.CharacterId1),
+			CharacterID2: int(item.CharacterId2),
+		})
+	}
+
+	levels, err := p.client.Level.Query().
+		Where(level.ServerRegionEQ(p.region.String()), level.LevelTypeEQ("bonds")).
+		All(ctx)
+	if err != nil {
+		return false
+	}
+	p.bondLevels = make([]*BondLevel, 0, len(levels))
+	for _, item := range levels {
+		p.bondLevels = append(p.bondLevels, &BondLevel{
+			Level:    int(item.Level),
+			TotalExp: int(item.TotalExp),
+		})
+	}
+
+	p.bondsLoaded = true
+	return true
+}
+
+func (p *dbEducationProvider) ensureGameCharacterStylesLoaded(ctx context.Context) bool {
+	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	p.styleMu.RLock()
+	if p.stylesLoaded {
+		p.styleMu.RUnlock()
+		return true
+	}
+	p.styleMu.RUnlock()
+
+	p.styleMu.Lock()
+	defer p.styleMu.Unlock()
+
+	if p.stylesLoaded {
+		return true
+	}
+
+	items, err := p.client.Gamecharacterunit.Query().
+		Where(gamecharacterunit.ServerRegionEQ(p.region.String())).
+		All(ctx)
+	if err != nil {
+		return false
+	}
+	for _, item := range items {
+		p.stylesByGameID[int(item.GameID)] = &GameCharacterStyle{
+			GameID:      int(item.GameID),
+			CharacterID: int(item.GameCharacterID),
+			ColorCode:   strings.TrimSpace(item.ColorCode),
+		}
+	}
+
+	p.stylesLoaded = true
+	return true
+}
+
+func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bool {
+	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	p.missionMu.RLock()
+	if p.leaderMissionsLoaded {
+		p.missionMu.RUnlock()
+		return true
+	}
+	p.missionMu.RUnlock()
+
+	p.missionMu.Lock()
+	defer p.missionMu.Unlock()
+
+	if p.leaderMissionsLoaded {
+		return true
+	}
+
+	items, err := p.client.Charactermissionv2Parametergroup.Query().
+		Where(
+			charactermissionv2parametergroup.ServerRegionEQ(p.region.String()),
+			charactermissionv2parametergroup.GameIDIn(1, 101),
+		).
+		Order(charactermissionv2parametergroup.ByGameID(), charactermissionv2parametergroup.BySeq()).
+		All(ctx)
+	if err != nil {
+		return false
+	}
+	p.leaderRequirements = make([]LeaderMissionRequirement, 0)
+	for _, item := range items {
+		switch item.GameID {
+		case 1:
+			if requirement := int(item.Requirement); requirement > p.leaderMaxPlayLimit {
+				p.leaderMaxPlayLimit = requirement
+			}
+		case 101:
+			p.leaderRequirements = append(p.leaderRequirements, LeaderMissionRequirement{
+				Seq:         int(item.Seq),
+				Requirement: int(item.Requirement),
+			})
+		}
+	}
+
+	p.leaderMissionsLoaded = true
+	return true
+}
+
+func (p *dbEducationProvider) ensureGateLevelsLoaded(ctx context.Context) bool {
+	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.gateMu.RLock()
 	if p.gatesLoaded {
@@ -411,7 +683,7 @@ func (p *dbEducationProvider) ensureGateLevelsLoaded() bool {
 
 	items, err := p.client.Mysekaigatelevel.Query().
 		Where(mysekaigatelevel.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -430,8 +702,11 @@ func (p *dbEducationProvider) ensureGateLevelsLoaded() bool {
 	return true
 }
 
-func (p *dbEducationProvider) ensureShopItemsLoaded() bool {
+func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 	p.init()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	p.shopMu.RLock()
 	if p.shopsLoaded {
@@ -449,7 +724,7 @@ func (p *dbEducationProvider) ensureShopItemsLoaded() bool {
 
 	items, err := p.client.Shopitem.Query().
 		Where(shopitem.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return false
 	}
@@ -536,6 +811,51 @@ func cloneEdCharacterRank(source *CharacterRank) *CharacterRank {
 	}
 	c := *source
 	return &c
+}
+
+func cloneEdBonds(source []*Bond) []*Bond {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*Bond, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		c := *item
+		out = append(out, &c)
+	}
+	return out
+}
+
+func cloneEdBondLevels(source []*BondLevel) []*BondLevel {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*BondLevel, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		c := *item
+		out = append(out, &c)
+	}
+	return out
+}
+
+func cloneEdGameCharacterStyle(source *GameCharacterStyle) *GameCharacterStyle {
+	if source == nil {
+		return nil
+	}
+	c := *source
+	return &c
+}
+
+func cloneEdLeaderMissionRequirements(source []LeaderMissionRequirement) []LeaderMissionRequirement {
+	if len(source) == 0 {
+		return nil
+	}
+	return append([]LeaderMissionRequirement(nil), source...)
 }
 
 func cloneEdMysekaiGateLevel(source *MysekaiGateLevel) *MysekaiGateLevel {

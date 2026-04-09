@@ -15,6 +15,7 @@ import (
 	sekaiHandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/parser"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/drawing"
@@ -43,6 +44,21 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			sekaiAPI.GetSekaiAPIClient(),
 		)
 		renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
+		renderRuntime.Snapshots = renderuserdata.NewFallbackSnapshotProvider(
+			renderuserdata.NewToolboxSnapshotProvider(
+				renderRuntime.Bindings,
+				sekaiAPI.GetToolboxClient(),
+				renderRuntime.Sekai,
+				renderRuntime.Assets,
+			),
+			renderRuntime.Snapshots,
+		)
+		renderRuntime.MySekaiPayloads = renderuserdata.NewFallbackMySekaiPayloadProvider(
+			renderuserdata.NewToolboxMySekaiPayloadProvider(
+				renderRuntime.Bindings,
+				sekaiAPI.GetToolboxClient(),
+			),
+		)
 		if renderRuntime.Assets != nil {
 			bgStore := userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())
 			renderRuntime.Bindings.SetProfileBGStorage(bgStore)
@@ -57,7 +73,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 	mainLogger.Infof("Sekai runtime services configured")
 }
 
-func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client) *renderapp.App {
+func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client) *renderapp.App {
 	if !harukiConfig.Cfg.PJSKRender.Enabled {
 		return nil
 	}
@@ -65,19 +81,23 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		mainLogger.Errorf("PJSK render runtime requires sekai.enabled=true")
 		os.Exit(1)
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
 		metaRefreshInterval = harukiConfig.MetaRefreshInterval
 	}
 	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"))
-	if err := metaLoader.LoadAll(context.Background()); err != nil {
+	if err := metaLoader.LoadAll(ctx); err != nil {
 		mainLogger.Warnf("music meta initial load partially failed: %v", err)
 	}
-	metaLoader.StartBackgroundRefresh(context.Background(), metaRefreshInterval)
+	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
 	mainLogger.Infof("Music meta loader started (refresh=%s)", metaRefreshInterval)
 
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
+		InitContext:       ctx,
 		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
 		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
 		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
@@ -105,15 +125,11 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 		},
 		MetaLoader: metaLoader,
 		DeckRecommend: renderapp.DeckRecommendConfig{
-			Enabled:          harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
-			UseLocalEngine:   harukiConfig.Cfg.PJSKRender.DeckRecommend.UseLocalEngine,
-			ServiceBaseURL:   harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
-			LocalPoolSize:    harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalPoolSize,
-			LocalLibraryDirs: append([]string(nil), harukiConfig.Cfg.PJSKRender.DeckRecommend.LocalLibraryDirs...),
-			StaticDataDir:    harukiConfig.Cfg.PJSKRender.DeckRecommend.StaticDataDir,
-			MasterdataDir:    harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
-			Timeout:          harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
-			DefaultAlgs:      harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
+			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
+			ServiceBaseURL: harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
+			MasterdataDir:  harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
+			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
+			DefaultAlgs:    harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
 		},
 	})
 
@@ -124,9 +140,12 @@ func initPJSKRenderIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 	return runtime
 }
 
-func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client) *parser.GlobalCommandResolver {
+func initPJSKParserIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client) *parser.GlobalCommandResolver {
 	if !harukiConfig.Cfg.PJSK.Enabled || sekaiClient == nil {
 		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	parserCfg := harukiConfig.Cfg.PJSK.Parser
@@ -140,10 +159,10 @@ func initPJSKParserIfEnabled(mainLogger *harukiLogger.Logger, sekaiClient *sekai
 	}
 
 	loader := chardata.NewLoader(sekaiClient, region, harukiLogger.NewLoggerFromGlobal("Chardata"))
-	if err := loader.Load(context.Background()); err != nil {
+	if err := loader.Load(ctx); err != nil {
 		mainLogger.Warnf("chardata initial load failed (parser will use empty nicknames): %v", err)
 	}
-	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
+	loader.StartBackgroundRefresh(ctx, refreshInterval)
 
 	sekaiHandler.EnsureCommandHandlersRegistered(loader.Nicknames())
 	resolver := parser.NewGlobalCommandResolver(loader.Nicknames())
@@ -175,10 +194,13 @@ func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	return kp
 }
 
-func initCensorIfEnabled(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App) *censor.Service {
+func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App) *censor.Service {
 	cfg := harukiConfig.Cfg.Censor
 	if strings.TrimSpace(cfg.CensorDBType) == "" || strings.TrimSpace(cfg.CensorDBURL) == "" {
 		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
@@ -186,7 +208,7 @@ func initCensorIfEnabled(mainLogger *harukiLogger.Logger, renderRuntime *rendera
 		mainLogger.Errorf("Failed to connect to Censor DB: %v", err)
 		return nil
 	}
-	if err := censorClient.Schema.Create(context.Background()); err != nil {
+	if err := censorClient.Schema.Create(ctx); err != nil {
 		mainLogger.Errorf("Failed to create schema for Censor DB: %v", err)
 		_ = censorClient.Close()
 		return nil

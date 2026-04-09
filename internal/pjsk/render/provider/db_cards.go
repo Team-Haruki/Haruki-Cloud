@@ -62,8 +62,15 @@ func (p *dbCardProvider) init() {
 }
 
 func (p *dbCardProvider) GetByID(id int) (*masterdata.Card, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbCardProvider) getByID(ctx context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -76,7 +83,7 @@ func (p *dbCardProvider) GetByID(id int) (*masterdata.Card, error) {
 
 	entity, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query card %d: %w", id, err)
 	}
@@ -92,14 +99,21 @@ func (p *dbCardProvider) GetByID(id int) (*masterdata.Card, error) {
 }
 
 func (p *dbCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
+	return p.getByCharacterAndSeq(nil, characterID, seq)
+}
+
+func (p *dbCardProvider) getByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error) {
 	if characterID == 0 {
 		return nil, fmt.Errorf("character id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	entities, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.CharacterIDEQ(int64(characterID))).
 		Order(card.ByReleaseAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query cards by character: %w", err)
 	}
@@ -133,14 +147,21 @@ func (p *dbCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata
 }
 
 func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) {
+	return p.filter(nil, filter)
+}
+
+func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
 	if filter == nil {
 		return nil, fmt.Errorf("filter is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
 	query := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String()))
 
-	if eventCardIDs, err := p.resolveFilterEventCardIDs(filter); err != nil {
+	if eventCardIDs, err := p.resolveFilterEventCardIDs(ctx, filter); err != nil {
 		return nil, err
 	} else if len(eventCardIDs) == 0 && filter.EventID != 0 {
 		return nil, nil
@@ -162,7 +183,7 @@ func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) 
 		query = query.Where(card.ReleaseAtGTE(start), card.ReleaseAtLT(end))
 	}
 
-	entities, err := query.Order(card.ByReleaseAt()).All(context.Background())
+	entities, err := query.Order(card.ByReleaseAt()).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("filter cards: %w", err)
 	}
@@ -173,12 +194,12 @@ func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) 
 		if err != nil {
 			return nil, err
 		}
-		if !p.matchesUnitFilter(filter, model) {
+		if !p.matchesUnitFilter(ctx, filter, model) {
 			continue
 		}
 		if filter.SkillType != "" {
 			if p.skills != nil {
-				skillInfo, sErr := p.skills.GetByID(model.SkillID)
+				skillInfo, sErr := p.skills.getByID(ctx, model.SkillID)
 				if sErr != nil || skillInfo == nil || skillInfo.DescriptionSpriteName != filter.SkillType {
 					continue
 				}
@@ -186,7 +207,7 @@ func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) 
 				continue
 			}
 		}
-		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(model)) {
+		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.getSupplyType(ctx, model)) {
 			continue
 		}
 		results = append(results, common.CloneCard(model))
@@ -198,6 +219,10 @@ func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) 
 }
 
 func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
+	return p.getSupplyType(nil, cardInfo)
+}
+
+func (p *dbCardProvider) getSupplyType(ctx context.Context, cardInfo *masterdata.Card) string {
 	if cardInfo == nil {
 		return cardNormalizeSupplyType("")
 	}
@@ -206,6 +231,9 @@ func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
 	}
 	if cardInfo.CardSupplyID == 0 {
 		return cardNormalizeSupplyType("")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	p.supplyMu.RLock()
@@ -217,7 +245,7 @@ func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
 
 	entity, err := p.client.Cardsupplie.Query().
 		Where(cardsupplie.ServerRegionEQ(p.region.String()), cardsupplie.GameIDEQ(int64(cardInfo.CardSupplyID))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return cardNormalizeSupplyType("")
 	}
@@ -230,8 +258,15 @@ func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
 }
 
 func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
+	return p.getGachaByCardID(nil, cardID)
+}
+
+func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*masterdata.Gacha, error) {
 	if cardID == 0 {
 		return nil, fmt.Errorf("invalid card id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -243,7 +278,7 @@ func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error)
 	}
 	p.gachaMu.RUnlock()
 
-	cardInfo, err := p.GetByID(cardID)
+	cardInfo, err := p.getByID(ctx, cardID)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +290,7 @@ func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error)
 			gacha.EndAtGTE(cardInfo.ReleaseAt),
 		).
 		Order(gacha.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query gacha by card %d: %w", cardID, err)
 	}
@@ -264,7 +299,7 @@ func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error)
 			Where(gacha.ServerRegionEQ(p.region.String())).
 			Order(gacha.ByStartAt(sql.OrderDesc())).
 			Limit(30).
-			All(context.Background())
+			All(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("query recent gachas: %w", err)
 		}
@@ -288,8 +323,15 @@ func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error)
 }
 
 func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+	return p.getCostume3dsByCardID(nil, cardID)
+}
+
+func (p *dbCardProvider) getCostume3dsByCardID(ctx context.Context, cardID int) ([]*masterdata.Costume3d, error) {
 	if cardID == 0 {
 		return nil, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -303,7 +345,7 @@ func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costum
 	links, err := p.client.Cardcostume3D.Query().
 		Where(cardcostume3d.ServerRegionEQ(p.region.String()), cardcostume3d.CardIDEQ(int64(cardID))).
 		Order(cardcostume3d.ByCostume3DID()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query card costumes for card %d: %w", cardID, err)
 	}
@@ -315,7 +357,7 @@ func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costum
 	for _, link := range links {
 		entity, err := p.client.Costume3D.Query().
 			Where(costume3d.ServerRegionEQ(p.region.String()), costume3d.GameIDEQ(link.Costume3DID)).
-			Only(context.Background())
+			Only(ctx)
 		if err != nil {
 			continue
 		}
@@ -337,12 +379,16 @@ func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costum
 }
 
 func (p *dbCardProvider) GetUnitByCardID(cardID int) (string, error) {
-	cardInfo, err := p.GetByID(cardID)
+	return p.getUnitByCardID(nil, cardID)
+}
+
+func (p *dbCardProvider) getUnitByCardID(ctx context.Context, cardID int) (string, error) {
+	cardInfo, err := p.getByID(ctx, cardID)
 	if err != nil {
 		return "", err
 	}
 	if p.characters != nil {
-		character, cErr := p.characters.GetByID(cardInfo.CharacterID)
+		character, cErr := p.characters.getByID(ctx, cardInfo.CharacterID)
 		if cErr == nil && character != nil {
 			if character.Unit != "" && character.Unit != "piapro" {
 				return character.Unit, nil
@@ -356,14 +402,17 @@ func (p *dbCardProvider) GetUnitByCardID(cardID int) (string, error) {
 	return "", fmt.Errorf("character not found for card %d", cardID)
 }
 
-func (p *dbCardProvider) resolveFilterEventCardIDs(filter *CardFilter) ([]int64, error) {
+func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *CardFilter) ([]int64, error) {
 	if filter == nil || filter.EventID == 0 {
 		return nil, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	links, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(filter.EventID))).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query event cards for event %d: %w", filter.EventID, err)
 	}
@@ -378,7 +427,7 @@ func (p *dbCardProvider) resolveFilterEventCardIDs(filter *CardFilter) ([]int64,
 	return result, nil
 }
 
-func (p *dbCardProvider) matchesUnitFilter(filter *CardFilter, cardInfo *masterdata.Card) bool {
+func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilter, cardInfo *masterdata.Card) bool {
 	if filter == nil || cardInfo == nil {
 		return false
 	}
@@ -389,16 +438,19 @@ func (p *dbCardProvider) matchesUnitFilter(filter *CardFilter, cardInfo *masterd
 		return false
 	}
 
-	character, err := p.characters.GetByID(cardInfo.CharacterID)
+	character, err := p.characters.getByID(ctx, cardInfo.CharacterID)
 	if err != nil || character == nil {
 		return false
 	}
 	return cardMatchesUnitFilter(filter, character.Unit, cardInfo.SupportUnit)
 }
 
-func (p *dbCardProvider) getRawCardSupplyType(id int) string {
+func (p *dbCardProvider) getRawCardSupplyType(ctx context.Context, id int) string {
 	if id == 0 {
 		return cardNormalizeSupplyType("")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.supplyMu.RLock()
 	if cached, ok := p.supplyByID[id]; ok {
@@ -409,7 +461,7 @@ func (p *dbCardProvider) getRawCardSupplyType(id int) string {
 
 	supply, err := p.client.Cardsupplie.Query().
 		Where(cardsupplie.ServerRegionEQ(p.region.String()), cardsupplie.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return cardNormalizeSupplyType("")
 	}
@@ -421,15 +473,18 @@ func (p *dbCardProvider) getRawCardSupplyType(id int) string {
 	return value
 }
 
-func (p *dbCardProvider) isFestivalCard(supplyID int) bool {
-	typ := p.getRawCardSupplyType(supplyID)
+func (p *dbCardProvider) isFestivalCard(ctx context.Context, supplyID int) bool {
+	typ := p.getRawCardSupplyType(ctx, supplyID)
 	return typ == "colorful_festival_limited" || typ == "bloom_festival_limited"
 }
 
-func (p *dbCardProvider) getEventBannerCharacterID(eventID int) (int, error) {
+func (p *dbCardProvider) getEventBannerCharacterID(ctx context.Context, eventID int) (int, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	links, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(eventID))).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -437,11 +492,11 @@ func (p *dbCardProvider) getEventBannerCharacterID(eventID int) (int, error) {
 	minCardID := 0
 	selected := 0
 	for _, link := range links {
-		cardInfo, err := p.GetByID(int(link.CardID))
+		cardInfo, err := p.getByID(ctx, int(link.CardID))
 		if err != nil || cardInfo == nil {
 			continue
 		}
-		if p.isFestivalCard(cardInfo.CardSupplyID) {
+		if p.isFestivalCard(ctx, cardInfo.CardSupplyID) {
 			continue
 		}
 		if minCardID == 0 || cardInfo.ID < minCardID {
@@ -455,11 +510,14 @@ func (p *dbCardProvider) getEventBannerCharacterID(eventID int) (int, error) {
 	return selected, nil
 }
 
-func (p *dbCardProvider) getBanEventsByCharacter(charID int) ([]*masterdata.Event, error) {
+func (p *dbCardProvider) getBanEventsByCharacter(ctx context.Context, charID int) ([]*masterdata.Event, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	entities, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
 		Order(event.ByStartAt()).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +531,7 @@ func (p *dbCardProvider) getBanEventsByCharacter(charID int) ([]*masterdata.Even
 		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
 			continue
 		}
-		bannerCID, err := p.getEventBannerCharacterID(eventInfo.ID)
+		bannerCID, err := p.getEventBannerCharacterID(ctx, eventInfo.ID)
 		if err != nil || bannerCID != charID {
 			continue
 		}

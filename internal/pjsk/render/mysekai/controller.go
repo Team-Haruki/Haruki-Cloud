@@ -16,7 +16,7 @@ import (
 
 type Controller struct {
 	drawing        *drawing.HarukiDrawingClient
-	snapshot       *userdata.Service
+	snapshot       userdata.Snapshot
 	rawMySekaiJSON []byte // direct mysekai JSON (bypasses snapshot merge)
 	masterdata     masterdataSource
 	defaultRegion  renderregion.Value
@@ -84,7 +84,7 @@ var (
 // NewController creates a mysekai Controller. If sekaiDSN is non-empty the
 // controller queries the sekai database for masterdata; otherwise it falls
 // back to reading JSON files from masterdataDir.
-func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot *userdata.Service, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, sekaiDSN ...string) *Controller {
+func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot userdata.Snapshot, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, sekaiDSN ...string) *Controller {
 	region := renderregion.WithDefault(defaultRegion)
 	var md masterdataSource
 	if len(sekaiDSN) > 0 && strings.TrimSpace(sekaiDSN[0]) != "" {
@@ -165,7 +165,7 @@ func (c *Controller) staticPath(relPath string) string {
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
-func (c *Controller) WithSnapshot(s *userdata.Service) *Controller {
+func (c *Controller) WithSnapshot(s userdata.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}

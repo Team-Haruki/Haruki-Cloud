@@ -11,6 +11,10 @@ type EducationProvider interface {
 	GetAreaItemLevels(areaItemID int) []*AreaItemLevel
 	GetAreaItemLevel(areaItemID, level int) *AreaItemLevel
 	GetCharacterRank(characterID, rank int) *CharacterRank
+	GetBonds() []*Bond
+	GetBondLevels() []*BondLevel
+	GetGameCharacterStyle(gameID int) *GameCharacterStyle
+	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int)
 	GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem
 }
@@ -59,6 +63,28 @@ type CharacterRank struct {
 	CharacterID     int
 	Rank            int
 	Power1BonusRate float64
+}
+
+type Bond struct {
+	GroupID      int
+	CharacterID1 int
+	CharacterID2 int
+}
+
+type BondLevel struct {
+	Level    int
+	TotalExp int
+}
+
+type GameCharacterStyle struct {
+	GameID      int
+	CharacterID int
+	ColorCode   string
+}
+
+type LeaderMissionRequirement struct {
+	Seq         int
+	Requirement int
 }
 
 type MysekaiGateLevel struct {

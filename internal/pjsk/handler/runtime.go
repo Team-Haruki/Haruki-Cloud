@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
+	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 // RequestContext holds pre-resolved request-level data for a single command
@@ -30,6 +31,18 @@ type RequestContext struct {
 	binding      *accountdata.ResolvedBinding
 	harukiUserID int
 	bindingErr   error
+
+	// Lazy snapshot resolution
+	basicSnapshotOnce sync.Once
+	basicSnapshot     userdata.Snapshot
+	fullSnapshotOnce  sync.Once
+	fullSnapshot      userdata.Snapshot
+
+	// Lazy self target / public profile resolution
+	selfTargetOnce    sync.Once
+	selfTarget        *resolvedGameTarget
+	publicProfileOnce sync.Once
+	publicProfileResp *sekaiutils.GetAnotherProfileResponse
 
 	// Lazy profile resolution
 	profileOnce     sync.Once
@@ -75,30 +88,93 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 }
 
 // ResolveSnapshot fetches and builds a live snapshot from Toolbox.
-// NOT cached (needMySekai varies per call site), so no sync.Once.
-func (rc *RequestContext) ResolveSnapshot(needMySekai bool) *userdata.Service {
-	return resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, needMySekai)
+// Cached per request for suite-only and full(mysekai) modes separately.
+func (rc *RequestContext) ResolveSnapshot(needMySekai bool) userdata.Snapshot {
+	if needMySekai {
+		rc.fullSnapshotOnce.Do(func() {
+			rc.fullSnapshot = resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, true)
+		})
+		return rc.fullSnapshot
+	}
+	rc.basicSnapshotOnce.Do(func() {
+		rc.basicSnapshot = resolveLiveSnapshot(rc.Ctx, rc.Cmd, rc.App, false)
+	})
+	return rc.basicSnapshot
+}
+
+func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
+	rc.selfTargetOnce.Do(func() {
+		if rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
+			return
+		}
+		target, err := resolveGameTarget(rc.Ctx, userQueryParams{
+			Mode:           "self",
+			Platform:       rc.Platform,
+			PlatformUserID: rc.PlatformUserID,
+		}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+		if err != nil {
+			return
+		}
+		copy := target
+		rc.selfTarget = &copy
+	})
+	return rc.selfTarget
+}
+
+func (rc *RequestContext) GetPublicProfileResponse() *sekaiutils.GetAnotherProfileResponse {
+	rc.publicProfileOnce.Do(func() {
+		target := rc.GetSelfTarget()
+		if target == nil {
+			return
+		}
+		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
+		if err != nil {
+			return
+		}
+		rc.publicProfileResp = resp
+	})
+	return rc.publicProfileResp
+}
+
+func (rc *RequestContext) resolveProfiles() {
+	rc.profileOnce.Do(func() {
+		if target := rc.GetSelfTarget(); target != nil {
+			if resp := rc.GetPublicProfileResponse(); resp != nil {
+				rc.detailedProfile, rc.profileCard = buildPublicMusicProfilesFromResolvedTarget(
+					rc.Ctx,
+					*target,
+					rc.RegionStr,
+					rc.Platform,
+					rc.PlatformUserID,
+					resp,
+					rc.App,
+				)
+			}
+		}
+		if rc.detailedProfile == nil && rc.profileCard == nil {
+			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
+		}
+		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
+			if detail := snapshot.DetailedProfile(rc.Region); detail != nil {
+				rc.detailedProfile = detail
+			}
+			if card := snapshot.ProfileCard(rc.Region); card != nil {
+				rc.profileCard = card
+			}
+		}
+	})
 }
 
 // GetDetailedProfile lazily resolves the user's detailed profile, preferring
 // live snapshot data over Sekai API data.
 func (rc *RequestContext) GetDetailedProfile() *drawing.DetailedProfileCardRequest {
-	rc.profileOnce.Do(func() {
-		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
-		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
-			if detail := snapshot.DetailedProfile(rc.Region); detail != nil {
-				rc.detailedProfile = detail
-			}
-		}
-	})
+	rc.resolveProfiles()
 	return rc.detailedProfile
 }
 
 // GetProfileCard returns the compact profile card (resolved along with detailed profile).
 func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
-	rc.profileOnce.Do(func() {
-		rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc.Ctx, rc.Cmd, rc.App)
-	})
+	rc.resolveProfiles()
 	return rc.profileCard
 }
 

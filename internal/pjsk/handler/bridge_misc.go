@@ -13,7 +13,7 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 		req := drawing.CharaBirthdayRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if req.Cid <= 0 || req.Month <= 0 || req.Day <= 0 || len(req.Cards) == 0 {
-			reqPtr, resolveErr := requestbuilder.BuildMiscBirthdayRequest(rc.Cmd, rc.App)
+			reqPtr, resolveErr := requestbuilder.BuildMiscBirthdayRequest(rc.Ctx, rc.Cmd, rc.App)
 			if resolveErr != nil {
 				return nil, resolveErr
 			}

@@ -1,6 +1,7 @@
 package gacha
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -16,6 +17,15 @@ type ProviderAdapter struct {
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
 	return &ProviderAdapter{p: p}
+}
+
+func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
+	if a == nil {
+		return nil
+	}
+	clone := *a
+	clone.p = provider.WithContext(a.p, ctx)
+	return &clone
 }
 
 func (a *ProviderAdapter) DefaultRegion() renderregion.Value { return a.p.Region() }

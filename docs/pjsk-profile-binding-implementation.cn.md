@@ -3,6 +3,8 @@
 > 最后更新：2026-03-25
 >
 > 本文档记录 2026-03-24 这轮账号绑定相关改造的最终收口结果，重点说明命令链路、分层边界、代码落点、测试覆盖和后续注意事项。
+>
+> 2026-04-09 补充说明：文中涉及 `api/legacy/pjsk/*` 的章节与测试命令仅代表当时的兼容入口；相关 legacy 路由现已从仓库和运行时移除，当前应以 Bot 主协议与 `internal/pjsk/handler` / `internal/pjsk/userdata` 的现状为准。
 
 ## 1. 文档目的
 
@@ -440,13 +442,13 @@
 7. 调用 `commandhandler.Execute(c.Context(), ...)`
 8. 直接返回 JSON 包装的 `onebot11.Message`
 
-### 7.2 legacy API
+### 7.2 legacy API（历史记录）
 
 涉及：
 
 - `api/legacy/pjsk/command.go`
 
-当前行为也已统一改为：
+当时行为也已统一改为：
 
 1. `resolver.Resolve(...)`
 2. `commandhandler.Execute(...)`
@@ -454,7 +456,7 @@
 
 不过需要再次明确：
 
-`/internal/pjsk/command` 不是客户端主协议，而且账号绑定命令当前并不通过 `GlobalCommandResolver` 暴露给它。
+`/internal/pjsk/command` 当时就不是客户端主协议，而且账号绑定命令也并不通过 `GlobalCommandResolver` 暴露给它。
 
 ## 8. 与之前错误实现相比，已经修正的点
 
@@ -534,7 +536,7 @@
 2. 文本型命令现在通过真实的 `profile/bind + /绑定列表` 链路返回 JSON 文本
 3. `decodeCommand` 会保留 OneBot 消息段，并覆盖 `@qq` 场景
 
-### 9.4 `api/legacy/pjsk/command_test.go`
+### 9.4 `api/legacy/pjsk/command_test.go`（历史记录）
 
 覆盖：
 
@@ -549,6 +551,8 @@ go test ./internal/pjsk/userdata ./internal/pjsk/handler/... ./api/bot/pjsk ./ap
 ```
 
 补充说明：
+
+- 这条命令中的 `./api/legacy/pjsk` 只对应当时的兼容入口验证；当前仓库已不再包含该包。
 
 当前 `uidArg` 通用解析相关测试还覆盖了：
 

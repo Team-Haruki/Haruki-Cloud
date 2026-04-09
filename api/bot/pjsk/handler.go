@@ -57,14 +57,21 @@ const botRouteBase = "/api/v2/bot"
 // data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
 func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
+	RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)
+}
+
+func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
 	if renderApp == nil {
 		return
+	}
+	if initCtx == nil {
+		initCtx = context.Background()
 	}
 
 	sekaihandler.EnsureCommandHandlersRegistered(nil)
 
 	if botDBClient != nil {
-		if err := SeedCommandManifests(context.Background(), botDBClient); err != nil {
+		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {
 			// Non-fatal: manifest table seed failure should not block startup.
 			_ = err
 		}
@@ -107,11 +114,11 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 
-		resolved, err := resolveBotCommand(req.Message, expectedPath, req)
+		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
 		if err != nil && legacySKPredictCompat {
 			var validationErr *botValidationError
 			if errors.As(err, &validationErr) && strings.Contains(validationErr.Error(), "belongs to path sk/predict") {
-				resolved, err = resolveBotCommand(req.Message, "sk/predict", req)
+				resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
 			}
 		}
 		if err != nil {
@@ -235,7 +242,7 @@ func (e *botValidationError) Error() string {
 	return e.msg
 }
 
-func resolveBotCommand(message onebot11.Message, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
 
 	matchedCommand := req.MatchedCommand
 	messageType := commandhandler.MessageTypePrivate
@@ -251,7 +258,7 @@ func resolveBotCommand(message onebot11.Message, expectedPath string, req BotCom
 		GroupId:     req.PlatformGroupID,
 	}
 
-	ctx, err := commandhandler.BuildContext(context.Background(), event)
+	ctx, err := commandhandler.BuildContext(requestCtx, event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build handler context: %w", err)
 	}

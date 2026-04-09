@@ -74,8 +74,15 @@ func (p *dbHonorProvider) init() {
 }
 
 func (p *dbHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
+	return p.getByID(nil, id)
+}
+
+func (p *dbHonorProvider) getByID(ctx context.Context, id int) (*masterdata.Honor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -88,7 +95,7 @@ func (p *dbHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
 
 	entity, err := p.client.Honor.Query().
 		Where(sekaiHonor.ServerRegionEQ(p.region.String()), sekaiHonor.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query honor %d: %w", id, err)
 	}
@@ -104,8 +111,15 @@ func (p *dbHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
 }
 
 func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
+	return p.getGroupByID(nil, id)
+}
+
+func (p *dbHonorProvider) getGroupByID(ctx context.Context, id int) (*masterdata.HonorGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor group id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -118,7 +132,7 @@ func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
 
 	entity, err := p.client.Honorgroup.Query().
 		Where(honorgroup.ServerRegionEQ(p.region.String()), honorgroup.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query honor group %d: %w", id, err)
 	}
@@ -136,7 +150,7 @@ func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
 		model.FrameName = &value
 	}
 	if model.HonorType == "birthday" && (model.BackgroundAssetBundleName == nil || model.FrameName == nil) {
-		if derived, ok := p.deriveBirthdayAssetsForGroup(int(entity.GameID), model.Name); ok {
+		if derived, ok := p.deriveBirthdayAssetsForGroup(ctx, int(entity.GameID), model.Name); ok {
 			if model.BackgroundAssetBundleName == nil && derived.background != "" {
 				value := derived.background
 				model.BackgroundAssetBundleName = &value
@@ -162,8 +176,15 @@ func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
 }
 
 func (p *dbHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
+	return p.getBondsHonorByID(nil, id)
+}
+
+func (p *dbHonorProvider) getBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid bonds honor id")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -176,7 +197,7 @@ func (p *dbHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, err
 
 	entity, err := p.client.Bondshonor.Query().
 		Where(bondshonor.ServerRegionEQ(p.region.String()), bondshonor.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query bonds honor %d: %w", id, err)
 	}
@@ -197,8 +218,15 @@ func (p *dbHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, err
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
+	return p.getGameCharacterUnitByID(nil, id)
+}
+
+func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {
 	if id == 0 {
 		return nil, false
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -211,7 +239,7 @@ func (p *dbHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameChar
 
 	entity, err := p.client.Gamecharacterunit.Query().
 		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameIDEQ(int64(id))).
-		Only(context.Background())
+		Only(ctx)
 	if err != nil {
 		return nil, false
 	}
@@ -229,8 +257,15 @@ func (p *dbHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameChar
 }
 
 func (p *dbHonorProvider) GetEventIDByHonorID(honorID int) int {
+	return p.getEventIDByHonorID(nil, honorID)
+}
+
+func (p *dbHonorProvider) getEventIDByHonorID(ctx context.Context, honorID int) int {
 	if honorID == 0 {
 		return 0
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	p.init()
 
@@ -250,7 +285,7 @@ func (p *dbHonorProvider) GetEventIDByHonorID(honorID int) int {
 
 	items, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
 		return 0
 	}
@@ -283,7 +318,7 @@ type honorRewardDetail struct {
 	ResourceID   int    `json:"resourceId"`
 }
 
-func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(groupID int, groupName string) (honorBirthdayAssets, bool) {
+func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(ctx context.Context, groupID int, groupName string) (honorBirthdayAssets, bool) {
 	p.birthdayMu.RLock()
 	if cached, ok := p.birthdayByGroup[groupID]; ok {
 		p.birthdayMu.RUnlock()
@@ -298,9 +333,12 @@ func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(groupID int, groupName st
 	}
 
 	if !p.birthdayLoaded {
+		if ctx == nil {
+			ctx = context.Background()
+		}
 		rows, err := p.client.Gamecharacter.Query().
 			Where(gamecharacter.ServerRegionEQ(p.region.String())).
-			All(context.Background())
+			All(ctx)
 		if err == nil {
 			p.birthdayChars = rows
 		}

@@ -12,8 +12,12 @@ import (
 )
 
 func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
-	if rc.App != nil && rc.App.Music != nil && rc.App.Aliases != nil {
-		rc.App.Music.SetAliasResolver(rc.App.Aliases)
+	var musicCtrl *music.Controller
+	if rc.App != nil && rc.App.Music != nil {
+		musicCtrl = rc.App.Music.WithContext(rc.Ctx)
+		if rc.App.Aliases != nil {
+			musicCtrl.SetAliasResolver(rc.App.Aliases)
+		}
 	}
 	var data []byte
 	switch rc.Cmd.Mode {
@@ -21,7 +25,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 		req := drawing.ScoreControlRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
-			reqPtr, resolveErr := requestbuilder.BuildScoreControlRequest(rc.Cmd, rc.App)
+			reqPtr, resolveErr := requestbuilder.BuildScoreControlRequest(rc.Ctx, rc.Cmd, rc.App)
 			if resolveErr != nil {
 				return nil, resolveErr
 			}
@@ -51,7 +55,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 		if len(params.Queries) == 0 {
 			params.Queries = splitScoreMusicMetaQueries(rc.Cmd.Query)
 		}
-		req, resolveErr := rc.App.Music.ResolveMusicMetaRequests(rc.Cmd.Region, params.Queries)
+		req, resolveErr := musicCtrl.ResolveMusicMetaRequests(rc.Cmd.Region, params.Queries)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
@@ -68,7 +72,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			if len(rc.Cmd.Params) == 0 && len(boardQuery.SpecQueries) == 0 {
 				boardQuery.SpecQueries = splitScoreMusicMetaQueries(rc.Cmd.Query)
 			}
-			reqPtr, resolveErr := rc.App.Music.ResolveMusicBoardRequest(rc.Cmd.Region, boardQuery)
+			reqPtr, resolveErr := musicCtrl.ResolveMusicBoardRequest(rc.Cmd.Region, boardQuery)
 			if resolveErr != nil {
 				return nil, resolveErr
 			}

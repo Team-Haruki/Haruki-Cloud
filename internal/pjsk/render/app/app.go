@@ -35,6 +35,7 @@ import (
 )
 
 type Config struct {
+	InitContext       context.Context
 	DefaultRegion     renderregion.Value
 	DrawingBaseURL    string
 	DrawingTimeout    time.Duration
@@ -67,51 +68,53 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled          bool
-	UseLocalEngine   bool
-	ServiceBaseURL   string
-	LocalPoolSize    int
-	LocalLibraryDirs []string
-	StaticDataDir    string
-	MasterdataDir    string
-	Timeout          time.Duration
-	DefaultAlgs      []string
+	Enabled        bool
+	ServiceBaseURL string
+	MasterdataDir  string
+	Timeout        time.Duration
+	DefaultAlgs    []string
 }
 
 type App struct {
-	Sekai      *sekaiDB.Client
-	PJSK       *pjskDB.Client
-	Drawing    *drawing.HarukiDrawingClient
-	Assets     *assets.AssetHelper
-	MetaLoader *meta.Loader
-	Provider   provider.MasterDataProvider
-	Cards      *card.Controller
-	Decks      *deck.Controller
-	Edu        *education.Controller
-	Events     *event.Controller
-	Gachas     *gacha.Controller
-	Honors     *honor.Controller
-	Misc       *misc.Controller
-	MySekai    *mysekai.Controller
-	Music      *music.Controller
-	Aliases    *pjskalias.Service
-	Profiles   *profile.Controller
-	Score      *score.Controller
-	SK         *sk.Controller
-	Stamps     *stamp.Controller
-	VLive      *vlive.Controller
-	Bindings   *accountdata.BindingService
-	BanChecker *accountdata.BanService
-	ImageCache *imagecache.Client
-	Censor     *censor.Service
-	Config     Config
+	Sekai           *sekaiDB.Client
+	PJSK            *pjskDB.Client
+	Drawing         *drawing.HarukiDrawingClient
+	Assets          *assets.AssetHelper
+	MetaLoader      *meta.Loader
+	Provider        provider.MasterDataProvider
+	Cards           *card.Controller
+	Decks           *deck.Controller
+	Edu             *education.Controller
+	Events          *event.Controller
+	Gachas          *gacha.Controller
+	Honors          *honor.Controller
+	Misc            *misc.Controller
+	MySekai         *mysekai.Controller
+	Music           *music.Controller
+	Aliases         *pjskalias.Service
+	Profiles        *profile.Controller
+	Score           *score.Controller
+	SK              *sk.Controller
+	Stamps          *stamp.Controller
+	VLive           *vlive.Controller
+	Bindings        *accountdata.BindingService
+	BanChecker      *accountdata.BanService
+	Snapshots       userdata.SnapshotProvider
+	MySekaiPayloads userdata.MySekaiPayloadProvider
+	ImageCache      *imagecache.Client
+	Censor          *censor.Service
+	Config          Config
 }
 
 func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *App {
 	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
+	initCtx := cfg.InitContext
+	if initCtx == nil {
+		initCtx = context.Background()
+	}
 
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
-	var snapshotService *userdata.Service
+	var snapshotService userdata.Snapshot
 	if provider := strings.TrimSpace(cfg.UserSnapshot.Provider); provider == "" || strings.EqualFold(provider, "local_file") {
 		snapshotService = userdata.NewLocalFileService(sekaiClient, assetHelper, userdata.LocalFileConfig{
 			DefaultRegion: cfg.DefaultRegion,
@@ -138,15 +141,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion, assetHelper, cfg.SekaiDSN)
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-		Enabled:          cfg.DeckRecommend.Enabled,
-		UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
-		ServiceBaseURL:   cfg.DeckRecommend.ServiceBaseURL,
-		LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
-		LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
-		StaticDataDir:    cfg.DeckRecommend.StaticDataDir,
-		MasterdataDir:    cfg.DeckRecommend.MasterdataDir,
-		Timeout:          cfg.DeckRecommend.Timeout,
-		DefaultAlgs:      append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+		Enabled:        cfg.DeckRecommend.Enabled,
+		ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
+		MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
+		Timeout:        cfg.DeckRecommend.Timeout,
+		DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -178,15 +177,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		// Initialize controllers with provider adapters.
 		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-			Enabled:          cfg.DeckRecommend.Enabled,
-			UseLocalEngine:   cfg.DeckRecommend.UseLocalEngine,
-			ServiceBaseURL:   cfg.DeckRecommend.ServiceBaseURL,
-			LocalPoolSize:    cfg.DeckRecommend.LocalPoolSize,
-			LocalLibraryDirs: append([]string(nil), cfg.DeckRecommend.LocalLibraryDirs...),
-			StaticDataDir:    cfg.DeckRecommend.StaticDataDir,
-			MasterdataDir:    cfg.DeckRecommend.MasterdataDir,
-			Timeout:          cfg.DeckRecommend.Timeout,
-			DefaultAlgs:      append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+			Enabled:        cfg.DeckRecommend.Enabled,
+			ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
+			MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
+			Timeout:        cfg.DeckRecommend.Timeout,
+			DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 		}, cfg.MetaLoader)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
 		educationController.RegisterSource(educationAdapter)
@@ -241,8 +236,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var imgStore *imagecache.PGStore
 	if cfg.ImageCachePGURL != "" {
 		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
-			_ = store.Init(context.Background())
-			imgStore = store
+			if err := store.Init(initCtx); err == nil {
+				imgStore = store
+			} else {
+				_ = store.Close()
+			}
 		}
 	}
 
@@ -275,6 +273,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SK:         skController,
 		Stamps:     stampController,
 		VLive:      vliveController,
+		Snapshots:  userdata.NewStaticSnapshotProvider(snapshotService),
 		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
 		Censor:     cfg.CensorService,
 		Config:     cfg,
@@ -286,4 +285,11 @@ func (a *App) AssetRoots() []string {
 		return nil
 	}
 	return a.Assets.Roots()
+}
+
+func (a *App) Close() error {
+	if a == nil || a.ImageCache == nil {
+		return nil
+	}
+	return a.ImageCache.Close()
 }

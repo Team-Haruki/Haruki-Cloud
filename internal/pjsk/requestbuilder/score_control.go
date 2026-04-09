@@ -1,6 +1,7 @@
 package requestbuilder
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -39,12 +40,16 @@ type scoreControlSelection struct {
 	WL          bool   `json:"wl,omitempty"`
 }
 
-func BuildScoreControlRequest(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.ScoreControlRequest, error) {
+func BuildScoreControlRequest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.ScoreControlRequest, error) {
 	if app == nil || app.Music == nil {
 		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	musicCtrl := app.Music.WithContext(ctx)
 	if app.Aliases != nil {
-		app.Music.SetAliasResolver(app.Aliases)
+		musicCtrl.SetAliasResolver(app.Aliases)
 	}
 
 	params, err := resolveScoreControlSelection(r)
@@ -60,7 +65,7 @@ func BuildScoreControlRequest(r *parser.ResolvedCommand, app *renderapp.App) (*d
 		query = strconv.Itoa(scoreControlDefaultMusicID)
 	}
 
-	requests, err := app.Music.ResolveMusicMetaRequests(r.Region, []string{query})
+	requests, err := musicCtrl.ResolveMusicMetaRequests(r.Region, []string{query})
 	if err != nil {
 		return nil, err
 	}

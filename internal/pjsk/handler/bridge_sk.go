@@ -17,6 +17,7 @@ import (
 )
 
 func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
+	skCtrl := rc.App.SK.WithContext(rc.Ctx)
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "sk-line":
@@ -24,76 +25,76 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildLineRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildLineRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderLine(*payload)
+			data, err = skCtrl.RenderLine(*payload)
 			break
 		}
 		req := sk.LineRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderLine(req)
+		data, err = skCtrl.RenderLine(req)
 	case "sk-query":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildQueryRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildQueryRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderQuery(*payload)
+			data, err = skCtrl.RenderQuery(*payload)
 			break
 		}
 		req := drawing.SKRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderQuery(req)
+		data, err = skCtrl.RenderQuery(req)
 	case "sk-check-room":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildCheckRoomRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildCheckRoomRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderCheckRoom(*payload)
+			data, err = skCtrl.RenderCheckRoom(*payload)
 			break
 		}
 		req := drawing.CFRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderCheckRoom(req)
+		data, err = skCtrl.RenderCheckRoom(req)
 	case "sk-speed":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildSpeedRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildSpeedRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderSpeed(*payload)
+			data, err = skCtrl.RenderSpeed(*payload)
 			break
 		}
 		req := drawing.SpeedRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderSpeed(req)
+		data, err = skCtrl.RenderSpeed(req)
 	case "sk-daily-speed":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildSpeedRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildSpeedRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderSpeed(*payload)
+			data, err = skCtrl.RenderSpeed(*payload)
 			break
 		}
 		req := drawing.SpeedRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderSpeed(req)
+		data, err = skCtrl.RenderSpeed(req)
 	case "sk-player-trace":
 		trackerReq, ok := trackerRankQueryFromParams(rc.Cmd)
 		if !ok {
@@ -121,50 +122,50 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 		}
 		if trackerReq.UserID != nil || len(trackerReq.Ranks) > 0 {
-			payload, buildErr := rc.App.SK.BuildPlayerTraceFromTracker(trackerReq)
+			payload, buildErr := skCtrl.BuildPlayerTraceFromTracker(trackerReq)
 			if buildErr != nil {
 				return nil, buildErr
 			}
-			data, err = rc.App.SK.RenderPlayerTrace(*payload)
+			data, err = skCtrl.RenderPlayerTrace(*payload)
 			break
 		}
 		req := drawing.PlayerTraceRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderPlayerTrace(req)
+		data, err = skCtrl.RenderPlayerTrace(req)
 	case "sk-rank-trace":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildRankTraceRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildRankTraceRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderRankTrace(*payload)
+			data, err = skCtrl.RenderRankTrace(*payload)
 			break
 		}
 		req := drawing.RankTraceRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderRankTrace(req)
+		data, err = skCtrl.RenderRankTrace(req)
 	case "sk-predict":
 		if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 			if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 				return nil, err
 			}
-			payload, err := rc.App.SK.BuildPredictLineRequestFromTracker(trackerReq)
+			payload, err := skCtrl.BuildPredictLineRequestFromTracker(trackerReq)
 			if err != nil {
 				return nil, err
 			}
-			data, err = rc.App.SK.RenderLine(*payload)
+			data, err = skCtrl.RenderLine(*payload)
 			break
 		}
 		req := sk.LineRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderLine(req)
+		data, err = skCtrl.RenderLine(req)
 	case "sk-winrate":
 		req := drawing.WinRateRequest{}
 		mergeParams(rc.Cmd.Params, &req)
-		data, err = rc.App.SK.RenderWinRate(req)
+		data, err = skCtrl.RenderWinRate(req)
 	default:
 		return nil, unsupportedModeError("sk", rc.Cmd.Mode)
 	}

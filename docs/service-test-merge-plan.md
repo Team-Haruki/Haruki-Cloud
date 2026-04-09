@@ -1,5 +1,14 @@
 # Service-Test -> Haruki-Cloud Merge Plan
 
+> Historical note (2026-04-09):
+>
+> - `api/legacy/pjsk/` has been removed from both repository and runtime
+> - `internal/pjsk/render/deck/deck_cgo/` has been removed from the repository
+> - deck recommendation runtime is now HTTP-service-only
+>
+> Any remaining mentions of legacy routes, local native engine, or `use_local_engine`
+> in this document describe staged migration history rather than the current implementation.
+
 ## 1. Conclusion
 
 This merge should be done as "move business logic into Haruki-Cloud, rebuild the transport layer around Haruki-Cloud conventions, and do not keep a code-level Service-Test compatibility layer by default".

@@ -838,3 +838,40 @@ func resolveBindingWithFallback(
 ---
 
 > 文档更新日期：2026-04-01
+>
+> 2026-04-10 追加：阶段 A-D 代码审计与架构优化已完成
+
+---
+
+## 阶段 A-D 代码审计与架构优化（2026-04-10）
+
+在 P0-R28 基础上，对全项目进行系统性代码审计，发现 18 个改进点并按 A-D 四阶段执行。
+
+### 阶段 A：快速修复 ✅（commit 220ed19）
+
+- A1: 删除 bridge_event + cache_helpers 7 个未调用函数
+- A2: 合并重复的 UUID 掩码函数（arrestDisplayUID → maskPJSKUID）
+- A3: 修复 bridge_card.go 隐式 (nil, nil) return
+- A4: 补充 honor adapter 缺失的 WithContext() 方法
+- A5: checkdata 绑定解析用 resolveBindingWithFallback 替换重复闭包
+
+### 阶段 C：模式统一 ✅（commit 3a91f48）
+
+- C1: helper 函数签名统一为 *RequestContext（resolver.go, bridge_event/sk/card, runtime.go）
+- C2: api/helper.go 错误处理清理
+- C3: cmd/server 初始化模式统一（init_database.go, init_services.go, server.go）
+- C4: API 缓存中间件抽象（helper.go + chunithm/pjsk 路由）
+
+### 阶段 D：架构优化 ✅（commit 22b12df）
+
+- **D1: ProviderAdapter 基类**：创建 `provider.ProviderAdapterBase`，嵌入 `MasterDataProvider` 并提供 `DefaultRegion()` 和 `CloneWithContext()` 方法。9 个 render 模块的 adapter_provider.go 均改为嵌入基类。
+- **D2: contextual.go 泛型简化**：已分析，因 Go 泛型无法抽象不同接口方法集而标记为 blocked（需代码生成）
+- **D3: lazyValue[T] 泛型**：创建 `provider/lazy.go`，用 `lazyValue[T]` 替换 11 个 local_*.go 文件中的 40+ 个 `sync.Once` + error + data 字段三元组。多值 loader 使用私有 wrapper struct（cardIndex, eventIndex, musicIndex 等）。
+- **D4: Sekai 客户端基础提取**：创建 `sekai/client_base.go`，提取共享的 `newRestyClient()` 和 `isRetryable` 重试逻辑。3 个 HTTP 客户端（api, toolbox, tracker）共享同一份重试配置。
+
+### 净效果
+
+- 减少约 110 行重复代码
+- 消除 40+ 个 sync.Once 字段三元组
+- 消除 9× 重复的 DefaultRegion/WithContext 模板
+- 消除 3× 重复的 resty 重试逻辑

@@ -25,11 +25,11 @@ type Controller struct {
 	nicknames map[string]int
 }
 
-type cardContextualDataSource interface {
+type contextualDataSource interface {
 	WithContext(ctx context.Context) DataSource
 }
 
-type cardContextualEventSource interface {
+type contextualEventSource interface {
 	WithContext(ctx context.Context) event.DataSource
 }
 
@@ -64,7 +64,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone := *c
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
-		if contextual, ok := any(source).(cardContextualDataSource); ok {
+		if contextual, ok := any(source).(contextualDataSource); ok {
 			clone.sources.RegisterSource(contextual.WithContext(ctx))
 			continue
 		}
@@ -72,7 +72,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	}
 	clone.events = regionsource.NewRegistry[event.DataSource](c.events.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.events.OrderedSources() {
-		if contextual, ok := any(source).(cardContextualEventSource); ok {
+		if contextual, ok := any(source).(contextualEventSource); ok {
 			clone.events.RegisterSource(contextual.WithContext(ctx))
 			continue
 		}

@@ -18,7 +18,7 @@ func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int,
 		case token == "full" || token == "-f" || token == "--full":
 			full = true
 			continue
-		case strings.HasPrefix(token, "event") && isDigits(token[5:]):
+		case strings.HasPrefix(token, "event") && len(token) > 5 && isDigits(token[5:]):
 			eventID, _ = strconv.Atoi(token[5:])
 			continue
 		case strings.HasPrefix(token, "e") && len(token) > 1 && isDigits(token[1:]):

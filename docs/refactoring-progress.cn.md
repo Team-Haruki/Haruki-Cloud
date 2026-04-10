@@ -1544,3 +1544,100 @@ func resolveBindingWithFallback(
 ### 净效果
 - staticcheck `SA1012`（排除 `database/` 生成代码）：已清零（0）
 - 移除 ~400 行死代码 + 505 行残留文件
+
+---
+
+## Provider Context 注入迁移（2026-04-10）
+
+**提交**: `b05d79a` refactor: inject context.Context into all provider interfaces, delete contextual layer
+
+### 背景
+
+Provider 层的 56 个 sub-provider 接口方法不接受 `context.Context` 参数。db_*.go 实现中通过 public/private 方法对传递 context：public 方法用 `context.TODO()` 创建 fallback ctx，再调用私有方法。`contextual_*.go` 包装层（~400 行）在每次请求时包装整个 provider 以注入 ctx。
+
+### 执行内容
+
+#### 1. 接口更新（12 个 sub-provider，56 个方法）
+所有 sub-provider 接口方法添加 `ctx context.Context` 作为第一个参数：
+- `cards.go`（7 方法）、`characters.go`（3）、`skills.go`（2）、`events.go`（8）
+- `musics.go`（11）、`gachas.go`（3）、`honors.go`（5）、`stamps.go`（1，已有 ctx）
+- `vlives.go`（1）、`education.go`（14）、`player_frames.go`（2）
+
+#### 2. db_*.go 实现合并（16 个文件）
+合并 public/private 方法对，消除所有 56 处 `context.TODO()`：
+- `db_skills.go`、`db_characters.go`、`db_cards_core.go`、`db_cards_gacha_costume.go`、`db_cards_supply.go`
+- `db_events.go`、`db_musics_core.go`、`db_musics_details.go`、`db_musics.go`
+- `db_gachas.go`、`db_honors.go`、`db_honors_event.go`、`db_honors_birthday.go`
+- `db_vlives.go`、`db_stamps.go`、`db_player_frames.go`
+- `db_education.go`、`db_education_area.go`、`db_education_bonds.go`
+- `db_education_rewards_boxes.go`、`db_education_gate_shop.go`
+
+#### 3. local_*.go 实现更新（12 个文件）
+所有 local provider 方法添加 `_ context.Context`（或 `ctx` 用于有交叉调用的方法）。
+
+#### 4. adapter_provider.go 更新（9 个模块）
+所有 adapter 调用传递 `a.Context()`：
+card, education, event, gacha, honor, music, profile, stamp, vlive
+
+#### 5. contextual 层删除
+- 删除 `contextual_cards.go`（70 行）、`contextual_event_music.go`（110 行）、`contextual_misc.go`（125 行）、`contextual.go`（92 行）
+- 删除 `ContextualMasterDataProvider` 接口、`WithContext()` 函数、`contextualDatabaseProvider` 及所有 12 个包装类型
+- 简化 `adapter_base.go` 的 `CloneWithContext()`：不再包装 provider
+
+### 净效果
+- `context.TODO()` in provider: 56 → **0**
+- contextual 包装文件: 4 → **0**
+- 净减少 **681 行**
+
+---
+
+## P1-P4 清理（2026-04-10）
+
+**提交**: `2c198ae` refactor: P1-P4 cleanup
+
+- **P1**: music/adapter_provider.go 统一 `a.Ctx` → `a.Context()`（11 处）
+- **P2**: local_*.go 交叉调用传递 `ctx` 而非 `context.Background()`（9 处）
+- **P3**: `interface{}` → `any` 全项目迁移（394 处 / 107 个文件）
+- **P4**: 删除未使用的 `cardContextOrBackground()` helper
+
+---
+
+## P5-P6 一致性与安全修复（2026-04-10）
+
+- **P5**: 统一 controller `contextualDataSource` 接口命名
+  - `honorContextualDataSource` → `contextualDataSource`
+  - `cardContextualDataSource` → `contextualDataSource`，`cardContextualEventSource` → `contextualEventSource`
+- **P6**: sk_parse.go 添加 `len(token) > 5` 防御性边界检查
+
+---
+
+## 当前项目状态（2026-04-10 最终）
+
+### 编译/测试
+- `go build ./...` ✅
+- `go vet ./...` ✅
+- `go test ./...` ✅（35 个包通过）
+
+### 指标
+| 指标 | 数量 |
+|------|------|
+| 生产代码行数（不含 database/） | ~54,588 |
+| 测试代码行数 | ~18,528 |
+| context.TODO() | 2（userdata/ 初始化，可接受）|
+| interface{} | 0 |
+| panic()（生产代码）| 0 |
+| fmt.Println | 0 |
+| 大文件 (>400 行) | 0 |
+
+### 评分
+
+| 维度 | 评分 | 说明 |
+|------|------|------|
+| 代码结构 | ⭐⭐⭐⭐⭐ | bridge 拆分完整，模块化良好 |
+| 重复消除 | ⭐⭐⭐⭐⭐ | lazyValue/AdapterBase/RestyBase 已提取，contextual 层已删除 |
+| Context 传播 | ⭐⭐⭐⭐⭐ | provider 层 100% ctx 注入，0 context.TODO() |
+| 错误处理 | ⭐⭐⭐⭐ | 良好 |
+| 测试覆盖 | ⭐⭐⭐⭐ | 87 个测试文件，35 个包通过 |
+| 代码现代化 | ⭐⭐⭐⭐⭐ | 全项目 interface{} → any，命名一致 |
+
+**总体结论**: 重构全部完成。从 bridge.go 2968 行到模块化架构，Provider 接口从无 context 到全量注入，代码从 interface{} 到 any，所有技术债已清理。

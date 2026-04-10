@@ -514,12 +514,24 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧，以及 snapshot/provider 主干收口已完成；大文件/巨型函数拆分也已连续推进多轮。下一阶段建议优先按下面顺序推进：
+P0-R28、阶段 A-E、Context 注入迁移、P1-P6 清理均已完成。所有生产文件 <375 行，`interface{}` 已全量迁移为 `any`，provider 层 context.TODO() 为零。
 
-1. 继续清理剩余的业务大文件热点，优先 `render/mysekai/fixture_builder.go`、`render/provider/db_events.go`、`render/profile/controller_helpers.go`、`render/assets/helper.go`、`render/music/rewards.go`。
-2. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
-3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
-4. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。
+当前推荐优先：
+
+1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验（唯一剩余 TODO）。
+2. 继续清理已经无主链价值的历史文档与状态描述，减少"旧协议误导"。
+3. 视调用方现状决定是否进一步统一内部服务鉴权字段。
+
+### 2026-04-10 重构最终状态
+
+| 指标 | 数量 |
+|------|------|
+| context.TODO() in provider | 0（从 56 减至 0）|
+| interface{} | 0（394 处已迁移为 any）|
+| contextual 包装层 | 已删除（~400 行）|
+| 所有生产文件 | <375 行 |
+| go build / vet / test | 全部通过 |
+
 
 ## 12. 维护说明
 

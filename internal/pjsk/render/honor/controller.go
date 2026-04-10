@@ -10,9 +10,9 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-// honorContextualDataSource is the local interface for type-asserting
+// contextualDataSource is the local interface for type-asserting
 // DataSource implementations that support context injection.
-type honorContextualDataSource interface {
+type contextualDataSource interface {
 	WithContext(ctx context.Context) DataSource
 }
 
@@ -46,7 +46,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone := *c
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
-		if contextual, ok := any(source).(honorContextualDataSource); ok {
+		if contextual, ok := any(source).(contextualDataSource); ok {
 			clone.sources.RegisterSource(contextual.WithContext(ctx))
 			continue
 		}

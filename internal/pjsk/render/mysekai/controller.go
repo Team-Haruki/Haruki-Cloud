@@ -77,17 +77,26 @@ var (
 	}
 )
 
-// NewController creates a mysekai Controller. If sekaiDSN is non-empty the
-// controller queries the sekai database for masterdata; otherwise it falls
-// back to reading JSON files from masterdataDir.
-func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot userdata.Snapshot, masterdataDir string, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, sekaiDSN ...string) *Controller {
+// MasterdataOptions configures the masterdata source for NewController.
+type MasterdataOptions struct {
+	SekaiDSN      string
+	LocalDir      string
+	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
+}
+
+// NewController creates a mysekai Controller. If SekaiDSN is non-empty the
+// controller queries the sekai database for masterdata. When AllowFallback is
+// true and the DB is unavailable, it falls back to reading JSON files from
+// LocalDir. In production (AllowFallback=false) a DB failure leaves masterdata
+// nil so callers get a clear error.
+func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot userdata.Snapshot, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, mdOpts MasterdataOptions) *Controller {
 	region := renderregion.WithDefault(defaultRegion)
 	var md masterdataSource
-	if len(sekaiDSN) > 0 && strings.TrimSpace(sekaiDSN[0]) != "" {
-		md = newDBMasterdataStore(sekaiDSN[0], region.String())
+	if dsn := strings.TrimSpace(mdOpts.SekaiDSN); dsn != "" {
+		md = newDBMasterdataStore(dsn, region.String())
 	}
-	if md == nil || !md.Configured() {
-		md = newLocalMasterdataStore(masterdataDir)
+	if (md == nil || !md.Configured()) && mdOpts.AllowFallback {
+		md = newLocalMasterdataStore(mdOpts.LocalDir)
 	}
 	return &Controller{
 		drawing:       drawingClient,

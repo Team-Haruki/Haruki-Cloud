@@ -56,12 +56,14 @@ type Config struct {
 }
 
 type LocalMasterdataConfig struct {
-	Enabled bool
-	Dir     string
+	Enabled       bool
+	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
+	Dir           string
 }
 
 type UserSnapshotConfig struct {
 	Provider      string
+	AllowFallback bool // when false, Toolbox failure is fatal; when true, fallback to local snapshot
 	UserJSON      string
 	MusicMetaJSON string
 	MySekaiJSON   string
@@ -72,6 +74,8 @@ type DeckRecommendConfig struct {
 	ServiceBaseURL string
 	MasterdataDir  string
 	Timeout        time.Duration
+	MaxRetries     int
+	RetryWaitTime  time.Duration
 	DefaultAlgs    []string
 }
 
@@ -138,13 +142,19 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
-	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.LocalMasterdata.Dir, cfg.DefaultRegion, assetHelper, cfg.SekaiDSN)
+	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
+		SekaiDSN:      cfg.SekaiDSN,
+		LocalDir:      cfg.LocalMasterdata.Dir,
+		AllowFallback: cfg.LocalMasterdata.AllowFallback,
+	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 		Enabled:        cfg.DeckRecommend.Enabled,
 		ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
 		MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
 		Timeout:        cfg.DeckRecommend.Timeout,
+		MaxRetries:     cfg.DeckRecommend.MaxRetries,
+		RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
 		DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
@@ -181,6 +191,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
 			MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
 			Timeout:        cfg.DeckRecommend.Timeout,
+			MaxRetries:     cfg.DeckRecommend.MaxRetries,
+			RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
 			DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 		}, cfg.MetaLoader)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)

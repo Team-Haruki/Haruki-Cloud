@@ -96,6 +96,7 @@ pjsk_render:
     refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"
+    allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test
     user_json: ""
     mysekai_json: ""
     # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
@@ -107,10 +108,13 @@ pjsk_render:
   
   local_masterdata:
     enabled: true
+    allow_fallback: true      # set false in production (DB failure is fatal); true for dev/test
     dir: "/data/HarukiServices/alpha/deckrec/masterdata"
 
   deck_recommend:
     enabled: true
     service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
     timeout: "10s"
+    max_retries: 3            # HTTP-level retry count for transient failures
+    retry_wait_time: "1s"     # wait between retries
     default_algs: ["dfs", "ga"]

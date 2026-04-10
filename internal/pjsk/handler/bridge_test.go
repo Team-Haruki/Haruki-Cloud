@@ -1322,7 +1322,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 		MySekaiJSON:   mysekaiPath,
 	})
 	app := &renderapp.App{
-		MySekai:    rendermysekai.NewController(nil, snapshot, "", renderregion.JP, nil),
+		MySekai:    rendermysekai.NewController(nil, snapshot, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 

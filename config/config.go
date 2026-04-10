@@ -173,12 +173,14 @@ type AssetDirsConfig struct {
 }
 
 type LocalMasterdataConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Dir     string `yaml:"dir"`
+	Enabled       bool   `yaml:"enabled"`
+	AllowFallback bool   `yaml:"allow_fallback"` // when false, DB failure is fatal (production); when true, fallback to local files (dev/test)
+	Dir           string `yaml:"dir"`
 }
 
 type UserSnapshotConfig struct {
 	Provider      string `yaml:"provider"`
+	AllowFallback bool   `yaml:"allow_fallback"` // when false, Toolbox failure is fatal (production); when true, fallback to local snapshot (dev/test)
 	UserJSON      string `yaml:"user_json"`
 	MusicMetaJSON string `yaml:"music_meta_json"`
 	MySekaiJSON   string `yaml:"mysekai_json"`
@@ -188,6 +190,8 @@ type DeckRecommendConfig struct {
 	Enabled        bool          `yaml:"enabled"`
 	ServiceBaseURL string        `yaml:"service_base_url"`
 	Timeout        time.Duration `yaml:"timeout"`
+	MaxRetries     int           `yaml:"max_retries"`
+	RetryWaitTime  time.Duration `yaml:"retry_wait_time"`
 	DefaultAlgs    []string      `yaml:"default_algs"`
 }
 

@@ -10,6 +10,8 @@ type RecommendConfig struct {
 	ServiceBaseURL string
 	MasterdataDir  string
 	Timeout        time.Duration
+	MaxRetries     int           // HTTP-level retry count (default: 3)
+	RetryWaitTime  time.Duration // wait between retries (default: 1s)
 	DefaultAlgs    []string
 }
 

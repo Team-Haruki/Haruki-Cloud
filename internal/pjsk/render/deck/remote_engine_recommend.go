@@ -18,26 +18,61 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		return nil, fmt.Errorf("deck remote engine requires music meta bytes or file path")
 	}
 
+	// Circuit breaker: reject early when service is consistently failing.
+	if failures := r.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
+		r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
+		return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
+	}
+
 	if err := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); err != nil {
+		r.recordFailure()
 		return nil, err
 	}
 
+	start := time.Now()
 	results, err := r.doRecommendCompatible(req)
+	elapsed := time.Since(start)
 	if err == nil {
+		r.recordSuccess()
+		r.logger.Debugf("recommend completed in %v", elapsed)
 		return aggregateRemoteRecommendResults(req.BatchOption, results)
 	}
 	if !shouldRewarmRemoteService(err) {
+		r.recordFailure()
+		r.logger.Warnf("recommend failed after %v: %v", elapsed, err)
 		return nil, err
 	}
+
+	// Rewarm and retry once.
+	r.logger.Infof("rewarming remote service after: %v", err)
 	r.invalidate()
 	if warmErr := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
+		r.recordFailure()
 		return nil, warmErr
 	}
 	results, err = r.doRecommendCompatible(req)
 	if err != nil {
+		r.recordFailure()
+		r.logger.Warnf("recommend failed after rewarm: %v", err)
 		return nil, err
 	}
+	r.recordSuccess()
 	return aggregateRemoteRecommendResults(req.BatchOption, results)
+}
+
+func (r *RemoteDeckRecommender) recordSuccess() {
+	r.consecutiveFailures.Store(0)
+}
+
+func (r *RemoteDeckRecommender) recordFailure() {
+	r.consecutiveFailures.Add(1)
+}
+
+// ResetCircuitBreaker allows external callers (e.g. health checks) to
+// re-enable the service after recovery.
+func (r *RemoteDeckRecommender) ResetCircuitBreaker() {
+	r.consecutiveFailures.Store(0)
+	r.logger.Infof("circuit breaker reset")
 }
 
 func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]remoteBatchRecommendResult, error) {

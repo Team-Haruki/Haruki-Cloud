@@ -5,7 +5,16 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"haruki-cloud/utils/logger"
+)
+
+const (
+	defaultMaxRetries            = 3
+	defaultRetryWaitTime         = time.Second
+	maxConsecutiveFailures int64 = 5
 )
 
 type remoteEngineProvider struct {
@@ -53,12 +62,24 @@ func (p *remoteEngineProvider) Get(region string) (DeckRecommender, error) {
 		algs = []string{"dfs", "sa", "ga"}
 	}
 
+	maxRetries := p.cfg.MaxRetries
+	if maxRetries <= 0 {
+		maxRetries = defaultMaxRetries
+	}
+	retryWait := p.cfg.RetryWaitTime
+	if retryWait <= 0 {
+		retryWait = defaultRetryWaitTime
+	}
+
 	recommender := &RemoteDeckRecommender{
 		baseURL:       strings.TrimRight(strings.TrimSpace(p.cfg.ServiceBaseURL), "/"),
 		client:        p.client,
 		defaultAlgs:   algs,
 		masterdataDir: masterdataDir,
 		region:        region,
+		maxRetries:    maxRetries,
+		retryWaitTime: retryWait,
+		logger:        logger.NewLoggerFromGlobal("DeckRemote"),
 	}
 	p.recommenders[region] = recommender
 	return recommender, nil
@@ -70,10 +91,15 @@ type RemoteDeckRecommender struct {
 	defaultAlgs   []string
 	masterdataDir string
 	region        string
+	maxRetries    int
+	retryWaitTime time.Duration
+	logger        *logger.Logger
 
 	mu              sync.Mutex
 	masterdataReady bool
 	musicMetaHash   string
+
+	consecutiveFailures atomic.Int64
 }
 
 type remoteRecommendResult struct {

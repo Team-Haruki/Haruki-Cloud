@@ -38,7 +38,7 @@ func TestResolveMySekaiRenderContextFallsBackToPayloadProvider(t *testing.T) {
 		t.Fatalf("bind: %v", err)
 	}
 
-	controller := rendermysekai.NewController(nil, nil, "", renderregion.JP, nil)
+	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
 	app := &renderapp.App{
 		Bindings:        service,
 		MySekai:         controller,

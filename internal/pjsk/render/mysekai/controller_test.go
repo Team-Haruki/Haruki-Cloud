@@ -43,7 +43,7 @@ func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,
 	})
-	return NewController(nil, service, "", renderregion.JP, nil)
+	return NewController(nil, service, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
 }
 
 func TestResolvePhotoSupportsPositiveAndNegativeSequence(t *testing.T) {
@@ -158,7 +158,7 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,
 	})
-	controller := NewController(nil, service, masterdataDir, renderregion.JP, nil)
+	controller := NewController(nil, service, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
 	onlyCraftable := true
 	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
@@ -204,7 +204,7 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 		{"id": 3, "gameCharacterUnitId": 34},
 	})
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil)
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
 	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || !strings.Contains(err.Error(), "需要同时指定组合") {
 		t.Fatalf("resolveTalkCharacter(miku) error = %v", err)
@@ -262,7 +262,7 @@ func TestBuildResourceRequestUsesGateLargeThumbnailPath(t *testing.T) {
   }
 }`
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildResourceRequest(ResourceQuery{
 		Region:  "jp",
 		Profile: &drawing.ProfileCardRequest{},
@@ -304,7 +304,7 @@ func TestBuildResourceRequestGateSkinOverridesGateDefaultIcon(t *testing.T) {
   }
 }`
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildResourceRequest(ResourceQuery{
 		Region:  "jp",
 		Profile: &drawing.ProfileCardRequest{},
@@ -416,7 +416,7 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
   }
 }`
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
 	if err != nil {
 		t.Fatalf("BuildMapRequest() error = %v", err)
@@ -577,9 +577,9 @@ func TestBuildMapRequestSkipsHarvestPointWhenStaticIconMissing(t *testing.T) {
 	controller := NewController(
 		nil,
 		nil,
-		masterdataDir,
 		renderregion.JP,
 		assets.NewAssetHelper(assetRoot, nil),
+		MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true},
 	).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{8}})
 	if err != nil {
@@ -669,7 +669,7 @@ func TestBuildMapRequestSkipsToneGustHarvestPoint(t *testing.T) {
   }
 }`
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
 	if err != nil {
 		t.Fatalf("BuildMapRequest() error = %v", err)
@@ -734,7 +734,7 @@ func TestBuildMapRequestMixedMaterialAndFixtureKeepsMaterialLarge(t *testing.T) 
   }
 }`
 
-	controller := NewController(nil, nil, masterdataDir, renderregion.JP, nil).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
 	if err != nil {
 		t.Fatalf("BuildMapRequest() error = %v", err)

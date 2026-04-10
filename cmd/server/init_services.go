@@ -41,6 +41,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		)
 		renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
 		renderRuntime.Snapshots = renderuserdata.NewFallbackSnapshotProvider(
+			harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
 			renderuserdata.NewToolboxSnapshotProvider(
 				renderRuntime.Bindings,
 				sekaiAPI.GetToolboxClient(),
@@ -107,12 +108,14 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		AssetsBaseURL:   harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
-			Enabled: harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
-			Dir:     harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
+			Enabled:       harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
+			AllowFallback: harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowFallback,
+			Dir:           harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 		},
 		SekaiDSN: harukiConfig.Cfg.Sekai.DBURL,
 		UserSnapshot: renderapp.UserSnapshotConfig{
 			Provider:      harukiConfig.Cfg.PJSKRender.UserSnapshot.Provider,
+			AllowFallback: harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
 			UserJSON:      harukiConfig.Cfg.PJSKRender.UserSnapshot.UserJSON,
 			MusicMetaJSON: harukiConfig.Cfg.PJSKRender.UserSnapshot.MusicMetaJSON,
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
@@ -123,6 +126,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			ServiceBaseURL: harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
 			MasterdataDir:  harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
+			MaxRetries:     harukiConfig.Cfg.PJSKRender.DeckRecommend.MaxRetries,
+			RetryWaitTime:  harukiConfig.Cfg.PJSKRender.DeckRecommend.RetryWaitTime,
 			DefaultAlgs:    harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
 		},
 	})

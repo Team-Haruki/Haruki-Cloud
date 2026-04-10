@@ -12,6 +12,10 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 		ctx.PrefixArg() == "wl",
 	)
 	wlMode := ctx.PrefixArg() == "wl" || wlCharacterID > 0 || strings.TrimSpace(wlCharacterQuery) != ""
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		wlCharacterQuery = "wl"
+		wlMode = true
+	}
 
 	effectiveRankArgs := rankArgs
 	rankArgsProvided := strings.TrimSpace(effectiveRankArgs) != ""
@@ -115,6 +119,9 @@ func buildSKPlayerTraceParams(ctx SekaiHandlerContext) (map[string]any, error) {
 	params := map[string]any{
 		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
 		"region_explicit": ctx.HasExplicitRegion(),
+	}
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		wlCharacterQuery = "wl"
 	}
 	if eventID > 0 {
 		params["event_id"] = eventID

@@ -75,13 +75,19 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (any, error) {
 	}
 
 	prefixArg := ""
+	bestPrefixLen := -1
 	for _, prefix := range skh.PrefixArgs {
 		cmdPrefix := fmt.Sprintf("/%s", prefix)
 		if strings.HasPrefix(triggerCmd, cmdPrefix) {
+			if len(cmdPrefix) <= bestPrefixLen {
+				continue
+			}
 			prefixArg = prefix
-			triggerCmd = strings.Replace(triggerCmd, cmdPrefix, "/", 1)
-			break
+			bestPrefixLen = len(cmdPrefix)
 		}
+	}
+	if bestPrefixLen >= 0 {
+		triggerCmd = strings.Replace(triggerCmd, fmt.Sprintf("/%s", prefixArg), "/", 1)
 	}
 
 	if cmdRegion.IsZero() && len(skh.Regions) > 0 {

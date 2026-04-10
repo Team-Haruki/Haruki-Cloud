@@ -76,3 +76,35 @@ func TestSKSpeedHandleBuildsResolvedCommandWithHourDefaults(t *testing.T) {
 		t.Fatalf("unexpected speed period: %+v", params)
 	}
 }
+
+func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
+	h := sekaiHandlers{}.SKLineHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/wlsk线",
+		ArgText:    "",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-line" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params sk.TrackerRankQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.WlCharacterQuery != "wl" {
+		t.Fatalf("expected wl selector, got %+v", params)
+	}
+	if len(params.Ranks) == 0 || !params.DefaultRanks {
+		t.Fatalf("expected default wl ranks, got %+v", params)
+	}
+}

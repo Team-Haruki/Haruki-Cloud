@@ -15,7 +15,7 @@ import (
 )
 
 func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg LocalFileConfig) *Service {
-	return NewLocalFileServiceWithContext(context.TODO(), sekaiClient, assetHelper, cfg)
+	return NewLocalFileServiceWithContext(context.Background(), sekaiClient, assetHelper, cfg)
 }
 
 func NewLocalFileServiceWithContext(ctx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg LocalFileConfig) *Service {

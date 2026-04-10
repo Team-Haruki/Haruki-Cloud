@@ -97,9 +97,11 @@ func ApplyEnvOverrides(cfg *Config) {
 	// Toolbox
 	envStr("HARUKI_TOOLBOX_BASE_URL", &cfg.Toolbox.BaseURL)
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
+	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
 
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
+	envStr("HARUKI_TRACKER_USER_AGENT", &cfg.Tracker.UserAgent)
 
 	// Censor
 	envStr("HARUKI_CENSOR_BAIDU_API_KEY", &cfg.Censor.BaiduAPIKey)

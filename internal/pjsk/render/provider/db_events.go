@@ -21,6 +21,7 @@ import (
 type dbEventProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	eventMu    sync.RWMutex
 	eventCache map[int]*masterdata.Event
@@ -33,19 +34,15 @@ type dbEventProvider struct {
 }
 
 func (p *dbEventProvider) init() {
-	if p.eventCache == nil {
+	p.once.Do(func() {
 		p.eventCache = make(map[int]*masterdata.Event)
-	}
-	if p.cardCache == nil {
 		p.cardCache = make(map[int]*masterdata.Card)
-	}
-	if p.supplyCache == nil {
 		p.supplyCache = make(map[int]string)
-	}
+	})
 }
 
 func (p *dbEventProvider) GetByID(id int) (*masterdata.Event, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbEventProvider) getByID(ctx context.Context, id int) (*masterdata.Event, error) {
@@ -78,7 +75,7 @@ func (p *dbEventProvider) getByID(ctx context.Context, id int) (*masterdata.Even
 }
 
 func (p *dbEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) {
-	return p.getByCardID(nil, cardID)
+	return p.getByCardID(context.TODO(), cardID)
 }
 
 func (p *dbEventProvider) getByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
@@ -97,7 +94,7 @@ func (p *dbEventProvider) getByCardID(ctx context.Context, cardID int) (*masterd
 }
 
 func (p *dbEventProvider) GetAll() []*masterdata.Event {
-	return p.getAll(nil)
+	return p.getAll(context.TODO())
 }
 
 func (p *dbEventProvider) getAll(ctx context.Context) []*masterdata.Event {
@@ -125,7 +122,7 @@ func (p *dbEventProvider) getAll(ctx context.Context) []*masterdata.Event {
 }
 
 func (p *dbEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
-	return p.getCards(nil, eventID)
+	return p.getCards(context.TODO(), eventID)
 }
 
 func (p *dbEventProvider) getCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
@@ -152,7 +149,7 @@ func (p *dbEventProvider) getCards(ctx context.Context, eventID int) ([]*masterd
 }
 
 func (p *dbEventProvider) GetBannerCharacterID(eventID int) (int, error) {
-	return p.getBannerCharacterID(nil, eventID)
+	return p.getBannerCharacterID(context.TODO(), eventID)
 }
 
 func (p *dbEventProvider) getBannerCharacterID(ctx context.Context, eventID int) (int, error) {
@@ -179,7 +176,7 @@ func (p *dbEventProvider) getBannerCharacterID(ctx context.Context, eventID int)
 }
 
 func (p *dbEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
-	return p.getDeckBonuses(nil, eventID)
+	return p.getDeckBonuses(context.TODO(), eventID)
 }
 
 func (p *dbEventProvider) getDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
@@ -207,7 +204,7 @@ func (p *dbEventProvider) getDeckBonuses(ctx context.Context, eventID int) ([]*m
 }
 
 func (p *dbEventProvider) GetBanEvents(charID int) []*masterdata.Event {
-	return p.getBanEvents(nil, charID)
+	return p.getBanEvents(context.TODO(), charID)
 }
 
 func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*masterdata.Event {
@@ -239,7 +236,7 @@ func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*maste
 }
 
 func (p *dbEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
-	return p.getWorldBloomChapters(nil, eventID)
+	return p.getWorldBloomChapters(context.TODO(), eventID)
 }
 
 func (p *dbEventProvider) getWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom {

@@ -25,7 +25,7 @@ func NewFromBytes(
 	mysekaiJSON []byte,
 	musicMetaBytes []byte,
 ) (*Service, error) {
-	return NewFromBytesWithContext(nil, sekaiClient, assetHelper, region, suiteJSON, mysekaiJSON, musicMetaBytes)
+	return NewFromBytesWithContext(context.TODO(), sekaiClient, assetHelper, region, suiteJSON, mysekaiJSON, musicMetaBytes)
 }
 
 func NewFromBytesWithContext(

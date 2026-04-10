@@ -30,6 +30,13 @@
 > - 2026-04-10 阶段 B 继续收尾：`internal/pjsk/render/event/builder.go` 已进一步拆为 `builder.go` / `builder_metadata.go` / `builder_filters.go`
 > - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/honor/builder.go` 已进一步拆为 `builder.go` / `builder_normal.go` / `builder_bonds.go` / `builder_trace.go`
 > - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/db_honors.go` 已进一步拆为 `db_honors.go` / `db_honors_event.go` / `db_honors_birthday.go` / `db_honors_convert.go`
+> - 2026-04-10 阶段 B 继续细拆：`internal/pjsk/render/userdata/local.go` 已进一步拆为 `local.go` / `local_types.go` / `local_service.go`
+> - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/sk/controller_trace.go` 已进一步拆为 `controller_trace.go` / `controller_trace_user.go` / `controller_trace_rank.go` / `controller_trace_speed.go`
+> - 2026-04-10 阶段 B 再推进一轮：`internal/pjsk/render/mysekai/helpers.go` 已进一步拆为 `helpers.go` / `helpers_resources.go` / `helpers_fixture.go`
+> - 2026-04-10 阶段 B 再收一轮：`internal/pjsk/render/music/board_request.go` 已进一步拆为 `board_request.go` / `board_request_query.go` / `board_request_rows.go`
+> - 2026-04-10 阶段 B 再推进一轮：`internal/pjsk/render/mysekai/map_builder.go` 已进一步拆为 `map_builder.go` / `map_builder_resources.go`
+> - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/profile/controller.go` 已进一步拆为 `controller.go` / `controller_snapshot.go` / `controller_api.go`
+> - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/contextual.go` 已进一步拆为 `contextual.go` / `contextual_cards.go` / `contextual_event_music.go` / `contextual_misc.go`
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -900,6 +907,167 @@ func executeSK(rc *RequestContext)
 
 ---
 
+### P20.15：render/userdata/local.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/userdata/local.go` 在本轮拆分前约 435 行，混合了：
+
+- local snapshot service 配置与状态
+- suite dump / mysekai / music meta 文件读取与 service 构造
+- raw suite dump schema 定义
+- profile / raw bytes / challenge live 等访问器
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `local.go` | 27 | LocalFileConfig、Service 结构 |
+| `local_types.go` | 213 | raw snapshot schema、challenge live data 结构 |
+| `local_service.go` | 202 | local service 构造、profile/raw accessor |
+
+这样 `userdata local` 这一块也已经从“一个文件同时承载 schema、构造和访问器”回到更自然的三层结构；后续如果继续补 local debug fallback，只需要在对应层里改动，不必再跨越整份长文件。
+
+---
+
+### P20.16：render/sk/controller_trace.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/sk/controller_trace.go` 在本轮拆分前约 435 行，混合了：
+
+- user trace by tracker
+- rank trace by tracker
+- speed infos / growth / trace fallback
+- score growth 到 speed info 的转换 helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller_trace.go` | 38 | rank -> user id 解析与 player trace 入口 |
+| `controller_trace_user.go` | 98 | user trace 构造 |
+| `controller_trace_rank.go` | 107 | rank trace 构造 |
+| `controller_trace_speed.go` | 214 | speed infos、trace fallback、growth helper |
+
+这样 `sk trace` 也已经从“一个文件同时承载三类 tracker trace 逻辑”回到按场景拆开的结构，后续无论是修 user/rank trace 还是 speed 计算，都不需要再在一个 400+ 行文件里交叉定位。
+
+---
+
+### P20.17：render/mysekai/helpers.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/mysekai/helpers.go` 在本轮拆分前约 418 行，混合了：
+
+- gate / phenomenon helper
+- resource rarity / quantity / 排序 helper
+- fixture thumbnail / color / tag / blueprint helper
+- 角色组、家具拥有状态、开放时间等通用小工具
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `helpers.go` | 109 | gate / phenomenon helper、基础 pathResolver |
+| `helpers_resources.go` | 108 | resource rarity / quantity / 排序 helper |
+| `helpers_fixture.go` | 213 | fixture thumbnail / color / tag / blueprint / 通用 fixture helper |
+
+这样 `mysekai helpers` 也已经从“一个文件同时承载资源、家具、现象三类 helper”回到更自然的分层结构；后续如果继续补 MySekai 相关能力，资源逻辑与家具逻辑可以独立维护。
+
+---
+
+### P20.18：render/music/board_request.go 再拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/music/board_request.go` 在上一轮收口后仍有约 421 行，混合了：
+
+- music board request 主入口
+- board query 归一化与默认值收口
+- board rows 构造与 skill strategy 处理
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `board_request.go` | 210 | request 主入口、分页与 spec row 组装、返回 Drawing request |
+| `board_request_query.go` | 130 | board query 归一化、skills 默认值/清洗 |
+| `board_request_rows.go` | 94 | board rows 构造与排序前预处理 |
+
+这样 `music board request` 也已经从“主入口 + query normalize + rows 构造”混在一个文件里的状态回到更自然的三层结构；后续如果继续调整 board 语义，query 规则和 rows 计算可以分别维护。
+
+---
+
+### P20.19：render/mysekai/map_builder.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/mysekai/map_builder.go` 在本轮拆分前约 390 行，混合了：
+
+- map request 主入口
+- harvest point 构造
+- map resource drop 分组/聚合/图标大小规则
+- map site id 归一化
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `map_builder.go` | 196 | map request 主入口、harvest point 构造、render 包装 |
+| `map_builder_resources.go` | 202 | resource drop 分组/聚合/尺寸规则、site id 归一化 |
+
+这样 `mysekai map builder` 也已经从“主流程 + 掉落聚合规则”混在一起的状态回到更自然的两层结构；后续如果继续补地图掉落语义，只需要在 resource 层维护，不必反复穿过整个主流程。
+
+---
+
+### P20.20：render/profile/controller.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/profile/controller.go` 在本轮拆分前约 398 行，混合了：
+
+- controller 基础结构与 context-aware source clone
+- local snapshot profile request / render
+- Sekai API profile request / profile card / detailed card 构造
+- Sekai API render helper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `controller.go` | 80 | Controller 结构、注册、WithContext、基础上下文 helper |
+| `controller_snapshot.go` | 106 | local snapshot profile request / render |
+| `controller_api.go` | 231 | Sekai API request / card / render helper |
+
+这样 `profile controller` 也已经从“本地 snapshot 与 API 两套入口混在一起”的状态回到按数据来源拆开的结构；后续如果继续补 profile 能力，可以更直接地在对应来源层维护。
+
+---
+
+### P20.21：render/provider/contextual.go 拆分 ✅
+
+**2026-04-10 当前状态补充**：
+
+`internal/pjsk/render/provider/contextual.go` 在本轮拆分前约 377 行，混合了：
+
+- contextual provider 顶层入口
+- card / character / skill contextual wrapper
+- event / music / gacha contextual wrapper
+- honor / player frame / stamp / vlive / education contextual wrapper
+
+本轮已继续拆为：
+
+| 当前文件 | 行数 | 内容 |
+|---------|------|------|
+| `contextual.go` | 92 | contextual provider 顶层入口与 DatabaseProvider.WithContext |
+| `contextual_cards.go` | 70 | card / character / skill wrapper |
+| `contextual_event_music.go` | 110 | event / music / gacha wrapper |
+| `contextual_misc.go` | 125 | honor / player frame / stamp / vlive / education wrapper |
+
+这样 `provider contextual` 也已经从“所有 wrapper 都堆在一个文件里”的状态回到更自然的按 provider 类型拆分结构；后续如果继续补请求级 ctx 传递，只需要在对应 provider 片段里修改。
+
+---
+
 ### P21：handler/sekai/score.go 拆分 ✅
 
 **提交**：`9acee70`
@@ -1371,8 +1539,8 @@ func resolveBindingWithFallback(
 
 #### E4: 评估决策
 - **runtime.go sync.Once**: 经分析，不迁移到 lazyValue[T]。runtime.go 使用"nil-on-failure"模式（错误被有意丢弃），与 lazyValue 的错误传播模式不同
-- **provider/db_*.go context.Background()**: 经分析，保持现状。nil-ctx 回退是 contextual wrapper 渐进式 context 传播的桥接模式，改变需要接口级别的破坏性变更
+- **provider/db_*.go nil-context 调用链**: 已完成第一阶段收口。导出 wrapper 层调用已从 `nil` 统一改为 `context.TODO()`，并完成 `SA1012`（排除 `database/` 生成代码）清零；内部 nil-ctx fallback 暂保留作为兼容兜底
 
 ### 净效果
-- staticcheck 非测试非 SA1012 问题：从 26+ 降至 1（仅剩 gacha.go WIP stub）
+- staticcheck `SA1012`（排除 `database/` 生成代码）：已清零（0）
 - 移除 ~400 行死代码 + 505 行残留文件

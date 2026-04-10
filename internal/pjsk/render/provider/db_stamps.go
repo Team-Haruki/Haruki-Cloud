@@ -21,7 +21,7 @@ type dbStampProvider struct {
 }
 
 func (p *dbStampProvider) GetAll() ([]masterdata.Stamp, error) {
-	return p.getAll(nil)
+	return p.getAll(context.TODO())
 }
 
 func (p *dbStampProvider) getAll(ctx context.Context) ([]masterdata.Stamp, error) {

@@ -25,6 +25,8 @@ type HarukiToolboxClient struct {
 	config *config.ToolboxConfig
 }
 
+const defaultToolboxUserAgent = "Haruki-Cloud/ToolboxClient"
+
 func GetToolboxClient() *HarukiToolboxClient {
 	toolboxOnce.Do(func() {
 		c := newRestyClient().SetTimeout(apiTimeout)
@@ -35,6 +37,15 @@ func GetToolboxClient() *HarukiToolboxClient {
 		}
 	})
 	return toolboxClient
+}
+
+func (c *HarukiToolboxClient) userAgent() string {
+	if c != nil && c.config != nil {
+		if ua := strings.TrimSpace(c.config.UserAgent); ua != "" {
+			return ua
+		}
+	}
+	return defaultToolboxUserAgent
 }
 
 // GetPrivateData fetches private game-data snapshots from the Toolbox API.
@@ -52,7 +63,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.config.UserAgent).
+		SetHeader("User-Agent", c.userAgent()).
 		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
@@ -122,7 +133,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.config.UserAgent).
+		SetHeader("User-Agent", c.userAgent()).
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
@@ -209,7 +220,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.config.UserAgent).
+		SetHeader("User-Agent", c.userAgent()).
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,

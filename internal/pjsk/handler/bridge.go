@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/logger"
 )
 
 // Execute routes a ResolvedCommand to the corresponding execution controller
@@ -128,5 +129,7 @@ func mergeParams(params json.RawMessage, target interface{}) {
 	if len(params) == 0 {
 		return
 	}
-	_ = json.Unmarshal(params, target)
+	if err := json.Unmarshal(params, target); err != nil {
+		logger.Warnf("bridge: failed to parse command params into %T: %v (raw_len=%d)", target, err, len(params))
+	}
 }

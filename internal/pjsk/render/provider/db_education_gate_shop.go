@@ -9,7 +9,7 @@ import (
 )
 
 func (p *dbEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
-	return p.getMysekaiGateLevel(nil, gateID, level)
+	return p.getMysekaiGateLevel(context.TODO(), gateID, level)
 }
 
 func (p *dbEducationProvider) getMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel {
@@ -26,7 +26,7 @@ func (p *dbEducationProvider) getMysekaiGateLevel(ctx context.Context, gateID, l
 }
 
 func (p *dbEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
-	return p.getShopItemByResourceBoxID(nil, resourceBoxID)
+	return p.getShopItemByResourceBoxID(context.TODO(), resourceBoxID)
 }
 
 func (p *dbEducationProvider) getShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem {

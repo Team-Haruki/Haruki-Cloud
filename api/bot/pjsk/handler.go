@@ -73,7 +73,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if botDBClient != nil {
 		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {
 			// Non-fatal: manifest table seed failure should not block startup.
-			_ = err
+			logger.Warnf("bot manifest seed failed: %v", err)
 		}
 	}
 

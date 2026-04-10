@@ -19,7 +19,7 @@ import (
 )
 
 func (p *dbMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
-	return p.getDifficulties(nil, musicID)
+	return p.getDifficulties(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
@@ -52,7 +52,7 @@ func (p *dbMusicProvider) getDifficulties(ctx context.Context, musicID int) ([]*
 }
 
 func (p *dbMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, error) {
-	return p.getVocals(nil, musicID)
+	return p.getVocals(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
@@ -86,7 +86,7 @@ func (p *dbMusicProvider) getVocals(ctx context.Context, musicID int) ([]*master
 }
 
 func (p *dbMusicProvider) GetTags(musicID int) ([]string, error) {
-	return p.getTags(nil, musicID)
+	return p.getTags(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getTags(ctx context.Context, musicID int) ([]string, error) {
@@ -113,7 +113,7 @@ func (p *dbMusicProvider) getTags(ctx context.Context, musicID int) ([]string, e
 }
 
 func (p *dbMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
-	return p.getOutsideCharacterByID(nil, id)
+	return p.getOutsideCharacterByID(context.TODO(), id)
 }
 
 func (p *dbMusicProvider) getOutsideCharacterByID(ctx context.Context, id int) (string, error) {
@@ -145,7 +145,7 @@ func (p *dbMusicProvider) getOutsideCharacterByID(ctx context.Context, id int) (
 }
 
 func (p *dbMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
-	return p.getPrimaryEventByMusicID(nil, musicID)
+	return p.getPrimaryEventByMusicID(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
@@ -188,7 +188,7 @@ func (p *dbMusicProvider) getPrimaryEventByMusicID(ctx context.Context, musicID 
 }
 
 func (p *dbMusicProvider) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
-	return p.getLimitedTimeMusics(nil, musicID)
+	return p.getLimitedTimeMusics(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getLimitedTimeMusics(ctx context.Context, musicID int) []*masterdata.LimitedTimeMusic {

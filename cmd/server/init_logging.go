@@ -3,14 +3,27 @@ package main
 import (
 	"io"
 	"os"
+	"strings"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
 )
 
+const defaultConfigPath = "haruki-db-configs.yaml"
+
+var mainLogFileHandle *os.File
+
+func resolveConfigPath() string {
+	if path := strings.TrimSpace(os.Getenv("HARUKI_CONFIG_PATH")); path != "" {
+		return path
+	}
+	return defaultConfigPath
+}
+
 func setupLogging() io.Writer {
-	harukiConfig.LoadConfig("haruki-db-configs.yaml")
+	harukiConfig.LoadConfig(resolveConfigPath())
 	loggerWriter := io.Writer(os.Stdout)
+	mainLogFileHandle = nil
 
 	if harukiConfig.Cfg.Backend.MainLogFile != "" {
 		logFile, err := harukiLogger.OpenLogFile(harukiConfig.Cfg.Backend.MainLogFile)
@@ -19,12 +32,23 @@ func setupLogging() io.Writer {
 			tmpLogger.Errorf("failed to open main log file: %v", err)
 			os.Exit(1)
 		}
+		mainLogFileHandle = logFile
 		loggerWriter = harukiLogger.NewMultiWriter(os.Stdout, logFile)
 	}
 
 	harukiLogger.SetGlobalLogLevel(harukiConfig.Cfg.Backend.LogLevel)
 	harukiLogger.SetGlobalFileWriter(loggerWriter)
 	return loggerWriter
+}
+
+func closeMainLogFile(mainLogger *harukiLogger.Logger) {
+	if mainLogFileHandle == nil {
+		return
+	}
+	if err := mainLogFileHandle.Close(); err != nil && mainLogger != nil {
+		mainLogger.Warnf("failed to close main log file: %v", err)
+	}
+	mainLogFileHandle = nil
 }
 
 func logStartupInfo(mainLogger *harukiLogger.Logger) {

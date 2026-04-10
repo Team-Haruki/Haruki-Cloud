@@ -11,6 +11,7 @@ import (
 type dbEducationProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	rewardMu      sync.RWMutex
 	rewardsByChar map[int][]*ChallengeReward
@@ -55,36 +56,18 @@ type dbEducationProvider struct {
 }
 
 func (p *dbEducationProvider) init() {
-	if p.rewardsByChar == nil {
+	p.once.Do(func() {
 		p.rewardsByChar = make(map[int][]*ChallengeReward)
-	}
-	if p.boxByID == nil {
 		p.boxByID = make(map[int]*ResourceBox)
-	}
-	if p.boxByPurpose == nil {
 		p.boxByPurpose = make(map[string]map[int]*ResourceBox)
-	}
-	if p.areaByID == nil {
 		p.areaByID = make(map[int]*AreaItem)
-	}
-	if p.areaLevelsByItem == nil {
 		p.areaLevelsByItem = make(map[int][]*AreaItemLevel)
-	}
-	if p.areaLevelByItem == nil {
 		p.areaLevelByItem = make(map[int]map[int]*AreaItemLevel)
-	}
-	if p.rankByChar == nil {
 		p.rankByChar = make(map[int]map[int]*CharacterRank)
-	}
-	if p.stylesByGameID == nil {
 		p.stylesByGameID = make(map[int]*GameCharacterStyle)
-	}
-	if p.gateByID == nil {
 		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
-	}
-	if p.shopByBoxID == nil {
 		p.shopByBoxID = make(map[int]*ShopItem)
-	}
+	})
 }
 
 func educationContextOrBackground(ctx context.Context) context.Context {

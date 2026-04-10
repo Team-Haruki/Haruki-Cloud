@@ -27,7 +27,8 @@
 > 19. `cmd/migrate` 已移除源码中的硬编码 Sekai DSN：现在优先读取 `HARUKI_SEKAI_DB_URL` / `HARUKI_SEKAI_DSN`，否则回退读取 `HARUKI_CONFIG_PATH` 或默认 `haruki-db-configs.yaml` 中的 `sekai.db_url`；迁移上下文也已挂到信号取消。
 > 20. 2026-04-10 又继续执行了一轮大文件治理：`render/deck/controller.go`、`render/education/snapshot_build.go`、`render/mysekai/controller.go`、`render/deck/remote_engine.go`、`handler/sekai/sk.go`、`alias/service.go`、`handler/sekai/profile.go`、`handler/sekai/mysekai.go`、`render/music/controller.go`、`render/sk/forecast_provider.go`、`render/provider/db_education.go`、`render/provider/db_cards.go` 均已进一步按职责拆分，当前大文件热点已明显收缩到少数 provider / builder / extractor 文件。
 > 21. 2026-04-10 本轮后续又继续清理了一批热点文件：`handler/sekai/deck_extractor.go`、`render/provider/db_musics.go`、`render/gacha/builder.go`、`handler/sekai/score_board_params.go`、`render/music/board_helpers.go`、`render/music/lookup.go`、`render/music/builder.go`、`render/event/builder.go`、`render/honor/builder.go`、`render/provider/db_honors.go` 均已进一步按职责拆分；`music/event/honor/provider` 相关 targeted tests 与 `go test ./...` 现已保持通过。
-> 22. 截至 2026-04-10，`go test ./...` 仍保持全绿；重构工作已从“主链架构收口”进入“剩余局部热点清理”阶段。
+> 22. 2026-04-10 本轮继续收尾后，`render/userdata/local.go`、`render/sk/controller_trace.go`、`render/mysekai/helpers.go`、`render/music/board_request.go`、`render/mysekai/map_builder.go`、`render/profile/controller.go`、`render/provider/contextual.go` 也已进一步按职责拆分；同时补平了 `render/music/lookup.go` 上一轮拆分残留的重复定义编译债务，`music/sk/userdata/mysekai/profile/provider/handler` 定向回归已恢复通过。
+> 23. 截至 2026-04-10，`go test ./...` 仍保持全绿；重构工作已从“主链架构收口”进入“剩余局部热点清理”阶段。
 
 ## 1. 范围与方法
 
@@ -497,7 +498,7 @@ go test ./...
 | 项目 | 状态 | 说明 |
 |------|------|------|
 | Legacy 兼容路由残留风险 | 已消除 | `api/legacy/pjsk` 已删除，`cmd/server/main.go` 也不再注册 legacy 路由 |
-| 后台刷新 goroutine 生命周期 | 待收尾 | `chardata` 与 `music meta` 刷新使用 `context.Background()` |
+| 后台刷新 goroutine 生命周期 | 已缓解 | 主链刷新任务已接入请求级/服务级可取消上下文；剩余 `context.Background()` 主要在本地调试 helper 与脚本入口兜底 |
 | 文档与代码漂移 | 存在 | 旧文档仍写 76 path，与当前 82 path 不一致 |
 
 ### 10.4 外部依赖风险
@@ -515,7 +516,7 @@ go test ./...
 
 P0 / P1 / P2、legacy 清理、集成测试 env 化与顺序解耦、`/internal/*` 默认鉴权收紧，以及 snapshot/provider 主干收口已完成；大文件/巨型函数拆分也已连续推进多轮。下一阶段建议优先按下面顺序推进：
 
-1. 继续清理剩余的大文件热点，优先 `render/provider/db_musics.go`、`handler/sekai/deck_extractor.go`、`render/gacha/builder.go`、`render/music/board_helpers.go`。
+1. 继续清理剩余的业务大文件热点，优先 `render/mysekai/fixture_builder.go`、`render/provider/db_events.go`、`render/profile/controller_helpers.go`、`render/assets/helper.go`、`render/music/rewards.go`。
 2. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验。
 3. 继续清理已经无主链价值的历史文档与状态描述，减少“旧协议误导”。
 4. 视调用方现状决定是否进一步统一内部服务鉴权字段，减少 `backend.accept_authorization` 与 `haruki_bot.internal_api_token` 的双配置心智负担。

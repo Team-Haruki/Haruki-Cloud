@@ -9,7 +9,7 @@ import (
 )
 
 func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
-	return p.getSupplyType(nil, cardInfo)
+	return p.getSupplyType(context.TODO(), cardInfo)
 }
 
 func (p *dbCardProvider) getSupplyType(ctx context.Context, cardInfo *masterdata.Card) string {

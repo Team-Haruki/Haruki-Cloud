@@ -14,7 +14,7 @@ import (
 )
 
 func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
-	return p.getGachaByCardID(nil, cardID)
+	return p.getGachaByCardID(context.TODO(), cardID)
 }
 
 func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*masterdata.Gacha, error) {
@@ -77,7 +77,7 @@ func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*mas
 }
 
 func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
-	return p.getCostume3dsByCardID(nil, cardID)
+	return p.getCostume3dsByCardID(context.TODO(), cardID)
 }
 
 func (p *dbCardProvider) getCostume3dsByCardID(ctx context.Context, cardID int) ([]*masterdata.Costume3d, error) {

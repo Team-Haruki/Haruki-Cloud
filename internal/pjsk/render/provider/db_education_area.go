@@ -9,7 +9,7 @@ import (
 )
 
 func (p *dbEducationProvider) GetAreaItem(id int) *AreaItem {
-	return p.getAreaItem(nil, id)
+	return p.getAreaItem(context.TODO(), id)
 }
 
 func (p *dbEducationProvider) getAreaItem(ctx context.Context, id int) *AreaItem {
@@ -23,7 +23,7 @@ func (p *dbEducationProvider) getAreaItem(ctx context.Context, id int) *AreaItem
 }
 
 func (p *dbEducationProvider) GetAreaItems() []*AreaItem {
-	return p.getAreaItems(nil)
+	return p.getAreaItems(context.TODO())
 }
 
 func (p *dbEducationProvider) getAreaItems(ctx context.Context) []*AreaItem {
@@ -42,7 +42,7 @@ func (p *dbEducationProvider) getAreaItems(ctx context.Context) []*AreaItem {
 }
 
 func (p *dbEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
-	return p.getAreaItemLevels(nil, areaItemID)
+	return p.getAreaItemLevels(context.TODO(), areaItemID)
 }
 
 func (p *dbEducationProvider) getAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel {
@@ -56,7 +56,7 @@ func (p *dbEducationProvider) getAreaItemLevels(ctx context.Context, areaItemID 
 }
 
 func (p *dbEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	return p.getAreaItemLevel(nil, areaItemID, level)
+	return p.getAreaItemLevel(context.TODO(), areaItemID, level)
 }
 
 func (p *dbEducationProvider) getAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel {
@@ -73,7 +73,7 @@ func (p *dbEducationProvider) getAreaItemLevel(ctx context.Context, areaItemID, 
 }
 
 func (p *dbEducationProvider) GetCharacterRank(characterID, rank int) *CharacterRank {
-	return p.getCharacterRank(nil, characterID, rank)
+	return p.getCharacterRank(context.TODO(), characterID, rank)
 }
 
 func (p *dbEducationProvider) getCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank {

@@ -17,7 +17,7 @@ type dbVLiveProvider struct {
 }
 
 func (p *dbVLiveProvider) GetLives(region renderregion.Value) ([]*VLive, error) {
-	return p.getLives(nil, region)
+	return p.getLives(context.TODO(), region)
 }
 
 func (p *dbVLiveProvider) getLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {

@@ -11,7 +11,7 @@ import (
 )
 
 func (p *dbEducationProvider) GetBonds() []*Bond {
-	return p.getBonds(nil)
+	return p.getBonds(context.TODO())
 }
 
 func (p *dbEducationProvider) getBonds(ctx context.Context) []*Bond {
@@ -25,7 +25,7 @@ func (p *dbEducationProvider) getBonds(ctx context.Context) []*Bond {
 }
 
 func (p *dbEducationProvider) GetBondLevels() []*BondLevel {
-	return p.getBondLevels(nil)
+	return p.getBondLevels(context.TODO())
 }
 
 func (p *dbEducationProvider) getBondLevels(ctx context.Context) []*BondLevel {
@@ -39,7 +39,7 @@ func (p *dbEducationProvider) getBondLevels(ctx context.Context) []*BondLevel {
 }
 
 func (p *dbEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
-	return p.getGameCharacterStyle(nil, gameID)
+	return p.getGameCharacterStyle(context.TODO(), gameID)
 }
 
 func (p *dbEducationProvider) getGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle {
@@ -53,7 +53,7 @@ func (p *dbEducationProvider) getGameCharacterStyle(ctx context.Context, gameID 
 }
 
 func (p *dbEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
-	return p.getLeaderMissionRequirements(nil)
+	return p.getLeaderMissionRequirements(context.TODO())
 }
 
 func (p *dbEducationProvider) getLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {

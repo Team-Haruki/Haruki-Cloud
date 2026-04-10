@@ -16,6 +16,7 @@ import (
 type dbCharacterProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	charMu    sync.RWMutex
 	charCache map[int]*masterdata.Character
@@ -28,19 +29,15 @@ type dbCharacterProvider struct {
 }
 
 func (p *dbCharacterProvider) init() {
-	if p.charCache == nil {
+	p.once.Do(func() {
 		p.charCache = make(map[int]*masterdata.Character)
-	}
-	if p.unitCache == nil {
 		p.unitCache = make(map[int]*masterdata.GameCharacterUnit)
-	}
-	if p.colorCache == nil {
 		p.colorCache = make(map[int]string)
-	}
+	})
 }
 
 func (p *dbCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbCharacterProvider) getByID(ctx context.Context, id int) (*masterdata.Character, error) {
@@ -80,7 +77,7 @@ func (p *dbCharacterProvider) getByID(ctx context.Context, id int) (*masterdata.
 }
 
 func (p *dbCharacterProvider) GetColorCode(id int) (string, bool) {
-	return p.getColorCode(nil, id)
+	return p.getColorCode(context.TODO(), id)
 }
 
 func (p *dbCharacterProvider) getColorCode(ctx context.Context, id int) (string, bool) {
@@ -113,7 +110,7 @@ func (p *dbCharacterProvider) getColorCode(ctx context.Context, id int) (string,
 }
 
 func (p *dbCharacterProvider) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
-	return p.getGameCharacterUnit(nil, id)
+	return p.getGameCharacterUnit(context.TODO(), id)
 }
 
 func (p *dbCharacterProvider) getGameCharacterUnit(ctx context.Context, id int) (*masterdata.GameCharacterUnit, error) {

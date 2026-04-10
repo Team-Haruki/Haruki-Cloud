@@ -21,19 +21,20 @@ type dbSkillProvider struct {
 	client     *sekaiDB.Client
 	region     renderregion.Value
 	characters *dbCharacterProvider
+	once       sync.Once
 
 	mu    sync.RWMutex
 	cache map[int]*masterdata.Skill
 }
 
 func (p *dbSkillProvider) init() {
-	if p.cache == nil {
+	p.once.Do(func() {
 		p.cache = make(map[int]*masterdata.Skill)
-	}
+	})
 }
 
 func (p *dbSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbSkillProvider) getByID(ctx context.Context, id int) (*masterdata.Skill, error) {
@@ -69,7 +70,7 @@ func (p *dbSkillProvider) getByID(ctx context.Context, id int) (*masterdata.Skil
 }
 
 func (p *dbSkillProvider) FormatDescription(skillInfo *masterdata.Skill, cardCharacterID int) string {
-	return p.formatDescription(nil, skillInfo, cardCharacterID)
+	return p.formatDescription(context.TODO(), skillInfo, cardCharacterID)
 }
 
 func (p *dbSkillProvider) formatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {

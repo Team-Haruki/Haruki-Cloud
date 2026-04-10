@@ -14,7 +14,7 @@ import (
 )
 
 func (p *dbMusicProvider) Search(query string) (*masterdata.Music, error) {
-	return p.search(nil, query)
+	return p.search(context.TODO(), query)
 }
 
 func (p *dbMusicProvider) search(ctx context.Context, query string) (*masterdata.Music, error) {
@@ -43,7 +43,7 @@ func (p *dbMusicProvider) search(ctx context.Context, query string) (*masterdata
 }
 
 func (p *dbMusicProvider) GetByID(id int) (*masterdata.Music, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbMusicProvider) getByID(ctx context.Context, id int) (*masterdata.Music, error) {
@@ -75,7 +75,7 @@ func (p *dbMusicProvider) getByID(ctx context.Context, id int) (*masterdata.Musi
 }
 
 func (p *dbMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error) {
-	return p.getByEventID(nil, eventID)
+	return p.getByEventID(context.TODO(), eventID)
 }
 
 func (p *dbMusicProvider) getByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
@@ -94,7 +94,7 @@ func (p *dbMusicProvider) getByEventID(ctx context.Context, eventID int) (*maste
 }
 
 func (p *dbMusicProvider) GetAll() []*masterdata.Music {
-	return p.getAll(nil)
+	return p.getAll(context.TODO())
 }
 
 func (p *dbMusicProvider) getAll(ctx context.Context) []*masterdata.Music {
@@ -141,7 +141,7 @@ func (p *dbMusicProvider) getAll(ctx context.Context) []*masterdata.Music {
 }
 
 func (p *dbMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
-	return p.getLocalizedTitles(nil, musicID)
+	return p.getLocalizedTitles(context.TODO(), musicID)
 }
 
 func (p *dbMusicProvider) getLocalizedTitles(ctx context.Context, musicID int) ([]string, error) {

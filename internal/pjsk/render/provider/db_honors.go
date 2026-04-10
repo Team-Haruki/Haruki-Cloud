@@ -19,6 +19,7 @@ import (
 type dbHonorProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	honorMu    sync.RWMutex
 	honorCache map[int]*masterdata.Honor
@@ -48,28 +49,18 @@ type honorBirthdayAssets struct {
 }
 
 func (p *dbHonorProvider) init() {
-	if p.honorCache == nil {
+	p.once.Do(func() {
 		p.honorCache = make(map[int]*masterdata.Honor)
-	}
-	if p.groupCache == nil {
 		p.groupCache = make(map[int]*masterdata.HonorGroup)
-	}
-	if p.bondsCache == nil {
 		p.bondsCache = make(map[int]*masterdata.BondsHonor)
-	}
-	if p.gcuCache == nil {
 		p.gcuCache = make(map[int]*masterdata.GameCharacterUnit)
-	}
-	if p.birthdayByGroup == nil {
 		p.birthdayByGroup = make(map[int]honorBirthdayAssets)
-	}
-	if p.eventByHonorID == nil {
 		p.eventByHonorID = make(map[int]int)
-	}
+	})
 }
 
 func (p *dbHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbHonorProvider) getByID(ctx context.Context, id int) (*masterdata.Honor, error) {
@@ -106,7 +97,7 @@ func (p *dbHonorProvider) getByID(ctx context.Context, id int) (*masterdata.Hono
 }
 
 func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
-	return p.getGroupByID(nil, id)
+	return p.getGroupByID(context.TODO(), id)
 }
 
 func (p *dbHonorProvider) getGroupByID(ctx context.Context, id int) (*masterdata.HonorGroup, error) {
@@ -171,7 +162,7 @@ func (p *dbHonorProvider) getGroupByID(ctx context.Context, id int) (*masterdata
 }
 
 func (p *dbHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
-	return p.getBondsHonorByID(nil, id)
+	return p.getBondsHonorByID(context.TODO(), id)
 }
 
 func (p *dbHonorProvider) getBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error) {
@@ -213,7 +204,7 @@ func (p *dbHonorProvider) getBondsHonorByID(ctx context.Context, id int) (*maste
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
-	return p.getGameCharacterUnitByID(nil, id)
+	return p.getGameCharacterUnitByID(context.TODO(), id)
 }
 
 func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {
@@ -252,5 +243,5 @@ func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) 
 }
 
 func (p *dbHonorProvider) GetEventIDByHonorID(honorID int) int {
-	return p.getEventIDByHonorID(nil, honorID)
+	return p.getEventIDByHonorID(context.TODO(), honorID)
 }

@@ -14,6 +14,7 @@ type dbCardProvider struct {
 	region     renderregion.Value
 	characters *dbCharacterProvider
 	skills     *dbSkillProvider
+	once       sync.Once
 
 	cardMu    sync.RWMutex
 	cardCache map[int]*masterdata.Card
@@ -30,21 +31,13 @@ type dbCardProvider struct {
 }
 
 func (p *dbCardProvider) init() {
-	if p.cardCache == nil {
+	p.once.Do(func() {
 		p.cardCache = make(map[int]*masterdata.Card)
-	}
-	if p.supplyByID == nil {
 		p.supplyByID = make(map[int]string)
-	}
-	if p.gachaByCard == nil {
 		p.gachaByCard = make(map[int]*masterdata.Gacha)
-	}
-	if p.gachaCache == nil {
 		p.gachaCache = make(map[int]*masterdata.Gacha)
-	}
-	if p.costumeByCard == nil {
 		p.costumeByCard = make(map[int][]*masterdata.Costume3d)
-	}
+	})
 }
 
 func cardContextOrBackground(ctx context.Context) context.Context {

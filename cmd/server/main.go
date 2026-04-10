@@ -26,6 +26,8 @@ func main() {
 
 	loggerWriter := setupLogging()
 	mainLogger := harukiLogger.NewLogger("Main", harukiConfig.Cfg.Backend.LogLevel, loggerWriter)
+	defer closeMainLogFile(mainLogger)
+	defer closeAccessLogFile(mainLogger)
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(rootCtx, mainLogger)
 	app := createFiberApp(mainLogger)

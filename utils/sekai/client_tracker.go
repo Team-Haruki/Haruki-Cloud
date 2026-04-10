@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -16,14 +17,17 @@ var (
 	trackerClient *TrackerClient
 )
 
+const defaultTrackerUserAgent = "Haruki-Cloud/TrackerClient"
+
 type TrackerClient struct {
-	http   *resty.Client
-	config *config.TrackerConfig
+	http       *resty.Client
+	config     *config.TrackerConfig
+	requestCtx context.Context
 }
 
 func GetTrackerClient() *TrackerClient {
 	trackerOnce.Do(func() {
-		c := newRestyClient()
+		c := newRestyClient().SetTimeout(apiTimeout)
 
 		trackerClient = &TrackerClient{
 			http:   c,
@@ -31,6 +35,31 @@ func GetTrackerClient() *TrackerClient {
 		}
 	})
 	return trackerClient
+}
+
+func (c *TrackerClient) WithContext(ctx context.Context) *TrackerClient {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	return &clone
+}
+
+func (c *TrackerClient) requestContext() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.Background()
+}
+
+func (c *TrackerClient) userAgent() string {
+	if c != nil && c.config != nil {
+		if ua := strings.TrimSpace(c.config.UserAgent); ua != "" {
+			return ua
+		}
+	}
+	return defaultTrackerUserAgent
 }
 
 // GetLatestRankingByRank fetches the latest ranking snapshot for a specific rank
@@ -191,7 +220,8 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 	}
 	url := baseURL + path
 	resp, err := c.http.R().
-		SetHeader("User-Agent", c.config.UserAgent).
+		SetContext(c.requestContext()).
+		SetHeader("User-Agent", c.userAgent()).
 		Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("tracker: request failed after retries: %w", err)

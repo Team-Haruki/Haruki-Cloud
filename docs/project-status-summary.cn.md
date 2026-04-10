@@ -1305,7 +1305,7 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 **本轮状态**：
 - Drawing API（远程 SSH INTERNAL_HOST:60022）不可达，key exchange 阶段被远程关闭
 - 所有依赖 Drawing API 的端点均报 `connection refused on port 28000`
-- Go test **76/76 全部 PASS**（失败端点以 warning/degraded 形式报告，不 fail test）
+- Go test **76/76 路径已覆盖并执行**（测试进程全部 PASS；失败端点以 warning/degraded 形式报告，不 fail test）
 
 **端点分类（TestBotCommands 59 + TestExpandedCoverage 17）**：
 
@@ -1356,7 +1356,7 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 **提交**：`debc7ed` — `fix: use staticPath for gate_icon, invitationcard, chara_icon, music_record`
 
-**结果**：**57/76 ✅ OK（75%）**，76/76 测试全部 PASS。新增通过：mysekai/resource、mysekai/fixture-detail
+**结果**：**57/76 ✅ OK（75%）**，测试路径覆盖 76/76（测试进程全部 PASS）。新增通过：mysekai/resource、mysekai/fixture-detail
 
 | 类别 | 通过数 | 端点 |
 |------|--------|------|
@@ -1368,7 +1368,7 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**57/76 ✅ OK**（75%），76/76 测试全部 PASS。
+> 当前集成测试通过率：**57/76 ✅ OK**（75%），测试路径覆盖为 76/76。
 >
 > 以上是最近一次完整回归的结果快照。由于随后又合入了 parser、score、education、bonds 等修复，旧版“剩余 19 个 warning”分类已与当前代码状态不完全一致。以下待处理项以**当前代码状态**为准，完整数量需在下一轮全量回归后刷新。
 
@@ -1558,7 +1558,7 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 
 **客户端接入就绪**：client 可使用 `client.json` 中的凭证连接 alpha 环境进行对接开发。
 
-**Command Manifest**：✅ 77 条指令已通过 `SeedCommandManifests` 写入 `command_manifests` 表，客户端通过 `GET /api/v2/bot/:botId/command/manifests`（需 session token）获取完整指令列表。
+**Command Manifest**：✅ 指令清单已通过 `SeedCommandManifests` 写入 `command_manifests` 表（数量随当前注册路由变化）；客户端通过 `GET /api/v2/bot/:botId/command/manifests`（需 session token）获取完整指令列表。
 
 ### 11.8 MySekai 国服区域限制
 

@@ -23,7 +23,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var accessLogFileHandle *os.File
+
 func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
+	accessLogFileHandle = nil
 	app := fiber.New(fiber.Config{
 		BodyLimit:   30 * 1024 * 1024,
 		JSONEncoder: sonic.Marshal,
@@ -43,11 +46,22 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 				mainLogger.Errorf("Failed to open access log file: %v", err)
 				os.Exit(1)
 			}
+			accessLogFileHandle = accessLogFile
 			loggerConfig.Stream = accessLogFile
 		}
 		app.Use(logger.New(loggerConfig))
 	}
 	return app
+}
+
+func closeAccessLogFile(mainLogger *harukiLogger.Logger) {
+	if accessLogFileHandle == nil {
+		return
+	}
+	if err := accessLogFileHandle.Close(); err != nil && mainLogger != nil {
+		mainLogger.Warnf("failed to close access log file: %v", err)
+	}
+	accessLogFileHandle = nil
 }
 
 func closeClients(

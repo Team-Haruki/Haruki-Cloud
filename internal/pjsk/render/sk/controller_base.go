@@ -32,6 +32,10 @@ type TrackerSource interface {
 	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
 }
 
+type contextualTrackerSource interface {
+	WithContext(ctx context.Context) *sekaiapi.TrackerClient
+}
+
 type EventSource interface {
 	DefaultRegion() renderregion.Value
 	GetEventByID(id int) (*masterdata.Event, error)
@@ -117,6 +121,11 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	}
 	clone := *c
 	clone.requestCtx = ctx
+	if c.tracker != nil {
+		if contextual, ok := c.tracker.(contextualTrackerSource); ok {
+			clone.tracker = contextual.WithContext(ctx)
+		}
+	}
 	return &clone
 }
 

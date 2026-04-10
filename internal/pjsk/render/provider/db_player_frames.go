@@ -15,6 +15,7 @@ import (
 type dbPlayerFrameProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	frameMu    sync.RWMutex
 	frameCache map[int]*masterdata.PlayerFrame
@@ -24,16 +25,14 @@ type dbPlayerFrameProvider struct {
 }
 
 func (p *dbPlayerFrameProvider) init() {
-	if p.frameCache == nil {
+	p.once.Do(func() {
 		p.frameCache = make(map[int]*masterdata.PlayerFrame)
-	}
-	if p.groupCache == nil {
 		p.groupCache = make(map[int]*masterdata.PlayerFrameGroup)
-	}
+	})
 }
 
 func (p *dbPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbPlayerFrameProvider) getByID(ctx context.Context, id int) (*masterdata.PlayerFrame, error) {
@@ -77,7 +76,7 @@ func (p *dbPlayerFrameProvider) getByID(ctx context.Context, id int) (*masterdat
 }
 
 func (p *dbPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
-	return p.getGroupByID(nil, id)
+	return p.getGroupByID(context.TODO(), id)
 }
 
 func (p *dbPlayerFrameProvider) getGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {

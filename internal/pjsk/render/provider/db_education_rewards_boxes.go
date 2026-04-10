@@ -10,7 +10,7 @@ import (
 )
 
 func (p *dbEducationProvider) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
-	return p.getChallengeRewardsByCharacter(nil, charID)
+	return p.getChallengeRewardsByCharacter(context.TODO(), charID)
 }
 
 func (p *dbEducationProvider) getChallengeRewardsByCharacter(ctx context.Context, charID int) []*ChallengeReward {
@@ -54,7 +54,7 @@ func (p *dbEducationProvider) getChallengeRewardsByCharacter(ctx context.Context
 }
 
 func (p *dbEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
-	return p.getResourceBoxByPurpose(nil, purpose, id)
+	return p.getResourceBoxByPurpose(context.TODO(), purpose, id)
 }
 
 func (p *dbEducationProvider) getResourceBoxByPurpose(ctx context.Context, purpose string, id int) *ResourceBox {
@@ -78,7 +78,7 @@ func (p *dbEducationProvider) getResourceBoxByPurpose(ctx context.Context, purpo
 }
 
 func (p *dbEducationProvider) GetResourceBoxesByPurpose(purpose string) []*ResourceBox {
-	return p.getResourceBoxesByPurpose(nil, purpose)
+	return p.getResourceBoxesByPurpose(context.TODO(), purpose)
 }
 
 func (p *dbEducationProvider) getResourceBoxesByPurpose(ctx context.Context, purpose string) []*ResourceBox {

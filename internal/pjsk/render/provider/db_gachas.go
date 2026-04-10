@@ -17,6 +17,7 @@ import (
 type dbGachaProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	once   sync.Once
 
 	gachaMu    sync.RWMutex
 	gachaCache map[int]*masterdata.Gacha
@@ -27,16 +28,14 @@ type dbGachaProvider struct {
 }
 
 func (p *dbGachaProvider) init() {
-	if p.gachaCache == nil {
+	p.once.Do(func() {
 		p.gachaCache = make(map[int]*masterdata.Gacha)
-	}
-	if p.cardCache == nil {
 		p.cardCache = make(map[int]*masterdata.Card)
-	}
+	})
 }
 
 func (p *dbGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbGachaProvider) getByID(ctx context.Context, id int) (*masterdata.Gacha, error) {
@@ -74,7 +73,7 @@ func (p *dbGachaProvider) getByID(ctx context.Context, id int) (*masterdata.Gach
 }
 
 func (p *dbGachaProvider) GetAll() []*masterdata.Gacha {
-	return p.getAll(nil)
+	return p.getAll(context.TODO())
 }
 
 func (p *dbGachaProvider) getAll(ctx context.Context) []*masterdata.Gacha {
@@ -126,7 +125,7 @@ func (p *dbGachaProvider) getAll(ctx context.Context) []*masterdata.Gacha {
 }
 
 func (p *dbGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
-	return p.getCardByID(nil, id)
+	return p.getCardByID(context.TODO(), id)
 }
 
 func (p *dbGachaProvider) getCardByID(ctx context.Context, id int) (*masterdata.Card, error) {

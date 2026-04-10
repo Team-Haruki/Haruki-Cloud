@@ -13,6 +13,7 @@ type dbMusicProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
 	events EventProvider
+	once   sync.Once
 
 	mu            sync.RWMutex
 	musicByID     map[int]*masterdata.Music
@@ -22,15 +23,11 @@ type dbMusicProvider struct {
 }
 
 func (p *dbMusicProvider) init() {
-	if p.musicByID == nil {
+	p.once.Do(func() {
 		p.musicByID = make(map[int]*masterdata.Music)
-	}
-	if p.outsideByID == nil {
 		p.outsideByID = make(map[int]string)
-	}
-	if p.localizedByID == nil {
 		p.localizedByID = make(map[int][]string)
-	}
+	})
 }
 
 func musicContextOrBackground(ctx context.Context) context.Context {

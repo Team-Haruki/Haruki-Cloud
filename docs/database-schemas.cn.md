@@ -96,7 +96,7 @@ entc.Generate("./schema", &gen.Config{
 
 ### 3.5 `command_manifests` 表
 
-Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点。管理员可在数据库中调整 `command_priority` 改变前缀匹配顺序。首次启动时由 `SeedCommandManifests` 自动填充 41 条默认记录。
+Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点。管理员可在数据库中调整 `command_priority` 改变前缀匹配顺序。首次启动时由 `SeedCommandManifests` 自动填充当前版本注册的默认记录（数量随路由注册变化）。
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|

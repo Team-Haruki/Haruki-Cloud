@@ -16,7 +16,7 @@ import (
 )
 
 func (p *dbCardProvider) GetByID(id int) (*masterdata.Card, error) {
-	return p.getByID(nil, id)
+	return p.getByID(context.TODO(), id)
 }
 
 func (p *dbCardProvider) getByID(ctx context.Context, id int) (*masterdata.Card, error) {
@@ -51,7 +51,7 @@ func (p *dbCardProvider) getByID(ctx context.Context, id int) (*masterdata.Card,
 }
 
 func (p *dbCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
-	return p.getByCharacterAndSeq(nil, characterID, seq)
+	return p.getByCharacterAndSeq(context.TODO(), characterID, seq)
 }
 
 func (p *dbCardProvider) getByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error) {
@@ -97,7 +97,7 @@ func (p *dbCardProvider) getByCharacterAndSeq(ctx context.Context, characterID, 
 }
 
 func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) {
-	return p.filter(nil, filter)
+	return p.filter(context.TODO(), filter)
 }
 
 func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
@@ -167,7 +167,7 @@ func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*mas
 }
 
 func (p *dbCardProvider) GetUnitByCardID(cardID int) (string, error) {
-	return p.getUnitByCardID(nil, cardID)
+	return p.getUnitByCardID(context.TODO(), cardID)
 }
 
 func (p *dbCardProvider) getUnitByCardID(ctx context.Context, cardID int) (string, error) {

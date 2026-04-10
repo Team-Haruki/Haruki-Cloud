@@ -22,6 +22,10 @@
   - 记录这轮 `deck-service <-> Haruki-Cloud` 接线、兼容层验证、真实服务调用结果与当前结论
   - 适合：继续排查 `deck recommend auto` 远程推荐失败，或查看这轮接入的边界与验证结果
 
+- **[PJSK 组卡功能分阶段改造方案](pjsk-deck-command-rework-plan.cn.md)** ⭐
+  - 整理 `deck` 命令族的完整需求、当前缺口、关键风险与分步实施计划
+  - 适合：继续修 `/组卡` `/挑战组卡` `/加成组卡` `/烤森组卡` 参数语义时对照
+
 - **[PJSK 歌曲查询统一改造方案](pjsk-music-query-unification-plan.cn.md)** ⭐
   - 整理歌曲查询、难度提取、排行参数抽取与 `deck` 指定歌曲的统一方向
   - 适合：后续继续修 `music/score/deck` 相关参数语义时对照
@@ -98,6 +102,7 @@ Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-04-10 | PJSK 组卡功能分阶段改造方案 / README 索引 | 新增组卡专题方案文档，整理完整需求、注意点、参考实现与分阶段测试计划 |
 | 2026-04-10 | 全量文档更新 | 收尾治理完成：快照正式化、MySekai 数据源收口、Deck 服务治理（重试+断路器）、CI 模板（ci.yml + integration.yml）、context 清理、文档漂移修正。重构进度 ~97-98% |
 | 2026-04-09 | 项目完成度跟踪 / README 索引 | 新增基于代码审计的完成度跟踪文档，并同步记录 legacy 移除、82 条活跃 Bot path 与当前测试基线 |
 | 2026-03-31 | PJSK Deck-Service HTTP 联调测试记录 / README 索引 | 新增 deck-service HTTP 联调测试文档，记录 Cloud 接线、真实服务验证与当前结论 |

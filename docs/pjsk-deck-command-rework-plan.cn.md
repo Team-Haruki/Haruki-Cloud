@@ -61,13 +61,7 @@
 
 ### 2.3 帮助文档
 
-帮助文档参考：
-
-- `lunabot_nonebot/helps/sekai.md` 第 `804` 行开始的 `## 🧮 组卡`
-
-本地分析时使用的路径为：
-
-- `/home/xmlq/codes/lunabot-xmlq/lunabot_nonebot/helps/sekai.md`
+[帮助文档参考](deck_refer_help.md)
 
 ## 3. 改造范围
 

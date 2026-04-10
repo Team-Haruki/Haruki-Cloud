@@ -105,6 +105,12 @@ func TestBuildAutoRecommendRequestRemoteServiceUsesExplicitEvent(t *testing.T) {
 	if request.Target == nil || *request.Target != "score" {
 		t.Fatalf("unexpected target: %+v", request.Target)
 	}
+	if request.SkillOrderChooseStrategy == nil || *request.SkillOrderChooseStrategy != "average" {
+		t.Fatalf("unexpected skill order strategy: %+v", request.SkillOrderChooseStrategy)
+	}
+	if request.SkillReferenceChooseStrategy == nil || *request.SkillReferenceChooseStrategy != "average" {
+		t.Fatalf("unexpected skill reference strategy: %+v", request.SkillReferenceChooseStrategy)
+	}
 	if len(request.DeckData) != 1 {
 		t.Fatalf("unexpected deck data count: %d", len(request.DeckData))
 	}

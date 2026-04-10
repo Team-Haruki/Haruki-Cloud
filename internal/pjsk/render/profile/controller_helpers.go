@@ -1,20 +1,21 @@
 package profile
 
 import (
-"fmt"
-"log/slog"
-"path/filepath"
-"sort"
-"strconv"
-"strings"
+	"fmt"
+	"log/slog"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 
-"haruki-cloud/internal/pjsk/render/assets"
-"haruki-cloud/internal/pjsk/render/common"
-renderhonor "haruki-cloud/internal/pjsk/render/honor"
-renderregion "haruki-cloud/internal/pjsk/render/region"
-"haruki-cloud/internal/pjsk/render/userdata"
-"haruki-cloud/utils/drawing"
-sekai "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
+	renderhonor "haruki-cloud/internal/pjsk/render/honor"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
+	sekai "haruki-cloud/utils/sekai"
 )
 
 func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {
@@ -113,12 +114,34 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 // buildLeaderImagePathFromSource resolves the leader card thumbnail path using the DataSource's
 // master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
-func buildLeaderImagePathFromSource(source DataSource, helper *assets.AssetHelper, cardID int, afterTraining bool, region renderregion.Value) string {
-	fallback := profileUnknownImagePath(helper)
+func (c *Controller) cardByIDWithFallback(source DataSource, region renderregion.Value, cardID int) (*masterdata.Card, error) {
 	if cardID == 0 || source == nil {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	if card, err := source.GetCardByID(cardID); err == nil && card != nil && strings.TrimSpace(card.AssetBundleName) != "" {
+		return card, nil
+	}
+	if c == nil || c.sources == nil || renderregion.WithDefault(region) == renderregion.JP {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	jpSource, ok := c.sources.SourceForRegion(renderregion.JP)
+	if !ok || jpSource == nil || jpSource == source {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	card, err := jpSource.GetCardByID(cardID)
+	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	return card, nil
+}
+
+func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID int, afterTraining bool, region renderregion.Value) string {
+	helper := c.assets
+	fallback := profileUnknownImagePath(helper)
+	if cardID == 0 {
 		return fallback
 	}
-	card, err := source.GetCardByID(cardID)
+	card, err := c.cardByIDWithFallback(source, region, cardID)
 	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return fallback
 	}
@@ -132,22 +155,22 @@ func buildLeaderImagePathFromSource(source DataSource, helper *assets.AssetHelpe
 	)
 }
 
-func buildProfileImagePathFromSource(
+func (c *Controller) buildProfileImagePathFromSource(
 	source DataSource,
-	helper *assets.AssetHelper,
 	profileCardID int,
 	profileAfterTraining bool,
 	leaderCardID int,
 	leaderAfterTraining bool,
 	region renderregion.Value,
 ) string {
+	helper := c.assets
 	fallback := profileUnknownImagePath(helper)
 
-	if path := buildLeaderImagePathFromSource(source, helper, profileCardID, profileAfterTraining, region); path != fallback {
+	if path := c.buildLeaderImagePathFromSource(source, profileCardID, profileAfterTraining, region); path != fallback {
 		return path
 	}
 	if profileCardID != leaderCardID {
-		if path := buildLeaderImagePathFromSource(source, helper, leaderCardID, leaderAfterTraining, region); path != fallback {
+		if path := c.buildLeaderImagePathFromSource(source, leaderCardID, leaderAfterTraining, region); path != fallback {
 			return path
 		}
 	}
@@ -198,7 +221,7 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 		if cardID == 0 {
 			continue
 		}
-		cardInfo, err := source.GetCardByID(cardID)
+		cardInfo, err := c.cardByIDWithFallback(source, region, cardID)
 		if err != nil || cardInfo == nil {
 			continue
 		}
@@ -352,4 +375,3 @@ func buildCharaIconMap(helper *assets.AssetHelper) map[string]string {
 func cleanWord(word string) string {
 	return wordTagPattern.ReplaceAllString(word, "")
 }
-

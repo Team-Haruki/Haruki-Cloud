@@ -107,6 +107,47 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	}
 }
 
+func TestDispatchSupportsRegionPrefixedWorldBloomSKLineWithCharacterOnly(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	result, err := handler.Dispatch(context.Background(), handler.Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/cnwlsk线冬弥"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok || resolved == nil {
+		t.Fatalf("expected resolved command, got %#v", result)
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-line" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+	if resolved.Region != "cn" {
+		t.Fatalf("unexpected region: %s", resolved.Region)
+	}
+
+	var params map[string]any
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if got, ok := params["wl_character_query"].(string); !ok || got != "冬弥" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	ranks, ok := params["ranks"].([]any)
+	if !ok || len(ranks) == 0 {
+		t.Fatalf("expected default wl ranks, got %#v", params["ranks"])
+	}
+	if got, ok := params["default_ranks"].(bool); !ok || !got {
+		t.Fatalf("unexpected default_ranks: %#v", params["default_ranks"])
+	}
+}
+
 func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

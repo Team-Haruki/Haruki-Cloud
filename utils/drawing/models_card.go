@@ -3,20 +3,20 @@ package drawing
 // =========================== Card Models ===========================
 
 type CardFullThumbnailRequest struct {
-	CardID            int                    `json:"card_id"`
-	CardThumbnailPath string                 `json:"card_thumbnail_path"`
-	Rare              string                 `json:"rare"`
-	FrameImgPath      string                 `json:"frame_img_path"`
-	AttrImgPath       string                 `json:"attr_img_path"`
-	RareImgPath       string                 `json:"rare_img_path"`
-	TrainRank         *int                   `json:"train_rank"`
-	TrainRankImgPath  *string                `json:"train_rank_img_path,omitempty"`
-	Level             *int                   `json:"level,omitempty"`
-	BirthdayIconPath  *string                `json:"birthday_icon_path,omitempty"`
-	IsAfterTraining   *bool                  `json:"is_after_training,omitempty"`
-	CustomText        *string                `json:"custom_text,omitempty"`
+	CardID            int            `json:"card_id"`
+	CardThumbnailPath string         `json:"card_thumbnail_path"`
+	Rare              string         `json:"rare"`
+	FrameImgPath      string         `json:"frame_img_path"`
+	AttrImgPath       string         `json:"attr_img_path"`
+	RareImgPath       string         `json:"rare_img_path"`
+	TrainRank         *int           `json:"train_rank"`
+	TrainRankImgPath  *string        `json:"train_rank_img_path,omitempty"`
+	Level             *int           `json:"level,omitempty"`
+	BirthdayIconPath  *string        `json:"birthday_icon_path,omitempty"`
+	IsAfterTraining   *bool          `json:"is_after_training,omitempty"`
+	CustomText        *string        `json:"custom_text,omitempty"`
 	CardLevel         map[string]any `json:"card_level,omitempty"`
-	IsPcard           bool                   `json:"is_pcard"`
+	IsPcard           bool           `json:"is_pcard"`
 }
 
 type CardPower struct {
@@ -36,22 +36,22 @@ type CardSkill struct {
 }
 
 type CardEventInfo struct {
-	EventID         int         `json:"event_id"`
-	EventName       string      `json:"event_name"`
-	StartAt         any `json:"start_at"` // datetime | int | str
-	EndAt           any `json:"end_at"`
-	EventBannerPath string      `json:"event_banner_path"`
-	BonusAttr       *string     `json:"bonus_attr,omitempty"`
-	Unit            *string     `json:"unit,omitempty"`
-	BannerCid       *int        `json:"banner_cid,omitempty"`
+	EventID         int     `json:"event_id"`
+	EventName       string  `json:"event_name"`
+	StartAt         any     `json:"start_at"` // datetime | int | str
+	EndAt           any     `json:"end_at"`
+	EventBannerPath string  `json:"event_banner_path"`
+	BonusAttr       *string `json:"bonus_attr,omitempty"`
+	Unit            *string `json:"unit,omitempty"`
+	BannerCid       *int    `json:"banner_cid,omitempty"`
 }
 
 type CardGachaInfo struct {
-	GachaID         int         `json:"gacha_id"`
-	GachaName       string      `json:"gacha_name"`
-	StartAt         any `json:"start_at"`
-	EndAt           any `json:"end_at"`
-	GachaBannerPath string      `json:"gacha_banner_path"`
+	GachaID         int    `json:"gacha_id"`
+	GachaName       string `json:"gacha_name"`
+	StartAt         any    `json:"start_at"`
+	EndAt           any    `json:"end_at"`
+	GachaBannerPath string `json:"gacha_banner_path"`
 }
 
 type CardBasic struct {
@@ -144,39 +144,41 @@ type DeckData struct {
 }
 
 type DeckRequest struct {
-	Region                     string                     `json:"region"`
-	Profile                    DetailedProfileCardRequest `json:"profile"`
-	DeckData                   []DeckData                 `json:"deck_data"`
-	EventName                  *string                    `json:"event_name,omitempty"`
-	MusicTitle                 *string                    `json:"music_title,omitempty"`
-	MusicID                    *int                       `json:"music_id,omitempty"`
-	MusicDiff                  *string                    `json:"music_diff,omitempty"`
-	EventBannerPath            *string                    `json:"event_banner_path,omitempty"`
-	MusicCoverPath             *string                    `json:"music_cover_path,omitempty"`
-	IsMaxDeck                  bool                       `json:"is_max_deck"`
-	RecommendType              string                     `json:"recommend_type"`
-	WlCharaName                *string                    `json:"wl_chara_name,omitempty"`
-	WlCharaIconPath            *string                    `json:"wl_chara_icon_path,omitempty"`
-	EventID                    *int                       `json:"event_id,omitempty"`
-	LiveType                   *string                    `json:"live_type,omitempty"`
-	LiveName                   *string                    `json:"live_name,omitempty"`
-	CharaIconPath              *string                    `json:"chara_icon_path,omitempty"`
-	CharaName                  *string                    `json:"chara_name,omitempty"`
-	UnitLogoPath               *string                    `json:"unit_logo_path,omitempty"`
-	AttrIconPath               *string                    `json:"attr_icon_path,omitempty"`
-	IsWl                       bool                       `json:"is_wl"`
-	MultiLiveTeammatePower     *int                       `json:"multi_live_teammate_power,omitempty"`
-	MultiLiveTeammateScoreUp   *float64                   `json:"multi_live_teammate_score_up,omitempty"`
-	Target                     *string                    `json:"target,omitempty"`
-	UnitFilter                 *string                    `json:"unit_filter,omitempty"`
-	AttrFilter                 *string                    `json:"attr_filter,omitempty"`
-	ExcludedCards              []int                      `json:"excluded_cards,omitempty"`
-	MultiLiveScoreUpLowerBound *float64                   `json:"multi_live_score_up_lower_bound,omitempty"`
-	KeepAfterTrainingState     bool                       `json:"keep_after_training_state"`
-	ModelName                  []any              `json:"model_name,omitempty"`
-	CanvasThumbnailPath        *string                    `json:"canvas_thumbnail_path,omitempty"`
-	FixedCardsID               []int                      `json:"fixed_cards_id,omitempty"`
-	FixedCharactersID          []int                      `json:"fixed_characters_id,omitempty"`
-	CostTimes                  map[string]any     `json:"cost_times,omitempty"`
-	WaitTimes                  map[string]any     `json:"wait_times,omitempty"`
+	Region                       string                     `json:"region"`
+	Profile                      DetailedProfileCardRequest `json:"profile"`
+	DeckData                     []DeckData                 `json:"deck_data"`
+	EventName                    *string                    `json:"event_name,omitempty"`
+	MusicTitle                   *string                    `json:"music_title,omitempty"`
+	MusicID                      *int                       `json:"music_id,omitempty"`
+	MusicDiff                    *string                    `json:"music_diff,omitempty"`
+	EventBannerPath              *string                    `json:"event_banner_path,omitempty"`
+	MusicCoverPath               *string                    `json:"music_cover_path,omitempty"`
+	IsMaxDeck                    bool                       `json:"is_max_deck"`
+	RecommendType                string                     `json:"recommend_type"`
+	WlCharaName                  *string                    `json:"wl_chara_name,omitempty"`
+	WlCharaIconPath              *string                    `json:"wl_chara_icon_path,omitempty"`
+	EventID                      *int                       `json:"event_id,omitempty"`
+	LiveType                     *string                    `json:"live_type,omitempty"`
+	LiveName                     *string                    `json:"live_name,omitempty"`
+	CharaIconPath                *string                    `json:"chara_icon_path,omitempty"`
+	CharaName                    *string                    `json:"chara_name,omitempty"`
+	UnitLogoPath                 *string                    `json:"unit_logo_path,omitempty"`
+	AttrIconPath                 *string                    `json:"attr_icon_path,omitempty"`
+	IsWl                         bool                       `json:"is_wl"`
+	MultiLiveTeammatePower       *int                       `json:"multi_live_teammate_power,omitempty"`
+	MultiLiveTeammateScoreUp     *float64                   `json:"multi_live_teammate_score_up,omitempty"`
+	Target                       *string                    `json:"target,omitempty"`
+	UnitFilter                   *string                    `json:"unit_filter,omitempty"`
+	AttrFilter                   *string                    `json:"attr_filter,omitempty"`
+	ExcludedCards                []int                      `json:"excluded_cards,omitempty"`
+	MultiLiveScoreUpLowerBound   *float64                   `json:"multi_live_score_up_lower_bound,omitempty"`
+	SkillOrderChooseStrategy     *string                    `json:"skill_order_choose_strategy,omitempty"`
+	SkillReferenceChooseStrategy *string                    `json:"skill_reference_choose_strategy,omitempty"`
+	KeepAfterTrainingState       bool                       `json:"keep_after_training_state"`
+	ModelName                    []interface{}              `json:"model_name,omitempty"`
+	CanvasThumbnailPath          *string                    `json:"canvas_thumbnail_path,omitempty"`
+	FixedCardsID                 []int                      `json:"fixed_cards_id,omitempty"`
+	FixedCharactersID            []int                      `json:"fixed_characters_id,omitempty"`
+	CostTimes                    map[string]any             `json:"cost_times,omitempty"`
+	WaitTimes                    map[string]any             `json:"wait_times,omitempty"`
 }

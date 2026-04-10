@@ -69,20 +69,45 @@ func (h *AssetHelper) FirstExisting(relPaths ...string) string {
 		if strings.TrimSpace(rel) == "" {
 			continue
 		}
-		for _, root := range h.roots {
-			if isAssetURL(root) {
-				continue
+		for _, candidateRel := range assetPathCandidates(rel) {
+			if filepath.IsAbs(candidateRel) {
+				if resolved, ok := resolveCaseInsensitivePath(candidateRel); ok {
+					return filepath.ToSlash(resolved)
+				}
+				if _, err := os.Stat(candidateRel); err == nil {
+					return filepath.ToSlash(candidateRel)
+				}
 			}
-			candidate := filepath.Join(root, rel)
-			if resolved, ok := resolveCaseInsensitivePath(candidate); ok {
-				return filepath.ToSlash(resolved)
-			}
-			if _, err := os.Stat(candidate); err == nil {
-				return filepath.ToSlash(candidate)
+			for _, root := range h.roots {
+				if isAssetURL(root) {
+					continue
+				}
+				candidate := filepath.Join(root, candidateRel)
+				if resolved, ok := resolveCaseInsensitivePath(candidate); ok {
+					return filepath.ToSlash(resolved)
+				}
+				if _, err := os.Stat(candidate); err == nil {
+					return filepath.ToSlash(candidate)
+				}
 			}
 		}
 	}
 	return ""
+}
+
+func assetPathCandidates(rel string) []string {
+	clean := filepath.ToSlash(strings.TrimSpace(rel))
+	if clean == "" {
+		return nil
+	}
+	candidates := []string{clean}
+	if strings.HasPrefix(clean, "asset/") {
+		trimmed := strings.TrimPrefix(clean, "asset/")
+		if trimmed != "" && trimmed != clean {
+			candidates = append(candidates, trimmed)
+		}
+	}
+	return candidates
 }
 
 func resolveCaseInsensitivePath(path string) (string, bool) {
@@ -245,11 +270,13 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	if len(candidates) == 0 {
 		return ""
 	}
-	// Try to find the file locally (e.g. when primary is the Drawing API data dir
-	// and assets follow the expected "asset/{region}-assets/{mode}/..." layout).
+	// Probe local existence to choose the right candidate, but keep the returned
+	// path relative for DrawingAPI callers that cannot access host-local absolute paths.
 	if helper != nil {
-		if resolved := helper.FirstExisting(candidates...); resolved != "" {
-			return filepath.ToSlash(resolved)
+		for _, candidate := range candidates {
+			if helper.FirstExisting(candidate) != "" {
+				return candidate
+			}
 		}
 	}
 	// Fall back to the first candidate as a relative path so that callers forwarding

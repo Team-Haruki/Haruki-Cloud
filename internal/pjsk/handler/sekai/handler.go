@@ -168,13 +168,12 @@ var registerOnce sync.Once
 
 type sekaiHandlers struct{}
 
-func EnsureCommandHandlersRegistered(nicknames map[string]int) {
-	_ = nicknames
+func EnsureCommandHandlersRegistered() {
 	registerOnce.Do(registerSekaiCommandHandlers)
 }
 
 func RegisterSekaiCommandHandler() {
-	EnsureCommandHandlersRegistered(nil)
+	EnsureCommandHandlersRegistered()
 }
 
 func registerSekaiCommandHandlers() {

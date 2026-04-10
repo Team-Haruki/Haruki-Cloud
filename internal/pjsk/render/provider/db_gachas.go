@@ -34,16 +34,9 @@ func (p *dbGachaProvider) init() {
 	})
 }
 
-func (p *dbGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbGachaProvider) getByID(ctx context.Context, id int) (*masterdata.Gacha, error) {
+func (p *dbGachaProvider) GetByID(ctx context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("gacha id is required")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -72,15 +65,8 @@ func (p *dbGachaProvider) getByID(ctx context.Context, id int) (*masterdata.Gach
 	return common.CloneGacha(model), nil
 }
 
-func (p *dbGachaProvider) GetAll() []*masterdata.Gacha {
-	return p.getAll(context.TODO())
-}
-
-func (p *dbGachaProvider) getAll(ctx context.Context) []*masterdata.Gacha {
+func (p *dbGachaProvider) GetAll(ctx context.Context) []*masterdata.Gacha {
 	p.init()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 
 	p.gachaMu.RLock()
 	if len(p.gachas) > 0 {
@@ -124,16 +110,9 @@ func (p *dbGachaProvider) getAll(ctx context.Context) []*masterdata.Gacha {
 	return common.CloneGachaList(items)
 }
 
-func (p *dbGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
-	return p.getCardByID(context.TODO(), id)
-}
-
-func (p *dbGachaProvider) getCardByID(ctx context.Context, id int) (*masterdata.Card, error) {
+func (p *dbGachaProvider) GetCardByID(ctx context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 

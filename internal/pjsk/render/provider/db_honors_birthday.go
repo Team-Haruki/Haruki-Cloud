@@ -26,9 +26,6 @@ func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(ctx context.Context, grou
 	}
 
 	if !p.birthdayLoaded {
-		if ctx == nil {
-			ctx = context.Background()
-		}
 		rows, err := p.client.Gamecharacter.Query().
 			Where(gamecharacter.ServerRegionEQ(p.region.String())).
 			All(ctx)

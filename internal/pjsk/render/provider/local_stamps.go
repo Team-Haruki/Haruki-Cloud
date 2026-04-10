@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"context"
+
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -13,7 +15,7 @@ type localStampProvider struct {
 	stamps lazyValue[[]masterdata.Stamp]
 }
 
-func (p *localStampProvider) GetAll() ([]masterdata.Stamp, error) {
+func (p *localStampProvider) GetAll(_ context.Context) ([]masterdata.Stamp, error) {
 	if err := p.stamps.init(func() ([]masterdata.Stamp, error) {
 		return loadJSON[masterdata.Stamp](p.store, "stamps.json")
 	}); err != nil {

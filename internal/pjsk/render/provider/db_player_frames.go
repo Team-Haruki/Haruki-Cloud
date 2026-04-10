@@ -31,16 +31,9 @@ func (p *dbPlayerFrameProvider) init() {
 	})
 }
 
-func (p *dbPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbPlayerFrameProvider) getByID(ctx context.Context, id int) (*masterdata.PlayerFrame, error) {
+func (p *dbPlayerFrameProvider) GetByID(ctx context.Context, id int) (*masterdata.PlayerFrame, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -75,16 +68,9 @@ func (p *dbPlayerFrameProvider) getByID(ctx context.Context, id int) (*masterdat
 	return &c, nil
 }
 
-func (p *dbPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
-	return p.getGroupByID(context.TODO(), id)
-}
-
-func (p *dbPlayerFrameProvider) getGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
+func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame group id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 

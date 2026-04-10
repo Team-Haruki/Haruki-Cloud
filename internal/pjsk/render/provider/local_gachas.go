@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -62,7 +63,7 @@ func (p *localGachaProvider) ensureCards() error {
 	})
 }
 
-func (p *localGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
+func (p *localGachaProvider) GetByID(_ context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("gacha id is required")
 	}
@@ -76,14 +77,14 @@ func (p *localGachaProvider) GetByID(id int) (*masterdata.Gacha, error) {
 	return common.CloneGacha(g), nil
 }
 
-func (p *localGachaProvider) GetAll() []*masterdata.Gacha {
+func (p *localGachaProvider) GetAll(_ context.Context) []*masterdata.Gacha {
 	if err := p.ensureGachas(); err != nil {
 		return nil
 	}
 	return common.CloneGachaList(p.gachas.v().all)
 }
 
-func (p *localGachaProvider) GetCardByID(id int) (*masterdata.Card, error) {
+func (p *localGachaProvider) GetCardByID(_ context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
 	}

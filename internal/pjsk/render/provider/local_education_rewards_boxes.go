@@ -1,6 +1,9 @@
 package provider
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 func (p *localEducationProvider) ensureRewards() error {
 	return p.rewards.init(func() (map[int][]*ChallengeReward, error) {
@@ -38,7 +41,7 @@ func (p *localEducationProvider) ensureResourceBoxes() error {
 	})
 }
 
-func (p *localEducationProvider) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
+func (p *localEducationProvider) GetChallengeRewardsByCharacter(_ context.Context, charID int) []*ChallengeReward {
 	if charID <= 0 {
 		return nil
 	}
@@ -48,7 +51,7 @@ func (p *localEducationProvider) GetChallengeRewardsByCharacter(charID int) []*C
 	return cloneEdChallengeRewards(p.rewards.v()[charID])
 }
 
-func (p *localEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
+func (p *localEducationProvider) GetResourceBoxByPurpose(_ context.Context, purpose string, id int) *ResourceBox {
 	if id <= 0 {
 		return nil
 	}
@@ -64,7 +67,7 @@ func (p *localEducationProvider) GetResourceBoxByPurpose(purpose string, id int)
 	return nil
 }
 
-func (p *localEducationProvider) GetResourceBoxesByPurpose(purpose string) []*ResourceBox {
+func (p *localEducationProvider) GetResourceBoxesByPurpose(_ context.Context, purpose string) []*ResourceBox {
 	if err := p.ensureResourceBoxes(); err != nil {
 		return nil
 	}

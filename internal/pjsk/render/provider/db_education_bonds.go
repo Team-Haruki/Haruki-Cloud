@@ -10,11 +10,7 @@ import (
 	"haruki-cloud/database/sekai/level"
 )
 
-func (p *dbEducationProvider) GetBonds() []*Bond {
-	return p.getBonds(context.TODO())
-}
-
-func (p *dbEducationProvider) getBonds(ctx context.Context) []*Bond {
+func (p *dbEducationProvider) GetBonds(ctx context.Context) []*Bond {
 	if !p.ensureBondMasterLoaded(ctx) {
 		return nil
 	}
@@ -24,11 +20,7 @@ func (p *dbEducationProvider) getBonds(ctx context.Context) []*Bond {
 	return cloneEdBonds(p.bonds)
 }
 
-func (p *dbEducationProvider) GetBondLevels() []*BondLevel {
-	return p.getBondLevels(context.TODO())
-}
-
-func (p *dbEducationProvider) getBondLevels(ctx context.Context) []*BondLevel {
+func (p *dbEducationProvider) GetBondLevels(ctx context.Context) []*BondLevel {
 	if !p.ensureBondMasterLoaded(ctx) {
 		return nil
 	}
@@ -38,11 +30,7 @@ func (p *dbEducationProvider) getBondLevels(ctx context.Context) []*BondLevel {
 	return cloneEdBondLevels(p.bondLevels)
 }
 
-func (p *dbEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
-	return p.getGameCharacterStyle(context.TODO(), gameID)
-}
-
-func (p *dbEducationProvider) getGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle {
+func (p *dbEducationProvider) GetGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle {
 	if gameID <= 0 || !p.ensureGameCharacterStylesLoaded(ctx) {
 		return nil
 	}
@@ -52,11 +40,7 @@ func (p *dbEducationProvider) getGameCharacterStyle(ctx context.Context, gameID 
 	return cloneEdGameCharacterStyle(p.stylesByGameID[gameID])
 }
 
-func (p *dbEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
-	return p.getLeaderMissionRequirements(context.TODO())
-}
-
-func (p *dbEducationProvider) getLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
+func (p *dbEducationProvider) GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
 	if !p.ensureLeaderMissionsLoaded(ctx) {
 		return nil, 0
 	}
@@ -68,8 +52,6 @@ func (p *dbEducationProvider) getLeaderMissionRequirements(ctx context.Context) 
 
 func (p *dbEducationProvider) ensureBondMasterLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.bondMu.RLock()
 	if p.bondsLoaded {
 		p.bondMu.RUnlock()
@@ -119,8 +101,6 @@ func (p *dbEducationProvider) ensureBondMasterLoaded(ctx context.Context) bool {
 
 func (p *dbEducationProvider) ensureGameCharacterStylesLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.styleMu.RLock()
 	if p.stylesLoaded {
 		p.styleMu.RUnlock()
@@ -155,8 +135,6 @@ func (p *dbEducationProvider) ensureGameCharacterStylesLoaded(ctx context.Contex
 
 func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.missionMu.RLock()
 	if p.leaderMissionsLoaded {
 		p.missionMu.RUnlock()

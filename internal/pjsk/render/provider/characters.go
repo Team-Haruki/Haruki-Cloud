@@ -1,10 +1,14 @@
 package provider
 
-import "haruki-cloud/internal/pjsk/render/masterdata"
+import (
+	"context"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
 
 // CharacterProvider exposes character and game-character-unit queries.
 type CharacterProvider interface {
-	GetByID(id int) (*masterdata.Character, error)
-	GetColorCode(id int) (string, bool)
-	GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error)
+	GetByID(ctx context.Context, id int) (*masterdata.Character, error)
+	GetColorCode(ctx context.Context, id int) (string, bool)
+	GetGameCharacterUnit(ctx context.Context, id int) (*masterdata.GameCharacterUnit, error)
 }

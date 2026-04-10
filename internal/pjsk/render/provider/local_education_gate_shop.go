@@ -1,6 +1,9 @@
 package provider
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 func (p *localEducationProvider) ensureGateLevels() error {
 	return p.gates.init(func() (map[int]map[int]*MysekaiGateLevel, error) {
@@ -53,7 +56,7 @@ func (p *localEducationProvider) ensureShopItems() error {
 	})
 }
 
-func (p *localEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
+func (p *localEducationProvider) GetMysekaiGateLevel(_ context.Context, gateID, level int) *MysekaiGateLevel {
 	if gateID <= 0 || level <= 0 {
 		return nil
 	}
@@ -66,7 +69,7 @@ func (p *localEducationProvider) GetMysekaiGateLevel(gateID, level int) *Mysekai
 	return nil
 }
 
-func (p *localEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
+func (p *localEducationProvider) GetShopItemByResourceBoxID(_ context.Context, resourceBoxID int) *ShopItem {
 	if resourceBoxID <= 0 {
 		return nil
 	}

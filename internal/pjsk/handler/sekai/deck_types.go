@@ -53,7 +53,6 @@ type deckCommonConfig struct {
 	allowRandom        bool
 	allowFixed         bool
 	allowCardConfig    bool
-	defaultNoChange    bool
 	defaultArgsTrigger string
 }
 

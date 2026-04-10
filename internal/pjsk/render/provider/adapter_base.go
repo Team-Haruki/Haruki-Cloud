@@ -11,18 +11,32 @@ import (
 // CloneWithContext helper so individual adapters only need a thin
 // WithContext wrapper that returns their module-specific DataSource.
 type ProviderAdapterBase struct {
-	P MasterDataProvider
+	P   MasterDataProvider
+	Ctx context.Context
 }
 
 func NewProviderAdapterBase(p MasterDataProvider) ProviderAdapterBase {
-	return ProviderAdapterBase{P: p}
+	return ProviderAdapterBase{P: p, Ctx: context.Background()}
 }
 
 func (b *ProviderAdapterBase) DefaultRegion() renderregion.Value {
 	return b.P.Region()
 }
 
-// CloneWithContext returns a new base with the provider wrapped for ctx.
+// Context returns the request context bound to this adapter, falling back
+// to context.Background() when no context has been set.
+func (b *ProviderAdapterBase) Context() context.Context {
+	if b == nil || b.Ctx == nil {
+		return context.Background()
+	}
+	return b.Ctx
+}
+
+// CloneWithContext returns a new base bound to ctx. All sub-provider
+// interfaces accept ctx directly, so no provider wrapping is needed.
 func (b *ProviderAdapterBase) CloneWithContext(ctx context.Context) ProviderAdapterBase {
-	return ProviderAdapterBase{P: WithContext(b.P, ctx)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return ProviderAdapterBase{P: b.P, Ctx: ctx}
 }

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"sort"
 
@@ -57,7 +58,7 @@ func (p *localVLiveProvider) ensureLoaded() error {
 	})
 }
 
-func (p *localVLiveProvider) GetLives(_ renderregion.Value) ([]*VLive, error) {
+func (p *localVLiveProvider) GetLives(_ context.Context, _ renderregion.Value) ([]*VLive, error) {
 	if err := p.ensureLoaded(); err != nil {
 		return nil, err
 	}

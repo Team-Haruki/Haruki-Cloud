@@ -32,7 +32,7 @@ func extractDeckCommonParams(args string, params *deckAutoQueryParams, cfg deckC
 		}
 	}
 	if cfg.allowCardConfig {
-		args = extractDeckCardConfigs(args, params, cfg.defaultNoChange)
+		args = extractDeckCardConfigs(args, params)
 	}
 	if cfg.allowTarget {
 		args = extractDeckTarget(args, params)

@@ -1,5 +1,7 @@
 package provider
 
+import "context"
+
 func (p *localEducationProvider) ensureAreaItems() error {
 	return p.areas.init(func() (areaIndex, error) {
 		items, err := loadJSON[AreaItem](p.store, "areaItems.json")
@@ -53,7 +55,7 @@ func (p *localEducationProvider) ensureCharacterRanks() error {
 	})
 }
 
-func (p *localEducationProvider) GetAreaItems() []*AreaItem {
+func (p *localEducationProvider) GetAreaItems(_ context.Context) []*AreaItem {
 	if err := p.ensureAreaItems(); err != nil {
 		return nil
 	}
@@ -64,7 +66,7 @@ func (p *localEducationProvider) GetAreaItems() []*AreaItem {
 	return items
 }
 
-func (p *localEducationProvider) GetAreaItem(id int) *AreaItem {
+func (p *localEducationProvider) GetAreaItem(_ context.Context, id int) *AreaItem {
 	if id <= 0 {
 		return nil
 	}
@@ -74,7 +76,7 @@ func (p *localEducationProvider) GetAreaItem(id int) *AreaItem {
 	return cloneEdAreaItem(p.areas.v().byID[id])
 }
 
-func (p *localEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
+func (p *localEducationProvider) GetAreaItemLevels(_ context.Context, areaItemID int) []*AreaItemLevel {
 	if areaItemID <= 0 {
 		return nil
 	}
@@ -84,7 +86,7 @@ func (p *localEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLe
 	return cloneEdAreaItemLevels(p.areas.v().levelsByItem[areaItemID])
 }
 
-func (p *localEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
+func (p *localEducationProvider) GetAreaItemLevel(_ context.Context, areaItemID, level int) *AreaItemLevel {
 	if areaItemID <= 0 || level <= 0 {
 		return nil
 	}
@@ -97,7 +99,7 @@ func (p *localEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaIt
 	return nil
 }
 
-func (p *localEducationProvider) GetCharacterRank(characterID, rank int) *CharacterRank {
+func (p *localEducationProvider) GetCharacterRank(_ context.Context, characterID, rank int) *CharacterRank {
 	if characterID <= 0 || rank <= 0 {
 		return nil
 	}

@@ -24,5 +24,5 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 }
 
 func (a *ProviderAdapter) GetStamps() ([]masterdata.Stamp, error) {
-	return a.P.Stamps().GetAll()
+	return a.P.Stamps().GetAll(a.Context())
 }

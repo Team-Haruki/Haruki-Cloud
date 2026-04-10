@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"sort"
 	"strings"
 
@@ -84,21 +85,21 @@ func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
 	})
 }
 
-func (p *localEducationProvider) GetBonds() []*Bond {
+func (p *localEducationProvider) GetBonds(_ context.Context) []*Bond {
 	if err := p.ensureBondMaster(); err != nil {
 		return nil
 	}
 	return cloneEdBonds(p.bonds.v().bonds)
 }
 
-func (p *localEducationProvider) GetBondLevels() []*BondLevel {
+func (p *localEducationProvider) GetBondLevels(_ context.Context) []*BondLevel {
 	if err := p.ensureBondMaster(); err != nil {
 		return nil
 	}
 	return cloneEdBondLevels(p.bonds.v().levels)
 }
 
-func (p *localEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
+func (p *localEducationProvider) GetGameCharacterStyle(_ context.Context, gameID int) *GameCharacterStyle {
 	if gameID <= 0 {
 		return nil
 	}
@@ -108,7 +109,7 @@ func (p *localEducationProvider) GetGameCharacterStyle(gameID int) *GameCharacte
 	return cloneEdGameCharacterStyle(p.styles.v()[gameID])
 }
 
-func (p *localEducationProvider) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
+func (p *localEducationProvider) GetLeaderMissionRequirements(_ context.Context) ([]LeaderMissionRequirement, int) {
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
 		return nil, 0
 	}

@@ -68,7 +68,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		initCtx = context.Background()
 	}
 
-	sekaihandler.EnsureCommandHandlersRegistered(nil)
+	sekaihandler.EnsureCommandHandlersRegistered()
 
 	if botDBClient != nil {
 		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {

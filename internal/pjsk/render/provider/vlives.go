@@ -1,6 +1,10 @@
 package provider
 
-import renderregion "haruki-cloud/internal/pjsk/render/region"
+import (
+	"context"
+
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+)
 
 // VLive holds a virtual live entry.
 type VLive struct {
@@ -19,5 +23,5 @@ type VLiveSchedule struct {
 
 // VLiveProvider exposes virtual-live masterdata queries.
 type VLiveProvider interface {
-	GetLives(region renderregion.Value) ([]*VLive, error)
+	GetLives(ctx context.Context, region renderregion.Value) ([]*VLive, error)
 }

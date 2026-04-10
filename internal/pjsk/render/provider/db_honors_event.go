@@ -7,12 +7,9 @@ import (
 	"haruki-cloud/database/sekai/event"
 )
 
-func (p *dbHonorProvider) getEventIDByHonorID(ctx context.Context, honorID int) int {
+func (p *dbHonorProvider) GetEventIDByHonorID(ctx context.Context, honorID int) int {
 	if honorID == 0 {
 		return 0
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 

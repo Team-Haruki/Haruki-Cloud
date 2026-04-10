@@ -1,22 +1,24 @@
 package provider
 
+import "context"
+
 // EducationProvider exposes area-item, challenge-reward, and character-rank
 // masterdata used by the education (power bonus / challenge info) module.
 type EducationProvider interface {
-	GetChallengeRewardsByCharacter(charID int) []*ChallengeReward
-	GetResourceBoxByPurpose(purpose string, id int) *ResourceBox
-	GetResourceBoxesByPurpose(purpose string) []*ResourceBox
-	GetAreaItems() []*AreaItem
-	GetAreaItem(id int) *AreaItem
-	GetAreaItemLevels(areaItemID int) []*AreaItemLevel
-	GetAreaItemLevel(areaItemID, level int) *AreaItemLevel
-	GetCharacterRank(characterID, rank int) *CharacterRank
-	GetBonds() []*Bond
-	GetBondLevels() []*BondLevel
-	GetGameCharacterStyle(gameID int) *GameCharacterStyle
-	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int)
-	GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel
-	GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem
+	GetChallengeRewardsByCharacter(ctx context.Context, charID int) []*ChallengeReward
+	GetResourceBoxByPurpose(ctx context.Context, purpose string, id int) *ResourceBox
+	GetResourceBoxesByPurpose(ctx context.Context, purpose string) []*ResourceBox
+	GetAreaItems(ctx context.Context) []*AreaItem
+	GetAreaItem(ctx context.Context, id int) *AreaItem
+	GetAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel
+	GetAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel
+	GetCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank
+	GetBonds(ctx context.Context) []*Bond
+	GetBondLevels(ctx context.Context) []*BondLevel
+	GetGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle
+	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int)
+	GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel
+	GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem
 }
 
 // Types used by EducationProvider, mirroring education package structs.

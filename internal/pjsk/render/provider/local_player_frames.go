@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -44,7 +45,7 @@ func (p *localPlayerFrameProvider) ensureGroups() error {
 	})
 }
 
-func (p *localPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, error) {
+func (p *localPlayerFrameProvider) GetByID(_ context.Context, id int) (*masterdata.PlayerFrame, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame id")
 	}
@@ -59,7 +60,7 @@ func (p *localPlayerFrameProvider) GetByID(id int) (*masterdata.PlayerFrame, err
 	return &c, nil
 }
 
-func (p *localPlayerFrameProvider) GetGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
+func (p *localPlayerFrameProvider) GetGroupByID(_ context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid player frame group id")
 	}

@@ -24,7 +24,7 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 }
 
 func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
-	pvLives, err := a.P.VLives().GetLives(region)
+	pvLives, err := a.P.VLives().GetLives(a.Context(), region)
 	if err != nil {
 		return nil, err
 	}

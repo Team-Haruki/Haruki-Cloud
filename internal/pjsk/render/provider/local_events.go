@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -109,7 +110,7 @@ func (p *localEventProvider) ensureWorldBlooms() error {
 	})
 }
 
-func (p *localEventProvider) GetByID(id int) (*masterdata.Event, error) {
+func (p *localEventProvider) GetByID(_ context.Context, id int) (*masterdata.Event, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("event id is required")
 	}
@@ -123,7 +124,7 @@ func (p *localEventProvider) GetByID(id int) (*masterdata.Event, error) {
 	return common.CloneEvent(ev), nil
 }
 
-func (p *localEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) {
+func (p *localEventProvider) GetByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
 	if err := p.ensureEventCards(); err != nil {
 		return nil, err
 	}
@@ -131,10 +132,10 @@ func (p *localEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) 
 	if !ok {
 		return nil, fmt.Errorf("no event found for card %d", cardID)
 	}
-	return p.GetByID(eventID)
+	return p.GetByID(ctx, eventID)
 }
 
-func (p *localEventProvider) GetAll() []*masterdata.Event {
+func (p *localEventProvider) GetAll(_ context.Context) []*masterdata.Event {
 	if err := p.ensureEvents(); err != nil {
 		return nil
 	}
@@ -145,7 +146,7 @@ func (p *localEventProvider) GetAll() []*masterdata.Event {
 	return result
 }
 
-func (p *localEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
+func (p *localEventProvider) GetCards(_ context.Context, eventID int) ([]*masterdata.Card, error) {
 	if err := p.ensureEventCards(); err != nil {
 		return nil, err
 	}
@@ -155,7 +156,7 @@ func (p *localEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
 	}
 	result := make([]*masterdata.Card, 0, len(cardIDs))
 	for _, id := range cardIDs {
-		card, err := p.cards.GetByID(id)
+		card, err := p.cards.GetByID(context.Background(), id)
 		if err != nil {
 			return nil, err
 		}
@@ -164,15 +165,15 @@ func (p *localEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
 	return result, nil
 }
 
-func (p *localEventProvider) GetBannerCharacterID(eventID int) (int, error) {
-	cards, err := p.GetCards(eventID)
+func (p *localEventProvider) GetBannerCharacterID(ctx context.Context, eventID int) (int, error) {
+	cards, err := p.GetCards(ctx, eventID)
 	if err != nil {
 		return 0, err
 	}
 	minCardID := -1
 	var selected *masterdata.Card
 	for _, cardInfo := range cards {
-		supplyType := p.cards.GetSupplyType(cardInfo)
+		supplyType := p.cards.GetSupplyType(context.Background(), cardInfo)
 		if strings.Contains(supplyType, "festival") {
 			continue
 		}
@@ -187,7 +188,7 @@ func (p *localEventProvider) GetBannerCharacterID(eventID int) (int, error) {
 	return selected.CharacterID, nil
 }
 
-func (p *localEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
+func (p *localEventProvider) GetDeckBonuses(_ context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
 	if err := p.ensureDeckBonuses(); err != nil {
 		return nil, err
 	}
@@ -203,7 +204,7 @@ func (p *localEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDec
 	return result, nil
 }
 
-func (p *localEventProvider) GetBanEvents(charID int) []*masterdata.Event {
+func (p *localEventProvider) GetBanEvents(ctx context.Context, charID int) []*masterdata.Event {
 	if err := p.ensureEvents(); err != nil {
 		return nil
 	}
@@ -212,7 +213,7 @@ func (p *localEventProvider) GetBanEvents(charID int) []*masterdata.Event {
 		if ev.EventType != "marathon" && ev.EventType != "cheerful_carnival" {
 			continue
 		}
-		bannerCID, err := p.GetBannerCharacterID(ev.ID)
+		bannerCID, err := p.GetBannerCharacterID(ctx, ev.ID)
 		if err != nil || bannerCID != charID {
 			continue
 		}
@@ -221,7 +222,7 @@ func (p *localEventProvider) GetBanEvents(charID int) []*masterdata.Event {
 	return result
 }
 
-func (p *localEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
+func (p *localEventProvider) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {
 	if err := p.ensureWorldBlooms(); err != nil {
 		return nil
 	}

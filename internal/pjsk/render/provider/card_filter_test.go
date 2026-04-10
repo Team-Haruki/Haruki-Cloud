@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -72,7 +73,7 @@ func TestLocalCardProviderFilterHonorsMainUnitConstraint(t *testing.T) {
 	provider := &localCardProvider{characters: characters}
 	provider.cards.init(func() (cardIndex, error) { return cardData, nil })
 
-	results, err := provider.Filter(&CardFilter{MainUnit: "idol", SupportUnit: "none"})
+	results, err := provider.Filter(context.Background(), &CardFilter{MainUnit: "idol", SupportUnit: "none"})
 	if err != nil {
 		t.Fatalf("Filter(oc) error = %v", err)
 	}
@@ -80,7 +81,7 @@ func TestLocalCardProviderFilterHonorsMainUnitConstraint(t *testing.T) {
 		t.Fatalf("unexpected oc filter results: %+v", results)
 	}
 
-	results, err = provider.Filter(&CardFilter{MainUnit: "piapro", SupportUnit: "none"})
+	results, err = provider.Filter(context.Background(), &CardFilter{MainUnit: "piapro", SupportUnit: "none"})
 	if err != nil {
 		t.Fatalf("Filter(pure vs) error = %v", err)
 	}

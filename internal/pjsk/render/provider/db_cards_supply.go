@@ -8,11 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (p *dbCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
-	return p.getSupplyType(context.TODO(), cardInfo)
-}
-
-func (p *dbCardProvider) getSupplyType(ctx context.Context, cardInfo *masterdata.Card) string {
+func (p *dbCardProvider) GetSupplyType(ctx context.Context, cardInfo *masterdata.Card) string {
 	if cardInfo == nil {
 		return cardNormalizeSupplyType("")
 	}
@@ -22,7 +18,6 @@ func (p *dbCardProvider) getSupplyType(ctx context.Context, cardInfo *masterdata
 	if cardInfo.CardSupplyID == 0 {
 		return cardNormalizeSupplyType("")
 	}
-	ctx = cardContextOrBackground(ctx)
 
 	p.supplyMu.RLock()
 	if cached, ok := p.supplyByID[cardInfo.CardSupplyID]; ok {

@@ -15,15 +15,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (p *dbCardProvider) GetByID(id int) (*masterdata.Card, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbCardProvider) getByID(ctx context.Context, id int) (*masterdata.Card, error) {
+func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
 	}
-	ctx = cardContextOrBackground(ctx)
 	p.init()
 
 	p.cardMu.RLock()
@@ -50,15 +45,10 @@ func (p *dbCardProvider) getByID(ctx context.Context, id int) (*masterdata.Card,
 	return common.CloneCard(model), nil
 }
 
-func (p *dbCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
-	return p.getByCharacterAndSeq(context.TODO(), characterID, seq)
-}
-
-func (p *dbCardProvider) getByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error) {
+func (p *dbCardProvider) GetByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error) {
 	if characterID == 0 {
 		return nil, fmt.Errorf("character id is required")
 	}
-	ctx = cardContextOrBackground(ctx)
 
 	entities, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.CharacterIDEQ(int64(characterID))).
@@ -96,15 +86,10 @@ func (p *dbCardProvider) getByCharacterAndSeq(ctx context.Context, characterID, 
 	return common.CloneCard(model), nil
 }
 
-func (p *dbCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) {
-	return p.filter(context.TODO(), filter)
-}
-
-func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
+func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
 	if filter == nil {
 		return nil, fmt.Errorf("filter is required")
 	}
-	ctx = cardContextOrBackground(ctx)
 	p.init()
 
 	query := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String()))
@@ -147,7 +132,7 @@ func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*mas
 		}
 		if filter.SkillType != "" {
 			if p.skills != nil {
-				skillInfo, sErr := p.skills.getByID(ctx, model.SkillID)
+				skillInfo, sErr := p.skills.GetByID(ctx, model.SkillID)
 				if sErr != nil || skillInfo == nil || skillInfo.DescriptionSpriteName != filter.SkillType {
 					continue
 				}
@@ -155,7 +140,7 @@ func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*mas
 				continue
 			}
 		}
-		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.getSupplyType(ctx, model)) {
+		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(ctx, model)) {
 			continue
 		}
 		results = append(results, common.CloneCard(model))
@@ -166,17 +151,13 @@ func (p *dbCardProvider) filter(ctx context.Context, filter *CardFilter) ([]*mas
 	return results, nil
 }
 
-func (p *dbCardProvider) GetUnitByCardID(cardID int) (string, error) {
-	return p.getUnitByCardID(context.TODO(), cardID)
-}
-
-func (p *dbCardProvider) getUnitByCardID(ctx context.Context, cardID int) (string, error) {
-	cardInfo, err := p.getByID(ctx, cardID)
+func (p *dbCardProvider) GetUnitByCardID(ctx context.Context, cardID int) (string, error) {
+	cardInfo, err := p.GetByID(ctx, cardID)
 	if err != nil {
 		return "", err
 	}
 	if p.characters != nil {
-		character, cErr := p.characters.getByID(ctx, cardInfo.CharacterID)
+		character, cErr := p.characters.GetByID(ctx, cardInfo.CharacterID)
 		if cErr == nil && character != nil {
 			if character.Unit != "" && character.Unit != "piapro" {
 				return character.Unit, nil
@@ -194,8 +175,6 @@ func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *
 	if filter == nil || filter.EventID == 0 {
 		return nil, nil
 	}
-	ctx = cardContextOrBackground(ctx)
-
 	links, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(filter.EventID))).
 		All(ctx)
@@ -224,7 +203,7 @@ func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilt
 		return false
 	}
 
-	character, err := p.characters.getByID(ctx, cardInfo.CharacterID)
+	character, err := p.characters.GetByID(ctx, cardInfo.CharacterID)
 	if err != nil || character == nil {
 		return false
 	}

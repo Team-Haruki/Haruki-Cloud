@@ -82,7 +82,7 @@ func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 }
 
 func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
-	EnsureCommandHandlersRegistered(nil)
+	EnsureCommandHandlersRegistered()
 
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
@@ -108,7 +108,7 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 }
 
 func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
-	EnsureCommandHandlersRegistered(nil)
+	EnsureCommandHandlersRegistered()
 
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
@@ -137,7 +137,7 @@ func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 }
 
 func TestDispatchSupportsSKPredictMode(t *testing.T) {
-	EnsureCommandHandlersRegistered(nil)
+	EnsureCommandHandlersRegistered()
 
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",

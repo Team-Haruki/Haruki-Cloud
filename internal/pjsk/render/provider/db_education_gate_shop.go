@@ -8,11 +8,7 @@ import (
 	"haruki-cloud/database/sekai/shopitem"
 )
 
-func (p *dbEducationProvider) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {
-	return p.getMysekaiGateLevel(context.TODO(), gateID, level)
-}
-
-func (p *dbEducationProvider) getMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel {
+func (p *dbEducationProvider) GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel {
 	if gateID <= 0 || level <= 0 || !p.ensureGateLevelsLoaded(ctx) {
 		return nil
 	}
@@ -25,11 +21,7 @@ func (p *dbEducationProvider) getMysekaiGateLevel(ctx context.Context, gateID, l
 	return nil
 }
 
-func (p *dbEducationProvider) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
-	return p.getShopItemByResourceBoxID(context.TODO(), resourceBoxID)
-}
-
-func (p *dbEducationProvider) getShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem {
+func (p *dbEducationProvider) GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem {
 	if resourceBoxID <= 0 || !p.ensureShopItemsLoaded(ctx) {
 		return nil
 	}
@@ -41,8 +33,6 @@ func (p *dbEducationProvider) getShopItemByResourceBoxID(ctx context.Context, re
 
 func (p *dbEducationProvider) ensureGateLevelsLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.gateMu.RLock()
 	if p.gatesLoaded {
 		p.gateMu.RUnlock()
@@ -80,8 +70,6 @@ func (p *dbEducationProvider) ensureGateLevelsLoaded(ctx context.Context) bool {
 
 func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.shopMu.RLock()
 	if p.shopsLoaded {
 		p.shopMu.RUnlock()

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/common"
@@ -574,7 +575,7 @@ func TestCardContainsPickup(t *testing.T) {
 
 func TestFormatDescriptionNilSkill(t *testing.T) {
 	sp := &dbSkillProvider{}
-	got := sp.FormatDescription(nil, 1)
+	got := sp.FormatDescription(context.Background(), nil, 1)
 	if got != "" {
 		t.Fatalf("expected empty string, got %q", got)
 	}
@@ -583,7 +584,7 @@ func TestFormatDescriptionNilSkill(t *testing.T) {
 func TestFormatDescriptionNoPlaceholders(t *testing.T) {
 	sp := &dbSkillProvider{}
 	skill := &masterdata.Skill{Description: "Score up by 100%%"}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	if got != "Score up by 100%%" {
 		t.Fatalf("expected unchanged string, got %q", got)
 	}
@@ -602,7 +603,7 @@ func TestFormatDescriptionValuePlaceholder(t *testing.T) {
 			},
 		},
 	}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	if got != "Score up by 120%%" {
 		t.Fatalf("expected 'Score up by 120%%%%', got %q", got)
 	}
@@ -621,7 +622,7 @@ func TestFormatDescriptionDurationPlaceholder(t *testing.T) {
 			},
 		},
 	}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	if got != "for 5.0 seconds" {
 		t.Fatalf("expected 'for 5.0 seconds', got %q", got)
 	}
@@ -633,7 +634,7 @@ func TestFormatDescriptionMissingEffect(t *testing.T) {
 		Description:  "Score up by {{99;v}}%%",
 		SkillEffects: []masterdata.SkillEffect{},
 	}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	if got != "Score up by ?%%" {
 		t.Fatalf("expected 'Score up by ?%%%%', got %q", got)
 	}
@@ -642,7 +643,7 @@ func TestFormatDescriptionMissingEffect(t *testing.T) {
 func TestFormatDescriptionMalformedPlaceholder(t *testing.T) {
 	sp := &dbSkillProvider{}
 	skill := &masterdata.Skill{Description: "test {{bad_format}} end"}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	// No semicolon → parts != 2 → returns original match
 	if got != "test {{bad_format}} end" {
 		t.Fatalf("expected unchanged, got %q", got)
@@ -668,7 +669,7 @@ func TestFormatDescriptionDualValuePlaceholder(t *testing.T) {
 			},
 		},
 	}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	// dual effects v mode: 100+50 = 150
 	if got != "bonus 150%%" {
 		t.Fatalf("expected 'bonus 150%%%%', got %q", got)
@@ -681,7 +682,7 @@ func TestFormatDescriptionCharacterMode(t *testing.T) {
 	skill := &masterdata.Skill{
 		Description: "{{1;c}} skill",
 	}
-	got := sp.FormatDescription(skill, 1)
+	got := sp.FormatDescription(context.Background(), skill, 1)
 	if got != "??? skill" {
 		t.Fatalf("expected '??? skill', got %q", got)
 	}

@@ -169,6 +169,8 @@ encrypted_payload = base64.b64encode(nonce + ciphertext).decode()
 }
 ```
 
+> `entries` 数量随服务端当前注册路由变化（2026-04-10 当前活跃路径为 82 条）。
+
 ### 4.2 Manifest 字段说明
 
 | 字段 | 说明 |

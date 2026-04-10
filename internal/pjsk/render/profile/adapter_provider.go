@@ -26,35 +26,35 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 // honor.DataSource methods
 
 func (a *ProviderAdapter) GetHonorByID(id int) (*masterdata.Honor, error) {
-	return a.P.Honors().GetByID(id)
+	return a.P.Honors().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
-	return a.P.Honors().GetGroupByID(id)
+	return a.P.Honors().GetGroupByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
-	return a.P.Honors().GetBondsHonorByID(id)
+	return a.P.Honors().GetBondsHonorByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
-	return a.P.Honors().GetGameCharacterUnitByID(id)
+	return a.P.Honors().GetGameCharacterUnitByID(a.Context(), id)
 }
 
 // profile-specific methods
 
 func (a *ProviderAdapter) GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error) {
-	return a.P.PlayerFrames().GetByID(id)
+	return a.P.PlayerFrames().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
-	return a.P.PlayerFrames().GetGroupByID(id)
+	return a.P.PlayerFrames().GetGroupByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
-	return a.P.Cards().GetByID(id)
+	return a.P.Cards().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetEventIDByHonorID(honorID int) int {
-	return a.P.Honors().GetEventIDByHonorID(honorID)
+	return a.P.Honors().GetEventIDByHonorID(a.Context(), honorID)
 }

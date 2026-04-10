@@ -21,7 +21,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	case "stamp-list":
 		q := stamp.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		_ = resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
+		resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
 		if message, ok, directErr := resolveDirectStampImage(stampCtrl, rc.App, q); ok {
 			return message, directErr
 		}
@@ -81,17 +81,19 @@ func resolveDirectStampImage(stampCtrl *stamp.Controller, app *renderapp.App, qu
 	return message, true, nil
 }
 
-func resolveStampCharacterSelection(ctx context.Context, app *renderapp.App, query *stamp.ListQuery, rawQuery string) error {
+// resolveStampCharacterSelection performs best-effort character alias resolution
+// for stamp queries. Failures (including unresolved aliases) are intentionally
+// swallowed so that downstream stamp lookup falls back to non-character behavior.
+func resolveStampCharacterSelection(ctx context.Context, app *renderapp.App, query *stamp.ListQuery, rawQuery string) {
 	if query == nil || len(query.CharacterIDs) > 0 {
-		return nil
+		return
 	}
 	if strings.TrimSpace(rawQuery) == "" {
-		return nil
+		return
 	}
 	characterID, err := resolveGameCharacterIDByQuery(ctx, app, query.Region, rawQuery, "stamp")
 	if err != nil || characterID <= 0 {
-		return nil
+		return
 	}
 	query.CharacterIDs = []int{characterID}
-	return nil
 }

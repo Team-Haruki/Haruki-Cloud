@@ -1208,16 +1208,19 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 历史记录（2026-03-27）：当时 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列），并完成 **76/76 全覆盖**。
 
-截至 2026-04-09，当前活跃 Bot path 已更新为 **82 条**，请以 [项目完成度跟踪](project-completion-tracker.cn.md) 的最新清单为准。
+截至 2026-04-10，当前活跃 Bot path 已更新为 **82 条**；`integration/api_test.go` 当前覆盖其中 **76 条**（`TestBotCommands` 58 + `TestExpandedCoverage` 18）。
+
+当前仍未纳入该集成测试集合的活跃路径有 6 条：`deck/score-up`、`mysekai/blueprint`、`mysekai/map`、`profile/bind/list`、`sk/daily-speed`、`sk/predict`。
 
 ### 无 Path 的 handler（不可通过 bot API 访问）
 
 | handler | 文件 | 指令 | 说明 |
 |---------|------|------|------|
 | `HeyiweiHandle` | `misc.go` | `/b30`、`/b39`、`/pjsk b30` 等 | 返回固定字符串 `"何意味"`，为占位/拦截 handler。不返回 `*parser.ResolvedCommand`，即使添加 Path 也无法在 bot API 中正常工作。可按需 Disable 或改为真实 b30 实现 |
-| `MysekaiBlueprintHandle` | `mysekai.go` | `/msb`、`/mysekai blueprint` | 根据参数派发到 `mysekai-fixture-list` 或 `mysekai-talk-list`，逻辑正确但无 Path。如需 bot API 可访问，添加 `Path: "mysekai/blueprint"` 并在 bridge 添加对应 case |
 
-### 未纳入集成测试的 17 条路径
+> 说明：`MysekaiBlueprintHandle` 已在后续版本补齐 `Path: "mysekai/blueprint"`，现已纳入活跃 route。
+
+### 历史记录：当时未纳入集成测试的 17 条路径
 
 | 路径 | 分类 | 说明 |
 |------|------|------|
@@ -1241,7 +1244,8 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 ### 有 Path 但尚未在测试中覆盖的路径分类建议
 
-> ✅ **第七轮已全部补测完成**，见 10.9 节。
+> ✅ 第七轮已将上方“当时未覆盖的 17 条路径”补测完成，见 10.9 节。  
+> ⚠️ 截至 2026-04-10，活跃 path 已扩展到 82 条，当前测试集合外仍有 6 条（见上文“注册路径总览”）。
 
 ---
 
@@ -1307,7 +1311,7 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 - 所有依赖 Drawing API 的端点均报 `connection refused on port 28000`
 - Go test **76/76 路径已覆盖并执行**（测试进程全部 PASS；失败端点以 warning/degraded 形式报告，不 fail test）
 
-**端点分类（TestBotCommands 59 + TestExpandedCoverage 17）**：
+**端点分类（共 76 条测试路径）**：
 
 | 状态 | 数量 | 端点 |
 |------|------|------|
@@ -1368,9 +1372,9 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 ## 11. 接下来需要做的事
 
-> 当前集成测试通过率：**57/76 ✅ OK**（75%），测试路径覆盖为 76/76。
+> 历史快照（第十轮，2026-03-28）：**57/76 ✅ OK**（75%），测试路径覆盖为 76/76。
 >
-> 以上是最近一次完整回归的结果快照。由于随后又合入了 parser、score、education、bonds 等修复，旧版“剩余 19 个 warning”分类已与当前代码状态不完全一致。以下待处理项以**当前代码状态**为准，完整数量需在下一轮全量回归后刷新。
+> 以上是阶段性回归快照。后续代码已继续演进（包含 parser、score、education、bonds 等修复），旧版“剩余 19 个 warning”分类仅供历史对照；当前待处理项以**当前代码状态**为准。
 
 ### 11.1 ✅ Parser handler 参数提取（已完成）
 
@@ -1426,7 +1430,7 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 第七轮已实现 76/76 路径全覆盖（100% 覆盖率），其中 50 条通过（66% 通过率）。详见 10.9 节。
 
-**测试架构**：`TestBotCommands`（59 个端点）+ `TestExpandedCoverage`（17 个端点，含 alias 全周期、profile BG、profile 管理、card/image、music/chart）。
+**测试架构（当前文件统计）**：`TestBotCommands`（58 个端点）+ `TestExpandedCoverage`（18 个端点，含 alias 全周期、profile BG、profile 管理、card/image、music/chart、`profile/bind` 前置校验）。
 
 ### 11.2.1 ✅ Toolbox 用户快照注入（已完成）
 
@@ -1517,7 +1521,7 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 
 **全量集成测试最终结果（2026-03-28）**：
 
-76 个测试路径（TestBotCommands 59 + TestExpandedCoverage 17），**70/76 通过（92.1%）**，6 个⚠️均为已知数据/功能限制：
+76 个测试路径（当前测试文件为 `TestBotCommands` 58 + `TestExpandedCoverage` 18），**70/76 通过（92.1%）**，6 个⚠️均为已知数据/功能限制：
 
 | 端点 | 状态 | 原因分类 |
 |------|------|----------|

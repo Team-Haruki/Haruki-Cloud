@@ -13,15 +13,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (p *dbCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
-	return p.getGachaByCardID(context.TODO(), cardID)
-}
-
-func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*masterdata.Gacha, error) {
+func (p *dbCardProvider) GetGachaByCardID(ctx context.Context, cardID int) (*masterdata.Gacha, error) {
 	if cardID == 0 {
 		return nil, fmt.Errorf("invalid card id")
 	}
-	ctx = cardContextOrBackground(ctx)
 	p.init()
 
 	p.gachaMu.RLock()
@@ -32,7 +27,7 @@ func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*mas
 	}
 	p.gachaMu.RUnlock()
 
-	cardInfo, err := p.getByID(ctx, cardID)
+	cardInfo, err := p.GetByID(ctx, cardID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,15 +71,10 @@ func (p *dbCardProvider) getGachaByCardID(ctx context.Context, cardID int) (*mas
 	return nil, fmt.Errorf("gacha not found for card: %d", cardID)
 }
 
-func (p *dbCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
-	return p.getCostume3dsByCardID(context.TODO(), cardID)
-}
-
-func (p *dbCardProvider) getCostume3dsByCardID(ctx context.Context, cardID int) ([]*masterdata.Costume3d, error) {
+func (p *dbCardProvider) GetCostume3dsByCardID(ctx context.Context, cardID int) ([]*masterdata.Costume3d, error) {
 	if cardID == 0 {
 		return nil, nil
 	}
-	ctx = cardContextOrBackground(ctx)
 	p.init()
 
 	p.costumeMu.RLock()

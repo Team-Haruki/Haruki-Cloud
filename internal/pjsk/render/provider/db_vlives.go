@@ -16,16 +16,9 @@ type dbVLiveProvider struct {
 	region renderregion.Value
 }
 
-func (p *dbVLiveProvider) GetLives(region renderregion.Value) ([]*VLive, error) {
-	return p.getLives(context.TODO(), region)
-}
-
-func (p *dbVLiveProvider) getLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
+func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
 	if p.client == nil {
 		return nil, fmt.Errorf("vlive provider is not configured")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 
 	queryRegion := renderregion.WithDefault(region)

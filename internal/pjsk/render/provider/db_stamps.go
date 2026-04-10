@@ -20,14 +20,7 @@ type dbStampProvider struct {
 	stamps []masterdata.Stamp
 }
 
-func (p *dbStampProvider) GetAll() ([]masterdata.Stamp, error) {
-	return p.getAll(context.TODO())
-}
-
-func (p *dbStampProvider) getAll(ctx context.Context) ([]masterdata.Stamp, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+func (p *dbStampProvider) GetAll(ctx context.Context) ([]masterdata.Stamp, error) {
 	p.mu.RLock()
 	if p.loaded {
 		out := append([]masterdata.Stamp(nil), p.stamps...)

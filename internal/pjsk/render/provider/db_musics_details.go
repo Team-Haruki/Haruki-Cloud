@@ -18,12 +18,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (p *dbMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
-	return p.getDifficulties(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
 	items, err := p.client.Musicdifficultie.Query().
 		Where(
 			musicdifficultie.ServerRegionEQ(p.region.String()),
@@ -51,12 +46,7 @@ func (p *dbMusicProvider) getDifficulties(ctx context.Context, musicID int) ([]*
 	return result, nil
 }
 
-func (p *dbMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, error) {
-	return p.getVocals(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
 	items, err := p.client.Musicvocal.Query().
 		Where(
 			musicvocal.ServerRegionEQ(p.region.String()),
@@ -85,12 +75,7 @@ func (p *dbMusicProvider) getVocals(ctx context.Context, musicID int) ([]*master
 	return result, nil
 }
 
-func (p *dbMusicProvider) GetTags(musicID int) ([]string, error) {
-	return p.getTags(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getTags(ctx context.Context, musicID int) ([]string, error) {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetTags(ctx context.Context, musicID int) ([]string, error) {
 	items, err := p.client.Musictag.Query().
 		Where(
 			musictag.ServerRegionEQ(p.region.String()),
@@ -112,15 +97,10 @@ func (p *dbMusicProvider) getTags(ctx context.Context, musicID int) ([]string, e
 	return result, nil
 }
 
-func (p *dbMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
-	return p.getOutsideCharacterByID(context.TODO(), id)
-}
-
-func (p *dbMusicProvider) getOutsideCharacterByID(ctx context.Context, id int) (string, error) {
+func (p *dbMusicProvider) GetOutsideCharacterByID(ctx context.Context, id int) (string, error) {
 	if id <= 0 {
 		return "", fmt.Errorf("invalid outside character id: %d", id)
 	}
-	ctx = musicContextOrBackground(ctx)
 	p.init()
 
 	p.mu.RLock()
@@ -144,12 +124,7 @@ func (p *dbMusicProvider) getOutsideCharacterByID(ctx context.Context, id int) (
 	return name, nil
 }
 
-func (p *dbMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
-	return p.getPrimaryEventByMusicID(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
 	links, err := p.client.Eventmusic.Query().
 		Where(
 			eventmusic.ServerRegionEQ(p.region.String()),
@@ -187,12 +162,7 @@ func (p *dbMusicProvider) getPrimaryEventByMusicID(ctx context.Context, musicID 
 	return common.CloneEvent(common.ConvertEventEntity(items[0])), nil
 }
 
-func (p *dbMusicProvider) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
-	return p.getLimitedTimeMusics(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getLimitedTimeMusics(ctx context.Context, musicID int) []*masterdata.LimitedTimeMusic {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetLimitedTimeMusics(ctx context.Context, musicID int) []*masterdata.LimitedTimeMusic {
 	items, err := p.client.Limitedtimemusic.Query().
 		Where(
 			limitedtimemusic.ServerRegionEQ(p.region.String()),

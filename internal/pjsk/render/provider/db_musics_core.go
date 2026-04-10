@@ -13,23 +13,18 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (p *dbMusicProvider) Search(query string) (*masterdata.Music, error) {
-	return p.search(context.TODO(), query)
-}
-
-func (p *dbMusicProvider) search(ctx context.Context, query string) (*masterdata.Music, error) {
+func (p *dbMusicProvider) Search(ctx context.Context, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
 	}
-	ctx = musicContextOrBackground(ctx)
 
 	if id, err := strconv.Atoi(query); err == nil {
-		return p.getByID(ctx, id)
+		return p.GetByID(ctx, id)
 	}
 
 	// Fall back to title match across all musics.
-	all := p.getAll(ctx)
+	all := p.GetAll(ctx)
 	lowerQuery := strings.ToLower(query)
 	for _, m := range all {
 		if strings.Contains(strings.ToLower(m.Title), lowerQuery) {
@@ -42,15 +37,10 @@ func (p *dbMusicProvider) search(ctx context.Context, query string) (*masterdata
 	return nil, fmt.Errorf("music not found: %s", query)
 }
 
-func (p *dbMusicProvider) GetByID(id int) (*masterdata.Music, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbMusicProvider) getByID(ctx context.Context, id int) (*masterdata.Music, error) {
+func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Music, error) {
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", id)
 	}
-	ctx = musicContextOrBackground(ctx)
 	p.init()
 
 	p.mu.RLock()
@@ -74,12 +64,7 @@ func (p *dbMusicProvider) getByID(ctx context.Context, id int) (*masterdata.Musi
 	return common.CloneMusic(model), nil
 }
 
-func (p *dbMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error) {
-	return p.getByEventID(context.TODO(), eventID)
-}
-
-func (p *dbMusicProvider) getByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
-	ctx = musicContextOrBackground(ctx)
+func (p *dbMusicProvider) GetByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
 	links, err := p.client.Eventmusic.Query().
 		Where(eventmusic.ServerRegionEQ(p.region.String()), eventmusic.EventIDEQ(int64(eventID))).
 		Order(eventmusic.BySeq()).
@@ -90,16 +75,11 @@ func (p *dbMusicProvider) getByEventID(ctx context.Context, eventID int) (*maste
 	if len(links) == 0 {
 		return nil, fmt.Errorf("no music found for event %d", eventID)
 	}
-	return p.getByID(ctx, int(links[0].MusicID))
+	return p.GetByID(ctx, int(links[0].MusicID))
 }
 
-func (p *dbMusicProvider) GetAll() []*masterdata.Music {
-	return p.getAll(context.TODO())
-}
-
-func (p *dbMusicProvider) getAll(ctx context.Context) []*masterdata.Music {
+func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 	p.init()
-	ctx = musicContextOrBackground(ctx)
 
 	p.mu.RLock()
 	if len(p.musicList) > 0 {
@@ -140,15 +120,10 @@ func (p *dbMusicProvider) getAll(ctx context.Context) []*masterdata.Music {
 	return common.CloneMusicList(list)
 }
 
-func (p *dbMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
-	return p.getLocalizedTitles(context.TODO(), musicID)
-}
-
-func (p *dbMusicProvider) getLocalizedTitles(ctx context.Context, musicID int) ([]string, error) {
+func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) ([]string, error) {
 	if musicID <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", musicID)
 	}
-	ctx = musicContextOrBackground(ctx)
 	p.init()
 
 	p.mu.RLock()

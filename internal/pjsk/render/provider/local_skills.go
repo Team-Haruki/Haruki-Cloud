@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -34,7 +35,7 @@ func (p *localSkillProvider) ensureLoaded() error {
 	})
 }
 
-func (p *localSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
+func (p *localSkillProvider) GetByID(_ context.Context, id int) (*masterdata.Skill, error) {
 	if id == 0 {
 		return nil, nil
 	}
@@ -48,7 +49,7 @@ func (p *localSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
 	return common.CloneSkill(s), nil
 }
 
-func (p *localSkillProvider) FormatDescription(skillInfo *masterdata.Skill, cardCharacterID int) string {
+func (p *localSkillProvider) FormatDescription(_ context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
 	if skillInfo == nil {
 		return ""
 	}
@@ -70,7 +71,7 @@ func (p *localSkillProvider) FormatDescription(skillInfo *masterdata.Skill, card
 		}
 		if parts[1] == "c" {
 			if p.characters != nil {
-				ch, err := p.characters.GetByID(cardCharacterID)
+				ch, err := p.characters.GetByID(context.Background(), cardCharacterID)
 				if err == nil && ch != nil {
 					return ch.FirstName + ch.GivenName
 				}

@@ -1,16 +1,20 @@
 package provider
 
-import "haruki-cloud/internal/pjsk/render/masterdata"
+import (
+	"context"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
 
 // CardProvider exposes card-related masterdata queries.
 type CardProvider interface {
-	GetByID(id int) (*masterdata.Card, error)
-	GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error)
-	Filter(filter *CardFilter) ([]*masterdata.Card, error)
-	GetSupplyType(card *masterdata.Card) string
-	GetGachaByCardID(cardID int) (*masterdata.Gacha, error)
-	GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error)
-	GetUnitByCardID(cardID int) (string, error)
+	GetByID(ctx context.Context, id int) (*masterdata.Card, error)
+	GetByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error)
+	Filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error)
+	GetSupplyType(ctx context.Context, card *masterdata.Card) string
+	GetGachaByCardID(ctx context.Context, cardID int) (*masterdata.Gacha, error)
+	GetCostume3dsByCardID(ctx context.Context, cardID int) ([]*masterdata.Costume3d, error)
+	GetUnitByCardID(ctx context.Context, cardID int) (string, error)
 }
 
 // CardFilter describes filtering criteria for card queries.

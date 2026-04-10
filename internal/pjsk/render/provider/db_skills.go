@@ -33,16 +33,9 @@ func (p *dbSkillProvider) init() {
 	})
 }
 
-func (p *dbSkillProvider) GetByID(id int) (*masterdata.Skill, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbSkillProvider) getByID(ctx context.Context, id int) (*masterdata.Skill, error) {
+func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skill, error) {
 	if id == 0 {
 		return nil, nil
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -69,16 +62,9 @@ func (p *dbSkillProvider) getByID(ctx context.Context, id int) (*masterdata.Skil
 	return common.CloneSkill(model), nil
 }
 
-func (p *dbSkillProvider) FormatDescription(skillInfo *masterdata.Skill, cardCharacterID int) string {
-	return p.formatDescription(context.TODO(), skillInfo, cardCharacterID)
-}
-
-func (p *dbSkillProvider) formatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
+func (p *dbSkillProvider) FormatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
 	if skillInfo == nil {
 		return ""
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 
 	return skillPlaceholder.ReplaceAllStringFunc(skillInfo.Description, func(match string) string {
@@ -101,7 +87,7 @@ func (p *dbSkillProvider) formatDescription(ctx context.Context, skillInfo *mast
 
 		if parts[1] == "c" {
 			if p.characters != nil {
-				ch, err := p.characters.getByID(ctx, cardCharacterID)
+				ch, err := p.characters.GetByID(ctx, cardCharacterID)
 				if err == nil && ch != nil {
 					return ch.FirstName + ch.GivenName
 				}

@@ -121,7 +121,6 @@ func buildMysekaiDeckParams(args string, params *deckAutoQueryParams, trigger st
 	args, err := extractDeckCommonParams(args, params, deckCommonConfig{
 		allowFixed:         true,
 		allowCardConfig:    true,
-		defaultNoChange:    true,
 		defaultArgsTrigger: trigger,
 	})
 	if err != nil {

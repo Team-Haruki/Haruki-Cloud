@@ -24,17 +24,17 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 }
 
 func (a *ProviderAdapter) GetHonorByID(id int) (*masterdata.Honor, error) {
-	return a.P.Honors().GetByID(id)
+	return a.P.Honors().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
-	return a.P.Honors().GetGroupByID(id)
+	return a.P.Honors().GetGroupByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
-	return a.P.Honors().GetBondsHonorByID(id)
+	return a.P.Honors().GetBondsHonorByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
-	return a.P.Honors().GetGameCharacterUnitByID(id)
+	return a.P.Honors().GetGameCharacterUnitByID(a.Context(), id)
 }

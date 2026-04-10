@@ -59,16 +59,9 @@ func (p *dbHonorProvider) init() {
 	})
 }
 
-func (p *dbHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbHonorProvider) getByID(ctx context.Context, id int) (*masterdata.Honor, error) {
+func (p *dbHonorProvider) GetByID(ctx context.Context, id int) (*masterdata.Honor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -96,16 +89,9 @@ func (p *dbHonorProvider) getByID(ctx context.Context, id int) (*masterdata.Hono
 	return common.CloneHonor(model), nil
 }
 
-func (p *dbHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
-	return p.getGroupByID(context.TODO(), id)
-}
-
-func (p *dbHonorProvider) getGroupByID(ctx context.Context, id int) (*masterdata.HonorGroup, error) {
+func (p *dbHonorProvider) GetGroupByID(ctx context.Context, id int) (*masterdata.HonorGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor group id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -161,16 +147,9 @@ func (p *dbHonorProvider) getGroupByID(ctx context.Context, id int) (*masterdata
 	return common.CloneHonorGroup(model), nil
 }
 
-func (p *dbHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
-	return p.getBondsHonorByID(context.TODO(), id)
-}
-
-func (p *dbHonorProvider) getBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error) {
+func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid bonds honor id")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -203,16 +182,9 @@ func (p *dbHonorProvider) getBondsHonorByID(ctx context.Context, id int) (*maste
 	return common.CloneBondsHonor(model), nil
 }
 
-func (p *dbHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
-	return p.getGameCharacterUnitByID(context.TODO(), id)
-}
-
-func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {
+func (p *dbHonorProvider) GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {
 	if id == 0 {
 		return nil, false
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -240,8 +212,4 @@ func (p *dbHonorProvider) getGameCharacterUnitByID(ctx context.Context, id int) 
 	p.gcuCache[id] = model
 	p.gcuMu.Unlock()
 	return common.CloneGameCharacterUnit(model), true
-}
-
-func (p *dbHonorProvider) GetEventIDByHonorID(honorID int) int {
-	return p.getEventIDByHonorID(context.TODO(), honorID)
 }

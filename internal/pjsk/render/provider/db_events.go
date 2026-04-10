@@ -41,16 +41,9 @@ func (p *dbEventProvider) init() {
 	})
 }
 
-func (p *dbEventProvider) GetByID(id int) (*masterdata.Event, error) {
-	return p.getByID(context.TODO(), id)
-}
-
-func (p *dbEventProvider) getByID(ctx context.Context, id int) (*masterdata.Event, error) {
+func (p *dbEventProvider) GetByID(ctx context.Context, id int) (*masterdata.Event, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("event id is required")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.init()
 
@@ -74,15 +67,8 @@ func (p *dbEventProvider) getByID(ctx context.Context, id int) (*masterdata.Even
 	return common.CloneEvent(model), nil
 }
 
-func (p *dbEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) {
-	return p.getByCardID(context.TODO(), cardID)
-}
-
-func (p *dbEventProvider) getByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
+func (p *dbEventProvider) GetByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
 	p.init()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	link, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.CardIDEQ(int64(cardID))).
 		Order(eventcard.ByEventID()).
@@ -90,18 +76,11 @@ func (p *dbEventProvider) getByCardID(ctx context.Context, cardID int) (*masterd
 	if err != nil {
 		return nil, fmt.Errorf("query event by card %d: %w", cardID, err)
 	}
-	return p.getByID(ctx, int(link.EventID))
+	return p.GetByID(ctx, int(link.EventID))
 }
 
-func (p *dbEventProvider) GetAll() []*masterdata.Event {
-	return p.getAll(context.TODO())
-}
-
-func (p *dbEventProvider) getAll(ctx context.Context) []*masterdata.Event {
+func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 	p.init()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	entities, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
 		Order(event.ByStartAt()).
@@ -121,15 +100,8 @@ func (p *dbEventProvider) getAll(ctx context.Context) []*masterdata.Event {
 	return result
 }
 
-func (p *dbEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
-	return p.getCards(context.TODO(), eventID)
-}
-
-func (p *dbEventProvider) getCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
+func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
 	p.init()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	links, err := p.client.Eventcard.Query().
 		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(eventID))).
 		Order(eventcard.ByCardID()).
@@ -148,12 +120,8 @@ func (p *dbEventProvider) getCards(ctx context.Context, eventID int) ([]*masterd
 	return p.getCardsByIDs(ctx, cardIDs)
 }
 
-func (p *dbEventProvider) GetBannerCharacterID(eventID int) (int, error) {
-	return p.getBannerCharacterID(context.TODO(), eventID)
-}
-
-func (p *dbEventProvider) getBannerCharacterID(ctx context.Context, eventID int) (int, error) {
-	cards, err := p.getCards(ctx, eventID)
+func (p *dbEventProvider) GetBannerCharacterID(ctx context.Context, eventID int) (int, error) {
+	cards, err := p.GetCards(ctx, eventID)
 	if err != nil {
 		return 0, err
 	}
@@ -175,14 +143,7 @@ func (p *dbEventProvider) getBannerCharacterID(ctx context.Context, eventID int)
 	return selected.CharacterID, nil
 }
 
-func (p *dbEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
-	return p.getDeckBonuses(context.TODO(), eventID)
-}
-
-func (p *dbEventProvider) getDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+func (p *dbEventProvider) GetDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
 	items, err := p.client.Eventdeckbonuse.Query().
 		Where(eventdeckbonuse.ServerRegionEQ(p.region.String()), eventdeckbonuse.EventIDEQ(int64(eventID))).
 		All(ctx)
@@ -203,15 +164,8 @@ func (p *dbEventProvider) getDeckBonuses(ctx context.Context, eventID int) ([]*m
 	return result, nil
 }
 
-func (p *dbEventProvider) GetBanEvents(charID int) []*masterdata.Event {
-	return p.getBanEvents(context.TODO(), charID)
-}
-
-func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*masterdata.Event {
+func (p *dbEventProvider) GetBanEvents(ctx context.Context, charID int) []*masterdata.Event {
 	p.init()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	entities, err := p.client.Event.Query().
 		Where(event.ServerRegionEQ(p.region.String())).
 		Order(event.ByStartAt()).
@@ -226,7 +180,7 @@ func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*maste
 		if eventInfo.EventType != "marathon" && eventInfo.EventType != "cheerful_carnival" {
 			continue
 		}
-		bannerCID, err := p.getBannerCharacterID(ctx, eventInfo.ID)
+		bannerCID, err := p.GetBannerCharacterID(ctx, eventInfo.ID)
 		if err != nil || bannerCID != charID {
 			continue
 		}
@@ -235,14 +189,7 @@ func (p *dbEventProvider) getBanEvents(ctx context.Context, charID int) []*maste
 	return result
 }
 
-func (p *dbEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
-	return p.getWorldBloomChapters(context.TODO(), eventID)
-}
-
-func (p *dbEventProvider) getWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom {
-	if ctx == nil {
-		ctx = context.Background()
-	}
+func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom {
 	items, err := p.client.Worldbloom.Query().
 		Where(worldbloom.ServerRegionEQ(p.region.String()), worldbloom.EventIDEQ(int64(eventID))).
 		Order(worldbloom.ByChapterStartAt()).
@@ -277,9 +224,6 @@ func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*ma
 	result := make([]*masterdata.Card, len(ids))
 	var missing []int64
 	missingIndex := make(map[int64]int)
-	if ctx == nil {
-		ctx = context.Background()
-	}
 
 	p.cardMu.RLock()
 	for idx, id := range ids {
@@ -333,9 +277,6 @@ func (p *dbEventProvider) isFestivalCard(ctx context.Context, supplyID int) bool
 func (p *dbEventProvider) getCardSupplyType(ctx context.Context, id int) string {
 	if id == 0 {
 		return ""
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	p.supplyMu.RLock()
 	if cached, ok := p.supplyCache[id]; ok {

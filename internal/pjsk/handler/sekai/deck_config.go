@@ -5,8 +5,7 @@ import (
 	"strings"
 )
 
-func extractDeckCardConfigs(args string, params *deckAutoQueryParams, defaultNoChange bool) string {
-	_ = defaultNoChange
+func extractDeckCardConfigs(args string, params *deckAutoQueryParams) string {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {

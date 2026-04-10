@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -28,11 +27,4 @@ func (p *dbMusicProvider) init() {
 		p.outsideByID = make(map[int]string)
 		p.localizedByID = make(map[int][]string)
 	})
-}
-
-func musicContextOrBackground(ctx context.Context) context.Context {
-	if ctx == nil {
-		return context.Background()
-	}
-	return ctx
 }

@@ -1,6 +1,7 @@
 package card
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -15,15 +16,15 @@ type adapterTestCardProvider struct {
 	filterErr    error
 }
 
-func (p *adapterTestCardProvider) GetByID(id int) (*masterdata.Card, error) {
+func (p *adapterTestCardProvider) GetByID(_ context.Context, id int) (*masterdata.Card, error) {
 	return nil, nil
 }
 
-func (p *adapterTestCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
+func (p *adapterTestCardProvider) GetByCharacterAndSeq(_ context.Context, characterID, seq int) (*masterdata.Card, error) {
 	return nil, nil
 }
 
-func (p *adapterTestCardProvider) Filter(filter *provider.CardFilter) ([]*masterdata.Card, error) {
+func (p *adapterTestCardProvider) Filter(_ context.Context, filter *provider.CardFilter) ([]*masterdata.Card, error) {
 	if filter != nil {
 		copy := *filter
 		p.lastFilter = &copy
@@ -31,19 +32,19 @@ func (p *adapterTestCardProvider) Filter(filter *provider.CardFilter) ([]*master
 	return p.filterResult, p.filterErr
 }
 
-func (p *adapterTestCardProvider) GetSupplyType(card *masterdata.Card) string {
+func (p *adapterTestCardProvider) GetSupplyType(_ context.Context, card *masterdata.Card) string {
 	return ""
 }
 
-func (p *adapterTestCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
+func (p *adapterTestCardProvider) GetGachaByCardID(_ context.Context, cardID int) (*masterdata.Gacha, error) {
 	return nil, nil
 }
 
-func (p *adapterTestCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+func (p *adapterTestCardProvider) GetCostume3dsByCardID(_ context.Context, cardID int) ([]*masterdata.Costume3d, error) {
 	return nil, nil
 }
 
-func (p *adapterTestCardProvider) GetUnitByCardID(cardID int) (string, error) {
+func (p *adapterTestCardProvider) GetUnitByCardID(_ context.Context, cardID int) (string, error) {
 	return "", nil
 }
 
@@ -51,35 +52,35 @@ type adapterTestEventProvider struct {
 	banEvents []*masterdata.Event
 }
 
-func (p *adapterTestEventProvider) GetByID(id int) (*masterdata.Event, error) {
+func (p *adapterTestEventProvider) GetByID(_ context.Context, id int) (*masterdata.Event, error) {
 	return nil, nil
 }
 
-func (p *adapterTestEventProvider) GetByCardID(cardID int) (*masterdata.Event, error) {
+func (p *adapterTestEventProvider) GetByCardID(_ context.Context, cardID int) (*masterdata.Event, error) {
 	return nil, nil
 }
 
-func (p *adapterTestEventProvider) GetAll() []*masterdata.Event {
+func (p *adapterTestEventProvider) GetAll(_ context.Context) []*masterdata.Event {
 	return nil
 }
 
-func (p *adapterTestEventProvider) GetCards(eventID int) ([]*masterdata.Card, error) {
+func (p *adapterTestEventProvider) GetCards(_ context.Context, eventID int) ([]*masterdata.Card, error) {
 	return nil, nil
 }
 
-func (p *adapterTestEventProvider) GetBannerCharacterID(eventID int) (int, error) {
+func (p *adapterTestEventProvider) GetBannerCharacterID(_ context.Context, eventID int) (int, error) {
 	return 0, nil
 }
 
-func (p *adapterTestEventProvider) GetDeckBonuses(eventID int) ([]*masterdata.EventDeckBonus, error) {
+func (p *adapterTestEventProvider) GetDeckBonuses(_ context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
 	return nil, nil
 }
 
-func (p *adapterTestEventProvider) GetBanEvents(charID int) []*masterdata.Event {
+func (p *adapterTestEventProvider) GetBanEvents(_ context.Context, charID int) []*masterdata.Event {
 	return p.banEvents
 }
 
-func (p *adapterTestEventProvider) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom {
+func (p *adapterTestEventProvider) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {
 	return nil
 }
 

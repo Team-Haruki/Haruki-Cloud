@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -68,11 +67,4 @@ func (p *dbEducationProvider) init() {
 		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
 		p.shopByBoxID = make(map[int]*ShopItem)
 	})
-}
-
-func educationContextOrBackground(ctx context.Context) context.Context {
-	if ctx == nil {
-		return context.Background()
-	}
-	return ctx
 }

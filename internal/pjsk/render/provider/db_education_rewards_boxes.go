@@ -9,15 +9,10 @@ import (
 	"haruki-cloud/database/sekai/resourceboxe"
 )
 
-func (p *dbEducationProvider) GetChallengeRewardsByCharacter(charID int) []*ChallengeReward {
-	return p.getChallengeRewardsByCharacter(context.TODO(), charID)
-}
-
-func (p *dbEducationProvider) getChallengeRewardsByCharacter(ctx context.Context, charID int) []*ChallengeReward {
+func (p *dbEducationProvider) GetChallengeRewardsByCharacter(ctx context.Context, charID int) []*ChallengeReward {
 	if charID <= 0 {
 		return nil
 	}
-	ctx = educationContextOrBackground(ctx)
 	p.init()
 
 	p.rewardMu.RLock()
@@ -53,11 +48,7 @@ func (p *dbEducationProvider) getChallengeRewardsByCharacter(ctx context.Context
 	return cloneEdChallengeRewards(p.rewardsByChar[charID])
 }
 
-func (p *dbEducationProvider) GetResourceBoxByPurpose(purpose string, id int) *ResourceBox {
-	return p.getResourceBoxByPurpose(context.TODO(), purpose, id)
-}
-
-func (p *dbEducationProvider) getResourceBoxByPurpose(ctx context.Context, purpose string, id int) *ResourceBox {
+func (p *dbEducationProvider) GetResourceBoxByPurpose(ctx context.Context, purpose string, id int) *ResourceBox {
 	if id <= 0 {
 		return nil
 	}
@@ -77,11 +68,7 @@ func (p *dbEducationProvider) getResourceBoxByPurpose(ctx context.Context, purpo
 	return nil
 }
 
-func (p *dbEducationProvider) GetResourceBoxesByPurpose(purpose string) []*ResourceBox {
-	return p.getResourceBoxesByPurpose(context.TODO(), purpose)
-}
-
-func (p *dbEducationProvider) getResourceBoxesByPurpose(ctx context.Context, purpose string) []*ResourceBox {
+func (p *dbEducationProvider) GetResourceBoxesByPurpose(ctx context.Context, purpose string) []*ResourceBox {
 	if !p.ensureResourceBoxesLoaded(ctx) {
 		return nil
 	}
@@ -110,8 +97,6 @@ func (p *dbEducationProvider) getResourceBoxesByPurpose(ctx context.Context, pur
 
 func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.boxMu.RLock()
 	if p.boxesLoaded {
 		p.boxMu.RUnlock()

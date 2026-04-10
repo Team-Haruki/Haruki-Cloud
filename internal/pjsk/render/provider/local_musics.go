@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -159,15 +160,15 @@ func (p *localMusicProvider) ensureLimitedTimeMusics() error {
 	})
 }
 
-func (p *localMusicProvider) Search(query string) (*masterdata.Music, error) {
+func (p *localMusicProvider) Search(ctx context.Context, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
 	}
 	if id, err := strconv.Atoi(query); err == nil {
-		return p.GetByID(id)
+		return p.GetByID(ctx, id)
 	}
-	all := p.GetAll()
+	all := p.GetAll(ctx)
 	lowerQuery := strings.ToLower(query)
 	for _, m := range all {
 		if strings.Contains(strings.ToLower(m.Title), lowerQuery) {
@@ -180,7 +181,7 @@ func (p *localMusicProvider) Search(query string) (*masterdata.Music, error) {
 	return nil, fmt.Errorf("music not found: %s", query)
 }
 
-func (p *localMusicProvider) GetByID(id int) (*masterdata.Music, error) {
+func (p *localMusicProvider) GetByID(_ context.Context, id int) (*masterdata.Music, error) {
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", id)
 	}
@@ -194,7 +195,7 @@ func (p *localMusicProvider) GetByID(id int) (*masterdata.Music, error) {
 	return common.CloneMusic(m), nil
 }
 
-func (p *localMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error) {
+func (p *localMusicProvider) GetByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
 	if err := p.ensureEventMusics(); err != nil {
 		return nil, err
 	}
@@ -202,17 +203,17 @@ func (p *localMusicProvider) GetByEventID(eventID int) (*masterdata.Music, error
 	if !ok {
 		return nil, fmt.Errorf("no music found for event %d", eventID)
 	}
-	return p.GetByID(musicID)
+	return p.GetByID(ctx, musicID)
 }
 
-func (p *localMusicProvider) GetAll() []*masterdata.Music {
+func (p *localMusicProvider) GetAll(_ context.Context) []*masterdata.Music {
 	if err := p.ensureMusics(); err != nil {
 		return nil
 	}
 	return common.CloneMusicList(p.musics.v().all)
 }
 
-func (p *localMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
+func (p *localMusicProvider) GetLocalizedTitles(_ context.Context, musicID int) ([]string, error) {
 	if musicID <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", musicID)
 	}
@@ -242,7 +243,7 @@ func (p *localMusicProvider) GetLocalizedTitles(musicID int) ([]string, error) {
 	return titles, nil
 }
 
-func (p *localMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
+func (p *localMusicProvider) GetDifficulties(_ context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
 	if err := p.ensureDifficulties(); err != nil {
 		return nil, err
 	}
@@ -258,7 +259,7 @@ func (p *localMusicProvider) GetDifficulties(musicID int) ([]*masterdata.MusicDi
 	return result, nil
 }
 
-func (p *localMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, error) {
+func (p *localMusicProvider) GetVocals(_ context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
 	if err := p.ensureVocals(); err != nil {
 		return nil, err
 	}
@@ -277,7 +278,7 @@ func (p *localMusicProvider) GetVocals(musicID int) ([]*masterdata.MusicVocal, e
 	return result, nil
 }
 
-func (p *localMusicProvider) GetTags(musicID int) ([]string, error) {
+func (p *localMusicProvider) GetTags(_ context.Context, musicID int) ([]string, error) {
 	if err := p.ensureTags(); err != nil {
 		return nil, err
 	}
@@ -285,7 +286,7 @@ func (p *localMusicProvider) GetTags(musicID int) ([]string, error) {
 	return append([]string(nil), tags...), nil
 }
 
-func (p *localMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
+func (p *localMusicProvider) GetOutsideCharacterByID(_ context.Context, id int) (string, error) {
 	if id <= 0 {
 		return "", fmt.Errorf("invalid outside character id: %d", id)
 	}
@@ -299,7 +300,7 @@ func (p *localMusicProvider) GetOutsideCharacterByID(id int) (string, error) {
 	return name, nil
 }
 
-func (p *localMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error) {
+func (p *localMusicProvider) GetPrimaryEventByMusicID(_ context.Context, musicID int) (*masterdata.Event, error) {
 	if err := p.ensureEventMusics(); err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (p *localMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.
 	}
 	var earliest *masterdata.Event
 	for _, eid := range eventIDs {
-		ev, err := p.events.GetByID(eid)
+		ev, err := p.events.GetByID(context.Background(), eid)
 		if err != nil {
 			continue
 		}
@@ -326,7 +327,7 @@ func (p *localMusicProvider) GetPrimaryEventByMusicID(musicID int) (*masterdata.
 	return earliest, nil
 }
 
-func (p *localMusicProvider) GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic {
+func (p *localMusicProvider) GetLimitedTimeMusics(_ context.Context, musicID int) []*masterdata.LimitedTimeMusic {
 	if err := p.ensureLimitedTimeMusics(); err != nil {
 		return nil
 	}

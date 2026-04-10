@@ -8,7 +8,7 @@ import (
 )
 
 func TestListBotRoutes(t *testing.T) {
-	sekaihandler.EnsureCommandHandlersRegistered(nil)
+	sekaihandler.EnsureCommandHandlersRegistered()
 
 	routes := commandhandler.ListBotRoutes()
 	if len(routes) == 0 {

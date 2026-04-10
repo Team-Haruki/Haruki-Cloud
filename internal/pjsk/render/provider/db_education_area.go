@@ -8,11 +8,7 @@ import (
 	"haruki-cloud/database/sekai/characterrank"
 )
 
-func (p *dbEducationProvider) GetAreaItem(id int) *AreaItem {
-	return p.getAreaItem(context.TODO(), id)
-}
-
-func (p *dbEducationProvider) getAreaItem(ctx context.Context, id int) *AreaItem {
+func (p *dbEducationProvider) GetAreaItem(ctx context.Context, id int) *AreaItem {
 	if id <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
@@ -22,11 +18,7 @@ func (p *dbEducationProvider) getAreaItem(ctx context.Context, id int) *AreaItem
 	return cloneEdAreaItem(p.areaByID[id])
 }
 
-func (p *dbEducationProvider) GetAreaItems() []*AreaItem {
-	return p.getAreaItems(context.TODO())
-}
-
-func (p *dbEducationProvider) getAreaItems(ctx context.Context) []*AreaItem {
+func (p *dbEducationProvider) GetAreaItems(ctx context.Context) []*AreaItem {
 	if !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
@@ -41,11 +33,7 @@ func (p *dbEducationProvider) getAreaItems(ctx context.Context) []*AreaItem {
 	return items
 }
 
-func (p *dbEducationProvider) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
-	return p.getAreaItemLevels(context.TODO(), areaItemID)
-}
-
-func (p *dbEducationProvider) getAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel {
+func (p *dbEducationProvider) GetAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel {
 	if areaItemID <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
@@ -55,11 +43,7 @@ func (p *dbEducationProvider) getAreaItemLevels(ctx context.Context, areaItemID 
 	return cloneEdAreaItemLevels(p.areaLevelsByItem[areaItemID])
 }
 
-func (p *dbEducationProvider) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	return p.getAreaItemLevel(context.TODO(), areaItemID, level)
-}
-
-func (p *dbEducationProvider) getAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel {
+func (p *dbEducationProvider) GetAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel {
 	if areaItemID <= 0 || level <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
@@ -72,11 +56,7 @@ func (p *dbEducationProvider) getAreaItemLevel(ctx context.Context, areaItemID, 
 	return nil
 }
 
-func (p *dbEducationProvider) GetCharacterRank(characterID, rank int) *CharacterRank {
-	return p.getCharacterRank(context.TODO(), characterID, rank)
-}
-
-func (p *dbEducationProvider) getCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank {
+func (p *dbEducationProvider) GetCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank {
 	if characterID <= 0 || rank <= 0 || !p.ensureCharacterRanksLoaded(ctx) {
 		return nil
 	}
@@ -91,8 +71,6 @@ func (p *dbEducationProvider) getCharacterRank(ctx context.Context, characterID,
 
 func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.areaMu.RLock()
 	if p.areaMasterLoaded {
 		p.areaMu.RUnlock()
@@ -150,8 +128,6 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
 
 func (p *dbEducationProvider) ensureCharacterRanksLoaded(ctx context.Context) bool {
 	p.init()
-	ctx = educationContextOrBackground(ctx)
-
 	p.rankMu.RLock()
 	if p.ranksLoaded {
 		p.rankMu.RUnlock()

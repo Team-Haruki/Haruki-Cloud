@@ -135,12 +135,11 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		req.FrameImgPath = &framePath
 	}
 
-	scoreInfo, hasScore := diffScoreMap[honorID]
+	_, hasScore := diffScoreMap[honorID]
 	if hasScore || groupType == "event" || groupType == "wl_event" {
 		if hasScore {
 			fcApGroup := "fc_ap"
 			req.GroupType = &fcApGroup
-			_ = scoreInfo
 		}
 		scrollPath := resolveGameAsset(fmt.Sprintf("honor/%s/scroll.png", assetName))
 		if b.assetExists(scrollPath) {

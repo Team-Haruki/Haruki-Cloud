@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -60,7 +61,7 @@ func (p *localCharacterProvider) ensureUnits() error {
 	})
 }
 
-func (p *localCharacterProvider) GetByID(id int) (*masterdata.Character, error) {
+func (p *localCharacterProvider) GetByID(_ context.Context, id int) (*masterdata.Character, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("character id is required")
 	}
@@ -74,7 +75,7 @@ func (p *localCharacterProvider) GetByID(id int) (*masterdata.Character, error) 
 	return common.CloneCharacter(ch), nil
 }
 
-func (p *localCharacterProvider) GetColorCode(id int) (string, bool) {
+func (p *localCharacterProvider) GetColorCode(_ context.Context, id int) (string, bool) {
 	if id == 0 {
 		return "", false
 	}
@@ -85,7 +86,7 @@ func (p *localCharacterProvider) GetColorCode(id int) (string, bool) {
 	return v, ok && v != ""
 }
 
-func (p *localCharacterProvider) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+func (p *localCharacterProvider) GetGameCharacterUnit(_ context.Context, id int) (*masterdata.GameCharacterUnit, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("game character unit id is required")
 	}

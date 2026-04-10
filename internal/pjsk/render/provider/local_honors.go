@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -126,7 +127,7 @@ func (p *localHonorProvider) ensureEventHonors() {
 	})
 }
 
-func (p *localHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
+func (p *localHonorProvider) GetByID(_ context.Context, id int) (*masterdata.Honor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor id")
 	}
@@ -140,7 +141,7 @@ func (p *localHonorProvider) GetByID(id int) (*masterdata.Honor, error) {
 	return common.CloneHonor(h), nil
 }
 
-func (p *localHonorProvider) GetGroupByID(id int) (*masterdata.HonorGroup, error) {
+func (p *localHonorProvider) GetGroupByID(_ context.Context, id int) (*masterdata.HonorGroup, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid honor group id")
 	}
@@ -230,7 +231,7 @@ func localBirthdayGroupMatchesCharacter(groupName string, ch *localGameCharacter
 	return false
 }
 
-func (p *localHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
+func (p *localHonorProvider) GetBondsHonorByID(_ context.Context, id int) (*masterdata.BondsHonor, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid bonds honor id")
 	}
@@ -244,7 +245,7 @@ func (p *localHonorProvider) GetBondsHonorByID(id int) (*masterdata.BondsHonor, 
 	return common.CloneBondsHonor(b), nil
 }
 
-func (p *localHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
+func (p *localHonorProvider) GetGameCharacterUnitByID(_ context.Context, id int) (*masterdata.GameCharacterUnit, bool) {
 	if id == 0 {
 		return nil, false
 	}
@@ -258,7 +259,7 @@ func (p *localHonorProvider) GetGameCharacterUnitByID(id int) (*masterdata.GameC
 	return common.CloneGameCharacterUnit(u), true
 }
 
-func (p *localHonorProvider) GetEventIDByHonorID(honorID int) int {
+func (p *localHonorProvider) GetEventIDByHonorID(_ context.Context, honorID int) int {
 	if honorID == 0 {
 		return 0
 	}

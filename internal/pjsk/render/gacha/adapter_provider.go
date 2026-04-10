@@ -26,7 +26,7 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 }
 
 func (a *ProviderAdapter) GetGachaByID(id int) (*masterdata.Gacha, error) {
-	return a.P.Gachas().GetByID(id)
+	return a.P.Gachas().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, error) {
@@ -34,7 +34,7 @@ func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 		return nil, fmt.Errorf("event id is required")
 	}
 
-	cards, err := a.P.Cards().Filter(&provider.CardFilter{EventID: eventID})
+	cards, err := a.P.Cards().Filter(a.Context(), &provider.CardFilter{EventID: eventID})
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +50,13 @@ func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 	if idx > 2 {
 		idx = 2
 	}
-	return a.P.Cards().GetGachaByCardID(cards[idx].ID)
+	return a.P.Cards().GetGachaByCardID(a.Context(), cards[idx].ID)
 }
 
 func (a *ProviderAdapter) GetGachas() []*masterdata.Gacha {
-	return a.P.Gachas().GetAll()
+	return a.P.Gachas().GetAll(a.Context())
 }
 
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
-	return a.P.Cards().GetByID(id)
+	return a.P.Cards().GetByID(a.Context(), id)
 }

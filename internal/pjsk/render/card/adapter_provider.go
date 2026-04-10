@@ -25,11 +25,11 @@ func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 }
 
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
-	return a.P.Cards().GetByID(id)
+	return a.P.Cards().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
-	return a.P.Cards().GetByCharacterAndSeq(characterID, seq)
+	return a.P.Cards().GetByCharacterAndSeq(a.Context(), characterID, seq)
 }
 
 func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
@@ -39,7 +39,7 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 
 	eventID := info.EventID
 	if eventID == 0 && info.BanCharID != 0 {
-		events := a.P.Events().GetBanEvents(info.BanCharID)
+		events := a.P.Events().GetBanEvents(a.Context(), info.BanCharID)
 		if len(events) == 0 {
 			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
 		}
@@ -49,7 +49,7 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 		eventID = events[info.BanSeq-1].ID
 	}
 
-	return a.P.Cards().Filter(&provider.CardFilter{
+	return a.P.Cards().Filter(a.Context(), &provider.CardFilter{
 		CharacterID: info.CharacterID,
 		Unit:        info.Unit,
 		MainUnit:    info.MainUnit,
@@ -64,33 +64,33 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 }
 
 func (a *ProviderAdapter) GetCharacterColorCode(id int) (string, bool) {
-	return a.P.Characters().GetColorCode(id)
+	return a.P.Characters().GetColorCode(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error) {
-	return a.P.Characters().GetByID(id)
+	return a.P.Characters().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) GetUnitByCardID(cardID int) (string, error) {
-	return a.P.Cards().GetUnitByCardID(cardID)
+	return a.P.Cards().GetUnitByCardID(a.Context(), cardID)
 }
 
 func (a *ProviderAdapter) GetCardSupplyType(card *masterdata.Card) string {
-	return a.P.Cards().GetSupplyType(card)
+	return a.P.Cards().GetSupplyType(a.Context(), card)
 }
 
 func (a *ProviderAdapter) GetSkillByID(id int) (*masterdata.Skill, error) {
-	return a.P.Skills().GetByID(id)
+	return a.P.Skills().GetByID(a.Context(), id)
 }
 
 func (a *ProviderAdapter) FormatSkillDescription(skill *masterdata.Skill, cardCharacterID int) string {
-	return a.P.Skills().FormatDescription(skill, cardCharacterID)
+	return a.P.Skills().FormatDescription(a.Context(), skill, cardCharacterID)
 }
 
 func (a *ProviderAdapter) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
-	return a.P.Cards().GetGachaByCardID(cardID)
+	return a.P.Cards().GetGachaByCardID(a.Context(), cardID)
 }
 
 func (a *ProviderAdapter) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
-	return a.P.Cards().GetCostume3dsByCardID(cardID)
+	return a.P.Cards().GetCostume3dsByCardID(a.Context(), cardID)
 }

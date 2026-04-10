@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -135,7 +136,7 @@ func (p *localCardProvider) ensureEventCards() error {
 	})
 }
 
-func (p *localCardProvider) GetByID(id int) (*masterdata.Card, error) {
+func (p *localCardProvider) GetByID(_ context.Context, id int) (*masterdata.Card, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid card id")
 	}
@@ -149,7 +150,7 @@ func (p *localCardProvider) GetByID(id int) (*masterdata.Card, error) {
 	return common.CloneCard(card), nil
 }
 
-func (p *localCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error) {
+func (p *localCardProvider) GetByCharacterAndSeq(_ context.Context, characterID, seq int) (*masterdata.Card, error) {
 	if characterID == 0 {
 		return nil, fmt.Errorf("character id is required")
 	}
@@ -183,7 +184,7 @@ func (p *localCardProvider) GetByCharacterAndSeq(characterID, seq int) (*masterd
 	return common.CloneCard(card), nil
 }
 
-func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, error) {
+func (p *localCardProvider) Filter(_ context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
 	if filter == nil {
 		return nil, fmt.Errorf("filter is required")
 	}
@@ -236,7 +237,7 @@ func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, erro
 		}
 		if filter.SkillType != "" {
 			if p.skills != nil {
-				skill, sErr := p.skills.GetByID(card.SkillID)
+				skill, sErr := p.skills.GetByID(context.Background(), card.SkillID)
 				if sErr != nil || skill == nil || skill.DescriptionSpriteName != filter.SkillType {
 					continue
 				}
@@ -244,7 +245,7 @@ func (p *localCardProvider) Filter(filter *CardFilter) ([]*masterdata.Card, erro
 				continue
 			}
 		}
-		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(card)) {
+		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(context.Background(), card)) {
 			continue
 		}
 		results = append(results, common.CloneCard(card))
@@ -265,14 +266,14 @@ func (p *localCardProvider) matchesUnitFilter(filter *CardFilter, card *masterda
 	if p.characters == nil {
 		return false
 	}
-	character, err := p.characters.GetByID(card.CharacterID)
+	character, err := p.characters.GetByID(context.Background(), card.CharacterID)
 	if err != nil || character == nil {
 		return false
 	}
 	return cardMatchesUnitFilter(filter, character.Unit, card.SupportUnit)
 }
 
-func (p *localCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
+func (p *localCardProvider) GetSupplyType(_ context.Context, cardInfo *masterdata.Card) string {
 	if cardInfo == nil {
 		return cardNormalizeSupplyType("")
 	}
@@ -291,7 +292,7 @@ func (p *localCardProvider) GetSupplyType(cardInfo *masterdata.Card) string {
 	return cardNormalizeSupplyType("")
 }
 
-func (p *localCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, error) {
+func (p *localCardProvider) GetGachaByCardID(_ context.Context, cardID int) (*masterdata.Gacha, error) {
 	if cardID == 0 {
 		return nil, fmt.Errorf("invalid card id")
 	}
@@ -306,7 +307,7 @@ func (p *localCardProvider) GetGachaByCardID(cardID int) (*masterdata.Gacha, err
 	return nil, fmt.Errorf("gacha not found for card: %d", cardID)
 }
 
-func (p *localCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+func (p *localCardProvider) GetCostume3dsByCardID(_ context.Context, cardID int) ([]*masterdata.Costume3d, error) {
 	if cardID == 0 {
 		return nil, nil
 	}
@@ -320,13 +321,13 @@ func (p *localCardProvider) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cos
 	return common.CloneCostumes(costumes), nil
 }
 
-func (p *localCardProvider) GetUnitByCardID(cardID int) (string, error) {
-	card, err := p.GetByID(cardID)
+func (p *localCardProvider) GetUnitByCardID(_ context.Context, cardID int) (string, error) {
+	card, err := p.GetByID(context.Background(), cardID)
 	if err != nil {
 		return "", err
 	}
 	if p.characters != nil {
-		character, cErr := p.characters.GetByID(card.CharacterID)
+		character, cErr := p.characters.GetByID(context.Background(), card.CharacterID)
 		if cErr == nil && character != nil {
 			if character.Unit != "" && character.Unit != "piapro" {
 				return character.Unit, nil

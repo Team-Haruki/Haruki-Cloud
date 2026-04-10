@@ -55,7 +55,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		if err != nil {
 			return nil, err
 		}
-		return imageMessage(data, rc.App, BotModulePJSK)
+		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if rc.App.Bindings == nil {
 			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")

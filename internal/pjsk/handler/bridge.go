@@ -87,15 +87,15 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	return message, nil
 }
 
-func imageMessage(img []byte, app *renderapp.App, group string) (onebot11.Message, error) {
-	url, err := app.ImageCache.StoreAndGetURL(img, group)
+func imageMessage(ctx context.Context, img []byte, app *renderapp.App, group string) (onebot11.Message, error) {
+	url, err := app.ImageCache.StoreAndGetURL(ctx, img, group)
 	if err != nil {
 		return nil, err
 	}
 	return onebot11.Message{onebot11.Image(url, "")}, nil
 }
 
-func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.Message, error) {
+func assetImageMessage(ctx context.Context, path string, app *renderapp.App, group string) (onebot11.Message, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil, fmt.Errorf("asset path is empty")
@@ -119,7 +119,7 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, app, group)
+	return imageMessage(ctx, data, app, group)
 }
 
 // mergeParams unmarshals the JSON params from ResolvedCommand into the target struct,

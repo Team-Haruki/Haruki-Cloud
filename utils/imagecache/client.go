@@ -53,9 +53,12 @@ func (c *Client) Close() error {
 // If a PGStore is configured and the hash is already known, the filesystem write
 // is skipped and the cached URL is returned directly.
 // group is a slash-separated path component, e.g. "pjsk/profile".
-func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
+func (c *Client) StoreAndGetURL(ctx context.Context, data []byte, group string) (string, error) {
 	if c == nil {
 		return "", fmt.Errorf("imagecache: client is not configured")
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	digest := sha256.Sum256(data)
@@ -63,7 +66,6 @@ func (c *Client) StoreAndGetURL(data []byte, group string) (string, error) {
 	name := hashHex + extFromData(data)
 
 	// Fast path: return cached URL from PostgreSQL — but only if the file still exists on disk.
-	ctx := context.Background()
 	if c.store != nil {
 		if cachedPath, storedPath, ok := c.store.Lookup(ctx, hashHex); ok {
 			if _, err := os.Stat(storedPath); err == nil {

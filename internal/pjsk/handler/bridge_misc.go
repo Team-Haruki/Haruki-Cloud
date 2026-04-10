@@ -26,5 +26,5 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, rc.App, BotModulePJSK)
+	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 }

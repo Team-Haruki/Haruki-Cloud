@@ -43,7 +43,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		message = make(onebot11.Message, 0, len(result.Paths))
 		for _, path := range result.Paths {
-			image, imageErr := assetImageMessage(path, rc.App, BotModulePJSK)
+			image, imageErr := assetImageMessage(rc.Ctx, path, rc.App, BotModulePJSK)
 			if imageErr != nil {
 				return nil, imageErr
 			}

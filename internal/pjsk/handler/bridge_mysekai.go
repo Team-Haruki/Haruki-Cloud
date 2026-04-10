@@ -89,7 +89,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
 		}
-		image, imageErr := imageMessage(data, rc.App, BotModulePJSK)
+		image, imageErr := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
@@ -109,5 +109,5 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(data, rc.App, BotModulePJSK)
+	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 }

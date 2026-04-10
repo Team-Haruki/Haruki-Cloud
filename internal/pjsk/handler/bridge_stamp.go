@@ -22,7 +22,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 		q := stamp.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
-		if message, ok, directErr := resolveDirectStampImage(stampCtrl, rc.App, q); ok {
+		if message, ok, directErr := resolveDirectStampImage(rc.Ctx, stampCtrl, rc.App, q); ok {
 			return message, directErr
 		}
 		if q.All {
@@ -32,7 +32,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			message = make(onebot11.Message, 0, len(images))
 			for _, img := range images {
-				segment, imageErr := imageMessage(img, rc.App, BotModulePJSK)
+				segment, imageErr := imageMessage(rc.Ctx, img, rc.App, BotModulePJSK)
 				if imageErr != nil {
 					return nil, imageErr
 				}
@@ -47,13 +47,13 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		return imageMessage(data, rc.App, BotModulePJSK)
+		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	default:
 		return nil, unsupportedModeError("stamp", rc.Cmd.Mode)
 	}
 }
 
-func resolveDirectStampImage(stampCtrl *stamp.Controller, app *renderapp.App, query stamp.ListQuery) (onebot11.Message, bool, error) {
+func resolveDirectStampImage(ctx context.Context, stampCtrl *stamp.Controller, app *renderapp.App, query stamp.ListQuery) (onebot11.Message, bool, error) {
 	if app == nil || stampCtrl == nil {
 		return nil, false, nil
 	}
@@ -74,7 +74,7 @@ func resolveDirectStampImage(stampCtrl *stamp.Controller, app *renderapp.App, qu
 	if imagePath == "" {
 		return nil, true, fmt.Errorf("stamp %d image path is empty", query.IDs[0])
 	}
-	message, imageErr := assetImageMessage(imagePath, app, BotModulePJSK)
+	message, imageErr := assetImageMessage(ctx, imagePath, app, BotModulePJSK)
 	if imageErr != nil {
 		return nil, false, nil
 	}

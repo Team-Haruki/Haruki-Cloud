@@ -62,7 +62,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := assetImageMessage(result.JacketPath, rc.App, BotModulePJSK)
+		image, imageErr := assetImageMessage(rc.Ctx, result.JacketPath, rc.App, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}
@@ -75,7 +75,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := assetImageMessage(result.JacketPath, rc.App, BotModulePJSK)
+		image, imageErr := assetImageMessage(rc.Ctx, result.JacketPath, rc.App, BotModulePJSK)
 		if imageErr != nil {
 			return nil, imageErr
 		}

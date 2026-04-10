@@ -180,7 +180,7 @@ func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
 
 // ImageMessage is a convenience method to store image bytes and return an image message.
 func (rc *RequestContext) ImageMessage(data []byte) (onebot11.Message, error) {
-	url, err := rc.App.ImageCache.StoreAndGetURL(data, BotModulePJSK)
+	url, err := rc.App.ImageCache.StoreAndGetURL(rc.Ctx, data, BotModulePJSK)
 	if err != nil {
 		return nil, err
 	}

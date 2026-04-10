@@ -88,9 +88,10 @@
 按 **当前 handler registry 实测**，Bot API 现在暴露的是：
 
 - **82 条活跃 Bot path**
-- **9 个 disabled handler**
+- **0 个 disabled handler**（所有注册 handler 均无 `Disabled: true` 标记）
 
 > 注意：旧文档中多处仍写 **76 条**。按照当前注册表运行结果，后续应以本文档中的 **82 条活跃 path 清单** 为准。
+> 2026-04-10 更新：原文档曾列 9 个 disabled handler（CardStory、GachaRecord、EventStory 等），经代码核实这些 handler 已不存在于代码库中，disabled 列表已清空。
 
 模块分布如下：
 
@@ -329,25 +330,16 @@
 
 ## 7. 未暴露 / Disabled Handler 清单
 
-当前显式 `Disabled: true` 的 handler 共 **9 个**：
+截至 2026-04-10，代码库中 **无任何 handler 设置 `Disabled: true`**。
 
-| Handler | 所属文件 | 当前状态 | 备注 |
-|---------|----------|----------|------|
-| `CardStoryHandle` | `internal/pjsk/handler/sekai/card.go` | `D` | 卡牌剧情 |
-| `GachaRecordHandle` | `internal/pjsk/handler/sekai/gacha.go` | `D` | 抽卡记录 |
-| `EventStoryHandle` | `internal/pjsk/handler/sekai/event.go` | `D` | 活动剧情 |
-| `HelpHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 帮助 |
-| `UpdateHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 更新信息 |
-| `NgWordHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | NG 词检测 |
-| `UploadHelpHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 抓包帮助 |
-| `ExtractCardHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 提取卡牌 |
-| `HeyiweiHandle` | `internal/pjsk/handler/sekai/misc.go` | `D` | 历史保留功能 |
+> 历史说明：此前文档曾列 9 个 disabled handler（CardStory、GachaRecord、EventStory、Help、Update、NgWord、UploadHelp、ExtractCard、Heyiwei），经核实这些 handler 已在历次重构中移除，不再存在于代码库中。`CommandHandlerBase` 结构体仍保留 `Disabled bool` 字段，但当前无任何注册 handler 使用该字段。
 
 ## 8. Legacy 清理状态
 
-截至 2026-04-09：
+截至 2026-04-10：
 
-- `api/legacy/pjsk/` 已从仓库中移除。
+- `api/legacy/pjsk/` 空目录已删除（2026-04-10）。
+- `api/legacy/` 目录已删除。
 - `cmd/server/main.go` 已不再注册 `RegisterPJSKRenderRoutes(...)` 与 `RegisterPJSKCommandRoute(...)`。
 - `/internal/pjsk/*` 不再作为运行时暴露路径保留。
 

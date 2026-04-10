@@ -116,7 +116,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
 	var snapshotService userdata.Snapshot
 	if provider := strings.TrimSpace(cfg.UserSnapshot.Provider); provider == "" || strings.EqualFold(provider, "local_file") {
-		snapshotService = userdata.NewLocalFileService(sekaiClient, assetHelper, userdata.LocalFileConfig{
+		snapshotService = userdata.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, userdata.LocalFileConfig{
 			DefaultRegion: cfg.DefaultRegion,
 			UserJSON:      cfg.UserSnapshot.UserJSON,
 			MusicMetaJSON: cfg.UserSnapshot.MusicMetaJSON,

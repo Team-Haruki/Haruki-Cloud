@@ -40,8 +40,8 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	}
 	if eventSource := c.eventSourceForRegion(normalized.Region); eventSource != nil {
 		if eventInfo, err := eventSource.GetEventByID(normalized.EventID); err == nil && eventInfo != nil {
-			if strings.EqualFold(eventInfo.EventType, "world_bloom") && normalized.WlCharacterID == nil {
-				return TrackerRankQuery{}, fmt.Errorf("world bloom event requires wl_character_id")
+			if !strings.EqualFold(eventInfo.EventType, "world_bloom") && normalized.WlCharacterID != nil {
+				return TrackerRankQuery{}, fmt.Errorf("wl_character_id is only valid for world bloom event")
 			}
 		}
 	}

@@ -199,6 +199,27 @@ func (missingDefaultRankLineTrackerSource) GetLatestRankingByRank(server string,
 	return lineNameTrackerSource{}.GetLatestRankingByRank(server, eventID, rank)
 }
 
+type worldBloomLineTrackerSource struct {
+	lineNameTrackerSource
+}
+
+func (worldBloomLineTrackerSource) GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    "",
+				Score:     2_000_000 + rank + characterID,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "",
+			Name:   "WorldBloomLineUser",
+		},
+	}, nil
+}
+
 type rankNameFallbackTrackerSource struct {
 	testTrackerSource
 }
@@ -860,6 +881,40 @@ func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 	}
 }
 
+func TestBuildLineRequestFromTrackerAllowsWorldBloomTotalRanking(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		EventType:   "world_bloom",
+		Name:        "World Bloom Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(time.Hour/time.Millisecond),
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		Region: "jp",
+		Ranks:  []int{1, 100},
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if payload.ID != eventInfo.ID {
+		t.Fatalf("expected inferred event id %d, got %d", eventInfo.ID, payload.ID)
+	}
+	if payload.WlCid != nil {
+		t.Fatalf("expected wl total ranking without chapter id, got %+v", payload.WlCid)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+}
+
 func TestBuildLineRequestFromTrackerSkipsMissingDefaultRanks(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1233,6 +1288,40 @@ func TestBuildSpeedRequestFromTrackerDerivesSpeedWhenGrowthFieldsMissing(t *test
 	}
 }
 
+func TestBuildSpeedRequestFromTrackerAllowsWorldBloomTotalRanking(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		EventType:   "world_bloom",
+		Name:        "World Bloom Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(time.Hour/time.Millisecond),
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		Region: "jp",
+		Ranks:  []int{50},
+	})
+	if err != nil {
+		t.Fatalf("build speed request: %v", err)
+	}
+	if payload.EventID != eventInfo.ID {
+		t.Fatalf("expected inferred event id %d, got %d", eventInfo.ID, payload.EventID)
+	}
+	if payload.IsWlEvent {
+		t.Fatalf("expected wl total speed to use total-ranking layout, got %+v", payload)
+	}
+	if payload.WlCharaIconPath != nil {
+		t.Fatalf("expected no wl chapter icon for total ranking, got %+v", payload.WlCharaIconPath)
+	}
+}
+
 func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1462,7 +1551,7 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	}
 }
 
-func TestBuildPredictLineRequestFromTrackerRejectsWorldBloom(t *testing.T) {
+func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapter(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "WL Event",
@@ -1471,7 +1560,7 @@ func TestBuildPredictLineRequestFromTrackerRejectsWorldBloom(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(testTrackerSource{}, &testEventSource{
+	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1480,15 +1569,27 @@ func TestBuildPredictLineRequestFromTrackerRejectsWorldBloom(t *testing.T) {
 		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
 	})
 
-	cid := 1
-	_, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+	cid := 21
+	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID:       101,
 		Region:        "jp",
 		Ranks:         []int{100},
 		WlCharacterID: &cid,
 	})
-	if err == nil {
-		t.Fatalf("expected world bloom predict rejection")
+	if err != nil {
+		t.Fatalf("build wl predict fallback: %v", err)
+	}
+	if payload.Name != "WL Event 预测(实时)" {
+		t.Fatalf("unexpected payload name: %s", payload.Name)
+	}
+	if payload.WlCid == nil || *payload.WlCid != 21 {
+		t.Fatalf("expected wl chapter id to be preserved, got %+v", payload.WlCid)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 2_000_121 {
+		t.Fatalf("unexpected fallback rank payload: %+v", payload.Ranks[0])
 	}
 }
 

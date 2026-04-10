@@ -1,12 +1,12 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-04-01（v17.2）
+> 最后更新：2026-04-10（v17.3 — 收尾治理完成）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
-> 2026-04-09 补充：当前模块分档、活跃 Bot path、disabled handler 与测试/风险快照，见 [项目完成度跟踪](project-completion-tracker.cn.md)。
+> 2026-04-10 状态：核心重构与 6 项收尾治理全部完成（快照正式化、MySekai 数据源收口、Deck 服务治理、CI 模板、context 清理、文档漂移修正）。重构进度 ~97-98%，整体交付 ~93-95%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。
 >
-> 再补充一条当前事实：`api/legacy/pjsk/` 与 `/internal/pjsk/*` 兼容运行时路由已于 2026-04-09 从仓库和运行时移除，`internal/pjsk/render/deck/deck_cgo/` 历史目录也已移除；本文保留了大量 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
+> `api/legacy/pjsk/` 与 `internal/pjsk/render/deck/deck_cgo/` 历史目录已移除。本文保留了 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
 ## 1. 当前结论
 

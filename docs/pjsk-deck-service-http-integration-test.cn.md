@@ -306,3 +306,14 @@ Cannot recommend any deck in 862 cards
 ## 12. 一句话总结
 
 本轮已经完成“Cloud 接入远程 deck-service，并把 `deck recommend auto` 主链正式收口为 HTTP 外部服务”的目标；当前没有证据表明 HTTP 化改坏了推荐逻辑，剩余问题集中在底层推荐业务结果本身。
+
+---
+
+## 13. 后续补充：Deck 服务治理（2026-04-10）
+
+在联调完成后，进一步对 Deck HTTP 链路进行了服务治理：
+
+- **重试机制**：`RecommendConfig` 新增 `MaxRetries` / `RetryWaitTime`，瞬时网络错误和 HTTP 5xx 自动重试
+- **断路器**：连续 5 次失败后自动拒绝请求，避免雪崩；`ResetCircuitBreaker()` 可用于手动恢复
+- **结构化日志**：所有 HTTP 调用记录耗时、重试次数、错误详情
+- **相关变更文件**：`remote_engine.go`、`remote_engine_http.go`、`remote_engine_recommend.go`、`recommender.go`

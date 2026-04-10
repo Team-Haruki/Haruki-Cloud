@@ -15,7 +15,7 @@
   - 适合：快速了解项目全貌
 
 - **[项目完成度跟踪](project-completion-tracker.cn.md)** ⭐
-  - 基于 2026-04-09 代码审计整理的模块分档、82 条活跃 Bot path、disabled handler 与当前测试/风险快照
+  - 基于代码审计整理的模块分档、82 条活跃 Bot path、CI 流水线状态与当前测试/风险快照
   - 适合：持续跟踪“哪些已经稳定、哪些仍是过渡实现、哪些尚未暴露”
 
 - **[PJSK Deck-Service HTTP 联调测试记录](pjsk-deck-service-http-integration-test.cn.md)** ⭐
@@ -98,6 +98,7 @@ Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
 
 | 日期 | 文档 | 变更 |
 |------|------|------|
+| 2026-04-10 | 全量文档更新 | 收尾治理完成：快照正式化、MySekai 数据源收口、Deck 服务治理（重试+断路器）、CI 模板（ci.yml + integration.yml）、context 清理、文档漂移修正。重构进度 ~97-98% |
 | 2026-04-09 | 项目完成度跟踪 / README 索引 | 新增基于代码审计的完成度跟踪文档，并同步记录 legacy 移除、82 条活跃 Bot path 与当前测试基线 |
 | 2026-03-31 | PJSK Deck-Service HTTP 联调测试记录 / README 索引 | 新增 deck-service HTTP 联调测试文档，记录 Cloud 接线、真实服务验证与当前结论 |
 | 2026-03-29 | PJSK 卡牌查询语义整理 / README 索引 | 新增卡牌查询专题文档，整理 `card/detail` `card/list` `card/image` 的入口分流与参数边界 |
@@ -118,4 +119,4 @@ Body: NoiseIK_Message1(MsgPack(BotCommandRequest))
 ---
 
 **维护者**：Haruki-Cloud Team  
-**最后更新**：2026-04-09
+**最后更新**：2026-04-10

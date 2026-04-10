@@ -1641,3 +1641,54 @@ card, education, event, gacha, honor, music, profile, stamp, vlive
 | 代码现代化 | ⭐⭐⭐⭐⭐ | 全项目 interface{} → any，命名一致 |
 
 **总体结论**: 重构全部完成。从 bridge.go 2968 行到模块化架构，Provider 接口从无 context 到全量注入，代码从 interface{} 到 any，所有技术债已清理。
+
+---
+
+## 收尾治理阶段（2026-04-10）
+
+在核心重构完成后，执行了 6 项收尾治理工作，将重构进度从 ~92-95% 推至 ~97-98%：
+
+### 1. 文档漂移修正
+- 删除 project-completion-tracker 中 phantom disabled handler 列表（代码中并无 `Disabled: true` 配置）
+- 更新路由统计：82 活跃 / 0 disabled
+- 删除 `api/legacy/pjsk/` 空目录骨架
+
+### 2. 快照链路正式化
+- `FallbackSnapshotProvider` 增加 `allowFallback bool` 参数
+- 生产环境 (`false`): 仅使用主 provider (Toolbox)，失败即报错
+- 开发环境 (`true`): 保留 fallback 链 + 警告日志
+- 配置项: `user_snapshot.allow_fallback`
+
+### 3. MySekai 数据源收口
+- `NewController` 签名改为 `MasterdataOptions` 结构体，取代 variadic `sekaiDSN`
+- `AllowFallback=false`: DB 失败时不回退本地 JSON 文件
+- `AllowFallback=true`: 保留本地 fallback（dev/test 用途）
+- 配置项: `local_masterdata.allow_fallback`
+
+### 4. Deck 服务治理
+- HTTP 重试: 可配置 `max_retries` + `retry_wait_time`
+- `isRetryableError()`: 匹配 `net.Error`、connection refused、HTTP 5xx 等瞬时错误
+- 断路器: 连续 5 次失败后拒绝请求（`atomic.Int64` 无锁计数）
+- 结构化日志: 所有 HTTP 调用记录耗时/重试/错误
+- `ResetCircuitBreaker()`: 导出方法供外部恢复调用
+
+### 5. CI 模板
+- `.github/workflows/ci.yml`: push/PR 触发 → `go build` + `go vet` + `go test ./...`
+- `.github/workflows/integration.yml`: `workflow_dispatch` 手动触发 + postgres 18.3 + redis 7
+
+### 6. context.Background() 兜底清理
+- `imagecache.StoreAndGetURL` 添加 `ctx context.Context` 参数
+- bridge 层全链路 `rc.Ctx` 传递
+- 剩余 `context.Background()` 均为合理的 nil-ctx 兜底路径
+
+### 收尾后指标
+
+| 指标 | 数量 |
+|------|------|
+| go build / vet / test | 全部通过（35 包）|
+| CI workflows | 2（ci.yml + integration.yml）|
+| context.TODO() in provider | 0 |
+| 快照/MySekai fallback | 可配置（AllowFallback 标志）|
+| Deck 重试/断路器 | 已实装 |
+| 重构完成度 | ~97-98% |
+| 整体交付完成度 | ~93-95% |

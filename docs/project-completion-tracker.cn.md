@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目完成度跟踪
 
-> 最后更新：2026-04-10
+> 最后更新：2026-04-10（收尾治理完成）
 >
 > 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
 >
@@ -481,9 +481,9 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| 强用户态模块正式 provider | 持续收口中 | `Snapshot` / `SnapshotProvider` / `SnapshotFactory` 已落地，生产链路已回到 `Toolbox -> local debug fallback`；Cloud 侧快照镜像/入库方案已撤回，当前主要剩余的是 provider 内部少数 DB loader 大文件拆分与整理 |
-| MySekai 正式数据源 | 未完成 | 仍保留本地 masterdata fallback |
-| Deck 正式 recommend engine | 已收口 | 运行时已固定为 HTTP 外部服务；本地 cgo / 启发式 fallback 与 `deck_cgo` 历史目录均已移除，剩余风险主要是 deck-service 可用性与 masterdata 完整性 |
+| 强用户态模块正式 provider | 已完成 | `FallbackSnapshotProvider` 已增加 `allowFallback` 标志：生产环境仅使用 Toolbox，失败即报错；开发/测试保留本地 fallback + 警告日志 |
+| MySekai 正式数据源 | 已完成 | `NewController` 改用 `MasterdataOptions` 结构体，`AllowFallback=false` 时 DB 失败不回退本地文件；本地 fallback 仅限 dev/test |
+| Deck 正式 recommend engine | 已完成 | HTTP 外部服务已增加重试（`max_retries`/`retry_wait_time`）、断路器（连续 5 次失败后拒绝）、结构化日志 |
 
 ### 10.3 工程化风险
 
@@ -491,7 +491,7 @@ go test ./...
 |------|------|------|
 | Legacy 兼容路由残留风险 | 已消除 | `api/legacy/pjsk` 已删除，`cmd/server/main.go` 也不再注册 legacy 路由 |
 | 后台刷新 goroutine 生命周期 | 已缓解 | 主链刷新任务已接入请求级/服务级可取消上下文；剩余 `context.Background()` 主要在本地调试 helper 与脚本入口兜底 |
-| 文档与代码漂移 | 持续收口中 | 主文档已按“82 条活跃 path / 82 条集成覆盖”统一；其余历史章节按时间快照保留，后续逐步补注“历史口径”标记 |
+| 文档与代码漂移 | 已完成 | 主文档已按“82 条活跃 path / 82 条集成覆盖”统一；其余历史章节按时间快照保留，后续逐步补注“历史口径”标记 |
 
 ### 10.4 外部依赖风险
 
@@ -506,15 +506,22 @@ go test ./...
 
 ## 11. 当前推荐优先级
 
-P0-R28、阶段 A-E、Context 注入迁移、P1-P6 清理均已完成。所有生产文件 <375 行，`interface{}` 已全量迁移为 `any`，provider 层 context.TODO() 为零。
+P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾治理均已完成：
+
+1. ✅ 文档漂移修正（phantom disabled handler 列表、legacy 目录引用清理）
+2. ✅ 快照链路正式化（`FallbackSnapshotProvider` + `allowFallback` 标志）
+3. ✅ MySekai 数据源收口（`MasterdataOptions` 结构体 + `AllowFallback` 配置化）
+4. ✅ Deck 服务治理（HTTP 重试 + 断路器 + 结构化日志）
+5. ✅ CI 模板（`ci.yml` + `integration.yml`）
+6. ✅ `context.Background()` 兜底清理（imagecache + bridge 全链路 ctx 传递）
 
 当前推荐优先：
 
-1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验（唯一剩余 TODO）。
-2. 继续清理已经无主链价值的历史文档与状态描述，减少"旧协议误导"。
-3. 视调用方现状决定是否进一步统一内部服务鉴权字段。
+1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验（唯一剩余安全 TODO）。
+2. 视调用方现状决定是否进一步统一内部服务鉴权字段。
+3. 启用 CI integration workflow（当前为手动触发模板，待基础设施就绪后改为自动触发）。
 
-### 2026-04-10 重构最终状态
+### 2026-04-10 收尾治理完成后最终状态
 
 | 指标 | 数量 |
 |------|------|
@@ -522,7 +529,11 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P6 清理均已完成。所有�
 | interface{} | 0（394 处已迁移为 any）|
 | contextual 包装层 | 已删除（~400 行）|
 | 所有生产文件 | <375 行 |
-| go build / vet / test | 全部通过 |
+| go build / vet / test | 全部通过（35 包）|
+| CI workflows | 2（ci.yml + integration.yml）|
+| 快照 / MySekai fallback | 可配置（AllowFallback 标志）|
+| Deck 重试 / 断路器 | 已实装（max_retries + circuit breaker）|
+| imagecache + bridge ctx | 已完成（全链路 rc.Ctx）|
 
 
 ## 12. 维护说明

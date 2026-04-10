@@ -1,13 +1,13 @@
 # Haruki-Cloud 代码审查问题记录
 
-> 版本：v1.0  
+> 版本：v1.1（2026-04-10 更新状态）  
 > 审查时间：2026-03-23  
 > 范围：`api/`、`internal/`、`cmd/server/main.go`  
 > 测试结论：`go test -race ./api/... ./internal/...` 全部通过，无数据竞争报告
 >
 > 说明：本文保留的是 2026-03-23 当时的审查快照，不等同于当前未修复问题总表。若与最新实现存在差异，应以 `architecture.cn.md`、`project-status-summary.cn.md` 与对应代码为准。
 >
-> 2026-04-09 再补充：文中 `L-1` 提到的 `api/legacy/pjsk/` 问题已经随 legacy 路由删除而完成；该条仅作为历史审查记录保留。
+> 2026-04-10 状态更新：H-3（context 生命周期）已通过 initCtx 迁移完成；M-1（context 传播）已全链路修复；M-3（bridge 大文件）已拆分完成；M-7（bridge error 路径）已修复。详见下方汇总表。
 
 ---
 
@@ -208,16 +208,16 @@ legacyPJSK.RegisterPJSKCommandRoute(app, pjskResolver, renderRuntime)
 | ID | 文件 | 严重程度 | 状态 |
 |----|------|---------|------|
 | H-1 | `api/bot/auth/statistics.go` | 🔴 高 | 待修复 |
-| H-2 | `internal/middleware/secure/secure.go` | 🔴 高 | 待修复 |
-| H-3 | `cmd/server/main.go:260` | 🔴 高 | 待修复 |
-| M-1 | 多处 handler | 🟡 中 | 待修复 |
-| M-2 | `render/*/source_cloud.go` | 🟡 中 | 待修复 |
-| M-3 | `internal/pjsk/handler/bridge.go` | 🟡 中 | 待修复 |
+| H-2 | `internal/middleware/secure/secure.go` | 🔴 高 | 待修复（明确延期，见 project-completion-tracker） |
+| H-3 | `cmd/server/main.go:260` | 🔴 高 | ✅ 已修复（initCtx 迁移 + context 生命周期收口）|
+| M-1 | 多处 handler | 🟡 中 | ✅ 已修复（provider 层 context.TODO()→0，bridge 全链路 ctx）|
+| M-2 | `render/*/source_cloud.go` | 🟡 中 | ✅ 已修复（context 注入迁移完成）|
+| M-3 | `internal/pjsk/handler/bridge.go` | 🟡 中 | ✅ 已修复（bridge 拆分为多个文件，均 <375 行）|
 | M-4 | `cmd/server/main.go` | 🟡 中 | 待修复 |
 | M-5 | `cmd/server/main.go` | 🟡 中 | 待修复 |
 | M-6 | `api/bot/pjsk/handler.go` | 🟡 中 | 待修复 |
-| M-7 | `internal/pjsk/handler/bridge.go` | 🟡 中 | 待修复 |
-| L-1 | `api/legacy/pjsk/` | 🟢 低 | 已完成（历史记录） |
-| L-2 | route_table / globalRoutes / bridge | 🟢 低 | 待对齐 |
+| M-7 | `internal/pjsk/handler/bridge.go` | 🟡 中 | ✅ 已修复（error 路径已统一）|
+| L-1 | `api/legacy/pjsk/` | 🟢 低 | ✅ 已完成（legacy 路由已删除） |
+| L-2 | route_table / globalRoutes / bridge | 🟢 低 | ✅ 已完成（统一注册表 bot_route.go）|
 | L-3 | `api/helper.go` | 🟢 低 | 待修复 |
 | L-4 | `sekai/*.go` | 🟢 低 | 待实现 |

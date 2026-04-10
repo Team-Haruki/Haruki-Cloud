@@ -223,6 +223,53 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 	}
 }
 
+func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards(t *testing.T) {
+	jpSource := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			764: {ID: 764, CharacterID: 17, AssetBundleName: "res017_no042"},
+			585: {ID: 585, CharacterID: 18, AssetBundleName: "res018_no033"},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+	twSource := &testProfileSource{
+		region:      renderregion.TW,
+		cards:       map[int]*masterdata.Card{},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(jpSource, nil, assets.NewAssetHelper("", nil), nil)
+	controller.RegisterSource(twSource)
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "TW User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "leader"},
+		UserDeck:    sekai.UserDeck{DeckID: 4, Leader: 764, Member1: 764, Member2: 585},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 764, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			{CardID: 585, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPI(Query{Region: "tw", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+
+	wantLeader := "asset/tw-assets/startapp/thumbnail/chara/res017_no042_after_training.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("unexpected leader image path: %q", payload.Profile.LeaderImagePath)
+	}
+	if len(payload.Pcards) != 2 {
+		t.Fatalf("expected 2 pcards, got %d", len(payload.Pcards))
+	}
+	if payload.Pcards[0].CardThumbnailPath != wantLeader {
+		t.Fatalf("unexpected first pcard thumbnail path: %q", payload.Pcards[0].CardThumbnailPath)
+	}
+}
+
 type profileSnapshotStub struct {
 	rawData *userdata.RawUserData
 }

@@ -132,7 +132,7 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if musicID := optionInt(option, "music_id"); musicID > 0 {
 		request.MusicID = drawing.IntPtr(musicID)
 		if musicID == 10000 {
-			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均) | 技能顺序: 平均情况 | BloomFes花前吸取: 平均值")
+			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均)")
 			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
 		}
 	}
@@ -156,6 +156,12 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	}
 	if lowerBound, ok := optionFloat(option, "multi_live_score_up_lower_bound"); ok {
 		request.MultiLiveScoreUpLowerBound = float64Ptr(lowerBound)
+	}
+	if strategy := optionString(option, "skill_order_choose_strategy"); strategy != "" {
+		request.SkillOrderChooseStrategy = drawing.StringPtr(strategy)
+	}
+	if strategy := optionString(option, "skill_reference_choose_strategy"); strategy != "" {
+		request.SkillReferenceChooseStrategy = drawing.StringPtr(strategy)
 	}
 	if fixedCards, ok := option["fixed_cards"].([]int); ok {
 		request.FixedCardsID = append([]int(nil), fixedCards...)

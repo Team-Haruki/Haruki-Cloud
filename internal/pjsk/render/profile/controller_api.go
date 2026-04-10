@@ -46,9 +46,8 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
 	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildProfileImagePathFromSource(
+	leaderImagePath := c.buildProfileImagePathFromSource(
 		source,
-		c.assets,
 		profileCardID,
 		isAPICardAfterTraining(profileCard),
 		resp.UserDeck.Leader,
@@ -121,9 +120,8 @@ func (c *Controller) buildDetailedProfileCardFromAPIFrames(query Query, resp *se
 	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
 	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
 	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := buildProfileImagePathFromSource(
+	leaderImagePath := c.buildProfileImagePathFromSource(
 		source,
-		c.assets,
 		profileCardID,
 		isAPICardAfterTraining(profileCard),
 		resp.UserDeck.Leader,

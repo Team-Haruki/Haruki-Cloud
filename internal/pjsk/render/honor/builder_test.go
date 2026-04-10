@@ -100,7 +100,7 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	if req.GroupType == nil || *req.GroupType != "wl_event" {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
-	expectedHonorPath := filepath.ToSlash(filepath.Join(dir, "asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
+	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_bg_001/degree_main.png"
 	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
@@ -208,7 +208,7 @@ func TestBuildHonorRequestFallsBackToLevelAssetWhenTopLevelAssetIsEmpty(t *testi
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	expectedHonorPath := filepath.ToSlash(filepath.Join(dir, "asset", "jp-assets", "ondemand", "honor", "honor_3009_100", "degree_main.png"))
+	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_3009_100/degree_main.png"
 	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
@@ -249,8 +249,188 @@ func TestBuildHonorRequestDetectsWorldLinkEventByAssetName(t *testing.T) {
 	if req.GroupType == nil || *req.GroupType != "wl_event" {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
-	expectedRankPath := filepath.ToSlash(filepath.Join(dir, "asset", "jp-assets", "ondemand", "honor", "honor_top_000100_event_wl_2nd_idol_cp1", "rank_main.png"))
+	expectedRankPath := "asset/jp-assets/ondemand/honor/honor_top_000100_event_wl_2nd_idol_cp1/rank_main.png"
 	if req.RankImgPath == nil || *req.RankImgPath != expectedRankPath {
+		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
+	}
+}
+
+func TestBuildHonorRequestEventUsesResolvedAbsoluteRankPath(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_demo", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_top_000100_event_demo", "rank_sub.png"))
+
+	source := newTestHonorSource(renderregion.CN)
+	bg := "honor_bg_event_demo"
+	source.honors[6201] = &masterdata.Honor{
+		ID:              6201,
+		GroupID:         601,
+		HonorRarity:     "high",
+		AssetBundleName: "honor_top_000100_event_demo",
+	}
+	source.groups[601] = &masterdata.HonorGroup{
+		ID:                        601,
+		HonorType:                 "event",
+		BackgroundAssetBundleName: &bg,
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.CN,
+		HonorID:    6201,
+		HonorLevel: 1,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	expectedRankPath := "asset/cn-assets/startapp/honor/honor_top_000100_event_demo/rank_sub.png"
+	if req.RankImgPath == nil || *req.RankImgPath != expectedRankPath {
+		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
+	}
+}
+
+func TestBuildHonorRequestLegacyWLEventUsesResolvedAbsoluteRankPath(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_beginning_cp6", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_top_001000_event_beginning_cp6", "rank_sub.png"))
+
+	source := newTestHonorSource(renderregion.CN)
+	bg := "honor_bg_event_beginning_cp6"
+	source.honors[6101] = &masterdata.Honor{
+		ID:              6101,
+		GroupID:         501,
+		HonorRarity:     "highest",
+		AssetBundleName: "honor_top_001000_event_beginning_cp6",
+	}
+	source.groups[501] = &masterdata.HonorGroup{
+		ID:                        501,
+		HonorType:                 "event",
+		BackgroundAssetBundleName: &bg,
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.CN,
+		HonorID:    6101,
+		HonorLevel: 1,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	expectedRankPath := "asset/cn-assets/startapp/honor/honor_top_001000_event_beginning_cp6/rank_sub.png"
+	if req.RankImgPath == nil || *req.RankImgPath != expectedRankPath {
+		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
+	}
+}
+
+func TestBuildHonorRequestFcApUsesResolvedAbsoluteScrollPath(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_3012_600", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_3012_600", "scroll.png"))
+
+	source := newTestHonorSource(renderregion.CN)
+	source.honors[3012] = &masterdata.Honor{
+		ID:          3012,
+		GroupID:     701,
+		HonorRarity: "high",
+		Levels: []masterdata.HonorLevel{
+			{Level: 56, AssetBundleName: "honor_3012_600", HonorRarity: "high"},
+		},
+	}
+	source.groups[701] = &masterdata.HonorGroup{
+		ID:        701,
+		HonorType: "achievement",
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.CN,
+		HonorID:    3012,
+		HonorLevel: 56,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	expectedScrollPath := "asset/cn-assets/startapp/honor/honor_3012_600/scroll.png"
+	if req.ScrollImgPath == nil || *req.ScrollImgPath != expectedScrollPath {
+		t.Fatalf("unexpected scroll image path: %#v", req.ScrollImgPath)
+	}
+	if req.GroupType == nil || *req.GroupType != "fc_ap" {
+		t.Fatalf("unexpected group type: %#v", req.GroupType)
+	}
+}
+
+func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_underwater_cp1", "degree_sub.png"))
+
+	source := newTestHonorSource(renderregion.CN)
+	bg := "honor_bg_event_underwater_cp1"
+	frame := "event_underwater_cp1"
+	source.honors[4301] = &masterdata.Honor{
+		ID:              4301,
+		GroupID:         801,
+		HonorRarity:     "middle",
+		AssetBundleName: "honor_top_000100_event_underwater_cp1",
+	}
+	source.groups[801] = &masterdata.HonorGroup{
+		ID:                        801,
+		HonorType:                 "event",
+		BackgroundAssetBundleName: &bg,
+		FrameName:                 &frame,
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.CN,
+		HonorID:    4301,
+		HonorLevel: 1,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_s_2.png" {
+		t.Fatalf("expected static fallback frame, got %#v", req.FrameImgPath)
+	}
+}
+
+func TestBuildHonorRequestRankMatchUsesRankLiveBackground(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "rank_live", "honor", "season_2025_winter", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "rank_live", "honor", "common", "tier_11", "sub.png"))
+
+	source := newTestHonorSource(renderregion.JP)
+	bg := "season_2025_winter"
+	source.honors[9001] = &masterdata.Honor{
+		ID:              9001,
+		GroupID:         901,
+		HonorRarity:     "low",
+		AssetBundleName: "common/tier_11",
+	}
+	source.groups[901] = &masterdata.HonorGroup{
+		ID:                        901,
+		HonorType:                 "rank_match",
+		BackgroundAssetBundleName: &bg,
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.JP,
+		HonorID:    9001,
+		HonorLevel: 1,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.HonorImgPath == nil || *req.HonorImgPath != "asset/jp-assets/startapp/rank_live/honor/season_2025_winter/degree_sub.png" {
+		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
+	}
+	if req.RankImgPath == nil || *req.RankImgPath != "asset/jp-assets/startapp/rank_live/honor/common/tier_11/sub.png" {
 		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
 	}
 }

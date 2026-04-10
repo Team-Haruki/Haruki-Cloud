@@ -71,6 +71,11 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
+	if eventID, remaining, ok := extractBareSingleEventID(args); ok {
+		params.EventID = eventID
+		return remaining, nil
+	}
+
 	if turn, charID, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && (charID > 0 || charQuery != "") {
 		params.WorldBloomEventTurn = intPtr(turn)
 		if charID > 0 {
@@ -102,6 +107,10 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return remaining, nil
 	}
 
+	return extractDeckSimulatedEventSelection(args, params, trigger)
+}
+
+func extractDeckSimulatedEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
 	attr, unit, remaining := extractDeckSimulatedEvent(args)
 	switch {
 	case attr != "" && unit != "":
@@ -168,6 +177,19 @@ func extractDeckEventID(args string) (*int, string) {
 		return nil, normalized
 	}
 	return &eventID, normalizeDeckSpaces(deckEventIDRegex.ReplaceAllString(normalized, " "))
+}
+
+func extractBareSingleEventID(args string) (*int, string, bool) {
+	normalized := normalizeDeckSpaces(args)
+	fields := strings.Fields(normalized)
+	if len(fields) != 1 || len(fields[0]) > 3 {
+		return nil, normalized, false
+	}
+	eventID, err := strconv.Atoi(fields[0])
+	if err != nil || eventID <= 0 {
+		return nil, normalized, false
+	}
+	return &eventID, "", true
 }
 
 func extractDeckSimulatedEvent(args string) (attr string, unit string, remaining string) {
@@ -246,4 +268,26 @@ func looksLikeInlineMusicQuery(raw string) bool {
 		return strings.TrimSpace(cleaned) != ""
 	}
 	return false
+}
+
+func validateNoEventDeckArgs(args, trigger string) error {
+	attr, unit, remaining := extractDeckSimulatedEvent(args)
+	if attr == "" && unit == "" {
+		return nil
+	}
+	if normalizeDeckSpaces(remaining) != "" {
+		return nil
+	}
+	return onebot11.NewReplayError(
+		"使用方式:\n%s\n%s 歌曲名 难度\n%s 团名 属性",
+		trigger,
+		trigger,
+		normalizeNoEventDeckHintTrigger(trigger),
+	)
+}
+
+func normalizeNoEventDeckHintTrigger(trigger string) string {
+	trigger = strings.Replace(trigger, "最强", "", 1)
+	trigger = strings.Replace(trigger, "长草", "", 1)
+	return trigger
 }

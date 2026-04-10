@@ -58,10 +58,10 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 
 	var honorImgPath string
 	switch {
-	case group.BackgroundAssetBundleName != nil && *group.BackgroundAssetBundleName != "":
-		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", *group.BackgroundAssetBundleName, mode))
 	case groupType == "rank_match":
 		honorImgPath = resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/degree_%s.png", bgAssetName, mode))
+	case group.BackgroundAssetBundleName != nil && *group.BackgroundAssetBundleName != "":
+		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", *group.BackgroundAssetBundleName, mode))
 	default:
 		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
 	}
@@ -93,22 +93,13 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 			req.RankImgPath = &rankImgPath
 		case "event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
-			degreeCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
-			switch {
-			case rankCandidate != honorImgPath && b.assetExists(rankCandidate):
+			if rankCandidate != honorImgPath && b.assetExists(rankCandidate) {
 				req.RankImgPath = &rankCandidate
-			case degreeCandidate != honorImgPath && b.assetExists(degreeCandidate):
-				req.RankImgPath = &degreeCandidate
 			}
 		case "wl_event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
-			if rankCandidate != honorImgPath {
+			if rankCandidate != honorImgPath && b.assetExists(rankCandidate) {
 				req.RankImgPath = &rankCandidate
-				break
-			}
-			degreeCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", assetName, mode))
-			if degreeCandidate != honorImgPath {
-				req.RankImgPath = &degreeCandidate
 			}
 		}
 	}
@@ -123,16 +114,24 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 	req.HonorType = &honorType
 	rarityRank := mapHonorRarity(rarity)
+	staticFramePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
 	if frameName != "" {
+		startRare := 2
+		if strings.HasPrefix(frameName, "event") {
+			startRare = 3
+		}
 		framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
-		req.FrameImgPath = &framePath
-		if strings.HasPrefix(frameName, "honor_frame_birthday") {
+		if rarityRank >= startRare && b.assetExists(framePath) {
+			req.FrameImgPath = &framePath
+		} else {
+			req.FrameImgPath = &staticFramePath
+		}
+		if strings.HasPrefix(frameName, "honor_frame_birthday") && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
 			levelPath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank))
 			req.FrameDegreeLevelImgPath = &levelPath
 		}
 	} else {
-		framePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
-		req.FrameImgPath = &framePath
+		req.FrameImgPath = &staticFramePath
 	}
 
 	_, hasScore := diffScoreMap[honorID]

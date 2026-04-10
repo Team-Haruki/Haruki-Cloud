@@ -17,7 +17,7 @@ func buildDeckQueryParams(ctx SekaiHandlerContext, mode string) (deckAutoQueryPa
 	case "deck-challenge":
 		args, err = buildChallengeDeckParams(args, &params)
 	case "deck-no-event":
-		args, err = buildNoEventDeckParams(args, &params)
+		args, err = buildNoEventDeckParams(args, &params, ctx.originalTriggerCmd)
 	case "deck-bonus":
 		args, err = buildBonusDeckParams(args, &params, ctx.originalTriggerCmd)
 	case "deck-mysekai":
@@ -78,7 +78,7 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 	return extractDeckMusicQuery(args, params)
 }
 
-func buildNoEventDeckParams(args string, params *deckAutoQueryParams) (string, error) {
+func buildNoEventDeckParams(args string, params *deckAutoQueryParams, trigger string) (string, error) {
 	args, err := extractDeckCommonParams(args, params, deckCommonConfig{
 		allowLiveType:   true,
 		allowMultiLive:  true,
@@ -89,6 +89,9 @@ func buildNoEventDeckParams(args string, params *deckAutoQueryParams) (string, e
 		allowCardConfig: true,
 	})
 	if err != nil {
+		return "", err
+	}
+	if err := validateNoEventDeckArgs(args, trigger); err != nil {
 		return "", err
 	}
 	return extractDeckMusicQuery(args, params)

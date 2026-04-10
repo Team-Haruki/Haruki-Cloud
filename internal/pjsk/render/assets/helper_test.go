@@ -46,6 +46,40 @@ func TestResolveAssetPathSupportsURLRoots(t *testing.T) {
 	}
 }
 
+func TestAssetHelperFirstExistingSupportsAbsolutePaths(t *testing.T) {
+	tmpDir := t.TempDir()
+	target := filepath.Join(tmpDir, "card", "frame_rarity_4.png")
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(target, []byte("ok"), 0o644); err != nil {
+		t.Fatalf("write asset: %v", err)
+	}
+
+	helper := NewAssetHelper(filepath.Join(tmpDir, "primary"), nil)
+	got := helper.FirstExisting(target)
+	if got != filepath.ToSlash(target) {
+		t.Fatalf("expected %q, got %q", filepath.ToSlash(target), got)
+	}
+}
+
+func TestAssetHelperFirstExistingSupportsAssetPrefixedPathsAgainstAssetDataRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	target := filepath.Join(tmpDir, "jp-assets", "startapp", "honor", "honor_top_000020", "rank_main.png")
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(target, []byte("ok"), 0o644); err != nil {
+		t.Fatalf("write asset: %v", err)
+	}
+
+	helper := NewAssetHelper(tmpDir, nil)
+	got := helper.FirstExisting("asset/jp-assets/startapp/honor/honor_top_000020/rank_main.png")
+	if got != filepath.ToSlash(target) {
+		t.Fatalf("expected %q, got %q", filepath.ToSlash(target), got)
+	}
+}
+
 func TestMakeRelativeSupportsURLRoots(t *testing.T) {
 	base := "https://sekai-assets.haruki.seiunx.com/jp-assets"
 	target := "https://sekai-assets.haruki.seiunx.com/jp-assets/music/jacket/jacket_s_001/jacket_s_001.png"
@@ -70,7 +104,7 @@ func TestResolveRegionAssetPathFallsBackToOnDemand(t *testing.T) {
 	}
 
 	got := ResolveRegionAssetPath(helper, "jp", filepath.Join("gacha", "ab_gacha_1", "logo", "logo.png"))
-	if want := filepath.ToSlash(full); got != want {
+	if want := filepath.ToSlash(rel); got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
@@ -97,7 +131,7 @@ func TestResolveRegionAssetPathHandlesCaseMismatch(t *testing.T) {
 	}
 
 	got := ResolveRegionAssetPath(helper, "jp", filepath.Join("music", "jacket", "jacket_s_001", "jacket_s_001.png"))
-	if want := filepath.ToSlash(full); got != want {
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", "music", "jacket", "jacket_s_001", "jacket_s_001.png")); got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
@@ -124,7 +158,7 @@ func TestResolveRegionAssetPathPrefersStartAppOverOnDemand(t *testing.T) {
 	}
 
 	got := ResolveRegionAssetPath(helper, "jp", rel)
-	if want := filepath.ToSlash(startApp); got != want {
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", rel)); got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
@@ -151,7 +185,7 @@ func TestResolveRegionAssetPathPrefersOnDemandForGacha(t *testing.T) {
 	}
 
 	got := ResolveRegionAssetPath(helper, "jp", rel)
-	if want := filepath.ToSlash(onDemand); got != want {
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "ondemand", rel)); got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
@@ -189,7 +223,7 @@ func TestResolveRegionAssetPathPrefersStartAppForBondsHonor(t *testing.T) {
 	}
 
 	got := ResolveRegionAssetPath(helper, "jp", rel)
-	if want := filepath.ToSlash(startApp); got != want {
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", rel)); got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }

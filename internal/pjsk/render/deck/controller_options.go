@@ -107,6 +107,34 @@ func normalizeRecommendLiveOptions(option map[string]any) {
 	delete(option, "multi_live_score_up_lower_bound")
 }
 
+func applyRecommendStrategyDefaults(option map[string]any, recType string) {
+	if option == nil {
+		return
+	}
+	if _, ok := option["skill_order_choose_strategy"]; !ok {
+		option["skill_order_choose_strategy"] = defaultRecommendSkillOrderStrategy(option, recType)
+	}
+	if _, ok := option["skill_reference_choose_strategy"]; !ok {
+		option["skill_reference_choose_strategy"] = defaultRecommendSkillReferenceStrategy(option, recType)
+	}
+}
+
+func defaultRecommendSkillOrderStrategy(option map[string]any, recType string) string {
+	liveType := optionString(option, "live_type")
+	if recType == "challenge" && liveType != "challenge_auto" && liveType != "auto" {
+		return "max"
+	}
+	return "average"
+}
+
+func defaultRecommendSkillReferenceStrategy(option map[string]any, recType string) string {
+	liveType := optionString(option, "live_type")
+	if recType == "challenge" && liveType != "challenge_auto" && liveType != "auto" {
+		return "max"
+	}
+	return "average"
+}
+
 func applyDeckConfigPatch(option map[string]any, key string, patch *CardConfigPatch) {
 	if option == nil || patch == nil {
 		return

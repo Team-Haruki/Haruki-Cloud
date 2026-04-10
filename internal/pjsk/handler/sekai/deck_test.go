@@ -3,6 +3,7 @@ package sekai
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
@@ -711,5 +712,83 @@ func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 	}
 	if len(params.FixedCharacterQueries) != 0 {
 		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
+func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "25时 紫",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventUnit != "school_refusal" || params.EventAttr != "mysterious" {
+		t.Fatalf("unexpected simulated event params: %+v", params)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestNoEventDeckHandleRejectsAttrOnlyAliasAsSongQuery(t *testing.T) {
+	h := sekaiHandlers{}.NoEventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/最强组卡",
+		ArgText:    "紫月",
+	})
+	if err == nil {
+		t.Fatalf("expected attr-only alias to trigger simulated-event hint")
+	}
+	if !strings.Contains(err.Error(), "/组卡 团名 属性") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
+	h := sekaiHandlers{}.NoEventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/最强组卡",
+		ArgText:    "25时 蓝星",
+	})
+	if err == nil {
+		t.Fatalf("expected no-event deck to reject simulated event aliases")
+	}
+	if !strings.Contains(err.Error(), "/组卡 团名 属性") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/活动组卡",
+		ArgText:    "118",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 118 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
 }

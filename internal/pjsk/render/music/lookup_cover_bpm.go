@@ -158,6 +158,7 @@ func (c *Controller) resolveLocalChartPath(region string, musicID int, difficult
 	for _, relPath := range relPaths {
 		candidates = append(candidates,
 			relPath,
+			filepath.Join(assets.CloudRegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
 			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
 		)
 	}

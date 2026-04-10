@@ -1208,9 +1208,9 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 
 历史记录（2026-03-27）：当时 `EnsureCommandHandlersRegistered` 共注册 **76 条** bot API 路径（含 alias 系列），并完成 **76/76 全覆盖**。
 
-截至 2026-04-10，当前活跃 Bot path 已更新为 **82 条**；`integration/api_test.go` 当前覆盖其中 **76 条**（`TestBotCommands` 58 + `TestExpandedCoverage` 18）。
+截至 2026-04-10，当前活跃 Bot path 已更新为 **82 条**；`integration/api_test.go` 当前覆盖其中 **82 条**（`TestBotCommands` 58 + `TestExpandedCoverage` 24）。
 
-当前仍未纳入该集成测试集合的活跃路径有 6 条：`deck/score-up`、`mysekai/blueprint`、`mysekai/map`、`profile/bind/list`、`sk/daily-speed`、`sk/predict`。
+当前活跃 path 在集成测试集合中的覆盖已补齐为 **82/82**。
 
 ### 无 Path 的 handler（不可通过 bot API 访问）
 
@@ -1245,7 +1245,7 @@ music/jacket/jacket_s_001 → tmp/game-assets/music/jacket/jacket_s_001
 ### 有 Path 但尚未在测试中覆盖的路径分类建议
 
 > ✅ 第七轮已将上方“当时未覆盖的 17 条路径”补测完成，见 10.9 节。  
-> ⚠️ 截至 2026-04-10，活跃 path 已扩展到 82 条，当前测试集合外仍有 6 条（见上文“注册路径总览”）。
+> ✅ 截至 2026-04-10，活跃 path 已扩展到 82 条，且当前集成测试覆盖已补齐为 82/82。
 
 ---
 
@@ -1430,7 +1430,7 @@ SSH 调查 Drawing 容器后发现部分资产属于 `static_images/` 而非 reg
 
 第七轮已实现 76/76 路径全覆盖（100% 覆盖率），其中 50 条通过（66% 通过率）。详见 10.9 节。
 
-**测试架构（当前文件统计）**：`TestBotCommands`（58 个端点）+ `TestExpandedCoverage`（18 个端点，含 alias 全周期、profile BG、profile 管理、card/image、music/chart、`profile/bind` 前置校验）。
+**测试架构（当前文件统计）**：`TestBotCommands`（58 个端点）+ `TestExpandedCoverage`（24 个端点，含 alias 全周期、profile BG、profile 管理、card/image、music/chart、`profile/bind` 前置校验、`deck/score-up`、`mysekai/{blueprint,map}`、`sk/{daily-speed,predict}`）。
 
 ### 11.2.1 ✅ Toolbox 用户快照注入（已完成）
 
@@ -1521,7 +1521,7 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 
 **全量集成测试最终结果（2026-03-28）**：
 
-76 个测试路径（当前测试文件为 `TestBotCommands` 58 + `TestExpandedCoverage` 18），**70/76 通过（92.1%）**，6 个⚠️均为已知数据/功能限制：
+76 个测试路径（当时测试文件为 `TestBotCommands` 59 + `TestExpandedCoverage` 17），**70/76 通过（92.1%）**，6 个⚠️均为已知数据/功能限制：
 
 | 端点 | 状态 | 原因分类 |
 |------|------|----------|

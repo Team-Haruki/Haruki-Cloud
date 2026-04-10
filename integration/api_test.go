@@ -883,6 +883,40 @@ func TestExpandedCoverage(t *testing.T) {
 		sendBotCommand(t, "profile/bind", "/绑定", "/绑定 "+cfg.GameUserID)
 	})
 
+	// ─── Profile Bind List ────────────────────────────────────
+	t.Run("profile/bind/list", func(t *testing.T) {
+		data, status := sendBotCommand(t, "profile/bind/list", "/绑定列表", "/绑定列表")
+		runTest(t, "profile/bind/list", data, status)
+	})
+
+	// ─── Deck Score-Up (text-only calculator) ────────────────
+	t.Run("deck/score-up", func(t *testing.T) {
+		data, status := sendBotCommand(t, "deck/score-up", "/实效", "/实效 160 160 150 150 150")
+		runTest(t, "deck/score-up", data, status)
+	})
+
+	// ─── MySEKAI Blueprint/Map ────────────────────────────────
+	t.Run("mysekai/blueprint", func(t *testing.T) {
+		data, status := sendBotCommand(t, "mysekai/blueprint", "/msb", "/msb")
+		runTest(t, "mysekai/blueprint", data, status)
+	})
+
+	t.Run("mysekai/map", func(t *testing.T) {
+		data, status := sendBotCommand(t, "mysekai/map", "/msm", "/msm 1")
+		runTest(t, "mysekai/map", data, status)
+	})
+
+	// ─── SK Daily/Predict ─────────────────────────────────────
+	t.Run("sk/daily-speed", func(t *testing.T) {
+		data, status := sendBotCommand(t, "sk/daily-speed", "/日速", "/日速")
+		runTest(t, "sk/daily-speed", data, status)
+	})
+
+	t.Run("sk/predict", func(t *testing.T) {
+		data, status := sendBotCommand(t, "sk/predict", "/榜线预测", "/榜线预测 100")
+		runTest(t, "sk/predict", data, status)
+	})
+
 	t.Log("\n=== Expanded Coverage Results ===")
 	for name, result := range results {
 		t.Logf("  %-30s %s", name, result)

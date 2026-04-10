@@ -158,15 +158,15 @@ func (b *Builder) getBannerIndex(charID, eventID int) *int {
 	return nil
 }
 
-func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]interface{} {
+func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]any {
 	chapters := b.source.GetWorldBloomChapters(eventID)
 	if len(chapters) == 0 {
 		return nil
 	}
 
-	timeline := make([]map[string]interface{}, 0, len(chapters))
+	timeline := make([]map[string]any, 0, len(chapters))
 	for _, chapter := range chapters {
-		item := map[string]interface{}{
+		item := map[string]any{
 			"start_at":     chapter.ChapterStartAt,
 			"aggregate_at": chapter.AggregateAt,
 		}

@@ -14,7 +14,7 @@ import (
 
 // Option extractors
 
-func optionString(option map[string]interface{}, key string) string {
+func optionString(option map[string]any, key string) string {
 	if option == nil {
 		return ""
 	}
@@ -24,7 +24,7 @@ func optionString(option map[string]interface{}, key string) string {
 	return ""
 }
 
-func optionInt(option map[string]interface{}, key string) int {
+func optionInt(option map[string]any, key string) int {
 	if option == nil {
 		return 0
 	}
@@ -40,7 +40,7 @@ func optionInt(option map[string]interface{}, key string) int {
 	}
 }
 
-func optionFloat(option map[string]interface{}, key string) (float64, bool) {
+func optionFloat(option map[string]any, key string) (float64, bool) {
 	if option == nil {
 		return 0, false
 	}
@@ -195,8 +195,8 @@ func (c *Controller) resolveAttrIconPath(attr string) string {
 
 // Deck config defaults
 
-func defaultDeckConfig12() map[string]interface{} {
-	return map[string]interface{}{
+func defaultDeckConfig12() map[string]any {
+	return map[string]any{
 		"disable":      false,
 		"level_max":    true,
 		"episode_read": true,
@@ -206,8 +206,8 @@ func defaultDeckConfig12() map[string]interface{} {
 	}
 }
 
-func defaultDeckConfig34bd() map[string]interface{} {
-	return map[string]interface{}{
+func defaultDeckConfig34bd() map[string]any {
+	return map[string]any{
 		"disable":      false,
 		"level_max":    true,
 		"episode_read": false,
@@ -217,8 +217,8 @@ func defaultDeckConfig34bd() map[string]interface{} {
 	}
 }
 
-func noChangeDeckConfig() map[string]interface{} {
-	return map[string]interface{}{
+func noChangeDeckConfig() map[string]any {
+	return map[string]any{
 		"disable":      false,
 		"level_max":    false,
 		"episode_read": false,
@@ -257,22 +257,22 @@ func parseBonusTarget(raw string) (int, error) {
 
 // Conversion helpers
 
-func toInterfaceSlice(values []string) []interface{} {
+func toInterfaceSlice(values []string) []any {
 	if len(values) == 0 {
 		return nil
 	}
-	result := make([]interface{}, 0, len(values))
+	result := make([]any, 0, len(values))
 	for _, value := range values {
 		result = append(result, value)
 	}
 	return result
 }
 
-func toInterfaceMap(values map[string]float64) map[string]interface{} {
+func toInterfaceMap(values map[string]float64) map[string]any {
 	if len(values) == 0 {
 		return nil
 	}
-	result := make(map[string]interface{}, len(values))
+	result := make(map[string]any, len(values))
 	for key, value := range values {
 		result[key] = value
 	}

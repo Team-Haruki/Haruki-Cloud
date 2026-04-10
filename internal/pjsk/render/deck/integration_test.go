@@ -166,7 +166,7 @@ func loadIntegrationSources(root, region string) (CardSource, EventSource, error
 		return nil, nil, os.ErrNotExist
 	}
 
-	read := func(name string, target interface{}) error {
+	read := func(name string, target any) error {
 		data, err := os.ReadFile(filepath.Join(baseDir, name))
 		if err != nil {
 			return err

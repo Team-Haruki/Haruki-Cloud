@@ -41,7 +41,7 @@ func (b *BaiduTextCensorClient) getAccessToken() error {
 		return err
 	}
 
-	var data map[string]interface{}
+	var data map[string]any
 	if err := sonic.Unmarshal(resp.Body(), &data); err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (b *BaiduTextCensorClient) Init() error {
 	return nil
 }
 
-func (b *BaiduTextCensorClient) TextCensor(text string) (map[string]interface{}, error) {
+func (b *BaiduTextCensorClient) TextCensor(text string) (map[string]any, error) {
 	if b.accessToken == "" {
 		if err := b.Init(); err != nil {
 			return nil, err
@@ -83,7 +83,7 @@ func (b *BaiduTextCensorClient) TextCensor(text string) (map[string]interface{},
 		return nil, err
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := sonic.Unmarshal(resp.Body(), &result); err != nil {
 		return nil, err
 	}

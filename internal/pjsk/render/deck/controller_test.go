@@ -381,11 +381,11 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		t.Fatalf("unexpected keep_after_training_state: %+v", option["keep_after_training_state"])
 	}
 
-	cfg, ok := option["rarity_4_config"].(map[string]interface{})
+	cfg, ok := option["rarity_4_config"].(map[string]any)
 	if !ok || cfg["master_max"] != true {
 		t.Fatalf("unexpected rarity_4_config: %+v", option["rarity_4_config"])
 	}
-	singleCardCfgs, ok := option["single_card_configs"].([]interface{})
+	singleCardCfgs, ok := option["single_card_configs"].([]any)
 	if !ok || len(singleCardCfgs) != 1 {
 		t.Fatalf("unexpected single card configs: %+v", option["single_card_configs"])
 	}
@@ -449,7 +449,7 @@ func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
 		RecommendType: "mysekai",
 	}
 
-	controller.applyCommonRecommendMetadata(request, renderregion.JP, "mysekai", map[string]interface{}{
+	controller.applyCommonRecommendMetadata(request, renderregion.JP, "mysekai", map[string]any{
 		"live_type": "mysekai",
 	}, AutoQuery{
 		Region:        "jp",
@@ -472,7 +472,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 		switch r.URL.Path {
 		case "/update/masterdata":
 			masterdataCalls.Add(1)
-			var payload map[string]interface{}
+			var payload map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode masterdata request: %v", err)
 			}
@@ -486,12 +486,12 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 
 		case "/update/musicmetas/string":
 			musicMetaCalls.Add(1)
-			var payload map[string]interface{}
+			var payload map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode music meta request: %v", err)
 			}
 			data, _ := payload["data"].(string)
-			var metas []map[string]interface{}
+			var metas []map[string]any
 			if err := json.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
 				http.Error(w, "invalid music meta payload", http.StatusBadRequest)
 				return
@@ -521,15 +521,15 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 			if len(payloads) != 1 {
 				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
 			}
-			var payload map[string]interface{}
+			var payload map[string]any
 			if err := json.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
-			options, ok := payload["batch_options"].([]interface{})
+			options, ok := payload["batch_options"].([]any)
 			if !ok || len(options) != 1 {
 				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
 			}
-			first, ok := options[0].(map[string]interface{})
+			first, ok := options[0].(map[string]any)
 			if !ok || first["algorithm"] != "ga" {
 				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
 			}
@@ -678,11 +678,11 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 			if len(payloads) != 1 {
 				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
 			}
-			var payload map[string]interface{}
+			var payload map[string]any
 			if err := json.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
-			options, ok := payload["batch_options"].([]interface{})
+			options, ok := payload["batch_options"].([]any)
 			if !ok || len(options) != 2 {
 				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
 			}
@@ -776,7 +776,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 			http.NotFound(w, r)
 		case "/recommend":
 			recommendCalls.Add(1)
-			var payload map[string]interface{}
+			var payload map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode recommend request: %v", err)
 			}

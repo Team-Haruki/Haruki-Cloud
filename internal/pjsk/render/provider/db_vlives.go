@@ -37,7 +37,7 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 			StartAt: entity.StartAt,
 			EndAt:   entity.EndAt,
 		}
-		var schedules []map[string]interface{}
+		var schedules []map[string]any
 		if len(entity.VirtualLiveSchedules) > 0 {
 			_ = json.Unmarshal(entity.VirtualLiveSchedules, &schedules)
 		}
@@ -64,7 +64,7 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 	return lives, nil
 }
 
-func vliveInt64Number(value interface{}) int64 {
+func vliveInt64Number(value any) int64 {
 	switch v := value.(type) {
 	case int64:
 		return v

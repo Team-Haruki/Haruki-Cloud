@@ -49,7 +49,7 @@ func (p *localSkillProvider) GetByID(_ context.Context, id int) (*masterdata.Ski
 	return common.CloneSkill(s), nil
 }
 
-func (p *localSkillProvider) FormatDescription(_ context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
+func (p *localSkillProvider) FormatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {
 	if skillInfo == nil {
 		return ""
 	}
@@ -71,7 +71,7 @@ func (p *localSkillProvider) FormatDescription(_ context.Context, skillInfo *mas
 		}
 		if parts[1] == "c" {
 			if p.characters != nil {
-				ch, err := p.characters.GetByID(context.Background(), cardCharacterID)
+				ch, err := p.characters.GetByID(ctx, cardCharacterID)
 				if err == nil && ch != nil {
 					return ch.FirstName + ch.GivenName
 				}

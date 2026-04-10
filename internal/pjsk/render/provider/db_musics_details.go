@@ -190,7 +190,7 @@ func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID 
 	if len(raw) == 0 {
 		return nil
 	}
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(raw, &items); err != nil {
 		return nil
 	}
@@ -213,7 +213,7 @@ func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID 
 	return result
 }
 
-func interfaceToInt(value interface{}) (int, bool) {
+func interfaceToInt(value any) (int, bool) {
 	switch v := value.(type) {
 	case int:
 		return v, true

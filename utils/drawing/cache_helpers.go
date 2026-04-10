@@ -13,7 +13,7 @@ neturl "net/url"
 hashstructure "github.com/mitchellh/hashstructure/v2"
 )
 
-func buildRenderCachePolicy(endpoint string, request interface{}) (renderCachePolicy, error) {
+func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, error) {
 	parsedEndpoint, err := parseRenderCacheEndpoint(endpoint)
 	if err != nil {
 		return renderCachePolicy{}, err
@@ -80,7 +80,7 @@ func parseRenderCacheEndpoint(raw string) (renderCacheEndpoint, error) {
 	}, nil
 }
 
-func normalizeRenderCachePayload(request interface{}) (any, error) {
+func normalizeRenderCachePayload(request any) (any, error) {
 	if request == nil {
 		return nil, nil
 	}

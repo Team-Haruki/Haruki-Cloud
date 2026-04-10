@@ -14,14 +14,14 @@ func (p *dbMySekaiProvider) Configured() bool {
 	return false
 }
 
-func (p *dbMySekaiProvider) LoadList(_ string) []map[string]interface{} {
+func (p *dbMySekaiProvider) LoadList(_ string) []map[string]any {
 	return nil
 }
 
-func (p *dbMySekaiProvider) LoadMapByID(_ string) map[int]map[string]interface{} {
+func (p *dbMySekaiProvider) LoadMapByID(_ string) map[int]map[string]any {
 	return nil
 }
 
-func (p *dbMySekaiProvider) LoadObject(_ string, _ interface{}) bool {
+func (p *dbMySekaiProvider) LoadObject(_ string, _ any) bool {
 	return false
 }

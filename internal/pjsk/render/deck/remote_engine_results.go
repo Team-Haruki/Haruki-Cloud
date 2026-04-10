@@ -43,7 +43,7 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 	return out
 }
 
-func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]interface{}) ([]remoteBatchRecommendResult, error) {
+func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([]remoteBatchRecommendResult, error) {
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 {
 		return nil, fmt.Errorf("deck-service returned empty response")
@@ -77,7 +77,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]interfa
 	return []remoteBatchRecommendResult{item}, nil
 }
 
-func aggregateRemoteRecommendResults(options []map[string]interface{}, results []remoteBatchRecommendResult) (*RecommendResult, error) {
+func aggregateRemoteRecommendResults(options []map[string]any, results []remoteBatchRecommendResult) (*RecommendResult, error) {
 	agg := &RecommendResult{
 		CostTimes: make(map[string]float64),
 		WaitTimes: make(map[string]float64),
@@ -228,11 +228,11 @@ func hashPayload(data []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func cloneRecommendOption(option map[string]interface{}) map[string]interface{} {
+func cloneRecommendOption(option map[string]any) map[string]any {
 	if option == nil {
-		return map[string]interface{}{}
+		return map[string]any{}
 	}
-	copied := make(map[string]interface{}, len(option)+1)
+	copied := make(map[string]any, len(option)+1)
 	for k, v := range option {
 		copied[k] = v
 	}

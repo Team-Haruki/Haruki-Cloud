@@ -31,7 +31,7 @@ func (p *localVLiveProvider) ensureLoaded() error {
 				StartAt: item.StartAt,
 				EndAt:   item.EndAt,
 			}
-			var schedules []map[string]interface{}
+			var schedules []map[string]any
 			if len(item.VirtualLiveSchedules) > 0 {
 				_ = json.Unmarshal(item.VirtualLiveSchedules, &schedules)
 			}

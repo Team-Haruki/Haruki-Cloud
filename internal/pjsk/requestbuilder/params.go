@@ -8,7 +8,7 @@ import (
 
 // mergeParams keeps the bridge-side behavior: absent or invalid params are
 // treated as no-op so prefilled fields stay intact.
-func mergeParams(params json.RawMessage, target interface{}) {
+func mergeParams(params json.RawMessage, target any) {
 	if len(params) == 0 {
 		return
 	}

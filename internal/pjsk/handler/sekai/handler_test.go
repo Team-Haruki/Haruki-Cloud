@@ -32,7 +32,7 @@ func TestRegisterCommandHandler(t *testing.T) {
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 	skh := SekaiCommandHandler{
 		ParseUIDArg: boolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			if ctx.UIDArg() != "@987654321" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
@@ -58,7 +58,7 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 	skh := SekaiCommandHandler{
 		ParseUIDArg: boolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			if ctx.UIDArg() != "" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
@@ -87,7 +87,7 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
-			{Type: "text", Data: map[string]interface{}{"text": "/cnsk event101 100"}},
+			{Type: "text", Data: map[string]any{"text": "/cnsk event101 100"}},
 		},
 		UserId: "12345",
 	})
@@ -113,8 +113,8 @@ func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
-			{Type: "text", Data: map[string]interface{}{"text": "/sk event101 "}},
-			{Type: "at", Data: map[string]interface{}{"qq": 67890}},
+			{Type: "text", Data: map[string]any{"text": "/sk event101 "}},
+			{Type: "at", Data: map[string]any{"qq": 67890}},
 		},
 		UserId: "12345",
 	})
@@ -142,7 +142,7 @@ func TestDispatchSupportsSKPredictMode(t *testing.T) {
 	result, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
-			{Type: "text", Data: map[string]interface{}{"text": "/skp event101 100"}},
+			{Type: "text", Data: map[string]any{"text": "/skp event101 100"}},
 		},
 		UserId: "12345",
 	})

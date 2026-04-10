@@ -99,7 +99,7 @@ func (s *Service) DetailedProfile(region renderregion.Value) *drawing.DetailedPr
 	}
 	profile.Mode = common.CloneStringPtr(s.baseProfile.Mode)
 	profile.FramePath = common.CloneStringPtr(s.baseProfile.FramePath)
-	profile.UserCards = append([]interface{}(nil), s.baseProfile.UserCards...)
+	profile.UserCards = append([]any(nil), s.baseProfile.UserCards...)
 	return &profile
 }
 

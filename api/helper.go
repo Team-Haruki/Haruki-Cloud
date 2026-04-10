@@ -14,7 +14,7 @@ import (
 	"github.com/shamaton/msgpack/v3"
 )
 
-func BuildResponseMap(status int, message string, data interface{}) fiber.Map {
+func BuildResponseMap(status int, message string, data any) fiber.Map {
 	return fiber.Map{
 		"status":  status,
 		"message": message,
@@ -22,7 +22,7 @@ func BuildResponseMap(status int, message string, data interface{}) fiber.Map {
 	}
 }
 
-func JSONResponse(c fiber.Ctx, status int, message string, data ...interface{}) error {
+func JSONResponse(c fiber.Ctx, status int, message string, data ...any) error {
 	var resp fiber.Map
 	if len(data) > 0 {
 		resp = BuildResponseMap(status, message, data[0])
@@ -34,7 +34,7 @@ func JSONResponse(c fiber.Ctx, status int, message string, data ...interface{}) 
 
 // MsgPackResponse writes a MsgPack-encoded response envelope.
 // Used when the request arrived through the Noise IK transport layer.
-func MsgPackResponse(c fiber.Ctx, status int, message string, data ...interface{}) error {
+func MsgPackResponse(c fiber.Ctx, status int, message string, data ...any) error {
 	var resp fiber.Map
 	if len(data) > 0 {
 		resp = BuildResponseMap(status, message, data[0])
@@ -65,7 +65,7 @@ func CachedJSONResponse(
 	key string,
 	status int,
 	message string,
-	data interface{},
+	data any,
 ) error {
 	resp := BuildResponseMap(status, message, data)
 	if redisClient != nil {
@@ -128,7 +128,7 @@ func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, nam
 // the data is written as a cached JSON response; on cache hit the handler
 // returns immediately. If fetchFn returns a *CacheBypassError the handler
 // returns that error's response directly (for 404 / 400 cases).
-func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn func(key string) (interface{}, error)) error {
+func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn func(key string) (any, error)) error {
 	ctx := c.Context()
 	key, cached, hit, err := CacheQuery(ctx, c, redisClient, namespace)
 	if err != nil {

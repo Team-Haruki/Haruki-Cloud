@@ -14,7 +14,7 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 		return data, nil
 	}
 
-	var raw interface{}
+	var raw any
 	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&raw); err != nil {
@@ -33,9 +33,9 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 	return encoded, nil
 }
 
-func normalizeExtendedJSONValue(value interface{}, topLevel bool) (interface{}, error) {
+func normalizeExtendedJSONValue(value any, topLevel bool) (any, error) {
 	switch typed := value.(type) {
-	case []interface{}:
+	case []any:
 		if topLevel {
 			if len(typed) == 0 {
 				return nil, fmt.Errorf("snapshot array is empty")
@@ -46,7 +46,7 @@ func normalizeExtendedJSONValue(value interface{}, topLevel bool) (interface{}, 
 			return normalizeExtendedJSONValue(typed[0], false)
 		}
 
-		out := make([]interface{}, 0, len(typed))
+		out := make([]any, 0, len(typed))
 		for _, item := range typed {
 			normalized, err := normalizeExtendedJSONValue(item, false)
 			if err != nil {
@@ -56,7 +56,7 @@ func normalizeExtendedJSONValue(value interface{}, topLevel bool) (interface{}, 
 		}
 		return out, nil
 
-	case map[string]interface{}:
+	case map[string]any:
 		if len(typed) == 1 {
 			if raw, ok := typed["$numberLong"]; ok {
 				return normalizeExtendedJSONNumber(raw, "$numberLong")
@@ -78,7 +78,7 @@ func normalizeExtendedJSONValue(value interface{}, topLevel bool) (interface{}, 
 			}
 		}
 
-		out := make(map[string]interface{}, len(typed))
+		out := make(map[string]any, len(typed))
 		for key, item := range typed {
 			normalized, err := normalizeExtendedJSONValue(item, false)
 			if err != nil {
@@ -93,7 +93,7 @@ func normalizeExtendedJSONValue(value interface{}, topLevel bool) (interface{}, 
 	}
 }
 
-func normalizeExtendedJSONNumber(raw interface{}, key string) (json.Number, error) {
+func normalizeExtendedJSONNumber(raw any, key string) (json.Number, error) {
 	switch value := raw.(type) {
 	case json.Number:
 		return value, nil
@@ -108,7 +108,7 @@ func normalizeExtendedJSONNumber(raw interface{}, key string) (json.Number, erro
 	}
 }
 
-func normalizeExtendedJSONString(raw interface{}, key string) (string, error) {
+func normalizeExtendedJSONString(raw any, key string) (string, error) {
 	switch value := raw.(type) {
 	case string:
 		return value, nil

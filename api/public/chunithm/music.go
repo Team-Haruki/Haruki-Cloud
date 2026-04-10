@@ -17,7 +17,7 @@ import (
 
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 	now := time.Now()
-	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (interface{}, error) {
+	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (any, error) {
 		rows, err := h.svc.client.ChunithmMusic.
 			Query().
 			Where(

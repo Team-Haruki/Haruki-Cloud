@@ -8,12 +8,12 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func findMusicMeta(payload []byte, musicID int, difficulty string) map[string]interface{} {
+func findMusicMeta(payload []byte, musicID int, difficulty string) map[string]any {
 	if len(payload) == 0 || musicID <= 0 {
 		return nil
 	}
 
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(payload, &items); err != nil {
 		return nil
 	}
@@ -31,17 +31,17 @@ func findMusicMeta(payload []byte, musicID int, difficulty string) map[string]in
 	return nil
 }
 
-func findAllMusicMetas(payload []byte, musicID int) []map[string]interface{} {
+func findAllMusicMetas(payload []byte, musicID int) []map[string]any {
 	if len(payload) == 0 || musicID <= 0 {
 		return nil
 	}
 
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(payload, &items); err != nil {
 		return nil
 	}
 
-	result := make([]map[string]interface{}, 0)
+	result := make([]map[string]any, 0)
 	for _, item := range items {
 		if musicMetaID(item) != musicID {
 			continue
@@ -78,7 +78,7 @@ func musicMetaInfosFromPayload(payload []byte, musicID int) []drawing.MusicMetaI
 	return result
 }
 
-func musicMetaID(item map[string]interface{}) int {
+func musicMetaID(item map[string]any) int {
 	if item == nil {
 		return 0
 	}
@@ -94,12 +94,12 @@ func musicMetaID(item map[string]interface{}) int {
 	}
 }
 
-func stringValue(value interface{}) string {
+func stringValue(value any) string {
 	text, _ := value.(string)
 	return text
 }
 
-func normalizedDifficultyValue(value interface{}) string {
+func normalizedDifficultyValue(value any) string {
 	raw := strings.TrimSpace(stringValue(value))
 	if normalized := normalizeDifficulty(raw); normalized != "" {
 		return normalized
@@ -107,7 +107,7 @@ func normalizedDifficultyValue(value interface{}) string {
 	return raw
 }
 
-func floatValue(value interface{}) float64 {
+func floatValue(value any) float64 {
 	switch item := value.(type) {
 	case float64:
 		return item
@@ -122,15 +122,15 @@ func floatValue(value interface{}) float64 {
 	}
 }
 
-func intValue(value interface{}) int {
+func intValue(value any) int {
 	return int(floatValue(value))
 }
 
-func floatSliceValue(value interface{}) []float64 {
+func floatSliceValue(value any) []float64 {
 	switch items := value.(type) {
 	case []float64:
 		return append([]float64(nil), items...)
-	case []interface{}:
+	case []any:
 		result := make([]float64, 0, len(items))
 		for _, item := range items {
 			result = append(result, floatValue(item))
@@ -141,12 +141,12 @@ func floatSliceValue(value interface{}) []float64 {
 	}
 }
 
-func cloneMetaMap(item map[string]interface{}) map[string]interface{} {
+func cloneMetaMap(item map[string]any) map[string]any {
 	data, err := json.Marshal(item)
 	if err != nil {
 		return nil
 	}
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal(data, &out); err != nil {
 		return nil
 	}

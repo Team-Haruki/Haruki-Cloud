@@ -27,7 +27,7 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 	}
 
 	// 验证 JWT session token
-	decoded, err := jwt.Parse(req.SessionToken, func(token *jwt.Token) (interface{}, error) {
+	decoded, err := jwt.Parse(req.SessionToken, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}

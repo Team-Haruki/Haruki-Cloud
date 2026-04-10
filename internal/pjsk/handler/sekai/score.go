@@ -36,7 +36,7 @@ func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
 		},
 		Regions:    []renderregion.Value{renderregion.JP},
 		PrefixArgs: []string{"wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildScoreControlParams(ctx)
 			if err != nil {
 				return nil, err
@@ -79,7 +79,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 			},
 		},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			targetPT, err := strconv.Atoi(args)
 			if err != nil || targetPT <= 0 {
@@ -102,7 +102,7 @@ func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
 			},
 			Priority: 1,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			clean := splitMusicMetaQueries(args)
 			if len(clean) == 0 {
@@ -131,7 +131,7 @@ func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
 			Priority: 1,
 		},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildMusicBoardParams(ctx.GetArgs())
 			if err != nil {
 				return nil, err

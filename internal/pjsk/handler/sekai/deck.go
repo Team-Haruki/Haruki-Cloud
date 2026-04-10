@@ -21,7 +21,7 @@ func (sekaiHandlers) EventDeckHandle() SekaiCommandHandler {
 				"/模拟组卡", "/模拟配队", "/模拟组队", "/模拟卡组",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildDeckQueryParams(ctx, "deck-event")
 			if err != nil {
 				return nil, err
@@ -40,7 +40,7 @@ func (sekaiHandlers) ChallengeDeckHandle() SekaiCommandHandler {
 				"/挑战组卡", "/挑战组队", "/挑战卡组", "/挑战配队",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildDeckQueryParams(ctx, "deck-challenge")
 			if err != nil {
 				return nil, err
@@ -60,7 +60,7 @@ func (sekaiHandlers) NoEventDeckHandle() SekaiCommandHandler {
 				"/最强卡组", "/最强组卡", "/最强组队", "/最强配队",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildDeckQueryParams(ctx, "deck-no-event")
 			if err != nil {
 				return nil, err
@@ -80,7 +80,7 @@ func (sekaiHandlers) BonusDeckHandle() SekaiCommandHandler {
 				"/控分组卡", "/控分组队", "/控分卡组", "/控分配队",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildDeckQueryParams(ctx, "deck-bonus")
 			if err != nil {
 				return nil, err
@@ -100,7 +100,7 @@ func (sekaiHandlers) MysekaiDeckHandle() SekaiCommandHandler {
 				"/ms组卡", "/ms组队", "/ms卡组", "/ms配队",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildDeckQueryParams(ctx, "deck-mysekai")
 			if err != nil {
 				return nil, err
@@ -125,7 +125,7 @@ func (sekaiHandlers) ScoreUpHandle() SekaiCommandHandler {
 				"/实效", "/倍率", "/时效", "/pjsk score up",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(parts) != 5 {
 				return nil, onebot11.NewReplayError("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())

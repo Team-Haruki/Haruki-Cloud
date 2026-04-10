@@ -71,12 +71,12 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 	}
 	if err != nil {
 		return &drawing.MusicVocalInfo{
-			VocalInfo:   map[string]interface{}{},
+			VocalInfo:   map[string]any{},
 			VocalAssets: map[string]string{},
 		}, nil
 	}
 
-	info := make(map[string]interface{}, len(vocals))
+	info := make(map[string]any, len(vocals))
 	assetsMap := make(map[string]string)
 	for _, vocal := range vocals {
 		if vocal == nil {
@@ -99,7 +99,7 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 		if region == renderregion.JP {
 			mapKey = buildJPVocalOrderKey(vocal)
 		}
-		info[mapKey] = map[string]interface{}{
+		info[mapKey] = map[string]any{
 			"caption":    normalizeVocalCaption(vocal.Caption, vocal.MusicVocalType, vocal.AssetBundleName, region),
 			"characters": characters,
 		}

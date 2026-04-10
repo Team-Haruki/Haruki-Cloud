@@ -108,17 +108,17 @@ func NewStatisticsHandler(svc *StatisticsService) *StatisticsHandler {
 
 // ================= UserService Methods =================
 
-func (s *UserService) setRedisKey(ctx context.Context, pattern string, id interface{}, value string, ttlMinutes int) error {
+func (s *UserService) setRedisKey(ctx context.Context, pattern string, id any, value string, ttlMinutes int) error {
 	key := fmt.Sprintf(pattern, id)
 	return s.redisStore.Set(ctx, key, value, time.Duration(ttlMinutes)*time.Minute)
 }
 
-func (s *UserService) getRedisKey(ctx context.Context, pattern string, id interface{}) (string, error) {
+func (s *UserService) getRedisKey(ctx context.Context, pattern string, id any) (string, error) {
 	key := fmt.Sprintf(pattern, id)
 	return s.redisStore.Get(ctx, key)
 }
 
-func (s *UserService) delRedisKey(ctx context.Context, pattern string, id interface{}) error {
+func (s *UserService) delRedisKey(ctx context.Context, pattern string, id any) error {
 	key := fmt.Sprintf(pattern, id)
 	return s.redisStore.Del(ctx, key)
 }
@@ -130,7 +130,7 @@ func (s *UserService) cleanupRegistrationKeys(ctx context.Context, qqNumber int6
 
 // ================= InternalService Methods =================
 
-func (s *InternalService) getRedisKey(ctx context.Context, pattern string, id interface{}) (string, error) {
+func (s *InternalService) getRedisKey(ctx context.Context, pattern string, id any) (string, error) {
 	key := fmt.Sprintf(pattern, id)
 	return s.redisStore.Get(ctx, key)
 }

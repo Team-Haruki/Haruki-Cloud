@@ -159,11 +159,11 @@ func extractSegmentDataField(data any, key string) (string, bool) {
 	case map[string]string:
 		v, ok := d[key]
 		return v, ok
-	case map[string]interface{}:
+	case map[string]any:
 		if v, ok := d[key]; ok {
 			return fmt.Sprint(v), true
 		}
-	case map[interface{}]interface{}:
+	case map[any]any:
 		if v, ok := d[key]; ok {
 			return fmt.Sprint(v), true
 		}

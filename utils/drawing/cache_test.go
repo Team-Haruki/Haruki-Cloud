@@ -124,8 +124,8 @@ func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
 
 func TestBuildRenderCachePolicyMusicListUsesRenderFlagsAndPublicFallback(t *testing.T) {
 	req := MusicListRequest{
-		UserResults: map[int]interface{}{1: "ap"},
-		MusicList: []map[string]interface{}{
+		UserResults: map[int]any{1: "ap"},
+		MusicList: []map[string]any{
 			{"id": 1, "difficulty": 32},
 		},
 		RequiredDifficulties: "master",

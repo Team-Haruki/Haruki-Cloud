@@ -10,12 +10,12 @@ import (
 // pathResolver resolves a relative asset path to its full Drawing-API-relative path.
 type pathResolver func(relPath string) string
 
-func extractMysekaiGateInfo(merged map[string]interface{}) (int, int, int) {
-	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]interface{})
+func extractMysekaiGateInfo(merged map[string]any) (int, int, int) {
+	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]any)
 	if !ok {
 		return 1, 1, 0
 	}
-	gate, ok := visit["userMysekaiGate"].(map[string]interface{})
+	gate, ok := visit["userMysekaiGate"].(map[string]any)
 	if !ok {
 		return 1, 1, 0
 	}
@@ -31,14 +31,14 @@ func extractMysekaiGateInfo(merged map[string]interface{}) (int, int, int) {
 	return gateID, gateLevel, gateSkinID
 }
 
-func extractMysekaiPhenoms(resolve pathResolver, merged map[string]interface{}) []drawing.MysekaiPhenomRequest {
-	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]interface{})
+func extractMysekaiPhenoms(resolve pathResolver, merged map[string]any) []drawing.MysekaiPhenomRequest {
+	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]any)
 	if !ok {
 		return []drawing.MysekaiPhenomRequest{}
 	}
 
 	nowMs := int64Number(merged["now"], 0)
-	if updated, ok := merged["updatedResources"].(map[string]interface{}); ok {
+	if updated, ok := merged["updatedResources"].(map[string]any); ok {
 		if v := int64Number(updated["now"], 0); v > 0 {
 			nowMs = v
 		}
@@ -62,7 +62,7 @@ func extractMysekaiPhenoms(resolve pathResolver, merged map[string]interface{}) 
 
 	phenoms := make([]drawing.MysekaiPhenomRequest, 0, len(rawSchedules))
 	for i, item := range rawSchedules {
-		schedule, ok := item.(map[string]interface{})
+		schedule, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}

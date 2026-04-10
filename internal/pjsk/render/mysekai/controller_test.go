@@ -124,7 +124,7 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
 		{
 			"id":                        2001,
 			"name":                      "Wood Chair",
@@ -142,16 +142,16 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 			"mysekaiFixtureSubGenreId":  11,
 		},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
 		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
 		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
 		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
 
 	service := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
@@ -184,12 +184,12 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{
 		{"id": 1, "firstName": "星乃", "givenName": "一歌", "firstNameEnglish": "Hoshino", "givenNameEnglish": "Ichika"},
 		{"id": 21, "firstName": "初音", "givenName": "未来", "firstNameEnglish": "Hatsune", "givenNameEnglish": "Miku"},
 		{"id": 22, "firstName": "镜音", "givenName": "铃", "firstNameEnglish": "Kagamine", "givenNameEnglish": "Rin"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]any{
 		{"id": 1, "gameCharacterId": 1, "unit": "light_sound"},
 		{"id": 21, "gameCharacterId": 21, "unit": "piapro"},
 		{"id": 27, "gameCharacterId": 21, "unit": "light_sound"},
@@ -198,7 +198,7 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 		{"id": 33, "gameCharacterId": 22, "unit": "light_sound"},
 		{"id": 34, "gameCharacterId": 22, "unit": "idol"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateCharacterLotteries.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateCharacterLotteries.json"), []map[string]any{
 		{"id": 1, "gameCharacterUnitId": 27},
 		{"id": 2, "gameCharacterUnitId": 28},
 		{"id": 3, "gameCharacterUnitId": 34},
@@ -227,7 +227,7 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 	}
 }
 
-func writeTestJSON(t *testing.T, path string, value interface{}) {
+func writeTestJSON(t *testing.T, path string, value any) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir fixture dir: %v", err)
@@ -248,7 +248,7 @@ func TestBuildResourceRequestUsesGateLargeThumbnailPath(t *testing.T) {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
 		{"id": 4, "assetbundleName": "mdl_non0006_gate_wns1"},
 	})
 
@@ -284,13 +284,13 @@ func TestBuildResourceRequestGateSkinOverridesGateDefaultIcon(t *testing.T) {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
 		{"id": 1, "assetbundleName": "mdl_non0006_gate_lon1"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateSkins.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateSkins.json"), []map[string]any{
 		{"id": 7, "mysekaiGateSkinType": "unit", "mysekaiGateSkinTypeId": 4},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateUnitSkins.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateUnitSkins.json"), []map[string]any{
 		{"id": 4, "assetbundleName": "mdl_non0006_gate_wns1"},
 	})
 
@@ -340,7 +340,7 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{
 		{
 			"id":                                  1001,
 			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
@@ -354,17 +354,17 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 			"mysekaiSiteHarvestFixtureRarityType": "rarity_2",
 		},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{
 		{"id": 6, "givenNameEnglish": "Haruka"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
 		{"id": 179, "iconAssetbundleName": "birthday_drop_179", "mysekaiMaterialRarityType": "rarity_2"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{
 		{"id": 501, "iconAssetbundleName": "side_drop_501"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
 
 	mysekaiJSON := `{
   "updatedResources": {
@@ -509,7 +509,7 @@ func TestBuildMapRequestSkipsHarvestPointWhenStaticIconMissing(t *testing.T) {
 		t.Fatalf("write static icon: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{
 		{
 			"id":                                  1001,
 			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
@@ -523,14 +523,14 @@ func TestBuildMapRequestSkipsHarvestPointWhenStaticIconMissing(t *testing.T) {
 			"mysekaiSiteHarvestFixtureRarityType": "rarity_2",
 		},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
 		{"id": 1, "iconAssetbundleName": "wood_mat", "mysekaiMaterialRarityType": "rarity_1"},
 		{"id": 24, "iconAssetbundleName": "item_tone_8", "mysekaiMaterialRarityType": "rarity_1"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
 
 	mysekaiJSON := `{
   "updatedResources": {
@@ -624,7 +624,7 @@ func TestBuildMapRequestSkipsToneGustHarvestPoint(t *testing.T) {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{
 		{
 			"id":                                  1001,
 			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
@@ -638,11 +638,11 @@ func TestBuildMapRequestSkipsToneGustHarvestPoint(t *testing.T) {
 			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
 		},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
 
 	mysekaiJSON := `{
   "updatedResources": {
@@ -693,17 +693,17 @@ func TestBuildMapRequestMixedMaterialAndFixtureKeepsMaterialLarge(t *testing.T) 
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
 		{"id": 1, "iconAssetbundleName": "mat_1", "mysekaiMaterialRarityType": "rarity_1"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]interface{}{
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
 		{"id": 118, "assetbundleName": "mdl_site_wood_common_conifer01"},
 	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]interface{}{})
-	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]interface{}{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
 
 	mysekaiJSON := `{
   "updatedResources": {

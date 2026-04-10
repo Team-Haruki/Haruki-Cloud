@@ -37,7 +37,7 @@ type DetailedProfileCardRequest struct {
 	LeaderImagePath string        `json:"leader_image_path"`
 	HasFrame        bool          `json:"has_frame"`
 	FramePath       *string       `json:"frame_path,omitempty"`
-	UserCards       []interface{} `json:"user_cards,omitempty"`
+	UserCards       []any `json:"user_cards,omitempty"`
 }
 
 type ProfileBgSettings struct {

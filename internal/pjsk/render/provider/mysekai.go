@@ -5,7 +5,7 @@ package provider
 // interact uniformly via filename keys (e.g. "mysekaiFixtures.json").
 type MySekaiProvider interface {
 	Configured() bool
-	LoadList(filename string) []map[string]interface{}
-	LoadMapByID(filename string) map[int]map[string]interface{}
-	LoadObject(filename string, target interface{}) bool
+	LoadList(filename string) []map[string]any
+	LoadMapByID(filename string) map[int]map[string]any
+	LoadObject(filename string, target any) bool
 }

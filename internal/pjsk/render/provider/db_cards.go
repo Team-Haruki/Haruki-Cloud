@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -38,11 +37,4 @@ func (p *dbCardProvider) init() {
 		p.gachaCache = make(map[int]*masterdata.Gacha)
 		p.costumeByCard = make(map[int][]*masterdata.Costume3d)
 	})
-}
-
-func cardContextOrBackground(ctx context.Context) context.Context {
-	if ctx == nil {
-		return context.Background()
-	}
-	return ctx
 }

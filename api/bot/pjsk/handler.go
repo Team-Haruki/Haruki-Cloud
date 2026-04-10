@@ -189,11 +189,11 @@ func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
 	for _, s := range msg {
 		data := make(map[string]string)
 		switch d := s.Data.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for k, v := range d {
 				data[k] = fmt.Sprint(v)
 			}
-		case map[interface{}]interface{}:
+		case map[any]any:
 			for k, v := range d {
 				ks, _ := k.(string)
 				vs := fmt.Sprint(v)
@@ -227,7 +227,7 @@ func stripInlineCQTags(text string) string {
 
 // botResponse sends a response using MsgPack when the request came through the
 // Noise IK transport layer, and JSON otherwise.
-func botResponse(c fiber.Ctx, status int, message string, data ...interface{}) error {
+func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 	if c.Locals("secure_noise") != nil {
 		return api.MsgPackResponse(c, status, message, data...)
 	}

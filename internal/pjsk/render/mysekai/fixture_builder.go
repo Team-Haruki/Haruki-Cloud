@@ -263,7 +263,7 @@ func (c *Controller) RenderFixtureDetail(query FixtureDetailQuery) ([]byte, erro
 }
 
 // fixtureCostMaterials builds the cost materials list for a fixture blueprint.
-func (c *Controller) fixtureCostMaterials(region renderregion.Value, blueprintID int, costs []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
+func (c *Controller) fixtureCostMaterials(region renderregion.Value, blueprintID int, costs []map[string]any) []drawing.MysekaiFixtureMaterial {
 	var result []drawing.MysekaiFixtureMaterial
 	iconMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	for _, item := range costs {
@@ -284,7 +284,7 @@ func (c *Controller) fixtureCostMaterials(region renderregion.Value, blueprintID
 }
 
 // fixtureRecycleMaterials builds the recycle materials list for a fixture.
-func (c *Controller) fixtureRecycleMaterials(region renderregion.Value, fixtureID int, items []map[string]interface{}) []drawing.MysekaiFixtureMaterial {
+func (c *Controller) fixtureRecycleMaterials(region renderregion.Value, fixtureID int, items []map[string]any) []drawing.MysekaiFixtureMaterial {
 	var result []drawing.MysekaiFixtureMaterial
 	iconMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	for _, item := range items {
@@ -306,25 +306,25 @@ func (c *Controller) fixtureRecycleMaterials(region renderregion.Value, fixtureI
 
 // fixtureReactionCharacterGroups builds the reaction character groups for a fixture.
 func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.MysekaiReactionCharacterGroups {
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if !c.masterdata.loadObject("mysekai/system/fixture_reaction_data/fixture_reaction_data.json", &parsed) {
 		return nil
 	}
 
-	rawItems, _ := parsed["FixturerRactions"].([]interface{})
+	rawItems, _ := parsed["FixturerRactions"].([]any)
 	grouped := map[int][][]int{}
 	for _, raw := range rawItems {
-		item, ok := raw.(map[string]interface{})
+		item, ok := raw.(map[string]any)
 		if !ok || intNumber(item["FixtureId"], 0) != fixtureID {
 			continue
 		}
-		reactions, _ := item["ReactionCharacter"].([]interface{})
+		reactions, _ := item["ReactionCharacter"].([]any)
 		for _, rawReaction := range reactions {
-			entry, ok := rawReaction.(map[string]interface{})
+			entry, ok := rawReaction.(map[string]any)
 			if !ok {
 				continue
 			}
-			characters, _ := entry["CharacterUnitIds"].([]interface{})
+			characters, _ := entry["CharacterUnitIds"].([]any)
 			var characterIDs []int
 			for _, character := range characters {
 				id := intNumber(character, 0)

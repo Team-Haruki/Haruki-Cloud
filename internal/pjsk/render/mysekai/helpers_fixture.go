@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func birthdayCharacterID(characters map[int]map[string]interface{}, fixtureName string) int {
+func birthdayCharacterID(characters map[int]map[string]any, fixtureName string) int {
 	for id, item := range characters {
 		givenName := stringValue(item["givenName"])
 		if givenName != "" && strings.HasSuffix(fixtureName, "（"+givenName+"）") {
@@ -17,7 +17,7 @@ func birthdayCharacterID(characters map[int]map[string]interface{}, fixtureName 
 	return 0
 }
 
-func fixtureThumbnailPath(resolve pathResolver, item map[string]interface{}) string {
+func fixtureThumbnailPath(resolve pathResolver, item map[string]any) string {
 	assetbundleName := stringValue(item["assetbundleName"])
 	if assetbundleName == "" {
 		return ""
@@ -32,14 +32,14 @@ func fixtureThumbnailPath(resolve pathResolver, item map[string]interface{}) str
 	return resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_1.png", assetbundleName))
 }
 
-func fixtureColorImages(resolve pathResolver, item map[string]interface{}) []drawing.MysekaiFixtureColorImage {
+func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.MysekaiFixtureColorImage {
 	base := fixtureThumbnailPath(resolve, item)
 	if base == "" {
 		return nil
 	}
 
 	images := []drawing.MysekaiFixtureColorImage{{ImagePath: base}}
-	rawColors, ok := item["mysekaiFixtureAnotherColors"].([]interface{})
+	rawColors, ok := item["mysekaiFixtureAnotherColors"].([]any)
 	if !ok {
 		return images
 	}
@@ -49,7 +49,7 @@ func fixtureColorImages(resolve pathResolver, item map[string]interface{}) []dra
 	}
 
 	for index, raw := range rawColors {
-		color, _ := raw.(map[string]interface{})
+		color, _ := raw.(map[string]any)
 		colorCode := stringValue(color["colorCode"])
 		path := resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2))
 		if stringValue(item["mysekaiFixtureType"]) == "surface_appearance" {
@@ -72,7 +72,7 @@ func fixtureColorImages(resolve pathResolver, item map[string]interface{}) []dra
 	return images
 }
 
-func fixtureBasicInfo(item map[string]interface{}) []string {
+func fixtureBasicInfo(item map[string]any) []string {
 	boolLabel := func(ok bool, yes, no string) string {
 		if ok {
 			return yes
@@ -89,7 +89,7 @@ func fixtureBasicInfo(item map[string]interface{}) []string {
 	return info
 }
 
-func fixtureBlueprintInfo(blueprint map[string]interface{}) []string {
+func fixtureBlueprintInfo(blueprint map[string]any) []string {
 	boolLabel := func(ok bool, yes, no string) string {
 		if ok {
 			return yes
@@ -108,8 +108,8 @@ func fixtureBlueprintInfo(blueprint map[string]interface{}) []string {
 	return append(info, "【无制作次数限制】")
 }
 
-func fixtureTags(item map[string]interface{}, tags map[int]map[string]interface{}) []string {
-	group, ok := item["mysekaiFixtureTagGroup"].(map[string]interface{})
+func fixtureTags(item map[string]any, tags map[int]map[string]any) []string {
+	group, ok := item["mysekaiFixtureTagGroup"].(map[string]any)
 	if !ok {
 		return nil
 	}
@@ -128,7 +128,7 @@ func fixtureTags(item map[string]interface{}, tags map[int]map[string]interface{
 	return result
 }
 
-func findFixtureBlueprint(items []map[string]interface{}, fixtureID int) map[string]interface{} {
+func findFixtureBlueprint(items []map[string]any, fixtureID int) map[string]any {
 	for _, item := range items {
 		if stringValue(item["mysekaiCraftType"]) == "mysekai_fixture" && intNumber(item["craftTargetId"], 0) == fixtureID {
 			return item
@@ -154,7 +154,7 @@ func charaIconName(cuid int) string {
 	return "miku"
 }
 
-func extractGroupCuids(group map[string]interface{}) []int {
+func extractGroupCuids(group map[string]any) []int {
 	result := make([]int, 0, 9)
 	for i := 1; i <= 9; i++ {
 		id := intNumber(group[fmt.Sprintf("gameCharacterUnitId%d", i)], 0)
@@ -201,7 +201,7 @@ func percent(a, b int) float64 {
 	return float64(a) * 100 / float64(b)
 }
 
-func isMusicAvailableNow(windows []map[string]interface{}, nowMs int64) bool {
+func isMusicAvailableNow(windows []map[string]any, nowMs int64) bool {
 	for _, item := range windows {
 		start := int64Number(item["startAt"], 0)
 		end := int64Number(item["endAt"], 0)

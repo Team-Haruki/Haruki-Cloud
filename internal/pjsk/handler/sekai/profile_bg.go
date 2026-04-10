@@ -119,7 +119,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/upload",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
 			}
@@ -144,7 +144,7 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/clear",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
@@ -163,7 +163,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/adjust",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params := newProfileSettingsParams(ctx)
 			adjustParams, err := parseProfileBGAdjustArgs(ctx.GetArgs())
 			if err != nil {

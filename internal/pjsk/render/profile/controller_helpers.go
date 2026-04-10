@@ -74,8 +74,8 @@ func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.Prof
 	return &cloned
 }
 
-func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck) []interface{} {
-	entries := make([]interface{}, 0, len(cards))
+func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck) []any {
+	entries := make([]any, 0, len(cards))
 	seen := make(map[int]struct{}, len(cards))
 	for _, card := range cards {
 		if card.CardID == 0 {
@@ -85,7 +85,7 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 			continue
 		}
 		seen[card.CardID] = struct{}{}
-		entries = append(entries, map[string]interface{}{
+		entries = append(entries, map[string]any{
 			"cardId":                card.CardID,
 			"level":                 card.Level,
 			"masterRank":            card.MasterRank,
@@ -98,12 +98,12 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 	}
 
 	ids := []int{deck.Leader, deck.SubLeader, deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5}
-	entries = make([]interface{}, 0, len(ids))
+	entries = make([]any, 0, len(ids))
 	for _, id := range ids {
 		if id == 0 {
 			continue
 		}
-		entries = append(entries, map[string]interface{}{
+		entries = append(entries, map[string]any{
 			"cardId": id,
 		})
 	}

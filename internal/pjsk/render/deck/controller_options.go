@@ -1,6 +1,6 @@
 package deck
 
-func applyRecommendOptionOverrides(option map[string]interface{}, recType string, query AutoQuery) {
+func applyRecommendOptionOverrides(option map[string]any, recType string, query AutoQuery) {
 	if option == nil {
 		return
 	}
@@ -89,7 +89,7 @@ func applyRecommendOptionOverrides(option map[string]interface{}, recType string
 	}
 }
 
-func normalizeRecommendLiveOptions(option map[string]interface{}) {
+func normalizeRecommendLiveOptions(option map[string]any) {
 	if option == nil {
 		return
 	}
@@ -107,11 +107,11 @@ func normalizeRecommendLiveOptions(option map[string]interface{}) {
 	delete(option, "multi_live_score_up_lower_bound")
 }
 
-func applyDeckConfigPatch(option map[string]interface{}, key string, patch *CardConfigPatch) {
+func applyDeckConfigPatch(option map[string]any, key string, patch *CardConfigPatch) {
 	if option == nil || patch == nil {
 		return
 	}
-	cfg, _ := option[key].(map[string]interface{})
+	cfg, _ := option[key].(map[string]any)
 	if cfg == nil {
 		cfg = noChangeDeckConfig()
 	}
@@ -136,16 +136,16 @@ func applyDeckConfigPatch(option map[string]interface{}, key string, patch *Card
 	option[key] = cfg
 }
 
-func toSingleCardConfigInterfaces(cfgs []SingleCardConfigPatch) []interface{} {
+func toSingleCardConfigInterfaces(cfgs []SingleCardConfigPatch) []any {
 	if len(cfgs) == 0 {
 		return nil
 	}
-	result := make([]interface{}, 0, len(cfgs))
+	result := make([]any, 0, len(cfgs))
 	for _, cfg := range cfgs {
 		if cfg.CardID <= 0 {
 			continue
 		}
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"card_id":      cfg.CardID,
 			"disable":      cfg.Disable,
 			"level_max":    cfg.LevelMax,

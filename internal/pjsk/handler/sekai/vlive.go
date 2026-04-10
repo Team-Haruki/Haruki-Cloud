@@ -11,7 +11,7 @@ func (sekaiHandlers) LiveHandle() SekaiCommandHandler {
 			Path:     "vlive",
 			Commands: []string{"/pjsk live", "/虚拟live", "/pjsk vlive", "/vlive"},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			return makeResolvedCmd(ctx, parser.ModuleVLive, "vlive-list"), nil
 		},
 	}

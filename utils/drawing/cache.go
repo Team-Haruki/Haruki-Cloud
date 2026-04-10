@@ -50,14 +50,14 @@ func newLocalRenderCache(ttl time.Duration) *localRenderCache {
 	}
 }
 
-func (lc *localRenderCache) buildKey(endpoint string, request interface{}) (string, error) {
+func (lc *localRenderCache) buildKey(endpoint string, request any) (string, error) {
 	payload, err := normalizeRenderCachePayload(request)
 	if err != nil {
 		return "", err
 	}
 	sanitizeRenderCachePayload(endpoint, payload)
 
-	b, err := json.Marshal(map[string]interface{}{
+	b, err := json.Marshal(map[string]any{
 		"v":        renderCacheKeyVersion,
 		"endpoint": endpoint,
 		"payload":  payload,
@@ -96,7 +96,7 @@ func (lc *localRenderCache) set(key string, data []byte) {
 }
 
 // Render returns cached bytes for identical requests; otherwise calls render() and stores the result.
-func (lc *localRenderCache) Render(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+func (lc *localRenderCache) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
 	key, err := lc.buildKey(endpoint, request)
 	if err != nil {
 		return render()
@@ -172,7 +172,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 	}
 }
 
-func (c *RenderCacheClient) Render(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+func (c *RenderCacheClient) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
 	if c == nil {
 		return render()
 	}

@@ -19,7 +19,7 @@ type MusicMetaSource interface {
 
 type DeckRecommender interface {
 	Enabled() bool
-	ExpandAlgorithms(option map[string]interface{}) []map[string]interface{}
+	ExpandAlgorithms(option map[string]any) []map[string]any
 	Recommend(req RecommendRequest) (*RecommendResult, error)
 	Close()
 }
@@ -30,7 +30,7 @@ type RecommendRequest struct {
 	UserDataFilePath  string
 	MusicMeta         []byte
 	MusicMetaFilePath string
-	BatchOption       []map[string]interface{}
+	BatchOption       []map[string]any
 }
 
 type RecommendResult struct {

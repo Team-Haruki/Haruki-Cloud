@@ -73,7 +73,7 @@ func BuildCustomRoomScoreRequest(r *parser.ResolvedCommand, app *renderapp.App) 
 		return nil, fmt.Errorf("找不到可用于自定义房间控分的歌曲")
 	}
 
-	filteredMusicMap := make(map[int][]map[string]interface{}, len(musicListMap))
+	filteredMusicMap := make(map[int][]map[string]any, len(musicListMap))
 	for _, pair := range filteredPairs {
 		rate := pair[0]
 		if _, ok := filteredMusicMap[rate]; ok {

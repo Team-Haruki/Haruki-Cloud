@@ -7,7 +7,7 @@ import "encoding/json"
 // Values are averaged across all qualifying real tracks.
 // If the entry already exists, or the JSON is malformed, the original data is returned unchanged.
 func InjectOmakase(data []byte) []byte {
-	var metas []map[string]interface{}
+	var metas []map[string]any
 	if err := json.Unmarshal(data, &metas); err != nil {
 		return data
 	}
@@ -21,7 +21,7 @@ func InjectOmakase(data []byte) []byte {
 		}
 	}
 
-	aggregate := map[string]interface{}{
+	aggregate := map[string]any{
 		"music_time":        0.0,
 		"event_rate":        0.0,
 		"base_score":        0.0,
@@ -73,7 +73,7 @@ func InjectOmakase(data []byte) []byte {
 	}
 
 	for _, difficulty := range difficulties {
-		metas = append(metas, map[string]interface{}{
+		metas = append(metas, map[string]any{
 			"music_id":          float64(omakaseMusicID),
 			"difficulty":        difficulty,
 			"music_time":        aggregate["music_time"],
@@ -96,7 +96,7 @@ func InjectOmakase(data []byte) []byte {
 	return encoded
 }
 
-func accumulateFloat(target, source map[string]interface{}, key string) {
+func accumulateFloat(target, source map[string]any, key string) {
 	value, ok := source[key].(float64)
 	if !ok {
 		return
@@ -104,8 +104,8 @@ func accumulateFloat(target, source map[string]interface{}, key string) {
 	target[key] = target[key].(float64) + value
 }
 
-func accumulateFloatSlice(target, source map[string]interface{}, key string) {
-	values, ok := source[key].([]interface{})
+func accumulateFloatSlice(target, source map[string]any, key string) {
+	values, ok := source[key].([]any)
 	if !ok {
 		return
 	}

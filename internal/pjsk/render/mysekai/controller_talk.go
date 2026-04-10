@@ -124,8 +124,8 @@ func (c *Controller) lookupTalkCharacterID(query string) int {
 	return 0
 }
 
-func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID int, gameCharacterUnits []map[string]interface{}) (int, int, error) {
-	candidates := make([]map[string]interface{}, 0, 6)
+func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID int, gameCharacterUnits []map[string]any) (int, int, error) {
+	candidates := make([]map[string]any, 0, 6)
 	for _, item := range gameCharacterUnits {
 		if intNumber(item["gameCharacterId"], 0) != characterID {
 			continue
@@ -163,7 +163,7 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 	return characterID, intNumber(candidates[0]["id"], 0), nil
 }
 
-func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candidates []map[string]interface{}) []map[string]interface{} {
+func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candidates []map[string]any) []map[string]any {
 	if characterID < 21 || characterID > 26 || len(candidates) == 0 {
 		return candidates
 	}
@@ -171,7 +171,7 @@ func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candi
 	if len(available) == 0 {
 		return candidates
 	}
-	filtered := make([]map[string]interface{}, 0, len(candidates))
+	filtered := make([]map[string]any, 0, len(candidates))
 	for _, item := range candidates {
 		if _, ok := available[intNumber(item["id"], 0)]; ok {
 			filtered = append(filtered, item)

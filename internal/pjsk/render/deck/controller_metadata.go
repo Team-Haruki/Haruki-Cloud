@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, region renderregion.Value, recType string, option map[string]interface{}, query AutoQuery) {
+func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, region renderregion.Value, recType string, option map[string]any, query AutoQuery) {
 	if request == nil {
 		return
 	}
@@ -111,7 +111,7 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 	}
 }
 
-func shouldUseFallbackEventMetadata(recType string, option map[string]interface{}) bool {
+func shouldUseFallbackEventMetadata(recType string, option map[string]any) bool {
 	switch recType {
 	case "event", "bonus":
 		return !optionHasSimulatedEvent(option)
@@ -120,21 +120,21 @@ func shouldUseFallbackEventMetadata(recType string, option map[string]interface{
 	}
 }
 
-func optionHasSimulatedEvent(option map[string]interface{}) bool {
+func optionHasSimulatedEvent(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
 	return optionHasUnitAttrEvent(option) || optionInt(option, "world_bloom_event_turn") > 0
 }
 
-func optionHasUnitAttrEvent(option map[string]interface{}) bool {
+func optionHasUnitAttrEvent(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
 	return optionString(option, "event_unit") != "" && optionString(option, "event_attr") != ""
 }
 
-func optionHasWorldBloom(option map[string]interface{}) bool {
+func optionHasWorldBloom(option map[string]any) bool {
 	if option == nil {
 		return false
 	}

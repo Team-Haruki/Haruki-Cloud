@@ -60,7 +60,7 @@ func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
 	c.cache = cache
 }
 
-func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request interface{}, render func() ([]byte, error)) ([]byte, error) {
+func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
 	if c == nil {
 		return render()
 	}
@@ -73,7 +73,7 @@ func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request interface
 	return render()
 }
 
-func (c *HarukiDrawingClient) post(endpoint string, body interface{}) ([]byte, error) {
+func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
 	resp, err := c.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
@@ -220,7 +220,7 @@ func (c *HarukiDrawingClient) GenerateMysekaiFixtureList(req *MysekaiFixtureList
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiFixtureDetail(req *MysekaiFixtureDetailRequest) ([]byte, error) {
-	return c.post("/api/pjsk/mysekai/fixture-detail", []interface{}{req})
+	return c.post("/api/pjsk/mysekai/fixture-detail", []any{req})
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiDoorUpgrade(req *MysekaiDoorUpgradeRequest) ([]byte, error) {

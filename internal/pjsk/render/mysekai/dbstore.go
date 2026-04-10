@@ -13,9 +13,9 @@ import (
 // controller can read from either local JSON files or a database.
 type masterdataSource interface {
 	Configured() bool
-	loadList(filename string) []map[string]interface{}
-	loadMapByID(filename string) map[int]map[string]interface{}
-	loadObject(filename string, target interface{}) bool
+	loadList(filename string) []map[string]any
+	loadMapByID(filename string) map[int]map[string]any
+	loadObject(filename string, target any) bool
 }
 
 // fileToTable maps the original game masterdata JSON filenames to the
@@ -57,8 +57,8 @@ type dbMasterdataStore struct {
 	region string
 
 	mu       sync.Mutex
-	lists    map[string][]map[string]interface{}
-	mapsByID map[string]map[int]map[string]interface{}
+	lists    map[string][]map[string]any
+	mapsByID map[string]map[int]map[string]any
 }
 
 // newDBMasterdataStore opens a read-only connection to the sekai database
@@ -81,8 +81,8 @@ func newDBMasterdataStore(dsn, region string) *dbMasterdataStore {
 	return &dbMasterdataStore{
 		db:       db,
 		region:   region,
-		lists:    make(map[string][]map[string]interface{}),
-		mapsByID: make(map[string]map[int]map[string]interface{}),
+		lists:    make(map[string][]map[string]any),
+		mapsByID: make(map[string]map[int]map[string]any),
 	}
 }
 
@@ -96,7 +96,7 @@ func (s *dbMasterdataStore) Close() {
 	}
 }
 
-func (s *dbMasterdataStore) loadList(filename string) []map[string]interface{} {
+func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
 	if s == nil || s.db == nil {
 		return nil
 	}
@@ -124,9 +124,9 @@ func (s *dbMasterdataStore) loadList(filename string) []map[string]interface{} {
 	return items
 }
 
-func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]interface{} {
+func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any {
 	if s == nil || s.db == nil {
-		return map[int]map[string]interface{}{}
+		return map[int]map[string]any{}
 	}
 
 	s.mu.Lock()
@@ -137,7 +137,7 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]inte
 	s.mu.Unlock()
 
 	items := s.loadList(filename)
-	result := make(map[int]map[string]interface{}, len(items))
+	result := make(map[int]map[string]any, len(items))
 	for _, item := range items {
 		id := intNumber(item["id"], 0)
 		if id == 0 {
@@ -154,14 +154,14 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]inte
 
 // loadObject is not supported by the DB store; the only caller
 // (fixture_reaction_data.json) has no corresponding table.
-func (s *dbMasterdataStore) loadObject(_ string, _ interface{}) bool {
+func (s *dbMasterdataStore) loadObject(_ string, _ any) bool {
 	return false
 }
 
 // queryTable runs SELECT * on the given table filtered by server_region and
 // converts each row into a map with camelCase keys matching the original
 // game masterdata JSON format.
-func (s *dbMasterdataStore) queryTable(table string) ([]map[string]interface{}, error) {
+func (s *dbMasterdataStore) queryTable(table string) ([]map[string]any, error) {
 	// Use double-quoting for safety; table names are from our own constant map.
 	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE server_region = $1`, table)
 	rows, err := s.db.Query(query, s.region)
@@ -176,10 +176,10 @@ func (s *dbMasterdataStore) queryTable(table string) ([]map[string]interface{}, 
 	}
 	colTypes, _ := rows.ColumnTypes()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
-		values := make([]interface{}, len(cols))
-		ptrs := make([]interface{}, len(cols))
+		values := make([]any, len(cols))
+		ptrs := make([]any, len(cols))
 		for i := range values {
 			ptrs[i] = &values[i]
 		}
@@ -187,7 +187,7 @@ func (s *dbMasterdataStore) queryTable(table string) ([]map[string]interface{}, 
 			continue
 		}
 
-		m := make(map[string]interface{}, len(cols))
+		m := make(map[string]any, len(cols))
 		for i, col := range cols {
 			key := mapColumnName(col)
 			if key == "" {
@@ -240,11 +240,11 @@ func snakeToCamel(s string) string {
 
 // normalizeValue converts a raw sql.Scan result into the type the controller
 // expects (matching JSON unmarshal behaviour).
-func normalizeValue(val interface{}, colTypes []*sql.ColumnType, idx int) interface{} {
+func normalizeValue(val any, colTypes []*sql.ColumnType, idx int) any {
 	switch v := val.(type) {
 	case []byte:
 		// Could be JSONB or TEXT; try JSON decode first.
-		var parsed interface{}
+		var parsed any
 		if err := json.Unmarshal(v, &parsed); err == nil {
 			return parsed
 		}

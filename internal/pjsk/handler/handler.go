@@ -16,7 +16,7 @@ var maxDepth int
 
 const DefaultPriority = 100
 
-func Dispatch(ctx context.Context, event Event) (interface{}, error) {
+func Dispatch(ctx context.Context, event Event) (any, error) {
 
 	handlerContext, err := BuildContext(ctx, event)
 	if err != nil {
@@ -37,7 +37,7 @@ type CommandHandler interface {
 	GetPath() string
 	GetPriority() int
 	GetHelper() string
-	Handle(Context) (interface{}, error)
+	Handle(Context) (any, error)
 }
 
 type CommandHandlerBase struct {
@@ -46,7 +46,7 @@ type CommandHandlerBase struct {
 	Path       string
 	Priority   int
 	Helper     string
-	handleFunc func(Context) (interface{}, error)
+	handleFunc func(Context) (any, error)
 }
 
 func (h *CommandHandlerBase) IsDisabled() bool {
@@ -65,7 +65,7 @@ func (h *CommandHandlerBase) GetPriority() int {
 func (h *CommandHandlerBase) GetHelper() string {
 	return h.Helper
 }
-func (b *CommandHandlerBase) Handle(ctx Context) (interface{}, error) {
+func (b *CommandHandlerBase) Handle(ctx Context) (any, error) {
 	if b.handleFunc != nil {
 		return b.handleFunc(ctx)
 	}
@@ -248,7 +248,7 @@ func (t *handlerTreeNode) Json() []byte {
 	if t == nil {
 		return nil
 	}
-	jsonMap := make(map[string]interface{})
+	jsonMap := make(map[string]any)
 	jsonMap["command"] = t.command
 	jsonMap["priority"] = t.priority
 	jsonMap["depth"] = t.depth

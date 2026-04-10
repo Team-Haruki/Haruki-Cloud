@@ -7,7 +7,7 @@ import (
 
 func TestParseRemoteRecommendBatchSupportsLegacySingleResponse(t *testing.T) {
 	raw := json.RawMessage(`{"decks":[{"score":100,"live_score":100,"mysekai_event_point":0,"total_power":200,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":120,"cards":[]} ]}`)
-	results, err := parseRemoteRecommendBatch(raw, []map[string]interface{}{
+	results, err := parseRemoteRecommendBatch(raw, []map[string]any{
 		{"algorithm": "ga"},
 	})
 	if err != nil {
@@ -22,7 +22,7 @@ func TestParseRemoteRecommendBatchSupportsLegacySingleResponse(t *testing.T) {
 }
 
 func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T) {
-	options := []map[string]interface{}{
+	options := []map[string]any{
 		{"algorithm": "dfs", "target": "score", "live_type": "multi", "limit": 1},
 		{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
 	}

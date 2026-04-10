@@ -41,7 +41,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	userTalkReads := map[int]bool{}
 	if !showAllTalks {
 		for _, raw := range nestedList(merged, "userMysekaiCharacterTalks") {
-			item, _ := raw.(map[string]interface{})
+			item, _ := raw.(map[string]any)
 			userTalkReads[intNumber(item["mysekaiCharacterTalkId"], 0)] = boolValue(item["isRead"])
 		}
 	}
@@ -72,7 +72,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		groupIDsByCondition[conditionID] = append(groupIDsByCondition[conditionID], intNumber(group["id"], 0))
 	}
 
-	talksByGroup := map[int][]map[string]interface{}{}
+	talksByGroup := map[int][]map[string]any{}
 	for _, talk := range talks {
 		groupID := intNumber(talk["mysekaiCharacterTalkConditionGroupId"], 0)
 		talksByGroup[groupID] = append(talksByGroup[groupID], talk)

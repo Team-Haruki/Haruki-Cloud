@@ -35,7 +35,7 @@ func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
 		return nil, fmt.Errorf("照片编号大于照片数量(%d)", len(photos))
 	}
 
-	photo, ok := photos[seq-1].(map[string]interface{})
+	photo, ok := photos[seq-1].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("照片数据格式错误")
 	}
@@ -95,21 +95,21 @@ func (c *Controller) resolveRegion(region string) renderregion.Value {
 	return renderregion.JP
 }
 
-func (c *Controller) prepareSnapshot(region string) (map[string]interface{}, renderregion.Value, error) {
+func (c *Controller) prepareSnapshot(region string) (map[string]any, renderregion.Value, error) {
 	if err := c.ensure(); err != nil {
 		return nil, renderregion.Unknown, err
 	}
 	return c.decodeSnapshot(region)
 }
 
-func (c *Controller) prepareSnapshotOnly(region string) (map[string]interface{}, renderregion.Value, error) {
+func (c *Controller) prepareSnapshotOnly(region string) (map[string]any, renderregion.Value, error) {
 	if err := c.ensureSnapshot(); err != nil {
 		return nil, renderregion.Unknown, err
 	}
 	return c.decodeSnapshot(region)
 }
 
-func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, renderregion.Value, error) {
+func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion.Value, error) {
 	var rawBytes []byte
 	var err error
 
@@ -122,7 +122,7 @@ func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, rend
 		}
 	}
 
-	var merged map[string]interface{}
+	var merged map[string]any
 	if err := json.Unmarshal(rawBytes, &merged); err != nil {
 		return nil, renderregion.Unknown, fmt.Errorf("decode mysekai data: %w", err)
 	}
@@ -131,7 +131,7 @@ func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, rend
 	// flatten updatedResources so that keys like userMysekaiFixtures are
 	// accessible at the top level, matching the merged-snapshot layout.
 	if len(c.rawMySekaiJSON) > 0 {
-		if updated, ok := merged["updatedResources"].(map[string]interface{}); ok {
+		if updated, ok := merged["updatedResources"].(map[string]any); ok {
 			for key, value := range updated {
 				merged[key] = value
 			}
@@ -141,7 +141,7 @@ func (c *Controller) decodeSnapshot(region string) (map[string]interface{}, rend
 	return merged, c.resolveRegion(region), nil
 }
 
-func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]interface{}, override *drawing.ProfileCardRequest) *drawing.ProfileCardRequest {
+func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]any, override *drawing.ProfileCardRequest) *drawing.ProfileCardRequest {
 	var profile *drawing.ProfileCardRequest
 	if override != nil {
 		cloned := *override
@@ -162,7 +162,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 	if profile == nil {
 		return nil
 	}
-	if updated, ok := merged["userMysekaiGamedata"].(map[string]interface{}); ok {
+	if updated, ok := merged["userMysekaiGamedata"].(map[string]any); ok {
 		if level := intNumber(updated["mysekaiRank"], 0); level > 0 {
 			profile.MysekaiLevel = &level
 		}

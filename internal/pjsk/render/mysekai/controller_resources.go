@@ -9,10 +9,10 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]interface{}, blueprints map[int]map[string]interface{}) map[int]struct{} {
+func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
 	result := map[int]struct{}{}
 	for _, raw := range nestedList(merged, "userMysekaiBlueprints") {
-		item, ok := raw.(map[string]interface{})
+		item, ok := raw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -29,7 +29,7 @@ func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]interface{}, bl
 	return result
 }
 
-func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]interface{}) map[int]struct{} {
+func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]any) map[int]struct{} {
 	result := map[int]struct{}{}
 	for _, blueprint := range blueprints {
 		if stringValue(blueprint["mysekaiCraftType"]) != "mysekai_fixture" {
@@ -43,14 +43,14 @@ func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]in
 	return result
 }
 
-func (c *Controller) extractVisitCharacters(region renderregion.Value, merged map[string]interface{}) []drawing.MysekaiVisitCharacter {
-	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]interface{})
+func (c *Controller) extractVisitCharacters(region renderregion.Value, merged map[string]any) []drawing.MysekaiVisitCharacter {
+	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]any)
 	if !ok {
 		return []drawing.MysekaiVisitCharacter{}
 	}
 
 	groupMap := c.masterdata.loadMapByID("mysekaiGameCharacterUnitGroups.json")
-	characters, ok := visit["userMysekaiGateCharacters"].([]interface{})
+	characters, ok := visit["userMysekaiGateCharacters"].([]any)
 	if !ok {
 		return []drawing.MysekaiVisitCharacter{}
 	}
@@ -58,7 +58,7 @@ func (c *Controller) extractVisitCharacters(region renderregion.Value, merged ma
 	result := make([]drawing.MysekaiVisitCharacter, 0, len(characters))
 	seen := map[int]struct{}{}
 	for _, item := range characters {
-		entry, ok := item.(map[string]interface{})
+		entry, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -101,7 +101,7 @@ func (c *Controller) extractVisitCharacters(region renderregion.Value, merged ma
 	return result
 }
 
-func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merged map[string]interface{}) []drawing.MysekaiSiteResourceNumber {
+func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merged map[string]any) []drawing.MysekaiSiteResourceNumber {
 	updated := nestedList(merged, "userMysekaiHarvestMaps")
 	if len(updated) == 0 {
 		return []drawing.MysekaiSiteResourceNumber{}
@@ -109,7 +109,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 
 	counts := map[int]map[string]int{5: {}, 7: {}, 6: {}, 8: {}}
 	for _, item := range updated {
-		siteMap, ok := item.(map[string]interface{})
+		siteMap, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -118,9 +118,9 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 			counts[siteID] = map[string]int{}
 		}
 
-		drops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]interface{})
+		drops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]any)
 		for _, rawDrop := range drops {
-			drop, ok := rawDrop.(map[string]interface{})
+			drop, ok := rawDrop.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -185,7 +185,7 @@ func (c *Controller) extractSiteResourceNumbers(region renderregion.Value, merge
 	return result
 }
 
-func (c *Controller) resourceImagePath(region renderregion.Value, key string, materialMap, itemMap, fixtureMap, musicRecordMap map[int]string, merged map[string]interface{}) (string, bool) {
+func (c *Controller) resourceImagePath(region renderregion.Value, key string, materialMap, itemMap, fixtureMap, musicRecordMap map[int]string, merged map[string]any) (string, bool) {
 	parts := strings.Split(key, "_")
 	if len(parts) < 2 {
 		return "", false
@@ -223,9 +223,9 @@ func (c *Controller) resourceImagePath(region renderregion.Value, key string, ma
 	return "", false
 }
 
-func (c *Controller) hasMysekaiMusicRecord(merged map[string]interface{}, recordID int) bool {
+func (c *Controller) hasMysekaiMusicRecord(merged map[string]any, recordID int) bool {
 	for _, item := range nestedList(merged, "userMysekaiMusicRecords") {
-		entry, ok := item.(map[string]interface{})
+		entry, ok := item.(map[string]any)
 		if ok && intNumber(entry["mysekaiMusicRecordId"], 0) == recordID {
 			return true
 		}
@@ -276,7 +276,7 @@ func mysekaiNormalizeResourceType(resourceType string) string {
 	}
 }
 
-func mysekaiBirthdayCharacterImageName(item map[string]interface{}) string {
+func mysekaiBirthdayCharacterImageName(item map[string]any) string {
 	if len(item) == 0 {
 		return ""
 	}

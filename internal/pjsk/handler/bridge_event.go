@@ -70,7 +70,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	if err != nil || len(eventEntities) == 0 {
 		return nil, fmt.Errorf("event master data not available")
 	}
-	type eventMasterEntry = map[string]interface{}
+	type eventMasterEntry = map[string]any
 	eventMaster := make(map[int]eventMasterEntry, len(eventEntities))
 	for _, e := range eventEntities {
 		id := int(e.GameID)
@@ -186,7 +186,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 }
 
 // buildEventHistoryFromMaster creates an EventHistory from master data.
-func buildEventHistoryFromMaster(master map[string]interface{}, eventID, eventPoint int, assetHelper *assets.AssetHelper, regionStr string) *drawing.EventHistory {
+func buildEventHistoryFromMaster(master map[string]any, eventID, eventPoint int, assetHelper *assets.AssetHelper, regionStr string) *drawing.EventHistory {
 	if len(master) == 0 {
 		return nil
 	}
@@ -212,7 +212,7 @@ func sortEventHistory(items []drawing.EventHistory) {
 	})
 }
 
-func stringVal(m map[string]interface{}, key string) string {
+func stringVal(m map[string]any, key string) string {
 	if v, ok := m[key]; ok {
 		if s, ok := v.(string); ok {
 			return s
@@ -221,7 +221,7 @@ func stringVal(m map[string]interface{}, key string) string {
 	return ""
 }
 
-func intVal(m map[string]interface{}, key string) int {
+func intVal(m map[string]any, key string) int {
 	if v, ok := m[key]; ok {
 		switch n := v.(type) {
 		case float64:

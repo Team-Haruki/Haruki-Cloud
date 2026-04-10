@@ -17,7 +17,7 @@ func (h *AliasHandler) GetMusicIDByAlias(c fiber.Ctx) error {
 	if !api.ValidateAlias(aliasStr) {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid alias")
 	}
-	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (interface{}, error) {
+	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (any, error) {
 		rows, err := h.svc.client.ChunithmMusicAlias.
 			Query().
 			Where(chunithmmusicalias.AliasEQ(aliasStr)).
@@ -38,7 +38,7 @@ func (h *AliasHandler) GetAliasesByMusicID(c fiber.Ctx) error {
 	if musicID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
 	}
-	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (interface{}, error) {
+	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (any, error) {
 		rows, err := h.svc.client.ChunithmMusicAlias.
 			Query().
 			Where(chunithmmusicalias.MusicIDEQ(musicID)).

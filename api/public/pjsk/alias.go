@@ -11,7 +11,7 @@ import (
 
 func (h *AliasHandler) GetGlobalAliasToID(c fiber.Ctx) error {
 	params := getAliasParams(c)
-	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (interface{}, error) {
+	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (any, error) {
 		rows, err := h.svc.client.Alias.Query().
 			Where(
 				alias.AliasTypeEQ(params.AliasType),
@@ -31,7 +31,7 @@ func (h *AliasHandler) GetGlobalAliasToID(c fiber.Ctx) error {
 
 func (h *AliasHandler) GetGlobalAliasesByID(c fiber.Ctx) error {
 	params := getAliasParams(c)
-	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (interface{}, error) {
+	return api.WithCache(c, h.svc.redisClient, CacheNSAlias, func(_ string) (any, error) {
 		rows, err := h.svc.client.Alias.Query().
 			Where(
 				alias.AliasTypeEQ(params.AliasType),

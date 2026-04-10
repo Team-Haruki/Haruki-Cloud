@@ -13,7 +13,7 @@ func (c *Controller) loadMusicBoardMetaMap(region string) map[int][]drawing.Musi
 		return nil
 	}
 
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(payload, &items); err != nil {
 		return nil
 	}

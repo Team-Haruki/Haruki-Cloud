@@ -128,18 +128,18 @@ func (r *RemoteDeckRecommender) Enabled() bool {
 
 func (r *RemoteDeckRecommender) Close() {}
 
-func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]interface{}) []map[string]interface{} {
+func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[string]any {
 	if option == nil {
 		return nil
 	}
 	alg, _ := option["algorithm"].(string)
 	alg = strings.ToLower(strings.TrimSpace(alg))
 	if alg != "all" {
-		return []map[string]interface{}{option}
+		return []map[string]any{option}
 	}
-	result := make([]map[string]interface{}, 0, len(r.defaultAlgs))
+	result := make([]map[string]any, 0, len(r.defaultAlgs))
 	for _, a := range r.defaultAlgs {
-		copied := make(map[string]interface{}, len(option))
+		copied := make(map[string]any, len(option))
 		for k, v := range option {
 			copied[k] = v
 		}

@@ -38,7 +38,7 @@ type PlayerRankingSchema struct {
 	Score                *int                  `json:"score,omitempty"`
 	UserCard             *RankingUserCard      `json:"userCard,omitempty"`
 	UserCheerfulCarnival *UserCheerfulCarnival `json:"userCheerfulCarnival,omitempty"`
-	UserHonorMissions    []interface{}         `json:"userHonorMissions,omitempty"`
+	UserHonorMissions    []any         `json:"userHonorMissions,omitempty"`
 	UserID               *int                  `json:"userId,omitempty"`
 	UserProfile          *RankingUserProfile   `json:"userProfile,omitempty"`
 	UserProfileHonors    []RankingProfileHonor `json:"userProfileHonors,omitempty"`

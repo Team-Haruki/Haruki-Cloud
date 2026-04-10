@@ -83,8 +83,8 @@ func TestBuildContextExtractsAtFromInterfaceMap(t *testing.T) {
 		Platform:    "qq",
 		MessageType: MessageTypeGroup,
 		Message: onebot11.Message{
-			{Type: "text", Data: map[string]interface{}{"text": "/sk "}},
-			{Type: "at", Data: map[string]interface{}{"qq": 1234567890}},
+			{Type: "text", Data: map[string]any{"text": "/sk "}},
+			{Type: "at", Data: map[string]any{"qq": 1234567890}},
 		},
 	}
 

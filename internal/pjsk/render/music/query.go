@@ -37,7 +37,7 @@ type ListQuery struct {
 	IncludeLeaks    bool                                `json:"include_leaks,omitempty"`
 	UserResults     map[int]string                      `json:"user_results,omitempty"`
 	Title           *string                             `json:"title,omitempty"`
-	TitleStyle      map[string]interface{}              `json:"title_style,omitempty"`
+	TitleStyle      map[string]any              `json:"title_style,omitempty"`
 	TitleShadow     bool                                `json:"title_shadow,omitempty"`
 	Keyword         string                              `json:"keyword,omitempty"`
 	ShowID          bool                                `json:"show_id,omitempty"`
@@ -50,7 +50,7 @@ type ProgressQuery struct {
 	Counts      []drawing.PlayProgressCount `json:"counts,omitempty"`
 	UserResults map[int]string              `json:"user_results,omitempty"`
 	Title       *string                     `json:"title,omitempty"`
-	TitleStyle  map[string]interface{}      `json:"title_style,omitempty"`
+	TitleStyle  map[string]any      `json:"title_style,omitempty"`
 	Profile     *drawing.ProfileCardRequest `json:"-"`
 }
 
@@ -74,7 +74,7 @@ type RewardsDetailQuery struct {
 	RankRewards   int                                   `json:"rank_rewards"`
 	ComboRewards  map[string][]drawing.MusicComboReward `json:"combo_rewards"`
 	Title         *string                               `json:"title,omitempty"`
-	TitleStyle    map[string]interface{}                `json:"title_style,omitempty"`
+	TitleStyle    map[string]any                `json:"title_style,omitempty"`
 	JewelIconPath *string                               `json:"jewel_icon_path,omitempty"`
 	ShardIconPath *string                               `json:"shard_icon_path,omitempty"`
 	Profile       *drawing.ProfileCardRequest           `json:"-"`
@@ -85,7 +85,7 @@ type RewardsBasicQuery struct {
 	RankRewards   string                      `json:"rank_rewards"`
 	ComboRewards  map[string]string           `json:"combo_rewards"`
 	Title         *string                     `json:"title,omitempty"`
-	TitleStyle    map[string]interface{}      `json:"title_style,omitempty"`
+	TitleStyle    map[string]any      `json:"title_style,omitempty"`
 	JewelIconPath *string                     `json:"jewel_icon_path,omitempty"`
 	ShardIconPath *string                     `json:"shard_icon_path,omitempty"`
 	Profile       *drawing.ProfileCardRequest `json:"-"`

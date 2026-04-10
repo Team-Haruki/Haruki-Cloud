@@ -26,7 +26,7 @@ func TestBuildCustomRoomScoreRequestNormalizesNestedCoverPaths(t *testing.T) {
 	req, err := controller.BuildCustomRoomScoreRequest(drawing.CustomRoomScoreRequest{
 		TargetPoint:    100,
 		CandidatePairs: [][]int{{1, 2}},
-		MusicListMap: map[int][]map[string]interface{}{
+		MusicListMap: map[int][]map[string]any{
 			10: {
 				{"music_cover": "jacket/jacket_s_002_rip/jacket_s_002.png"},
 			},

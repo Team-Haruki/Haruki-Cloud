@@ -146,7 +146,7 @@ func (p *localEventProvider) GetAll(_ context.Context) []*masterdata.Event {
 	return result
 }
 
-func (p *localEventProvider) GetCards(_ context.Context, eventID int) ([]*masterdata.Card, error) {
+func (p *localEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
 	if err := p.ensureEventCards(); err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (p *localEventProvider) GetCards(_ context.Context, eventID int) ([]*master
 	}
 	result := make([]*masterdata.Card, 0, len(cardIDs))
 	for _, id := range cardIDs {
-		card, err := p.cards.GetByID(context.Background(), id)
+		card, err := p.cards.GetByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +173,7 @@ func (p *localEventProvider) GetBannerCharacterID(ctx context.Context, eventID i
 	minCardID := -1
 	var selected *masterdata.Card
 	for _, cardInfo := range cards {
-		supplyType := p.cards.GetSupplyType(context.Background(), cardInfo)
+		supplyType := p.cards.GetSupplyType(ctx, cardInfo)
 		if strings.Contains(supplyType, "festival") {
 			continue
 		}

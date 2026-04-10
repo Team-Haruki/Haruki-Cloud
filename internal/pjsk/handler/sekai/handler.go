@@ -29,7 +29,7 @@ type SekaiCommandHandler struct {
 	Regions     []renderregion.Value
 	PrefixArgs  []string
 	ParseUIDArg *bool
-	handleFunc  func(SekaiHandlerContext) (interface{}, error)
+	handleFunc  func(SekaiHandlerContext) (any, error)
 }
 
 func (s *SekaiHandlerContext) Region() renderregion.Value {
@@ -51,7 +51,7 @@ func (s *SekaiHandlerContext) SetArgs(args string) {
 	s.ArgText = args
 }
 
-func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (interface{}, error) {
+func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (any, error) {
 	if skh.handleFunc == nil {
 		cmdName := "未定义"
 		if len(skh.Commands) > 0 {

@@ -65,11 +65,11 @@ func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {
 		t.Fatalf("expected normalized raw bytes, got: %s", string(rawBytes))
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(rawBytes, &payload); err != nil {
 		t.Fatalf("decode normalized raw bytes: %v", err)
 	}
-	if _, ok := payload["userGamedata"].(map[string]interface{}); !ok {
+	if _, ok := payload["userGamedata"].(map[string]any); !ok {
 		t.Fatalf("unexpected normalized payload: %+v", payload["userGamedata"])
 	}
 
@@ -78,7 +78,7 @@ func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {
 		t.Fatalf("RawValue returned error: %v", err)
 	}
 
-	var decks []map[string]interface{}
+	var decks []map[string]any
 	if err := json.Unmarshal(frameBytes, &decks); err != nil {
 		t.Fatalf("decode raw value: %v", err)
 	}

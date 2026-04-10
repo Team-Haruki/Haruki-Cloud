@@ -57,7 +57,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, result)
 }
 
-func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]interface{}, error) {
+func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {
 	eventID := 0
 	if query.EventID != nil && *query.EventID > 0 {
 		eventID = *query.EventID
@@ -73,7 +73,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		limit = 6
 	}
 
-	option := map[string]interface{}{
+	option := map[string]any{
 		"region":                    region.String(),
 		"algorithm":                 "all",
 		"timeout_ms":                c.recommendTimeoutMs(),
@@ -88,7 +88,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		"rarity_3_config":           defaultDeckConfig34bd(),
 		"rarity_4_config":           defaultDeckConfig34bd(),
 		"rarity_birthday_config":    defaultDeckConfig34bd(),
-		"single_card_configs":       []interface{}{},
+		"single_card_configs":       []any{},
 		"best_skill_as_leader":      true,
 		"keep_after_training_state": false,
 	}

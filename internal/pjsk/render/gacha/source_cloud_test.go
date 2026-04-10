@@ -9,19 +9,19 @@ import (
 )
 
 func TestConvertGachaEntityDecodesNestedFields(t *testing.T) {
-	rarityRatesJSON, _ := json.Marshal([]map[string]interface{}{
+	rarityRatesJSON, _ := json.Marshal([]map[string]any{
 		{"id": 1, "groupId": 2, "cardRarityType": "rarity_4", "lotteryType": "normal", "rate": 3.0},
 	})
-	detailsJSON, _ := json.Marshal([]map[string]interface{}{
+	detailsJSON, _ := json.Marshal([]map[string]any{
 		{"id": 10, "gachaId": 101, "cardId": 2001, "weight": 50, "isWish": true},
 	})
-	behaviorsJSON, _ := json.Marshal([]map[string]interface{}{
+	behaviorsJSON, _ := json.Marshal([]map[string]any{
 		{"id": 20, "gachaId": 101, "gachaBehaviorType": "over_rarity_3_once", "costResourceType": "jewel", "costResourceQuantity": 3000, "spinCount": 10, "executeLimit": 1, "groupId": 1, "priority": 1, "resourceCategory": "currency", "gachaSpinnableType": "normal"},
 	})
-	pickupsJSON, _ := json.Marshal([]map[string]interface{}{
+	pickupsJSON, _ := json.Marshal([]map[string]any{
 		{"id": 30, "gachaId": 101, "cardId": 2001, "gachaPickupType": "pickup"},
 	})
-	informationJSON, _ := json.Marshal(map[string]interface{}{
+	informationJSON, _ := json.Marshal(map[string]any{
 		"gachaId": 101, "summary": "summary", "description": "desc",
 	})
 

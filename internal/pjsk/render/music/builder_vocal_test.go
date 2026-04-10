@@ -92,7 +92,7 @@ func TestBuildMusicDetailRequestUsesNameForOutsideCharacters(t *testing.T) {
 		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
 	}
 
-	entry, ok := req.Vocal.VocalInfo["30_an_test"].(map[string]interface{})
+	entry, ok := req.Vocal.VocalInfo["30_an_test"].(map[string]any)
 	if !ok {
 		t.Fatalf("unexpected vocal entry: %#v", req.Vocal.VocalInfo)
 	}

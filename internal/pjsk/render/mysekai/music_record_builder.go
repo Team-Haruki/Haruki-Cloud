@@ -22,7 +22,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 
 	obtainedRecords := map[int]int64{}
 	for _, raw := range nestedList(merged, "userMysekaiMusicRecords") {
-		item, _ := raw.(map[string]interface{})
+		item, _ := raw.(map[string]any)
 		obtainedRecords[intNumber(item["mysekaiMusicRecordId"], 0)] = int64Number(item["obtainedAt"], 0)
 	}
 
@@ -41,7 +41,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		"other":            {},
 	}
 
-	limitedByMusic := map[int][]map[string]interface{}{}
+	limitedByMusic := map[int][]map[string]any{}
 	for _, item := range limitedTimes {
 		musicID := intNumber(item["musicId"], 0)
 		if musicID != 0 {

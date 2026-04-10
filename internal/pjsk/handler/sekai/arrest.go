@@ -90,7 +90,7 @@ func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
 			},
 			Path: "arrest",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			logger.Infof("uidArg: %s, event: %+v", ctx.UIDArg(), ctx.GetEvent().Message)
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
@@ -109,7 +109,7 @@ func (sekaiHandlers) RegTimeHandle() SekaiCommandHandler {
 			},
 			Path: "profile/reg-time",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err

@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int, limit int) (map[int][]map[string]interface{}, error) {
+func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int, limit int) (map[int][]map[string]any, error) {
 	if c == nil {
 		return nil, fmt.Errorf("music controller is not configured")
 	}
 	if len(eventRates) == 0 {
-		return map[int][]map[string]interface{}{}, nil
+		return map[int][]map[string]any{}, nil
 	}
 
 	resolvedRegion, source, builder, err := c.resolveBuilder(region)
@@ -26,7 +26,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 		return nil, fmt.Errorf("music meta data is unavailable")
 	}
 
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(payload, &items); err != nil {
 		return nil, fmt.Errorf("decode music meta data: %w", err)
 	}
@@ -38,7 +38,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 		}
 	}
 	if len(wantedRates) == 0 {
-		return map[int][]map[string]interface{}{}, nil
+		return map[int][]map[string]any{}, nil
 	}
 
 	musicByID := make(map[int]*musicCandidate, len(source.GetMusics()))
@@ -60,7 +60,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 		}
 	}
 
-	result := make(map[int][]map[string]interface{}, len(wantedRates))
+	result := make(map[int][]map[string]any, len(wantedRates))
 	seenByRate := make(map[int]map[int]struct{}, len(wantedRates))
 	for _, item := range items {
 		if !strings.EqualFold(strings.TrimSpace(stringValue(item["difficulty"])), "master") {
@@ -88,7 +88,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 		}
 		seenByRate[rate][musicID] = struct{}{}
 
-		result[rate] = append(result[rate], map[string]interface{}{
+		result[rate] = append(result[rate], map[string]any{
 			"music_id":    candidate.id,
 			"music_title": candidate.title,
 			"music_cover": candidate.coverPath,

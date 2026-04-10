@@ -15,7 +15,7 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, true, true, false)
 			if err != nil {
 				return nil, err
@@ -32,7 +32,7 @@ func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 		},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
@@ -52,7 +52,7 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -72,7 +72,7 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -91,7 +91,7 @@ func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKPlayerTraceParams(ctx)
 			if err != nil {
 				return nil, err
@@ -113,7 +113,7 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -129,7 +129,7 @@ func (sekaiHandlers) WinratePredictHandle() SekaiCommandHandler {
 			"/pjsk winrate predict", "/胜率预测", "/5v5预测", "/胜率", "/5v5胜率", "/预测胜率", "/预测5v5",
 		}},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-winrate"), nil
 		},
 	}
@@ -144,7 +144,7 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -164,7 +164,7 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -183,7 +183,7 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
@@ -202,7 +202,7 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (interface{}, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err

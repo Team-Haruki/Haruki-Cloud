@@ -21,13 +21,13 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 
 	userMaterials := map[int]int{}
 	for _, raw := range nestedList(merged, "userMysekaiMaterials") {
-		item, _ := raw.(map[string]interface{})
+		item, _ := raw.(map[string]any)
 		userMaterials[intNumber(item["mysekaiMaterialId"], 0)] = intNumber(item["quantity"], 0)
 	}
 
 	specLevels := map[int]int{}
 	for _, raw := range nestedList(merged, "userMysekaiGates") {
-		item, _ := raw.(map[string]interface{})
+		item, _ := raw.(map[string]any)
 		gateID := intNumber(item["mysekaiGateId"], 0)
 		if gateID != 0 {
 			specLevels[gateID] = intNumber(item["mysekaiGateLevel"], 0)

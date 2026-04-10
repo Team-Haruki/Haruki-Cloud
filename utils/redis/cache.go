@@ -63,7 +63,7 @@ func CacheKeyBuilder(c fiber.Ctx, namespace string) string {
 	return fmt.Sprintf("%s:%s:query=%s", namespace, fullPath, queryHash)
 }
 
-func SetCache(ctx context.Context, client *redis.Client, key string, value interface{}, ttl time.Duration) error {
+func SetCache(ctx context.Context, client *redis.Client, key string, value any, ttl time.Duration) error {
 	data, err := sonic.Marshal(value)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func SetCache(ctx context.Context, client *redis.Client, key string, value inter
 	return client.Set(ctx, key, data, ttl).Err()
 }
 
-func GetCache(ctx context.Context, client *redis.Client, key string, out interface{}) (bool, error) {
+func GetCache(ctx context.Context, client *redis.Client, key string, out any) (bool, error) {
 	val, err := client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
 		return false, nil

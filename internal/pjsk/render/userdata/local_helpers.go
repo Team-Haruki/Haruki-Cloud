@@ -23,22 +23,22 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	var baseMap map[string]interface{}
+	var baseMap map[string]any
 	if err := json.Unmarshal(userData, &baseMap); err != nil {
 		return nil, fmt.Errorf("decode user snapshot for mysekai merge: %w", err)
 	}
 
-	var mySekaiMap map[string]interface{}
+	var mySekaiMap map[string]any
 	if err := json.Unmarshal(mySekaiData, &mySekaiMap); err != nil {
 		return nil, fmt.Errorf("decode mysekai snapshot: %w", err)
 	}
 
-	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]interface{}); ok {
+	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any); ok {
 		for key, value := range updatedResources {
 			// Don't overwrite a non-empty suite array with an empty mysekai delta.
 			if existing, exists := baseMap[key]; exists {
-				if existingSlice, ok := existing.([]interface{}); ok && len(existingSlice) > 0 {
-					if newSlice, ok := value.([]interface{}); ok && len(newSlice) == 0 {
+				if existingSlice, ok := existing.([]any); ok && len(existingSlice) > 0 {
+					if newSlice, ok := value.([]any); ok && len(newSlice) == 0 {
 						continue
 					}
 				}
@@ -130,9 +130,9 @@ func makeRelativeAsset(assetHelper *assets.AssetHelper, target string) string {
 	return filepath.ToSlash(filepath.Clean(target))
 }
 
-func buildUserCardEntries(cards []RawUserCard) []interface{} {
+func buildUserCardEntries(cards []RawUserCard) []any {
 	seen := make(map[int]struct{}, len(cards))
-	entries := make([]interface{}, 0, len(cards))
+	entries := make([]any, 0, len(cards))
 	for _, card := range cards {
 		if card.CardID == 0 {
 			continue
@@ -141,7 +141,7 @@ func buildUserCardEntries(cards []RawUserCard) []interface{} {
 			continue
 		}
 		seen[card.CardID] = struct{}{}
-		entries = append(entries, map[string]interface{}{
+		entries = append(entries, map[string]any{
 			"cardId":                card.CardID,
 			"level":                 card.Level,
 			"masterRank":            card.MasterRank,

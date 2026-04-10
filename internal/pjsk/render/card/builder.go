@@ -222,7 +222,7 @@ func extractOwnedCards(detailedProfile *drawing.DetailedProfileCardRequest) map[
 	owned := make(map[int]ownedCardState, len(detailedProfile.UserCards))
 	for _, raw := range detailedProfile.UserCards {
 		switch item := raw.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			state := ownedCardState{
 				CardID:                intValue(item["cardId"], item["card_id"]),
 				Level:                 intValue(item["level"]),
@@ -318,7 +318,7 @@ func onlyHasAfterTrainingCard(card *masterdata.Card) bool {
 	return card != nil && strings.EqualFold(card.InitialSpecialTrainingStatus, "done")
 }
 
-func intValue(values ...interface{}) int {
+func intValue(values ...any) int {
 	for _, raw := range values {
 		switch value := raw.(type) {
 		case int:
@@ -332,7 +332,7 @@ func intValue(values ...interface{}) int {
 	return 0
 }
 
-func stringValueAny(values ...interface{}) string {
+func stringValueAny(values ...any) string {
 	for _, raw := range values {
 		if value, ok := raw.(string); ok {
 			return strings.TrimSpace(value)

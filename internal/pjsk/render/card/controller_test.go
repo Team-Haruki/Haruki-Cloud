@@ -70,7 +70,7 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
 		{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"},
 		{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Card B", AssetBundleName: "card_b"},
-	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []interface{}{map[string]interface{}{"cardId": 1002}}}, false, false, true)
+	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1002}}}, false, false, true)
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
@@ -105,7 +105,7 @@ func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *test
 	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
 	controller := NewController(source, nil, nil, nil)
 	useAfterTraining := false
-	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: &useAfterTraining, DetailedProfile: &drawing.DetailedProfileCardRequest{UserCards: []interface{}{map[string]interface{}{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}}}}})
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: &useAfterTraining, DetailedProfile: &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}}}}})
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
@@ -146,9 +146,9 @@ func TestBuildCardBoxRequestUsesOwnedCardVisualStateFromDetailedProfile(t *testi
 	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
 		{ID: 190, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a", InitialSpecialTrainingStatus: "not_done"},
 		{ID: 191, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card B", AssetBundleName: "card_b", InitialSpecialTrainingStatus: "not_done"},
-	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []interface{}{
-		map[string]interface{}{"cardId": 190, "level": 60, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "normal"},
-		map[string]interface{}{"cardId": 191, "level": 50, "masterRank": 2, "specialTrainingStatus": "done", "defaultImage": "special_training"},
+	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{
+		map[string]any{"cardId": 190, "level": 60, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "normal"},
+		map[string]any{"cardId": 191, "level": 50, "masterRank": 2, "specialTrainingStatus": "done", "defaultImage": "special_training"},
 	}}, false, false, true)
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)

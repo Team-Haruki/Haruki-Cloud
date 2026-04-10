@@ -15,7 +15,7 @@ type CardFullThumbnailRequest struct {
 	BirthdayIconPath  *string                `json:"birthday_icon_path,omitempty"`
 	IsAfterTraining   *bool                  `json:"is_after_training,omitempty"`
 	CustomText        *string                `json:"custom_text,omitempty"`
-	CardLevel         map[string]interface{} `json:"card_level,omitempty"`
+	CardLevel         map[string]any `json:"card_level,omitempty"`
 	IsPcard           bool                   `json:"is_pcard"`
 }
 
@@ -38,8 +38,8 @@ type CardSkill struct {
 type CardEventInfo struct {
 	EventID         int         `json:"event_id"`
 	EventName       string      `json:"event_name"`
-	StartAt         interface{} `json:"start_at"` // datetime | int | str
-	EndAt           interface{} `json:"end_at"`
+	StartAt         any `json:"start_at"` // datetime | int | str
+	EndAt           any `json:"end_at"`
 	EventBannerPath string      `json:"event_banner_path"`
 	BonusAttr       *string     `json:"bonus_attr,omitempty"`
 	Unit            *string     `json:"unit,omitempty"`
@@ -49,8 +49,8 @@ type CardEventInfo struct {
 type CardGachaInfo struct {
 	GachaID         int         `json:"gacha_id"`
 	GachaName       string      `json:"gacha_name"`
-	StartAt         interface{} `json:"start_at"`
-	EndAt           interface{} `json:"end_at"`
+	StartAt         any `json:"start_at"`
+	EndAt           any `json:"end_at"`
 	GachaBannerPath string      `json:"gacha_banner_path"`
 }
 
@@ -173,10 +173,10 @@ type DeckRequest struct {
 	ExcludedCards              []int                      `json:"excluded_cards,omitempty"`
 	MultiLiveScoreUpLowerBound *float64                   `json:"multi_live_score_up_lower_bound,omitempty"`
 	KeepAfterTrainingState     bool                       `json:"keep_after_training_state"`
-	ModelName                  []interface{}              `json:"model_name,omitempty"`
+	ModelName                  []any              `json:"model_name,omitempty"`
 	CanvasThumbnailPath        *string                    `json:"canvas_thumbnail_path,omitempty"`
 	FixedCardsID               []int                      `json:"fixed_cards_id,omitempty"`
 	FixedCharactersID          []int                      `json:"fixed_characters_id,omitempty"`
-	CostTimes                  map[string]interface{}     `json:"cost_times,omitempty"`
-	WaitTimes                  map[string]interface{}     `json:"wait_times,omitempty"`
+	CostTimes                  map[string]any     `json:"cost_times,omitempty"`
+	WaitTimes                  map[string]any     `json:"wait_times,omitempty"`
 }

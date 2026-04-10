@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]interface{}, result *RecommendResult) (*drawing.DeckRequest, error) {
+func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, result *RecommendResult) (*drawing.DeckRequest, error) {
 	if result == nil || len(result.Decks) == 0 {
 		return nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
@@ -122,7 +122,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	return request, nil
 }
 
-func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]interface{}, query AutoQuery) {
+func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]any, query AutoQuery) {
 	if request == nil {
 		return
 	}

@@ -125,7 +125,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		return nil, err
 	}
 	now := time.Now().UnixMilli()
-	list := make([]map[string]interface{}, 0)
+	list := make([]map[string]any, 0)
 	jackets := make(map[int]string)
 
 	for _, musicInfo := range source.GetMusics() {
@@ -156,7 +156,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 			continue
 		}
 
-		list = append(list, map[string]interface{}{
+		list = append(list, map[string]any{
 			"id":         musicInfo.ID,
 			"difficulty": level,
 			"release_at": musicInfo.PublishedAt,
@@ -168,7 +168,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
 
-	userResults := make(map[int]interface{})
+	userResults := make(map[int]any)
 	if query.UserResults != nil {
 		for musicID, result := range query.UserResults {
 			userResults[musicID] = result

@@ -11,15 +11,15 @@ type localMasterdataStore struct {
 	dir string
 
 	mu       sync.Mutex
-	lists    map[string][]map[string]interface{}
-	mapsByID map[string]map[int]map[string]interface{}
+	lists    map[string][]map[string]any
+	mapsByID map[string]map[int]map[string]any
 }
 
 func newLocalMasterdataStore(dir string) *localMasterdataStore {
 	return &localMasterdataStore{
 		dir:      filepath.Clean(dir),
-		lists:    make(map[string][]map[string]interface{}),
-		mapsByID: make(map[string]map[int]map[string]interface{}),
+		lists:    make(map[string][]map[string]any),
+		mapsByID: make(map[string]map[int]map[string]any),
 	}
 }
 
@@ -27,7 +27,7 @@ func (s *localMasterdataStore) Configured() bool {
 	return s != nil && s.dir != "" && s.dir != "."
 }
 
-func (s *localMasterdataStore) loadList(filename string) []map[string]interface{} {
+func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 	if s == nil || !s.Configured() {
 		return nil
 	}
@@ -43,7 +43,7 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]interface{
 	if err != nil {
 		return nil
 	}
-	var items []map[string]interface{}
+	var items []map[string]any
 	if err := json.Unmarshal(data, &items); err != nil {
 		return nil
 	}
@@ -54,9 +54,9 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]interface{
 	return items
 }
 
-func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]interface{} {
+func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]any {
 	if s == nil || !s.Configured() {
-		return map[int]map[string]interface{}{}
+		return map[int]map[string]any{}
 	}
 
 	s.mu.Lock()
@@ -67,7 +67,7 @@ func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]i
 	s.mu.Unlock()
 
 	items := s.loadList(filename)
-	result := make(map[int]map[string]interface{}, len(items))
+	result := make(map[int]map[string]any, len(items))
 	for _, item := range items {
 		id := intNumber(item["id"], 0)
 		if id == 0 {
@@ -82,7 +82,7 @@ func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]i
 	return result
 }
 
-func (s *localMasterdataStore) loadObject(filename string, target interface{}) bool {
+func (s *localMasterdataStore) loadObject(filename string, target any) bool {
 	if s == nil || !s.Configured() {
 		return false
 	}

@@ -65,7 +65,7 @@ func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remote
 		return nil, fmt.Errorf("deck-service cache_userdata returned empty userdata_hash")
 	}
 
-	recommendPayload := map[string]interface{}{
+	recommendPayload := map[string]any{
 		"region":        strings.ToLower(strings.TrimSpace(req.Region)),
 		"batch_options": req.BatchOption,
 		"userdata_hash": cacheResp.UserdataHash,
@@ -127,7 +127,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remot
 	return out, nil
 }
 
-func (r *RemoteDeckRecommender) doRecommendLegacyOption(req RecommendRequest, option map[string]interface{}) ([]remoteRecommendDeck, error) {
+func (r *RemoteDeckRecommender) doRecommendLegacyOption(req RecommendRequest, option map[string]any) ([]remoteRecommendDeck, error) {
 	payload := cloneRecommendOption(option)
 	payload["region"] = strings.ToLower(strings.TrimSpace(req.Region))
 	if len(req.UserData) > 0 {
@@ -163,7 +163,7 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 	}
 
 	if !masterReady {
-		req := map[string]interface{}{
+		req := map[string]any{
 			"base_dir": r.masterdataDir,
 			"region":   region,
 		}
@@ -173,7 +173,7 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 	}
 
 	if hash != "" && !musicReady {
-		req := map[string]interface{}{"region": region}
+		req := map[string]any{"region": region}
 		// Prefer sending bytes directly — container cannot access host file paths.
 		if len(musicMeta) > 0 {
 			req["data"] = string(musicMeta)

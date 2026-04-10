@@ -300,7 +300,7 @@ func (p *localMusicProvider) GetOutsideCharacterByID(_ context.Context, id int) 
 	return name, nil
 }
 
-func (p *localMusicProvider) GetPrimaryEventByMusicID(_ context.Context, musicID int) (*masterdata.Event, error) {
+func (p *localMusicProvider) GetPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
 	if err := p.ensureEventMusics(); err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (p *localMusicProvider) GetPrimaryEventByMusicID(_ context.Context, musicID
 	}
 	var earliest *masterdata.Event
 	for _, eid := range eventIDs {
-		ev, err := p.events.GetByID(context.Background(), eid)
+		ev, err := p.events.GetByID(ctx, eid)
 		if err != nil {
 			continue
 		}

@@ -83,7 +83,7 @@ func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.
 		IsHideUID:       true,
 		LeaderImagePath: leaderPath,
 		HasFrame:        false,
-		UserCards:       []interface{}{},
+		UserCards:       []any{},
 	}
 }
 
@@ -230,7 +230,7 @@ func (c *Controller) resolveStaticIcon(explicit *string, filename string) *strin
 	return &path
 }
 
-func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID int, difficulty string) map[string]interface{} {
+func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID int, difficulty string) map[string]any {
 	diff := normalizeDifficulty(difficulty)
 	if diff == "" || musicID <= 0 {
 		return nil

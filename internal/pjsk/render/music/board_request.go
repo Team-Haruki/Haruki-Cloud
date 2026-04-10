@@ -169,9 +169,9 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		return showRows[i].Rank < showRows[j].Rank
 	})
 
-	specMidDiffs := make([][]interface{}, 0, len(specs))
+	specMidDiffs := make([][]any, 0, len(specs))
 	for _, spec := range specs {
-		specMidDiffs = append(specMidDiffs, []interface{}{spec.MusicID, spec.Difficulty})
+		specMidDiffs = append(specMidDiffs, []any{spec.MusicID, spec.Difficulty})
 	}
 
 	items := make([]drawing.MusicBoardItem, 0, len(showRows))

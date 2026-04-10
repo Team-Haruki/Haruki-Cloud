@@ -11,8 +11,8 @@ import (
 // buildMapResourceDrops builds the resource drops list for a single map site.
 func (c *Controller) buildMapResourceDrops(
 	region renderregion.Value,
-	merged map[string]interface{},
-	rawDrops []interface{},
+	merged map[string]any,
+	rawDrops []any,
 	materialMap, materialRarityMap, itemMap, fixtureMap, musicRecordMap map[int]string,
 ) []drawing.MysekaiMsrMapResourceDrop {
 	type groupedMysekaiResourceDrop struct {
@@ -31,7 +31,7 @@ func (c *Controller) buildMapResourceDrops(
 
 	resourceDropsByPos := make(map[string]map[string]*groupedMysekaiResourceDrop)
 	for _, raw := range rawDrops {
-		drop, ok := raw.(map[string]interface{})
+		drop, ok := raw.(map[string]any)
 		if !ok {
 			continue
 		}

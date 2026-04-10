@@ -5,7 +5,7 @@ import (
 "strings"
 )
 
-func intNumber(value interface{}, fallback int) int {
+func intNumber(value any, fallback int) int {
 	switch v := value.(type) {
 	case float64:
 		return int(v)
@@ -25,7 +25,7 @@ func intNumber(value interface{}, fallback int) int {
 	return fallback
 }
 
-func floatNumber(value interface{}, fallback float64) float64 {
+func floatNumber(value any, fallback float64) float64 {
 	switch v := value.(type) {
 	case float64:
 		return v
@@ -45,7 +45,7 @@ func floatNumber(value interface{}, fallback float64) float64 {
 	return fallback
 }
 
-func int64Number(value interface{}, fallback int64) int64 {
+func int64Number(value any, fallback int64) int64 {
 	switch v := value.(type) {
 	case float64:
 		return int64(v)
@@ -65,12 +65,12 @@ func int64Number(value interface{}, fallback int64) int64 {
 	return fallback
 }
 
-func boolValue(value interface{}) bool {
+func boolValue(value any) bool {
 	v, ok := value.(bool)
 	return ok && v
 }
 
-func stringValue(value interface{}) string {
+func stringValue(value any) string {
 	v, ok := value.(string)
 	if !ok {
 		return ""
@@ -78,26 +78,26 @@ func stringValue(value interface{}) string {
 	return strings.TrimSpace(v)
 }
 
-func nestedList(root map[string]interface{}, key string) []interface{} {
+func nestedList(root map[string]any, key string) []any {
 	if root == nil {
 		return nil
 	}
-	if items, ok := root[key].([]interface{}); ok {
+	if items, ok := root[key].([]any); ok {
 		return items
 	}
-	if updated, ok := root["updatedResources"].(map[string]interface{}); ok {
-		if items, ok := updated[key].([]interface{}); ok {
+	if updated, ok := root["updatedResources"].(map[string]any); ok {
+		if items, ok := updated[key].([]any); ok {
 			return items
 		}
 	}
 	return nil
 }
 
-func nestedInt(root map[string]interface{}, parent, child string) int {
+func nestedInt(root map[string]any, parent, child string) int {
 	if root == nil {
 		return 0
 	}
-	parentMap, ok := root[parent].(map[string]interface{})
+	parentMap, ok := root[parent].(map[string]any)
 	if !ok {
 		return 0
 	}

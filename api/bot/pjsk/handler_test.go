@@ -332,7 +332,7 @@ func assertSingleImageMessage(t *testing.T, body []byte) {
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("expected single image message, got %+v", message)
 	}
-	data, ok := message[0].Data.(map[string]interface{})
+	data, ok := message[0].Data.(map[string]any)
 	if !ok {
 		t.Fatalf("unexpected image segment data: %#v", message[0].Data)
 	}
@@ -348,7 +348,7 @@ func assertSingleTextMessage(t *testing.T, body []byte, want string) {
 	if len(message) != 1 || message[0].Type != "text" {
 		t.Fatalf("expected single text message, got %+v", message)
 	}
-	data, ok := message[0].Data.(map[string]interface{})
+	data, ok := message[0].Data.(map[string]any)
 	if !ok {
 		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
 	}
@@ -1194,7 +1194,7 @@ func assertSingleTextMessageContains(t *testing.T, body []byte, wantPart string)
 	if len(message) != 1 || message[0].Type != "text" {
 		t.Fatalf("expected single text message, got %+v", message)
 	}
-	data, ok := message[0].Data.(map[string]interface{})
+	data, ok := message[0].Data.(map[string]any)
 	if !ok {
 		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
 	}
@@ -1550,7 +1550,7 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 	}
 
 	// Decode MsgPack response
-	var envelope map[string]interface{}
+	var envelope map[string]any
 	if err := noiseMP.Unmarshal(decrypted, &envelope); err != nil {
 		t.Fatalf("msgpack unmarshal response: %v raw_len=%d", err, len(decrypted))
 	}

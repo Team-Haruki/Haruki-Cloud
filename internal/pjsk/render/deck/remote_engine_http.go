@@ -12,7 +12,7 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
-func (r *RemoteDeckRecommender) postJSON(path string, requestBody interface{}, responseBody interface{}) error {
+func (r *RemoteDeckRecommender) postJSON(path string, requestBody any, responseBody any) error {
 	body, err := json.Marshal(requestBody)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (r *RemoteDeckRecommender) postJSON(path string, requestBody interface{}, r
 	return json.Unmarshal(payload, responseBody)
 }
 
-func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, responseBody interface{}) error {
+func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, responseBody any) error {
 	req, err := http.NewRequest(http.MethodPost, r.baseURL+path, bytes.NewReader(payload))
 	if err != nil {
 		return err

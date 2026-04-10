@@ -22,7 +22,7 @@ type DifficultyInfo struct {
 }
 
 type MusicVocalInfo struct {
-	VocalInfo   map[string]interface{} `json:"vocal_info"`   // {"caption": str, "characters": [{"characterName": str}]}
+	VocalInfo   map[string]any `json:"vocal_info"`   // {"caption": str, "characters": [{"characterName": str}]}
 	VocalAssets map[string]string      `json:"vocal_assets"` // {"xxx": path}
 }
 
@@ -69,20 +69,20 @@ type MusicBriefListRequest struct {
 	RequiredDifficulty   string           `json:"required_difficulty,omitempty"`
 	RequiredDifficulties string           `json:"required_difficulties,omitempty"`
 	Title                *string          `json:"title,omitempty"`
-	TitleStyle           interface{}      `json:"title_style,omitempty"`
+	TitleStyle           any      `json:"title_style,omitempty"`
 	TitleShadow          bool             `json:"title_shadow,omitempty"`
 }
 
 // MusicListRequest represents request for /music/list
 type MusicListRequest struct {
-	UserResults           map[int]interface{}        `json:"user_results"` // key: musicId
-	MusicList             []map[string]interface{}   `json:"music_list"`   // [{"id": int, "difficulty": str}]
+	UserResults           map[int]any        `json:"user_results"` // key: musicId
+	MusicList             []map[string]any   `json:"music_list"`   // [{"id": int, "difficulty": str}]
 	JacketsPathList       map[int]string             `json:"jackets_path_list"`
 	RequiredDifficulties  string                     `json:"required_difficulties"`
 	Profile               DetailedProfileCardRequest `json:"profile"`
 	PlayResultIconPathMap map[string]string          `json:"play_result_icon_path_map,omitempty"`
 	Title                 *string                    `json:"title,omitempty"`
-	TitleStyle            interface{}                `json:"title_style,omitempty"`
+	TitleStyle            any                `json:"title_style,omitempty"`
 	TitleShadow           bool                       `json:"title_shadow,omitempty"`
 }
 
@@ -128,16 +128,16 @@ type BasicMusicRewardsRequest struct {
 // =========================== Chart Models ===========================
 
 type GenerateMusicChartRequest struct {
-	MusicID              interface{}            `json:"music_id"` // str | int
+	MusicID              any            `json:"music_id"` // str | int
 	Title                string                 `json:"title"`
 	Artist               string                 `json:"artist"`
 	Difficulty           string                 `json:"difficulty"`
-	PlayLevel            interface{}            `json:"play_level"` // str | int
+	PlayLevel            any            `json:"play_level"` // str | int
 	Skill                bool                   `json:"skill"`
 	JacketPath           string                 `json:"jacket_path"`
 	SusPath              string                 `json:"sus_path"`
 	StylePath            *string                `json:"style_path,omitempty"`
 	NoteHost             string                 `json:"note_host"`
-	MusicMeta            map[string]interface{} `json:"music_meta,omitempty"`
+	MusicMeta            map[string]any `json:"music_meta,omitempty"`
 	TargetSegmentSeconds *float64               `json:"target_segment_seconds,omitempty"`
 }

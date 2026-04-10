@@ -207,7 +207,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	}
 
 	// 解析并验证 JWT credential
-	decoded, err := jwt.Parse(payload.Credential, func(token *jwt.Token) (interface{}, error) {
+	decoded, err := jwt.Parse(payload.Credential, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}

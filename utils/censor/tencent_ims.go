@@ -94,7 +94,7 @@ func (t *TencentIMSClient) imageModeration(ctx context.Context, fileURL, fileCon
 }
 
 // doSignedRequest performs a TC3-HMAC-SHA256 signed POST to the IMS endpoint.
-func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) (map[string]interface{}, error) {
+func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) (map[string]any, error) {
 	now := time.Now().UTC()
 	timestamp := strconv.FormatInt(now.Unix(), 10)
 	date := now.Format("2006-01-02")
@@ -148,7 +148,7 @@ func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) 
 	}
 
 	var outer struct {
-		Response map[string]interface{} `json:"Response"`
+		Response map[string]any `json:"Response"`
 	}
 	if err := json.Unmarshal(b, &outer); err != nil {
 		return nil, fmt.Errorf("tencent IMS: unmarshal: %w", err)

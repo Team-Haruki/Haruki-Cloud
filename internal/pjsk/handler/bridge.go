@@ -125,7 +125,7 @@ func assetImageMessage(path string, app *renderapp.App, group string) (onebot11.
 // mergeParams unmarshals the JSON params from ResolvedCommand into the target struct,
 // allowing handler-set fields to override defaults. Fields not present in params
 // remain at their zero/pre-set values.
-func mergeParams(params json.RawMessage, target interface{}) {
+func mergeParams(params json.RawMessage, target any) {
 	if len(params) == 0 {
 		return
 	}

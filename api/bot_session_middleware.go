@@ -54,7 +54,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 		}
 
 		// Validate JWT signature and expiry.
-		decoded, err := jwt.Parse(sessionToken, func(token *jwt.Token) (interface{}, error) {
+		decoded, err := jwt.Parse(sessionToken, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("unexpected signing method")
 			}

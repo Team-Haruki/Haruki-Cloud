@@ -20,9 +20,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		showHarvested = *query.ShowHarvested
 	}
 
-	harvestMapsBySite := make(map[int]map[string]interface{}, 4)
+	harvestMapsBySite := make(map[int]map[string]any, 4)
 	for _, raw := range nestedList(merged, "userMysekaiHarvestMaps") {
-		item, ok := raw.(map[string]interface{})
+		item, ok := raw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -72,9 +72,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		harvestPoints := make([]drawing.MysekaiMsrMapHarvestPoint, 0, 16)
 		characterMap := c.masterdata.loadMapByID("gameCharacters.json")
 		birthdayCharacterByPos := make(map[string]int)
-		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]interface{})
+		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]any)
 		for _, raw := range rawDrops {
-			drop, ok := raw.(map[string]interface{})
+			drop, ok := raw.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -94,9 +94,9 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			}
 		}
 
-		rawHarvestPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]interface{})
+		rawHarvestPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]any)
 		for _, raw := range rawHarvestPoints {
-			point, ok := raw.(map[string]interface{})
+			point, ok := raw.(map[string]any)
 			if !ok {
 				continue
 			}

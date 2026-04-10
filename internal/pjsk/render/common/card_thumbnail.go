@@ -21,7 +21,7 @@ type ThumbnailOptions struct {
 	Level            *int
 	BirthdayIconPath *string
 	CustomText       *string
-	CardLevel        map[string]interface{}
+	CardLevel        map[string]any
 	IsPcard          bool
 }
 

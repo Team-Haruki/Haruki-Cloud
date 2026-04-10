@@ -81,16 +81,27 @@ func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 	}
 }
 
-func TestBuildSKTrackerParamsWlRequiresCharacter(t *testing.T) {
+func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
 	ctx := SekaiHandlerContext{
 		HandlerContext: handler.HandlerContext{ArgText: "100 500"},
 		region:         renderregion.JP,
 		prefixArg:      "wl",
 	}
 
-	_, err := buildSKTrackerParams(ctx, false, true, false)
-	if err == nil {
-		t.Fatalf("expected error when wl character is missing")
+	params, err := buildSKTrackerParams(ctx, false, true, false)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["wl_character_query"].(string); !ok || got != "wl" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	ranks, ok := params["ranks"].([]int)
+	if !ok {
+		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
+	}
+	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
+		t.Fatalf("unexpected ranks: %#v", ranks)
 	}
 }
 
@@ -265,6 +276,29 @@ func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 	}
 
 	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	ranks, ok := params["ranks"].([]int)
+	if !ok {
+		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
+	}
+	if len(ranks) != 1 || ranks[0] != 100 {
+		t.Fatalf("unexpected ranks: %#v", ranks)
+	}
+}
+
+func TestBuildSKTrackerParamsParsesLeadingWlChapterSelector(t *testing.T) {
+	ctx := SekaiHandlerContext{
+		HandlerContext: handler.HandlerContext{ArgText: "wl2 100"},
+		region:         renderregion.JP,
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true, false)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["wl_character_query"].(string); !ok || got != "wl2" {
 		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
 	}
 	ranks, ok := params["ranks"].([]int)

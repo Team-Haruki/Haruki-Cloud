@@ -11,7 +11,7 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 		defaultFull,
 		ctx.PrefixArg() == "wl",
 	)
-	wlMode := ctx.PrefixArg() == "wl"
+	wlMode := ctx.PrefixArg() == "wl" || wlCharacterID > 0 || strings.TrimSpace(wlCharacterQuery) != ""
 
 	effectiveRankArgs := rankArgs
 	rankArgsProvided := strings.TrimSpace(effectiveRankArgs) != ""
@@ -56,10 +56,6 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if !rankArgsProvided && userID == nil && targetUserID == "" {
 		ranks = defaultSKRanksByMode(wlMode)
 	}
-	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
-		return nil, fmt.Errorf("wl 模式需要角色ID或角色名，例如: /wlsk 初音未来 100 500")
-	}
-
 	params := map[string]any{
 		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
 		"region_explicit": ctx.HasExplicitRegion(),
@@ -128,10 +124,6 @@ func buildSKPlayerTraceParams(ctx SekaiHandlerContext) (map[string]any, error) {
 	}
 	if strings.TrimSpace(wlCharacterQuery) != "" {
 		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
-	}
-
-	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
-		return nil, fmt.Errorf("wl 模式需要角色ID或角色名，例如: /wlptr 初音未来 100 500")
 	}
 
 	targetUserID := ""

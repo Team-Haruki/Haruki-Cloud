@@ -35,7 +35,16 @@ func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int,
 	}
 	if wlMode && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
 		wlCharacterQuery, rankArgs = splitSKWorldBloomCharacterAndRanks(remaining)
+		if strings.TrimSpace(wlCharacterQuery) == "" {
+			wlCharacterQuery = "wl"
+		}
 		return
+	}
+	if wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		if query, ranks, ok := splitLeadingSKWorldBloomSelectorAndRanks(remaining); ok {
+			wlCharacterQuery, rankArgs = query, ranks
+			return
+		}
 	}
 	rankArgs = strings.TrimSpace(strings.Join(remaining, " "))
 	return
@@ -73,6 +82,9 @@ func parseSKWorldBloomCharacterToken(raw string) (int, string, bool) {
 			return 0, "", false
 		}
 		if isDigits(value) {
+			if strings.HasPrefix(rule.prefix, "wl") {
+				return 0, "", false
+			}
 			id, _ := strconv.Atoi(value)
 			return id, "", true
 		}
@@ -103,6 +115,26 @@ func splitSKWorldBloomCharacterAndRanks(fields []string) (string, string) {
 		}
 	}
 	return remaining, ""
+}
+
+func splitLeadingSKWorldBloomSelectorAndRanks(fields []string) (string, string, bool) {
+	if len(fields) == 0 {
+		return "", "", false
+	}
+	query := strings.TrimSpace(fields[0])
+	if !isSKWorldBloomSelector(query) {
+		return "", "", false
+	}
+	rankArgs := strings.TrimSpace(strings.Join(fields[1:], " "))
+	if rankArgs != "" && !isValidSKRankExpression(rankArgs) {
+		return "", "", false
+	}
+	return query, rankArgs, true
+}
+
+func isSKWorldBloomSelector(raw string) bool {
+	raw = strings.ToLower(strings.TrimSpace(raw))
+	return raw == "wl" || (strings.HasPrefix(raw, "wl") && len(raw) > 2)
 }
 
 func isValidSKRankExpression(args string) bool {

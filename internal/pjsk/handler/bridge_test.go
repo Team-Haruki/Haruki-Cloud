@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/config"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
+	sekaidb "haruki-cloud/database/sekai"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
@@ -172,6 +174,28 @@ func TestTrackerRankQueryFromParamsKeepsExplicitRegion(t *testing.T) {
 	}
 	if req.Region != "jp" {
 		t.Fatalf("expected region jp, got %q", req.Region)
+	}
+}
+
+func TestTrackerRankQueryFromParamsAcceptsWlSelectorWithoutRanks(t *testing.T) {
+	raw, err := json.Marshal(rendersk.TrackerRankQuery{
+		Region:           "jp",
+		RegionExplicit:   false,
+		WlCharacterQuery: "wl",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	req, ok := trackerRankQueryFromParams(&parser.ResolvedCommand{
+		Region: "jp",
+		Params: raw,
+	})
+	if !ok {
+		t.Fatal("expected tracker request to be parsed")
+	}
+	if req.WlCharacterQuery != "wl" {
+		t.Fatalf("unexpected wl selector: %q", req.WlCharacterQuery)
 	}
 }
 
@@ -1201,10 +1225,59 @@ func TestResolveDeckCharacterSelectionsFallsBackWorldBloomQueryToMusic(t *testin
 	}
 }
 
-func TestResolveTrackerCharacterSelectionUsesMasterdataQuery(t *testing.T) {
+type bridgeTestWorldBloomChapter struct {
+	chapterNo   int64
+	startAt     int64
+	aggregateAt int64
+	characterID int64
+}
+
+func seedBridgeTestWorldBloomEvent(
+	t *testing.T,
+	ctx context.Context,
+	sekaiClient *sekaidb.Client,
+	region string,
+	eventID int64,
+	startAt int64,
+	aggregateAt int64,
+	chapters []bridgeTestWorldBloomChapter,
+) {
+	t.Helper()
+
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion(region).
+		SetGameID(eventID).
+		SetEventType("world_bloom").
+		SetName(fmt.Sprintf("WL %d", eventID)).
+		SetAssetbundleName(fmt.Sprintf("wl_%d", eventID)).
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + int64(time.Hour/time.Millisecond)).
+		Save(ctx); err != nil {
+		t.Fatalf("create wl event %d: %v", eventID, err)
+	}
+
+	for _, chapter := range chapters {
+		create := sekaiClient.Worldbloom.Create().
+			SetServerRegion(region).
+			SetEventID(eventID).
+			SetChapterNo(chapter.chapterNo).
+			SetChapterStartAt(chapter.startAt).
+			SetAggregateAt(chapter.aggregateAt)
+		if chapter.characterID > 0 {
+			create.SetGameCharacterID(chapter.characterID)
+		}
+		if _, err := create.Save(ctx); err != nil {
+			t.Fatalf("create wl chapter %d for event %d: %v", chapter.chapterNo, eventID, err)
+		}
+	}
+}
+
+func TestResolveTrackerCharacterSelectionUsesWorldBloomCharacterQuery(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_tracker_character?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
 
 	if _, err := sekaiClient.Gamecharacter.Create().
 		SetServerRegion("jp").
@@ -1216,6 +1289,9 @@ func TestResolveTrackerCharacterSelectionUsesMasterdataQuery(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create gamecharacter: %v", err)
 	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 101, now-int64(2*time.Hour/time.Millisecond), now+int64(2*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
 
 	req := rendersk.TrackerRankQuery{
 		Region:           "jp",
@@ -1232,6 +1308,141 @@ func TestResolveTrackerCharacterSelectionUsesMasterdataQuery(t *testing.T) {
 	}
 	if req.WlCharacterQuery != "" {
 		t.Fatalf("expected wl character query to be cleared: %q", req.WlCharacterQuery)
+	}
+}
+
+func TestResolveTrackerCharacterSelectionResolvesCurrentWorldBloomChapter(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_tracker_wl_current?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 201, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now - int64(time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	req := rendersk.TrackerRankQuery{
+		Region:           "jp",
+		Ranks:            []int{100},
+		WlCharacterQuery: "wl",
+	}
+
+	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
+		t.Fatalf("resolveTrackerCharacterSelection() error = %v", err)
+	}
+	if req.EventID != 201 {
+		t.Fatalf("expected current wl event 201, got %d", req.EventID)
+	}
+	if req.WlCharacterID == nil || *req.WlCharacterID != 21 {
+		t.Fatalf("unexpected wl character id: %+v", req.WlCharacterID)
+	}
+}
+
+func TestResolveTrackerCharacterSelectionResolvesWorldBloomChapterSelector(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_tracker_wl_selector?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 301, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now - int64(time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	req := rendersk.TrackerRankQuery{
+		Region:           "jp",
+		Ranks:            []int{100},
+		WlCharacterQuery: "wl2",
+	}
+
+	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
+		t.Fatalf("resolveTrackerCharacterSelection() error = %v", err)
+	}
+	if req.EventID != 301 {
+		t.Fatalf("expected current wl event 301, got %d", req.EventID)
+	}
+	if req.WlCharacterID == nil || *req.WlCharacterID != 24 {
+		t.Fatalf("unexpected wl character id: %+v", req.WlCharacterID)
+	}
+}
+
+func TestResolveTrackerCharacterSelectionFallsBackToPreviousWorldBloomEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_tracker_wl_prev?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 401, now-int64(72*time.Hour/time.Millisecond), now-int64(48*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(70*time.Hour/time.Millisecond), aggregateAt: now - int64(66*time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now - int64(60*time.Hour/time.Millisecond), aggregateAt: now - int64(56*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	req := rendersk.TrackerRankQuery{
+		Region:           "jp",
+		Ranks:            []int{100},
+		WlCharacterQuery: "wl",
+	}
+
+	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
+		t.Fatalf("resolveTrackerCharacterSelection() error = %v", err)
+	}
+	if req.EventID != 401 {
+		t.Fatalf("expected previous wl event 401, got %d", req.EventID)
+	}
+	if req.WlCharacterID == nil || *req.WlCharacterID != 24 {
+		t.Fatalf("unexpected wl character id: %+v", req.WlCharacterID)
 	}
 }
 

@@ -218,7 +218,6 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {
 	relCandidates := []string{
 		filepath.Join("stamp", item.AssetBundleName, item.AssetBundleName+".png"),
-		filepath.Join("stamp", item.AssetBundleName+"_rip", item.AssetBundleName+".png"),
 	}
 	candidates := append([]string(nil), relCandidates...)
 	for _, rel := range relCandidates {

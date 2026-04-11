@@ -126,7 +126,6 @@ func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cost
 func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
 	root := t.TempDir()
 	normal := filepath.Join(root, "asset", "jp-assets", "startapp", "character", "member", "card_test", "card_normal.png")
-	after := filepath.Join(root, "asset", "jp-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png")
 	for _, path := range []string{normal, after} {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatalf("mkdir: %v", err)

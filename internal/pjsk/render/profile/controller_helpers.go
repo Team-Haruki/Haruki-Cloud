@@ -149,10 +149,7 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 	if afterTraining {
 		imageType = "after_training"
 	}
-	return assets.ResolveRegionAssetPath(helper, region.String(),
-		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
-		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
-	)
+	return common.ResolveCardThumbnailPath(helper, region, card.AssetBundleName, imageType == "after_training")
 }
 
 func (c *Controller) buildProfileImagePathFromSource(

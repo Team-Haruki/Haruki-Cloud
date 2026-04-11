@@ -25,19 +25,28 @@ type ThumbnailOptions struct {
 	IsPcard          bool
 }
 
+func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Value, assetBundleName string, trainedArt bool) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	if assetBundleName == "" {
+		return ""
+	}
+
+	fileSuffix := "_normal.png"
+	memberFile := "card_normal.png"
+	if trainedArt {
+		fileSuffix = "_after_training.png"
+		memberFile = "card_after_training.png"
+	}
+
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("thumbnail", "chara", assetBundleName+fileSuffix),
+		filepath.Join("character", "member", assetBundleName, memberFile),
+}
+
 func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {
 	thumbPath := opts.ThumbnailPath
 	if thumbPath == "" {
-		fileSuffix := "_normal.png"
-		memberFile := "card_normal.png"
-		if opts.TrainedArt {
-			fileSuffix = "_after_training.png"
-			memberFile = "card_after_training.png"
-		}
-		thumbPath = assets.ResolveRegionAssetPath(helper, region.String(),
-			filepath.Join("thumbnail", "chara", card.AssetBundleName+fileSuffix),
-			filepath.Join("character", "member", card.AssetBundleName, memberFile),
-		)
+		thumbPath = ResolveCardThumbnailPath(helper, region, card.AssetBundleName, opts.TrainedArt)
 	} else {
 		thumbPath = filepath.ToSlash(thumbPath)
 	}

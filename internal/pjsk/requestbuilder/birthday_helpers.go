@@ -142,7 +142,6 @@ func birthdayCardImagePath(app *renderapp.App, region renderregion.Value, assetB
 			app.Assets,
 			region.String(),
 			filepath.Join("character", "member", assetBundleName, "card_normal.png"),
-			filepath.Join("character", "member", assetBundleName+"_rip", "card_normal.png"),
 		),
 	)
 }

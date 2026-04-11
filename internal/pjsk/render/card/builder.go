@@ -269,16 +269,7 @@ func (b *Builder) buildBoxThumbnailInfo(card *masterdata.Card, region renderregi
 		if strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
 			rareImageType = "after_training"
 		}
-		fileSuffix := "_normal.png"
-		memberFile := "card_normal.png"
-		if afterTraining {
-			fileSuffix = "_after_training.png"
-			memberFile = "card_after_training.png"
-		}
-		thumbnailPath := assets.ResolveRegionAssetPath(b.assets, region.String(),
-			filepath.Join("thumbnail", "chara", card.AssetBundleName+fileSuffix),
-			filepath.Join("character", "member", card.AssetBundleName, memberFile),
-		)
+		thumbnailPath := common.ResolveCardThumbnailPath(b.assets, region, card.AssetBundleName, afterTraining)
 		rareImgPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "rare_star_"+rareImageType+".png"))
 		if card.CardRarityType == "rarity_birthday" {
 			rareImgPath = assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "rare_birthday.png"))

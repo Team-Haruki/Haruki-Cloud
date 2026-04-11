@@ -51,7 +51,6 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 	}
 
 	base := filepath.Join("character", "member", card.AssetBundleName)
-	ripBase := filepath.Join("character", "member", card.AssetBundleName+"_rip")
 
 	type candidate struct {
 		primary  string

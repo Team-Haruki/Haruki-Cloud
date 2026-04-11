@@ -138,7 +138,6 @@ func (c *Controller) resolveLocalMusicJacket(assetName string) string {
 	}
 	return c.assets.FirstExisting(
 		filepath.Join("music", "jacket", assetName, assetName+".png"),
-		filepath.Join("music", "jacket", assetName+"_rip", assetName+".png"),
 	)
 }
 

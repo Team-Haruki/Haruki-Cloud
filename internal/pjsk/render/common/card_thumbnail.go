@@ -41,6 +41,7 @@ func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Va
 	return assets.ResolveRegionAssetPath(helper, region.String(),
 		filepath.Join("thumbnail", "chara", assetBundleName+fileSuffix),
 		filepath.Join("character", "member", assetBundleName, memberFile),
+	)
 }
 
 func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {

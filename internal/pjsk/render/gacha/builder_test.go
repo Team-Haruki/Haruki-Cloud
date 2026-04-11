@@ -239,6 +239,7 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 		},
 		GachaBehaviors: []masterdata.GachaBehavior{
 			{GachaBehaviorType: "over_rarity_4_once", SpinCount: 10, CostResourceType: "jewel", CostResourceQuantity: 3000},
+			{GachaBehaviorType: "normal", SpinCount: 1, CostResourceType: "gacha_ticket", CostResourceQuantity: 1},
 		},
 		GachaInformation: masterdata.GachaInformation{
 			Summary:     "summary",
@@ -273,6 +274,15 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	if req.PickupCards[0].ID != 2001 {
 		t.Fatalf("unexpected pickup card id: %d", req.PickupCards[0].ID)
 	}
+	if len(req.Gacha.Behaviors) != 2 {
+		t.Fatalf("expected 2 gacha behaviors, got %d", len(req.Gacha.Behaviors))
+	}
+	if req.Gacha.Behaviors[0].CostIconPath == nil || *req.Gacha.Behaviors[0].CostIconPath != "static_images/jewel.png" {
+		t.Fatalf("unexpected jewel cost icon path: %+v", req.Gacha.Behaviors[0].CostIconPath)
+	}
+	if req.Gacha.Behaviors[1].CostIconPath == nil || *req.Gacha.Behaviors[1].CostIconPath != "thumbnail/gacha_ticket/gacha_ticket.png" {
+		t.Fatalf("unexpected ticket cost icon path: %+v", req.Gacha.Behaviors[1].CostIconPath)
+	}
 }
 
 func TestBuildGachaListRequestUsesOnDemandLogoFallback(t *testing.T) {
@@ -304,7 +314,7 @@ func TestBuildGachaListRequestUsesOnDemandLogoFallback(t *testing.T) {
 		t.Fatalf("BuildGachaListRequest failed: %v", err)
 	}
 	got := req.GachaLogos[item.ID]
-	if want := filepath.ToSlash(logoPath); got != want {
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "ondemand", "gacha", "ab_gacha_392", "logo", "logo.png")); got != want {
 		t.Fatalf("expected logo path %q, got %q", want, got)
 	}
 }

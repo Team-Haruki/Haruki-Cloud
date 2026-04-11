@@ -65,6 +65,10 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 	adaptedCards := adaptAPICards(resp.UserCards)
 	adaptedDecks := adaptAPIDeckAsList(resp.UserDeck)
 
+	// 拼接drawing的背景路径
+	if query.BgSettings != nil && query.BgSettings.ImgPath != nil && *query.BgSettings.ImgPath != "" {
+		*query.BgSettings.ImgPath = fmt.Sprintf("asset/%s", *query.BgSettings.ImgPath)
+	}
 	return &drawing.ProfileRequest{
 		Profile: drawing.BasicProfile{
 			ID:              strconv.FormatInt(resp.User.UserID, 10),

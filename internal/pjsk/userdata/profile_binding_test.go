@@ -80,3 +80,71 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("unexpected list text:\n%s", string(listText))
 	}
 }
+
+func TestExecuteProfileBindingCommandBindListFiltersByServer(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"2000": "JP User"},
+		"cn": {"3000": "CN User"},
+	})
+
+	ctx := context.Background()
+
+	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "2000",
+	}); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "3000",
+	}); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+
+	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "cn",
+	})
+	if err != nil {
+		t.Fatalf("execute bind list with server filter: %v", err)
+	}
+
+	expectedList := "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 3000 (CN服默认)"
+	if string(listText) != expectedList {
+		t.Fatalf("unexpected filtered list text:\n%s", string(listText))
+	}
+}
+
+func TestExecuteProfileBindingCommandBindListFiltersByServerWhenEmpty(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"2000": "JP User"},
+	})
+
+	ctx := context.Background()
+
+	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "2000",
+	}); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+
+	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "cn",
+	})
+	if err != nil {
+		t.Fatalf("execute bind list with empty server filter: %v", err)
+	}
+
+	expectedList := "你还没有绑定任何CN服PJSK账号"
+	if string(listText) != expectedList {
+		t.Fatalf("unexpected empty filtered list text:\n%s", string(listText))
+	}
+}

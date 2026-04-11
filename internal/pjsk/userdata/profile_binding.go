@@ -69,7 +69,10 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatBindingListText(items)), nil
+		if params.Server != "" {
+			items = filterBindingsByServer(items, params.Server)
+		}
+		return []byte(formatBindingListText(items, params.Server)), nil
 	case ProfileModeUnbind:
 		result, err := service.Unbind(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server)
 		if err != nil {
@@ -93,12 +96,18 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 	}
 }
 
-func formatBindingListText(items []BindingListItem) string {
+func formatBindingListText(items []BindingListItem, server string) string {
 	if len(items) == 0 {
+		if server != "" {
+			return fmt.Sprintf("你还没有绑定任何%s服PJSK账号", strings.ToUpper(server))
+		}
 		return "你还没有绑定任何PJSK账号"
 	}
 
 	lines := []string{"已绑定账号列表（u序号按区服分别编号）:"}
+	if server != "" {
+		lines[0] = fmt.Sprintf("已绑定%s服账号列表（u序号按该区服编号）:", strings.ToUpper(server))
+	}
 	for _, item := range items {
 		line := fmt.Sprintf("u%d [%s] %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item))
 		marks := make([]string, 0, 2)

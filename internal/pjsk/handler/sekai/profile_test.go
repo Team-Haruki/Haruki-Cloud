@@ -122,3 +122,65 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 		t.Fatalf("unexpected profile vertical: %+v", params.ProfileVertical)
 	}
 }
+
+func TestProfileBindListHandleOmitsServerWhenRegionImplicit(t *testing.T) {
+	h := sekaiHandlers{}.ProfileBindListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/绑定列表",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Mode != accountdata.ProfileModeBindList {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Server != "" {
+		t.Fatalf("unexpected server for implicit region: %q", params.Server)
+	}
+}
+
+func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
+	h := sekaiHandlers{}.ProfileBindListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP, renderregion.CN}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cn绑定列表",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Mode != accountdata.ProfileModeBindList {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Server != "cn" {
+		t.Fatalf("unexpected server for explicit region: %q", params.Server)
+	}
+}

@@ -43,7 +43,11 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, newProfileBindingParams(ctx, "", "")), nil
+			params := newProfileBindingParams(ctx, "", "")
+			if !ctx.HasExplicitRegion() {
+				params.Server = ""
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, params), nil
 		},
 	}
 }

@@ -60,14 +60,12 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 
 	if !onlyHasAfterTrainingCard(card) {
 		candidates = append(candidates, candidate{
-			primary:  filepath.Join(base, "card_normal.png"),
-			fallback: filepath.Join(ripBase, "card_normal.png"),
+			primary: filepath.Join(base, "card_normal.png"),
 		})
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
 		candidates = append(candidates, candidate{
-			primary:  filepath.Join(base, "card_after_training.png"),
-			fallback: filepath.Join(ripBase, "card_after_training.png"),
+			primary: filepath.Join(base, "card_after_training.png"),
 		})
 	}
 

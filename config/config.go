@@ -35,6 +35,15 @@ func envBool(name string, dst *bool) {
 	}
 }
 
+// envDuration overrides dst with the duration value of the named env var if set and valid.
+func envDuration(name string, dst *time.Duration) {
+	if v := os.Getenv(name); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			*dst = d
+		}
+	}
+}
+
 // ApplyEnvOverrides replaces key config fields with environment variables when set.
 // Env var names follow the pattern HARUKI_<SECTION>_<FIELD> (all upper-snake).
 func ApplyEnvOverrides(cfg *Config) {
@@ -118,6 +127,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
+	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
+	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
+	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 }
 
 type BackendConfig struct {
@@ -189,6 +201,7 @@ type UserSnapshotConfig struct {
 type DeckRecommendConfig struct {
 	Enabled        bool          `yaml:"enabled"`
 	ServiceBaseURL string        `yaml:"service_base_url"`
+	MasterdataDir  string        `yaml:"masterdata_dir"`
 	Timeout        time.Duration `yaml:"timeout"`
 	MaxRetries     int           `yaml:"max_retries"`
 	RetryWaitTime  time.Duration `yaml:"retry_wait_time"`

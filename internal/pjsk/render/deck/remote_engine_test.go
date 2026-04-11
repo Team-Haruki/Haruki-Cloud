@@ -2,7 +2,13 @@ package deck
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync/atomic"
 	"testing"
+
+	"haruki-cloud/utils/logger"
 )
 
 func TestParseRemoteRecommendBatchSupportsLegacySingleResponse(t *testing.T) {
@@ -63,5 +69,105 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	}
 	if agg.CostTimes["dfs"] != 1.2 || agg.CostTimes["ga"] != 2.3 {
 		t.Fatalf("unexpected cost times: %+v", agg.CostTimes)
+	}
+}
+
+func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
+	var masterdataCalls atomic.Int32
+	var musicMetaCalls atomic.Int32
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata":
+			masterdataCalls.Add(1)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/update/musicmetas/string":
+			musicMetaCalls.Add(1)
+			var payload map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode music meta update payload: %v", err)
+			}
+			if strings.TrimSpace(payload["data"].(string)) == "" {
+				t.Fatalf("expected non-empty music meta payload")
+			}
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			call := recommendCalls.Add(1)
+			if call == 1 {
+				_, _ = w.Write([]byte(`[
+					{
+						"alg": "ga",
+						"error": "Music metas not found for region: jp"
+					}
+				]`))
+				return
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.1,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 20,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+	}
+
+	// Simulate a stale Cloud-side ready cache after deck-service restart.
+	recommender.masterdataReady = true
+	recommender.musicMetaHash = hashPayload(musicMeta)
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: musicMeta,
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+	if masterdataCalls.Load() != 1 {
+		t.Fatalf("expected 1 masterdata rewarm call, got %d", masterdataCalls.Load())
+	}
+	if musicMetaCalls.Load() != 1 {
+		t.Fatalf("expected 1 music meta rewarm call, got %d", musicMetaCalls.Load())
+	}
+	if recommendCalls.Load() != 2 {
+		t.Fatalf("expected 2 recommend calls, got %d", recommendCalls.Load())
 	}
 }

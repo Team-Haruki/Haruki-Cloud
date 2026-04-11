@@ -31,29 +31,33 @@ import (
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/drawing"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/logger"
 	sekaiutil "haruki-cloud/utils/sekai"
 )
 
 type Config struct {
-	InitContext       context.Context
-	DefaultRegion     renderregion.Value
-	DrawingBaseURL    string
-	DrawingTimeout    time.Duration
-	DrawingRetryCount int
-	DrawingCache      drawing.RenderCacheConfig
-	ImageCacheURI     string
-	ImageCacheDir     string
-	ImageCachePGURL   string // PostgreSQL DSN for image cache deduplication (optional)
-	CensorService     *censor.Service
-	AssetPrimaryDir   string
-	AssetLegacyDirs   []string
-	AssetsBaseURL     string // CDN base URL for direct asset serving; skips imagecache for region assets
-	LocalMasterdata   LocalMasterdataConfig
-	SekaiDSN          string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot      UserSnapshotConfig
-	MetaLoader        *meta.Loader
-	DeckRecommend     DeckRecommendConfig
+	InitContext              context.Context
+	DefaultRegion            renderregion.Value
+	DrawingBaseURL           string
+	DrawingTimeout           time.Duration
+	DrawingRetryCount        int
+	DrawingCache             drawing.RenderCacheConfig
+	ImageCacheURI            string
+	ImageCacheDir            string
+	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
+	CensorService            *censor.Service
+	AssetPrimaryDir          string
+	AssetLegacyDirs          []string
+	AssetsBaseURL            string // CDN base URL for direct asset serving; skips imagecache for region assets
+	LocalMasterdata          LocalMasterdataConfig
+	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot             UserSnapshotConfig
+	MusicMetaRefreshInterval time.Duration
+	MetaLoader               *meta.Loader
+	DeckRecommend            DeckRecommendConfig
 }
+
+const defaultMusicMetaRefreshInterval = 30 * time.Minute
 
 type LocalMasterdataConfig struct {
 	Enabled       bool
@@ -116,6 +120,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if initCtx == nil {
 		initCtx = context.Background()
 	}
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval)
 
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
 	var snapshotService userdata.Snapshot
@@ -292,6 +297,27 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Censor:     cfg.CensorService,
 		Config:     cfg,
 	}
+}
+
+func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration) *meta.Loader {
+	if configured != nil {
+		return configured
+	}
+
+	if initCtx == nil {
+		initCtx = context.Background()
+	}
+
+	if refreshInterval <= 0 {
+		refreshInterval = defaultMusicMetaRefreshInterval
+	}
+
+	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"))
+	if err := loader.LoadAll(initCtx); err != nil {
+		logger.Warnf("meta: initial load failed: %v", err)
+	}
+	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
+	return loader
 }
 
 func (a *App) AssetRoots() []string {

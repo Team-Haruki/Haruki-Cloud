@@ -10,6 +10,17 @@ import (
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
+type fakeMusicMetaSource struct {
+	payloads map[string][]byte
+}
+
+func (f *fakeMusicMetaSource) Get(region string) []byte {
+	if f == nil {
+		return nil
+	}
+	return append([]byte(nil), f.payloads[region]...)
+}
+
 type fakeBindingLookup struct {
 	resolveCalls []string
 	bindings     map[string]*accountdata.ResolvedBinding
@@ -127,6 +138,42 @@ func TestToolboxSnapshotProviderSupportsExplicitBoundAccount(t *testing.T) {
 	}
 	if len(client.suiteCalls) != 1 {
 		t.Fatalf("expected exactly one suite call, got %d", len(client.suiteCalls))
+	}
+}
+
+func TestToolboxSnapshotProviderInjectsMusicMetaPayload(t *testing.T) {
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{
+			bindings: map[string]*accountdata.ResolvedBinding{
+				"jp": {
+					PJSKUserID:     "123456789",
+					Server:         "jp",
+					SuiteVisible:   true,
+					MySekaiVisible: true,
+				},
+			},
+		},
+		&fakePrivateDataClient{
+			suiteJSON: []byte(minimalSuiteJSON),
+		},
+		nil,
+		nil,
+	).WithMusicMetaSource(&fakeMusicMetaSource{
+		payloads: map[string][]byte{
+			"jp": []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		},
+	})
+
+	snapshot, err := provider.Resolve(context.Background(), Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{})
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if len(snapshot.MusicMetaBytes()) == 0 {
+		t.Fatalf("expected music meta bytes on toolbox snapshot")
 	}
 }
 

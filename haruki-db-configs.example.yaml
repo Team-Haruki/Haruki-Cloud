@@ -114,6 +114,7 @@ pjsk_render:
   deck_recommend:
     enabled: true
     service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
+    masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir
     timeout: "10s"
     max_retries: 3            # HTTP-level retry count for transient failures
     retry_wait_time: "1s"     # wait between retries

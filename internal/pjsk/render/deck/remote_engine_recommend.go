@@ -30,12 +30,12 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	}
 
 	start := time.Now()
-	results, err := r.doRecommendCompatible(req)
+	result, err := r.recommendOnce(req)
 	elapsed := time.Since(start)
 	if err == nil {
 		r.recordSuccess()
 		r.logger.Debugf("recommend completed in %v", elapsed)
-		return aggregateRemoteRecommendResults(req.BatchOption, results)
+		return result, nil
 	}
 	if !shouldRewarmRemoteService(err) {
 		r.recordFailure()
@@ -50,13 +50,22 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		r.recordFailure()
 		return nil, warmErr
 	}
-	results, err = r.doRecommendCompatible(req)
+	result, err = r.recommendOnce(req)
 	if err != nil {
 		r.recordFailure()
 		r.logger.Warnf("recommend failed after rewarm: %v", err)
 		return nil, err
 	}
 	r.recordSuccess()
+	r.logger.Debugf("recommend completed after rewarm")
+	return result, nil
+}
+
+func (r *RemoteDeckRecommender) recommendOnce(req RecommendRequest) (*RecommendResult, error) {
+	results, err := r.doRecommendCompatible(req)
+	if err != nil {
+		return nil, err
+	}
 	return aggregateRemoteRecommendResults(req.BatchOption, results)
 }
 

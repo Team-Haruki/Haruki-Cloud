@@ -22,6 +22,10 @@ type privateDataClient interface {
 	GetMySekaiData(server string, userID int64, platform, platformUserID string) ([]byte, error)
 }
 
+type musicMetaSource interface {
+	Get(region string) []byte
+}
+
 // ToolboxSnapshotProvider is the current request-scoped provider implementation.
 // It keeps the existing Toolbox live-data path behind a stable provider
 // contract, so future DB-backed snapshot stores can replace it without forcing
@@ -30,6 +34,7 @@ type ToolboxSnapshotProvider struct {
 	bindings bindingLookup
 	client   privateDataClient
 	factory  SnapshotFactory
+	metas    musicMetaSource
 }
 
 func NewToolboxSnapshotProvider(bindings bindingLookup, client privateDataClient, sekai *sekaiDB.Client, assetHelper *assets.AssetHelper) *ToolboxSnapshotProvider {
@@ -38,6 +43,14 @@ func NewToolboxSnapshotProvider(bindings bindingLookup, client privateDataClient
 		client:   client,
 		factory:  NewDefaultSnapshotFactory(sekai, assetHelper),
 	}
+}
+
+func (p *ToolboxSnapshotProvider) WithMusicMetaSource(source musicMetaSource) *ToolboxSnapshotProvider {
+	if p == nil {
+		return nil
+	}
+	p.metas = source
+	return p
 }
 
 func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector, opts ResolveOptions) (Snapshot, error) {
@@ -78,11 +91,21 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		}
 	}
 
+	metaRegion := region
+	if bindingRegion := renderregion.Normalize(binding.Server); !bindingRegion.IsZero() {
+		metaRegion = bindingRegion
+	}
+	var musicMetaJSON []byte
+	if p.metas != nil {
+		musicMetaJSON = p.metas.Get(metaRegion.String())
+	}
+
 	snapshot, err := p.factory.Build(ctx, BuildInput{
-		Region:      region,
-		Source:      "toolbox_live",
-		SuiteJSON:   suiteJSON,
-		MySekaiJSON: mysekaiJSON,
+		Region:        region,
+		Source:        "toolbox_live",
+		SuiteJSON:     suiteJSON,
+		MySekaiJSON:   mysekaiJSON,
+		MusicMetaJSON: musicMetaJSON,
 	})
 	if err != nil {
 		return nil, err

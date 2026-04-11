@@ -22,6 +22,39 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if len(query.TargetBonuses) > 0 {
 		option["target_bonus_list"] = append([]int(nil), query.TargetBonuses...)
 	}
+	if query.Boost != nil && *query.Boost >= 0 {
+		option["boost"] = *query.Boost
+	}
+	if query.AreaItemLevel != nil && *query.AreaItemLevel > 0 {
+		option["area_item_level"] = *query.AreaItemLevel
+	}
+	if query.UnitFilter != "" {
+		option["unit_filter"] = query.UnitFilter
+	}
+	if query.AttrFilter != "" {
+		option["attr_filter"] = query.AttrFilter
+	}
+	if len(query.ExcludedCards) > 0 {
+		option["excluded_cards"] = append([]int(nil), query.ExcludedCards...)
+	}
+	if query.UseCurrentDeck {
+		option["use_current_deck"] = true
+	}
+	if query.MaxProfile {
+		option["max_profile"] = true
+	}
+	if query.SubMaxProfile {
+		option["sub_max_profile"] = true
+	}
+	if query.MusicCompare {
+		option["music_compare"] = true
+	}
+	if len(query.MusicCompareQueries) > 0 {
+		option["music_compare_queries"] = append([]string(nil), query.MusicCompareQueries...)
+	}
+	if len(query.SpecificSkillOrder) > 0 {
+		option["specific_skill_order"] = append([]int(nil), query.SpecificSkillOrder...)
+	}
 
 	explicitEventID := query.EventID != nil && *query.EventID > 0
 	if explicitEventID {

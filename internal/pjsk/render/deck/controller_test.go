@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -394,6 +395,62 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	singleCardCfgs, ok := option["single_card_configs"].([]any)
 	if !ok || len(singleCardCfgs) != 1 {
 		t.Fatalf("unexpected single card configs: %+v", option["single_card_configs"])
+	}
+}
+
+func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	boost := 5
+	areaItemLevel := 15
+	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:              "jp",
+		RecommendType:       "event",
+		Boost:               &boost,
+		AreaItemLevel:       &areaItemLevel,
+		UnitFilter:          "idol",
+		AttrFilter:          "cool",
+		ExcludedCards:       []int{1001, 1002},
+		UseCurrentDeck:      true,
+		MaxProfile:          true,
+		SubMaxProfile:       true,
+		MusicCompare:        true,
+		MusicCompareQueries: []string{"龙hard", "虾expert", "sage"},
+		SpecificSkillOrder:  []int{0, 1, 2, 3, 4},
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["boost"] != 5 {
+		t.Fatalf("unexpected boost: %+v", option["boost"])
+	}
+	if option["area_item_level"] != 15 {
+		t.Fatalf("unexpected area_item_level: %+v", option["area_item_level"])
+	}
+	if option["unit_filter"] != "idol" || option["attr_filter"] != "cool" {
+		t.Fatalf("unexpected filters: unit=%+v attr=%+v", option["unit_filter"], option["attr_filter"])
+	}
+	excludedCards, ok := option["excluded_cards"].([]int)
+	if !ok || !reflect.DeepEqual(excludedCards, []int{1001, 1002}) {
+		t.Fatalf("unexpected excluded_cards: %+v", option["excluded_cards"])
+	}
+	if option["use_current_deck"] != true {
+		t.Fatalf("unexpected use_current_deck: %+v", option["use_current_deck"])
+	}
+	if option["max_profile"] != true || option["sub_max_profile"] != true {
+		t.Fatalf("unexpected profile flags: max=%+v sub=%+v", option["max_profile"], option["sub_max_profile"])
+	}
+	if option["music_compare"] != true {
+		t.Fatalf("unexpected music_compare: %+v", option["music_compare"])
+	}
+	musicCompareQueries, ok := option["music_compare_queries"].([]string)
+	if !ok || !reflect.DeepEqual(musicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
+		t.Fatalf("unexpected music_compare_queries: %+v", option["music_compare_queries"])
+	}
+	specificSkillOrder, ok := option["specific_skill_order"].([]int)
+	if !ok || !reflect.DeepEqual(specificSkillOrder, []int{0, 1, 2, 3, 4}) {
+		t.Fatalf("unexpected specific_skill_order: %+v", option["specific_skill_order"])
 	}
 }
 

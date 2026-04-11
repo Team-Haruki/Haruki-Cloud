@@ -14,6 +14,17 @@ type mysekaiDeckCombinedParams struct {
 type deckAutoQueryParams struct {
 	EventID                      *int                               `json:"event_id,omitempty"`
 	TargetBonuses                []int                              `json:"target_bonuses,omitempty"`
+	Boost                        *int                               `json:"boost,omitempty"`
+	AreaItemLevel                *int                               `json:"area_item_level,omitempty"`
+	UnitFilter                   string                             `json:"unit_filter,omitempty"`
+	AttrFilter                   string                             `json:"attr_filter,omitempty"`
+	ExcludedCards                []int                              `json:"excluded_cards,omitempty"`
+	UseCurrentDeck               bool                               `json:"use_current_deck,omitempty"`
+	MaxProfile                   bool                               `json:"max_profile,omitempty"`
+	SubMaxProfile                bool                               `json:"sub_max_profile,omitempty"`
+	MusicCompare                 bool                               `json:"music_compare,omitempty"`
+	MusicCompareQueries          []string                           `json:"music_compare_queries,omitempty"`
+	SpecificSkillOrder           []int                              `json:"specific_skill_order,omitempty"`
 	Args                         string                             `json:"args,omitempty"`
 	Algorithm                    string                             `json:"algorithm,omitempty"`
 	LiveType                     string                             `json:"live_type,omitempty"`

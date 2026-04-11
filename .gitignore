@@ -68,3 +68,4 @@ deploy_alpha_native_deck.sh
 haruki-server-linux
 collections.suite.json
 music_metas.json
+test/

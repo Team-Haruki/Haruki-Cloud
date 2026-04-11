@@ -3,12 +3,64 @@ package sekai
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 )
+
+func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
+	boost := 5
+	areaItemLevel := 15
+
+	original := deckAutoQueryParams{
+		Boost:               &boost,
+		AreaItemLevel:       &areaItemLevel,
+		UnitFilter:          "idol",
+		AttrFilter:          "cool",
+		ExcludedCards:       []int{123, 456},
+		UseCurrentDeck:      true,
+		MaxProfile:          true,
+		SubMaxProfile:       true,
+		MusicCompare:        true,
+		MusicCompareQueries: []string{"龙hard", "虾expert", "sage"},
+		SpecificSkillOrder:  []int{0, 1, 2, 3, 4},
+	}
+
+	data, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	var decoded deckAutoQueryParams
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+
+	if decoded.Boost == nil || *decoded.Boost != 5 {
+		t.Fatalf("unexpected boost: %+v", decoded.Boost)
+	}
+	if decoded.AreaItemLevel == nil || *decoded.AreaItemLevel != 15 {
+		t.Fatalf("unexpected area item level: %+v", decoded.AreaItemLevel)
+	}
+	if decoded.UnitFilter != "idol" || decoded.AttrFilter != "cool" {
+		t.Fatalf("unexpected filters: unit=%q attr=%q", decoded.UnitFilter, decoded.AttrFilter)
+	}
+	if !reflect.DeepEqual(decoded.ExcludedCards, []int{123, 456}) {
+		t.Fatalf("unexpected excluded cards: %+v", decoded.ExcludedCards)
+	}
+	if !decoded.UseCurrentDeck || !decoded.MaxProfile || !decoded.SubMaxProfile || !decoded.MusicCompare {
+		t.Fatalf("unexpected flags: %+v", decoded)
+	}
+	if !reflect.DeepEqual(decoded.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
+		t.Fatalf("unexpected music compare queries: %+v", decoded.MusicCompareQueries)
+	}
+	if !reflect.DeepEqual(decoded.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
+		t.Fatalf("unexpected specific skill order: %+v", decoded.SpecificSkillOrder)
+	}
+}
 
 func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()

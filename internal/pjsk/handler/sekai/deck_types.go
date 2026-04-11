@@ -79,7 +79,12 @@ var (
 
 var deckPowerTargetKeywords = []string{"综合力", "综合", "总合力", "总和", "power"}
 var deckSkillTargetKeywords = []string{"倍率", "实效", "skill", "时效"}
+var deckCurrentDeckKeywords = []string{"当前", "目前"}
+var deckMusicCompareKeywords = []string{"歌曲比较", "歌曲排行", "歌曲排名", "歌曲推荐"}
 var deckBoostKeywords = []string{"boost", "火", "体力", "体"}
+var deckAreaItemKeywords = []string{"区域道具", "道具", "areaitem"}
+var deckMaxProfileKeywords = []string{"顶配", "满配"}
+var deckSubMaxProfileKeywords = []string{"次顶配", "次满配", "中配"}
 var deckSkillMaxKeywords = []string{"满技能", "满技", "skillmax", "技能满级", "slv4"}
 var deckMasterMaxKeywords = []string{"满突破", "满破", "rankmax", "mastermax", "5破", "五破"}
 var deckEpisodeReadKeywords = []string{"剧情已读", "满剧情", "前后篇已读", "前后篇", "已读"}
@@ -93,6 +98,21 @@ var deckSkillReferenceKeywords = []string{"技能抽取", "技能吸取"}
 var deckMaxKeywords = []string{"最高", "最大", "最优", "最强", "最佳"}
 var deckMinKeywords = []string{"最低", "最小", "最差", "最弱", "最烂"}
 var deckAverageKeywords = []string{"平均", "均值", "期望"}
+var deckUnitFilterKeywords = map[string][]string{
+	"light_sound":    {"纯ln", "仅ln"},
+	"idol":           {"纯mmj", "仅mmj"},
+	"street":         {"纯vbs", "仅vbs"},
+	"theme_park":     {"纯ws", "仅ws"},
+	"school_refusal": {"纯25h", "纯25时", "纯25", "仅25h", "仅25时", "仅25"},
+	"piapro":         {"纯vs", "纯v", "仅vs", "仅v"},
+}
+var deckAttrFilterAliases = map[string][]string{
+	"cute":       {"cute", "可爱", "粉花", "粉", "pink"},
+	"cool":       {"cool", "帅气", "蓝星", "蓝", "blue"},
+	"pure":       {"pure", "纯真", "绿草", "草", "绿", "green"},
+	"happy":      {"happy", "快乐", "橙心", "橙", "orange"},
+	"mysterious": {"mysterious", "神秘", "紫月", "紫", "purple"},
+}
 var deckInlineDifficultySuffixes = []string{
 	"append", "expert", "master", "normal", "easy", "hard",
 	"粉谱", "红谱", "紫谱", "蓝谱", "绿谱", "黄谱",
@@ -133,3 +153,11 @@ var deckRarityPrefixes = []struct {
 }
 
 var deckUnitAliasRules = newDeckUnitAliasRules()
+
+const deckSpecificSkillOrderUsage = `
+指定技能顺序方式:
+最优顺序: /指令 ... 技能顺序最优
+最差顺序: /指令 ... 技能顺序最差
+平均顺序: /指令 ... 技能顺序平均
+特定顺序: /指令 ... 技能顺序12345
+`

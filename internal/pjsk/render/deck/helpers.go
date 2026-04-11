@@ -128,7 +128,7 @@ func normalizeRecommendUnit(raw string) string {
 
 func normalizeRecommendStrategy(raw string) string {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "max", "min", "average":
+	case "max", "min", "average", "specific":
 		return strings.ToLower(strings.TrimSpace(raw))
 	default:
 		return ""

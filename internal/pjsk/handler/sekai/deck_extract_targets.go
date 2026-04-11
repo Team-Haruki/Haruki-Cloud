@@ -71,9 +71,20 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	if eventID, remaining, ok := extractBareSingleEventID(args); ok {
-		params.EventID = eventID
+	if eventID, remaining := extractDeckExplicitEventID(args); eventID != nil {
+		return extractDeckExplicitEventSelection(remaining, eventID, params)
+	}
+
+	if attr, unit, remaining, partial := extractDeckSimulatedEvent(args); attr != "" && unit != "" {
+		params.EventAttr = attr
+		params.EventUnit = unit
 		return remaining, nil
+	} else if partial {
+		return "", onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
+	}
+
+	if eventID, remaining := extractDeckEventID(args); eventID != nil {
+		return extractDeckExplicitEventSelection(remaining, eventID, params)
 	}
 
 	if turn, charID, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && (charID > 0 || charQuery != "") {
@@ -89,39 +100,47 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return remaining, nil
 	}
 
-	if eventID, remaining := extractDeckEventID(args); eventID != nil {
-		params.EventID = eventID
-		if charID, charQuery, next := extractDeckCharacterCandidate(remaining, true); charID > 0 {
-			params.WorldBloomCharacterID = intPtr(charID)
-			if params.EventUnit == "" {
-				params.EventUnit = deckCharacterUnit(charID)
-			}
-			return next, nil
-		} else if charQuery != "" {
-			if next == "" && looksLikeInlineMusicQuery(charQuery) {
-				return remaining, nil
-			}
-			params.WorldBloomCharacterQuery = charQuery
-			return next, nil
-		}
-		return remaining, nil
-	}
-
-	return extractDeckSimulatedEventSelection(args, params, trigger)
+	return normalizeDeckSpaces(args), nil
 }
 
-func extractDeckSimulatedEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	attr, unit, remaining := extractDeckSimulatedEvent(args)
-	switch {
-	case attr != "" && unit != "":
-		params.EventAttr = attr
-		params.EventUnit = unit
+func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams) (string, error) {
+	params.EventID = eventID
+	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
+		params.WorldBloomCharacterQuery = selector
 		return remaining, nil
-	case attr != "" || unit != "":
-		return "", onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
-	default:
-		return normalizeDeckSpaces(args), nil
 	}
+	if charID, charQuery, remaining := extractDeckCharacterCandidate(args, true); charID > 0 {
+		params.WorldBloomCharacterID = intPtr(charID)
+		if params.EventUnit == "" {
+			params.EventUnit = deckCharacterUnit(charID)
+		}
+		return remaining, nil
+	} else if charQuery != "" {
+		if remaining == "" && looksLikeInlineMusicQuery(charQuery) {
+			return args, nil
+		}
+		params.WorldBloomCharacterQuery = charQuery
+		return remaining, nil
+	}
+	return normalizeDeckSpaces(args), nil
+}
+
+func extractDeckWorldBloomSelectorCandidate(args string) (string, string) {
+	normalized := normalizeDeckSpaces(args)
+	fields := strings.Fields(normalized)
+	if len(fields) == 0 {
+		return "", normalized
+	}
+
+	first := strings.TrimSpace(fields[0])
+	if first == "" {
+		return "", normalized
+	}
+	lower := strings.ToLower(first)
+	if strings.EqualFold(lower, "wl") || strings.HasPrefix(lower, "wl") {
+		return lower, normalizeDeckSpaces(strings.Join(fields[1:], " "))
+	}
+	return "", normalized
 }
 
 func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string) {
@@ -142,7 +161,7 @@ func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuer
 	return turnValue, charID, charQuery, normalizeDeckSpaces(args)
 }
 
-func extractDeckEventID(args string) (*int, string) {
+func extractDeckExplicitEventID(args string) (*int, string) {
 	normalized := normalizeDeckSpaces(args)
 	if strings.Contains(args, "终章") {
 		eventID := 180
@@ -150,27 +169,7 @@ func extractDeckEventID(args string) (*int, string) {
 	}
 	matches := deckEventIDRegex.FindStringSubmatch(normalized)
 	if len(matches) < 3 {
-		fields := strings.Fields(normalized)
-		if len(fields) < 2 || len(fields[0]) > 3 {
-			return nil, normalized
-		}
-		if _, err := strconv.Atoi(fields[0]); err != nil {
-			return nil, normalized
-		}
-
-		// Keep the legacy behavior for inputs like "123 ex" which are commonly
-		// used as bare music queries with difficulty suffixes.
-		if len(fields) == 2 {
-			if diff, cleaned := rendermusic.ExtractMusicDifficulty(normalized); diff != "" && normalizeDeckSpaces(cleaned) == fields[0] {
-				return nil, normalized
-			}
-		}
-
-		eventID, err := strconv.Atoi(fields[0])
-		if err != nil || eventID <= 0 {
-			return nil, normalized
-		}
-		return &eventID, normalizeDeckSpaces(strings.Join(fields[1:], " "))
+		return nil, normalized
 	}
 	eventID, err := strconv.Atoi(matches[2])
 	if err != nil || eventID <= 0 {
@@ -179,23 +178,64 @@ func extractDeckEventID(args string) (*int, string) {
 	return &eventID, normalizeDeckSpaces(deckEventIDRegex.ReplaceAllString(normalized, " "))
 }
 
-func extractBareSingleEventID(args string) (*int, string, bool) {
+func extractDeckEventID(args string) (*int, string) {
 	normalized := normalizeDeckSpaces(args)
-	fields := strings.Fields(normalized)
-	if len(fields) != 1 || len(fields[0]) > 3 {
-		return nil, normalized, false
+	if eventID, remaining := extractDeckExplicitEventID(normalized); eventID != nil {
+		return eventID, remaining
 	}
+
+	fields := strings.Fields(normalized)
+	if len(fields) == 0 || len(fields[0]) > 3 {
+		return nil, normalized
+	}
+	if _, err := strconv.Atoi(fields[0]); err != nil {
+		return nil, normalized
+	}
+
+	// Keep the legacy behavior for inputs like "123 ex" which are commonly
+	// used as bare music queries with difficulty suffixes.
+	if len(fields) == 2 {
+		if diff, cleaned := rendermusic.ExtractMusicDifficulty(normalized); diff != "" && normalizeDeckSpaces(cleaned) == fields[0] {
+			return nil, normalized
+		}
+	}
+
 	eventID, err := strconv.Atoi(fields[0])
 	if err != nil || eventID <= 0 {
-		return nil, normalized, false
+		return nil, normalized
 	}
-	return &eventID, "", true
+	return &eventID, normalizeDeckSpaces(strings.Join(fields[1:], " "))
 }
 
-func extractDeckSimulatedEvent(args string) (attr string, unit string, remaining string) {
+func extractDeckSimulatedEvent(args string) (attr string, unit string, remaining string, partial bool) {
 	attr, args = extractDeckAttribute(args)
-	unit, args = extractDeckUnit(args)
-	return attr, unit, normalizeDeckSpaces(args)
+	unit, args = extractDeckSimulatedEventUnit(args)
+	return attr, unit, normalizeDeckSpaces(args), attr != "" || unit != ""
+}
+
+func extractDeckSimulatedEventUnit(args string) (string, string) {
+	unit, remaining := extractDeckUnit(args)
+	switch unit {
+	case "piapro":
+		if !strings.Contains(args, "vs") {
+			return "", strings.TrimSpace(args)
+		}
+	case "school_refusal":
+		if idx := strings.Index(args, "25"); idx >= 0 {
+			left := ' '
+			right := ' '
+			if idx > 0 {
+				left = rune(args[idx-1])
+			}
+			if idx+2 < len(args) {
+				right = rune(args[idx+2])
+			}
+			if (left >= '0' && left <= '9') || (right >= '0' && right <= '9') || left == 't' || left == '活' {
+				return "", strings.TrimSpace(args)
+			}
+		}
+	}
+	return unit, remaining
 }
 
 func extractDeckAttribute(args string) (string, string) {
@@ -271,7 +311,7 @@ func looksLikeInlineMusicQuery(raw string) bool {
 }
 
 func validateNoEventDeckArgs(args, trigger string) error {
-	attr, unit, remaining := extractDeckSimulatedEvent(args)
+	attr, unit, remaining, _ := extractDeckSimulatedEvent(args)
 	if attr == "" && unit == "" {
 		return nil
 	}

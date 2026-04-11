@@ -157,6 +157,30 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "25 蓝",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != nil {
+		t.Fatalf("simulated event should not set event id: %+v", params.EventID)
+	}
+	if params.EventUnit != "school_refusal" || params.EventAttr != "cool" {
+		t.Fatalf("unexpected simulate event params: %+v", params)
+	}
+}
+
 func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
@@ -370,6 +394,321 @@ func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing
 	}
 }
 
+func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "140 wl1 sage",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 140 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "wl1" {
+		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 顶配 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.MaxProfile {
+		t.Fatalf("expected max_profile to be enabled")
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 次顶配 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.SubMaxProfile {
+		t.Fatalf("expected sub_max_profile to be enabled")
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 当前 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 仅vs sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.UnitFilter != "piapro" {
+		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 仅紫 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.AttrFilter != "mysterious" {
+		t.Fatalf("unexpected attr filter: %q", params.AttrFilter)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 sage neo -123 -456",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !reflect.DeepEqual(params.ExcludedCards, []int{123, 456}) {
+		t.Fatalf("unexpected excluded cards: %+v", params.ExcludedCards)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 区域道具15级 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.AreaItemLevel == nil || *params.AreaItemLevel != 15 {
+		t.Fatalf("unexpected area item level: %+v", params.AreaItemLevel)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 技能顺序平均 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.SkillOrderChooseStrategy != "average" {
+		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	}
+	if len(params.SpecificSkillOrder) != 0 {
+		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 当前 技能顺序12345 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.SkillOrderChooseStrategy != "specific" {
+		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	}
+	if !reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
+		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 sage neo 技能顺序15234 #1 2 3 4 5",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !reflect.DeepEqual(params.FixedCards, []int{1, 2, 3, 4, 5}) {
+		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
+	}
+	if params.SkillOrderChooseStrategy != "specific" {
+		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	}
+	if !reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 4, 1, 2, 3}) {
+		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 技能顺序12345 sage neo",
+	})
+	if err == nil {
+		t.Fatalf("expected specific skill order without fixed deck to fail")
+	}
+	if !strings.Contains(err.Error(), "仅在使用固定队伍") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 sage neo 技能顺序12345 #miku rin",
+	})
+	if err == nil {
+		t.Fatalf("expected fixed characters with specific skill order to fail")
+	}
+	if !strings.Contains(err.Error(), "仅在使用固定队伍") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 	h := sekaiHandlers{}.BonusDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
@@ -418,6 +757,30 @@ func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
 	}
 }
 
+func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T) {
+	h := sekaiHandlers{}.BonusDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/加成组卡",
+		ArgText:    "123 120",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != nil {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if !reflect.DeepEqual(params.TargetBonuses, []int{123, 120}) {
+		t.Fatalf("unexpected target bonuses: %+v", params.TargetBonuses)
+	}
+}
+
 func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
@@ -443,6 +806,117 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 	}
 	if params.LiveType != "auto" {
 		t.Fatalf("unexpected live type: %q", params.LiveType)
+	}
+}
+
+func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.ChallengeLiveCharacterQuery != "" {
+		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "当前",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "miku 当前",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "miku 歌曲比较 10th 群青apd",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if !params.MusicCompare {
+		t.Fatalf("expected music_compare to be enabled")
+	}
+	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"10th", "群青apd"}) {
+		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
 }
 
@@ -686,6 +1160,9 @@ func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *te
 	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 13 {
 		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
+	if params.Boost == nil || *params.Boost != 5 {
+		t.Fatalf("unexpected boost: %+v", params.Boost)
+	}
 	if params.MusicQuery != "sage" {
 		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
@@ -709,6 +1186,9 @@ func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
 	}
 	if params.EventID == nil || *params.EventID != 163 {
 		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.Boost == nil || *params.Boost != 5 {
+		t.Fatalf("unexpected boost: %+v", params.Boost)
 	}
 	if params.MusicQuery != "sage neo" {
 		t.Fatalf("unexpected music query: %q", params.MusicQuery)

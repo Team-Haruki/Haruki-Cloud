@@ -63,6 +63,34 @@ func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, 
 	})
 }
 
+func (a *ProviderAdapter) GetAllCards() ([]*masterdata.Card, error) {
+	return a.P.Cards().Filter(a.Context(), &provider.CardFilter{})
+}
+
+func (a *ProviderAdapter) AreaItemLevelCaps(limit int) map[int]int {
+	result := make(map[int]int)
+	items := a.P.Education().GetAreaItems(a.Context())
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		maxLevel := 0
+		for _, level := range a.P.Education().GetAreaItemLevels(a.Context(), item.ID) {
+			if level == nil {
+				continue
+			}
+			if limit > 0 && level.Level > limit {
+				continue
+			}
+			if level.Level > maxLevel {
+				maxLevel = level.Level
+			}
+		}
+		result[item.ID] = maxLevel
+	}
+	return result
+}
+
 func (a *ProviderAdapter) GetCharacterColorCode(id int) (string, bool) {
 	return a.P.Characters().GetColorCode(a.Context(), id)
 }

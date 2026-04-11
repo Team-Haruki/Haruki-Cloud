@@ -141,15 +141,45 @@ func buildUserCardEntries(cards []RawUserCard) []any {
 			continue
 		}
 		seen[card.CardID] = struct{}{}
-		entries = append(entries, map[string]any{
+		entry := map[string]any{
 			"cardId":                card.CardID,
 			"level":                 card.Level,
 			"masterRank":            card.MasterRank,
 			"defaultImage":          card.DefaultImage,
 			"specialTrainingStatus": card.SpecialTrainingStatus,
-		})
+		}
+		if card.SkillLevel > 0 {
+			entry["skillLevel"] = card.SkillLevel
+		}
+		entries = append(entries, entry)
 	}
 	return entries
+}
+
+func CloneRawUserData(raw *RawUserData) (*RawUserData, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return nil, fmt.Errorf("encode raw user snapshot: %w", err)
+	}
+	var cloned RawUserData
+	if err := json.Unmarshal(data, &cloned); err != nil {
+		return nil, fmt.Errorf("decode raw user snapshot clone: %w", err)
+	}
+	return &cloned, nil
+}
+
+func EncodeRawUserData(raw *RawUserData) ([]byte, error) {
+	if raw == nil {
+		return nil, fmt.Errorf("raw user snapshot is unavailable")
+	}
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return nil, fmt.Errorf("encode raw user snapshot: %w", err)
+	}
+	return data, nil
 }
 
 // FindActiveDeck returns the deck with the given activeID, or the first deck if not found.
@@ -165,6 +195,19 @@ func FindActiveDeck(decks []RawUserDeck, activeID int) RawUserDeck {
 	return RawUserDeck{}
 }
 
+func UserDeckCardIDs(deck *RawUserDeck) ([]int, bool) {
+	if deck == nil {
+		return nil, false
+	}
+	cards := []int{deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5}
+	for _, cardID := range cards {
+		if cardID <= 0 {
+			return nil, false
+		}
+	}
+	return cards, true
+}
+
 // FindUserCard returns the card matching cardID, or nil if not found.
 func FindUserCard(cards []RawUserCard, cardID int) *RawUserCard {
 	for i := range cards {
@@ -173,6 +216,28 @@ func FindUserCard(cards []RawUserCard, cardID int) *RawUserCard {
 		}
 	}
 	return nil
+}
+
+func FindChallengeLiveDeck(decks []RawChallengeLiveDeck, characterID int) *RawChallengeLiveDeck {
+	for i := range decks {
+		if decks[i].CharacterID == characterID {
+			return &decks[i]
+		}
+	}
+	return nil
+}
+
+func ChallengeLiveDeckCardIDs(deck *RawChallengeLiveDeck) ([]int, bool) {
+	if deck == nil {
+		return nil, false
+	}
+	cards := []int{deck.Leader, deck.Support1, deck.Support2, deck.Support3, deck.Support4}
+	for _, cardID := range cards {
+		if cardID <= 0 {
+			return nil, false
+		}
+	}
+	return cards, true
 }
 
 func isAfterTraining(cardInfo *RawUserCard) bool {

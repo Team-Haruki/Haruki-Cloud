@@ -8,6 +8,7 @@ type RawUserData struct {
 	UserCards                                         []RawUserCard                     `json:"userCards"`
 	UserBonds                                         []RawUserBond                     `json:"userBonds"`
 	UserMusicStats                                    []RawMusicResult                  `json:"userMusicResults"`
+	UserChallengeLiveSoloDecks                        []RawChallengeLiveDeck            `json:"userChallengeLiveSoloDecks"`
 	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults"`
 	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages"`
 	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward          `json:"userChallengeLiveSoloHighScoreRewards"`
@@ -68,6 +69,7 @@ type RawUserCardEpisode struct {
 type RawUserCard struct {
 	CardID                int                  `json:"cardId"`
 	Level                 int                  `json:"level"`
+	SkillLevel            int                  `json:"skillLevel,omitempty"`
 	MasterRank            int                  `json:"masterRank"`
 	SpecialTrainingStatus string               `json:"specialTrainingStatus"`
 	DefaultImage          string               `json:"defaultImage"`
@@ -86,6 +88,15 @@ type RawMusicResult struct {
 type RawChallengeLiveResult struct {
 	CharacterID int `json:"characterId"`
 	HighScore   int `json:"highScore"`
+}
+
+type RawChallengeLiveDeck struct {
+	CharacterID int `json:"characterId"`
+	Leader      int `json:"leader"`
+	Support1    int `json:"support1"`
+	Support2    int `json:"support2"`
+	Support3    int `json:"support3"`
+	Support4    int `json:"support4"`
 }
 
 type RawChallengeLiveStage struct {

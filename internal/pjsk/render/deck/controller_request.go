@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, result *RecommendResult) (*drawing.DeckRequest, error) {
+func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *userdata.RawUserData, result *RecommendResult) (*drawing.DeckRequest, error) {
 	if result == nil || len(result.Decks) == 0 {
 		return nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
@@ -23,7 +23,11 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 
 	profile := c.resolveProfile(region, query.Profile, "deck_remote_service")
 	userCardMap := make(map[int]userdata.RawUserCard)
-	if raw := c.snapshot.RawData(); raw != nil {
+	if preparedRaw != nil {
+		for _, userCard := range preparedRaw.UserCards {
+			userCardMap[userCard.CardID] = userCard
+		}
+	} else if raw := c.snapshot.RawData(); raw != nil {
 		for _, userCard := range raw.UserCards {
 			userCardMap[userCard.CardID] = userCard
 		}
@@ -163,11 +167,23 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if strategy := optionString(option, "skill_reference_choose_strategy"); strategy != "" {
 		request.SkillReferenceChooseStrategy = drawing.StringPtr(strategy)
 	}
+	if unitFilter := optionString(option, "unit_filter"); unitFilter != "" {
+		request.UnitFilter = drawing.StringPtr(unitFilter)
+	}
+	if attrFilter := optionString(option, "attr_filter"); attrFilter != "" {
+		request.AttrFilter = drawing.StringPtr(attrFilter)
+	}
+	if excludedCards, ok := option["excluded_cards"].([]int); ok && len(excludedCards) > 0 {
+		request.ExcludedCards = append([]int(nil), excludedCards...)
+	}
 	if fixedCards, ok := option["fixed_cards"].([]int); ok {
 		request.FixedCardsID = append([]int(nil), fixedCards...)
 	}
 	if fixedCharacters, ok := option["fixed_characters"].([]int); ok {
 		request.FixedCharactersID = append([]int(nil), fixedCharacters...)
+	}
+	if maxProfile, ok := option["max_profile"].(bool); ok {
+		request.IsMaxDeck = maxProfile
 	}
 	if keepAfterTrainingState, ok := option["keep_after_training_state"].(bool); ok {
 		request.KeepAfterTrainingState = keepAfterTrainingState

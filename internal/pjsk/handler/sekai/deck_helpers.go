@@ -42,6 +42,64 @@ func resolveDeckStrategyField(field string, index int, fields []string, keywords
 	return "", 0
 }
 
+func resolveDeckSkillOrderField(field string, index int, fields []string) (string, []int, int, error) {
+	for _, keyword := range deckSkillOrderKeywords {
+		if !strings.Contains(field, keyword) {
+			continue
+		}
+		if strategy := resolveDeckStrategyValue(field); strategy != "" {
+			return strategy, nil, 1, nil
+		}
+
+		raw := strings.TrimSpace(strings.Replace(field, keyword, "", 1))
+		if raw != "" {
+			order, ok := parseDeckSpecificSkillOrder(raw)
+			if !ok {
+				return "", nil, 0, fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+			}
+			return "specific", order, 1, nil
+		}
+
+		if index+1 < len(fields) {
+			next := strings.TrimSpace(fields[index+1])
+			if strategy := resolveDeckStrategyValue(next); strategy != "" {
+				return strategy, nil, 2, nil
+			}
+			order, ok := parseDeckSpecificSkillOrder(next)
+			if ok {
+				return "specific", order, 2, nil
+			}
+		}
+		return "", nil, 0, fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+	}
+	return "", nil, 0, nil
+}
+
+func parseDeckSpecificSkillOrder(raw string) ([]int, bool) {
+	value := strings.TrimSpace(raw)
+	if len(value) != 5 {
+		return nil, false
+	}
+
+	order := make([]int, 0, 5)
+	seen := make(map[int]struct{}, 5)
+	for _, ch := range value {
+		if ch < '1' || ch > '5' {
+			return nil, false
+		}
+		index := int(ch - '1')
+		if _, ok := seen[index]; ok {
+			return nil, false
+		}
+		seen[index] = struct{}{}
+		order = append(order, index)
+	}
+	if len(order) != 5 {
+		return nil, false
+	}
+	return order, true
+}
+
 func resolveDeckStrategyValue(raw string) string {
 	switch {
 	case containsDeckKeyword(raw, deckMaxKeywords):

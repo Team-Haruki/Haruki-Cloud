@@ -21,11 +21,6 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		return nil, err
 	}
 
-	userBytes, err := c.snapshot.RawBytes()
-	if err != nil {
-		return nil, err
-	}
-
 	recommender, err := c.engine.Get(region.String())
 	if err != nil {
 		return nil, err
@@ -41,20 +36,45 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	if err != nil {
 		return nil, err
 	}
+	if recType == "challenge" {
+		if err := c.prepareChallengeRecommend(query, option); err != nil {
+			return nil, err
+		}
+	}
 
-	result, err := recommender.Recommend(RecommendRequest{
+	preparedRaw, userBytes, err := c.prepareRecommendUserData(region, recType, query, option)
+	if err != nil {
+		return nil, err
+	}
+
+	recommendRequest := RecommendRequest{
 		Region:            region.String(),
 		UserData:          userBytes,
 		UserDataFilePath:  c.resolveUserDataFilePath(),
 		MusicMeta:         musicMeta,
 		MusicMetaFilePath: musicMetaPath,
-		BatchOption:       recommender.ExpandAlgorithms(option),
-	})
+	}
+
+	var result *RecommendResult
+	if recType == "challenge" {
+		if shouldRunChallengeAll(option) {
+			result, err = c.recommendChallengeAll(recommender, recommendRequest, option)
+		} else {
+			recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
+			result, err = recommender.Recommend(recommendRequest)
+			if err == nil {
+				applyChallengeScoreDelta(result, optionInt(option, "challenge_live_character_id"), c.snapshot.RawData())
+			}
+		}
+	} else {
+		recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
+		result, err = recommender.Recommend(recommendRequest)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, result)
+	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, preparedRaw, result)
 }
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {

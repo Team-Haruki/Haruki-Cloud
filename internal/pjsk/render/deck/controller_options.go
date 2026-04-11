@@ -1,5 +1,7 @@
 package deck
 
+import "strings"
+
 func applyRecommendOptionOverrides(option map[string]any, recType string, query AutoQuery) {
 	if option == nil {
 		return
@@ -53,6 +55,9 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["music_compare_queries"] = append([]string(nil), query.MusicCompareQueries...)
 	}
 	if len(query.SpecificSkillOrder) > 0 {
+		if strings.TrimSpace(query.SkillOrderChooseStrategy) == "" {
+			option["skill_order_choose_strategy"] = "specific"
+		}
 		option["specific_skill_order"] = append([]int(nil), query.SpecificSkillOrder...)
 	}
 
@@ -112,7 +117,9 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["multi_live_score_up_lower_bound"] = *query.MultiLiveScoreUpLowerBound
 	}
 	if strategy := normalizeRecommendStrategy(query.SkillOrderChooseStrategy); strategy != "" {
-		option["skill_order_choose_strategy"] = strategy
+		if strategy != "specific" || len(query.SpecificSkillOrder) > 0 {
+			option["skill_order_choose_strategy"] = strategy
+		}
 	}
 	if strategy := normalizeRecommendStrategy(query.SkillReferenceChooseStrategy); strategy != "" {
 		option["skill_reference_choose_strategy"] = strategy

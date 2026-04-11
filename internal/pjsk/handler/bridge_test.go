@@ -1225,6 +1225,178 @@ func TestResolveDeckCharacterSelectionsFallsBackWorldBloomQueryToMusic(t *testin
 	}
 }
 
+func TestResolveDeckCharacterSelectionsResolvesExplicitWorldBloomSelector(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_selector?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 501, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now - int64(time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  drawing.IntPtr(501),
+		WorldBloomCharacterQuery: "wl2",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 24 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected world bloom query to be cleared: %q", query.WorldBloomCharacterQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsResolvesDefaultWorldBloomChapterForExplicitEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_default_explicit?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 502, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       drawing.IntPtr(502),
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected default world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventID == nil || *query.EventID != 502 {
+		t.Fatalf("unexpected event id: %+v", query.EventID)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventIDMissing(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_default_current?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 503, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 503 {
+		t.Fatalf("unexpected event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected default world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsRejectsWorldBloomSelectorOnNonWorldBloomEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_non_wl_selector?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedBridgeTestRegularEvent(t, ctx, sekaiClient, "jp", 601, now-int64(time.Hour/time.Millisecond), now+int64(time.Hour/time.Millisecond))
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  drawing.IntPtr(601),
+		WorldBloomCharacterQuery: "wl1",
+	}
+
+	err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient})
+	if err == nil {
+		t.Fatalf("expected non-world bloom event to reject wl selector")
+	}
+	if !strings.Contains(err.Error(), "不是WL活动") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsClearsWorldBloomCharacterForNonWorldBloomEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_non_wl_character?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedBridgeTestRegularEvent(t, ctx, sekaiClient, "jp", 602, now-int64(time.Hour/time.Millisecond), now+int64(time.Hour/time.Millisecond))
+
+	query := renderdeck.AutoQuery{
+		Region:                "jp",
+		RecommendType:         "event",
+		EventID:               drawing.IntPtr(602),
+		WorldBloomCharacterID: drawing.IntPtr(21),
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID != nil {
+		t.Fatalf("expected world bloom character id to be cleared: %+v", query.WorldBloomCharacterID)
+	}
+}
+
 type bridgeTestWorldBloomChapter struct {
 	chapterNo   int64
 	startAt     int64
@@ -1270,6 +1442,31 @@ func seedBridgeTestWorldBloomEvent(
 		if _, err := create.Save(ctx); err != nil {
 			t.Fatalf("create wl chapter %d for event %d: %v", chapter.chapterNo, eventID, err)
 		}
+	}
+}
+
+func seedBridgeTestRegularEvent(
+	t *testing.T,
+	ctx context.Context,
+	sekaiClient *sekaidb.Client,
+	region string,
+	eventID int64,
+	startAt int64,
+	aggregateAt int64,
+) {
+	t.Helper()
+
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion(region).
+		SetGameID(eventID).
+		SetEventType("marathon").
+		SetName(fmt.Sprintf("EV %d", eventID)).
+		SetAssetbundleName(fmt.Sprintf("event_%d", eventID)).
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + int64(time.Hour/time.Millisecond)).
+		Save(ctx); err != nil {
+		t.Fatalf("create event %d: %v", eventID, err)
 	}
 }
 

@@ -28,10 +28,36 @@ func buildDeckQueryParams(ctx SekaiHandlerContext, mode string) (deckAutoQueryPa
 	if err != nil {
 		return deckAutoQueryParams{}, err
 	}
+	if err := validateDeckQueryParams(&params); err != nil {
+		return deckAutoQueryParams{}, err
+	}
 	if args = strings.TrimSpace(args); args != "" {
 		params.Args = args
 	}
 	return params, nil
+}
+
+func validateDeckQueryParams(params *deckAutoQueryParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.SkillOrderChooseStrategy != "specific" && len(params.SpecificSkillOrder) == 0 {
+		return nil
+	}
+	if params.SkillOrderChooseStrategy == "specific" && len(params.SpecificSkillOrder) == 0 {
+		return onebot11.NewReplayError("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+	}
+	if deckHasCompleteFixedCards(params) {
+		return nil
+	}
+	return onebot11.NewReplayError("仅在使用固定队伍（例如添加\"当前\"参数）时可指定特定技能顺序")
+}
+
+func deckHasCompleteFixedCards(params *deckAutoQueryParams) bool {
+	if params == nil {
+		return false
+	}
+	return len(params.FixedCards) == 5 || params.UseCurrentDeck
 }
 
 func buildEventDeckParams(args string, params *deckAutoQueryParams, trigger string) (string, error) {
@@ -67,6 +93,16 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 	if err != nil {
 		return "", err
 	}
+
+	comparePrefix, compareSuffix, hasCompare := extractDeckMusicCompare(args)
+	args = comparePrefix
+	if hasCompare {
+		params.MusicCompare = true
+		if compareSuffix != "" {
+			params.MusicCompareQueries = strings.Fields(compareSuffix)
+		}
+	}
+
 	charID, charQuery, remaining := extractDeckCharacterCandidate(args, true)
 	if charID > 0 {
 		params.ChallengeLiveCharacterID = intPtr(charID)
@@ -74,6 +110,9 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 	} else if charQuery != "" {
 		params.ChallengeLiveCharacterQuery = charQuery
 		args = remaining
+	}
+	if hasCompare {
+		return "", nil
 	}
 	return extractDeckMusicQuery(args, params)
 }
@@ -98,7 +137,7 @@ func buildNoEventDeckParams(args string, params *deckAutoQueryParams, trigger st
 }
 
 func buildBonusDeckParams(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	eventID, remaining := extractDeckEventID(args)
+	eventID, remaining := extractDeckExplicitEventID(args)
 	if eventID != nil {
 		params.EventID = eventID
 		args = remaining

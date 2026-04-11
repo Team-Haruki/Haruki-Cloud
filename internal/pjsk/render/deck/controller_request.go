@@ -115,9 +115,6 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			if strings.TrimSpace(selection.MusicCoverPath) != "" {
 				deckItem.MusicCoverPath = drawing.StringPtr(selection.MusicCoverPath)
 			}
-			if strings.TrimSpace(selection.MusicQuery) != "" {
-				deckItem.MusicQuery = drawing.StringPtr(selection.MusicQuery)
-			}
 		}
 		deckData = append(deckData, deckItem)
 	}

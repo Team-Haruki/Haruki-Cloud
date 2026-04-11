@@ -1078,6 +1078,9 @@ func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *tes
 	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
 		t.Fatalf("unexpected first compare deck music title: %+v", request.DeckData[0].MusicTitle)
 	}
+	if request.DeckData[0].MusicQuery != nil {
+		t.Fatalf("expected compare deck music query to be omitted for drawing layout, got %+v", request.DeckData[0].MusicQuery)
+	}
 	if request.DeckData[1].MusicID == nil || *request.DeckData[1].MusicID != 1 {
 		t.Fatalf("unexpected second compare deck music id: %+v", request.DeckData[1].MusicID)
 	}

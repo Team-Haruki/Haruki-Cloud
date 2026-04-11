@@ -308,6 +308,50 @@ func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
 	}
 }
 
+func TestBuildDrawingRequestFromRecommendResultFallsBackToJPCardSource(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	controller.RegisterCardSource(&testCardSource{
+		region: renderregion.CN,
+		cards:  map[int]*masterdata.Card{},
+	})
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.CN,
+		"no_event",
+		AutoQuery{Region: "cn"},
+		map[string]any{},
+		nil,
+		&RecommendResult{
+			Decks: []RecommendDeck{
+				{
+					Cards: []RecommendCard{
+						{
+							CardID:       1001,
+							Level:        50,
+							MasterRank:   1,
+							DefaultImage: "normal",
+							SkillLevel:   4,
+							SkillRate:    100,
+						},
+					},
+				},
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult returned error: %v", err)
+	}
+
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("expected one fallback card, got %+v", request.DeckData)
+	}
+	got := request.DeckData[0].CardData[0].CardThumbnail.CardThumbnailPath
+	if !strings.Contains(got, "asset/cn-assets/") || !strings.Contains(got, "card_1001_normal.png") {
+		t.Fatalf("unexpected fallback thumbnail path: %q", got)
+	}
+}
+
 func TestBuildAutoRecommendRequestRequiresRemoteServiceWhenEngineEnabled(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{
 		Enabled: true,

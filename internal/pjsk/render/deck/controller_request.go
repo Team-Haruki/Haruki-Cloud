@@ -7,6 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
@@ -37,7 +38,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	for index, deckInfo := range result.Decks {
 		cardData := make([]drawing.DeckCardData, 0, len(deckInfo.Cards))
 		for _, deckCard := range deckInfo.Cards {
-			card, err := cardSource.GetCardByID(deckCard.CardID)
+			card, err := c.cardByIDWithFallback(cardSource, region, deckCard.CardID)
 			if err != nil || card == nil {
 				continue
 			}
@@ -139,6 +140,27 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
+}
+
+func (c *Controller) cardByIDWithFallback(source CardSource, region renderregion.Value, cardID int) (*masterdata.Card, error) {
+	if cardID == 0 || source == nil {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	if card, err := source.GetCardByID(cardID); err == nil && card != nil && strings.TrimSpace(card.AssetBundleName) != "" {
+		return card, nil
+	}
+	if c == nil || c.cardSources == nil || renderregion.WithDefault(region) == renderregion.JP {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	jpSource, ok := c.cardSources.SourceForRegion(renderregion.JP)
+	if !ok || jpSource == nil || jpSource == source {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	card, err := jpSource.GetCardByID(cardID)
+	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
+		return nil, fmt.Errorf("card not found: %d", cardID)
+	}
+	return card, nil
 }
 
 func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, option map[string]any, query AutoQuery) {

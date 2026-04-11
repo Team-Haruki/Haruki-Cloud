@@ -47,6 +47,11 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		return nil, err
 	}
 
+	musicCompareSelections, musicCompareShowNum, err := c.prepareMusicCompareSelections(region, recType, query, option, musicMeta, musicMetaPath)
+	if err != nil {
+		return nil, err
+	}
+
 	recommendRequest := RecommendRequest{
 		Region:            region.String(),
 		UserData:          userBytes,
@@ -57,7 +62,9 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 
 	var result *RecommendResult
 	if recType == "challenge" {
-		if shouldRunChallengeAll(option) {
+		if query.MusicCompare {
+			result, musicCompareSelections, err = c.recommendMusicCompare(recommender, recommendRequest, option, musicCompareSelections, musicCompareShowNum, recType)
+		} else if shouldRunChallengeAll(option) {
 			result, err = c.recommendChallengeAll(recommender, recommendRequest, option)
 		} else {
 			recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
@@ -66,6 +73,8 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 				applyChallengeScoreDelta(result, optionInt(option, "challenge_live_character_id"), c.snapshot.RawData())
 			}
 		}
+	} else if query.MusicCompare {
+		result, musicCompareSelections, err = c.recommendMusicCompare(recommender, recommendRequest, option, musicCompareSelections, musicCompareShowNum, recType)
 	} else {
 		recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
 		result, err = recommender.Recommend(recommendRequest)
@@ -74,7 +83,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		return nil, err
 	}
 
-	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, preparedRaw, result)
+	return c.buildDrawingRequestFromRecommendResult(region, recType, query, option, preparedRaw, result, musicCompareSelections)
 }
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {

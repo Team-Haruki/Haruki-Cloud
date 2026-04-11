@@ -195,6 +195,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
 			DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
 		}, cfg.MetaLoader)
+		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
 		educationController.RegisterSource(educationAdapter)
 		eventController = event.NewController(eventAdapter, drawingClient, assetHelper)
@@ -229,6 +230,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			cardController.RegisterEventSource(regionEventAdapter)
 			deckController.RegisterCardSource(regionCardAdapter)
 			deckController.RegisterEventSource(regionEventAdapter)
+			deckController.RegisterMusicSource(regionMusicAdapter)
 			educationController.RegisterSource(regionEducationAdapter)
 			eventController.RegisterSource(regionEventAdapter)
 			gachaController.RegisterSource(regionGachaAdapter)

@@ -135,6 +135,18 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	if app == nil || app.Music == nil {
 		return fmt.Errorf("deck music resolve requires music controller")
 	}
+	if q.MusicCompare {
+		if len(q.MusicCompareQueries) == 0 {
+			q.MusicCompareSelections = nil
+			return nil
+		}
+		selections, err := resolveDeckMusicCompareSelections(q.Region, q.MusicCompareQueries, app)
+		if err != nil {
+			return err
+		}
+		q.MusicCompareSelections = selections
+		return nil
+	}
 
 	var (
 		result *music.CoverResult
@@ -166,6 +178,54 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	q.MusicTitle = result.Music.Title
 	q.MusicCoverPath = result.JacketPath
 	return nil
+}
+
+func resolveDeckMusicCompareSelections(region string, queries []string, app *renderapp.App) ([]deck.MusicCompareSelection, error) {
+	if len(queries) == 0 {
+		return nil, nil
+	}
+	if app == nil || app.Music == nil {
+		return nil, fmt.Errorf("deck music resolve requires music controller")
+	}
+
+	result := make([]deck.MusicCompareSelection, 0, len(queries))
+	for _, raw := range queries {
+		query := strings.TrimSpace(raw)
+		if query == "" {
+			continue
+		}
+
+		diff, cleaned := music.ExtractMusicDifficulty(query)
+		if diff == "" {
+			diff = "master"
+		}
+		if cleaned == "" {
+			return nil, fmt.Errorf("无法解析要比较的歌曲 %q", query)
+		}
+
+		coverResult, err := app.Music.ResolveMusicCoverByTitleOrAlias(music.Query{
+			Query:  cleaned,
+			Region: region,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if coverResult == nil || coverResult.Music == nil || coverResult.Music.ID <= 0 {
+			return nil, fmt.Errorf("failed to resolve compare music selection %q", query)
+		}
+
+		result = append(result, deck.MusicCompareSelection{
+			MusicID:        coverResult.Music.ID,
+			MusicDiff:      diff,
+			MusicTitle:     coverResult.Music.Title,
+			MusicCoverPath: coverResult.JacketPath,
+			MusicQuery:     query,
+		})
+	}
+	if len(result) == 0 {
+		return nil, nil
+	}
+	return result, nil
 }
 
 func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app *renderapp.App) error {

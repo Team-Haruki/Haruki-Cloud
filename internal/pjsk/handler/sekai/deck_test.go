@@ -496,6 +496,75 @@ func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "歌曲比较 当前",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.MusicCompare || !params.UseCurrentDeck {
+		t.Fatalf("unexpected compare current params: %+v", params)
+	}
+	if len(params.MusicCompareQueries) != 0 {
+		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "龙hard 歌曲比较 虾expert sage",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.MusicCompare {
+		t.Fatalf("expected music_compare to be enabled")
+	}
+	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
+		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "歌曲比较 a b c d e f",
+	})
+	if err == nil {
+		t.Fatalf("expected too many compare songs to fail")
+	}
+	if !strings.Contains(err.Error(), "最多只能指定 5 首歌曲") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
@@ -974,6 +1043,30 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 	}
 	if len(params.FixedCharacterQueries) != 0 {
 		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
+func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/ms组卡",
+		ArgText:    "歌曲比较 龙hard 虾expert",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var combined mysekaiDeckCombinedParams
+	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !combined.Deck.MusicCompare {
+		t.Fatalf("expected music_compare to be enabled")
+	}
+	if !reflect.DeepEqual(combined.Deck.MusicCompareQueries, []string{"龙hard", "虾expert"}) {
+		t.Fatalf("unexpected music compare queries: %+v", combined.Deck.MusicCompareQueries)
 	}
 }
 

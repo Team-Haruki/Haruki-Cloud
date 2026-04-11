@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *userdata.RawUserData, result *RecommendResult) (*drawing.DeckRequest, error) {
+func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *userdata.RawUserData, result *RecommendResult, musicCompareSelections []MusicCompareSelection) (*drawing.DeckRequest, error) {
 	if result == nil || len(result.Decks) == 0 {
 		return nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
@@ -34,7 +34,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	}
 
 	deckData := make([]drawing.DeckData, 0, len(result.Decks))
-	for _, deckInfo := range result.Decks {
+	for index, deckInfo := range result.Decks {
 		cardData := make([]drawing.DeckCardData, 0, len(deckInfo.Cards))
 		for _, deckCard := range deckInfo.Cards {
 			card, err := cardSource.GetCardByID(deckCard.CardID)
@@ -92,7 +92,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			})
 		}
 
-		deckData = append(deckData, drawing.DeckData{
+		deckItem := drawing.DeckData{
 			CardData:             cardData,
 			Score:                drawing.IntPtr(deckInfo.Score),
 			LiveScore:            drawing.IntPtr(deckInfo.LiveScore),
@@ -102,7 +102,24 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			MultiLiveScoreUp:     float64Ptr(deckInfo.MultiLiveScoreUp),
 			TotalPower:           drawing.IntPtr(deckInfo.TotalPower),
 			ChallengeScoreDelta:  drawing.IntPtr(deckInfo.ChallengeScoreDelta),
-		})
+		}
+		if query.MusicCompare && index < len(musicCompareSelections) {
+			selection := musicCompareSelections[index]
+			deckItem.MusicID = drawing.IntPtr(selection.MusicID)
+			if strings.TrimSpace(selection.MusicDiff) != "" {
+				deckItem.MusicDiff = drawing.StringPtr(selection.MusicDiff)
+			}
+			if strings.TrimSpace(selection.MusicTitle) != "" {
+				deckItem.MusicTitle = drawing.StringPtr(selection.MusicTitle)
+			}
+			if strings.TrimSpace(selection.MusicCoverPath) != "" {
+				deckItem.MusicCoverPath = drawing.StringPtr(selection.MusicCoverPath)
+			}
+			if strings.TrimSpace(selection.MusicQuery) != "" {
+				deckItem.MusicQuery = drawing.StringPtr(selection.MusicQuery)
+			}
+		}
+		deckData = append(deckData, deckItem)
 	}
 
 	target := "score"
@@ -113,6 +130,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 		Region:              region.String(),
 		Profile:             *profile,
 		DeckData:            deckData,
+		MusicCompare:        query.MusicCompare,
 		RecommendType:       recType,
 		Target:              drawing.StringPtr(target),
 		ModelName:           toInterfaceSlice(result.DeckAlgs),
@@ -133,21 +151,23 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if target := optionString(option, "target"); target != "" {
 		request.Target = drawing.StringPtr(target)
 	}
-	if musicID := optionInt(option, "music_id"); musicID > 0 {
-		request.MusicID = drawing.IntPtr(musicID)
-		if musicID == 10000 {
-			request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均)")
-			request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
+	if !query.MusicCompare {
+		if musicID := optionInt(option, "music_id"); musicID > 0 {
+			request.MusicID = drawing.IntPtr(musicID)
+			if musicID == 10000 {
+				request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均)")
+				request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
+			}
 		}
-	}
-	if strings.TrimSpace(query.MusicTitle) != "" && request.MusicTitle == nil {
-		request.MusicTitle = drawing.StringPtr(query.MusicTitle)
-	}
-	if strings.TrimSpace(query.MusicCoverPath) != "" && request.MusicCoverPath == nil {
-		request.MusicCoverPath = drawing.StringPtr(query.MusicCoverPath)
-	}
-	if diff := optionString(option, "music_diff"); diff != "" {
-		request.MusicDiff = drawing.StringPtr(diff)
+		if strings.TrimSpace(query.MusicTitle) != "" && request.MusicTitle == nil {
+			request.MusicTitle = drawing.StringPtr(query.MusicTitle)
+		}
+		if strings.TrimSpace(query.MusicCoverPath) != "" && request.MusicCoverPath == nil {
+			request.MusicCoverPath = drawing.StringPtr(query.MusicCoverPath)
+		}
+		if diff := optionString(option, "music_diff"); diff != "" {
+			request.MusicDiff = drawing.StringPtr(diff)
+		}
 	}
 	if option == nil {
 		return

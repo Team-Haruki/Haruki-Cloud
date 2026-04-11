@@ -131,6 +131,11 @@ type DeckCardData struct {
 
 type DeckData struct {
 	CardData             []DeckCardData `json:"card_data"`
+	MusicTitle           *string        `json:"music_title,omitempty"`
+	MusicID              *int           `json:"music_id,omitempty"`
+	MusicDiff            *string        `json:"music_diff,omitempty"`
+	MusicCoverPath       *string        `json:"music_cover_path,omitempty"`
+	MusicQuery           *string        `json:"music_query,omitempty"`
 	Pt                   *int           `json:"pt,omitempty"`
 	EventBonusRate       *float64       `json:"event_bonus_rate,omitempty"`
 	ScoreUp              *float64       `json:"score_up,omitempty"`
@@ -147,6 +152,7 @@ type DeckRequest struct {
 	Region                       string                     `json:"region"`
 	Profile                      DetailedProfileCardRequest `json:"profile"`
 	DeckData                     []DeckData                 `json:"deck_data"`
+	MusicCompare                 bool                       `json:"music_compare,omitempty"`
 	EventName                    *string                    `json:"event_name,omitempty"`
 	MusicTitle                   *string                    `json:"music_title,omitempty"`
 	MusicID                      *int                       `json:"music_id,omitempty"`

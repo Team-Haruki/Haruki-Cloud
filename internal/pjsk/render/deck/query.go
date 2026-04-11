@@ -2,6 +2,14 @@ package deck
 
 import "haruki-cloud/utils/drawing"
 
+type MusicCompareSelection struct {
+	MusicID        int    `json:"music_id"`
+	MusicDiff      string `json:"music_diff,omitempty"`
+	MusicTitle     string `json:"music_title,omitempty"`
+	MusicCoverPath string `json:"music_cover_path,omitempty"`
+	MusicQuery     string `json:"music_query,omitempty"`
+}
+
 type CardConfigPatch struct {
 	Disable     bool `json:"disable,omitempty"`
 	LevelMax    bool `json:"level_max,omitempty"`
@@ -37,6 +45,7 @@ type AutoQuery struct {
 	SubMaxProfile                bool                                `json:"sub_max_profile,omitempty"`
 	MusicCompare                 bool                                `json:"music_compare,omitempty"`
 	MusicCompareQueries          []string                            `json:"music_compare_queries,omitempty"`
+	MusicCompareSelections       []MusicCompareSelection             `json:"music_compare_selections,omitempty"`
 	SpecificSkillOrder           []int                               `json:"specific_skill_order,omitempty"`
 	Args                         string                              `json:"args,omitempty"`
 	Algorithm                    string                              `json:"algorithm,omitempty"`

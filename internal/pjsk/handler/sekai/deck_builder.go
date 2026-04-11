@@ -41,6 +41,9 @@ func validateDeckQueryParams(params *deckAutoQueryParams) error {
 	if params == nil {
 		return nil
 	}
+	if len(params.MusicCompareQueries) > deckMusicCompareMaxQueries {
+		return onebot11.NewReplayError("最多只能指定 %d 首歌曲进行比较", deckMusicCompareMaxQueries)
+	}
 	if params.SkillOrderChooseStrategy != "specific" && len(params.SpecificSkillOrder) == 0 {
 		return nil
 	}
@@ -78,6 +81,11 @@ func buildEventDeckParams(args string, params *deckAutoQueryParams, trigger stri
 	if err != nil {
 		return "", err
 	}
+	comparePrefix, compareSuffix, hasCompare := extractDeckMusicCompare(args)
+	if hasCompare {
+		applyDeckMusicCompareParams(params, comparePrefix, compareSuffix)
+		return "", nil
+	}
 	return extractDeckMusicQuery(args, params)
 }
 
@@ -98,9 +106,6 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 	args = comparePrefix
 	if hasCompare {
 		params.MusicCompare = true
-		if compareSuffix != "" {
-			params.MusicCompareQueries = strings.Fields(compareSuffix)
-		}
 	}
 
 	charID, charQuery, remaining := extractDeckCharacterCandidate(args, true)
@@ -112,6 +117,7 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 		args = remaining
 	}
 	if hasCompare {
+		applyDeckMusicCompareParams(params, remaining, compareSuffix)
 		return "", nil
 	}
 	return extractDeckMusicQuery(args, params)
@@ -132,6 +138,11 @@ func buildNoEventDeckParams(args string, params *deckAutoQueryParams, trigger st
 	}
 	if err := validateNoEventDeckArgs(args, trigger); err != nil {
 		return "", err
+	}
+	comparePrefix, compareSuffix, hasCompare := extractDeckMusicCompare(args)
+	if hasCompare {
+		applyDeckMusicCompareParams(params, comparePrefix, compareSuffix)
+		return "", nil
 	}
 	return extractDeckMusicQuery(args, params)
 }
@@ -168,5 +179,35 @@ func buildMysekaiDeckParams(args string, params *deckAutoQueryParams, trigger st
 	if err != nil {
 		return "", err
 	}
-	return extractDeckEventSelection(args, params, trigger)
+	args, err = extractDeckEventSelection(args, params, trigger)
+	if err != nil {
+		return "", err
+	}
+	comparePrefix, compareSuffix, hasCompare := extractDeckMusicCompare(args)
+	if hasCompare {
+		applyDeckMusicCompareParams(params, comparePrefix, compareSuffix)
+		return "", nil
+	}
+	return args, nil
+}
+
+func applyDeckMusicCompareParams(params *deckAutoQueryParams, segments ...string) {
+	if params == nil {
+		return
+	}
+	params.MusicCompare = true
+
+	combined := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		segment = strings.TrimSpace(segment)
+		if segment == "" {
+			continue
+		}
+		combined = append(combined, segment)
+	}
+	if len(combined) == 0 {
+		params.MusicCompareQueries = nil
+		return
+	}
+	params.MusicCompareQueries = strings.Fields(strings.Join(combined, " "))
 }

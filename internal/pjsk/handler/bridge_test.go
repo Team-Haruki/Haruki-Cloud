@@ -603,6 +603,54 @@ func TestResolveDeckMusicSelection(t *testing.T) {
 	}
 }
 
+func TestResolveDeckMusicSelectionMusicCompareSelections(t *testing.T) {
+	root := t.TempDir()
+	for _, asset := range []string{"jacket_a", "jacket_b"} {
+		jacketPath := filepath.Join(root, "music", "jacket", asset, asset+".png")
+		if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
+			t.Fatalf("mkdir jacket: %v", err)
+		}
+		if err := os.WriteFile(jacketPath, []byte("png"), 0o644); err != nil {
+			t.Fatalf("write jacket: %v", err)
+		}
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "hard", PlayLevel: 21}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 31}},
+		},
+	}
+	app := &renderapp.App{
+		Music: music.NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil),
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:              "jp",
+		MusicCompare:        true,
+		MusicCompareQueries: []string{"Song Ahd", "Song B"},
+	}
+	if err := resolveDeckMusicSelection(&query, app); err != nil {
+		t.Fatalf("resolveDeckMusicSelection compare: %v", err)
+	}
+	if query.MusicID != nil || query.MusicTitle != "" || query.MusicCoverPath != "" {
+		t.Fatalf("unexpected single-music fields in compare mode: %+v", query)
+	}
+	if len(query.MusicCompareSelections) != 2 {
+		t.Fatalf("unexpected compare selections: %+v", query.MusicCompareSelections)
+	}
+	if query.MusicCompareSelections[0].MusicID != 1 || query.MusicCompareSelections[0].MusicDiff != "hard" {
+		t.Fatalf("unexpected first compare selection: %+v", query.MusicCompareSelections[0])
+	}
+	if query.MusicCompareSelections[1].MusicID != 2 || query.MusicCompareSelections[1].MusicDiff != "master" {
+		t.Fatalf("unexpected second compare selection: %+v", query.MusicCompareSelections[1])
+	}
+}
+
 func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/score/music-meta" {

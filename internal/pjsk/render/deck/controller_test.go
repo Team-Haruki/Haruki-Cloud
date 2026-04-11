@@ -86,6 +86,11 @@ type testEventSource struct {
 	events map[int]*masterdata.Event
 }
 
+type testMusicSource struct {
+	region renderregion.Value
+	musics map[int]*masterdata.Music
+}
+
 type testMusicMetaSource struct {
 	data []byte
 }
@@ -96,8 +101,14 @@ func (s *testMusicMetaSource) Get(string) []byte {
 
 func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
 
+func (s *testMusicSource) DefaultRegion() renderregion.Value { return s.region }
+
 func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	return s.events[id], nil
+}
+
+func (s *testMusicSource) GetMusicByID(id int) (*masterdata.Music, error) {
+	return s.musics[id], nil
 }
 
 func (s *testEventSource) GetEvents() []*masterdata.Event {
@@ -920,6 +931,274 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareRequiresCharacter(t *test
 	}
 	if !strings.Contains(err.Error(), "必须指定一个角色") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildAutoRecommendRequestEventMusicCompareRequiresFixedDeckWhenQueriesOmitted(t *testing.T) {
+	server, masterdataRoot := newDeckRecommendStubServer(t)
+	defer server.Close()
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":1,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 7
+	_, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		MusicCompare:  true,
+	})
+	if err == nil {
+		t.Fatalf("expected compare without fixed deck to fail")
+	}
+	if !strings.Contains(err.Error(), "必须固定一个卡组") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *testing.T) {
+	var recommendCalls atomic.Int32
+	seenMusicIDs := make([]int, 0, 2)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"compare-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			option := options[0].(map[string]any)
+			musicID := int(option["music_id"].(float64))
+			seenMusicIDs = append(seenMusicIDs, musicID)
+			if option["best_skill_as_leader"] != false {
+				t.Fatalf("expected compare mode to disable best_skill_as_leader: %+v", option["best_skill_as_leader"])
+			}
+
+			scoreByMusicID := map[int]int{
+				1: 100,
+				2: 300,
+			}
+			score := scoreByMusicID[musicID]
+			_, _ = w.Write([]byte(fmt.Sprintf(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": %d,
+							"live_score": %d,
+							"mysekai_event_point": 0,
+							"total_power": 200000,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
+						}]
+					}
+				}
+			]`, score, score)))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":1,"difficulty":"hard","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},{"music_id":2,"difficulty":"expert","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		MusicCompare:  true,
+		MusicCompareSelections: []MusicCompareSelection{
+			{MusicID: 1, MusicDiff: "hard", MusicTitle: "Song A", MusicCoverPath: "music/jacket/song_a/song_a.png", MusicQuery: "Song Ahd"},
+			{MusicID: 2, MusicDiff: "expert", MusicTitle: "Song B", MusicCoverPath: "music/jacket/song_b/song_b.png", MusicQuery: "Song Bex"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if recommendCalls.Load() != 2 {
+		t.Fatalf("expected two recommend calls, got %d", recommendCalls.Load())
+	}
+	if !reflect.DeepEqual(seenMusicIDs, []int{1, 2}) {
+		t.Fatalf("unexpected recommend music ids: %+v", seenMusicIDs)
+	}
+	if !request.MusicCompare {
+		t.Fatalf("expected music_compare in request")
+	}
+	if request.MusicTitle != nil || request.MusicID != nil || request.MusicCoverPath != nil {
+		t.Fatalf("unexpected top-level music fields in compare mode: title=%+v id=%+v cover=%+v", request.MusicTitle, request.MusicID, request.MusicCoverPath)
+	}
+	if len(request.DeckData) != 2 {
+		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
+	}
+	if request.DeckData[0].MusicID == nil || *request.DeckData[0].MusicID != 2 {
+		t.Fatalf("unexpected first compare deck music id: %+v", request.DeckData[0].MusicID)
+	}
+	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
+		t.Fatalf("unexpected first compare deck music title: %+v", request.DeckData[0].MusicTitle)
+	}
+	if request.DeckData[1].MusicID == nil || *request.DeckData[1].MusicID != 1 {
+		t.Fatalf("unexpected second compare deck music id: %+v", request.DeckData[1].MusicID)
+	}
+}
+
+func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAndSorts(t *testing.T) {
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"compare-current-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			option := options[0].(map[string]any)
+			fixedCards, ok := option["fixed_cards"].([]any)
+			if !ok || len(fixedCards) != 5 {
+				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+			}
+			musicID := int(option["music_id"].(float64))
+			scoreByMusicID := map[int]int{
+				1: 100,
+				2: 400,
+				3: 250,
+			}
+			score := scoreByMusicID[musicID]
+			_, _ = w.Write([]byte(fmt.Sprintf(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": %d,
+							"live_score": %d,
+							"mysekai_event_point": 0,
+							"total_power": 200000,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
+						}]
+					}
+				}
+			]`, score, score)))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[
+			{"music_id":1,"difficulty":"master","music_time":100,"event_rate":100,"base_score":50,"base_score_auto":50,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},
+			{"music_id":2,"difficulty":"master","music_time":100,"event_rate":120,"base_score":40,"base_score_auto":40,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},
+			{"music_id":3,"difficulty":"expert","music_time":100,"event_rate":90,"base_score":30,"base_score_auto":30,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}
+		]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:         "jp",
+		RecommendType:  "event",
+		EventID:        &eventID,
+		UseCurrentDeck: true,
+		MusicCompare:   true,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if recommendCalls.Load() != 3 {
+		t.Fatalf("expected three recommend calls, got %d", recommendCalls.Load())
+	}
+	if !reflect.DeepEqual(request.FixedCardsID, []int{1001, 1002, 1003, 1004, 1005}) {
+		t.Fatalf("unexpected fixed cards in compare request: %+v", request.FixedCardsID)
+	}
+	if len(request.DeckData) != 3 {
+		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
+	}
+	gotMusicIDs := make([]int, 0, len(request.DeckData))
+	for _, item := range request.DeckData {
+		if item.MusicID == nil {
+			t.Fatalf("missing compare music id in deck data: %+v", item)
+		}
+		gotMusicIDs = append(gotMusicIDs, *item.MusicID)
+	}
+	if !reflect.DeepEqual(gotMusicIDs, []int{2, 3, 1}) {
+		t.Fatalf("unexpected compare sort order: %+v", gotMusicIDs)
+	}
+	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
+		t.Fatalf("unexpected first compare title: %+v", request.DeckData[0].MusicTitle)
 	}
 }
 
@@ -1889,8 +2168,20 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 			},
 		},
 	}
+	musicSource := &testMusicSource{
+		region: renderregion.JP,
+		musics: map[int]*masterdata.Music{
+			1:     {ID: 1, Title: "Song A", AssetBundleName: "song_a"},
+			2:     {ID: 2, Title: "Song B", AssetBundleName: "song_b"},
+			3:     {ID: 3, Title: "Song C", AssetBundleName: "song_c"},
+			4:     {ID: 4, Title: "Song D", AssetBundleName: "song_d"},
+			10000: {ID: 10000, Title: "おまかせ", AssetBundleName: "omakase"},
+		},
+	}
 
-	return NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, metaLoader)
+	controller := NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, metaLoader)
+	controller.RegisterMusicSource(musicSource)
+	return controller
 }
 
 func decodeDeckMultipartPayload(body io.Reader, out *[][]byte) error {

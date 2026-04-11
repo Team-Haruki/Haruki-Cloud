@@ -27,6 +27,7 @@ type EventSource interface {
 type Controller struct {
 	cardSources   *regionsource.Registry[CardSource]
 	eventSources  *regionsource.Registry[EventSource]
+	musicSources  *regionsource.Registry[MusicSource]
 	drawing       *drawing.HarukiDrawingClient
 	assets        *assets.AssetHelper
 	snapshot      userdata.Snapshot
@@ -48,6 +49,7 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 	controller := &Controller{
 		cardSources:   regionsource.NewRegistry[CardSource](resolvedDefaultRegion),
 		eventSources:  regionsource.NewRegistry[EventSource](resolvedDefaultRegion),
+		musicSources:  regionsource.NewRegistry[MusicSource](resolvedDefaultRegion),
 		drawing:       drawingClient,
 		assets:        assetHelper,
 		snapshot:      snapshot,
@@ -87,6 +89,16 @@ func (c *Controller) RegisterEventSource(source EventSource) {
 		c.eventSources = regionsource.NewRegistry[EventSource](c.defaultRegion)
 	}
 	c.eventSources.RegisterSource(source)
+}
+
+func (c *Controller) RegisterMusicSource(source MusicSource) {
+	if c == nil {
+		return
+	}
+	if c.musicSources == nil {
+		c.musicSources = regionsource.NewRegistry[MusicSource](c.defaultRegion)
+	}
+	c.musicSources.RegisterSource(source)
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given

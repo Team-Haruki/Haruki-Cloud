@@ -79,7 +79,7 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 		TwitterID:            resp.UserProfile.TwitterID,
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID, region),
-		BgSettings:           resolveProfileBGSettings(query.BgSettings),
+		BgSettings:           applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride),
 		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
 		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),

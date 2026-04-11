@@ -22,12 +22,16 @@ func (f fakeFastVerifier) GetToolboxUserFastVerificationGameAccountBindings(plat
 }
 
 type fakeProfileBGStore struct {
-	saved   []string
-	deleted []string
+	saved          []string
+	savedServers   []string
+	savedBindingID []int
+	deleted        []string
 }
 
 func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server string, bindingID int, imageURL string) (*drawing.ProfileBgSettings, error) {
 	s.saved = append(s.saved, imageURL)
+	s.savedServers = append(s.savedServers, server)
+	s.savedBindingID = append(s.savedBindingID, bindingID)
 	path := userdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "1" + ".jpg"
 	if bindingID != 1 {
 		path = userdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "2" + ".jpg"
@@ -196,5 +200,74 @@ func TestExecuteProfileSettingsCommandVerifyReturnsVerificationText(t *testing.T
 	}
 	if got := string(text); got != "已验证JP服账号 12345678901234" {
 		t.Fatalf("unexpected verify text:\n%s", got)
+	}
+}
+
+func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegionImplicit(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"tw": {"11111111111111": "TW User"},
+		"jp": {"22222222222222": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{
+			{Server: "tw", GameUserID: "11111111111111"},
+			{Server: "jp", GameUserID: "22222222222222"},
+		},
+	})
+	bgStore := &fakeProfileBGStore{}
+	service.SetProfileBGStorage(bgStore)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "tw"); err != nil {
+		t.Fatalf("verify tw: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify jp: %v", err)
+	}
+
+	text, err := userdata.ExecuteProfileSettingsCommand(ctx, service, userdata.ProfileModeBGUpload, userdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: false,
+		ImageURL:       "https://example.com/bg-tw.png",
+	})
+	if err != nil {
+		t.Fatalf("bg upload command: %v", err)
+	}
+	if got := string(text); got != "已更新TW服个人信息背景" {
+		t.Fatalf("unexpected bg upload text:\n%s", got)
+	}
+	if len(bgStore.saved) != 1 || bgStore.saved[0] != "https://example.com/bg-tw.png" {
+		t.Fatalf("unexpected saved backgrounds: %+v", bgStore.saved)
+	}
+	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "tw" {
+		t.Fatalf("unexpected saved servers: %+v", bgStore.savedServers)
+	}
+
+	items, err := service.List(ctx, "qq", "42")
+	if err != nil {
+		t.Fatalf("list bindings: %v", err)
+	}
+	var twHasBG, jpHasBG bool
+	for _, item := range items {
+		switch item.Server {
+		case "tw":
+			twHasBG = item.Bg != nil && item.Bg.ImgPath != nil && *item.Bg.ImgPath != ""
+		case "jp":
+			jpHasBG = item.Bg != nil && item.Bg.ImgPath != nil && *item.Bg.ImgPath != ""
+		}
+	}
+	if !twHasBG {
+		t.Fatalf("expected TW binding to receive custom bg")
+	}
+	if jpHasBG {
+		t.Fatalf("expected JP binding to remain unchanged")
 	}
 }

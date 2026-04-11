@@ -47,9 +47,10 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 
 		q := profile.Query{
-			Region:     rc.Cmd.Region,
-			Visible:    target.Visible,
-			BgSettings: target.BgSettings,
+			Region:           rc.Cmd.Region,
+			Visible:          target.Visible,
+			BgSettings:       target.BgSettings,
+			VerticalOverride: p.ProfileVertical,
 		}
 		data, err := profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
 		if err != nil {
@@ -90,5 +91,3 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		return nil, unsupportedModeError("profile", rc.Cmd.Mode)
 	}
 }
-
-

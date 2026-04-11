@@ -184,20 +184,28 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return []byte(formatVerifyListText(items)), nil
 	case ProfileModeBGUpload:
-		item, err := service.SetCurrentBindingProfileBG(ctx, params.Platform, params.PlatformUserID, params.Server, params.ImageURL)
+		binding, err := resolveBinding()
+		if err != nil {
+			return nil, err
+		}
+		item, err := service.setBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding, params.ImageURL)
 		if err != nil {
 			return nil, err
 		}
 		return []byte(fmt.Sprintf("已更新%s服个人信息背景", strings.ToUpper(item.Server))), nil
 	case ProfileModeBGClear:
-		item, err := service.ClearCurrentBindingProfileBG(ctx, params.Platform, params.PlatformUserID, params.Server)
+		binding, err := resolveBinding()
+		if err != nil {
+			return nil, err
+		}
+		item, err := service.clearBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding)
 		if err != nil {
 			return nil, err
 		}
 		return []byte(fmt.Sprintf("已清空%s服个人信息背景", strings.ToUpper(item.Server))), nil
 	case ProfileModeBGAdjust:
 		if params.Blur == nil && params.Alpha == nil && params.Vertical == nil {
-			binding, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, params.Server)
+			binding, err := resolveBinding()
 			if err != nil {
 				return nil, err
 			}
@@ -207,7 +215,11 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			}
 			return []byte(formatProfileBGSettingsText(*item)), nil
 		}
-		item, err := service.AdjustCurrentBindingProfileBG(ctx, params.Platform, params.PlatformUserID, params.Server, params.Blur, params.Alpha, params.Vertical)
+		binding, err := resolveBinding()
+		if err != nil {
+			return nil, err
+		}
+		item, err := service.adjustBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding, params.Blur, params.Alpha, params.Vertical)
 		if err != nil {
 			return nil, err
 		}

@@ -13,12 +13,13 @@ import (
 // UserQueryParams holds the resolved identity context for commands that query
 // another user's data (arrest, registration time, etc.).
 type UserQueryParams struct {
-	Mode           string `json:"mode"`               // "self", "at_user", "uid"
-	Platform       string `json:"platform"`           // caller's IM platform
-	PlatformUserID string `json:"platform_user_id"`   // caller's platform UID (self mode)
-	AtUserID       string `json:"at_user_id"`         // @-mentioned platform UID (at_user mode)
-	PJSKUserID     string `json:"pjsk_user_id"`       // direct game UID (uid mode)
-	Selector       string `json:"selector,omitempty"` // u[i] binding selector (self mode only)
+	Mode            string `json:"mode"`               // "self", "at_user", "uid"
+	Platform        string `json:"platform"`           // caller's IM platform
+	PlatformUserID  string `json:"platform_user_id"`   // caller's platform UID (self mode)
+	AtUserID        string `json:"at_user_id"`         // @-mentioned platform UID (at_user mode)
+	PJSKUserID      string `json:"pjsk_user_id"`       // direct game UID (uid mode)
+	Selector        string `json:"selector,omitempty"` // u[i] binding selector (self mode only)
+	ProfileVertical *bool  `json:"profile_vertical,omitempty"`
 }
 
 // isBindingSelector returns true if the value is a u[i] binding selector (e.g. "u1", "u2").

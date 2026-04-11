@@ -75,6 +75,15 @@ func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.Prof
 	return &cloned
 }
 
+func applyProfileBGVerticalOverride(settings *drawing.ProfileBgSettings, override *bool) *drawing.ProfileBgSettings {
+	resolved := resolveProfileBGSettings(settings)
+	if override == nil {
+		return resolved
+	}
+	resolved.Vertical = *override
+	return resolved
+}
+
 func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck) []any {
 	entries := make([]any, 0, len(cards))
 	seen := make(map[int]struct{}, len(cards))

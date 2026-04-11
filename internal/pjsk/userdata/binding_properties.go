@@ -9,6 +9,99 @@ import (
 	"haruki-cloud/utils/query"
 )
 
+func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, imageURL string) (*BindingListItem, error) {
+	if s == nil || s.bgStorage == nil {
+		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
+	}
+	if binding == nil {
+		return nil, fmt.Errorf("未找到要设置背景的绑定账号")
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(binding.Server))
+	}
+
+	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
+	queryClient := query.NewClient(nil, nil, s.pjskDB, nil)
+	userSettings, _ := queryClient.GetPJSKSettings(ctx, binding.HarukiUserID)
+	currentCount := 0
+	if userSettings != nil {
+		currentCount = userSettings.NoncompliantBGCount
+	}
+	if currentCount >= 3 {
+		return nil, fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
+	}
+
+	// Image content moderation
+	if s.censor != nil {
+		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
+			newCount, _ := queryClient.IncrNoncompliantBGCount(ctx, binding.HarukiUserID)
+			if newCount >= 3 {
+				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
+			}
+			return nil, fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
+		}
+	}
+
+	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).SetBg(settings).Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, error) {
+	if binding == nil {
+		return nil, fmt.Errorf("未找到要清除背景的绑定账号")
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(binding.Server))
+	}
+	if s.bgStorage != nil {
+		if err := s.bgStorage.DeleteProfileBackground(ctx, binding.Bg); err != nil {
+			return nil, err
+		}
+	}
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		ClearBg().
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, blur, alpha *int, vertical *bool) (*BindingListItem, error) {
+	if binding == nil {
+		return nil, fmt.Errorf("未找到要调整背景的绑定账号")
+	}
+	if !binding.Verified {
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(binding.Server))
+	}
+	if binding.Bg == nil || binding.Bg.ImgPath == nil || strings.TrimSpace(*binding.Bg.ImgPath) == "" {
+		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))
+	}
+
+	settings := cloneProfileBGSettings(binding.Bg)
+	if blur != nil {
+		settings.Blur = *blur
+	}
+	if alpha != nil {
+		settings.Alpha = *alpha
+	}
+	if vertical != nil {
+		settings.Vertical = *vertical
+	}
+
+	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
+		SetBg(settings).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
 // SetBindingVisible sets the visibility flag for the current binding.
 func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platformUserID, server string, visible bool) (*BindingListItem, error) {
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
@@ -119,47 +212,11 @@ func (s *BindingService) ListVerifiedBindings(ctx context.Context, platform, pla
 
 // SetCurrentBindingProfileBG sets the profile background for the current binding.
 func (s *BindingService) SetCurrentBindingProfileBG(ctx context.Context, platform, platformUserID, server, imageURL string) (*BindingListItem, error) {
-	if s == nil || s.bgStorage == nil {
-		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
-	}
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
 	if err != nil {
 		return nil, err
 	}
-	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(binding.Server))
-	}
-
-	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
-	queryClient := query.NewClient(nil, nil, s.pjskDB, nil)
-	userSettings, _ := queryClient.GetPJSKSettings(ctx, binding.HarukiUserID)
-	currentCount := 0
-	if userSettings != nil {
-		currentCount = userSettings.NoncompliantBGCount
-	}
-	if currentCount >= 3 {
-		return nil, fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
-	}
-
-	// Image content moderation
-	if s.censor != nil {
-		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
-			newCount, _ := queryClient.IncrNoncompliantBGCount(ctx, binding.HarukiUserID)
-			if newCount >= 3 {
-				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
-			}
-			return nil, fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
-		}
-	}
-
-	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).SetBg(settings).Save(ctx); err != nil {
-		return nil, err
-	}
-	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+	return s.setBindingProfileBG(ctx, platform, platformUserID, binding, imageURL)
 }
 
 // ClearCurrentBindingProfileBG clears the profile background for the current binding.
@@ -168,20 +225,7 @@ func (s *BindingService) ClearCurrentBindingProfileBG(ctx context.Context, platf
 	if err != nil {
 		return nil, err
 	}
-	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(binding.Server))
-	}
-	if s.bgStorage != nil {
-		if err := s.bgStorage.DeleteProfileBackground(ctx, binding.Bg); err != nil {
-			return nil, err
-		}
-	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		ClearBg().
-		Save(ctx); err != nil {
-		return nil, err
-	}
-	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+	return s.clearBindingProfileBG(ctx, platform, platformUserID, binding)
 }
 
 // AdjustCurrentBindingProfileBG adjusts the profile background settings for the current binding.
@@ -190,28 +234,5 @@ func (s *BindingService) AdjustCurrentBindingProfileBG(ctx context.Context, plat
 	if err != nil {
 		return nil, err
 	}
-	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(binding.Server))
-	}
-	if binding.Bg == nil || binding.Bg.ImgPath == nil || strings.TrimSpace(*binding.Bg.ImgPath) == "" {
-		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))
-	}
-
-	settings := cloneProfileBGSettings(binding.Bg)
-	if blur != nil {
-		settings.Blur = *blur
-	}
-	if alpha != nil {
-		settings.Alpha = *alpha
-	}
-	if vertical != nil {
-		settings.Vertical = *vertical
-	}
-
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		SetBg(settings).
-		Save(ctx); err != nil {
-		return nil, err
-	}
-	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+	return s.adjustBindingProfileBG(ctx, platform, platformUserID, binding, blur, alpha, vertical)
 }

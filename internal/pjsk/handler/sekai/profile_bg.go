@@ -11,6 +11,28 @@ import (
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 )
 
+var (
+	profileHorizontalKeywords = []string{"横屏", "横向", "横版"}
+	profileVerticalKeywords   = []string{"竖屏", "竖向", "竖版", "纵向"}
+)
+
+func extractProfileVerticalArg(args string) (*bool, string) {
+	remaining := strings.TrimSpace(args)
+	for _, keyword := range profileHorizontalKeywords {
+		if strings.Contains(remaining, keyword) {
+			v := false
+			return &v, strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
+		}
+	}
+	for _, keyword := range profileVerticalKeywords {
+		if strings.Contains(remaining, keyword) {
+			v := true
+			return &v, strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
+		}
+	}
+	return nil, remaining
+}
+
 func extractFirstImageURL(ctx SekaiHandlerContext) string {
 	for _, segment := range ctx.GetMessage() {
 		if segment.Type != "image" {
@@ -37,17 +59,12 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 	if args == "" {
 		return params, nil
 	}
+	params.Vertical, args = extractProfileVerticalArg(args)
 
 	tokens := strings.Fields(args)
 	for i := 0; i < len(tokens); i++ {
 		token := strings.TrimSpace(tokens[i])
 		switch strings.ToLower(token) {
-		case "横屏", "横向", "横版":
-			v := false
-			params.Vertical = &v
-		case "竖屏", "竖向", "竖版", "纵向":
-			v := true
-			params.Vertical = &v
 		case "模糊", "blur":
 			if i+1 >= len(tokens) {
 				return params, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")

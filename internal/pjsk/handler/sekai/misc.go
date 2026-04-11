@@ -61,6 +61,7 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
+			p.ProfileVertical, _ = extractProfileVerticalArg(ctx.GetArgs())
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeRender, p), nil
 		},
 	}

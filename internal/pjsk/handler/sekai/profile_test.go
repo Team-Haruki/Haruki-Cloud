@@ -84,3 +84,41 @@ func TestProfileAdjustBGHandleParsesArgs(t *testing.T) {
 		t.Fatalf("unexpected vertical: %+v", params.Vertical)
 	}
 }
+
+func TestProfileHandleParsesVerticalArg(t *testing.T) {
+	h := sekaiHandlers{}.ProfileHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/个人信息",
+		ArgText:    "u2 竖屏",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Mode != accountdata.ProfileModeRender {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params UserQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" {
+		t.Fatalf("unexpected mode: %q", params.Mode)
+	}
+	if params.Selector != "u2" {
+		t.Fatalf("unexpected selector: %q", params.Selector)
+	}
+	if params.ProfileVertical == nil || !*params.ProfileVertical {
+		t.Fatalf("unexpected profile vertical: %+v", params.ProfileVertical)
+	}
+}

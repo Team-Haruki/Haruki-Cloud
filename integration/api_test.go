@@ -76,7 +76,6 @@ type integrationConfig struct {
 
 var (
 	sessionToken string
-	clientKP     *corecrypto.KeyPair
 	serverPubKey []byte
 
 	testConfig     integrationConfig
@@ -216,10 +215,6 @@ func authenticate(cfg integrationConfig) error {
 	}
 
 	sessionToken = authResp.Data.SessionToken
-	clientKP, err = corecrypto.GenerateKeyPair()
-	if err != nil {
-		return fmt.Errorf("generate client keypair: %w", err)
-	}
 	serverPubKey, err = hex.DecodeString(cfg.ServerPubKeyHex)
 	if err != nil {
 		return fmt.Errorf("decode server pubkey: %w", err)
@@ -234,7 +229,7 @@ func summarizeSecret(value string) string {
 	return value[:8] + "..." + value[len(value)-6:]
 }
 
-// noiseRoundTrip sends an encrypted Noise IK request and decrypts the response.
+// noiseRoundTrip sends an encrypted Noise NK request and decrypts the response.
 func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int) {
 	t.Helper()
 	cfg := ensureAuthenticated(t)
@@ -243,7 +238,7 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 		t.Fatalf("msgpack marshal: %v", err)
 	}
 
-	nc, err := corecrypto.NewHandshake(clientKP, serverPubKey, true)
+	nc, err := corecrypto.NewInitiator(serverPubKey)
 	if err != nil {
 		t.Fatalf("noise handshake init: %v", err)
 	}

@@ -10,26 +10,28 @@ import (
 
 // Config defines the config for Secure middleware.
 type Config struct {
-	// ServerPrivateKey is the server's private key used for Noise IK.
+	// ServerPrivateKey is the server's static key pair used for Noise NK.
 	ServerPrivateKey *crypto.KeyPair
 }
 
-// New creates a new Secure middleware with Noise IK support.
+// New creates a new Secure middleware with Noise NK transport encryption.
+// Each HTTP request performs a full NK handshake:
+//
+//	Request body  = Noise NK Message 1 (-> e, es, payload)
+//	Response body = Noise NK Message 2 (<- e, ee, payload)
 func New(config Config) fiber.Handler {
 	if config.ServerPrivateKey == nil {
 		log.Fatal("Secure middleware: ServerPrivateKey is required")
 	}
 
 	return func(c fiber.Ctx) error {
-		// 1. Initialize Noise Responder (IK Pattern)
-		// Responder doesn't need peer static key initially for IK.
-		nc, err := crypto.NewHandshake(config.ServerPrivateKey, nil, false)
+		// 1. Initialize Noise NK Responder
+		nc, err := crypto.NewResponder(config.ServerPrivateKey)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Crypto init failed"})
 		}
 
-		// 2. Read Request Body (Handshake Message 1)
-		// For IK, the first message contains Client's Static Key (encrypted) and Payload (Encrypted).
+		// 2. Read Request Body (NK Message 1: -> e, es, payload)
 		ciphertext := c.Body()
 		if len(ciphertext) == 0 {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Empty body"})
@@ -41,31 +43,18 @@ func New(config Config) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Secure handshake failed (Decrypt)"})
 		}
 
-		// 3. Verify Client Identity (Optional but recommended)
-		peerStatic := nc.GetPeerStatic()
-		if peerStatic != nil {
-			// TODO: Verify peerStatic against a whitelist DB
-			// log.Printf("SecureMiddleware: Client Identity: %x", peerStatic)
-		}
-
-		// 4. Set Request Body to Plaintext
+		// 3. Set Request Body to Plaintext
 		c.Request().SetBody(plaintext)
-		// Ensure Content-Type is msgpack for binding
 		c.Request().Header.Set("Content-Type", "application/msgpack")
-		// Flag downstream handlers that this request came through Noise IK
 		c.Locals("secure_noise", true)
 
-		// 5. Continue stack
+		// 4. Continue stack
 		if err := c.Next(); err != nil {
 			return err
 		}
 
-		// 6. Encrypt Response Body (Handshake Message 2)
-		// For IK, the second message (Response) finishes the handshake.
+		// 5. Encrypt Response Body (NK Message 2: <- e, ee, payload)
 		responseBody := c.Response().Body()
-
-		// Even if body is empty (e.g. 204), Noise protocol expects the flow to complete if we want strictness.
-		// But `EncryptPacket` handles writing the next message step even with empty payload.
 		encrypted, err := nc.EncryptPacket(responseBody)
 		if err != nil {
 			log.Printf("SecureMiddleware: Encryption failed: %v", err)

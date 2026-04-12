@@ -108,3 +108,52 @@ func DecryptString(ciphertextBase64 string, keyBase64 string) (string, error) {
 	}
 	return string(plaintext), nil
 }
+
+// EncryptRaw encrypts plaintext with AES-256-GCM and returns raw bytes: nonce(12) || ciphertext || tag.
+func EncryptRaw(plaintext []byte, key []byte) ([]byte, error) {
+	if len(key) != KeySize {
+		return nil, ErrInvalidKeySize
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
+	}
+	nonce := make([]byte, NonceSize)
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
+	}
+	ciphertext := gcm.Seal(nil, nonce, plaintext, nil)
+	result := make([]byte, NonceSize+len(ciphertext))
+	copy(result[:NonceSize], nonce)
+	copy(result[NonceSize:], ciphertext)
+	return result, nil
+}
+
+// DecryptRaw decrypts raw bytes (nonce(12) || ciphertext || tag) with AES-256-GCM.
+func DecryptRaw(data []byte, key []byte) ([]byte, error) {
+	if len(key) != KeySize {
+		return nil, ErrInvalidKeySize
+	}
+	if len(data) < NonceSize+TagSize {
+		return nil, ErrCiphertextTooShort
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
+	}
+	nonce := data[:NonceSize]
+	ciphertext := data[NonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, ErrDecryptionFailed
+	}
+	return plaintext, nil
+}

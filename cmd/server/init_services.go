@@ -139,6 +139,25 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	return runtime
 }
 
+func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
+	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
+	if keyHex == "" {
+		mainLogger.Warnf("Auth encryption key not configured; auth endpoint will reject requests")
+		return nil
+	}
+	keyBytes, err := hex.DecodeString(keyHex)
+	if err != nil {
+		mainLogger.Errorf("Invalid auth_encryption_key hex: %v", err)
+		os.Exit(1)
+	}
+	if len(keyBytes) != 32 {
+		mainLogger.Errorf("auth_encryption_key must be 32 bytes (got %d)", len(keyBytes))
+		os.Exit(1)
+	}
+	mainLogger.Infof("Auth encryption key loaded (AES-256-GCM)")
+	return keyBytes
+}
+
 func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
 	if keyHex == "" {

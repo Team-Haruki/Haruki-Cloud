@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-04-10（v17.3 — 收尾治理完成）
+> 最后更新：2026-04-12（v17.4 — Noise IK→NK + Auth AES 固定密钥改造）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
@@ -650,6 +650,48 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | `HeyiweiHandle`（/b30, /b39） | 返回硬编码字符串"何意味"，Easter Egg，不走 bridge |
 
 ---
+### 6.5 Noise IK→NK 迁移 + Auth AES 固定密钥改造（2026-04-12）
+
+Bot API 传输层加密从 Noise IK 模式迁移至 Noise NK 模式，Auth API 从 credential 派生密钥改为固定 AES-256-GCM 密钥。
+
+**Noise 协议变更**：
+
+| 项目 | 之前 (IK) | 之后 (NK) |
+|------|-----------|-----------|
+| 模式 | `Noise_IK_25519_AESGCM_SHA256` | `Noise_NK_25519_AESGCM_SHA256` |
+| 客户端静态密钥 | 需要生成 X25519 密钥对 | **不需要** |
+| 服务端验证客户端身份 | 可选（未实现的 TODO 白名单） | 不适用 |
+| 握手消息 | `-> e, es, s, ss` / `<- e, ee, se` | `-> e, es` / `<- e, ee` |
+| 双向加密 | ✅ | ✅ |
+
+**Auth API 变更**：
+
+| 项目 | 之前 | 之后 |
+|------|------|------|
+| 加密密钥 | credential 前 32 字节（每 bot 不同） | 固定 AES-256 密钥（`auth_encryption_key` 配置） |
+| 请求格式 | JSON `{"encrypted_payload": "base64(...)}` | raw binary: `nonce(12) \|\| ciphertext \|\| tag` |
+| 载荷编码 | JSON `{credential, timestamp}` | MsgPack `{bot_id, credential, timestamp}` |
+| 响应格式 | JSON `{session_token, expires_at}` | AES-GCM 加密 MsgPack `{session_token, expires_at, noise_server_pubkey}` |
+| Noise 公钥分发 | 预配置 / 手动 | **Auth 响应自动返回** |
+
+**变更文件清单**：
+
+- `internal/core/crypto/crypto.go`：`HandshakeIK` → `HandshakeNK`，`NewHandshake()` → `NewResponder()` / `NewInitiator()`，删除 `GetPeerStatic()`
+- `internal/middleware/secure/secure.go`：使用 `NewResponder()`，删除 peerStatic 验证
+- `config/config.go`：新增 `AuthEncryptionKey` 字段
+- `utils/crypto/crypto.go`：新增 `EncryptRaw()` / `DecryptRaw()`（raw binary AES-GCM）
+- `api/bot/auth/user.go`：Auth handler 使用固定密钥 + MsgPack + 返回 noise pubkey
+- `api/bot/auth/struct.go`：AuthPayload 新增 `bot_id` 字段（MsgPack tag），AuthResponse 新增 `noise_server_pubkey`
+- `api/bot/auth/helper.go`：删除 `deriveKeyFromCredential()`
+- `api/bot/auth/route.go`：`RegisterBotRoutes` 新增 `authEncryptionKey` + `noiseServerPubKey` 参数
+- `cmd/server/main.go`：`initNoiseKeyPair` 提前到 `initBot` 之前，新增 `initAuthEncryptionKey`
+- `cmd/server/init_database.go`：`initBot` 转发 auth 密钥和 noise pubkey
+
+**配置新增**：
+- `haruki_bot.auth_encryption_key`：32 字节 AES-256 密钥的 hex 编码（环境变量 `HARUKI_BOT_AUTH_ENCRYPTION_KEY`）
+
+**测试**：全部通过（`api/bot/auth` 22 个、`api/bot/pjsk` 原有全部通过）。
+
 ## 7. 当前保留项
 
 下面这些内容目前明确保留：
@@ -696,7 +738,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | Nil panic 风险消除 | ✅ | bridge.go 已补充 6 处 nil guard |
 | 代码无存根（enabled 路径） | ✅ | 无 TODO stub 在活跃链路中 |
 | 全量单元测试通过 | ✅ | 21 个 bot 测试 + legacy 测试全部通过 |
-| Noise IK 传输层加密 | ✅ | 已完整接入 pjsk 路由组；`noise_private_key` 为空时自动降级 |
+| Noise NK 传输层加密 | ✅ | 已从 IK 迁移至 NK；`noise_private_key` 为空时自动降级 |
 | MsgPack 编码 | ✅ | Noise 信封内请求/响应使用 MsgPack；明文模式仍用 JSON |
 | 内容审核覆盖完整性 | ✅ | profile / arrest / SK 排名 / suite snapshot 全路径遮盖（v16.9）|
 | BG 违规计数粒度 | ✅ | 用户粒度（UserSettings JSONB），跨绑定生效（v16.9）|
@@ -710,6 +752,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`；censor DB：`image_mod_cache` 表）
 2. 部署配置中设置 `pjsk_render.image_cache.uri` + `image_cache.dir`
 3. 配置 `haruki_bot.noise_private_key`（32 字节 X25519 私钥的 hex 编码；留空则退回明文 JSON 模式）
+4. 配置 `haruki_bot.auth_encryption_key`（32 字节 AES-256 密钥的 hex 编码；留空则 Auth 端点拒绝请求）
 4. push 本地 `test` 分支到 `origin/test`
 
 ## 10.1 集成测试执行结果（2026-03-27，第一轮）
@@ -727,7 +770,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 | 测试项 | 结果 | 说明 |
 |--------|------|------|
 | Bot 认证（AES-GCM + JWT credential） | ✅ | Session token 获取成功 |
-| Noise IK 密钥对生成 | ✅ | 客户端 X25519 密钥对就绪 |
+| Noise NK 握手 | ✅ | 客户端无需静态密钥对，只需服务端公钥（从 Auth 响应获取） |
 | Manifest 获取 | ✅ | 返回 76 个 command group |
 
 ### 指令端点测试（第一轮，12/23 通过）

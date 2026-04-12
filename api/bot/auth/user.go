@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
+	"github.com/shamaton/msgpack/v3"
 )
 
 // ================= Public API Handlers =================
@@ -159,22 +159,48 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 	})
 }
 
-// Auth 登录 - AES-256-GCM 加密验证 credential，生成 session token（公开 API，AES 加密）
+// Auth 登录 - AES-256-GCM 固定密钥加密（公开 API）
+// 请求体: raw bytes = nonce(12) || AES-256-GCM(key, nonce, MsgPack{bot_id, credential, timestamp})
+// 响应体: raw bytes = nonce(12) || AES-256-GCM(key, nonce, MsgPack{session_token, expires_at, noise_server_pubkey})
 func (h *UserHandler) Auth(c fiber.Ctx) error {
 	ctx := c.Context()
 	botIDStr := c.Params("bot_id")
 	botID, err := strconv.Atoi(botIDStr)
 	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid bot_id")
+		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
 
-	var req AuthRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	// 使用固定 AES-256 密钥解密请求体
+	key := h.svc.authEncryptionKey
+	if len(key) == 0 {
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	if req.EncryptedPayload == "" {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrInvalidEncryptedData)
+	body := c.Body()
+	if len(body) == 0 {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
+	}
+
+	plaintext, err := crypto.DecryptRaw(body, key)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
+	}
+
+	// MsgPack 解码载荷
+	var payload AuthPayload
+	if err := msgpack.Unmarshal(plaintext, &payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
+	}
+
+	// 验证 bot_id 一致性
+	if payload.BotID != botIDStr {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrBotIDMismatch)
+	}
+
+	// 验证时间戳（防重放）
+	now := time.Now().Unix()
+	if payload.Timestamp < now-AuthTimestampMaxAge || payload.Timestamp > now+AuthTimestampMaxAge {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthTimestampExpired)
 	}
 
 	// 获取用户信息
@@ -182,28 +208,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		Where(user.BotIDEQ(botID)).
 		Only(ctx)
 	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrAuthFailed)
-	}
-
-	// 使用 credential 作为解密密钥（取前 32 字节）
-	keyBytes := deriveKeyFromCredential(u.Credential)
-
-	// 解密载荷
-	plaintext, err := crypto.Decrypt(req.EncryptedPayload, keyBytes)
-	if err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrInvalidEncryptedData)
-	}
-
-	// 解析载荷
-	var payload AuthPayload
-	if err := json.Unmarshal(plaintext, &payload); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrInvalidEncryptedData)
-	}
-
-	// 验证时间戳（防重放）
-	now := time.Now().Unix()
-	if payload.Timestamp < now-AuthTimestampMaxAge || payload.Timestamp > now+AuthTimestampMaxAge {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrAuthTimestampExpired)
+		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
 
 	// 解析并验证 JWT credential
@@ -214,23 +219,23 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		return []byte(config.Cfg.HarukiBotDB.CredentialSignToken), nil
 	})
 	if err != nil || !decoded.Valid {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrInvalidCredential)
+		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidCredential)
 	}
 
 	claims, ok := decoded.Claims.(jwt.MapClaims)
 	if !ok {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrInvalidCredential)
+		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidCredential)
 	}
 
-	tokenBotID := claims["bot_id"].(string)
-	tokenCredential := claims["credential"].(string)
+	tokenBotID, _ := claims["bot_id"].(string)
+	tokenCredential, _ := claims["credential"].(string)
 
 	if tokenBotID != botIDStr {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrBotIDMismatch)
+		return c.Status(fiber.StatusBadRequest).SendString(ErrBotIDMismatch)
 	}
 
 	if u.Credential != tokenCredential {
-		return api.JSONResponse(c, fiber.StatusBadRequest, ErrAuthFailed)
+		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
 
 	// 生成 session token
@@ -244,22 +249,35 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	sessionToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, sessionPayload).
 		SignedString([]byte(config.Cfg.HarukiBotDB.SessionSignToken))
 	if err != nil {
-		return api.InternalError(c)
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	// 存储 session 到 Redis
 	_ = h.svc.setRedisKey(ctx, RedisKeySessionToken, botIDStr, sessionToken, int(sessionTTL.Minutes()))
 
-	return api.JSONResponse(c, fiber.StatusOK, "ok", AuthResponse{
-		SessionToken: sessionToken,
-		ExpiresAt:    expiresAt,
-	})
+	// 构造加密响应: MsgPack → AES-256-GCM
+	resp := AuthResponse{
+		SessionToken:      sessionToken,
+		ExpiresAt:         expiresAt,
+		NoiseServerPubKey: h.svc.noiseServerPubKey,
+	}
+	respBytes, err := msgpack.Marshal(resp)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	encrypted, err := crypto.EncryptRaw(respBytes, key)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	c.Set("Content-Type", "application/octet-stream")
+	return c.Send(encrypted)
 }
 
 // ================= Route Registration =================
 
-func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client) {
-	svc := NewUserService(dbClient, redisClient)
+func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) {
+	svc := NewUserService(dbClient, redisClient, authEncryptionKey, noiseServerPubKey)
 	h := NewUserHandler(svc)
 
 	// 公开 API（无需鉴权，暴露到公网）
@@ -267,5 +285,5 @@ func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis
 
 	public.Post("/send-mail", h.SendMail) // 发送验证码
 	public.Post("/register", h.Register)  // 注册
-	public.Post("/:bot_id/auth", h.Auth)  // 登录（AES-256-GCM 加密）
+	public.Post("/:bot_id/auth", h.Auth)  // 登录（AES-256-GCM 固定密钥加密）
 }

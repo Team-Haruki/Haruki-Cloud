@@ -98,6 +98,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
 	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
+	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
@@ -273,6 +274,7 @@ type HarukiBotDBConfig struct {
 	InternalAPIToken    string `yaml:"internal_api_token"`
 	SessionTTLDays      int    `yaml:"session_ttl_days"`
 	NoisePrivateKey     string `yaml:"noise_private_key"`
+	AuthEncryptionKey   string `yaml:"auth_encryption_key"`
 }
 
 type UsersDBConfig struct {

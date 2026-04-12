@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/redis/go-redis/v9"
+	noiseMP "github.com/shamaton/msgpack/v3"
 )
 
 type testEnvelope struct {
@@ -110,7 +112,7 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 	t.Cleanup(func() { config.Cfg = prev })
 
 	app := fiber.New()
-	RegisterBotRoutes(app, client, nil)
+	RegisterBotRoutes(app, client, nil, nil, "")
 
 	sendResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", `{"qq_number":0}`, nil)
 	if sendResp.Status != fiber.StatusBadRequest {
@@ -122,9 +124,11 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 		t.Fatalf("expected /bot/register to be registered, got status=%d message=%s", registerResp.Status, registerResp.Message)
 	}
 
-	authResp := sendJSONRequest(t, app, http.MethodPost, "/bot/12345678/auth", `{"encrypted_payload":""}`, nil)
-	if authResp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected /bot/:bot_id/auth to be registered, got status=%d message=%s", authResp.Status, authResp.Message)
+	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/12345678/auth", []byte("garbage"))
+	authHTTPResp.Body.Close()
+	// Auth route is registered if we get a non-404 response (400 or 500 both ok)
+	if authHTTPResp.StatusCode == fiber.StatusNotFound {
+		t.Fatalf("expected /bot/:bot_id/auth to be registered, got 404")
 	}
 
 	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", `{}`, map[string]string{
@@ -155,7 +159,8 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	turnstileMock := &mockTurnstile{valid: true}
 	smtpMock := &mockSMTP{}
 
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock))
+	testAuthKey := []byte("01234567890123456789012345678901") // 32 bytes
+	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock, testAuthKey, "deadbeef"))
 	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store))
 	statsHandler := NewStatisticsHandler(NewStatisticsService(client))
 
@@ -211,29 +216,40 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	}
 
 	authPayload := AuthPayload{
+		BotID:      registerData.BotID,
 		Credential: registerData.Credential,
 		Timestamp:  time.Now().Unix(),
 	}
-	payloadBytes, err := json.Marshal(authPayload)
+	payloadBytes, err := noiseMP.Marshal(authPayload)
 	if err != nil {
 		t.Fatalf("marshal auth payload: %v", err)
 	}
-	encryptedPayload, err := crypto.Encrypt(payloadBytes, deriveKeyFromCredential(dbUser.Credential))
+	encryptedBody, err := crypto.EncryptRaw(payloadBytes, testAuthKey)
 	if err != nil {
 		t.Fatalf("encrypt auth payload: %v", err)
 	}
 
-	authResp := sendJSONRequest(t, app, http.MethodPost, "/bot/"+registerData.BotID+"/auth", fmt.Sprintf(`{"encrypted_payload":"%s"}`, encryptedPayload), nil)
-	if authResp.Status != fiber.StatusOK {
-		t.Fatalf("auth failed: status=%d message=%s", authResp.Status, authResp.Message)
+	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/"+registerData.BotID+"/auth", encryptedBody)
+	if authHTTPResp.StatusCode != fiber.StatusOK {
+		body, _ := io.ReadAll(authHTTPResp.Body)
+		t.Fatalf("auth failed: status=%d body=%s", authHTTPResp.StatusCode, string(body))
 	}
+	authRespBody, _ := io.ReadAll(authHTTPResp.Body)
+	authHTTPResp.Body.Close()
 
+	decryptedResp, err := crypto.DecryptRaw(authRespBody, testAuthKey)
+	if err != nil {
+		t.Fatalf("decrypt auth response: %v", err)
+	}
 	var authData AuthResponse
-	if err := json.Unmarshal(authResp.Data, &authData); err != nil {
+	if err := noiseMP.Unmarshal(decryptedResp, &authData); err != nil {
 		t.Fatalf("decode auth response: %v", err)
 	}
 	if authData.SessionToken == "" || authData.ExpiresAt <= time.Now().Unix() {
 		t.Fatalf("invalid auth response: %+v", authData)
+	}
+	if authData.NoiseServerPubKey != "deadbeef" {
+		t.Fatalf("expected noise pubkey 'deadbeef', got '%s'", authData.NoiseServerPubKey)
 	}
 
 	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, registerData.BotID, authData.SessionToken)
@@ -301,7 +317,7 @@ func TestBotSendMail_TurnstileFailure(t *testing.T) {
 	turnstileMock := &mockTurnstile{valid: false}
 	smtpMock := &mockSMTP{}
 
-	h := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock))
+	h := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock, nil, ""))
 	app := fiber.New()
 	app.Post("/bot/send-mail", h.SendMail)
 
@@ -342,6 +358,20 @@ func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, he
 		t.Fatalf("decode response body: %v\nraw=%s", err, string(respBody))
 	}
 	return envelope
+}
+
+func sendRawRequest(t *testing.T, app *fiber.App, method, path string, body []byte) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(method, path, bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	return resp
 }
 
 func newBotTestClient(t *testing.T, name string) *ent.Client {

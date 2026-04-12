@@ -50,13 +50,15 @@ func (s *redisKVStore) Del(ctx context.Context, key string) error {
 
 // ================= Service Constructors =================
 
-func NewUserService(dbClient *ent.Client, redisClient *redis.Client) *UserService {
+func NewUserService(dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) *UserService {
 	cfg := config.Cfg.HarukiBotDB
 	return NewUserServiceWithDependencies(
 		dbClient,
 		newRedisKVStore(redisClient),
 		turnstile.NewClient(cfg.TurnstileSecretKey),
 		smtp.NewClient(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom),
+		authEncryptionKey,
+		noiseServerPubKey,
 	)
 }
 
@@ -65,15 +67,19 @@ func NewUserServiceWithDependencies(
 	redisStore RedisKVStore,
 	turnstileClient TurnstileVerifier,
 	smtpClient VerificationMailer,
+	authEncryptionKey []byte,
+	noiseServerPubKey string,
 ) *UserService {
 	if redisStore == nil {
 		redisStore = newRedisKVStore(nil)
 	}
 	return &UserService{
-		dbClient:        dbClient,
-		redisStore:      redisStore,
-		turnstileClient: turnstileClient,
-		smtpClient:      smtpClient,
+		dbClient:          dbClient,
+		redisStore:        redisStore,
+		turnstileClient:   turnstileClient,
+		smtpClient:        smtpClient,
+		authEncryptionKey: authEncryptionKey,
+		noiseServerPubKey: noiseServerPubKey,
 	}
 }
 
@@ -171,13 +177,4 @@ func getSessionTTL() time.Duration {
 		days = 7
 	}
 	return time.Duration(days) * 24 * time.Hour
-}
-
-// deriveKeyFromCredential 从 credential 派生 32 字节的 AES-256 密钥
-// 使用 credential 的 SHA-256 hash 作为密钥
-func deriveKeyFromCredential(credential string) []byte {
-	// 使用简单的方式：取 credential 的前 32 字节，不足则填充
-	key := make([]byte, 32)
-	copy(key, []byte(credential))
-	return key
 }

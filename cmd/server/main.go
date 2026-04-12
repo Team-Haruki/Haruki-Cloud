@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"os/signal"
 	"syscall"
 
@@ -38,8 +39,13 @@ func main() {
 	renderRuntime := initPJSKRenderIfEnabled(rootCtx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(rootCtx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, censorService)
-	botDBClient := initBot(rootCtx, mainLogger, app, redisClient)
 	noiseKeyPair := initNoiseKeyPair(mainLogger)
+	authEncryptionKey := initAuthEncryptionKey(mainLogger)
+	var noiseServerPubKeyHex string
+	if noiseKeyPair != nil {
+		noiseServerPubKeyHex = hex.EncodeToString(noiseKeyPair.Public)
+	}
+	botDBClient := initBot(rootCtx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex)
 	botPJSK.RegisterPJSKBotRoutesWithContext(rootCtx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {

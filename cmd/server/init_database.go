@@ -129,7 +129,7 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 	)
 }
 
-func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) *botDB.Client {
+func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) *botDB.Client {
 	ctx = ensureContext(ctx)
 
 	botDBClient := initDBClient(ctx, mainLogger, "Bot",
@@ -139,6 +139,6 @@ func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.Ap
 		func(c *botDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 
-	botAuth.RegisterBotRoutes(app, botDBClient, redisClient)
+	botAuth.RegisterBotRoutes(app, botDBClient, redisClient, authEncryptionKey, noiseServerPubKey)
 	return botDBClient
 }

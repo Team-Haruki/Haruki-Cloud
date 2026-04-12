@@ -1518,8 +1518,8 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 		t.Fatalf("msgpack marshal: %v", err)
 	}
 
-	// Noise IK: client is initiator, knows server public key
-	clientNC, err := noiseCrypto.NewHandshake(mustGenKP(t), serverKP.Public, true)
+	// Noise NK: client is initiator, knows server public key
+	clientNC, err := noiseCrypto.NewInitiator(serverKP.Public)
 	if err != nil {
 		t.Fatalf("client handshake init: %v", err)
 	}
@@ -1563,13 +1563,4 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 	if message != "ok" && message != "render failed" {
 		t.Fatalf("unexpected message: %s (full envelope: %+v)", message, envelope)
 	}
-}
-
-func mustGenKP(t *testing.T) *noiseCrypto.KeyPair {
-	t.Helper()
-	kp, err := noiseCrypto.GenerateKeyPair()
-	if err != nil {
-		t.Fatalf("generate key pair: %v", err)
-	}
-	return kp
 }

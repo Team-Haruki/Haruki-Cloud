@@ -21,15 +21,12 @@ type RegisterRequest struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-// AuthRequest 登录请求（公开 API，AES-256-GCM 加密）
-type AuthRequest struct {
-	EncryptedPayload string `json:"encrypted_payload"` // base64(nonce || ciphertext || tag)
-}
-
-// AuthPayload 解密后的登录载荷
+// AuthPayload 解密后的登录载荷（MsgPack 编码）
+// 请求体格式: nonce(12) || AES-256-GCM(key, nonce, MsgPack(AuthPayload))
 type AuthPayload struct {
-	Credential string `json:"credential"` // JWT 签名的 credential
-	Timestamp  int64  `json:"timestamp"`  // 防重放攻击
+	BotID      string `msgpack:"bot_id"`
+	Credential string `msgpack:"credential"` // JWT 签名的 credential
+	Timestamp  int64  `msgpack:"timestamp"`  // 防重放攻击
 }
 
 // InternalVerifyRequest 内部服务验证请求
@@ -46,10 +43,11 @@ type CredentialResponse struct {
 	Credential string `json:"credential"` // JWT 签名的 credential
 }
 
-// AuthResponse 登录成功响应
+// AuthResponse 登录成功响应（MsgPack 编码，AES-256-GCM 加密返回）
 type AuthResponse struct {
-	SessionToken string `json:"session_token"`
-	ExpiresAt    int64  `json:"expires_at"` // Unix 时间戳
+	SessionToken      string `msgpack:"session_token"`
+	ExpiresAt         int64  `msgpack:"expires_at"`          // Unix 时间戳
+	NoiseServerPubKey string `msgpack:"noise_server_pubkey"` // hex 编码的 X25519 公钥
 }
 
 // InternalVerifyResponse 内部服务验证响应
@@ -111,10 +109,12 @@ type RedisKVStore interface {
 }
 
 type UserService struct {
-	dbClient        *ent.Client
-	redisStore      RedisKVStore
-	turnstileClient TurnstileVerifier
-	smtpClient      VerificationMailer
+	dbClient          *ent.Client
+	redisStore        RedisKVStore
+	turnstileClient   TurnstileVerifier
+	smtpClient        VerificationMailer
+	authEncryptionKey []byte // 32-byte AES-256 key for auth payload encryption
+	noiseServerPubKey string // hex-encoded server Noise NK public key
 }
 
 type InternalService struct {

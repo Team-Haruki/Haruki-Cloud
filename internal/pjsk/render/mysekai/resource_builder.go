@@ -22,7 +22,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
 	return &drawing.MysekaiResourceRequest{
 		Profile:             *profile,
-		Phenoms:             extractMysekaiPhenoms(func(p string) string { return c.regionPath(region, p) }, merged),
+		Phenoms:             extractMysekaiPhenoms(region, func(p string) string { return c.regionPath(region, p) }, merged),
 		GateID:              gateID,
 		GateLevel:           gateLevel,
 		GateIconPath:        c.resolveGateIconPath(region, gateID, gateSkinID),

@@ -57,6 +57,7 @@ type MysekaiMsrMapSiteInfo struct {
 type MysekaiMsrMapHarvestPoint struct {
 	ID        *int    `json:"id,omitempty"`
 	ImagePath string  `json:"image_path"`
+	FallbackImagePath *string `json:"fallback_image_path,omitempty"`
 	PositionX float64 `json:"position_x"`
 	PositionZ float64 `json:"position_z"`
 	Status    string  `json:"status,omitempty"`

@@ -2,8 +2,10 @@ package mysekai
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -31,7 +33,51 @@ func extractMysekaiGateInfo(merged map[string]any) (int, int, int) {
 	return gateID, gateLevel, gateSkinID
 }
 
-func extractMysekaiPhenoms(resolve pathResolver, merged map[string]any) []drawing.MysekaiPhenomRequest {
+var (
+	mysekaiBirthdayRefreshRegions = map[string]struct{}{
+		"jp": {},
+	}
+	mysekaiCharacterBirthdays = map[int]struct {
+		Month int
+		Day   int
+	}{
+		1:  {Month: 8, Day: 11},
+		2:  {Month: 5, Day: 9},
+		3:  {Month: 10, Day: 27},
+		4:  {Month: 1, Day: 8},
+		5:  {Month: 4, Day: 14},
+		6:  {Month: 10, Day: 5},
+		7:  {Month: 3, Day: 19},
+		8:  {Month: 12, Day: 6},
+		9:  {Month: 3, Day: 2},
+		10: {Month: 7, Day: 26},
+		11: {Month: 11, Day: 12},
+		12: {Month: 5, Day: 25},
+		13: {Month: 5, Day: 17},
+		14: {Month: 9, Day: 9},
+		15: {Month: 7, Day: 20},
+		16: {Month: 6, Day: 24},
+		17: {Month: 2, Day: 10},
+		18: {Month: 1, Day: 27},
+		19: {Month: 4, Day: 30},
+		20: {Month: 8, Day: 27},
+		21: {Month: 8, Day: 31},
+		22: {Month: 12, Day: 27},
+		23: {Month: 12, Day: 27},
+		24: {Month: 1, Day: 30},
+		25: {Month: 11, Day: 5},
+		26: {Month: 2, Day: 17},
+	}
+	mysekaiRegionUTCOffsets = map[string]int{
+		"jp": 9,
+		"en": -8,
+		"cn": 8,
+		"tw": 8,
+		"kr": 9,
+	}
+)
+
+func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, merged map[string]any) []drawing.MysekaiPhenomRequest {
 	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]any)
 	if !ok {
 		return []drawing.MysekaiPhenomRequest{}
@@ -47,9 +93,7 @@ func extractMysekaiPhenoms(resolve pathResolver, merged map[string]any) []drawin
 	if nowMs > 0 {
 		now = time.UnixMilli(nowMs)
 	}
-
-	const firstHour = 4
-	const secondHour = 16
+	firstHour, secondHour := mysekaiRefreshHoursLocal(region, now)
 
 	phenomStart := time.Date(now.Year(), now.Month(), now.Day(), firstHour, 0, 0, 0, now.Location())
 	if now.Hour() < firstHour {
@@ -60,28 +104,143 @@ func extractMysekaiPhenoms(resolve pathResolver, merged map[string]any) []drawin
 		currentIdx = 0
 	}
 
-	phenoms := make([]drawing.MysekaiPhenomRequest, 0, len(rawSchedules))
+	phenoms := make([]drawing.MysekaiPhenomRequest, 0, len(rawSchedules)+1)
 	for i, item := range rawSchedules {
 		schedule, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		bg := []int{255, 255, 255, 75}
-		fg := []int{125, 125, 125, 255}
-		if i == currentIdx {
-			bg = []int{255, 255, 255, 150}
-			fg = []int{0, 0, 0, 255}
-		}
 		phenomID := intNumber(schedule["mysekaiPhenomenaId"], 1)
-		phenoms = append(phenoms, drawing.MysekaiPhenomRequest{
-			RefreshReason:  "natural",
-			ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", mysekaiPhenomIconName(phenomID))),
-			BackgroundFill: bg,
-			Text:           phenomStart.Add(time.Duration(i) * 12 * time.Hour).Format("15:04"),
-			TextFill:       fg,
-		})
+		currentStart := phenomStart.Add(time.Duration(i) * 12 * time.Hour)
+		current := i == currentIdx
+		phenomEnd := currentStart.Add(11*time.Hour + 59*time.Minute)
+		lastRefreshOfEnd, reason := mysekaiLastRefreshTimeAndReason(region, phenomEnd)
+		var midCurrent *bool
+		if !lastRefreshOfEnd.Equal(currentStart) {
+			value := !now.Before(lastRefreshOfEnd)
+			midCurrent = &value
+			current = current && !value
+		}
+		phenoms = append(phenoms, mysekaiNaturalPhenom(resolve, phenomID, currentStart, current))
+		if midCurrent != nil {
+			phenoms = append(phenoms, mysekaiBirthdayPhenom(resolve, reason, lastRefreshOfEnd, *midCurrent))
+		}
 	}
 	return phenoms
+}
+
+func mysekaiNaturalPhenom(resolve pathResolver, phenomID int, start time.Time, isCurrent bool) drawing.MysekaiPhenomRequest {
+	bg := []int{255, 255, 255, 75}
+	fg := []int{125, 125, 125, 255}
+	if isCurrent {
+		bg = []int{255, 255, 255, 150}
+		fg = []int{0, 0, 0, 255}
+	}
+	return drawing.MysekaiPhenomRequest{
+		RefreshReason:  "natural",
+		ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", mysekaiPhenomIconName(phenomID))),
+		BackgroundFill: bg,
+		Text:           start.Format("15:04"),
+		TextFill:       fg,
+	}
+}
+
+func mysekaiBirthdayPhenom(resolve pathResolver, reason string, start time.Time, isCurrent bool) drawing.MysekaiPhenomRequest {
+	bg := []int{255, 255, 200, 150}
+	if isCurrent {
+		bg = []int{255, 255, 200, 255}
+	}
+	fg := []int{125, 125, 125, 255}
+	if isCurrent {
+		fg = []int{0, 0, 0, 255}
+	}
+	characterID := 0
+	if lastUnderscore := strings.LastIndex(reason, "_"); lastUnderscore >= 0 {
+		characterID = intNumber(reason[lastUnderscore+1:], 0)
+	}
+	return drawing.MysekaiPhenomRequest{
+		RefreshReason:  reason,
+		ImagePath:      resolve(fmt.Sprintf("thumbnail/material/material%d.png", characterID+173)),
+		BackgroundFill: bg,
+		Text:           start.Format("15:04"),
+		TextFill:       fg,
+	}
+}
+
+func mysekaiRefreshHoursLocal(region renderregion.Value, now time.Time) (int, int) {
+	return regionHourToLocal(region, 5, now), regionHourToLocal(region, 17, now)
+}
+
+func regionHourToLocal(region renderregion.Value, hour int, now time.Time) int {
+	normalized := region.String()
+	localOffset := mysekaiLocalUTCOffset(now)
+	regionOffset := mysekaiRegionUTCOffset(normalized, now)
+	return (hour + localOffset - regionOffset + 24) % 24
+}
+
+func mysekaiLocalUTCOffset(now time.Time) int {
+	_, seconds := now.Zone()
+	return seconds / 3600
+}
+
+func mysekaiRegionUTCOffset(region string, now time.Time) int {
+	region = renderregion.WithDefault(renderregion.Normalize(region)).String()
+	offset, ok := mysekaiRegionUTCOffsets[region]
+	if !ok {
+		return 8
+	}
+	if region == "en" {
+		nowUTC := now.UTC()
+		dstStart := time.Date(nowUTC.Year(), 3, 8, 0, 0, 0, 0, time.UTC)
+		dstEnd := time.Date(nowUTC.Year(), 11, 1, 0, 0, 0, 0, time.UTC)
+		if !nowUTC.Before(dstStart) && nowUTC.Before(dstEnd) {
+			offset++
+		}
+	}
+	return offset
+}
+
+func mysekaiLastRefreshTimeAndReason(region renderregion.Value, now time.Time) (time.Time, string) {
+	firstHour, secondHour := mysekaiRefreshHoursLocal(region, now)
+	if firstHour > secondHour {
+		firstHour, secondHour = secondHour, firstHour
+	}
+	var lastRefresh time.Time
+	switch {
+	case now.Hour() < firstHour:
+		lastRefresh = time.Date(now.Year(), now.Month(), now.Day(), secondHour, 0, 0, 0, now.Location()).Add(-24 * time.Hour)
+	case now.Hour() < secondHour:
+		lastRefresh = time.Date(now.Year(), now.Month(), now.Day(), firstHour, 0, 0, 0, now.Location())
+	default:
+		lastRefresh = time.Date(now.Year(), now.Month(), now.Day(), secondHour, 0, 0, 0, now.Location())
+	}
+
+	if _, ok := mysekaiBirthdayRefreshRegions[region.String()]; !ok {
+		return lastRefresh, "natural"
+	}
+
+	for characterID, birthday := range mysekaiCharacterBirthdays {
+		nextBirthday := mysekaiNextBirthdayLocal(region, now.Add(-24*time.Hour), characterID, birthday.Month, birthday.Day)
+		start := nextBirthday.Add(-72 * time.Hour)
+		end := nextBirthday
+		if lastRefresh.Before(start) && !start.After(now) {
+			return start, fmt.Sprintf("bdstart_%d", characterID)
+		}
+		if lastRefresh.Before(end) && !end.After(now) {
+			return end, fmt.Sprintf("bdend_%d", characterID)
+		}
+	}
+	return lastRefresh, "natural"
+}
+
+func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, characterID, month, day int) time.Time {
+	_ = characterID
+	regionLocation := time.FixedZone(region.String(), mysekaiRegionUTCOffset(region.String(), now)*3600)
+	nextBirthday := time.Date(now.Year(), time.Month(month), day, 0, 0, 0, 0, regionLocation).In(now.Location())
+	if nextBirthday.Before(now) {
+		nextBirthday = time.Date(now.Year()+1, time.Month(month), day, 0, 0, 0, 0, regionLocation).In(now.Location())
+	}
+	return nextBirthday
 }
 
 func mysekaiPhenomIconName(phenomID int) string {

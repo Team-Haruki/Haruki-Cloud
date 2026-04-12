@@ -26,6 +26,7 @@ func resourceRarity(key string, materialRarityMap map[int]string) int {
 		"mysekai_fixture_121": {},
 		"material_17":         {},
 		"material_170":        {},
+		"material_173":        {},
 	}
 	rare := map[string]struct{}{
 		"mysekai_material_32": {},
@@ -37,6 +38,9 @@ func resourceRarity(key string, materialRarityMap map[int]string) int {
 		"mysekai_material_66": {},
 	}
 	if _, ok := mostRare[key]; ok {
+		return 2
+	}
+	if matchesResourceIDRange(key, "material_", 174, 203) || matchesResourceIDRange(key, "mysekai_material_", 67, 92) {
 		return 2
 	}
 	if _, ok := rare[key]; ok {
@@ -56,6 +60,14 @@ func resourceRarity(key string, materialRarityMap map[int]string) int {
 		}
 	}
 	return 0
+}
+
+func matchesResourceIDRange(key, prefix string, minID, maxID int) bool {
+	if !strings.HasPrefix(key, prefix) {
+		return false
+	}
+	id := intNumber(strings.TrimPrefix(key, prefix), 0)
+	return id >= minID && id <= maxID
 }
 
 func musicRecordIconPath(resolve pathResolver, hasRecord bool) *string {
@@ -82,27 +94,23 @@ func sortKeysByResource(counts map[string]int, materialRarityMap map[int]string)
 		keys = append(keys, key)
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		leftPriority := resourceSortPriority(keys[i])
-		rightPriority := resourceSortPriority(keys[j])
-		if leftPriority != rightPriority {
-			return leftPriority < rightPriority
-		}
-		leftRarity := resourceRarity(keys[i], materialRarityMap)
-		rightRarity := resourceRarity(keys[j], materialRarityMap)
-		if leftRarity != rightRarity {
-			return leftRarity > rightRarity
-		}
-		if counts[keys[i]] != counts[keys[j]] {
-			return counts[keys[i]] > counts[keys[j]]
+		leftScore := adjustedResourceSortScore(keys[i], counts[keys[i]], materialRarityMap)
+		rightScore := adjustedResourceSortScore(keys[j], counts[keys[j]], materialRarityMap)
+		if leftScore != rightScore {
+			return leftScore > rightScore
 		}
 		return keys[i] < keys[j]
 	})
 	return keys
 }
 
-func resourceSortPriority(key string) int {
-	if strings.HasPrefix(key, "mysekai_music_record_") {
-		return 0
+func adjustedResourceSortScore(key string, count int, materialRarityMap map[int]string) int {
+	switch resourceRarity(key, materialRarityMap) {
+	case 2:
+		return count - 1000000
+	case 1:
+		return count - 100000
+	default:
+		return count
 	}
-	return 1
 }

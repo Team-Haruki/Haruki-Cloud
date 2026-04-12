@@ -455,6 +455,13 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	if birthdayPoint.ImagePath != fmt.Sprintf("static_images/mysekai/birthday/haruka_%d/icon_refresh.png", time.Now().Year()) {
 		t.Fatalf("unexpected birthday point image path: %q", birthdayPoint.ImagePath)
 	}
+	gotFallback := "<nil>"
+	if birthdayPoint.FallbackImagePath != nil {
+		gotFallback = *birthdayPoint.FallbackImagePath
+	}
+	if gotFallback != "static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png" {
+		t.Fatalf("unexpected birthday point fallback image path: %q", gotFallback)
+	}
 	if birthdayPoint.Size == nil || *birthdayPoint.Size != 50 {
 		t.Fatalf("unexpected birthday point size: %+v", birthdayPoint.Size)
 	}
